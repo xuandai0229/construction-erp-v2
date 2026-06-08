@@ -78,32 +78,33 @@ enum SiteReportStatus {
 // MODELS
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
+  id        String    @id @default(cuid())
+  email     String    @unique
   password  String
   name      String
-  role      UserRole @default(STAFF)
+  role      UserRole  @default(STAFF)
   phone     String?
   avatar    String?
-  isActive  Boolean  @default(true)
+  isActive  Boolean   @default(true)
   deletedAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-  projectMembers ProjectMember[]
-  auditLogs      AuditLog[]
-  messages       ChatMessage[]
-  siteReports    SiteReport[]
+  projectMembers   ProjectMember[]
+  auditLogs        AuditLog[]
+  messages         ChatMessage[]
+  siteReports      SiteReport[]
   approvalRequests ApprovalRequest[] @relation("Requester")
   approvals        ApprovalRequest[] @relation("Approver")
+  documents        Document[]
 
   @@index([email])
   @@index([createdAt])
 }
 
 model Project {
-  id          String   @id @default(cuid())
-  code        String   @unique
+  id          String        @id @default(cuid())
+  code        String        @unique
   name        String
   description String?
   investor    String?
@@ -111,19 +112,20 @@ model Project {
   status      ProjectStatus @default(PLANNING)
   startDate   DateTime?
   endDate     DateTime?
-  budget      Decimal? @db.Decimal(19, 4)
+  budget      Decimal?      @db.Decimal(19, 4)
   deletedAt   DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
-  members          ProjectMember[]
-  wbsItems         WBSItem[]
-  contracts        Contract[]
-  documentFolders  DocumentFolder[]
-  siteReports      SiteReport[]
+  members           ProjectMember[]
+  wbsItems          WBSItem[]
+  contracts         Contract[]
+  documentFolders   DocumentFolder[]
+  siteReports       SiteReport[]
   materialMovements MaterialMovement[]
-  paymentPlans     PaymentPlan[]
-  paymentRecords   PaymentRecord[]
+  paymentPlans      PaymentPlan[]
+  paymentRecords    PaymentRecord[]
+  documents         Document[]
 
   @@index([code])
   @@index([status])
@@ -131,11 +133,11 @@ model Project {
 }
 
 model ProjectMember {
-  id        String   @id @default(cuid())
+  id        String      @id @default(cuid())
   projectId String
   userId    String
   role      ProjectRole
-  joinedAt  DateTime @default(now())
+  joinedAt  DateTime    @default(now())
   leftAt    DateTime?
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -147,7 +149,7 @@ model ProjectMember {
 }
 
 model WBSItem {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   projectId   String
   parentId    String?
   code        String
@@ -155,13 +157,13 @@ model WBSItem {
   description String?
   startDate   DateTime?
   endDate     DateTime?
-  progress    Decimal  @default(0) @db.Decimal(5, 2)
-  budget      Decimal? @db.Decimal(19, 4)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  progress    Decimal   @default(0) @db.Decimal(5, 2)
+  budget      Decimal?  @db.Decimal(19, 4)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  project Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  parent  WBSItem?  @relation("WBSHierarchy", fields: [parentId], references: [id])
+  project  Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parent   WBSItem?  @relation("WBSHierarchy", fields: [parentId], references: [id])
   children WBSItem[] @relation("WBSHierarchy")
 
   @@unique([projectId, code])
@@ -170,17 +172,17 @@ model WBSItem {
 }
 
 model Supplier {
-  id        String   @id @default(cuid())
-  code      String   @unique
-  name      String
-  taxCode   String?
-  address   String?
-  phone     String?
-  email     String?
+  id            String    @id @default(cuid())
+  code          String    @unique
+  name          String
+  taxCode       String?
+  address       String?
+  phone         String?
+  email         String?
   contactPerson String?
-  deletedAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  deletedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   contracts Contract[]
 
@@ -188,23 +190,23 @@ model Supplier {
 }
 
 model Contract {
-  id          String   @id @default(cuid())
-  projectId   String
-  supplierId  String?
-  contractNo  String   @unique
-  name        String
-  type        ContractType
-  status      ContractStatus @default(DRAFT)
-  value       Decimal  @db.Decimal(19, 4)
-  signDate    DateTime?
-  startDate   DateTime?
-  endDate     DateTime?
-  deletedAt   DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String         @id @default(cuid())
+  projectId  String
+  supplierId String?
+  contractNo String         @unique
+  name       String
+  type       ContractType
+  status     ContractStatus @default(DRAFT)
+  value      Decimal        @db.Decimal(19, 4)
+  signDate   DateTime?
+  startDate  DateTime?
+  endDate    DateTime?
+  deletedAt  DateTime?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
 
-  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  supplier    Supplier? @relation(fields: [supplierId], references: [id])
+  project      Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  supplier     Supplier?     @relation(fields: [supplierId], references: [id])
   paymentPlans PaymentPlan[]
 
   @@index([projectId])
@@ -213,12 +215,13 @@ model Contract {
 }
 
 model DocumentFolder {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   projectId String
   parentId  String?
   name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   project   Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
   parent    DocumentFolder?  @relation("FolderHierarchy", fields: [parentId], references: [id])
@@ -230,24 +233,32 @@ model DocumentFolder {
 }
 
 model Document {
-  id        String   @id @default(cuid())
-  folderId  String
-  name      String
-  mimeType  String
-  size      Int
-  storageKey String
-  version   Int      @default(1)
-  deletedAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String    @id @default(cuid())
+  projectId    String
+  folderId     String
+  originalName String
+  storedName   String
+  mimeType     String
+  extension    String
+  size         Int
+  storagePath  String
+  uploadedById String
+  version      Int       @default(1)
+  deletedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  folder DocumentFolder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  project    Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  folder     DocumentFolder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  uploadedBy User           @relation(fields: [uploadedById], references: [id])
 
+  @@index([projectId])
   @@index([folderId])
+  @@index([uploadedById])
 }
 
 model SiteReport {
-  id          String   @id @default(cuid())
+  id          String           @id @default(cuid())
   projectId   String
   authorId    String
   reportDate  DateTime
@@ -256,11 +267,11 @@ model SiteReport {
   workDone    String
   issues      String?
   status      SiteReportStatus @default(DRAFT)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  author  User    @relation(fields: [authorId], references: [id])
+  project Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author  User              @relation(fields: [authorId], references: [id])
   photos  SiteReportPhoto[]
 
   @@index([projectId])
@@ -269,11 +280,11 @@ model SiteReport {
 }
 
 model SiteReportPhoto {
-  id           String   @id @default(cuid())
-  reportId     String
-  storageKey   String
-  description  String?
-  createdAt    DateTime @default(now())
+  id          String   @id @default(cuid())
+  reportId    String
+  storageKey  String
+  description String?
+  createdAt   DateTime @default(now())
 
   report SiteReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
 
@@ -295,16 +306,16 @@ model MaterialItem {
 }
 
 model MaterialMovement {
-  id             String   @id @default(cuid())
+  id             String               @id @default(cuid())
   projectId      String
   materialItemId String
   type           MaterialMovementType
-  quantity       Decimal  @db.Decimal(19, 4)
-  unitPrice      Decimal? @db.Decimal(19, 4)
+  quantity       Decimal              @db.Decimal(19, 4)
+  unitPrice      Decimal?             @db.Decimal(19, 4)
   movementDate   DateTime
   notes          String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 
   project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
   materialItem MaterialItem @relation(fields: [materialItemId], references: [id])
@@ -315,18 +326,18 @@ model MaterialMovement {
 }
 
 model PaymentPlan {
-  id          String   @id @default(cuid())
+  id          String        @id @default(cuid())
   projectId   String
   contractId  String?
   name        String
-  amount      Decimal  @db.Decimal(19, 4)
+  amount      Decimal       @db.Decimal(19, 4)
   plannedDate DateTime
   status      PaymentStatus @default(PENDING)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
-  project  Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  contract Contract? @relation(fields: [contractId], references: [id])
+  project  Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  contract Contract?       @relation(fields: [contractId], references: [id])
   records  PaymentRecord[]
 
   @@index([projectId])
@@ -352,15 +363,15 @@ model PaymentRecord {
 }
 
 model ApprovalRequest {
-  id          String   @id @default(cuid())
+  id          String         @id @default(cuid())
   requesterId String
   approverId  String?
   entityType  String
   entityId    String
   status      ApprovalStatus @default(PENDING)
   notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
   requester User  @relation("Requester", fields: [requesterId], references: [id])
   approver  User? @relation("Approver", fields: [approverId], references: [id])
