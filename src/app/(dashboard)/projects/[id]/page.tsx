@@ -90,12 +90,16 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
           </CardContent>
         </Card>
 
-        <div className="space-y-6">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center"><FolderOpen className="h-4 w-4 mr-2"/> Thư mục mặc định</CardTitle>
+          <Card className="flex flex-col h-full">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+              <CardTitle className="text-sm font-semibold flex items-center">
+                <FolderOpen className="h-4 w-4 mr-2"/> Thư mục
+              </CardTitle>
+              <Link href={`/documents/${project.id}`} className="text-xs text-blue-600 hover:underline">
+                Quản lý &rarr;
+              </Link>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-1 overflow-y-auto max-h-48">
               <ul className="space-y-2 text-sm text-slate-600">
                 {project.documentFolders.length > 0 ? project.documentFolders.map(folder => (
                   <li key={folder.id} className="flex items-center">
@@ -106,7 +110,6 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
               </ul>
             </CardContent>
           </Card>
-        </div>
       </div>
 
       <h2 className="text-lg font-semibold text-slate-900 mt-8 mb-4">Các phân hệ quản lý</h2>

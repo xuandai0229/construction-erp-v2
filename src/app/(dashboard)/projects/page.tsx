@@ -68,7 +68,7 @@ export default async function ProjectsPage({
                 type="text" 
                 name="q"
                 defaultValue={q}
-                placeholder="Tìm mã, tên công trình, chủ đầu tư..." 
+                placeholder="Tìm kiếm công trình..." 
                 className="w-full pl-9 pr-4 py-2 text-sm text-slate-900 font-medium placeholder:text-slate-400 placeholder:font-normal border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -96,17 +96,17 @@ export default async function ProjectsPage({
         {projects.length > 0 ? (
           <>
             {/* Desktop View */}
-            <div className="hidden md:block overflow-x-auto">
+            <div className="hidden xl:block overflow-x-auto">
               <table className="w-full text-left text-sm text-slate-600">
                 <thead className="bg-slate-50 border-b border-slate-200 text-slate-900">
                   <tr>
-                    <th className="px-6 py-3 font-semibold">Mã CT</th>
-                    <th className="px-6 py-3 font-semibold">Tên công trình</th>
-                    <th className="px-6 py-3 font-semibold">Chủ đầu tư</th>
-                    <th className="px-6 py-3 font-semibold">Địa điểm</th>
-                    <th className="px-6 py-3 font-semibold">Trạng thái</th>
-                    <th className="px-6 py-3 font-semibold">Ngày BĐ - KT</th>
-                    <th className="px-6 py-3 font-semibold text-right">Hành động</th>
+                    <th className="px-6 py-3 font-semibold whitespace-nowrap">Mã CT</th>
+                    <th className="px-6 py-3 font-semibold whitespace-nowrap">Tên công trình</th>
+                    <th className="px-6 py-3 font-semibold whitespace-nowrap">Chủ đầu tư</th>
+                    <th className="px-6 py-3 font-semibold whitespace-nowrap">Địa điểm</th>
+                    <th className="px-6 py-3 font-semibold whitespace-nowrap">Trạng thái</th>
+                    <th className="px-6 py-3 font-semibold whitespace-nowrap">Ngày BĐ - KT</th>
+                    <th className="px-6 py-3 font-semibold text-right whitespace-nowrap">Hành động</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 bg-white">
@@ -141,12 +141,12 @@ export default async function ProjectsPage({
               </table>
             </div>
 
-            {/* Mobile View */}
-            <div className="md:hidden divide-y divide-slate-200">
+            {/* Mobile/Tablet View */}
+            <div className="xl:hidden grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50">
               {projects.map(project => (
-                <div key={project.id} className="p-4 space-y-3 bg-white">
+                <div key={project.id} className="p-4 space-y-3 bg-white border border-slate-200 rounded-lg shadow-sm flex flex-col">
                   <div className="flex items-start justify-between gap-2">
-                    <div>
+                    <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-1">
                         <span className="text-xs font-semibold px-2 py-0.5 bg-slate-100 text-slate-700 rounded-md">
                           {project.code}
@@ -167,13 +167,16 @@ export default async function ProjectsPage({
                     </p>
                   </div>
 
-                  <div className="flex gap-2 pt-2 border-t border-slate-100">
-                    <Link href={`/projects/${project.id}`} className="flex-1 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-slate-300 bg-white hover:bg-slate-100 text-slate-900 h-9 px-3">
-                      Xem
-                    </Link>
-                    <Link href={`/projects/${project.id}/edit`} className="flex-1 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-slate-300 bg-white hover:bg-slate-100 text-slate-900 h-9 px-3">
-                      Sửa
-                    </Link>
+
+                  <div className="mt-auto pt-4 border-t border-slate-100">
+                    <div className="flex gap-2">
+                      <Link href={`/projects/${project.id}`} className="flex-1 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-slate-300 bg-white hover:bg-slate-100 text-slate-900 h-9 px-3">
+                        Xem
+                      </Link>
+                      <Link href={`/projects/${project.id}/edit`} className="flex-1 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-slate-300 bg-white hover:bg-slate-100 text-slate-900 h-9 px-3">
+                        Sửa
+                      </Link>
+                    </div>
                   </div>
                 </div>
               ))}

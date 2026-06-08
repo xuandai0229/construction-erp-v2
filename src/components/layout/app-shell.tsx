@@ -7,7 +7,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen w-full bg-slate-50 overflow-hidden">
-      <div className="hidden md:block">
+      <div className="hidden lg:block">
         <Sidebar />
       </div>
       <div className="flex flex-1 flex-col overflow-hidden">

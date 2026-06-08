@@ -39,7 +39,7 @@ export function Header({ userName, userRole }: { userName?: string, userRole?: s
   return (
     <>
       <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 md:px-6">
-        <div className="flex items-center md:hidden">
+        <div className="flex items-center lg:hidden">
           <button
             onClick={() => setMobileMenuOpen(true)}
             className="text-slate-500 hover:text-slate-700 p-2"
@@ -49,14 +49,14 @@ export function Header({ userName, userRole }: { userName?: string, userRole?: s
           <span className="ml-2 text-lg font-bold text-blue-600">ERP</span>
         </div>
         
-        <div className="hidden md:block"></div>
+        <div className="hidden lg:block"></div>
 
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2 text-sm">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600">
               <User className="h-4 w-4" />
             </div>
-            <div className="hidden md:block">
+            <div className="hidden sm:block">
               <p className="font-medium text-slate-900">{userName || 'Tài khoản Dev'}</p>
               <p className="text-xs text-slate-500">{userRole || 'Admin'}</p>
             </div>
@@ -73,7 +73,7 @@ export function Header({ userName, userRole }: { userName?: string, userRole?: s
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 flex md:hidden">
+        <div className="fixed inset-0 z-50 flex lg:hidden">
           <div className="fixed inset-0 bg-slate-900/80" onClick={() => setMobileMenuOpen(false)} />
           <div className="relative flex w-full max-w-xs flex-1 flex-col bg-white">
             <div className="flex h-16 shrink-0 items-center justify-between px-6 border-b border-slate-200">
