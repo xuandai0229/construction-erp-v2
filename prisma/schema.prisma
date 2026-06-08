@@ -106,6 +106,8 @@ model Project {
   code        String   @unique
   name        String
   description String?
+  owner       String?
+  location    String?
   status      ProjectStatus @default(PLANNING)
   startDate   DateTime?
   endDate     DateTime?

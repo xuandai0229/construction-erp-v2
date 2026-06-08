@@ -2,14 +2,26 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'default' | 'outline' | 'ghost' | 'destructive'
+  variant?: 'default' | 'outline' | 'ghost' | 'destructive';
+  asChild?: boolean;
+}
+
+function Slot({ children, className, ...props }: any) {
+  if (React.isValidElement(children)) {
+    return React.cloneElement(children, {
+      className: cn(className, (children.props as any).className),
+      ...props,
+    } as any);
+  }
+  return children;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'default', ...props }, ref) => {
+  ({ className, variant = 'default', asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button";
     return (
-      <button
-        ref={ref}
+      <Comp
+        ref={ref as any}
         className={cn(
           "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2",
           {
