@@ -47,7 +47,7 @@ export default function LoginPage() {
             <Building2 className="h-6 w-6 text-blue-600" />
           </div>
           <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-slate-900">
-            Construction ERP
+            ERP Công trình
           </h2>
           <p className="mt-2 text-center text-sm text-slate-600">
             Môi trường Development

@@ -1,10 +1,10 @@
-import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import prisma from "@/lib/prisma";
 import { Building2, Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ProjectStatus } from "@prisma/client";
+import { format } from "date-fns";
 
 export default async function ProjectsPage({
   searchParams,
@@ -23,7 +23,7 @@ export default async function ProjectsPage({
     whereCondition.OR = [
       { code: { contains: q, mode: 'insensitive' } },
       { name: { contains: q, mode: 'insensitive' } },
-      { owner: { contains: q, mode: 'insensitive' } },
+      { investor: { contains: q, mode: 'insensitive' } },
     ];
   }
 
@@ -47,16 +47,16 @@ export default async function ProjectsPage({
     }
   };
 
+  const buttonClass = "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-slate-300 bg-white hover:bg-slate-100 text-slate-900 h-10 px-4 py-2";
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-slate-900">Quản lý Công trình</h1>
-        <Button asChild>
-          <Link href="/projects/new">
-            <Plus className="h-4 w-4 mr-2" />
-            Tạo công trình
-          </Link>
-        </Button>
+        <Link href="/projects/new" className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-blue-600 text-white hover:bg-blue-700 h-10 px-4 py-2">
+          <Plus className="h-4 w-4 mr-2" />
+          Tạo công trình
+        </Link>
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
@@ -69,13 +69,13 @@ export default async function ProjectsPage({
                 name="q"
                 defaultValue={q}
                 placeholder="Tìm mã, tên công trình, chủ đầu tư..." 
-                className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-9 pr-4 py-2 text-sm text-slate-900 font-medium placeholder:text-slate-400 placeholder:font-normal border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <select 
               name="status"
               defaultValue={statusFilter}
-              className="px-4 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              className="px-4 py-2 text-sm text-slate-900 font-medium border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             >
               <option value="">Tất cả trạng thái</option>
               <option value="PLANNING">Lập kế hoạch</option>
@@ -84,57 +84,101 @@ export default async function ProjectsPage({
               <option value="COMPLETED">Hoàn thành</option>
               <option value="CANCELLED">Đã hủy</option>
             </select>
-            <Button type="submit" variant="outline">Lọc</Button>
+            <button type="submit" className={buttonClass}>Lọc</button>
             {(q || statusFilter) && (
-              <Button type="button" variant="ghost" asChild>
-                <Link href="/projects">Xóa</Link>
-              </Button>
+              <Link href="/projects" className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-slate-100 hover:text-slate-900 text-slate-700 h-10 px-4 py-2">
+                Xóa
+              </Link>
             )}
           </form>
         </div>
 
         {projects.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-600">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-900">
-                <tr>
-                  <th className="px-6 py-3 font-semibold">Mã CT</th>
-                  <th className="px-6 py-3 font-semibold">Tên công trình</th>
-                  <th className="px-6 py-3 font-semibold">Chủ đầu tư</th>
-                  <th className="px-6 py-3 font-semibold">Địa điểm</th>
-                  <th className="px-6 py-3 font-semibold">Trạng thái</th>
-                  <th className="px-6 py-3 font-semibold">Ngày BĐ - KT</th>
-                  <th className="px-6 py-3 font-semibold text-right">Hành động</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 bg-white">
-                {projects.map(project => (
-                  <tr key={project.id} className="hover:bg-slate-50">
-                    <td className="px-6 py-4 font-medium text-slate-900">{project.code}</td>
-                    <td className="px-6 py-4">
-                      <Link href={`/projects/${project.id}`} className="font-medium text-blue-600 hover:underline">
+          <>
+            {/* Desktop View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-sm text-slate-600">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-900">
+                  <tr>
+                    <th className="px-6 py-3 font-semibold">Mã CT</th>
+                    <th className="px-6 py-3 font-semibold">Tên công trình</th>
+                    <th className="px-6 py-3 font-semibold">Chủ đầu tư</th>
+                    <th className="px-6 py-3 font-semibold">Địa điểm</th>
+                    <th className="px-6 py-3 font-semibold">Trạng thái</th>
+                    <th className="px-6 py-3 font-semibold">Ngày BĐ - KT</th>
+                    <th className="px-6 py-3 font-semibold text-right">Hành động</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200 bg-white">
+                  {projects.map(project => (
+                    <tr key={project.id} className="hover:bg-slate-50">
+                      <td className="px-6 py-4 font-medium text-slate-900">{project.code}</td>
+                      <td className="px-6 py-4">
+                        <Link href={`/projects/${project.id}`} className="font-medium text-blue-600 hover:underline">
+                          {project.name}
+                        </Link>
+                      </td>
+                      <td className="px-6 py-4">{project.investor || "-"}</td>
+                      <td className="px-6 py-4">{project.location || "-"}</td>
+                      <td className="px-6 py-4">{getStatusBadge(project.status)}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col text-xs text-slate-500 whitespace-nowrap">
+                          <span>BĐ: {project.startDate ? format(new Date(project.startDate), 'dd/MM/yyyy') : '-'}</span>
+                          <span>KT: {project.endDate ? format(new Date(project.endDate), 'dd/MM/yyyy') : '-'}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
+                        <Link href={`/projects/${project.id}`} className="inline-flex items-center justify-center rounded-md text-xs font-medium transition-colors border border-slate-300 bg-white hover:bg-slate-100 text-slate-900 h-8 px-3">
+                          Xem
+                        </Link>
+                        <Link href={`/projects/${project.id}/edit`} className="inline-flex items-center justify-center rounded-md text-xs font-medium transition-colors border border-slate-300 bg-white hover:bg-slate-100 text-slate-900 h-8 px-3 ml-2">
+                          Sửa
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile View */}
+            <div className="md:hidden divide-y divide-slate-200">
+              {projects.map(project => (
+                <div key={project.id} className="p-4 space-y-3 bg-white">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className="text-xs font-semibold px-2 py-0.5 bg-slate-100 text-slate-700 rounded-md">
+                          {project.code}
+                        </span>
+                        {getStatusBadge(project.status)}
+                      </div>
+                      <Link href={`/projects/${project.id}`} className="text-base font-medium text-blue-600 hover:underline line-clamp-2">
                         {project.name}
                       </Link>
-                    </td>
-                    <td className="px-6 py-4">{project.owner || "-"}</td>
-                    <td className="px-6 py-4">{project.location || "-"}</td>
-                    <td className="px-6 py-4">{getStatusBadge(project.status)}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col text-xs text-slate-500 whitespace-nowrap">
-                        <span>BĐ: {project.startDate ? new Date(project.startDate).toLocaleDateString('vi-VN') : '-'}</span>
-                        <span>KT: {project.endDate ? new Date(project.endDate).toLocaleDateString('vi-VN') : '-'}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
-                      <Button variant="outline" asChild className="h-8 text-xs px-3">
-                        <Link href={`/projects/${project.id}/edit`}>Sửa</Link>
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-1 text-sm text-slate-600">
+                    <p><span className="text-slate-500">CĐT:</span> {project.investor || "-"}</p>
+                    <p><span className="text-slate-500">Vị trí:</span> {project.location || "-"}</p>
+                    <p className="text-xs text-slate-500">
+                      Thời gian: {project.startDate ? format(new Date(project.startDate), 'dd/MM/yyyy') : '-'} đến {project.endDate ? format(new Date(project.endDate), 'dd/MM/yyyy') : '-'}
+                    </p>
+                  </div>
+
+                  <div className="flex gap-2 pt-2 border-t border-slate-100">
+                    <Link href={`/projects/${project.id}`} className="flex-1 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-slate-300 bg-white hover:bg-slate-100 text-slate-900 h-9 px-3">
+                      Xem
+                    </Link>
+                    <Link href={`/projects/${project.id}/edit`} className="flex-1 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-slate-300 bg-white hover:bg-slate-100 text-slate-900 h-9 px-3">
+                      Sửa
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         ) : (
           <div className="p-8">
             <EmptyState 

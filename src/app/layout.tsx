@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Construction ERP",
+  title: "ERP Công trình",
   description: "Phần mềm quản lý xây dựng",
 };
 

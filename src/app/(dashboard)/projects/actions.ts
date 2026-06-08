@@ -10,7 +10,7 @@ import { redirect } from "next/navigation";
 const projectSchema = z.object({
   code: z.string().min(1, "Mã công trình là bắt buộc"),
   name: z.string().min(1, "Tên công trình là bắt buộc"),
-  owner: z.string().optional(),
+  investor: z.string().optional(),
   location: z.string().optional(),
   description: z.string().optional(),
   status: z.enum(["PLANNING", "ACTIVE", "ON_HOLD", "COMPLETED", "CANCELLED"]).default("PLANNING"),

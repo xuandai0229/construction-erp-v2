@@ -22,6 +22,8 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
     return d.toISOString().split("T")[0];
   };
 
+  const inputClass = "w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 read-only:bg-slate-100 read-only:text-slate-500 read-only:cursor-not-allowed text-slate-900";
+
   return (
     <form action={formAction} className="space-y-6 max-w-3xl">
       {state?.error && (
@@ -39,7 +41,7 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
             type="text"
             required
             defaultValue={initialData?.code}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className={inputClass}
             placeholder="Ví dụ: CT-001"
             readOnly={!!initialData}
             title={initialData ? "Không được sửa mã công trình" : ""}
@@ -54,18 +56,18 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
             type="text"
             required
             defaultValue={initialData?.name}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className={inputClass}
           />
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="owner" className="text-sm font-medium text-slate-700">Chủ đầu tư</label>
+          <label htmlFor="investor" className="text-sm font-medium text-slate-700">Chủ đầu tư</label>
           <input
-            id="owner"
-            name="owner"
+            id="investor"
+            name="investor"
             type="text"
-            defaultValue={initialData?.owner || ""}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            defaultValue={initialData?.investor || ""}
+            className={inputClass}
           />
         </div>
 
@@ -76,7 +78,7 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
             name="location"
             type="text"
             defaultValue={initialData?.location || ""}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className={inputClass}
           />
         </div>
 
@@ -86,7 +88,7 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
             id="status"
             name="status"
             defaultValue={initialData?.status || "PLANNING"}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className={inputClass}
           >
             <option value="PLANNING">Lập kế hoạch</option>
             <option value="ACTIVE">Đang thi công</option>
@@ -103,7 +105,7 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
             name="startDate"
             type="date"
             defaultValue={formatDate(initialData?.startDate)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className={inputClass}
           />
         </div>
 
@@ -114,7 +116,7 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
             name="endDate"
             type="date"
             defaultValue={formatDate(initialData?.endDate)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className={inputClass}
           />
         </div>
       </div>
@@ -126,14 +128,14 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
           name="description"
           rows={4}
           defaultValue={initialData?.description || ""}
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className={inputClass}
         />
       </div>
 
       <div className="flex justify-end space-x-4 border-t border-slate-200 pt-6">
-        <Button type="button" variant="outline" asChild>
-          <Link href="/projects">Hủy</Link>
-        </Button>
+        <Link href="/projects" className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-slate-300 bg-transparent hover:bg-slate-100 text-slate-900 h-10 px-4 py-2">
+          Hủy
+        </Link>
         <Button type="submit" disabled={isPending}>
           {isPending ? "Đang xử lý..." : initialData ? "Lưu thay đổi" : "Tạo công trình"}
         </Button>

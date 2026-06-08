@@ -4,9 +4,9 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, Calendar, MapPin, User, ListTree, FolderOpen, FileText, ClipboardCheck, History } from "lucide-react";
 import { DeleteProjectButton } from "@/components/projects/delete-project-button";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ProjectStatus } from "@prisma/client";
+import { format } from "date-fns";
 
 export default async function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -34,6 +34,8 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
     }
   };
 
+  const buttonClass = "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-slate-300 bg-white hover:bg-slate-100 text-slate-900 h-10 px-4 py-2";
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -44,10 +46,13 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
           </div>
           <p className="text-sm text-slate-500 mt-1">Mã: {project.code}</p>
         </div>
-        <div className="flex space-x-2">
-          <Button variant="outline" asChild>
-            <Link href={`/projects/${project.id}/edit`}>Sửa thông tin</Link>
-          </Button>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/projects" className={buttonClass}>
+            Quay lại danh sách
+          </Link>
+          <Link href={`/projects/${project.id}/edit`} className={buttonClass}>
+            Sửa thông tin
+          </Link>
           <DeleteProjectButton id={project.id} projectName={project.name} />
         </div>
       </div>
@@ -58,10 +63,10 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
             <CardTitle>Thông tin chung</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div className="space-y-1">
                 <span className="text-slate-500 flex items-center"><User className="h-4 w-4 mr-1"/> Chủ đầu tư</span>
-                <p className="font-medium">{project.owner || "Chưa cập nhật"}</p>
+                <p className="font-medium">{project.investor || "Chưa cập nhật"}</p>
               </div>
               <div className="space-y-1">
                 <span className="text-slate-500 flex items-center"><MapPin className="h-4 w-4 mr-1"/> Địa điểm</span>
@@ -69,11 +74,11 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
               </div>
               <div className="space-y-1">
                 <span className="text-slate-500 flex items-center"><Calendar className="h-4 w-4 mr-1"/> Ngày bắt đầu</span>
-                <p className="font-medium">{project.startDate ? new Date(project.startDate).toLocaleDateString('vi-VN') : "Chưa cập nhật"}</p>
+                <p className="font-medium">{project.startDate ? format(new Date(project.startDate), 'dd/MM/yyyy') : "Chưa cập nhật"}</p>
               </div>
               <div className="space-y-1">
                 <span className="text-slate-500 flex items-center"><Calendar className="h-4 w-4 mr-1"/> Ngày dự kiến KT</span>
-                <p className="font-medium">{project.endDate ? new Date(project.endDate).toLocaleDateString('vi-VN') : "Chưa cập nhật"}</p>
+                <p className="font-medium">{project.endDate ? format(new Date(project.endDate), 'dd/MM/yyyy') : "Chưa cập nhật"}</p>
               </div>
             </div>
             {project.description && (

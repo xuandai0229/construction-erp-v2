@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import prisma from '@/lib/prisma';
 import { Building2, FolderOpen, FileText, Users } from 'lucide-react';
+import { format } from 'date-fns';
 
 export default async function DashboardPage() {
   const [
@@ -13,14 +14,15 @@ export default async function DashboardPage() {
     totalSuppliers,
     recentReports
   ] = await Promise.all([
-    prisma.project.count(),
-    prisma.project.count({ where: { status: 'ACTIVE' } }),
-    prisma.project.count({ where: { status: 'COMPLETED' } }),
-    prisma.document.count(),
-    prisma.contract.count(),
-    prisma.supplier.count(),
+    prisma.project.count({ where: { deletedAt: null } }),
+    prisma.project.count({ where: { status: 'ACTIVE', deletedAt: null } }),
+    prisma.project.count({ where: { status: 'COMPLETED', deletedAt: null } }),
+    prisma.document.count({ where: { deletedAt: null } }),
+    prisma.contract.count({ where: { deletedAt: null } }),
+    prisma.supplier.count({ where: { deletedAt: null } }),
     prisma.siteReport.findMany({
       take: 5,
+      where: { project: { deletedAt: null } },
       orderBy: { createdAt: 'desc' },
       include: { author: true, project: true }
     })
@@ -104,7 +106,7 @@ export default async function DashboardPage() {
                       <p className="text-sm text-slate-500">{report.workDone.substring(0, 50)}...</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-medium text-slate-900">{new Date(report.reportDate).toLocaleDateString('vi-VN')}</p>
+                      <p className="text-sm font-medium text-slate-900">{format(new Date(report.reportDate), 'dd/MM/yyyy')}</p>
                       <p className="text-xs text-slate-500">{report.author.name}</p>
                     </div>
                   </div>
