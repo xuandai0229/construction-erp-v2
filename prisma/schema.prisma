@@ -1,0 +1,402 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ENUMS
+enum UserRole {
+  ADMIN
+  DIRECTOR
+  MANAGER
+  ENGINEER
+  ACCOUNTANT
+  STAFF
+}
+
+enum ProjectRole {
+  PROJECT_MANAGER
+  SITE_COMMANDER
+  QA_QC
+  HSE
+  SUPERVISOR
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum ContractType {
+  CLIENT
+  SUBCONTRACTOR
+  SUPPLIER
+  LABOR
+}
+
+enum ContractStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  TERMINATED
+}
+
+enum MaterialMovementType {
+  IMPORT
+  EXPORT
+  TRANSFER
+  RETURN
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  PARTIAL
+  PAID
+  REJECTED
+}
+
+enum ApprovalStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum SiteReportStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+// MODELS
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      UserRole @default(STAFF)
+  phone     String?
+  avatar    String?
+  isActive  Boolean  @default(true)
+  deletedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projectMembers ProjectMember[]
+  auditLogs      AuditLog[]
+  messages       ChatMessage[]
+  siteReports    SiteReport[]
+  approvalRequests ApprovalRequest[] @relation("Requester")
+  approvals        ApprovalRequest[] @relation("Approver")
+
+  @@index([email])
+  @@index([createdAt])
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String?
+  status      ProjectStatus @default(PLANNING)
+  startDate   DateTime?
+  endDate     DateTime?
+  budget      Decimal? @db.Decimal(19, 4)
+  deletedAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members          ProjectMember[]
+  wbsItems         WBSItem[]
+  contracts        Contract[]
+  documentFolders  DocumentFolder[]
+  siteReports      SiteReport[]
+  materialMovements MaterialMovement[]
+  paymentPlans     PaymentPlan[]
+  paymentRecords   PaymentRecord[]
+
+  @@index([code])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ProjectMember {
+  id        String   @id @default(cuid())
+  projectId String
+  userId    String
+  role      ProjectRole
+  joinedAt  DateTime @default(now())
+  leftAt    DateTime?
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+}
+
+model WBSItem {
+  id          String   @id @default(cuid())
+  projectId   String
+  parentId    String?
+  code        String
+  name        String
+  description String?
+  startDate   DateTime?
+  endDate     DateTime?
+  progress    Decimal  @default(0) @db.Decimal(5, 2)
+  budget      Decimal? @db.Decimal(19, 4)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parent  WBSItem?  @relation("WBSHierarchy", fields: [parentId], references: [id])
+  children WBSItem[] @relation("WBSHierarchy")
+
+  @@unique([projectId, code])
+  @@index([projectId])
+  @@index([parentId])
+}
+
+model Supplier {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  taxCode   String?
+  address   String?
+  phone     String?
+  email     String?
+  contactPerson String?
+  deletedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contracts Contract[]
+
+  @@index([code])
+}
+
+model Contract {
+  id          String   @id @default(cuid())
+  projectId   String
+  supplierId  String?
+  contractNo  String   @unique
+  name        String
+  type        ContractType
+  status      ContractStatus @default(DRAFT)
+  value       Decimal  @db.Decimal(19, 4)
+  signDate    DateTime?
+  startDate   DateTime?
+  endDate     DateTime?
+  deletedAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  supplier    Supplier? @relation(fields: [supplierId], references: [id])
+  paymentPlans PaymentPlan[]
+
+  @@index([projectId])
+  @@index([supplierId])
+  @@index([contractNo])
+}
+
+model DocumentFolder {
+  id        String   @id @default(cuid())
+  projectId String
+  parentId  String?
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project   Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parent    DocumentFolder?  @relation("FolderHierarchy", fields: [parentId], references: [id])
+  children  DocumentFolder[] @relation("FolderHierarchy")
+  documents Document[]
+
+  @@index([projectId])
+  @@index([parentId])
+}
+
+model Document {
+  id        String   @id @default(cuid())
+  folderId  String
+  name      String
+  mimeType  String
+  size      Int
+  storageKey String
+  version   Int      @default(1)
+  deletedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  folder DocumentFolder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+
+  @@index([folderId])
+}
+
+model SiteReport {
+  id          String   @id @default(cuid())
+  projectId   String
+  authorId    String
+  reportDate  DateTime
+  weather     String?
+  temperature String?
+  workDone    String
+  issues      String?
+  status      SiteReportStatus @default(DRAFT)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author  User    @relation(fields: [authorId], references: [id])
+  photos  SiteReportPhoto[]
+
+  @@index([projectId])
+  @@index([authorId])
+  @@index([reportDate])
+}
+
+model SiteReportPhoto {
+  id           String   @id @default(cuid())
+  reportId     String
+  storageKey   String
+  description  String?
+  createdAt    DateTime @default(now())
+
+  report SiteReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+}
+
+model MaterialItem {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  unit        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  movements MaterialMovement[]
+
+  @@index([code])
+}
+
+model MaterialMovement {
+  id             String   @id @default(cuid())
+  projectId      String
+  materialItemId String
+  type           MaterialMovementType
+  quantity       Decimal  @db.Decimal(19, 4)
+  unitPrice      Decimal? @db.Decimal(19, 4)
+  movementDate   DateTime
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  materialItem MaterialItem @relation(fields: [materialItemId], references: [id])
+
+  @@index([projectId])
+  @@index([materialItemId])
+  @@index([movementDate])
+}
+
+model PaymentPlan {
+  id          String   @id @default(cuid())
+  projectId   String
+  contractId  String?
+  name        String
+  amount      Decimal  @db.Decimal(19, 4)
+  plannedDate DateTime
+  status      PaymentStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project  Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  contract Contract? @relation(fields: [contractId], references: [id])
+  records  PaymentRecord[]
+
+  @@index([projectId])
+  @@index([contractId])
+}
+
+model PaymentRecord {
+  id            String   @id @default(cuid())
+  projectId     String
+  paymentPlanId String?
+  amount        Decimal  @db.Decimal(19, 4)
+  paymentDate   DateTime
+  referenceNo   String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  paymentPlan PaymentPlan? @relation(fields: [paymentPlanId], references: [id])
+
+  @@index([projectId])
+  @@index([paymentPlanId])
+}
+
+model ApprovalRequest {
+  id          String   @id @default(cuid())
+  requesterId String
+  approverId  String?
+  entityType  String
+  entityId    String
+  status      ApprovalStatus @default(PENDING)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  requester User  @relation("Requester", fields: [requesterId], references: [id])
+  approver  User? @relation("Approver", fields: [approverId], references: [id])
+
+  @@index([requesterId])
+  @@index([approverId])
+  @@index([entityType, entityId])
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  senderId  String
+  content   String
+  createdAt DateTime @default(now())
+
+  sender User @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([senderId])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  projectId  String?
+  action     String
+  entityType String
+  entityId   String
+  beforeData String?  @db.Text
+  afterData  String?  @db.Text
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([projectId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
