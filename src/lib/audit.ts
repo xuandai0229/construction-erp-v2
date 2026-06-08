@@ -16,8 +16,8 @@ export async function writeAuditLog({
   action: string;
   entityType: string;
   entityId: string;
-  beforeData?: any;
-  afterData?: any;
+  beforeData?: unknown;
+  afterData?: unknown;
   ipAddress?: string;
   userAgent?: string;
 }) {
