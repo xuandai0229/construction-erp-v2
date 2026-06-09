@@ -61,7 +61,7 @@ export default async function FieldProgressSummaryPage({
     orderBy: { entryDate: 'asc' }
   });
 
-  // Calculate cumulative data (up to 'toDate')
+  // Calculate cumulative data (up to 'toDate') for APPROVED entries
   const cumulativeData = await prisma.fieldProgressEntry.groupBy({
     by: ['itemId'],
     where: {
@@ -78,6 +78,25 @@ export default async function FieldProgressSummaryPage({
   const cumulativeMap: Record<string, number> = {};
   cumulativeData.forEach(d => {
     cumulativeMap[d.itemId] = Number(d._sum.quantity || 0);
+  });
+
+  // Calculate cumulative data (before 'fromDate') for APPROVED entries
+  const cumulativeBeforeData = await prisma.fieldProgressEntry.groupBy({
+    by: ['itemId'],
+    where: {
+      templateId: template.id,
+      deletedAt: null,
+      status: 'APPROVED',
+      entryDate: { lt: new Date(fromDate) }
+    },
+    _sum: {
+      quantity: true
+    }
+  });
+  
+  const cumulativeBeforeMap: Record<string, number> = {};
+  cumulativeBeforeData.forEach(d => {
+    cumulativeBeforeMap[d.itemId] = Number(d._sum.quantity || 0);
   });
 
   const availableDates = new Set<string>();
@@ -104,13 +123,13 @@ export default async function FieldProgressSummaryPage({
             href={`/projects/${id}/field-progress`}
             className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-md text-sm font-medium hover:bg-slate-50 flex items-center gap-2"
           >
-            <Table className="w-4 h-4" /> Bảng khối lượng
+            <Table className="w-4 h-4" /> Bảng khối lượng gốc
           </Link>
           <Link 
             href={`/projects/${id}/field-progress/daily`}
             className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-md text-sm font-medium hover:bg-slate-50 flex items-center gap-2"
           >
-            <Calendar className="w-4 h-4" /> Nhập ngày
+            <Calendar className="w-4 h-4" /> Nhập khối lượng theo ngày
           </Link>
         </div>
       </div>
@@ -119,24 +138,24 @@ export default async function FieldProgressSummaryPage({
         <form className="flex flex-wrap items-end gap-4" method="GET">
           <div>
             <label className="block text-xs font-medium text-slate-500 mb-1">Từ ngày</label>
-            <input type="date" name="from" defaultValue={fromDate} className="px-3 py-2 border rounded-md text-sm" />
+            <input type="date" name="from" defaultValue={fromDate} className="px-3 py-2 border border-slate-300 bg-white rounded-md text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-500 mb-1">Đến ngày</label>
-            <input type="date" name="to" defaultValue={toDate} className="px-3 py-2 border rounded-md text-sm" />
+            <input type="date" name="to" defaultValue={toDate} className="px-3 py-2 border border-slate-300 bg-white rounded-md text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" />
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-500 mb-1">Chế độ hiển thị ngày</label>
-            <select name="mode" defaultValue={mode} className="px-3 py-2 border rounded-md text-sm">
+            <select name="mode" defaultValue={mode} className="px-3 py-2 border border-slate-300 bg-white rounded-md text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
               <option value="HAS_DATA_ONLY">Chỉ ngày có dữ liệu</option>
               <option value="ALL_DAYS">Tất cả các ngày</option>
             </select>
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-500 mb-1">Trạng thái dữ liệu</label>
-            <select name="status" defaultValue={statusFilter} className="px-3 py-2 border rounded-md text-sm">
-              <option value="APPROVED_ONLY">Chỉ tính khối lượng đã duyệt</option>
-              <option value="ALL">Bao gồm bản nháp / chờ duyệt</option>
+            <select name="status" defaultValue={statusFilter} className="px-3 py-2 border border-slate-300 bg-white rounded-md text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+              <option value="APPROVED_ONLY">Chỉ tính khối lượng đã xác nhận</option>
+              <option value="ALL">Bao gồm dữ liệu lưu tạm / chờ kiểm tra</option>
             </select>
           </div>
           <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 flex items-center gap-2">
@@ -154,7 +173,9 @@ export default async function FieldProgressSummaryPage({
                 <th className="px-3 py-3 border-r bg-slate-50 sticky left-[40px] z-20" rowSpan={2}>Hạng mục / Công việc</th>
                 <th className="px-3 py-3 border-r" rowSpan={2}>Mũi thi công</th>
                 <th className="px-3 py-3 border-r text-center" rowSpan={2}>Đơn vị</th>
-                <th className="px-3 py-3 border-r text-center" rowSpan={2}>Tổng TK</th>
+                <th className="px-3 py-3 border-r text-right" rowSpan={2}>Tổng KL thiết kế</th>
+                <th className="px-3 py-3 border-r text-right" rowSpan={2}>Lũy kế kỳ trước</th>
+                <th className="px-3 py-3 border-r text-right text-indigo-900 bg-indigo-50/80" rowSpan={2}>Phát sinh trong kỳ</th>
                 <th className="px-3 py-3 border-r text-center bg-blue-50/80 text-blue-900" colSpan={2}>Lũy kế đến nay</th>
                 {dynamicDates.length > 0 && (
                   <th className="px-3 py-2 border-r text-center bg-green-50/80 text-green-900" colSpan={dynamicDates.length}>
@@ -175,8 +196,14 @@ export default async function FieldProgressSummaryPage({
             <tbody className="divide-y divide-slate-200">
               {template.items.map((item, idx) => {
                 const cumulative = cumulativeMap[item.id] || 0;
+                const cumulativeBefore = cumulativeBeforeMap[item.id] || 0;
                 const designQty = item.designQuantity ? Number(item.designQuantity) : null;
                 
+                let periodTotal = 0;
+                Object.values(groupedEntries[item.id] || {}).forEach(arr => {
+                  periodTotal += arr.reduce((sum, e) => sum + Number(e.quantity), 0);
+                });
+
                 let percent = null;
                 let isOver = false;
                 if (designQty && designQty > 0) {
@@ -185,18 +212,26 @@ export default async function FieldProgressSummaryPage({
                 }
 
                 return (
-                  <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-3 py-3 border-r bg-white sticky left-0 z-10 text-center text-slate-500 font-medium">{idx + 1}</td>
-                    <td className="px-3 py-3 border-r bg-white sticky left-[40px] z-10 max-w-[250px]">
+                  <tr key={item.id} className={`transition-colors ${isOver ? 'bg-red-50/50 hover:bg-red-50/80' : 'hover:bg-slate-50'}`}>
+                    <td className={`px-3 py-3 border-r sticky left-0 z-10 text-center text-slate-500 font-medium ${isOver ? 'bg-red-50/50' : 'bg-white'}`}>{idx + 1}</td>
+                    <td className={`px-3 py-3 border-r sticky left-[40px] z-10 max-w-[250px] ${isOver ? 'bg-red-50/50' : 'bg-white'}`}>
                       <div className="text-[10px] text-slate-400 mb-0.5 truncate uppercase tracking-wider">{item.parent?.categoryName || "-"}</div>
                       <div className="font-semibold text-slate-800 truncate" title={item.workContent || ""}>{item.workContent}</div>
                     </td>
-                    <td className="px-3 py-3 border-r text-slate-600">{item.constructionCrew || "-"}</td>
+                    <td className="px-3 py-3 border-r text-slate-600 truncate max-w-[120px]" title={item.constructionCrew || ""}>{item.constructionCrew || "-"}</td>
                     <td className="px-3 py-3 border-r text-center text-slate-500 font-medium">{item.unit || "-"}</td>
                     <td className="px-3 py-3 border-r text-right text-slate-700 font-semibold">
                       {designQty ? formatQuantity(designQty) : "-"}
                     </td>
                     
+                    <td className="px-3 py-3 border-r text-right text-slate-600">
+                      {formatQuantity(cumulativeBefore)}
+                    </td>
+                    
+                    <td className="px-3 py-3 border-r text-right text-indigo-700 font-bold bg-indigo-50/30">
+                      {periodTotal > 0 ? formatQuantity(periodTotal) : "-"}
+                    </td>
+
                     <td className="px-3 py-3 border-r text-right text-blue-800 font-bold bg-blue-50/30">
                       {formatQuantity(cumulative)}
                     </td>
@@ -296,9 +331,13 @@ export default async function FieldProgressSummaryPage({
           )}
         </div>
 
-        {statusFilter !== 'APPROVED_ONLY' && (
-          <div className="bg-yellow-50 p-3 text-xs text-yellow-800 border-t border-yellow-200">
-            <span className="font-semibold">Lưu ý:</span> Khối lượng "Phát sinh theo ngày" đang bao gồm cả các bản nháp / chờ duyệt. Tuy nhiên "Lũy kế" luôn chỉ tính các bản đã duyệt.
+        {statusFilter !== 'APPROVED_ONLY' ? (
+          <div className="bg-yellow-50 p-3 text-sm text-yellow-800 border-t border-yellow-200">
+            <span className="font-semibold">Lưu ý:</span> Bảng đang bao gồm dữ liệu chưa xác nhận ở cột Phát sinh. "Lũy kế" luôn chỉ tính các bản đã xác nhận.
+          </div>
+        ) : (
+          <div className="bg-blue-50 p-3 text-sm text-blue-800 border-t border-blue-200">
+            <span className="font-semibold">Lưu ý:</span> Lũy kế và số phát sinh hiển thị trên bảng này chỉ tính khối lượng đã xác nhận.
           </div>
         )}
       </div>

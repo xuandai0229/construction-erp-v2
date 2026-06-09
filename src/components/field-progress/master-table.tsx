@@ -109,7 +109,7 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
       <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50">
         <h2 className="font-semibold text-slate-800 flex items-center gap-2">
-          <ListTree className="h-5 w-5 text-blue-600" /> Bảng thiết lập mẫu khối lượng (Master Data)
+          <ListTree className="h-5 w-5 text-blue-600" /> Bảng thiết lập hạng mục & công việc
         </h2>
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" className="h-9 px-3 text-sm bg-white" onClick={handleAddGroup} disabled={loading}>
@@ -123,18 +123,6 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
             <Save className="w-4 h-4 mr-2" /> Lưu thay đổi {hasChanges && `(${Object.keys(dirtyItems).length})`}
           </Button>
           
-          <div className="h-6 w-px bg-slate-300 mx-1 hidden sm:block"></div>
-          
-          <Link href={`/projects/${projectId}/field-progress/daily`}>
-            <Button variant="outline" className="h-9 px-3 text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200">
-              <Calendar className="w-4 h-4 mr-2" /> Nhập hôm nay
-            </Button>
-          </Link>
-          <Link href={`/projects/${projectId}/field-progress/summary`}>
-            <Button variant="outline" className="h-9 px-3 text-sm bg-green-50 text-green-700 hover:bg-green-100 border-green-200">
-              <BarChart2 className="w-4 h-4 mr-2" /> Xem tổng hợp
-            </Button>
-          </Link>
         </div>
       </div>
 
@@ -142,15 +130,15 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
         <table className="w-full text-sm text-left whitespace-nowrap min-w-max">
           <thead className="bg-slate-100 border-b border-slate-200 text-slate-700">
             <tr>
-              <th className="px-3 py-3 border-r w-10 text-center">STT</th>
-              <th className="px-3 py-3 border-r min-w-[200px]">Nội dung hạng mục</th>
-              <th className="px-3 py-3 border-r min-w-[200px]">Nội dung công việc</th>
-              <th className="px-3 py-3 border-r min-w-[120px]">Mũi thi công</th>
-              <th className="px-3 py-3 border-r w-32 text-center">Tổng KL thiết kế</th>
+              <th className="px-3 py-3 border-r w-10 text-center sticky left-0 z-20 bg-slate-100">STT</th>
+              <th className="px-3 py-3 border-r min-w-[200px] text-left sticky left-[40px] z-20 bg-slate-100">Nội dung hạng mục</th>
+              <th className="px-3 py-3 border-r min-w-[300px] text-left sticky left-[240px] z-20 bg-slate-100">Nội dung công việc</th>
+              <th className="px-3 py-3 border-r min-w-[120px] text-left">Mũi thi công</th>
+              <th className="px-3 py-3 border-r w-32 text-right">Tổng KL thiết kế</th>
               <th className="px-3 py-3 border-r w-20 text-center">Đơn vị</th>
-              <th className="px-3 py-3 border-r w-32 text-center text-blue-800 bg-blue-50/50">Lũy kế</th>
-              <th className="px-3 py-3 border-r w-24 text-center text-blue-800 bg-blue-50/50">% TH</th>
-              <th className="px-3 py-3 border-r min-w-[150px]">Ghi chú</th>
+              <th className="px-3 py-3 border-r w-32 text-right text-blue-800 bg-blue-50/50">Lũy kế</th>
+              <th className="px-3 py-3 border-r w-24 text-right text-blue-800 bg-blue-50/50">% TH</th>
+              <th className="px-3 py-3 border-r min-w-[150px] text-left">Ghi chú</th>
               <th className="px-3 py-3 w-16 text-center">Hành động</th>
             </tr>
           </thead>
@@ -166,11 +154,11 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
               if (percentVal && Number(percentVal) > 100) isOver = true;
 
               return (
-                <tr key={item.id} className={`${isGroup ? 'bg-slate-50/80 border-b-2 border-slate-200' : 'bg-white'} hover:bg-slate-50 transition-colors`}>
-                  <td className="px-3 py-2 border-r text-center text-slate-500 font-medium">{index + 1}</td>
+                <tr key={item.id} className={`${isGroup ? 'bg-slate-100 border-b-2 border-slate-300' : 'bg-white'} hover:bg-slate-50 transition-colors`}>
+                  <td className={`px-3 py-2 border-r text-center text-slate-500 font-medium sticky left-0 z-10 ${isGroup ? 'bg-slate-100' : 'bg-white'}`}>{index + 1}</td>
                   
                   {/* Nội dung hạng mục */}
-                  <td className={`px-3 py-2 border-r ${isDirty ? 'bg-amber-50/30' : ''}`} style={{ paddingLeft: `${item.displayLevel * 20 + 12}px` }}>
+                  <td className={`px-3 py-2 border-r sticky left-[40px] z-10 ${isGroup ? 'bg-slate-100' : 'bg-white'} ${isDirty ? 'bg-amber-50/30' : ''}`} style={{ paddingLeft: `${item.displayLevel * 30 + 12}px` }}>
                     <div className="flex items-center gap-2">
                       {isGroup && (
                         <button onClick={() => toggleExpand(item.id)} className="p-0.5 text-slate-400 hover:text-slate-700 bg-white rounded shadow-sm border border-slate-200">
@@ -182,18 +170,19 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
                         value={item.categoryName || ""} 
                         onChange={e => handleChange(item.id, 'categoryName', e.target.value)}
                         placeholder={isGroup ? "Nhập tên hạng mục..." : "-"}
-                        className={`w-full bg-slate-50/50 hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 transition-colors ${isGroup ? 'font-bold text-slate-800' : 'text-slate-500'}`}
+                        title={item.categoryName || ""}
+                        className={`w-full bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 transition-colors ${isGroup ? 'font-bold text-slate-900' : 'text-slate-500'}`}
                       />
                     </div>
                   </td>
 
-                  {/* Nội dung công việc */}
-                  <td className={`px-3 py-2 border-r ${isDirty ? 'bg-amber-50/30' : ''}`}>
+                  <td className={`px-3 py-2 border-r sticky left-[240px] z-10 ${isGroup ? 'bg-slate-100' : 'bg-white'} ${isDirty ? 'bg-amber-50/30' : ''}`}>
                     <input 
                       value={item.workContent || ""} 
                       onChange={e => handleChange(item.id, 'workContent', e.target.value)}
                       placeholder={!isGroup ? "Nhập tên công việc..." : "-"}
-                      className={`w-full bg-slate-50/50 hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 transition-colors ${!isGroup ? 'font-semibold text-slate-800' : 'text-slate-400'}`}
+                      title={item.workContent || ""}
+                      className={`w-full bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 transition-colors ${!isGroup ? 'font-semibold text-slate-800' : 'text-slate-400'}`}
                     />
                   </td>
 
@@ -202,7 +191,7 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
                     <input 
                       value={item.constructionCrew || ""} 
                       onChange={e => handleChange(item.id, 'constructionCrew', e.target.value)}
-                      className="w-full bg-slate-50/50 hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 text-slate-700 transition-colors"
+                      className="w-full bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 text-slate-700 transition-colors"
                     />
                   </td>
 
@@ -216,7 +205,7 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
                         step="any"
                         value={item.designQuantity || ""} 
                         onChange={e => handleChange(item.id, 'designQuantity', e.target.value)}
-                        className="w-full bg-slate-50/50 hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 text-right font-bold text-slate-800 transition-colors"
+                        className="w-full bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 text-right font-bold text-slate-800 transition-colors"
                         placeholder="0.00"
                       />
                     )}
@@ -228,7 +217,7 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
                       <input 
                         value={item.unit || ""} 
                         onChange={e => handleChange(item.id, 'unit', e.target.value)}
-                        className="w-full bg-slate-50/50 hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 text-center text-slate-700 transition-colors"
+                        className="w-full bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 text-center text-slate-700 transition-colors"
                       />
                     )}
                   </td>

@@ -46,7 +46,7 @@ export default async function FieldProgressPage({ params }: { params: Promise<{ 
             <Link href={`/projects/${id}`} className="p-2 -ml-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-full transition-colors">
               <ArrowLeft className="h-5 w-5" />
             </Link>
-            Bảng khối lượng hiện trường
+            Bảng khối lượng gốc
           </h1>
           <p className="text-slate-500 mt-1 ml-10">Công trình: {project.code} - {project.name}</p>
         </div>
@@ -56,13 +56,13 @@ export default async function FieldProgressPage({ params }: { params: Promise<{ 
             href={`/projects/${id}/field-progress/daily`}
             className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-md text-sm font-medium hover:bg-slate-50 flex items-center gap-2"
           >
-            <Calendar className="w-4 h-4" /> Nhập ngày
+            <Calendar className="w-4 h-4" /> Nhập khối lượng theo ngày
           </Link>
           <Link 
             href={`/projects/${id}/field-progress/summary`}
             className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-md text-sm font-medium hover:bg-slate-50 flex items-center gap-2"
           >
-            <BarChart2 className="w-4 h-4" /> Tổng hợp
+            <BarChart2 className="w-4 h-4" /> Xem tổng hợp
           </Link>
         </div>
       </div>

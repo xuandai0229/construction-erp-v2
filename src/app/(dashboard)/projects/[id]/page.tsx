@@ -115,45 +115,52 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
       <h2 className="text-lg font-semibold text-slate-900 mt-8 mb-4">Các phân hệ quản lý</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Link href={`/projects/${project.id}/field-progress`} className="block group">
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:border-blue-300 transition-colors h-full text-center space-y-2">
-            <div className="mx-auto bg-blue-50 w-12 h-12 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-              <FileText className="h-6 w-6 text-blue-600" />
-            </div>
-            <h3 className="font-medium">Bảng khối lượng</h3>
-            <p className="text-xs text-slate-500">Master data, nhập nhanh khối lượng giống Excel.</p>
-          </div>
-        </Link>
-        <Link href={`/projects/${project.id}/field-progress/summary`} className="block group">
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:border-blue-300 transition-colors h-full text-center space-y-2">
-            <div className="mx-auto bg-green-50 w-12 h-12 rounded-full flex items-center justify-center group-hover:bg-green-100 transition-colors">
-              <BarChart2 className="h-6 w-6 text-green-600" />
-            </div>
-            <h3 className="font-medium">Tổng hợp khối lượng</h3>
-            <p className="text-xs text-slate-500">Giám sát báo cáo theo tiến độ, ngày tháng.</p>
-          </div>
-        </Link>
-
-        <Link href={`/reports?projectId=${project.id}`} className="block group">
           <Card className="hover:border-blue-300 transition-colors h-full">
             <CardContent className="p-6 text-center space-y-2">
-              <div className="mx-auto bg-orange-50 w-12 h-12 rounded-full flex items-center justify-center group-hover:bg-orange-100 transition-colors">
-                <ClipboardCheck className="h-6 w-6 text-orange-600" />
+              <div className="mx-auto bg-blue-50 w-12 h-12 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                <FileText className="h-6 w-6 text-blue-600" />
               </div>
-              <h3 className="font-medium">Báo cáo hiện trường</h3>
-              <p className="text-xs text-slate-500">Ghi nhận nhật ký thi công, khối lượng hằng ngày.</p>
+              <h3 className="font-semibold text-slate-900">Bảng khối lượng gốc</h3>
+              <p className="text-xs text-slate-500">Thiết lập hạng mục, công việc, mũi thi công và khối lượng thiết kế.</p>
             </CardContent>
           </Card>
         </Link>
 
-        <Card className="hover:border-blue-300 transition-colors cursor-pointer group">
-          <CardContent className="p-6 text-center space-y-2">
-            <div className="mx-auto bg-blue-50 w-12 h-12 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-              <History className="h-6 w-6 text-blue-600" />
-            </div>
-            <h3 className="font-medium">Nhật ký hệ thống</h3>
-            <p className="text-xs text-slate-500">Truy vết mọi thay đổi và cập nhật trên dự án này.</p>
-          </CardContent>
-        </Card>
+        <Link href={`/projects/${project.id}/field-progress/daily`} className="block group">
+          <Card className="hover:border-blue-300 transition-colors h-full">
+            <CardContent className="p-6 text-center space-y-2">
+              <div className="mx-auto bg-emerald-50 w-12 h-12 rounded-full flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
+                <ClipboardCheck className="h-6 w-6 text-emerald-600" />
+              </div>
+              <h3 className="font-semibold text-slate-900">Nhập khối lượng theo ngày</h3>
+              <p className="text-xs text-slate-500">Nhập khối lượng thực hiện hằng ngày cho từng công việc.</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href={`/projects/${project.id}/field-progress/summary`} className="block group">
+          <Card className="hover:border-blue-300 transition-colors h-full">
+            <CardContent className="p-6 text-center space-y-2">
+              <div className="mx-auto bg-indigo-50 w-12 h-12 rounded-full flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
+                <BarChart2 className="h-6 w-6 text-indigo-600" />
+              </div>
+              <h3 className="font-semibold text-slate-900">Tổng hợp khối lượng</h3>
+              <p className="text-xs text-slate-500">Theo dõi lũy kế, phát sinh theo ngày và phần trăm hoàn thành.</p>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <div className="block group cursor-pointer">
+          <Card className="hover:border-blue-300 transition-colors h-full bg-white">
+            <CardContent className="p-6 text-center space-y-2">
+              <div className="mx-auto bg-slate-100 w-12 h-12 rounded-full flex items-center justify-center group-hover:bg-slate-200 transition-colors">
+                <History className="h-6 w-6 text-slate-600" />
+              </div>
+              <h3 className="font-semibold text-slate-900">Nhật ký hệ thống</h3>
+              <p className="text-xs text-slate-500">Xem lịch sử thay đổi dữ liệu của công trình.</p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
