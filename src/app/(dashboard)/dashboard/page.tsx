@@ -24,7 +24,7 @@ export default async function DashboardPage() {
       take: 5,
       where: { project: { deletedAt: null } },
       orderBy: { createdAt: 'desc' },
-      include: { author: true, project: true }
+      include: { createdBy: true, project: true }
     })
   ]);
 
@@ -103,11 +103,11 @@ export default async function DashboardPage() {
                   <div key={report.id} className="flex items-center justify-between border-b border-slate-100 pb-4 last:border-0 last:pb-0">
                     <div>
                       <p className="font-medium text-slate-900">{report.project.name}</p>
-                      <p className="text-sm text-slate-500">{report.workDone.substring(0, 50)}...</p>
+                      <p className="text-sm text-slate-500">{report.title || "Báo cáo hiện trường"}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-medium text-slate-900">{format(new Date(report.reportDate), 'dd/MM/yyyy')}</p>
-                      <p className="text-xs text-slate-500">{report.author.name}</p>
+                      <p className="text-xs text-slate-500">{report.createdBy.name}</p>
                     </div>
                   </div>
                 ))}

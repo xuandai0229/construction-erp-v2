@@ -225,7 +225,7 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
                 <select 
                   value={filterType}
                   onChange={e => setFilterType(e.target.value)}
-                  className="px-3 py-1.5 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-slate-900 font-medium"
+                  className="px-3 py-1.5 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-900 font-medium"
                 >
                   <option value="ALL">Tất cả</option>
                   <option value="IMAGE">Ảnh</option>

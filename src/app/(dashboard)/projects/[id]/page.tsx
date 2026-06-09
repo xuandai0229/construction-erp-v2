@@ -2,7 +2,7 @@ import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Calendar, MapPin, User, ListTree, FolderOpen, FileText, ClipboardCheck, History } from "lucide-react";
+import { Building2, Calendar, MapPin, User, ListTree, FolderOpen, FileText, ClipboardCheck, History, BarChart2 } from "lucide-react";
 import { DeleteProjectButton } from "@/components/projects/delete-project-button";
 import Link from "next/link";
 import { ProjectStatus } from "@prisma/client";
@@ -114,35 +114,36 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
 
       <h2 className="text-lg font-semibold text-slate-900 mt-8 mb-4">Các phân hệ quản lý</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="hover:border-blue-300 transition-colors cursor-pointer group">
-          <CardContent className="p-6 text-center space-y-2">
-            <div className="mx-auto bg-blue-50 w-12 h-12 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-              <ListTree className="h-6 w-6 text-blue-600" />
-            </div>
-            <h3 className="font-medium">Hạng mục (WBS)</h3>
-            <p className="text-xs text-slate-500">Quản lý các hạng mục thi công, tiến độ và ngân sách chi tiết.</p>
-          </CardContent>
-        </Card>
-        
-        <Card className="hover:border-blue-300 transition-colors cursor-pointer group">
-          <CardContent className="p-6 text-center space-y-2">
+        <Link href={`/projects/${project.id}/field-progress`} className="block group">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:border-blue-300 transition-colors h-full text-center space-y-2">
             <div className="mx-auto bg-blue-50 w-12 h-12 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors">
               <FileText className="h-6 w-6 text-blue-600" />
             </div>
-            <h3 className="font-medium">Hợp đồng</h3>
-            <p className="text-xs text-slate-500">Quản lý hợp đồng thầu chính, thầu phụ và nhà cung cấp.</p>
-          </CardContent>
-        </Card>
-
-        <Card className="hover:border-blue-300 transition-colors cursor-pointer group">
-          <CardContent className="p-6 text-center space-y-2">
-            <div className="mx-auto bg-blue-50 w-12 h-12 rounded-full flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-              <ClipboardCheck className="h-6 w-6 text-blue-600" />
+            <h3 className="font-medium">Bảng khối lượng</h3>
+            <p className="text-xs text-slate-500">Master data, nhập nhanh khối lượng giống Excel.</p>
+          </div>
+        </Link>
+        <Link href={`/projects/${project.id}/field-progress/summary`} className="block group">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:border-blue-300 transition-colors h-full text-center space-y-2">
+            <div className="mx-auto bg-green-50 w-12 h-12 rounded-full flex items-center justify-center group-hover:bg-green-100 transition-colors">
+              <BarChart2 className="h-6 w-6 text-green-600" />
             </div>
-            <h3 className="font-medium">Báo cáo hiện trường</h3>
-            <p className="text-xs text-slate-500">Ghi nhận nhật ký thi công, thời tiết, sự cố hằng ngày.</p>
-          </CardContent>
-        </Card>
+            <h3 className="font-medium">Tổng hợp khối lượng</h3>
+            <p className="text-xs text-slate-500">Giám sát báo cáo theo tiến độ, ngày tháng.</p>
+          </div>
+        </Link>
+
+        <Link href={`/reports?projectId=${project.id}`} className="block group">
+          <Card className="hover:border-blue-300 transition-colors h-full">
+            <CardContent className="p-6 text-center space-y-2">
+              <div className="mx-auto bg-orange-50 w-12 h-12 rounded-full flex items-center justify-center group-hover:bg-orange-100 transition-colors">
+                <ClipboardCheck className="h-6 w-6 text-orange-600" />
+              </div>
+              <h3 className="font-medium">Báo cáo hiện trường</h3>
+              <p className="text-xs text-slate-500">Ghi nhận nhật ký thi công, khối lượng hằng ngày.</p>
+            </CardContent>
+          </Card>
+        </Link>
 
         <Card className="hover:border-blue-300 transition-colors cursor-pointer group">
           <CardContent className="p-6 text-center space-y-2">
