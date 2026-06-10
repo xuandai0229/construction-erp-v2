@@ -1,14 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import { Plus, Save, Trash2, ChevronRight, ChevronDown, ListTree, Calendar, BarChart2, FileText } from "lucide-react";
+import { Plus, Save, Trash2, ChevronRight, ChevronDown, ListTree, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createItem, updateItem, deleteItem, batchUpdateItems } from "@/app/(dashboard)/projects/[id]/field-progress/actions";
-import { formatQuantity, formatPercent } from "@/lib/field-progress";
+import { formatQuantity } from "@/lib/field-progress";
 
 export function MasterTable({ projectId, templateId, initialItems }: { projectId: string, templateId: string, initialItems: any[] }) {
-// ... keep state logic ...
   const [items, setItems] = useState<any[]>(initialItems);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [dirtyItems, setDirtyItems] = useState<Record<string, any>>({});
@@ -96,7 +94,6 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (Object.keys(dirtyItems).length > 0) {
         e.preventDefault();
-        e.returnValue = '';
       }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -106,43 +103,61 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
   const hasChanges = Object.keys(dirtyItems).length > 0;
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-      <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50">
-        <h2 className="font-semibold text-slate-800 flex items-center gap-2">
-          <ListTree className="h-5 w-5 text-blue-600" /> Bảng thiết lập hạng mục & công việc
-        </h2>
+    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+      {/* Header */}
+      <div className="px-5 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50">
+        <div>
+          <h2 className="font-bold text-slate-800 text-base flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+              <ListTree className="h-4 w-4 text-blue-600" />
+            </div>
+            Thiết lập hạng mục &amp; công việc
+          </h2>
+          <p className="text-xs text-slate-500 mt-1 ml-10">Thiết lập hạng mục, công việc, mũi thi công và khối lượng thiết kế.</p>
+        </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" className="h-9 px-3 text-sm bg-white" onClick={handleAddGroup} disabled={loading}>
-            <Plus className="w-4 h-4 mr-2 text-blue-600" /> Thêm hạng mục chính
-          </Button>
           <Button 
-            className={`h-9 px-4 text-sm font-medium ${hasChanges ? "bg-amber-500 hover:bg-amber-600 text-white shadow-sm" : "bg-blue-600 hover:bg-blue-700 text-white shadow-sm"}`}
+            variant="outline" 
+            className="h-9 px-3 text-sm bg-white border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition-colors" 
+            onClick={handleAddGroup} 
+            disabled={loading}
+          >
+            <Plus className="w-4 h-4 mr-1.5 text-blue-600" /> Thêm hạng mục chính
+          </Button>
+          {hasChanges && (
+            <span className="text-xs text-amber-600 font-medium px-2 py-1 bg-amber-50 rounded-md border border-amber-200">
+              {Object.keys(dirtyItems).length} thay đổi chưa lưu
+            </span>
+          )}
+          <Button 
+            className={`h-9 px-4 border text-sm font-semibold transition-all ${hasChanges ? "border-blue-600 bg-blue-600 text-white hover:bg-blue-700" : "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"}`}
             onClick={handleSave} 
             disabled={!hasChanges || loading}
+            title={!hasChanges ? "Không có thay đổi để lưu" : "Lưu các thay đổi thiết lập bảng khối lượng gốc"}
           >
-            <Save className="w-4 h-4 mr-2" /> Lưu thay đổi {hasChanges && `(${Object.keys(dirtyItems).length})`}
+            <Save className="w-4 h-4 mr-1.5" /> Lưu thay đổi
           </Button>
-          
         </div>
       </div>
 
+      {/* Table */}
       <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left whitespace-nowrap min-w-max">
-          <thead className="bg-slate-100 border-b border-slate-200 text-slate-700">
-            <tr>
-              <th className="px-3 py-3 border-r w-10 text-center sticky left-0 z-20 bg-slate-100">STT</th>
-              <th className="px-3 py-3 border-r min-w-[200px] text-left sticky left-[40px] z-20 bg-slate-100">Nội dung hạng mục</th>
-              <th className="px-3 py-3 border-r min-w-[300px] text-left sticky left-[240px] z-20 bg-slate-100">Nội dung công việc</th>
-              <th className="px-3 py-3 border-r min-w-[120px] text-left">Mũi thi công</th>
-              <th className="px-3 py-3 border-r w-32 text-right">Tổng KL thiết kế</th>
-              <th className="px-3 py-3 border-r w-20 text-center">Đơn vị</th>
-              <th className="px-3 py-3 border-r w-32 text-right text-blue-800 bg-blue-50/50">Lũy kế</th>
-              <th className="px-3 py-3 border-r w-24 text-right text-blue-800 bg-blue-50/50">% TH</th>
-              <th className="px-3 py-3 border-r min-w-[150px] text-left">Ghi chú</th>
-              <th className="px-3 py-3 w-16 text-center">Hành động</th>
+        <table className="w-full text-sm min-w-[1100px]">
+          <thead>
+            <tr className="bg-slate-50 border-b-2 border-slate-200">
+              <th className="px-3 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider w-12 border-r border-slate-200 sticky left-0 z-20 bg-slate-50">STT</th>
+              <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[180px] border-r border-slate-200 sticky left-[48px] z-20 bg-slate-50">Nội dung hạng mục</th>
+              <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[260px] border-r border-slate-200 sticky left-[228px] z-20 bg-slate-50">Nội dung công việc</th>
+              <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[120px] border-r border-slate-200">Mũi thi công</th>
+              <th className="px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider w-[120px] border-r border-slate-200">Tổng KL TK</th>
+              <th className="px-3 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider w-[80px] border-r border-slate-200">Đơn vị</th>
+              <th className="px-3 py-3 text-right text-xs font-semibold text-blue-600 uppercase tracking-wider w-[110px] border-r border-slate-200 bg-blue-50/60">Lũy kế</th>
+              <th className="px-3 py-3 text-right text-xs font-semibold text-blue-600 uppercase tracking-wider w-[80px] border-r border-slate-200 bg-blue-50/60">% TH</th>
+              <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[140px] border-r border-slate-200">Ghi chú</th>
+              <th className="px-3 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider w-[80px]">Thao tác</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200">
+          <tbody>
             {items.map((item, index) => {
               if (item.parentId && !expanded[item.parentId]) return null;
               
@@ -154,106 +169,136 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
               if (percentVal && Number(percentVal) > 100) isOver = true;
 
               return (
-                <tr key={item.id} className={`${isGroup ? 'bg-slate-100 border-b-2 border-slate-300' : 'bg-white'} hover:bg-slate-50 transition-colors`}>
-                  <td className={`px-3 py-2 border-r text-center text-slate-500 font-medium sticky left-0 z-10 ${isGroup ? 'bg-slate-100' : 'bg-white'}`}>{index + 1}</td>
+                <tr 
+                  key={item.id} 
+                  className={`border-b transition-colors ${
+                    isGroup 
+                      ? 'bg-slate-50 border-slate-200' 
+                      : isDirty 
+                        ? 'bg-amber-50/30 border-slate-100' 
+                        : 'bg-white border-slate-100 hover:bg-slate-50/50'
+                  }`}
+                >
+                  {/* STT */}
+                  <td className={`h-14 px-4 py-3 text-center text-slate-400 font-medium text-xs border-r border-slate-100 sticky left-0 z-10 ${isGroup ? 'bg-slate-50' : isDirty ? 'bg-amber-50/30' : 'bg-white'}`}>
+                    {index + 1}
+                  </td>
                   
                   {/* Nội dung hạng mục */}
-                  <td className={`px-3 py-2 border-r sticky left-[40px] z-10 ${isGroup ? 'bg-slate-100' : 'bg-white'} ${isDirty ? 'bg-amber-50/30' : ''}`} style={{ paddingLeft: `${item.displayLevel * 30 + 12}px` }}>
-                    <div className="flex items-center gap-2">
+                  <td className={`h-14 px-4 py-3 border-r border-slate-100 sticky left-[48px] z-10 ${isGroup ? 'bg-slate-50' : isDirty ? 'bg-amber-50/30' : 'bg-white'}`} style={{ paddingLeft: `${item.displayLevel * 24 + 12}px` }}>
+                    <div className="flex items-center gap-1.5">
                       {isGroup && (
-                        <button onClick={() => toggleExpand(item.id)} className="p-0.5 text-slate-400 hover:text-slate-700 bg-white rounded shadow-sm border border-slate-200">
+                        <button onClick={() => toggleExpand(item.id)} className="p-0.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors flex-shrink-0">
                           {expanded[item.id] ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                         </button>
                       )}
-                      {!isGroup && <div className="w-5" />}
+                      {!isGroup && <div className="w-5 flex-shrink-0" />}
                       <input 
                         value={item.categoryName || ""} 
                         onChange={e => handleChange(item.id, 'categoryName', e.target.value)}
                         placeholder={isGroup ? "Nhập tên hạng mục..." : "-"}
                         title={item.categoryName || ""}
-                        className={`w-full bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 transition-colors ${isGroup ? 'font-bold text-slate-900' : 'text-slate-500'}`}
+                        className={`w-full bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded px-2 py-1 transition-all outline-none ${isGroup ? 'font-bold text-slate-900 text-sm' : 'text-slate-400 text-xs'}`}
                       />
                     </div>
                   </td>
 
-                  <td className={`px-3 py-2 border-r sticky left-[240px] z-10 ${isGroup ? 'bg-slate-100' : 'bg-white'} ${isDirty ? 'bg-amber-50/30' : ''}`}>
+                  {/* Nội dung công việc */}
+                  <td className={`h-14 px-4 py-3 border-r border-slate-100 sticky left-[228px] z-10 ${isGroup ? 'bg-slate-50' : isDirty ? 'bg-amber-50/30' : 'bg-white'}`}>
                     <input 
                       value={item.workContent || ""} 
                       onChange={e => handleChange(item.id, 'workContent', e.target.value)}
                       placeholder={!isGroup ? "Nhập tên công việc..." : "-"}
                       title={item.workContent || ""}
-                      className={`w-full bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 transition-colors ${!isGroup ? 'font-semibold text-slate-800' : 'text-slate-400'}`}
+                      className={`w-full bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded px-2 py-1 transition-all outline-none ${!isGroup ? 'font-semibold text-slate-800 text-sm' : 'text-slate-400 text-xs'}`}
                     />
                   </td>
 
                   {/* Mũi thi công */}
-                  <td className={`px-3 py-2 border-r ${isDirty ? 'bg-amber-50/30' : ''}`}>
+                  <td className={`h-14 px-4 py-3 border-r border-slate-100 text-center ${isDirty ? 'bg-amber-50/30' : ''}`}>
                     <input 
                       value={item.constructionCrew || ""} 
                       onChange={e => handleChange(item.id, 'constructionCrew', e.target.value)}
-                      className="w-full bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 text-slate-700 transition-colors"
+                      className="w-full bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded px-2 py-1 text-slate-700 text-sm transition-all outline-none"
+                      placeholder="Mũi..."
                     />
                   </td>
 
                   {/* Tổng KL thiết kế */}
-                  <td className={`px-3 py-2 border-r text-right ${isDirty ? 'bg-amber-50/30' : ''}`}>
+                  <td className={`h-14 px-4 py-3 border-r border-slate-100 text-right ${isDirty ? 'bg-amber-50/30' : ''}`}>
                     {isGroup ? (
-                      <span className="text-slate-700 font-bold px-2">{item.rollupDesignQuantity ? formatQuantity(item.rollupDesignQuantity) : "-"}</span>
+                      <span className="text-slate-700 font-bold text-sm px-2">{item.rollupDesignQuantity ? formatQuantity(item.rollupDesignQuantity) : "-"}</span>
                     ) : (
                       <input 
                         type="number"
                         step="any"
                         value={item.designQuantity || ""} 
                         onChange={e => handleChange(item.id, 'designQuantity', e.target.value)}
-                        className="w-full bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 text-right font-bold text-slate-800 transition-colors"
+                        className="w-full bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded px-2 py-1 text-right font-semibold text-slate-800 text-sm transition-all outline-none"
                         placeholder="0.00"
                       />
                     )}
                   </td>
 
                   {/* Đơn vị */}
-                  <td className={`px-3 py-2 border-r text-center ${isDirty ? 'bg-amber-50/30' : ''}`}>
-                    {isGroup ? "-" : (
+                  <td className={`h-14 px-4 py-3 border-r border-slate-100 text-center ${isDirty ? 'bg-amber-50/30' : ''}`}>
+                    {isGroup ? <span className="text-slate-400">-</span> : (
                       <input 
                         value={item.unit || ""} 
                         onChange={e => handleChange(item.id, 'unit', e.target.value)}
-                        className="w-full bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 text-center text-slate-700 transition-colors"
+                        className="w-full bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded px-2 py-1 text-center text-slate-700 text-sm transition-all outline-none"
+                        placeholder="m"
                       />
                     )}
                   </td>
 
                   {/* Lũy kế (Readonly) */}
-                  <td className="px-3 py-2 border-r text-right bg-blue-50/30 font-bold text-blue-700">
+                  <td className="h-14 px-4 py-3 border-r border-slate-100 text-right bg-blue-50/40 font-bold text-blue-700 text-sm">
                     {item.rollupCumulative ? formatQuantity(item.rollupCumulative) : "0"}
                   </td>
 
                   {/* % TH (Readonly) */}
-                  <td className="px-3 py-2 border-r text-right bg-blue-50/30">
-                    <span className={`font-bold ${isOver ? 'text-red-600' : 'text-blue-700'}`}>
+                  <td className="h-14 px-4 py-3 border-r border-slate-100 text-right bg-blue-50/40">
+                    <span className={`font-bold text-sm ${isOver ? 'text-red-600' : 'text-blue-700'}`}>
                       {percentVal ? `${percentVal}%` : "-"}
                     </span>
+                    {isOver && (
+                      <div className="flex items-center justify-end gap-0.5 mt-0.5">
+                        <span className="text-[10px] bg-red-100 text-red-700 px-1 py-0.5 rounded font-semibold border border-red-200">Vượt KL</span>
+                      </div>
+                    )}
                   </td>
 
                   {/* Ghi chú */}
-                  <td className={`px-3 py-2 border-r ${isDirty ? 'bg-amber-50/30' : ''}`}>
+                  <td className={`h-14 px-4 py-3 border-r border-slate-100 ${isDirty ? 'bg-amber-50/30' : ''}`}>
                     <input 
                       value={item.note || ""} 
                       onChange={e => handleChange(item.id, 'note', e.target.value)}
-                      className="w-full bg-slate-50/50 hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:ring-2 focus:ring-blue-500 rounded px-2 py-1 text-slate-600 transition-colors"
-                      placeholder="..."
+                      className="w-full bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded px-2 py-1 text-slate-600 text-sm transition-all outline-none"
+                      placeholder="Ghi chú..."
                     />
                   </td>
 
                   {/* Actions */}
-                  <td className="px-3 py-2 text-center space-x-1">
-                    {isGroup && (
-                      <button onClick={() => handleAddWork(item.id, item.displayLevel)} className="p-1.5 text-blue-600 hover:bg-blue-100 hover:text-blue-700 rounded bg-white border border-slate-200 shadow-sm transition-colors" title="Thêm công việc con">
-                        <Plus className="w-4 h-4" />
+                  <td className="h-14 px-4 py-3 text-center">
+                    <div className="flex items-center justify-center gap-1">
+                      {isGroup && (
+                        <button 
+                          onClick={() => handleAddWork(item.id, item.displayLevel)} 
+                          className="p-1.5 text-blue-600 hover:bg-blue-50 hover:text-blue-700 rounded-md transition-colors" 
+                          title="Thêm công việc"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      <button 
+                        onClick={() => handleDelete(item.id)} 
+                        className="p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-md transition-colors" 
+                        title="Xóa dòng"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
-                    )}
-                    <button onClick={() => handleDelete(item.id)} className="p-1.5 text-red-500 hover:bg-red-50 hover:text-red-600 rounded bg-white border border-slate-200 shadow-sm transition-colors" title="Xóa dòng">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    </div>
                   </td>
                 </tr>
               );
@@ -261,16 +306,16 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
             
             {items.length === 0 && (
               <tr>
-                <td colSpan={10} className="px-4 py-16 text-center text-slate-500 bg-white">
+                <td colSpan={10} className="px-4 py-16 text-center bg-white">
                   <div className="flex flex-col items-center justify-center max-w-md mx-auto space-y-4">
-                    <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center">
+                    <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center">
                       <FileText className="w-8 h-8" />
                     </div>
                     <h3 className="text-lg font-bold text-slate-800">Bảng khối lượng đang trống</h3>
                     <p className="text-sm text-slate-500">
                       Bắt đầu bằng cách thêm hạng mục chính, sau đó thêm các công việc con để quản lý chi tiết.
                     </p>
-                    <Button onClick={handleAddGroup} className="bg-blue-600 hover:bg-blue-700 text-white mt-2">
+                    <Button onClick={handleAddGroup} className="bg-blue-600 hover:bg-blue-700 text-white mt-2 shadow-md shadow-blue-200">
                       <Plus className="w-4 h-4 mr-2" /> Thêm hạng mục đầu tiên
                     </Button>
                   </div>

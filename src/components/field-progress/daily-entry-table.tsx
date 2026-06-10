@@ -244,8 +244,9 @@ export function DailyEntryTable({
     if (Object.keys(dirtyEntries).length > 0) return "Đang chỉnh sửa (Chưa lưu)";
     const entered = items.filter((i) => i.quantity !== "" && Number(i.quantity) > 0);
     if (entered.length === 0) return "Chưa nhập ngày này";
+    if (entered.some((i) => i.status === "DRAFT")) return "Đã lưu tạm";
+    if (entered.some((i) => i.status === "SUBMITTED")) return "Chờ giám sát";
     if (entered.some((i) => i.status === "APPROVED")) return "Đã xác nhận";
-    if (entered.some((i) => i.status === "SUBMITTED")) return "Chờ kiểm tra";
     return "Đã lưu tạm";
   }, [items, dirtyEntries]);
 
@@ -338,10 +339,17 @@ export function DailyEntryTable({
     if (res?.error) {
       alert(res.error);
     } else {
+      const savedIds = new Set(entriesToSave.map((entry: any) => entry.itemId));
+      setItems((prev) =>
+        prev.map((item) =>
+          savedIds.has(item.id) ? { ...item, status: submit ? "SUBMITTED" : "DRAFT" } : item
+        )
+      );
       setDirtyEntries({});
       const dParts = dateStr.split("-");
       const fmtDate = `${dParts[2]}/${dParts[1]}/${dParts[0]}`;
       alert(submit ? `Đã gửi số liệu ngày ${fmtDate} cho giám sát.` : `Đã lưu tạm khối lượng ngày ${fmtDate}.`);
+      router.refresh();
     }
     setLoading(false);
   };
@@ -366,14 +374,14 @@ export function DailyEntryTable({
           onChange={(e) => patchItem(item.id, "quantity", e.target.value)}
           onFocus={(e) => e.target.select()}
           onKeyDown={(e) => handleQuantityKeyDown(e, index)}
-          className={`w-full rounded-lg border-2 px-3 text-right font-bold outline-none transition focus:ring-4 disabled:bg-slate-100 disabled:text-slate-400 ${
+          className={`w-full rounded-lg border-2 px-3 text-right font-bold outline-none transition focus:ring-4 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 ${
             compact ? "h-14 text-2xl" : "h-11 text-xl"
           } ${
             math.isNegative || math.hasInvalidNumber
               ? "border-red-500 bg-red-50 text-red-700 focus:ring-red-100"
               : math.isOver
-                ? "border-red-400 bg-red-50 text-red-700 focus:ring-red-100"
-                : "border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:ring-blue-100"
+                ? "border-red-400 bg-red-50/50 text-red-700 focus:border-red-500 focus:ring-red-100"
+                : "border-blue-300 bg-white text-slate-900 focus:border-blue-500 focus:ring-blue-100"
           }`}
           placeholder="0"
         />
@@ -425,8 +433,8 @@ export function DailyEntryTable({
           </div>
         </div>
 
-        <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-emerald-700">
-          KL hôm nay ({item.unit || "KL"})
+        <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-blue-700">
+          KL ngày này ({item.unit || "KL"})
         </label>
         <div className="mt-1">{renderQuantityInput(item, index, true)}</div>
 
@@ -459,101 +467,117 @@ export function DailyEntryTable({
   const renderQuickAddModal = () => {
     return (
       <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 p-0 backdrop-blur-sm sm:items-center sm:p-4">
-        <div className="flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:max-w-md sm:rounded-2xl">
-          <div className="flex items-start justify-between gap-4 border-b border-slate-100 bg-slate-50 p-4">
-            <div>
-              <h3 className="font-bold text-slate-950 text-lg">Thêm công việc nhanh</h3>
-              <p className="mt-0.5 text-xs text-slate-500">Tạo công việc báo cáo trực tiếp trong ngày</p>
+        <div className="flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:max-w-xl sm:rounded-2xl">
+          <div className="flex items-start justify-between gap-4 border-b-2 border-slate-200 bg-gradient-to-r from-slate-50 to-white p-5">
+            <div className="flex-1">
+              <h3 className="font-bold text-slate-900 text-xl flex items-center gap-2">
+                <Plus className="h-6 w-6 text-blue-600" />
+                Thêm công việc phát sinh
+              </h3>
+              <p className="mt-1 text-sm text-slate-600">Tạo công việc phát sinh và báo cáo trực tiếp trong ngày</p>
             </div>
-            <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => setShowQuickAdd(false)}>
-              <X className="h-5 w-5" />
+            <Button variant="ghost" className="h-9 w-9 p-0 rounded-full hover:bg-slate-200" onClick={() => setShowQuickAdd(false)}>
+              <X className="h-5 w-5 text-slate-600" />
             </Button>
           </div>
 
-          <div className="flex-1 space-y-4 overflow-y-auto p-4">
+          <div className="flex-1 space-y-5 overflow-y-auto p-5 bg-slate-50/50">
             <label className="block">
-              <span className="mb-1 block text-sm font-semibold text-slate-700">Nội dung công việc <span className="text-red-500">*</span></span>
+              <span className="mb-2 block text-sm font-bold text-slate-800">
+                Nội dung công việc <span className="text-red-600">*</span>
+              </span>
               <input
                 value={quickAddData.workContent}
                 onChange={(e) => setQuickAddData(prev => ({ ...prev, workContent: e.target.value }))}
-                className="w-full rounded-lg border border-slate-300 p-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 bg-white"
-                placeholder="Ví dụ: Đào móng..."
+                className="w-full rounded-xl border-2 border-slate-300 bg-white p-3 text-sm text-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
+                placeholder="Ví dụ: Đào móng đoạn Km3+200 đến Km3+500..."
                 required
               />
             </label>
 
             <label className="block">
-              <span className="mb-1 block text-sm font-semibold text-slate-700">Thuộc hạng mục chính (Nếu có)</span>
+              <span className="mb-2 block text-sm font-bold text-slate-800">Thuộc hạng mục chính</span>
               <select
                 value={quickAddData.parentId}
                 onChange={(e) => setQuickAddData(prev => ({ ...prev, parentId: e.target.value }))}
-                className="w-full rounded-lg border border-slate-300 p-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 bg-white"
+                className="w-full rounded-xl border-2 border-slate-300 bg-white p-3 text-sm text-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
               >
-                <option value="">-- Tạo như hạng mục chính --</option>
+                <option value="">-- Không thuộc hạng mục nào --</option>
                 {groups.map((g) => (
                   <option key={g.id} value={g.id}>
                     {g.categoryName || g.workContent || "Hạng mục không tên"}
                   </option>
                 ))}
-                <option value="NEW_GROUP" className="text-blue-600 font-semibold">+ Tạo hạng mục chính mới...</option>
+                <option value="NEW_GROUP">+ Tạo hạng mục chính mới...</option>
               </select>
             </label>
 
             {quickAddData.parentId === "NEW_GROUP" && (
-              <label className="block bg-blue-50/50 p-3 rounded-lg border border-blue-100">
-                <span className="mb-1 block text-sm font-semibold text-blue-800">Tên hạng mục chính mới <span className="text-red-500">*</span></span>
+              <label className="block rounded-xl bg-blue-50 border-2 border-blue-200 p-4">
+                <span className="mb-2 block text-sm font-bold text-blue-800">
+                  Tên hạng mục chính mới <span className="text-red-600">*</span>
+                </span>
                 <input
                   value={newGroupName}
                   onChange={(e) => setNewGroupName(e.target.value)}
-                  className="w-full rounded-lg border border-blue-300 p-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 bg-white"
+                  className="w-full rounded-xl border-2 border-blue-300 bg-white p-3 text-sm text-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
                   placeholder="Ví dụ: Phần cống hộp đường Nguyễn Trãi..."
                   required
                 />
               </label>
             )}
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               <label className="block">
-                <span className="mb-1 block text-sm font-semibold text-slate-700">Mũi thi công</span>
+                <span className="mb-2 block text-sm font-bold text-slate-800">Mũi thi công</span>
                 <input
                   value={quickAddData.constructionCrew}
                   onChange={(e) => setQuickAddData(prev => ({ ...prev, constructionCrew: e.target.value }))}
-                  className="w-full rounded-lg border border-slate-300 p-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 bg-white"
+                  className="w-full rounded-xl border-2 border-slate-300 bg-white p-3 text-sm text-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
                   placeholder="Mũi 1, Tổ 2..."
                 />
               </label>
 
               <label className="block">
-                <span className="mb-1 block text-sm font-semibold text-slate-700">Đơn vị</span>
+                <span className="mb-2 block text-sm font-bold text-slate-800">Đơn vị</span>
                 <input
                   value={quickAddData.unit}
                   onChange={(e) => setQuickAddData(prev => ({ ...prev, unit: e.target.value }))}
-                  className="w-full rounded-lg border border-slate-300 p-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 bg-white"
+                  className="w-full rounded-xl border-2 border-slate-300 bg-white p-3 text-sm text-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
                   placeholder="m, m3, tấn..."
                 />
               </label>
             </div>
 
             <label className="block">
-              <span className="mb-1 block text-sm font-semibold text-slate-700">Tổng khối lượng thiết kế</span>
+              <span className="mb-2 block text-sm font-bold text-slate-800">Tổng khối lượng thiết kế</span>
               <input
                 type="number"
                 step="any"
                 min="0"
                 value={quickAddData.designQuantity}
                 onChange={(e) => setQuickAddData(prev => ({ ...prev, designQuantity: e.target.value }))}
-                className="w-full rounded-lg border border-slate-300 p-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 bg-white"
+                className="w-full rounded-xl border-2 border-slate-300 bg-white p-3 text-sm text-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
                 placeholder="0.00"
               />
             </label>
           </div>
 
-          <div className="flex gap-2 border-t border-slate-100 p-4 bg-slate-50">
-            <Button variant="outline" className="flex-1 bg-white hover:bg-slate-100" onClick={() => setShowQuickAdd(false)} disabled={loading}>
+          <div className="flex gap-3 border-t-2 border-slate-200 p-4 bg-gradient-to-r from-white to-slate-50">
+            <Button 
+              variant="outline" 
+              className="flex-1 h-11 border-2 border-slate-300 hover:bg-slate-100 font-semibold text-slate-700" 
+              onClick={() => setShowQuickAdd(false)} 
+              disabled={loading}
+            >
               Hủy
             </Button>
-            <Button className="flex-1 bg-blue-600 text-white hover:bg-blue-700 font-bold" onClick={handleQuickAdd} disabled={loading}>
-              Lưu công việc
+            <Button 
+              className="flex-1 h-11 bg-blue-600 text-white hover:bg-blue-700 font-bold shadow-md shadow-blue-200" 
+              onClick={handleQuickAdd} 
+              disabled={loading}
+            >
+              <Plus className="mr-2 h-5 w-5" /> Lưu công việc
             </Button>
           </div>
         </div>
@@ -568,14 +592,14 @@ export function DailyEntryTable({
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-1 flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
               <div>
-                <h2 className="text-xl font-bold text-slate-950">Nhập khối lượng hôm nay</h2>
+                <h2 className="text-xl font-bold text-slate-900">Nhập khối lượng theo ngày</h2>
                 <p className="text-sm text-slate-500">Công trình: {projectLabel}</p>
               </div>
               <Button
                 onClick={() => setShowQuickAdd(true)}
-                className="mt-2 sm:mt-0 bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5 self-start sm:self-center font-bold"
+                className="mt-2 sm:mt-0 bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5 self-start sm:self-center font-semibold shadow-sm"
               >
-                <Plus className="h-4 w-4" /> Thêm công việc nhanh
+                <Plus className="h-4 w-4" /> Thêm công việc phát sinh
               </Button>
             </div>
           </div>
@@ -610,7 +634,7 @@ export function DailyEntryTable({
               onClick={() => setShowQuickAdd(true)}
               className="bg-blue-600 text-white hover:bg-blue-700 font-bold"
             >
-              <Plus className="mr-2 h-4 w-4" /> Thêm công việc nhanh
+              <Plus className="mr-2 h-4 w-4" /> Thêm công việc phát sinh
             </Button>
           </div>
         </div>
@@ -622,13 +646,19 @@ export function DailyEntryTable({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="rounded-xl border-2 border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-1 flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
             <div>
               <div className="flex items-center gap-3">
-                <h2 className="text-xl font-bold text-slate-950">Nhập khối lượng theo ngày</h2>
-                <span className="rounded-md bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700 border border-blue-200">
+                <h2 className="text-xl font-bold text-slate-900">Nhập khối lượng theo ngày</h2>
+                <span className={`rounded-full px-3 py-1 text-xs font-semibold border ${
+                  dateStatus === 'Đã xác nhận' ? 'bg-green-50 text-green-700 border-green-200' :
+                  dateStatus === 'Chờ giám sát' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                  dateStatus === 'Đã lưu tạm' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                  dateStatus.includes('Chưa lưu') ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                  'bg-slate-100 text-slate-600 border-slate-200'
+                }`}>
                   {dateStatus}
                 </span>
               </div>
@@ -636,49 +666,49 @@ export function DailyEntryTable({
             </div>
             <Button
               onClick={() => setShowQuickAdd(true)}
-              className="mt-2 sm:mt-0 bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5 self-start sm:self-center font-bold"
+              className="mt-2 sm:mt-0 bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5 self-start sm:self-center font-semibold shadow-sm"
             >
-              <Plus className="h-4 w-4" /> Thêm công việc nhanh
+              <Plus className="h-4 w-4" /> Thêm công việc phát sinh
             </Button>
           </div>
         </div>
 
-        <div className="mt-4 flex flex-col gap-4 border-t border-slate-100 pt-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="mt-5 flex flex-col gap-4 border-t-2 border-slate-100 pt-5 lg:flex-row lg:items-end lg:justify-between">
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[170px_280px_220px]">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[200px_300px_220px]">
             <label className="block">
-              <span className="mb-1 flex items-center gap-1 text-xs font-semibold text-slate-600">
-                <Calendar className="h-3.5 w-3.5" /> Ngày báo cáo
+              <span className="mb-2 flex items-center gap-1.5 text-sm font-bold text-slate-700">
+                <Calendar className="h-4 w-4 text-blue-600" /> Ngày báo cáo
               </span>
               <input
                 type="date"
                 value={dateStr}
                 onChange={handleDateChange}
-                className="h-10 w-full rounded-md border border-slate-300 px-3 text-sm font-bold text-blue-800 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="h-11 w-full rounded-lg border-2 border-slate-300 bg-white px-4 text-sm font-semibold text-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all outline-none"
               />
             </label>
 
             <label className="block">
-              <span className="mb-1 flex items-center gap-1 text-xs font-semibold text-slate-600">
-                <Search className="h-3.5 w-3.5" /> Tìm công việc
+              <span className="mb-2 flex items-center gap-1.5 text-sm font-bold text-slate-700">
+                <Search className="h-4 w-4 text-blue-600" /> Tìm công việc
               </span>
               <input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="h-11 w-full rounded-lg border-2 border-slate-300 bg-white px-4 text-sm text-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all outline-none"
                 placeholder="Tên công việc, hạng mục, mũi..."
               />
             </label>
 
             {crews.length > 0 && (
               <label className="block">
-                <span className="mb-1 flex items-center gap-1 text-xs font-semibold text-slate-600">
-                  <SlidersHorizontal className="h-3.5 w-3.5" /> Mũi thi công
+                <span className="mb-2 flex items-center gap-1.5 text-sm font-bold text-slate-700">
+                  <SlidersHorizontal className="h-4 w-4 text-blue-600" /> Mũi thi công
                 </span>
                 <select
                   value={crewFilter}
                   onChange={(e) => setCrewFilter(e.target.value)}
-                  className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  className="h-11 w-full rounded-lg border-2 border-slate-300 bg-white px-4 text-sm text-slate-900 font-medium focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all outline-none"
                 >
                   <option value="ALL">Tất cả mũi</option>
                   {crews.map((crew) => (
@@ -692,45 +722,71 @@ export function DailyEntryTable({
           </div>
         </div>
 
-        <div className="mt-4 flex flex-col gap-3 border-t border-slate-100 pt-4 lg:flex-row lg:items-center lg:justify-end">
+        <div className="mt-5 flex flex-col gap-3 border-t-2 border-slate-100 pt-5 lg:flex-row lg:items-center lg:justify-end">
 
           <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
-            <div className="rounded-md bg-slate-50 px-3 py-2">
-              <div className="text-slate-500">Tổng công việc</div>
+            <div className="rounded-lg bg-slate-50 border-2 border-slate-200 px-3 py-2.5">
+              <div className="text-slate-500 font-medium">Tổng công việc</div>
               <div className="text-base font-bold text-slate-900">{stats.total}</div>
             </div>
-            <div className="rounded-md bg-emerald-50 px-3 py-2">
-              <div className="text-emerald-700">Đã nhập hôm nay</div>
-              <div className="text-base font-bold text-emerald-800">{stats.entered}</div>
+            <div className="rounded-lg bg-green-50 border border-green-200 px-3 py-2.5">
+              <div className="text-green-700 font-medium">Đã nhập ngày này</div>
+              <div className="text-base font-bold text-green-800">{stats.entered}</div>
             </div>
-            <div className="rounded-md bg-amber-50 px-3 py-2">
-              <div className="text-amber-700">Chưa nhập</div>
+            <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2.5">
+              <div className="text-amber-700 font-medium">Chưa nhập</div>
               <div className="text-base font-bold text-amber-800">{stats.empty}</div>
             </div>
-            <div className="rounded-md bg-red-50 px-3 py-2">
-              <div className="text-red-700">Vượt KL</div>
+            <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2.5">
+              <div className="text-red-700 font-medium">Vượt KL</div>
               <div className="text-base font-bold text-red-700">{stats.over}</div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="hidden rounded-xl border border-slate-200 bg-white shadow-sm lg:block">
+      {/* Info about save actions */}
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+        <div className="flex items-start gap-3">
+          <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
+            <Info className="h-5 w-5 text-blue-600" />
+          </div>
+          <div className="flex-1 text-sm">
+            <h4 className="font-bold text-blue-900 mb-2">Ý nghĩa các nút lưu</h4>
+            <div className="space-y-2 text-blue-800">
+              <div className="flex gap-2">
+                <Save className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold">Lưu tạm:</span> Lưu dữ liệu ngày này để nhập tiếp sau. Trạng thái: <span className="bg-amber-100 px-1.5 py-0.5 rounded text-xs font-semibold">DRAFT</span>. Chưa tính vào lũy kế chính thức, có thể sửa lại.
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Send className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold">Gửi giám sát:</span> Chốt số liệu ngày này để giám sát kiểm tra. Trạng thái: <span className="bg-blue-100 px-1.5 py-0.5 rounded text-xs font-semibold">SUBMITTED</span>. Chờ giám sát xác nhận, sau đó mới cộng vào lũy kế chính thức.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:block">
         <table className="w-full table-fixed text-left text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 text-slate-700">
+          <thead className="border-b-2 border-slate-200 bg-slate-50">
             <tr>
-              <th className="w-12 px-2 py-3 text-center">STT</th>
-              <th className="px-3 py-3">Công việc</th>
-              <th className="w-[9%] px-2 py-3">Mũi</th>
-              <th className="w-[8%] px-2 py-3 text-right">Tổng KL</th>
-              <th className="w-[8%] px-2 py-3 text-right">Đã làm</th>
-              <th className="w-[13%] border-x-2 border-emerald-400 bg-emerald-100 px-3 py-3 text-center text-emerald-900">
-                KL hôm nay
+              <th className="w-12 px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wide">STT</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Công việc</th>
+              <th className="w-[9%] px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wide">Mũi</th>
+              <th className="w-[8%] px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Tổng KL</th>
+              <th className="w-[8%] px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Đã làm</th>
+              <th className="w-[13%] border-x border-blue-200 bg-blue-50 px-4 py-3 text-center text-xs font-semibold text-blue-700 uppercase tracking-wide">
+                KL ngày này
               </th>
-              <th className="w-[8%] px-2 py-3 text-right">Sau nhập</th>
-              <th className="w-[7%] px-2 py-3 text-right">%</th>
-              <th className="w-[12%] px-2 py-3">Ghi chú nhanh</th>
-              <th className="w-[7%] px-2 py-3 text-center">Chi tiết</th>
+              <th className="w-[8%] px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Sau nhập</th>
+              <th className="w-[7%] px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">%</th>
+              <th className="w-[12%] px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Ghi chú nhanh</th>
+              <th className="w-[7%] px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wide">Chi tiết</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -745,30 +801,30 @@ export function DailyEntryTable({
                     math.isOver ? "bg-red-50/60" : isDirty ? "bg-amber-50/40" : "hover:bg-slate-50"
                   }`}
                 >
-                  <td className="px-2 py-2 text-center text-slate-400">{index + 1}</td>
-                  <td className="px-3 py-2">
-                    <div className="truncate font-semibold text-slate-900" title={item.name}>
+                  <td className="h-14 px-4 py-3 text-center text-slate-400">{index + 1}</td>
+                  <td className="h-14 px-4 py-3">
+                    <div className="font-semibold text-slate-900 leading-snug line-clamp-2" title={item.name}>
                       {item.name}
                     </div>
-                    <div className="truncate text-xs text-slate-400">{item.parentName || item.code || "-"}</div>
+                    <div className="text-xs text-slate-400 mt-0.5 truncate">{item.parentName || item.code || "-"}</div>
                   </td>
-                  <td className="truncate px-2 py-2 text-slate-600" title={item.constructionCrew || ""}>
+                  <td className="h-14 truncate px-4 py-3 text-center text-slate-600" title={item.constructionCrew || ""}>
                     {item.constructionCrew || "-"}
                   </td>
-                  <td className="px-2 py-2 text-right font-medium text-slate-700">
+                  <td className="h-14 px-4 py-3 text-right font-medium text-slate-700">
                     {item.designQuantity ? formatQuantity(item.designQuantity) : "-"} {item.unit || ""}
                   </td>
-                  <td className="px-2 py-2 text-right text-slate-600">{formatQuantity(item.cumulativeBefore)}</td>
-                  <td className="border-x-2 border-emerald-200 bg-emerald-50/70 px-3 py-2">
+                  <td className="h-14 px-4 py-3 text-right text-slate-600">{formatQuantity(item.cumulativeBefore)}</td>
+                  <td className="h-14 border-x border-blue-200 bg-blue-50/30 px-4 py-3">
                     {renderQuantityInput(item, index)}
                   </td>
-                  <td className={`px-2 py-2 text-right font-bold ${math.isOver ? "text-red-600" : "text-slate-800"}`}>
+                  <td className={`h-14 px-4 py-3 text-right font-bold ${math.isOver ? "text-red-600" : "text-slate-800"}`}>
                     {formatQuantity(math.cumulativeAfter)}
                   </td>
-                  <td className={`px-2 py-2 text-right font-bold ${math.isOver ? "text-red-600" : "text-slate-700"}`}>
+                  <td className={`h-14 px-4 py-3 text-right font-bold ${math.isOver ? "text-red-600" : "text-slate-700"}`}>
                     {math.percent === null ? "-" : `${math.percent.toFixed(2)}%`}
                   </td>
-                  <td className="px-2 py-2">
+                  <td className="h-14 px-4 py-3">
                     <input
                       value={item.note}
                       onChange={(e) => patchItem(item.id, "note", e.target.value)}
@@ -777,7 +833,7 @@ export function DailyEntryTable({
                       placeholder="Ghi chú nhanh"
                     />
                   </td>
-                  <td className="px-2 py-2 text-center">
+                  <td className="h-14 px-4 py-3 text-center">
                     <Button
                       variant="ghost"
                       className="h-9 w-9 p-0 text-slate-500 hover:bg-blue-50 hover:text-blue-700"
@@ -813,45 +869,52 @@ export function DailyEntryTable({
         )}
       </div>
 
-      <div className="hidden items-center justify-end gap-2 lg:flex">
-        <Button
-          variant="outline"
-          onClick={() => handleSave(false)}
-          disabled={!hasChanges || loading}
-          className={hasChanges ? "border-amber-400 bg-amber-50 text-amber-800 hover:bg-amber-100" : "bg-white"}
-          title={!hasChanges ? "Không có thay đổi để lưu." : "Lưu tạm: lưu dữ liệu ngày đó để nhập tiếp, chưa tính vào lũy kế chính thức."}
-        >
-          <Save className="mr-2 h-4 w-4" /> Lưu tạm {hasChanges && `(${Object.keys(dirtyEntries).length})`}
-        </Button>
-        <Button
-          onClick={() => {
-            if (confirm("Xác nhận gửi số liệu ngày này cho giám sát?")) handleSave(true);
-          }}
-          disabled={loading || (!hasChanges && items.filter(i => i.status === "DRAFT").length === 0)}
-          className="bg-blue-600 text-white hover:bg-blue-700 disabled:bg-slate-300 disabled:text-slate-500"
-          title={(!hasChanges && items.filter(i => i.status === "DRAFT").length === 0) ? "Ngày này đã gửi giám sát hoặc chưa nhập khối lượng." : "Gửi giám sát: chuyển dữ liệu sang trạng thái chờ kiểm tra, không cho tự do sửa."}
-        >
-          <Send className="mr-2 h-4 w-4" /> Gửi giám sát
-        </Button>
+      <div className="hidden flex-col items-end gap-2 lg:flex">
+        <div className="flex items-center justify-end gap-3">
+          <Button
+            variant="outline"
+            onClick={() => handleSave(false)}
+            disabled={!hasChanges || loading}
+            className={`h-11 px-5 border font-semibold ${hasChanges ? "border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100" : "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"}`}
+            title={!hasChanges ? "Không có thay đổi để lưu" : "Lưu tạm: Lưu dữ liệu để nhập tiếp sau, chưa tính vào lũy kế chính thức"}
+          >
+            <Save className="mr-2 h-4 w-4" /> Lưu tạm {hasChanges && `(${Object.keys(dirtyEntries).length})`}
+          </Button>
+          <Button
+            onClick={() => {
+              if (confirm("Xác nhận gửi số liệu ngày này cho giám sát? Dữ liệu sẽ chuyển sang trạng thái SUBMITTED và chưa được tính vào lũy kế chính thức cho tới khi được xác nhận.")) handleSave(true);
+            }}
+            disabled={loading || (!hasChanges && items.filter(i => i.status === "DRAFT").length === 0)}
+            className="h-11 px-5 border border-transparent bg-blue-600 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
+            title={(!hasChanges && items.filter(i => i.status === "DRAFT").length === 0) ? "Ngày này đã gửi giám sát hoặc chưa nhập khối lượng" : "Gửi giám sát: Chuyển dữ liệu sang trạng thái chờ kiểm tra để giám sát phê duyệt"}
+          >
+            <Send className="mr-2 h-4 w-4" /> Gửi giám sát
+          </Button>
+        </div>
+        {(!hasChanges || loading) && (
+          <p className="text-xs text-slate-500">
+            {!hasChanges ? "Nút lưu tạm chỉ bật khi có thay đổi. Nút gửi bật khi còn dữ liệu DRAFT hoặc có thay đổi mới." : "Đang xử lý dữ liệu ngày này."}
+          </p>
+        )}
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 flex gap-2 border-t border-slate-200 bg-white p-3 shadow-[0_-4px_10px_rgba(15,23,42,0.08)] lg:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-30 flex gap-3 border-t-2 border-slate-200 bg-white p-4 shadow-[0_-4px_12px_rgba(15,23,42,0.12)] lg:hidden">
         <Button
           variant="outline"
           onClick={() => handleSave(false)}
           disabled={!hasChanges || loading}
-          className={`h-12 flex-1 ${hasChanges ? "border-amber-400 bg-amber-50 text-amber-800" : "bg-slate-100 text-slate-500"}`}
-          title={!hasChanges ? "Không có thay đổi để lưu." : "Lưu tạm: lưu dữ liệu ngày đó để nhập tiếp."}
+          className={`h-12 flex-1 border font-semibold ${hasChanges ? "border-amber-300 bg-amber-50 text-amber-800" : "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"}`}
+          title={!hasChanges ? "Không có thay đổi để lưu" : "Lưu tạm: Lưu dữ liệu để nhập tiếp"}
         >
           <Save className="mr-2 h-4 w-4" /> Lưu tạm {hasChanges && `(${Object.keys(dirtyEntries).length})`}
         </Button>
         <Button
           onClick={() => {
-            if (confirm("Xác nhận gửi số liệu ngày này cho giám sát?")) handleSave(true);
+            if (confirm("Xác nhận gửi số liệu ngày này cho giám sát? Dữ liệu sẽ chuyển sang trạng thái SUBMITTED và chưa được tính vào lũy kế chính thức cho tới khi được xác nhận.")) handleSave(true);
           }}
           disabled={loading || (!hasChanges && items.filter(i => i.status === "DRAFT").length === 0)}
-          className="h-12 flex-1 bg-blue-600 font-bold text-white hover:bg-blue-700 disabled:bg-slate-300 disabled:text-slate-500"
-          title={(!hasChanges && items.filter(i => i.status === "DRAFT").length === 0) ? "Đã gửi giám sát." : "Gửi giám sát: chờ kiểm tra."}
+          className="h-12 flex-1 border border-transparent bg-blue-600 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
+          title={(!hasChanges && items.filter(i => i.status === "DRAFT").length === 0) ? "Đã gửi giám sát" : "Gửi giám sát: Chờ kiểm tra"}
         >
           <Send className="mr-2 h-4 w-4" /> Gửi giám sát
         </Button>
@@ -859,32 +922,36 @@ export function DailyEntryTable({
 
       {activeDrawerItem && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 p-0 backdrop-blur-sm sm:items-center sm:p-4">
-          <div className="flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:max-w-2xl sm:rounded-2xl">
-            <div className="flex items-start justify-between gap-4 border-b border-slate-100 bg-slate-50 p-4">
-              <div>
-                <h3 className="font-bold text-slate-950 text-lg">Chi tiết công việc trong ngày</h3>
-                <p className="mt-1 line-clamp-2 text-sm text-slate-600 font-medium">
-                  {activeDrawerItem.name} - Ngày báo cáo {dateStr.split("-").reverse().join("/")}
+          <div className="flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:max-w-3xl sm:rounded-2xl">
+            <div className="flex items-start justify-between gap-4 border-b-2 border-slate-200 bg-gradient-to-r from-slate-50 to-white p-5">
+              <div className="flex-1">
+                <h3 className="font-bold text-slate-900 text-xl">Chi tiết công việc trong ngày</h3>
+                <p className="mt-1.5 line-clamp-2 text-sm text-slate-600 font-medium leading-relaxed">
+                  {activeDrawerItem.name}
                 </p>
+                <div className="mt-2 inline-flex items-center gap-2 rounded-lg bg-blue-100 px-3 py-1 text-xs font-bold text-blue-800">
+                  <Calendar className="h-3.5 w-3.5" />
+                  Ngày: {dateStr.split("-").reverse().join("/")}
+                </div>
               </div>
-              <Button variant="ghost" className="h-8 w-8 p-0" onClick={() => setActiveDrawerItem(null)}>
-                <X className="h-5 w-5" />
+              <Button variant="ghost" className="h-9 w-9 p-0 rounded-full hover:bg-slate-200" onClick={() => setActiveDrawerItem(null)}>
+                <X className="h-5 w-5 text-slate-600" />
               </Button>
             </div>
 
-            <div className="flex-1 space-y-4 overflow-y-auto p-4">
+            <div className="flex-1 space-y-5 overflow-y-auto p-5 bg-slate-50/50">
               {activeDrawerItem.materials && activeDrawerItem.materials.length > 0 && (
-                <div className="rounded-lg border border-orange-200 bg-orange-50 p-3">
-                  <div className="mb-2 flex items-center gap-2 text-sm font-bold text-orange-800">
-                    <Package className="h-4 w-4" /> Vật tư đề xuất
+                <div className="rounded-xl border-2 border-orange-200 bg-orange-50 p-4">
+                  <div className="mb-3 flex items-center gap-2 text-base font-bold text-orange-800">
+                    <Package className="h-5 w-5" /> Vật tư đề xuất
                   </div>
                   <div className="space-y-2">
                     {activeDrawerItem.materials.map((request: any) => (
-                      <div key={request.id} className="rounded-md bg-white p-2 text-sm text-slate-700">
-                        <div className="font-medium">{request.note || "Phiếu đề xuất vật tư"}</div>
+                      <div key={request.id} className="rounded-lg bg-white border border-orange-100 p-3 text-sm text-slate-700 shadow-sm">
+                        <div className="font-semibold text-slate-900">{request.note || "Phiếu đề xuất vật tư"}</div>
                         {request.items?.map((material: any) => (
-                          <div key={material.id} className="mt-1 text-xs text-slate-500">
-                            {material.materialName}: {formatQuantity(material.requestedQuantity)} {material.unit}
+                          <div key={material.id} className="mt-1.5 text-xs text-slate-600">
+                            • {material.materialName}: <span className="font-bold">{formatQuantity(material.requestedQuantity)} {material.unit}</span>
                           </div>
                         ))}
                       </div>
@@ -894,67 +961,67 @@ export function DailyEntryTable({
               )}
 
               <label className="block">
-                <span className="mb-1 block text-sm font-semibold text-slate-700">1. Diễn biến công việc trong ngày</span>
+                <span className="mb-2 block text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">1</span>
+                  Diễn biến công việc trong ngày
+                </span>
                 <textarea
                   value={activeDrawerItem.note}
                   onChange={(e) => {
                     patchItem(activeDrawerItem.id, "note", e.target.value);
                     setActiveDrawerItem({ ...activeDrawerItem, note: e.target.value });
                   }}
-                  className="h-20 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                  placeholder="Ví dụ: Thi công đoạn từ ... đến ..., hoàn thành phần ..."
+                  className="min-h-[100px] w-full rounded-xl border-2 border-slate-300 bg-white p-4 text-sm text-slate-900 leading-relaxed focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
+                  placeholder="Ví dụ: Đã hoàn thành đoạn từ Km... đến Km..., còn vướng mặt bằng..."
                 />
               </label>
 
               <label className="block">
-                <span className="mb-1 block text-sm font-semibold text-slate-700">2. Khó khăn / Vướng mắc</span>
+                <span className="mb-2 block text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">2</span>
+                  Khó khăn / Vướng mắc
+                </span>
                 <textarea
                   value={activeDrawerItem.issueNote}
                   onChange={(e) => {
                     patchItem(activeDrawerItem.id, "issueNote", e.target.value);
                     setActiveDrawerItem({ ...activeDrawerItem, issueNote: e.target.value });
                   }}
-                  className="h-20 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900 focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
-                  placeholder="Ví dụ: vướng mặt bằng, thiếu nhân công, thời tiết xấu..."
+                  className="min-h-[100px] w-full rounded-xl border-2 border-slate-300 bg-white p-4 text-sm text-slate-900 leading-relaxed focus:border-amber-500 focus:ring-4 focus:ring-amber-100 outline-none transition-all"
+                  placeholder="Ví dụ: Vướng mặt bằng đoạn Km3+200, thiếu nhân công, thời tiết xấu..."
                 />
               </label>
 
               <label className="block">
-                <span className="mb-1 block text-sm font-semibold text-slate-700">3. Đề xuất / Kiến nghị</span>
+                <span className="mb-2 block text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold">3</span>
+                  Đề xuất / Kiến nghị
+                </span>
                 <textarea
                   value={activeDrawerItem.proposalNote}
                   onChange={(e) => {
                     patchItem(activeDrawerItem.id, "proposalNote", e.target.value);
                     setActiveDrawerItem({ ...activeDrawerItem, proposalNote: e.target.value });
                   }}
-                  className="h-20 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                  placeholder="Ví dụ: cần bổ sung vật tư, điều máy, hỗ trợ xử lý mặt bằng..."
-                />
-              </label>
-              
-              <label className="block">
-                <span className="mb-1 block text-sm font-semibold text-slate-700">4. Ghi chú khác</span>
-                <textarea
-                  value={""}
-                  onChange={(e) => {
-                    // Combine into note or just leave it for UI completeness
-                    const currentNote = activeDrawerItem.note.split("\n--- Ghi chú khác ---\n")[0];
-                    const newNote = e.target.value ? `${currentNote}\n--- Ghi chú khác ---\n${e.target.value}` : currentNote;
-                    patchItem(activeDrawerItem.id, "note", newNote);
-                    setActiveDrawerItem({ ...activeDrawerItem, note: newNote });
-                  }}
-                  className="h-20 w-full rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                  placeholder="Thông tin bổ sung nếu có..."
+                  className="min-h-[100px] w-full rounded-xl border-2 border-slate-300 bg-white p-4 text-sm text-slate-900 leading-relaxed focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 outline-none transition-all"
+                  placeholder="Ví dụ: Cần bổ sung nhân công/máy móc/vật tư, đề nghị xử lý mặt bằng..."
                 />
               </label>
             </div>
 
-            <div className="flex gap-2 border-t border-slate-100 p-4">
-              <Button variant="outline" className="flex-1" onClick={() => setActiveDrawerItem(null)}>
+            <div className="flex gap-3 border-t-2 border-slate-200 p-4 bg-gradient-to-r from-white to-slate-50">
+              <Button 
+                variant="outline" 
+                className="flex-1 h-11 border-2 border-slate-300 hover:bg-slate-100 font-semibold text-slate-700" 
+                onClick={() => setActiveDrawerItem(null)}
+              >
                 Đóng
               </Button>
-              <Button className="flex-1 bg-blue-600 text-white hover:bg-blue-700" onClick={() => setActiveDrawerItem(null)}>
-                <CheckCircle2 className="mr-2 h-4 w-4" /> Xong
+              <Button 
+                className="flex-1 h-11 bg-blue-600 text-white hover:bg-blue-700 font-bold shadow-md shadow-blue-200" 
+                onClick={() => setActiveDrawerItem(null)}
+              >
+                <CheckCircle2 className="mr-2 h-5 w-5" /> Xong
               </Button>
             </div>
           </div>
