@@ -128,18 +128,31 @@ export async function deleteItem(itemId: string, projectId: string) {
   if (!session) return { error: "Unauthorized" };
 
   try {
+    const deletedTime = new Date();
+
     // Soft delete
     const item = await prisma.fieldProgressItem.update({
       where: { id: itemId },
-      data: { deletedAt: new Date() }
+      data: { deletedAt: deletedTime }
     });
 
-    // Also cascade soft delete children? 
-    // In a real app we might want to recursively delete or just let the query filter them out by parent deletedAt
-    // Let's just do a simple updateMany for immediate children
+    // Soft delete immediate children
     await prisma.fieldProgressItem.updateMany({
       where: { parentId: itemId },
-      data: { deletedAt: new Date() }
+      data: { deletedAt: deletedTime }
+    });
+
+    // Find children ids to soft-delete their entries as well
+    const children = await prisma.fieldProgressItem.findMany({
+      where: { parentId: itemId },
+      select: { id: true }
+    });
+    const itemIds = [itemId, ...children.map(c => c.id)];
+
+    // Cascade soft delete entries
+    await prisma.fieldProgressEntry.updateMany({
+      where: { itemId: { in: itemIds }, deletedAt: null },
+      data: { deletedAt: deletedTime }
     });
 
     await writeAuditLog({

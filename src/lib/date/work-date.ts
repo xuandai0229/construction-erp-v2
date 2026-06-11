@@ -44,6 +44,13 @@ export function addWorkDays(date: Date, days: number): Date {
   return next;
 }
 
-export function todayWorkDate(): string {
-  return formatWorkDate(new Date());
+export function todayWorkDate(now: Date = new Date()): string {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+
+  return formatter.format(now);
 }

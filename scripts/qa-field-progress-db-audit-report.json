@@ -1,0 +1,23 @@
+{
+  "summary": {
+    "totalEntries": 16,
+    "duplicatesByItemDate": 0,
+    "timezoneIssues": 0,
+    "orphanEntries": 0,
+    "overQuantityIssues": 0,
+    "hasConstraintConflicts": false
+  },
+  "activeAudit": {
+    "duplicates": [],
+    "timezoneIssues": [],
+    "orphans": [],
+    "overVolume": [],
+    "zeroNegativeQuantity": []
+  },
+  "softDeletedHistoricalFindings": {
+    "duplicateRemnantsCount": 3,
+    "timezoneIssuesCount": 1,
+    "orphanDraftsCount": 3,
+    "volumeTestEntriesCount": 1
+  }
+}

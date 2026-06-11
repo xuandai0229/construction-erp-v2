@@ -23,6 +23,7 @@ import { batchSaveDailyEntries } from "@/app/(dashboard)/projects/[id]/field-pro
 import { createItem } from "@/app/(dashboard)/projects/[id]/field-progress/actions";
 import { formatQuantity } from "@/lib/field-progress";
 import { sharedTableStyles } from "./table-styles";
+import { evaluateVolumeGuard } from "@/lib/field-progress/volume-guard";
 
 type DailyItem = {
   id: string;
@@ -202,15 +203,31 @@ export function DailyEntryTable({
     const quantity = raw === "" || raw === null || raw === undefined ? 0 : Number(raw);
     const hasInvalidNumber = raw !== "" && Number.isNaN(quantity);
     const isNegative = !hasInvalidNumber && quantity < 0;
-    const cumulativeAfter = item.cumulativeBefore + (hasInvalidNumber ? 0 : quantity);
-    const percent =
-      item.designQuantity && item.designQuantity > 0
-        ? (cumulativeAfter / item.designQuantity) * 100
-        : null;
-    const isOver = percent !== null && percent > 100;
     const hasTodayQuantity = !hasInvalidNumber && quantity > 0;
 
-    return { quantity, hasInvalidNumber, isNegative, cumulativeAfter, percent, isOver, hasTodayQuantity };
+    const validQuantityForCalc = hasInvalidNumber || isNegative ? 0 : quantity;
+    const guard = evaluateVolumeGuard({
+      designQuantity: item.designQuantity || 0,
+      cumulativeBefore: item.cumulativeBefore,
+      todayQuantity: validQuantityForCalc,
+      status: (item.status as "DRAFT" | "SUBMITTED" | "APPROVED") || "DRAFT",
+      note: item.note,
+      issueNote: item.issueNote,
+      proposalNote: item.proposalNote
+    });
+
+    const isOver = guard.level === "OVER_DESIGN" || guard.level === "BLOCK_SUBMIT" || guard.level === "REQUIRE_NOTE";
+
+    return { 
+      quantity, 
+      hasInvalidNumber, 
+      isNegative, 
+      cumulativeAfter: guard.projectedCumulative, 
+      percent: guard.level === "NEED_DESIGN_QUANTITY" ? null : guard.percent, 
+      isOver, 
+      hasTodayQuantity,
+      guard
+    };
   };
 
   const filteredItems = useMemo(() => {
@@ -382,14 +399,16 @@ export function DailyEntryTable({
               ? "border-red-500 bg-red-50 text-red-700 focus:ring-red-100"
               : math.isOver
                 ? "border-red-400 bg-red-50/50 text-red-700 focus:border-red-500 focus:ring-red-100"
-                : "border-blue-300 bg-white text-slate-900 focus:border-blue-500 focus:ring-blue-100"
+                : math.guard.level === "NEAR_LIMIT"
+                  ? "border-amber-400 bg-amber-50/50 text-amber-700 focus:border-amber-500 focus:ring-amber-100"
+                  : "border-blue-300 bg-white text-slate-900 focus:border-blue-500 focus:ring-blue-100"
           }`}
           placeholder="0"
         />
-        {(math.isNegative || math.hasInvalidNumber || math.isOver) && (
-          <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-red-600">
+        {(math.isNegative || math.hasInvalidNumber || math.guard.level !== "OK") && math.guard.level !== "NEED_DESIGN_QUANTITY" && (
+          <div className={`mt-1 flex items-center justify-end gap-1 text-xs font-semibold ${math.guard.level === "NEAR_LIMIT" ? "text-amber-600" : "text-red-600"}`}>
             <AlertCircle className="h-3.5 w-3.5" />
-            {math.isNegative || math.hasInvalidNumber ? "Không nhập âm" : "Vượt KL"}
+            {math.isNegative || math.hasInvalidNumber ? "Không nhập âm" : math.guard.message}
           </div>
         )}
       </div>
@@ -427,8 +446,8 @@ export function DailyEntryTable({
             <div className="font-semibold text-slate-800">{formatQuantity(item.cumulativeBefore)}</div>
           </div>
           <div>
-            <div className="text-[10px] uppercase text-slate-500">% hiện tại</div>
-            <div className={`font-bold ${math.isOver ? "text-red-600" : "text-slate-800"}`}>
+            <div className="text-[10px] uppercase text-slate-500">% sau nhập</div>
+            <div className={`font-bold ${math.isOver ? "text-red-600" : math.guard.level === "NEAR_LIMIT" ? "text-amber-600" : "text-slate-800"}`}>
               {math.percent === null ? "-" : `${math.percent.toFixed(2)}%`}
             </div>
           </div>
@@ -821,8 +840,13 @@ export function DailyEntryTable({
                     {formatQuantity(math.cumulativeAfter)}
                   </td>
                   <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.percent} relative`}>
-                    <div className={`font-bold flex items-center justify-end gap-1 ${math.isOver ? "text-red-600" : "text-slate-800"}`}>
-                      {math.percent === null ? "-" : `${math.percent.toFixed(2)}%`}
+                    <div className={`font-bold flex flex-col items-end gap-0.5 ${math.isOver ? "text-red-600" : math.guard.level === "NEAR_LIMIT" ? "text-amber-600" : "text-slate-800"}`}>
+                      <span>{math.percent === null ? "-" : `${math.percent.toFixed(2)}%`}</span>
+                      {math.percent !== null && (
+                        <span className="text-[10px] font-medium text-slate-500">
+                          còn {formatQuantity(math.guard.remaining)}
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.notes} p-2`}>
