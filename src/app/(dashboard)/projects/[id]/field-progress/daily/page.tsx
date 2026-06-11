@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Table, BarChart2 } from "lucide-react";
 import { DailyEntryTable } from "@/components/field-progress/daily-entry-table";
 import { DailyStatusCalendar } from "@/components/field-progress/daily-status-calendar";
+import { addWorkDays, formatWorkDate, getWorkDateRange, parseWorkDate, todayWorkDate } from "@/lib/date/work-date";
 
 export default async function FieldProgressDailyPage({
   params,
@@ -42,14 +43,13 @@ export default async function FieldProgressDailyPage({
     include: { parent: true },
   });
 
-  const selectedDateStr = sp.date || new Date().toISOString().split("T")[0];
-  const selectedDate = new Date(selectedDateStr);
+  const selectedDateStr = sp.date || todayWorkDate();
+  const selectedDate = parseWorkDate(selectedDateStr);
+  const selectedDateRange = getWorkDateRange(selectedDateStr);
 
   // Query entry status for calendar (7 days before and 7 days after)
-  const startCalendarDate = new Date(selectedDate);
-  startCalendarDate.setDate(startCalendarDate.getDate() - 7);
-  const endCalendarDate = new Date(selectedDate);
-  endCalendarDate.setDate(endCalendarDate.getDate() + 7);
+  const startCalendarDate = addWorkDays(selectedDate, -7);
+  const endCalendarDate = addWorkDays(selectedDate, 8);
 
   const calendarEntries = await prisma.fieldProgressEntry.findMany({
     where: {
@@ -57,7 +57,7 @@ export default async function FieldProgressDailyPage({
       deletedAt: null,
       entryDate: {
         gte: startCalendarDate,
-        lte: endCalendarDate
+        lt: endCalendarDate
       }
     },
     select: {
@@ -69,7 +69,7 @@ export default async function FieldProgressDailyPage({
   // Build status map for calendar
   const entriesStatusMap: Record<string, "APPROVED" | "SUBMITTED" | "DRAFT" | "EMPTY"> = {};
   calendarEntries.forEach(entry => {
-    const dateStr = new Date(entry.entryDate).toISOString().split("T")[0];
+    const dateStr = formatWorkDate(new Date(entry.entryDate));
     
     // Priority for operators: DRAFT means there is still editable saved work on that day.
     // If all editable entries were submitted, SUBMITTED becomes the visible status.
@@ -86,12 +86,12 @@ export default async function FieldProgressDailyPage({
     where: {
       templateId: template.id,
       deletedAt: null,
-      entryDate: { lte: selectedDate },
+      entryDate: { lt: selectedDateRange.end },
     },
   });
 
   const materials = await prisma.fieldMaterialRequest.findMany({
-    where: { templateId: template.id, requestDate: selectedDate, deletedAt: null },
+    where: { templateId: template.id, requestDate: selectedDateRange.start, deletedAt: null },
     include: { items: true },
   });
 
@@ -99,7 +99,7 @@ export default async function FieldProgressDailyPage({
   const todayEntriesMap: Record<string, any> = {};
 
   for (const entry of allEntries) {
-    const entryDateStr = new Date(entry.entryDate).toISOString().split("T")[0];
+    const entryDateStr = formatWorkDate(new Date(entry.entryDate));
     if (entryDateStr === selectedDateStr) {
       todayEntriesMap[entry.itemId] = entry;
     } else if (entry.status === "APPROVED") {

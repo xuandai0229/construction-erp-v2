@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth";
 import { writeAuditLog } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
+import { getWorkDateRange } from "@/lib/date/work-date";
 const Decimal = Prisma.Decimal;
 
 // NOTE:
@@ -18,36 +19,50 @@ export async function batchSaveDailyEntries(projectId: string, templateId: strin
   if (!session) return { error: "Unauthorized" };
 
   try {
-    // Normalize entryDateStr (YYYY-MM-DD) to a stable day range to avoid timezone mismatch.
-    // We treat "entryDateStr" as local date and store/query by [startOfDay, nextDay).
-    const startOfDay = new Date(entryDateStr + "T00:00:00");
-    const nextDay = new Date(entryDateStr + "T00:00:00");
-    nextDay.setDate(nextDay.getDate() + 1);
+    const { start, end } = getWorkDateRange(entryDateStr);
 
     const status = submit ? "SUBMITTED" : "DRAFT";
 
-    // Fetch existing entries for this date (by range), to know whether to create or update.
+    // Fetch existing ACTIVE entries for this date (by range), to know whether to create or update.
+    // Only consider entries where deletedAt is null (soft delete check).
     const existing = await prisma.fieldProgressEntry.findMany({
       where: {
         templateId,
+        deletedAt: null,
         entryDate: {
-          gte: startOfDay,
-          lt: nextDay,
+          gte: start,
+          lt: end,
         },
       },
     });
 
-    const existingMap = new Map(existing.map((e) => [e.itemId, e.id]));
+    // Group existing entries by itemId to detect duplicates
+    const existingByItemId = new Map<string, string[]>();
+    for (const entry of existing) {
+      if (!existingByItemId.has(entry.itemId)) {
+        existingByItemId.set(entry.itemId, []);
+      }
+      existingByItemId.get(entry.itemId)!.push(entry.id);
+    }
 
     const operations = entries.map(e => {
       const quantity = new Decimal(e.quantity || 0);
       if (quantity.lessThan(0)) throw new Error("Khối lượng không được âm");
 
-      const existingId = existingMap.get(e.itemId);
+      const existingIds = existingByItemId.get(e.itemId) || [];
       
-      if (existingId) {
+      // Check for duplicate entries
+      if (existingIds.length > 1) {
+        throw new Error(
+          `Phát hiện dữ liệu trùng lặp cho công việc (${e.itemId}) trong ngày đã chọn. ` +
+          `Vui lòng chạy audit và xử lý dữ liệu trước khi nhập tiếp.`
+        );
+      }
+      
+      if (existingIds.length === 1) {
+        // Exactly one existing entry, update it
         return prisma.fieldProgressEntry.update({
-          where: { id: existingId },
+          where: { id: existingIds[0] },
           data: {
             quantity,
             issueNote: e.issueNote,
@@ -58,13 +73,13 @@ export async function batchSaveDailyEntries(projectId: string, templateId: strin
           }
         });
       } else {
+        // No existing entry, create new
         return prisma.fieldProgressEntry.create({
           data: {
             projectId,
             templateId,
             itemId: e.itemId,
-            // Store normalized start-of-day to keep day switching stable.
-            entryDate: startOfDay,
+            entryDate: start,
             quantity,
             issueNote: e.issueNote,
             proposalNote: e.proposalNote,
@@ -88,7 +103,10 @@ export async function batchSaveDailyEntries(projectId: string, templateId: strin
       afterData: entries
     });
 
+    revalidatePath(`/projects/${projectId}/field-progress`);
     revalidatePath(`/projects/${projectId}/field-progress/daily`);
+    revalidatePath(`/projects/${projectId}/field-progress/summary`);
+    revalidatePath(`/projects/${projectId}/field-progress`, "layout");
     return { success: true };
   } catch (error: any) {
     return { error: error.message };

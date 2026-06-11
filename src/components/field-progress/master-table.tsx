@@ -5,6 +5,7 @@ import { Plus, Save, Trash2, ChevronRight, ChevronDown, ListTree, FileText } fro
 import { Button } from "@/components/ui/button";
 import { createItem, updateItem, deleteItem, batchUpdateItems } from "@/app/(dashboard)/projects/[id]/field-progress/actions";
 import { formatQuantity } from "@/lib/field-progress";
+import { sharedTableStyles } from "./table-styles";
 
 export function MasterTable({ projectId, templateId, initialItems }: { projectId: string, templateId: string, initialItems: any[] }) {
   const [items, setItems] = useState<any[]>(initialItems);
@@ -142,19 +143,18 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
 
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="w-full text-sm min-w-[1100px]">
+        <table className="w-full text-sm min-w-[1200px]">
           <thead>
             <tr className="bg-slate-50 border-b-2 border-slate-200">
-              <th className="px-3 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider w-12 border-r border-slate-200 sticky left-0 z-20 bg-slate-50">STT</th>
-              <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[180px] border-r border-slate-200 sticky left-[48px] z-20 bg-slate-50">Nội dung hạng mục</th>
-              <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[260px] border-r border-slate-200 sticky left-[228px] z-20 bg-slate-50">Nội dung công việc</th>
-              <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[120px] border-r border-slate-200">Mũi thi công</th>
-              <th className="px-3 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider w-[120px] border-r border-slate-200">Tổng KL TK</th>
-              <th className="px-3 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider w-[80px] border-r border-slate-200">Đơn vị</th>
-              <th className="px-3 py-3 text-right text-xs font-semibold text-blue-600 uppercase tracking-wider w-[110px] border-r border-slate-200 bg-blue-50/60">Lũy kế</th>
-              <th className="px-3 py-3 text-right text-xs font-semibold text-blue-600 uppercase tracking-wider w-[80px] border-r border-slate-200 bg-blue-50/60">% TH</th>
-              <th className="px-3 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider min-w-[140px] border-r border-slate-200">Ghi chú</th>
-              <th className="px-3 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider w-[80px]">Thao tác</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.stt} sticky left-0 z-20 text-center`}>STT</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.content} sticky left-[56px] z-20 text-left`}>Nội dung công việc / Hạng mục</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.crew} text-center`}>Mũi thi công</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.unit} text-center`}>Đơn vị</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.designQty} text-right`}>Tổng KL TK</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.cumulative} text-right text-blue-600 bg-blue-50/60`}>Lũy kế</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.percent} text-right text-blue-600 bg-blue-50/60`}>% TH</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.notes} text-left`}>Ghi chú</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.action} text-center`}>Thao tác</th>
             </tr>
           </thead>
           <tbody>
@@ -171,21 +171,13 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
               return (
                 <tr 
                   key={item.id} 
-                  className={`border-b transition-colors ${
-                    isGroup 
-                      ? 'bg-slate-50 border-slate-200' 
-                      : isDirty 
-                        ? 'bg-amber-50/30 border-slate-100' 
-                        : 'bg-white border-slate-100 hover:bg-slate-50/50'
-                  }`}
+                  className={isGroup ? sharedTableStyles.groupRow : isDirty ? 'bg-amber-50/30 border-slate-100' : sharedTableStyles.workRow}
                 >
-                  {/* STT */}
-                  <td className={`h-14 px-4 py-3 text-center text-slate-400 font-medium text-xs border-r border-slate-100 sticky left-0 z-10 ${isGroup ? 'bg-slate-50' : isDirty ? 'bg-amber-50/30' : 'bg-white'}`}>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.stt} sticky left-0 z-10 ${isGroup ? 'bg-slate-50' : isDirty ? 'bg-amber-50/30' : 'bg-white'} text-center text-slate-400`}>
                     {index + 1}
                   </td>
                   
-                  {/* Nội dung hạng mục */}
-                  <td className={`h-14 px-4 py-3 border-r border-slate-100 sticky left-[48px] z-10 ${isGroup ? 'bg-slate-50' : isDirty ? 'bg-amber-50/30' : 'bg-white'}`} style={{ paddingLeft: `${item.displayLevel * 24 + 12}px` }}>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.content} sticky left-[56px] z-10 ${isGroup ? 'bg-slate-50' : isDirty ? 'bg-amber-50/30' : 'bg-white'}`} style={{ paddingLeft: `${item.displayLevel * 24 + 12}px` }}>
                     <div className="flex items-center gap-1.5">
                       {isGroup && (
                         <button onClick={() => toggleExpand(item.id)} className="p-0.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors flex-shrink-0">
@@ -194,38 +186,35 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
                       )}
                       {!isGroup && <div className="w-5 flex-shrink-0" />}
                       <input 
-                        value={item.categoryName || ""} 
-                        onChange={e => handleChange(item.id, 'categoryName', e.target.value)}
-                        placeholder={isGroup ? "Nhập tên hạng mục..." : "-"}
-                        title={item.categoryName || ""}
-                        className={`w-full bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded px-2 py-1 transition-all outline-none ${isGroup ? 'font-bold text-slate-900 text-sm' : 'text-slate-400 text-xs'}`}
+                        value={isGroup ? (item.categoryName || "") : (item.workContent || "")} 
+                        onChange={e => handleChange(item.id, isGroup ? 'categoryName' : 'workContent', e.target.value)}
+                        placeholder={isGroup ? "Nhập tên hạng mục..." : "Nhập tên công việc..."}
+                        className={`w-full bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded px-2 py-1 transition-all outline-none ${isGroup ? 'font-bold text-slate-900 text-sm' : 'font-semibold text-slate-800 text-sm'}`}
                       />
                     </div>
                   </td>
 
-                  {/* Nội dung công việc */}
-                  <td className={`h-14 px-4 py-3 border-r border-slate-100 sticky left-[228px] z-10 ${isGroup ? 'bg-slate-50' : isDirty ? 'bg-amber-50/30' : 'bg-white'}`}>
-                    <input 
-                      value={item.workContent || ""} 
-                      onChange={e => handleChange(item.id, 'workContent', e.target.value)}
-                      placeholder={!isGroup ? "Nhập tên công việc..." : "-"}
-                      title={item.workContent || ""}
-                      className={`w-full bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded px-2 py-1 transition-all outline-none ${!isGroup ? 'font-semibold text-slate-800 text-sm' : 'text-slate-400 text-xs'}`}
-                    />
-                  </td>
-
-                  {/* Mũi thi công */}
-                  <td className={`h-14 px-4 py-3 border-r border-slate-100 text-center ${isDirty ? 'bg-amber-50/30' : ''}`}>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.crew} text-center ${isDirty ? 'bg-amber-50/30' : ''}`}>
                     <input 
                       value={item.constructionCrew || ""} 
                       onChange={e => handleChange(item.id, 'constructionCrew', e.target.value)}
-                      className="w-full bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded px-2 py-1 text-slate-700 text-sm transition-all outline-none"
+                      className="w-full bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded px-2 py-1 text-center text-slate-700 text-sm transition-all outline-none"
                       placeholder="Mũi..."
                     />
                   </td>
 
-                  {/* Tổng KL thiết kế */}
-                  <td className={`h-14 px-4 py-3 border-r border-slate-100 text-right ${isDirty ? 'bg-amber-50/30' : ''}`}>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.unit} text-center ${isDirty ? 'bg-amber-50/30' : ''}`}>
+                    {isGroup ? <span className="text-slate-400">-</span> : (
+                      <input 
+                        value={item.unit || ""} 
+                        onChange={e => handleChange(item.id, 'unit', e.target.value)}
+                        className="w-full bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded px-2 py-1 text-center text-slate-700 text-sm transition-all outline-none"
+                        placeholder="m"
+                      />
+                    )}
+                  </td>
+
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.designQty} text-right ${isDirty ? 'bg-amber-50/30' : ''}`}>
                     {isGroup ? (
                       <span className="text-slate-700 font-bold text-sm px-2">{item.rollupDesignQuantity ? formatQuantity(item.rollupDesignQuantity) : "-"}</span>
                     ) : (
@@ -240,25 +229,11 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
                     )}
                   </td>
 
-                  {/* Đơn vị */}
-                  <td className={`h-14 px-4 py-3 border-r border-slate-100 text-center ${isDirty ? 'bg-amber-50/30' : ''}`}>
-                    {isGroup ? <span className="text-slate-400">-</span> : (
-                      <input 
-                        value={item.unit || ""} 
-                        onChange={e => handleChange(item.id, 'unit', e.target.value)}
-                        className="w-full bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded px-2 py-1 text-center text-slate-700 text-sm transition-all outline-none"
-                        placeholder="m"
-                      />
-                    )}
-                  </td>
-
-                  {/* Lũy kế (Readonly) */}
-                  <td className="h-14 px-4 py-3 border-r border-slate-100 text-right bg-blue-50/40 font-bold text-blue-700 text-sm">
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.cumulative} text-right bg-blue-50/40 font-bold text-blue-700`}>
                     {item.rollupCumulative ? formatQuantity(item.rollupCumulative) : "0"}
                   </td>
 
-                  {/* % TH (Readonly) */}
-                  <td className="h-14 px-4 py-3 border-r border-slate-100 text-right bg-blue-50/40">
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.percent} text-right bg-blue-50/40 relative`}>
                     <span className={`font-bold text-sm ${isOver ? 'text-red-600' : 'text-blue-700'}`}>
                       {percentVal ? `${percentVal}%` : "-"}
                     </span>
@@ -269,8 +244,7 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
                     )}
                   </td>
 
-                  {/* Ghi chú */}
-                  <td className={`h-14 px-4 py-3 border-r border-slate-100 ${isDirty ? 'bg-amber-50/30' : ''}`}>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.notes} ${isDirty ? 'bg-amber-50/30' : ''}`}>
                     <input 
                       value={item.note || ""} 
                       onChange={e => handleChange(item.id, 'note', e.target.value)}
@@ -279,8 +253,7 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
                     />
                   </td>
 
-                  {/* Actions */}
-                  <td className="h-14 px-4 py-3 text-center">
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.action} text-center`}>
                     <div className="flex items-center justify-center gap-1">
                       {isGroup && (
                         <button 
@@ -306,7 +279,7 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
             
             {items.length === 0 && (
               <tr>
-                <td colSpan={10} className="px-4 py-16 text-center bg-white">
+                <td colSpan={9} className="px-4 py-16 text-center bg-white">
                   <div className="flex flex-col items-center justify-center max-w-md mx-auto space-y-4">
                     <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center">
                       <FileText className="w-8 h-8" />

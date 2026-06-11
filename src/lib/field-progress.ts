@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import { addWorkDays, formatWorkDate, parseWorkDate } from "@/lib/date/work-date";
 const Decimal = Prisma.Decimal;
 type Decimal = Prisma.Decimal;
 
@@ -44,19 +45,15 @@ export function formatPercent(percent: string | number | null | undefined): stri
 
 export function buildDateColumns(fromDate: Date | string, toDate: Date | string, mode: "ALL_DAYS" | "HAS_DATA_ONLY", availableDateStrings: Set<string>): Date[] {
   const dates: Date[] = [];
-  let current = new Date(fromDate);
-  const end = new Date(toDate);
-  
-  // Set time to midnight for safe comparison
-  current.setHours(0, 0, 0, 0);
-  end.setHours(0, 0, 0, 0);
+  let current = typeof fromDate === "string" ? parseWorkDate(fromDate) : parseWorkDate(formatWorkDate(fromDate));
+  const end = typeof toDate === "string" ? parseWorkDate(toDate) : parseWorkDate(formatWorkDate(toDate));
 
   while (current <= end) {
-    const dateStr = current.toISOString().split("T")[0];
+    const dateStr = formatWorkDate(current);
     if (mode === "ALL_DAYS" || availableDateStrings.has(dateStr)) {
       dates.push(new Date(current));
     }
-    current.setDate(current.getDate() + 1);
+    current = addWorkDays(current, 1);
   }
   return dates;
 }
@@ -68,7 +65,7 @@ export function groupEntriesByItemAndDate(entries: any[]) {
     if (!grouped[entry.itemId]) {
       grouped[entry.itemId] = {};
     }
-    const dateStr = new Date(entry.entryDate).toISOString().split("T")[0];
+    const dateStr = formatWorkDate(new Date(entry.entryDate));
     if (!grouped[entry.itemId][dateStr]) {
       grouped[entry.itemId][dateStr] = [];
     }
@@ -145,3 +142,4 @@ export function calculateParentRollup(flatTree: any[], entriesMap: Record<string
   
   return flatTree;
 }
+

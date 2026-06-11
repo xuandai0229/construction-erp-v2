@@ -14,6 +14,10 @@ const results: TestResult[] = [];
 async function main() {
   console.log("=== QA FIELD PROGRESS SYNC TEST ===\n");
   console.log("Database: Connected ✅\n");
+
+  // Fetch admin user once, used throughout the script
+  const admin = await prisma.user.findFirst();
+  if (!admin) throw new Error("No user found");
   
   // Setup: Tìm hoặc tạo project test
   let project = await prisma.project.findFirst({
@@ -22,19 +26,14 @@ async function main() {
   
   if (!project) {
     console.log("📦 Creating test project: QA-FIELD-PROGRESS");
-    const admin = await prisma.user.findFirst();
-    if (!admin) throw new Error("No user found to create project");
     
     project = await prisma.project.create({
       data: {
         code: "QA-FIELD-PROGRESS",
         name: "QA Test - Field Progress Module",
         startDate: new Date("2026-06-01"),
-        estimatedEndDate: new Date("2026-12-31"),
         status: "ACTIVE",
         investor: "QA Department",
-        investmentAmount: 1000000,
-        createdById: admin.id
       }
     });
     console.log(`✅ Project created: ${project.id}\n`);
@@ -49,7 +48,6 @@ async function main() {
   
   if (!template) {
     console.log("📋 Creating template");
-    const admin = await prisma.user.findFirst();
     template = await prisma.fieldProgressTemplate.create({
       data: {
         projectId: project.id,
@@ -81,7 +79,9 @@ async function main() {
     // Create group
     const group = await prisma.fieldProgressItem.create({
       data: {
+        projectId: project.id,
         templateId: template.id,
+        createdById: admin!.id,
         itemType: "GROUP",
         categoryName: "Phần móng QA Test",
         code: "MONG-QA",
@@ -94,7 +94,9 @@ async function main() {
     testItems = await Promise.all([
       prisma.fieldProgressItem.create({
         data: {
+          projectId: project.id,
           templateId: template.id,
+          createdById: admin!.id,
           parentId: group.id,
           itemType: "WORK",
           workContent: "Đào móng QA Test",
@@ -108,7 +110,9 @@ async function main() {
       }),
       prisma.fieldProgressItem.create({
         data: {
+          projectId: project.id,
           templateId: template.id,
+          createdById: admin!.id,
           parentId: group.id,
           itemType: "WORK",
           workContent: "Bê tông lót QA Test",
@@ -122,7 +126,9 @@ async function main() {
       }),
       prisma.fieldProgressItem.create({
         data: {
+          projectId: project.id,
           templateId: template.id,
+          createdById: admin!.id,
           parentId: group.id,
           itemType: "WORK",
           workContent: "Đào hố ga QA Test",
@@ -136,7 +142,9 @@ async function main() {
       }),
       prisma.fieldProgressItem.create({
         data: {
+          projectId: project.id,
           templateId: template.id,
+          createdById: admin!.id,
           parentId: group.id,
           itemType: "WORK",
           workContent: "Xây tường móng QA Test",
@@ -150,7 +158,9 @@ async function main() {
       }),
       prisma.fieldProgressItem.create({
         data: {
+          projectId: project.id,
           templateId: template.id,
+          createdById: admin!.id,
           parentId: group.id,
           itemType: "WORK",
           workContent: "Dầm móng QA Test",
@@ -185,9 +195,6 @@ async function main() {
     }
   });
   console.log(`🧹 Cleaned ${deletedCount.count} old test entries\n`);
-  
-  const admin = await prisma.user.findFirst();
-  if (!admin) throw new Error("No user found");
   
   // ==================== TEST 1: LƯU TẠM 09/06 ====================
   console.log("📝 TEST 1: Lưu tạm ngày 09/06");

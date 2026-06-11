@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { batchSaveDailyEntries } from "@/app/(dashboard)/projects/[id]/field-progress/daily/actions";
 import { createItem } from "@/app/(dashboard)/projects/[id]/field-progress/actions";
 import { formatQuantity } from "@/lib/field-progress";
+import { sharedTableStyles } from "./table-styles";
 
 type DailyItem = {
   id: string;
@@ -772,21 +773,20 @@ export function DailyEntryTable({
       </div>
 
       <div className="hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:block">
-        <table className="w-full table-fixed text-left text-sm">
+        <table className="w-full text-left text-sm whitespace-nowrap min-w-[1200px]">
           <thead className="border-b-2 border-slate-200 bg-slate-50">
             <tr>
-              <th className="w-12 px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wide">STT</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Công việc</th>
-              <th className="w-[9%] px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wide">Mũi</th>
-              <th className="w-[8%] px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Tổng KL</th>
-              <th className="w-[8%] px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Đã làm</th>
-              <th className="w-[13%] border-x border-blue-200 bg-blue-50 px-4 py-3 text-center text-xs font-semibold text-blue-700 uppercase tracking-wide">
-                KL ngày này
-              </th>
-              <th className="w-[8%] px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">Sau nhập</th>
-              <th className="w-[7%] px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wide">%</th>
-              <th className="w-[12%] px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Ghi chú nhanh</th>
-              <th className="w-[7%] px-4 py-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wide">Chi tiết</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.stt} sticky left-0 z-20 text-center`}>STT</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.content} sticky left-[56px] z-20 text-left`}>Công việc</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.crew} text-center`}>Mũi</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.unit} text-center`}>Đơn vị</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.designQty} text-right`}>Tổng KL</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.cumulative} text-right`}>Đã làm</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.dayQty} border-x border-blue-200 bg-blue-50 text-center text-blue-700`}>KL ngày này</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.remaining} text-right`}>Sau nhập</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.percent} text-right`}>%</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.notes} text-left`}>Ghi chú nhanh</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.action} text-center`}>Chi tiết</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -797,50 +797,45 @@ export function DailyEntryTable({
               return (
                 <tr
                   key={item.id}
-                  className={`transition ${
-                    math.isOver ? "bg-red-50/60" : isDirty ? "bg-amber-50/40" : "hover:bg-slate-50"
-                  }`}
+                  className={`transition ${sharedTableStyles.workRow} ${math.isOver ? "bg-red-50/40 border-red-200" : isDirty ? "bg-amber-50/30" : ""}`}
                 >
-                  <td className="h-14 px-4 py-3 text-center text-slate-400">{index + 1}</td>
-                  <td className="h-14 px-4 py-3">
-                    <div className="font-semibold text-slate-900 leading-snug line-clamp-2" title={item.name}>
-                      {item.name}
-                    </div>
-                    <div className="text-xs text-slate-400 mt-0.5 truncate">{item.parentName || item.code || "-"}</div>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.stt} sticky left-0 z-10 text-center text-slate-400 ${math.isOver ? 'bg-red-50/50' : isDirty ? 'bg-amber-50/30' : 'bg-white'}`}>
+                    {index + 1}
                   </td>
-                  <td className="h-14 truncate px-4 py-3 text-center text-slate-600" title={item.constructionCrew || ""}>
-                    {item.constructionCrew || "-"}
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.content} sticky left-[56px] z-10 ${math.isOver ? 'bg-red-50/50' : isDirty ? 'bg-amber-50/30' : 'bg-white'}`}>
+                    {item.parentName && <div className="mb-0.5 text-[10px] font-medium uppercase tracking-wider text-slate-400 truncate">{item.parentName}</div>}
+                    <div className="font-semibold text-slate-800 truncate" title={item.name}>{item.name}</div>
                   </td>
-                  <td className="h-14 px-4 py-3 text-right font-medium text-slate-700">
-                    {item.designQuantity ? formatQuantity(item.designQuantity) : "-"} {item.unit || ""}
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.crew}`}>{item.constructionCrew || "-"}</td>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.unit}`}>{item.unit || "-"}</td>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.designQty} font-semibold text-slate-700`}>
+                    {item.designQuantity ? formatQuantity(item.designQuantity) : "-"}
                   </td>
-                  <td className="h-14 px-4 py-3 text-right text-slate-600">{formatQuantity(item.cumulativeBefore)}</td>
-                  <td className="h-14 border-x border-blue-200 bg-blue-50/30 px-4 py-3">
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.cumulative} text-slate-600`}>
+                    {formatQuantity(item.cumulativeBefore)}
+                  </td>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.dayQty} bg-blue-50/50 p-2`}>
                     {renderQuantityInput(item, index)}
                   </td>
-                  <td className={`h-14 px-4 py-3 text-right font-bold ${math.isOver ? "text-red-600" : "text-slate-800"}`}>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.remaining} font-bold ${math.isOver ? "text-red-600" : "text-blue-800"}`}>
                     {formatQuantity(math.cumulativeAfter)}
                   </td>
-                  <td className={`h-14 px-4 py-3 text-right font-bold ${math.isOver ? "text-red-600" : "text-slate-700"}`}>
-                    {math.percent === null ? "-" : `${math.percent.toFixed(2)}%`}
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.percent} relative`}>
+                    <div className={`font-bold flex items-center justify-end gap-1 ${math.isOver ? "text-red-600" : "text-slate-800"}`}>
+                      {math.percent === null ? "-" : `${math.percent.toFixed(2)}%`}
+                    </div>
                   </td>
-                  <td className="h-14 px-4 py-3">
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.notes} p-2`}>
                     <input
                       value={item.note}
                       onChange={(e) => patchItem(item.id, "note", e.target.value)}
-                      tabIndex={-1}
-                      className="h-9 w-full rounded-md border border-slate-200 px-2 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                      placeholder="Ghi chú nhanh"
+                      className="h-9 w-full min-w-[120px] rounded-md border border-slate-200 px-3 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
+                      placeholder="Ghi chú nhanh..."
                     />
                   </td>
-                  <td className="h-14 px-4 py-3 text-center">
-                    <Button
-                      variant="ghost"
-                      className="h-9 w-9 p-0 text-slate-500 hover:bg-blue-50 hover:text-blue-700"
-                      onClick={() => setActiveDrawerItem(item)}
-                      title="Chi tiết"
-                    >
-                      <Info className="h-4 w-4" />
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.action}`}>
+                    <Button variant="ghost" className="h-8 w-8 p-0 text-slate-400 hover:text-blue-600 mx-auto block" onClick={() => setActiveDrawerItem(item)}>
+                      <Info className="h-4 w-4 mx-auto" />
                     </Button>
                   </td>
                 </tr>
