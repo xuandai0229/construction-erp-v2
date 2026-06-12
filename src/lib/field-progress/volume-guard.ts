@@ -55,7 +55,7 @@ export function evaluateVolumeGuard(input: {
     canSubmit = true;
   } else if (percent > 90 && percent <= 100) {
     level = "NEAR_LIMIT";
-    message = "Gần hết KL";
+    message = "Sắp vượt khối lượng thiết kế";
     canSubmit = true;
   } else if (percent > 100 && percent <= 110) {
     if (input.status === "SUBMITTED" && !hasValidNote) {
@@ -64,7 +64,7 @@ export function evaluateVolumeGuard(input: {
       canSubmit = false;
     } else {
       level = "REQUIRE_NOTE";
-      message = "Vượt KL (100-110%)";
+      message = "Vượt thiết kế";
       canSubmit = true;
     }
   } else if (percent > 110) {

@@ -49,8 +49,8 @@ export function Sidebar() {
                 href={item.href}
                 className={cn(
                   isActive
-                    ? 'bg-blue-50 text-blue-600'
-                    : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900',
+                    ? 'bg-blue-50 text-blue-600 font-semibold shadow-sm border-r-2 border-blue-600'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-700',
                   'group flex items-center rounded-md px-3 py-2 text-sm font-medium'
                 )}
               >

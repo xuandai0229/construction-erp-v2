@@ -41,3 +41,22 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# Local browser binaries / generated test artifacts
+chrome/
+ms-playwright/
+.playwright/
+playwright-report/
+test-results/
+
+
+# QA screenshots and generated browser/test artifacts
+docs/qa/screenshots/
+chrome/
+ms-playwright/
+.playwright/
+playwright-report/
+test-results/
+*.webm
+trace.zip
+

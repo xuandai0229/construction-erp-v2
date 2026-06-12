@@ -67,72 +67,68 @@ export default async function FieldProgressPage({ params }: { params: Promise<{ 
   return (
     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 pt-4 sm:pt-6 space-y-6 pb-20">
       {/* Header */}
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-2">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 flex items-center gap-3">
+          <h1 className="text-xl sm:text-3xl font-bold text-slate-900 flex items-center gap-2 sm:gap-3">
             <Link 
               href={`/projects/${id}`} 
-              className="p-2 -ml-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
+              className="p-1 sm:p-2 -ml-1 sm:-ml-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 active:bg-slate-200 active:scale-95 rounded-lg transition-all duration-150 ease-out"
             >
               <ArrowLeft className="h-5 w-5" />
             </Link>
             Bảng khối lượng gốc
           </h1>
-          <p className="text-slate-600 mt-1.5 ml-11 text-sm sm:text-base">
-            Thiết lập hạng mục, công việc, mũi thi công và khối lượng thiết kế của công trình.
-          </p>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1 ml-11">
-            Công trình: <span className="font-semibold text-slate-700">{project.code}</span> - {project.name}
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5 sm:mt-1.5 ml-7 sm:ml-11 line-clamp-1">
+            <span className="font-semibold text-slate-700">{project.code}</span> - {project.name}
           </p>
         </div>
         
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:ml-11">
+        <div className="flex flex-row items-center gap-2 ml-7 sm:ml-11">
           <Link 
             href={`/projects/${id}/field-progress/daily`}
-            className="px-4 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 flex items-center justify-center gap-2 shadow-sm transition-all"
+            className="flex-1 sm:flex-none h-9 sm:h-10 px-3 sm:px-4 bg-blue-600 text-white rounded-md text-xs sm:text-sm font-semibold hover:bg-blue-700 active:bg-blue-800 active:scale-95 flex items-center justify-center gap-1.5 shadow-sm transition-all duration-150 ease-out"
           >
-            <Calendar className="w-4 h-4" /> Nhập khối lượng theo ngày
+            <Calendar className="w-4 h-4" /> 
+            <span className="md:hidden">Nhập khối lượng</span>
+            <span className="hidden md:inline">Nhập khối lượng theo ngày</span>
           </Link>
           <Link 
             href={`/projects/${id}/field-progress/summary`}
-            className="px-4 py-2.5 bg-white border-2 border-slate-300 text-slate-700 rounded-lg text-sm font-semibold hover:bg-slate-50 flex items-center justify-center gap-2 transition-all"
+            className="flex-1 sm:flex-none h-9 sm:h-10 px-3 sm:px-4 bg-white border border-slate-300 text-slate-700 rounded-md text-xs sm:text-sm font-semibold hover:bg-slate-50 active:bg-slate-100 active:scale-95 flex items-center justify-center gap-1.5 transition-all duration-150 ease-out"
           >
-            <BarChart2 className="w-4 h-4" /> Xem tổng hợp
+            <BarChart2 className="w-4 h-4" /> 
+            <span className="md:hidden">Tổng hợp</span>
+            <span className="hidden md:inline">Tổng hợp khối lượng</span>
           </Link>
         </div>
       </div>
 
       {/* Overview Stats Bar */}
-      <div className="inline-flex flex-wrap items-center gap-0 rounded-xl border border-slate-200 bg-white shadow-sm py-1.5 px-1.5">
-        <div className="flex items-center gap-2 px-3 py-1">
-          <Package className="h-4 w-4 text-blue-500" />
-          <span className="text-base font-bold text-slate-900">{groupItems.length}</span>
-          <span className="text-sm font-medium text-slate-500">Hạng mục chính</span>
+      <div className="flex sm:inline-flex flex-wrap items-center gap-0 rounded-lg border border-slate-200 bg-white shadow-sm py-1 px-1">
+        <div className="flex items-center gap-1.5 px-2 py-1">
+          <Package className="h-4 w-4 text-blue-500 hidden xs:block" />
+          <span className="text-sm font-bold text-slate-900">{groupItems.length}</span>
+          <span className="text-xs font-medium text-slate-500">Hạng mục</span>
         </div>
 
-        <div className="hidden sm:block h-4 w-px bg-slate-200" />
+        <div className="h-3 w-px bg-slate-200" />
 
-        <div className="flex items-center gap-2 px-3 py-1">
-          <BarChart3 className="h-4 w-4 text-blue-500" />
-          <span className="text-base font-bold text-slate-900">{workItems.length}</span>
-          <span className="text-sm font-medium text-slate-500">Công việc</span>
+        <div className="flex items-center gap-1.5 px-2 py-1">
+          <BarChart3 className="h-4 w-4 text-blue-500 hidden xs:block" />
+          <span className="text-sm font-bold text-slate-900">{workItems.length}</span>
+          <span className="text-xs font-medium text-slate-500">Công việc</span>
         </div>
 
-        <div className="hidden sm:block h-4 w-px bg-slate-200" />
+        <div className="h-3 w-px bg-slate-200" />
 
-        <div className="flex items-center gap-2 px-3 py-1">
-          <TrendingUp className="h-4 w-4 text-blue-500" />
-          <span className="text-base font-bold text-slate-900">{formatQuantity(totalDesignQty)}</span>
-          <span className="text-sm font-medium text-slate-500">Tổng KL thiết kế</span>
+        <div className="flex items-center gap-1.5 px-2 py-1">
+          <TrendingUp className="h-4 w-4 text-blue-500 hidden xs:block" />
+          <span className="text-sm font-bold text-slate-900">{formatQuantity(totalDesignQty)}</span>
+          <span className="text-xs font-medium text-slate-500">Tổng khối lượng thiết kế</span>
         </div>
       </div>
 
-      {/* Info notice about cumulative calculation */}
-      <div className="flex items-center gap-2 text-sm text-slate-500 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 w-fit">
-        <Info className="w-4 h-4 text-blue-500 flex-shrink-0" />
-        <span><strong className="font-semibold text-slate-700">Lưu ý:</strong> Cột Lũy kế chỉ cộng các khối lượng đã được duyệt (APPROVED). Dữ liệu nháp/chờ chưa được tính.</span>
-      </div>
 
       <MasterTable 
         projectId={id} 

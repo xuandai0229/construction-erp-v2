@@ -130,39 +130,43 @@ export default async function FieldProgressDailyPage({
   });
 
   return (
-    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 space-y-6 pb-20">
-      <div className="flex flex-col gap-4">
+    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 space-y-6 pb-20 min-w-0 overflow-x-hidden">
+      <div className="flex flex-col gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 flex items-center gap-3">
+          <h1 className="text-xl sm:text-3xl font-bold text-slate-900 flex items-center gap-2 sm:gap-3">
             <Link
               href={`/projects/${id}/field-progress`}
-              className="p-2 -ml-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
+              className="p-1.5 sm:p-2 -ml-1.5 sm:-ml-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
             >
               <ArrowLeft className="h-5 w-5" />
             </Link>
             Nhập khối lượng theo ngày
           </h1>
-          <p className="text-slate-600 mt-1.5 ml-11 text-sm sm:text-base">
-            Chọn ngày báo cáo, nhập khối lượng phát sinh cho từng công việc và gửi giám sát kiểm tra.
+          <p className="text-slate-600 mt-1.5 ml-8 sm:ml-11 text-sm sm:text-base hidden sm:block">
+            Chọn ngày báo cáo và nhập khối lượng thực hiện cho từng công việc.
           </p>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1 ml-11">
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 sm:mt-1.5 ml-8 sm:ml-11 line-clamp-1">
             Công trình: <span className="font-semibold text-slate-700">{project.code}</span> - {project.name}
           </p>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:ml-11">
+        <div className="flex flex-row items-center gap-2 ml-8 sm:ml-11">
           <Link
             href={`/projects/${id}/field-progress`}
-            className="px-4 py-2.5 bg-white border-2 border-slate-300 text-slate-700 rounded-lg text-sm font-semibold hover:bg-slate-50 flex items-center justify-center gap-2 transition-all"
+            className="flex-1 sm:flex-none h-10 px-2 sm:px-4 bg-white border border-slate-300 text-slate-700 rounded-lg text-[13px] sm:text-sm font-semibold hover:bg-slate-50 flex items-center justify-center gap-1.5 transition-all whitespace-nowrap"
           >
-            <Table className="w-4 h-4" /> Bảng khối lượng gốc
+            <Table className="w-4 h-4 shrink-0" /> 
+            <span className="sm:hidden">Bảng gốc</span>
+            <span className="hidden sm:inline">Bảng khối lượng gốc</span>
           </Link>
           <Link
             href={`/projects/${id}/field-progress/summary`}
-            className="px-4 py-2.5 bg-white border-2 border-slate-300 text-slate-700 rounded-lg text-sm font-semibold hover:bg-slate-50 flex items-center justify-center gap-2 transition-all"
+            className="flex-1 sm:flex-none h-10 px-2 sm:px-4 bg-white border border-slate-300 text-slate-700 rounded-lg text-[13px] sm:text-sm font-semibold hover:bg-slate-50 flex items-center justify-center gap-1.5 transition-all whitespace-nowrap"
           >
-            <BarChart2 className="w-4 h-4" /> Xem tổng hợp
+            <BarChart2 className="w-4 h-4 shrink-0" /> 
+            <span className="sm:hidden">Tổng hợp</span>
+            <span className="hidden sm:inline">Tổng hợp khối lượng</span>
           </Link>
         </div>
       </div>

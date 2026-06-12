@@ -17,6 +17,8 @@ import {
   Send,
   SlidersHorizontal,
   X,
+  ChevronDown,
+  ArrowRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { batchSaveDailyEntries } from "@/app/(dashboard)/projects/[id]/field-progress/daily/actions";
@@ -64,11 +66,11 @@ export function DailyEntryTable({
   const [loading, setLoading] = useState(false);
   const [activeDrawerItem, setActiveDrawerItem] = useState<DailyItem | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [crewFilter, setCrewFilter] = useState("ALL");
-
-  // Quick Add State
-  const [groups, setGroups] = useState<any[]>(parentGroups || []);
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [focusedItemId, setFocusedItemId] = useState<string | null>(null);
+  const [groups, setGroups] = useState<any[]>(parentGroups || []);
   const [newGroupName, setNewGroupName] = useState("");
   const [quickAddData, setQuickAddData] = useState({
     workContent: "",
@@ -198,9 +200,10 @@ export function DailyEntryTable({
     return Array.from(new Set(items.map((item) => item.constructionCrew).filter(Boolean))).sort() as string[];
   }, [items]);
 
-function parseVietnameseDecimalInput(raw: string): number | null {
+function parseVietnameseDecimalInput(raw: string | number | null | undefined): number | null {
   if (raw === "" || raw === null || raw === undefined) return null;
-  const value = raw.trim().replace(",", ".");
+  const strValue = String(raw);
+  const value = strValue.trim().replace(",", ".");
   if (value === "") return null;
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return null;
@@ -251,11 +254,50 @@ function parseVietnameseDecimalInput(raw: string): number | null {
         item.name?.toLowerCase().includes(needle) ||
         item.parentName?.toLowerCase().includes(needle) ||
         item.constructionCrew?.toLowerCase().includes(needle);
-      const matchesCrew = crewFilter === "ALL" || item.constructionCrew === crewFilter;
+      
+      let matchesStatus = true;
+      if (statusFilter === "EMPTY") matchesStatus = !math.hasTodayQuantity;
+      if (statusFilter === "ENTERED") matchesStatus = math.hasTodayQuantity;
+      if (statusFilter === "OVER") matchesStatus = math.isOver;
 
-      return matchesSearch && matchesCrew;
+      return matchesSearch && matchesStatus;
     });
-  }, [crewFilter, items, searchTerm]);
+  }, [statusFilter, items, searchTerm]);
+
+  const groupedItems = useMemo(() => {
+    const map: Record<string, DailyItem[]> = {};
+    filteredItems.forEach(item => {
+      const pName = item.parentName || "Khác";
+      if (!map[pName]) map[pName] = [];
+      map[pName].push(item);
+    });
+    return Object.entries(map).sort((a,b) => a[0].localeCompare(b[0])).map(([gName, gItems]) => {
+      gItems.sort((a, b) => {
+        const ma = getItemMath(a);
+        const mb = getItemMath(b);
+        const scoreA = ma.isOver ? 0 : !ma.hasTodayQuantity ? 1 : 2;
+        const scoreB = mb.isOver ? 0 : !mb.hasTodayQuantity ? 1 : 2;
+        if (scoreA !== scoreB) return scoreA - scoreB;
+        return 0;
+      });
+      return [gName, gItems] as [string, DailyItem[]];
+    });
+  }, [filteredItems]);
+
+  useEffect(() => {
+    if (Object.keys(expandedGroups).length === 0 && groupedItems.length > 0) {
+      const firstGroupToExpand = groupedItems.find(([_, gItems]) => gItems.some(i => !getItemMath(i).hasTodayQuantity));
+      if (firstGroupToExpand) {
+        setExpandedGroups({ [firstGroupToExpand[0]]: true });
+      } else if (groupedItems[0]) {
+        setExpandedGroups({ [groupedItems[0][0]]: true });
+      }
+    }
+  }, [groupedItems, expandedGroups]);
+
+  const toggleGroup = (groupName: string) => {
+    setExpandedGroups(prev => ({ ...prev, [groupName]: !prev[groupName] }));
+  };
 
   useEffect(() => {
     const firstId = filteredItems[0]?.id;
@@ -316,10 +358,38 @@ function parseVietnameseDecimalInput(raw: string): number | null {
   };
 
   const focusNextQuantity = (index: number) => {
-    const next = filteredItems[index + 1];
+    const flatGrouped = groupedItems.flatMap(([_, items]) => items);
+    const currentIndex = flatGrouped.findIndex(i => i.id === filteredItems[index]?.id);
+    const next = flatGrouped[currentIndex + 1] || filteredItems[index + 1];
     if (next) {
       quantityRefs.current[next.id]?.focus();
       quantityRefs.current[next.id]?.select();
+    }
+  };
+
+  const focusNextEmpty = () => {
+    let targetId: string | null = null;
+    for (const [gName, gItems] of groupedItems) {
+      const emptyItem = gItems.find(i => !getItemMath(i).hasTodayQuantity);
+      if (emptyItem) {
+        targetId = emptyItem.id;
+        if (!expandedGroups[gName]) {
+          setExpandedGroups(prev => ({ ...prev, [gName]: true }));
+        }
+        break;
+      }
+    }
+    
+    if (targetId) {
+      setTimeout(() => {
+        const input = quantityRefs.current[targetId as string];
+        if (input) {
+          input.focus();
+          input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+    } else {
+      alert("Tuyệt vời! Đã nhập hết các công việc.");
     }
   };
 
@@ -380,13 +450,17 @@ function parseVietnameseDecimalInput(raw: string): number | null {
           }}
           type="text"
           inputMode="decimal"
-          disabled={loading}
           value={item.quantity}
           onChange={(e) => patchItem(item.id, "quantity", e.target.value)}
-          onFocus={(e) => e.target.select()}
+          onFocus={(e) => {
+            setFocusedItemId(item.id);
+            e.target.select();
+          }}
+          onBlur={() => setFocusedItemId(null)}
           onKeyDown={(e) => handleQuantityKeyDown(e, index)}
-          className={`w-full rounded-lg border-2 px-3 text-right font-bold outline-none transition focus:ring-4 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 ${
-            compact ? "h-14 text-2xl" : "h-11 text-xl"
+          disabled={loading}
+          className={`w-full rounded border-2 px-2 text-right font-bold outline-none transition focus:ring-2 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 ${
+            compact ? "h-10 text-base" : "h-11 text-xl"
           } ${
             math.isNegative || math.hasInvalidNumber
               ? "border-red-500 bg-red-50 text-red-700 focus:ring-red-100"
@@ -399,8 +473,8 @@ function parseVietnameseDecimalInput(raw: string): number | null {
           placeholder="0"
         />
         {(math.isNegative || math.hasInvalidNumber || math.guard.level !== "OK") && math.guard.level !== "NEED_DESIGN_QUANTITY" && (
-          <div className={`mt-1 flex items-center justify-end gap-1 text-xs font-semibold ${math.guard.level === "NEAR_LIMIT" ? "text-amber-600" : "text-red-600"}`}>
-            <AlertCircle className="h-3.5 w-3.5" />
+          <div className={`mt-1 flex items-center justify-end gap-1 text-[10px] font-semibold ${math.guard.level === "NEAR_LIMIT" ? "text-amber-600" : "text-red-600"}`}>
+            <AlertCircle className="h-3 w-3" />
             {math.isNegative || math.hasInvalidNumber ? "Không nhập âm" : math.guard.message}
           </div>
         )}
@@ -408,71 +482,128 @@ function parseVietnameseDecimalInput(raw: string): number | null {
     );
   };
 
-  const renderMobileCard = (item: DailyItem, index: number) => {
+  const renderMobileRow = (item: DailyItem, index: number) => {
     const math = getItemMath(item);
     const isDirty = !!dirtyEntries[item.id];
+    const isFocused = focusedItemId === item.id;
 
     return (
       <div
         key={item.id}
-        className={`rounded-lg border bg-white p-4 shadow-sm ${
-          math.isOver ? "border-red-300 bg-red-50/40" : isDirty ? "border-amber-300" : "border-slate-200"
+        className={`border-b last:border-0 bg-white p-3 transition-all duration-150 ease-out active:scale-[0.99] active:bg-blue-50/50 ${
+          isFocused ? "bg-blue-50/50 ring-inset ring-2 ring-blue-400 relative z-10" : math.isOver ? "bg-red-50/40" : isDirty ? "bg-amber-50/20" : ""
         }`}
       >
-        <div className="space-y-1">
-          <h3 className="line-clamp-2 text-base font-bold leading-snug text-slate-900">{item.name}</h3>
-          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-            <span>Mũi: {item.constructionCrew ? <span className="text-slate-800">{item.constructionCrew}</span> : <span className="text-slate-400">—</span>}</span>
-            {item.parentName && <span className="max-w-full truncate">Hạng mục: {item.parentName}</span>}
-          </div>
-        </div>
-
-        <div className="mt-3 grid grid-cols-3 gap-2 rounded-lg border border-slate-100 bg-slate-50 p-2 text-center">
-          <div>
-            <div className="text-[10px] uppercase text-slate-500">Tổng KL</div>
-            <div className="font-semibold text-slate-800">
-              {item.designQuantity ? formatQuantity(item.designQuantity) : "-"} {item.unit}
+        <div className="flex items-start justify-between gap-2">
+          <div className="space-y-1 flex-1 min-w-0">
+            <h3 className="line-clamp-2 text-sm font-bold leading-snug text-slate-900">{item.name}</h3>
+            <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-600">
+              <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{item.constructionCrew || "—"}</span>
+              <span className="text-slate-400">•</span>
+              <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{item.unit || "—"}</span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 mt-1">
+              <span>Thiết kế: <span className="font-semibold text-slate-700">{item.designQuantity ? formatQuantity(item.designQuantity) : "-"}</span></span>
+              <span className="text-slate-300">|</span>
+              <span>Đã làm: <span className="font-semibold text-slate-700">{formatQuantity(item.cumulativeBefore)}</span></span>
             </div>
           </div>
-          <div>
-            <div className="text-[10px] uppercase text-slate-500">Đã làm</div>
-            <div className="font-semibold text-slate-800">{formatQuantity(item.cumulativeBefore)}</div>
-          </div>
-          <div>
-            <div className="text-[10px] uppercase text-slate-500">% sau nhập</div>
-            <div className={`font-bold ${math.isOver ? "text-red-600" : math.guard.level === "NEAR_LIMIT" ? "text-amber-600" : "text-slate-800"}`}>
-              {math.percent === null ? "-" : `${math.percent.toFixed(2)}%`}
-            </div>
-          </div>
+          <Button
+            variant="ghost"
+            className="h-10 w-10 p-0 shrink-0 text-slate-500 hover:text-blue-600 bg-slate-50 rounded-full flex items-center justify-center border border-slate-100"
+            onClick={() => setActiveDrawerItem(item)}
+          >
+            <Info className="h-5 w-5" />
+          </Button>
         </div>
 
-        <label className="mt-4 block text-xs font-bold uppercase tracking-wide text-blue-700">
-          KL ngày này ({item.unit || "KL"})
-        </label>
-        <div className="mt-1">{renderQuantityInput(item, index, true)}</div>
-
-        <div className="mt-3 grid grid-cols-2 gap-3">
-          <div className="rounded-lg bg-slate-50 p-2">
-            <div className="text-[10px] uppercase text-slate-500">Sau nhập</div>
-            <div className={`text-lg font-bold ${math.isOver ? "text-red-600" : "text-slate-900"}`}>
-              {formatQuantity(math.cumulativeAfter)}
+        {math.isOver && (
+          <div className="mt-3 w-full rounded-lg bg-red-50 border border-red-200 p-2.5 text-left">
+            <div className="text-xs font-bold text-red-600 flex items-center gap-1.5"><AlertCircle className="h-3.5 w-3.5" /> Vượt khối lượng thiết kế</div>
+            <div className="text-[11px] font-medium text-red-600 mt-1 flex items-center justify-between">
+              <span>Sau nhập: {formatQuantity(math.cumulativeAfter)} / Thiết kế: {item.designQuantity ? formatQuantity(item.designQuantity) : "-"}</span>
             </div>
+            <div className="text-[10px] font-semibold text-red-500 mt-0.5">Cần ghi chú giải trình</div>
           </div>
-          <input
-            value={item.note}
-            onChange={(e) => patchItem(item.id, "note", e.target.value)}
-            className="h-full min-w-0 rounded-lg border border-slate-200 px-3 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 bg-white"
-            placeholder="Ghi chú nhanh"
-          />
-        </div>
+        )}
 
-        <Button
-          variant="outline"
-          className="mt-3 h-9 w-full justify-center text-sm"
-          onClick={() => setActiveDrawerItem(item)}
+        <div className={`mt-3 flex items-center justify-between gap-3 bg-slate-50 border rounded-lg p-2 ${math.isOver ? "border-red-300" : "border-slate-100"}`}>
+          {!math.isOver && (
+            <div className="flex-1 min-w-0">
+              {math.hasTodayQuantity ? (
+                <div className="text-xs font-bold text-emerald-600">
+                  Đã nhập: {formatQuantity(math.cumulativeAfter)}
+                  <div className="text-[10px] font-medium text-emerald-500 mt-0.5">
+                    Tỷ lệ sau nhập: {math.percent === null ? "-" : `${math.percent.toFixed(1)}%`}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-xs font-semibold text-slate-500">Chưa nhập</div>
+              )}
+            </div>
+          )}
+          <div className={`shrink-0 w-[120px] ${math.isOver ? "ml-auto" : ""}`}>
+            {renderQuantityInput(item, index, true)}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderMobileGroup = (groupName: string, groupItems: DailyItem[]) => {
+    const isExpanded = !!expandedGroups[groupName];
+    const total = groupItems.length;
+    let entered = 0;
+    let over = 0;
+    groupItems.forEach(i => {
+      const math = getItemMath(i);
+      if (math.hasTodayQuantity) entered++;
+      if (math.isOver) over++;
+    });
+    const empty = total - entered;
+
+    return (
+      <div key={groupName} className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden mb-3">
+        <button
+          onClick={() => toggleGroup(groupName)}
+          className={`flex w-full items-center justify-between p-3 transition-all active:bg-blue-50/80 active:scale-[0.99] ${
+            isExpanded ? "bg-slate-50 border-b border-slate-200" : "bg-white"
+          }`}
         >
-          <Info className="mr-2 h-4 w-4" /> Chi tiết
-        </Button>
+          <div className="flex-1 text-left min-w-0 pr-2">
+            <h3 className="line-clamp-2 text-sm font-bold text-slate-900">{groupName}</h3>
+            <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] font-medium">
+              <span className="text-slate-500">{total} công việc</span>
+              {entered > 0 && (
+                <>
+                  <span className="text-slate-300">•</span>
+                  <span className="text-emerald-600">{entered} đã nhập</span>
+                </>
+              )}
+              {empty > 0 && (
+                <>
+                  <span className="text-slate-300">•</span>
+                  <span className="text-amber-600">{empty} chưa nhập</span>
+                </>
+              )}
+              {over > 0 && (
+                <>
+                  <span className="text-slate-300">•</span>
+                  <span className="rounded-full bg-red-100 px-1.5 text-red-700">{over} vượt thiết kế</span>
+                </>
+              )}
+            </div>
+          </div>
+          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white shadow-sm border border-slate-200 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}>
+            <ChevronDown className="h-4 w-4 text-slate-500" />
+          </div>
+        </button>
+
+        {isExpanded && (
+          <div className="flex flex-col">
+            {groupItems.map((item, index) => renderMobileRow(item, index))}
+          </div>
+        )}
       </div>
     );
   };
@@ -658,13 +789,13 @@ function parseVietnameseDecimalInput(raw: string): number | null {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border-2 border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <div className="rounded-xl border border-slate-200 bg-white p-3 sm:p-5 shadow-sm">
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-1 flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
             <div>
-              <div className="flex items-center gap-3">
-                <h2 className="text-xl font-bold text-slate-900">Nhập khối lượng theo ngày</h2>
-                <span className={`rounded-full px-3 py-1 text-xs font-semibold border ${
+              <div className="flex items-center gap-2 sm:gap-3">
+                <h2 className="text-base sm:text-lg font-bold text-slate-900 hidden sm:block">Danh sách công việc</h2>
+                <span className={`rounded-full px-2.5 py-0.5 sm:px-3 sm:py-1 text-[11px] sm:text-xs font-semibold border ${
                   dateStatus === 'Đã nhập' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                   dateStatus.includes('Chưa lưu') ? 'bg-amber-50 text-amber-700 border-amber-200' :
                   'bg-slate-100 text-slate-600 border-slate-200'
@@ -672,104 +803,108 @@ function parseVietnameseDecimalInput(raw: string): number | null {
                   {dateStatus}
                 </span>
               </div>
-              <p className="text-sm text-slate-500 mt-1">Công trình: {projectLabel}</p>
             </div>
             <Button
               onClick={() => setShowQuickAdd(true)}
-              className="mt-2 sm:mt-0 bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5 self-start sm:self-center font-semibold shadow-sm"
+              variant="outline"
+              className="mt-1 sm:mt-0 text-blue-700 border-blue-200 bg-blue-50 hover:bg-blue-100 active:bg-blue-200 flex items-center gap-1.5 self-start sm:self-center font-semibold shadow-sm h-8 px-3 text-xs transition-all"
             >
-              <Plus className="h-4 w-4" /> Thêm công việc phát sinh
+              <Plus className="h-3.5 w-3.5" /> <span className="sm:hidden">Thêm phát sinh</span><span className="hidden sm:inline">Thêm công việc phát sinh</span>
             </Button>
           </div>
         </div>
 
-        <div className="mt-5 flex flex-col gap-4 border-t-2 border-slate-100 pt-5 lg:flex-row lg:items-end lg:justify-between">
+        <div className="mt-2 flex flex-col gap-2 border-t border-slate-100 pt-2 lg:flex-row lg:items-end lg:justify-between">
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[200px_300px_220px]">
+          <div className="grid gap-2 grid-cols-2 lg:grid-cols-[140px_220px]">
             <label className="block">
-              <span className="mb-2 flex items-center gap-1.5 text-sm font-bold text-slate-700">
-                <Calendar className="h-4 w-4 text-blue-600" /> Ngày báo cáo
+              <span className="mb-1 flex items-center gap-1 text-[11px] sm:text-xs font-bold text-slate-700">
+                <Calendar className="h-3 w-3 text-blue-600" /> Ngày nhập
               </span>
               <input
                 type="date"
                 value={dateStr}
                 onChange={handleDateChange}
-                className="h-11 w-full rounded-lg border-2 border-slate-300 bg-white px-4 text-sm font-semibold text-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all outline-none"
+                className="h-8 sm:h-9 w-full rounded-md border border-slate-300 bg-white px-2.5 text-xs sm:text-sm font-semibold text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all outline-none"
               />
             </label>
 
-            <label className="block">
-              <span className="mb-2 flex items-center gap-1.5 text-sm font-bold text-slate-700">
-                <Search className="h-4 w-4 text-blue-600" /> Tìm công việc
+            <label className="block col-span-2 sm:col-span-1">
+              <span className="mb-1 flex items-center gap-1 text-[11px] sm:text-xs font-bold text-slate-700">
+                <Search className="h-3 w-3 text-blue-600" /> Tìm kiếm
               </span>
               <input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-11 w-full rounded-lg border-2 border-slate-300 bg-white px-4 text-sm text-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all outline-none"
-                placeholder="Tên công việc, hạng mục, mũi..."
+                className="h-8 sm:h-9 w-full rounded-md border border-slate-300 bg-white px-2.5 text-xs sm:text-sm text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all outline-none"
+                placeholder="Tên, hạng mục, mũi thi công..."
               />
             </label>
 
-            {crews.length > 0 && (
-              <label className="block">
-                <span className="mb-2 flex items-center gap-1.5 text-sm font-bold text-slate-700">
-                  <SlidersHorizontal className="h-4 w-4 text-blue-600" /> Mũi thi công
-                </span>
-                <select
-                  value={crewFilter}
-                  onChange={(e) => setCrewFilter(e.target.value)}
-                  className="h-11 w-full rounded-lg border-2 border-slate-300 bg-white px-4 text-sm text-slate-900 font-medium focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all outline-none"
-                >
-                  <option value="ALL">Tất cả mũi</option>
-                  {crews.map((crew) => (
-                    <option key={crew} value={crew}>
-                      {crew}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 pb-1 mt-1 sm:hidden">
+            {[
+              { id: "ALL", label: "Tất cả" },
+              { id: "EMPTY", label: "Chưa nhập" },
+              { id: "ENTERED", label: "Đã nhập" },
+              { id: "OVER", label: "Vượt khối lượng" }
+            ].map(f => (
+              <button
+                key={f.id}
+                onClick={() => setStatusFilter(f.id)}
+                className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-[11px] font-semibold transition-all active:scale-[0.97] ${
+                  statusFilter === f.id
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
           </div>
         </div>
 
-        <div className="mt-5 flex flex-col gap-3 border-t-2 border-slate-100 pt-5 lg:flex-row lg:items-center lg:justify-end">
-
-          <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
-            <div className="rounded-lg bg-slate-50 border-2 border-slate-200 px-3 py-2.5">
-              <div className="text-slate-500 font-medium">Tổng công việc</div>
-              <div className="text-base font-bold text-slate-900">{stats.total}</div>
-            </div>
-            <div className="rounded-lg bg-green-50 border border-green-200 px-3 py-2.5">
-              <div className="text-green-700 font-medium">Đã nhập ngày này</div>
-              <div className="text-base font-bold text-green-800">{stats.entered}</div>
-            </div>
-            <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2.5">
-              <div className="text-amber-700 font-medium">Chưa nhập</div>
-              <div className="text-base font-bold text-amber-800">{stats.empty}</div>
-            </div>
-            <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2.5">
-              <div className="text-red-700 font-medium">Vượt KL</div>
-              <div className="text-base font-bold text-red-700">{stats.over}</div>
-            </div>
+        <div className="mt-2 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-end">
+          
+          <div className="hidden sm:flex items-center gap-2 mr-auto">
+            {[
+              { id: "ALL", label: "Tất cả" },
+              { id: "EMPTY", label: "Chưa nhập" },
+              { id: "ENTERED", label: "Đã nhập" },
+              { id: "OVER", label: "Vượt khối lượng" }
+            ].map(f => (
+              <button
+                key={f.id}
+                onClick={() => setStatusFilter(f.id)}
+                className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold transition-all active:scale-[0.97] ${
+                  statusFilter === f.id
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
 
-      <div className="hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:block">
-        <table className="w-full text-left text-sm whitespace-nowrap min-w-[1200px]">
+      <div className="hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:block overflow-x-auto overflow-y-hidden max-w-full">
+        <table className="w-full text-left text-sm whitespace-nowrap min-w-max border-collapse">
           <thead className="border-b-2 border-slate-200 bg-slate-50">
             <tr>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.stt} sticky left-0 z-20 text-center`}>STT</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.content} sticky left-[56px] z-20 text-left`}>Công việc</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.crew} text-center`}>Mũi</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.unit} text-center`}>Đơn vị</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.designQty} text-right`}>Tổng KL</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.cumulative} text-right`}>Đã làm</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.dayQty} border-x border-blue-200 bg-blue-50 text-center text-blue-700`}>KL ngày này</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.remaining} text-right`}>Sau nhập</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.percent} text-right`}>%</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.notes} text-left`}>Ghi chú nhanh</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.action} text-center`}>Chi tiết</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.stt} bg-slate-100 border-r-slate-200`}>STT</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.content} bg-slate-100 border-r-slate-200`}>Công việc</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.crew}`}>Mũi</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.unit}`}>Đơn vị</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.designQty}`}>Tổng khối lượng</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.cumulative}`}>Đã thực hiện</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.dayQty} bg-blue-100 text-blue-800`}>Khối lượng ngày này</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.remaining}`}>Sau nhập</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.percent}`}>Tỷ lệ</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.notes}`}>Ghi chú nhanh</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.action} bg-slate-100 border-l border-slate-200`}>Chi tiết</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -780,53 +915,53 @@ function parseVietnameseDecimalInput(raw: string): number | null {
               return (
                 <tr
                   key={item.id}
-                  className={`transition ${sharedTableStyles.workRow} ${math.isOver ? "bg-red-50/40 border-red-200" : isDirty ? "bg-amber-50/30" : ""}`}
+                  className={`transition ${sharedTableStyles.workRow} ${math.isOver ? "bg-red-50/60" : isDirty ? "bg-amber-50/40" : ""}`}
                 >
-                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.stt} sticky left-0 z-10 text-center text-slate-400 ${math.isOver ? 'bg-red-50/50' : isDirty ? 'bg-amber-50/30' : 'bg-white'}`}>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.dailyCols.stt} bg-white border-r-slate-100 ${math.isOver ? '!bg-red-50/60' : isDirty ? '!bg-amber-50/40' : ''}`}>
                     {index + 1}
                   </td>
-                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.content} sticky left-[56px] z-10 ${math.isOver ? 'bg-red-50/50' : isDirty ? 'bg-amber-50/30' : 'bg-white'}`}>
-                    {item.parentName && <div className="mb-0.5 text-[10px] font-medium uppercase tracking-wider text-slate-400 truncate">{item.parentName}</div>}
-                    <div className="font-semibold text-slate-800 truncate" title={item.name}>{item.name}</div>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.dailyCols.content} bg-white ${math.isOver ? '!bg-red-50/60' : isDirty ? '!bg-amber-50/40' : ''}`}>
+                    {item.parentName && <div className="mb-0.5 text-[10px] font-medium uppercase tracking-wider text-slate-400 truncate w-full">{item.parentName}</div>}
+                    <div className="font-semibold text-slate-800 truncate w-full" title={item.name}>{item.name}</div>
+                    {math.isOver && (
+                      <div className="mt-1 text-xs font-bold text-red-600 flex items-center gap-1.5 whitespace-nowrap">
+                        <AlertCircle className="h-3.5 w-3.5" /> Vượt khối lượng thiết kế. <span className="font-medium">Cần ghi chú giải trình.</span>
+                      </div>
+                    )}
                   </td>
-                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.crew}`}>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.dailyCols.crew}`}>
                     {item.constructionCrew ? <span className="text-slate-800 truncate block w-full" title={item.constructionCrew}>{item.constructionCrew}</span> : <span className="text-slate-400">—</span>}
                   </td>
-                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.unit}`}>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.dailyCols.unit}`}>
                     {item.unit ? <span className="text-slate-800">{item.unit}</span> : <span className="text-slate-400">—</span>}
                   </td>
-                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.designQty} font-semibold text-slate-700`}>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.dailyCols.designQty} font-semibold text-slate-700`}>
                     {item.designQuantity ? formatQuantity(item.designQuantity) : "-"}
                   </td>
-                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.cumulative} text-slate-600`}>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.dailyCols.cumulative} text-slate-600`}>
                     {formatQuantity(item.cumulativeBefore)}
                   </td>
-                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.dayQty} bg-blue-50/50 p-2`}>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.dailyCols.dayQty} bg-blue-50/30 p-2 border-l border-r border-blue-100 ${math.isOver ? "bg-red-50/50 border-red-200" : ""}`}>
                     {renderQuantityInput(item, index)}
                   </td>
-                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.remaining} font-bold ${math.isOver ? "text-red-600" : "text-blue-800"}`}>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.dailyCols.remaining} font-bold ${math.isOver ? "text-red-600" : "text-blue-800"}`}>
                     {formatQuantity(math.cumulativeAfter)}
                   </td>
-                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.percent} relative`}>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.dailyCols.percent} relative`}>
                     <div className={`font-bold flex flex-col items-end gap-0.5 ${math.isOver ? "text-red-600" : math.guard.level === "NEAR_LIMIT" ? "text-amber-600" : "text-slate-800"}`}>
-                      <span>{math.percent === null ? "-" : `${math.percent.toFixed(2)}%`}</span>
-                      {math.percent !== null && (
-                        <span className="text-[10px] font-medium text-slate-500">
-                          còn {formatQuantity(math.guard.remaining)}
-                        </span>
-                      )}
+                      <span>{math.percent === null ? "-" : `${math.percent.toFixed(1)}%`}</span>
                     </div>
                   </td>
-                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.notes} p-2`}>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.dailyCols.notes} p-2`}>
                     <input
                       value={item.note}
                       onChange={(e) => patchItem(item.id, "note", e.target.value)}
-                      className="h-9 w-full min-w-[120px] rounded-md border border-slate-200 px-3 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none"
+                      className="h-9 w-full min-w-[120px] rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                       placeholder="Ghi chú nhanh..."
                     />
                   </td>
-                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.action}`}>
-                    <Button variant="ghost" className="h-8 w-8 p-0 text-slate-400 hover:text-blue-600 mx-auto block" onClick={() => setActiveDrawerItem(item)}>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.dailyCols.action} bg-white border-l border-slate-100 ${math.isOver ? '!bg-red-50/60' : isDirty ? '!bg-amber-50/40' : ''}`}>
+                    <Button variant="ghost" className="h-8 w-8 p-0 text-slate-400 hover:text-blue-600 mx-auto block hover:bg-slate-100 rounded-full" onClick={() => setActiveDrawerItem(item)}>
                       <Info className="h-4 w-4 mx-auto" />
                     </Button>
                   </td>
@@ -846,9 +981,9 @@ function parseVietnameseDecimalInput(raw: string): number | null {
         </table>
       </div>
 
-      <div className="flex flex-col gap-3 pb-28 lg:hidden">
-        {filteredItems.map((item, index) => renderMobileCard(item, index))}
-        {filteredItems.length === 0 && (
+      <div className="flex flex-col pb-24 lg:hidden">
+        {groupedItems.map(([groupName, groupItems]) => renderMobileGroup(groupName, groupItems))}
+        {groupedItems.length === 0 && (
           <div className="rounded-lg border border-slate-200 bg-white p-8 text-center text-slate-500">
             <FileText className="mx-auto mb-2 h-8 w-8 text-slate-300" />
             Không có công việc phù hợp bộ lọc.
@@ -856,32 +991,43 @@ function parseVietnameseDecimalInput(raw: string): number | null {
         )}
       </div>
 
-      <div className="hidden flex-col items-end gap-2 lg:flex">
-        <div className="flex items-center justify-end gap-3">
-          <Button
-            onClick={() => handleSave()}
-            disabled={!hasChanges || loading}
-            className={`h-11 px-5 border border-transparent font-semibold shadow-sm ${hasChanges ? "bg-blue-600 text-white hover:bg-blue-700" : "cursor-not-allowed bg-slate-100 text-slate-400"}`}
-            title={!hasChanges ? "Không có thay đổi để lưu" : "Lưu khối lượng vào lũy kế chính thức"}
-          >
-            <Save className="mr-2 h-4 w-4" /> {loading ? "Đang lưu..." : "Lưu khối lượng"} {!loading && hasChanges && `(${Object.keys(dirtyEntries).length})`}
-          </Button>
-        </div>
-        {(!hasChanges || loading) && (
-          <p className="text-xs text-slate-500">
-            {!hasChanges ? "Nút lưu chỉ bật khi có thay đổi." : "Đang xử lý dữ liệu ngày này."}
-          </p>
-        )}
-      </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 flex gap-3 border-t-2 border-slate-200 bg-white p-4 shadow-[0_-4px_12px_rgba(15,23,42,0.12)] lg:hidden">
+
+      <div className={`fixed inset-x-0 bottom-0 z-30 flex gap-3 border-t border-slate-200 bg-white p-3 sm:p-4 shadow-[0_-8px_16px_rgba(15,23,42,0.08)] lg:hidden transition-transform duration-300 ease-out ${hasChanges ? "translate-y-0" : "translate-y-full"}`}>
         <Button
           onClick={() => handleSave()}
           disabled={!hasChanges || loading}
-          className={`h-12 flex-1 border border-transparent font-semibold shadow-sm ${hasChanges ? "bg-blue-600 text-white hover:bg-blue-700" : "cursor-not-allowed bg-slate-100 text-slate-400"}`}
-          title={!hasChanges ? "Không có thay đổi để lưu" : "Lưu khối lượng vào lũy kế chính thức"}
+          className="h-12 flex-1 bg-blue-600 text-white font-bold shadow-md hover:bg-blue-700 active:scale-[0.98] transition-all rounded-xl"
         >
-          <Save className="mr-2 h-4 w-4" /> {loading ? "Đang lưu..." : "Lưu khối lượng"} {!loading && hasChanges && `(${Object.keys(dirtyEntries).length})`}
+          <Save className="mr-2 h-4.5 w-4.5" /> {loading ? "Đang lưu..." : hasChanges ? `Lưu ${Object.keys(dirtyEntries).length} thay đổi` : "Lưu khối lượng"}
+        </Button>
+      </div>
+
+      <div className="fixed bottom-[88px] right-4 z-20 lg:hidden">
+        {stats.empty > 0 && (
+          <Button
+            onClick={focusNextEmpty}
+            className="h-11 w-11 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center p-0"
+            title="Tiếp theo"
+          >
+            <ArrowRight className="h-5 w-5" />
+          </Button>
+        )}
+      </div>
+
+      {/* Sticky Save Bar Desktop */}
+      <div className="hidden lg:block fixed bottom-6 right-8 z-40 transition-transform duration-300 ease-out">
+        <Button
+          onClick={() => handleSave()}
+          disabled={!hasChanges || loading}
+          className={`h-12 px-6 font-bold shadow-xl rounded-xl border-2 transition-all ${
+            hasChanges 
+              ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700 hover:scale-105 active:scale-95 shadow-[0_8px_16px_rgba(37,99,235,0.2)]" 
+              : "bg-white text-slate-400 border-slate-200 cursor-not-allowed hidden"
+          }`}
+        >
+          <Save className="mr-2 h-4.5 w-4.5" /> 
+          {loading ? "Đang lưu..." : hasChanges ? `Lưu ${Object.keys(dirtyEntries).length} thay đổi` : "Lưu khối lượng"}
         </Button>
       </div>
 
@@ -891,12 +1037,12 @@ function parseVietnameseDecimalInput(raw: string): number | null {
             <div className="flex items-start justify-between gap-4 border-b-2 border-slate-200 bg-gradient-to-r from-slate-50 to-white p-5">
               <div className="flex-1">
                 <h3 className="font-bold text-slate-900 text-xl">Chi tiết công việc trong ngày</h3>
-                <p className="mt-1.5 line-clamp-2 text-sm text-slate-600 font-medium leading-relaxed">
+                <p className="mt-1.5 text-sm text-slate-600 font-medium leading-relaxed">
                   {activeDrawerItem.name}
                 </p>
-                <div className="mt-2 inline-flex items-center gap-2 rounded-lg bg-blue-100 px-3 py-1 text-xs font-bold text-blue-800">
-                  <Calendar className="h-3.5 w-3.5" />
-                  Ngày: {dateStr.split("-").reverse().join("/")}
+                <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold text-slate-600">
+                  <span className="bg-slate-100 px-2 py-1 rounded">Mũi: {activeDrawerItem.constructionCrew || "—"}</span>
+                  <span className="bg-slate-100 px-2 py-1 rounded">Đơn vị: {activeDrawerItem.unit || "—"}</span>
                 </div>
               </div>
               <Button variant="ghost" className="h-9 w-9 p-0 rounded-full hover:bg-slate-200" onClick={() => setActiveDrawerItem(null)}>
@@ -905,25 +1051,39 @@ function parseVietnameseDecimalInput(raw: string): number | null {
             </div>
 
             <div className="flex-1 space-y-5 overflow-y-auto p-5 bg-slate-50/50">
-              {activeDrawerItem.materials && activeDrawerItem.materials.length > 0 && (
-                <div className="rounded-xl border-2 border-orange-200 bg-orange-50 p-4">
-                  <div className="mb-3 flex items-center gap-2 text-base font-bold text-orange-800">
-                    <Package className="h-5 w-5" /> Vật tư đề xuất
-                  </div>
-                  <div className="space-y-2">
-                    {activeDrawerItem.materials.map((request: any) => (
-                      <div key={request.id} className="rounded-lg bg-white border border-orange-100 p-3 text-sm text-slate-700 shadow-sm">
-                        <div className="font-semibold text-slate-900">{request.note || "Phiếu đề xuất vật tư"}</div>
-                        {request.items?.map((material: any) => (
-                          <div key={material.id} className="mt-1.5 text-xs text-slate-600">
-                            • {material.materialName}: <span className="font-bold">{formatQuantity(material.requestedQuantity)} {material.unit}</span>
-                          </div>
-                        ))}
+              {(() => {
+                const math = getItemMath(activeDrawerItem);
+                return (
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div>
+                      <div className="text-xs uppercase text-slate-500 mb-1">Tổng thiết kế</div>
+                      <div className="font-bold text-slate-800">{activeDrawerItem.designQuantity ? formatQuantity(activeDrawerItem.designQuantity) : "-"}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs uppercase text-slate-500 mb-1">Đã thực hiện</div>
+                      <div className="font-bold text-slate-800">{formatQuantity(activeDrawerItem.cumulativeBefore)}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs uppercase text-slate-500 mb-1">Khối lượng sau nhập</div>
+                      <div className={`font-bold ${math.isOver ? "text-red-600" : "text-blue-700"}`}>
+                        {formatQuantity(math.cumulativeAfter)}
                       </div>
-                    ))}
+                    </div>
+                    <div>
+                      <div className="text-xs uppercase text-slate-500 mb-1">Tỷ lệ sau nhập</div>
+                      <div className={`font-bold ${math.isOver ? "text-red-600" : math.guard.level === "NEAR_LIMIT" ? "text-amber-600" : "text-blue-700"}`}>
+                        {math.percent === null ? "-" : `${math.percent.toFixed(2)}%`}
+                      </div>
+                    </div>
+                    
+                    {math.isOver && (
+                      <div className="col-span-2 sm:col-span-4 mt-2 p-2 rounded bg-red-50 border border-red-200 text-xs font-semibold text-red-700 flex items-center gap-1.5">
+                        <AlertCircle className="h-4 w-4" /> Vượt khối lượng thiết kế. Vui lòng ghi chú giải trình.
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               <label className="block">
                 <span className="mb-2 block text-sm font-bold text-slate-800 flex items-center gap-2">

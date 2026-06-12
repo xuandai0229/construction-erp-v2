@@ -74,15 +74,15 @@ export function Header({ userName, userRole }: { userName?: string, userRole?: s
       {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 flex lg:hidden">
-          <div className="fixed inset-0 bg-slate-900/80" onClick={() => setMobileMenuOpen(false)} />
-          <div className="relative flex w-full max-w-xs flex-1 flex-col bg-white">
-            <div className="flex h-16 shrink-0 items-center justify-between px-6 border-b border-slate-200">
-              <span className="text-xl font-bold text-blue-600">ERP Công trình</span>
+          <div className="fixed inset-0 bg-slate-900/60 transition-opacity" onClick={() => setMobileMenuOpen(false)} />
+          <div className="relative flex w-[85vw] max-w-sm flex-1 flex-col bg-white">
+            <div className="flex h-16 shrink-0 items-center justify-between px-4 sm:px-6 border-b border-slate-200">
+              <span className="text-lg sm:text-xl font-bold text-blue-600">ERP Công trình</span>
               <button
                 onClick={() => setMobileMenuOpen(false)}
                 className="text-slate-500 hover:text-slate-700 p-2"
               >
-                <X className="h-6 w-6" />
+                <X className="h-5 w-5 sm:h-6 sm:w-6" />
               </button>
             </div>
             <div className="flex flex-1 flex-col overflow-y-auto pt-4 pb-4">
@@ -98,13 +98,13 @@ export function Header({ userName, userRole }: { userName?: string, userRole?: s
                         isActive
                           ? 'bg-blue-50 text-blue-600'
                           : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900',
-                        'group flex items-center rounded-md px-3 py-3 text-base font-medium'
+                        'group flex items-center rounded-md px-3 py-2.5 text-sm font-medium'
                       )}
                     >
                       <item.icon
                         className={cn(
                           isActive ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-500',
-                          'mr-4 h-6 w-6 flex-shrink-0'
+                          'mr-3 h-5 w-5 flex-shrink-0'
                         )}
                         aria-hidden="true"
                       />

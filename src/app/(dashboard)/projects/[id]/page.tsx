@@ -46,14 +46,16 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
           </div>
           <p className="text-sm text-slate-500 mt-1">Mã: {project.code}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link href="/projects" className={buttonClass}>
-            Quay lại danh sách
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+          <Link href="/projects" className="flex-1 sm:flex-none inline-flex items-center justify-center rounded-md text-xs sm:text-sm font-medium transition-colors border border-slate-300 bg-white hover:bg-slate-100 text-slate-900 h-9 sm:h-10 px-3 sm:px-4">
+            Quay lại
           </Link>
-          <Link href={`/projects/${project.id}/edit`} className={buttonClass}>
-            Sửa thông tin
+          <Link href={`/projects/${project.id}/edit`} className="flex-1 sm:flex-none inline-flex items-center justify-center rounded-md text-xs sm:text-sm font-medium transition-colors border border-slate-300 bg-white hover:bg-slate-100 text-slate-900 h-9 sm:h-10 px-3 sm:px-4">
+            Sửa
           </Link>
-          <DeleteProjectButton id={project.id} projectName={project.name} />
+          <div className="w-full sm:w-auto mt-2 sm:mt-0 flex justify-end">
+            <DeleteProjectButton id={project.id} projectName={project.name} />
+          </div>
         </div>
       </div>
 
@@ -77,7 +79,7 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
                 <p className="font-medium">{project.startDate ? format(new Date(project.startDate), 'dd/MM/yyyy') : "Chưa cập nhật"}</p>
               </div>
               <div className="space-y-1">
-                <span className="text-slate-500 flex items-center"><Calendar className="h-4 w-4 mr-1"/> Ngày dự kiến KT</span>
+                <span className="text-slate-500 flex items-center"><Calendar className="h-4 w-4 mr-1"/> Ngày dự kiến kết thúc</span>
                 <p className="font-medium">{project.endDate ? format(new Date(project.endDate), 'dd/MM/yyyy') : "Chưa cập nhật"}</p>
               </div>
             </div>
@@ -99,65 +101,84 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
                 Quản lý &rarr;
               </Link>
             </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto max-h-48">
+            <CardContent className="flex-1">
               <ul className="space-y-2 text-sm text-slate-600">
-                {project.documentFolders.length > 0 ? project.documentFolders.map(folder => (
-                  <li key={folder.id} className="flex items-center">
-                    <FolderOpen className="h-3 w-3 mr-2 text-blue-500" />
-                    {folder.name}
-                  </li>
-                )) : <li>Chưa có thư mục</li>}
+                {project.documentFolders.length > 0 ? (
+                  <>
+                    {project.documentFolders.slice(0, 4).map(folder => (
+                      <li key={folder.id} className="flex items-center">
+                        <FolderOpen className="h-4 w-4 mr-2 text-blue-500" />
+                        <span className="truncate">{folder.name}</span>
+                      </li>
+                    ))}
+                    {project.documentFolders.length > 4 && (
+                      <li className="pt-2">
+                        <Link href={`/documents/${project.id}`} className="text-xs text-blue-600 hover:underline">
+                          + {project.documentFolders.length - 4} thư mục khác
+                        </Link>
+                      </li>
+                    )}
+                  </>
+                ) : <li>Chưa có thư mục</li>}
               </ul>
             </CardContent>
           </Card>
       </div>
 
-      <h2 className="text-lg font-semibold text-slate-900 mt-8 mb-4">Các phân hệ quản lý</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <h2 className="text-lg font-semibold text-slate-900 mt-6 md:mt-8 mb-3 md:mb-4">Các phân hệ quản lý</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <Link href={`/projects/${project.id}/field-progress`} className="block group">
-          <Card className="hover:border-blue-400 hover:shadow-lg transition-all h-full border-2">
-            <CardContent className="p-6 text-center space-y-3">
-              <div className="mx-auto bg-blue-50 w-14 h-14 rounded-xl flex items-center justify-center group-hover:bg-blue-100 group-hover:scale-110 transition-all shadow-sm">
-                <ListTree className="h-7 w-7 text-blue-600" />
+          <Card className="hover:border-blue-400 hover:shadow-lg transition-all h-full border-2 border-slate-200">
+            <CardContent className="p-4 md:p-5 flex flex-row items-center md:flex-col md:text-center md:space-y-3 gap-4 md:gap-0">
+              <div className="shrink-0 bg-blue-50 w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center group-hover:bg-blue-100 group-hover:scale-110 transition-all shadow-sm">
+                <ListTree className="h-6 w-6 md:h-7 md:w-7 text-blue-600" />
               </div>
-              <h3 className="font-bold text-slate-900 text-base">Bảng khối lượng gốc</h3>
-              <p className="text-sm text-slate-600 leading-relaxed">Thiết lập hạng mục, công việc, mũi thi công và khối lượng thiết kế.</p>
+              <div className="flex-1">
+                <h3 className="font-bold text-slate-900 text-sm md:text-base">Bảng khối lượng gốc</h3>
+                <p className="text-xs md:text-sm text-slate-600 leading-relaxed mt-0.5 line-clamp-2 md:line-clamp-none">Thiết lập hạng mục, công việc, mũi thi công.</p>
+              </div>
             </CardContent>
           </Card>
         </Link>
 
         <Link href={`/projects/${project.id}/field-progress/daily`} className="block group">
-          <Card className="hover:border-emerald-400 hover:shadow-lg transition-all h-full border-2">
-            <CardContent className="p-6 text-center space-y-3">
-              <div className="mx-auto bg-emerald-50 w-14 h-14 rounded-xl flex items-center justify-center group-hover:bg-emerald-100 group-hover:scale-110 transition-all shadow-sm">
-                <ClipboardCheck className="h-7 w-7 text-emerald-600" />
+          <Card className="hover:border-emerald-400 hover:shadow-lg transition-all h-full border-2 border-slate-200">
+            <CardContent className="p-4 md:p-5 flex flex-row items-center md:flex-col md:text-center md:space-y-3 gap-4 md:gap-0">
+              <div className="shrink-0 bg-emerald-50 w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center group-hover:bg-emerald-100 group-hover:scale-110 transition-all shadow-sm">
+                <ClipboardCheck className="h-6 w-6 md:h-7 md:w-7 text-emerald-600" />
               </div>
-              <h3 className="font-bold text-slate-900 text-base">Nhập khối lượng theo ngày</h3>
-              <p className="text-sm text-slate-600 leading-relaxed">Nhập khối lượng thực hiện từng ngày cho từng công việc.</p>
+              <div className="flex-1">
+                <h3 className="font-bold text-slate-900 text-sm md:text-base">Nhập khối lượng theo ngày</h3>
+                <p className="text-xs md:text-sm text-slate-600 leading-relaxed mt-0.5 line-clamp-2 md:line-clamp-none">Nhập khối lượng thực hiện theo từng ngày.</p>
+              </div>
             </CardContent>
           </Card>
         </Link>
 
         <Link href={`/projects/${project.id}/field-progress/summary`} className="block group">
-          <Card className="hover:border-indigo-400 hover:shadow-lg transition-all h-full border-2">
-            <CardContent className="p-6 text-center space-y-3">
-              <div className="mx-auto bg-indigo-50 w-14 h-14 rounded-xl flex items-center justify-center group-hover:bg-indigo-100 group-hover:scale-110 transition-all shadow-sm">
-                <BarChart2 className="h-7 w-7 text-indigo-600" />
+          <Card className="hover:border-indigo-400 hover:shadow-lg transition-all h-full border-2 border-slate-200">
+            <CardContent className="p-4 md:p-5 flex flex-row items-center md:flex-col md:text-center md:space-y-3 gap-4 md:gap-0">
+              <div className="shrink-0 bg-indigo-50 w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center group-hover:bg-indigo-100 group-hover:scale-110 transition-all shadow-sm">
+                <BarChart2 className="h-6 w-6 md:h-7 md:w-7 text-indigo-600" />
               </div>
-              <h3 className="font-bold text-slate-900 text-base">Tổng hợp khối lượng</h3>
-              <p className="text-sm text-slate-600 leading-relaxed">Theo dõi lũy kế, phát sinh theo kỳ, tỷ lệ hoàn thành và ngày có phát sinh.</p>
+              <div className="flex-1">
+                <h3 className="font-bold text-slate-900 text-sm md:text-base">Tổng hợp khối lượng</h3>
+                <p className="text-xs md:text-sm text-slate-600 leading-relaxed mt-0.5 line-clamp-2 md:line-clamp-none">Theo dõi lũy kế, phát sinh và tỷ lệ hoàn thành.</p>
+              </div>
             </CardContent>
           </Card>
         </Link>
 
         <Link href={`/audit?project=${project.id}`} className="block group">
-          <Card className="hover:border-slate-400 hover:shadow-lg transition-all h-full border-2">
-            <CardContent className="p-6 text-center space-y-3">
-              <div className="mx-auto bg-slate-100 w-14 h-14 rounded-xl flex items-center justify-center group-hover:bg-slate-200 group-hover:scale-110 transition-all shadow-sm">
-                <History className="h-7 w-7 text-slate-600" />
+          <Card className="hover:border-slate-300 transition-all h-full border border-slate-200 bg-slate-50/50">
+            <CardContent className="p-4 md:p-5 flex flex-row items-center md:flex-col md:text-center md:space-y-3 gap-4 md:gap-0">
+              <div className="shrink-0 bg-slate-100 w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center group-hover:bg-slate-200 group-hover:scale-110 transition-all shadow-sm">
+                <History className="h-6 w-6 md:h-7 md:w-7 text-slate-600" />
               </div>
-              <h3 className="font-bold text-slate-900 text-base">Nhật ký hệ thống</h3>
-              <p className="text-sm text-slate-600 leading-relaxed">Xem lịch sử thay đổi dữ liệu của công trình.</p>
+              <div className="flex-1">
+                <h3 className="font-bold text-slate-900 text-sm md:text-base">Nhật ký hệ thống</h3>
+                <p className="text-xs md:text-sm text-slate-600 leading-relaxed mt-0.5 line-clamp-2 md:line-clamp-none">Xem lịch sử thay đổi dữ liệu của công trình.</p>
+              </div>
             </CardContent>
           </Card>
         </Link>
