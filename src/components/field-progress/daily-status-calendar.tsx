@@ -42,28 +42,14 @@ export function DailyStatusCalendar({
   const getStatusConfig = (status: DayStatus) => {
     switch (status) {
       case "APPROVED":
+      case "SUBMITTED":
+      case "DRAFT":
         return {
           icon: CheckCircle2,
           bg: "bg-emerald-100",
           border: "border-emerald-300",
           text: "text-emerald-700",
-          label: "Đã xác nhận"
-        };
-      case "SUBMITTED":
-        return {
-          icon: Clock,
-          bg: "bg-blue-100",
-          border: "border-blue-300",
-          text: "text-blue-700",
-          label: "Chờ giám sát"
-        };
-      case "DRAFT":
-        return {
-          icon: FileText,
-          bg: "bg-amber-100",
-          border: "border-amber-300",
-          text: "text-amber-700",
-          label: "Lưu tạm"
+          label: "Đã nhập"
         };
       default:
         return {
@@ -82,7 +68,7 @@ export function DailyStatusCalendar({
         <div className="p-2 bg-blue-100 rounded-lg">
           <Calendar className="h-5 w-5 text-blue-600" />
         </div>
-        <h3 className="font-bold text-slate-900 text-base">Lịch trạng thái báo cáo</h3>
+        <h3 className="font-bold text-slate-900 text-base">Lịch nhập khối lượng</h3>
       </div>
 
       {/* Timeline */}
@@ -121,9 +107,7 @@ export function DailyStatusCalendar({
       {/* Legend */}
       <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t-2 border-slate-100">
         {[
-          { status: "APPROVED" as DayStatus, label: "Đã xác nhận" },
-          { status: "SUBMITTED" as DayStatus, label: "Chờ giám sát" },
-          { status: "DRAFT" as DayStatus, label: "Lưu tạm" },
+          { status: "APPROVED" as DayStatus, label: "Đã nhập" },
           { status: "EMPTY" as DayStatus, label: "Chưa nhập" }
         ].map(({ status, label }) => {
           const config = getStatusConfig(status);

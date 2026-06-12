@@ -4,7 +4,7 @@ import { getOrCreateTemplate } from "./actions";
 import { MasterTable } from "@/components/field-progress/master-table";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
-import { ArrowLeft, Calendar, BarChart2, Package, TrendingUp, CheckCircle2, BarChart3 } from "lucide-react";
+import { ArrowLeft, Calendar, BarChart2, Package, TrendingUp, CheckCircle2, BarChart3, Info } from "lucide-react";
 import { buildTreeItems, flattenTreeForTable, calculateParentRollup, formatQuantity } from "@/lib/field-progress";
 
 export default async function FieldProgressPage({ params }: { params: Promise<{ id: string }> }) {
@@ -65,7 +65,7 @@ export default async function FieldProgressPage({ params }: { params: Promise<{ 
   const pendingQty = draftQty + submittedQty;
 
   return (
-    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 space-y-6 pb-20">
+    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 pt-4 sm:pt-6 space-y-6 pb-20">
       {/* Header */}
       <div className="flex flex-col gap-4">
         <div>
@@ -103,82 +103,35 @@ export default async function FieldProgressPage({ params }: { params: Promise<{ 
         </div>
       </div>
 
-      {/* Overview Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <Package className="h-8 w-8 text-blue-600" />
-          </div>
-          <div className="text-2xl font-bold text-slate-900">{groupItems.length}</div>
-          <div className="text-xs font-medium text-slate-600 mt-1 uppercase tracking-wide">Tổng hạng mục chính</div>
+      {/* Overview Stats Bar */}
+      <div className="inline-flex flex-wrap items-center gap-0 rounded-xl border border-slate-200 bg-white shadow-sm py-1.5 px-1.5">
+        <div className="flex items-center gap-2 px-3 py-1">
+          <Package className="h-4 w-4 text-blue-500" />
+          <span className="text-base font-bold text-slate-900">{groupItems.length}</span>
+          <span className="text-sm font-medium text-slate-500">Hạng mục chính</span>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <BarChart3 className="h-8 w-8 text-blue-600" />
-          </div>
-          <div className="text-2xl font-bold text-slate-900">{workItems.length}</div>
-          <div className="text-xs font-medium text-slate-600 mt-1 uppercase tracking-wide">Tổng công việc</div>
+        <div className="hidden sm:block h-4 w-px bg-slate-200" />
+
+        <div className="flex items-center gap-2 px-3 py-1">
+          <BarChart3 className="h-4 w-4 text-blue-500" />
+          <span className="text-base font-bold text-slate-900">{workItems.length}</span>
+          <span className="text-sm font-medium text-slate-500">Công việc</span>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <TrendingUp className="h-8 w-8 text-blue-600" />
-          </div>
-          <div className="text-2xl font-bold text-slate-900">{formatQuantity(totalDesignQty)}</div>
-          <div className="text-xs font-medium text-slate-600 mt-1 uppercase tracking-wide">Tổng KL thiết kế</div>
-        </div>
+        <div className="hidden sm:block h-4 w-px bg-slate-200" />
 
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <CheckCircle2 className="h-8 w-8 text-green-600" />
-          </div>
-          <div className="text-2xl font-bold text-slate-900">{overallProgress}%</div>
-          <div className="text-xs font-medium text-slate-600 mt-1 uppercase tracking-wide">% hoàn thành chính thức</div>
+        <div className="flex items-center gap-2 px-3 py-1">
+          <TrendingUp className="h-4 w-4 text-blue-500" />
+          <span className="text-base font-bold text-slate-900">{formatQuantity(totalDesignQty)}</span>
+          <span className="text-sm font-medium text-slate-500">Tổng KL thiết kế</span>
         </div>
       </div>
 
       {/* Info notice about cumulative calculation */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-        <div className="flex items-start gap-3">
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <CheckCircle2 className="h-5 w-5 text-blue-600" />
-          </div>
-          <div className="flex-1">
-            <h3 className="text-sm font-bold text-blue-900 mb-1">
-              Lưu ý về lũy kế tại màn này
-            </h3>
-            <p className="text-sm text-blue-800 leading-relaxed">
-              Cột <span className="font-semibold">Lũy kế</span> và <span className="font-semibold">% TH</span> chỉ tính các khối lượng <span className="font-bold text-blue-900">đã được giám sát xác nhận</span> (status = APPROVED). 
-              Dữ liệu đang ở trạng thái "Lưu tạm" (DRAFT) hoặc "Chờ giám sát" (SUBMITTED) chưa được cộng vào lũy kế chính thức.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-sm font-bold text-amber-900">Khối lượng chờ xác nhận</h2>
-            <p className="mt-1 text-sm leading-relaxed text-amber-800">
-              Dữ liệu DRAFT và SUBMITTED đã lưu trong bảng FieldProgressEntry nhưng chưa cộng vào cột Lũy kế chính thức. Khi có luồng duyệt chuyển sang APPROVED, khối lượng mới được tính vào lũy kế.
-            </p>
-          </div>
-          <div className="grid grid-cols-3 gap-2 text-center text-sm sm:min-w-[360px]">
-            <div className="rounded-lg border border-amber-200 bg-white px-3 py-2">
-              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Lưu tạm</div>
-              <div className="mt-1 font-bold text-amber-800">{formatQuantity(draftQty)}</div>
-            </div>
-            <div className="rounded-lg border border-blue-200 bg-white px-3 py-2">
-              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Chờ giám sát</div>
-              <div className="mt-1 font-bold text-blue-700">{formatQuantity(submittedQty)}</div>
-            </div>
-            <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Tổng chờ</div>
-              <div className="mt-1 font-bold text-slate-900">{formatQuantity(pendingQty)}</div>
-            </div>
-          </div>
-        </div>
+      <div className="flex items-center gap-2 text-sm text-slate-500 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 w-fit">
+        <Info className="w-4 h-4 text-blue-500 flex-shrink-0" />
+        <span><strong className="font-semibold text-slate-700">Lưu ý:</strong> Cột Lũy kế chỉ cộng các khối lượng đã được duyệt (APPROVED). Dữ liệu nháp/chờ chưa được tính.</span>
       </div>
 
       <MasterTable 

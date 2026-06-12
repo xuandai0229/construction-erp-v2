@@ -16,7 +16,7 @@ export async function batchSaveDailyEntries(projectId: string, templateId: strin
 
   try {
     const { start, end } = getWorkDateRange(entryDateStr);
-    const status = submit ? "SUBMITTED" : "DRAFT";
+    const status = "APPROVED";
     
     const itemIds = entries.map(e => e.itemId);
 
@@ -103,8 +103,8 @@ export async function batchSaveDailyEntries(projectId: string, templateId: strin
         proposalNote: e.proposalNote
       });
 
-      if (submit && !guard.canSubmit) {
-        throw new Error("Khối lượng sau khi gửi vượt giới hạn cho phép. Vui lòng nhập lý do phát sinh tối thiểu 10 ký tự hoặc điều chỉnh lại số liệu.");
+      if (!guard.canSubmit) {
+        throw new Error("Khối lượng sau khi lưu vượt giới hạn cho phép. Vui lòng nhập lý do phát sinh tối thiểu 10 ký tự hoặc điều chỉnh lại số liệu.");
       }
       
       if (existingIds.length === 1) {
@@ -117,7 +117,8 @@ export async function batchSaveDailyEntries(projectId: string, templateId: strin
               proposalNote: e.proposalNote,
               note: e.note,
               status,
-              submittedAt: submit ? new Date() : undefined,
+              approvedAt: new Date(),
+              submittedAt: null,
               deletedAt: null // Restore if it was previously soft-deleted (though our query filtered deletedAt: null anyway)
             }
           })
@@ -136,7 +137,7 @@ export async function batchSaveDailyEntries(projectId: string, templateId: strin
               note: e.note,
               status,
               createdById: session.id,
-              submittedAt: submit ? new Date() : undefined
+              approvedAt: new Date()
             }
           })
         ];
@@ -148,7 +149,7 @@ export async function batchSaveDailyEntries(projectId: string, templateId: strin
     await writeAuditLog({
       userId: session.id,
       projectId,
-      action: submit ? "SUBMIT_FIELD_PROGRESS_ENTRY" : "UPDATE_FIELD_PROGRESS_ENTRY",
+      action: "UPDATE_FIELD_PROGRESS_ENTRY",
       entityType: "FieldProgressEntry",
       entityId: entryDateStr,
       afterData: entries

@@ -2,7 +2,7 @@ import { getSession } from "@/lib/auth";
 import { notFound, redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
-import { ArrowLeft, Filter, Table, Calendar } from "lucide-react";
+import { ArrowLeft, Filter, Table, Calendar, Info } from "lucide-react";
 import { buildDateColumns, formatQuantity, groupEntriesByItemAndDate } from "@/lib/field-progress";
 import { buildFieldProgressRollupTree } from "@/lib/field-progress/rollup";
 import { sharedTableStyles } from "@/components/field-progress/table-styles";
@@ -105,6 +105,8 @@ export default async function FieldProgressSummaryPage({
     dynamicDates,
   });
 
+  const formattedFromDate = formatWorkDateShort(parseWorkDate(fromDate));
+
   return (
     <div className="max-w-[1600px] mx-auto px-4 sm:px-6 space-y-6 pb-20">
       <div className="flex flex-col gap-4">
@@ -144,50 +146,50 @@ export default async function FieldProgressSummaryPage({
       </div>
 
       <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-        <form className="flex flex-wrap items-end gap-4" method="GET">
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">Từ ngày</label>
+        <form className="flex flex-wrap items-end gap-3 sm:gap-4" method="GET">
+          <div className="flex-1 min-w-[140px] max-w-[180px]">
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">Từ ngày</label>
             <input 
               type="date" 
               name="from" 
               defaultValue={fromDate} 
-              className="h-11 px-4 py-2 border-2 border-slate-300 bg-white text-slate-900 rounded-lg text-sm font-medium focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all outline-none" 
+              className="w-full h-10 px-3 border border-slate-300 bg-white text-slate-900 rounded-lg text-sm font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none" 
             />
           </div>
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">Đến ngày</label>
+          <div className="flex-1 min-w-[140px] max-w-[180px]">
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">Đến ngày</label>
             <input 
               type="date" 
               name="to" 
               defaultValue={toDate} 
-              className="h-11 px-4 py-2 border-2 border-slate-300 bg-white text-slate-900 rounded-lg text-sm font-medium focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all outline-none" 
+              className="w-full h-10 px-3 border border-slate-300 bg-white text-slate-900 rounded-lg text-sm font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none" 
             />
           </div>
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">Chế độ hiển thị ngày</label>
+          <div className="flex-1 min-w-[180px] max-w-[240px]">
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">Hiển thị ngày</label>
             <select 
               name="mode" 
               defaultValue={mode} 
-              className="h-11 px-4 py-2 border-2 border-slate-300 bg-white text-slate-900 rounded-lg text-sm font-medium focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all outline-none"
+              className="w-full h-10 px-3 border border-slate-300 bg-white text-slate-900 rounded-lg text-sm font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
             >
-              <option value="HAS_DATA_ONLY">Chỉ ngày có dữ liệu</option>
-              <option value="ALL_DAYS">Tất cả các ngày</option>
+              <option value="HAS_DATA_ONLY">Chỉ ngày có phát sinh</option>
+              <option value="ALL_DAYS">Tất cả ngày trong kỳ</option>
             </select>
           </div>
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">Trạng thái dữ liệu</label>
+          <div className="flex-1 min-w-[180px] max-w-[260px]">
+            <label className="block text-xs font-bold text-slate-700 mb-1.5">Phạm vi số liệu</label>
             <select 
               name="status" 
               defaultValue={statusFilter} 
-              className="h-11 px-4 py-2 border-2 border-slate-300 bg-white text-slate-900 rounded-lg text-sm font-medium focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all outline-none"
+              className="w-full h-10 px-3 border border-slate-300 bg-white text-slate-900 rounded-lg text-sm font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
             >
-              <option value="APPROVED_ONLY">Chỉ tính khối lượng đã xác nhận</option>
-              <option value="ALL">Bao gồm dữ liệu lưu tạm / chờ kiểm tra</option>
+              <option value="APPROVED_ONLY">Chỉ số đã duyệt</option>
+              <option value="ALL">Bao gồm tất cả số đã nhập</option>
             </select>
           </div>
           <button 
             type="submit" 
-            className="h-11 px-6 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 flex items-center gap-2 shadow-sm transition-all"
+            className="h-10 px-5 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 flex items-center justify-center gap-2 shadow-sm transition-all whitespace-nowrap"
           >
             <Filter className="w-4 h-4" /> Lọc
           </button>
@@ -208,13 +210,23 @@ export default async function FieldProgressSummaryPage({
           <table className="w-full text-sm text-left whitespace-nowrap min-w-[1200px]">
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 sticky top-0 z-10">
               <tr>
-                <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.stt} sticky left-0 z-20`} rowSpan={2}>STT</th>
-                <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.content} sticky left-[56px] z-20 text-left`} rowSpan={2}>Hạng mục / Công việc</th>
-                <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.crew}`} rowSpan={2}>Mũi thi công</th>
-                <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.unit}`} rowSpan={2}>Đơn vị</th>
-                <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.designQty} text-right`} rowSpan={2}>Tổng KL thiết kế</th>
-                <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.cumulative} text-right`} rowSpan={2}>Lũy kế kỳ trước</th>
-                <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.dayQty} text-right text-blue-700 bg-blue-50/80`} rowSpan={2}>Phát sinh trong kỳ</th>
+                <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.stt} sticky left-0 z-20 shadow-[1px_0_0_0_#e2e8f0] text-center`} rowSpan={2}>STT</th>
+                <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.content} sticky left-[56px] z-20 text-left shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]`} rowSpan={2}>Hạng mục / Công việc</th>
+                <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.crew} text-center`} rowSpan={2}>Mũi thi công</th>
+                <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.unit} text-center`} rowSpan={2}>Đơn vị</th>
+                <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.designQty} text-center`} rowSpan={2}>Tổng KL thiết kế</th>
+                <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.cumulative} text-center`} rowSpan={2}>
+                  <div className="flex h-full min-h-[56px] flex-col items-center justify-center gap-1 text-center">
+                    <div className="flex items-center justify-center gap-1 cursor-help" title="Tổng khối lượng đã lưu trước ngày bắt đầu kỳ lọc. Nếu chưa có dữ liệu trước kỳ thì hiển thị 0.">
+                      <Info className="h-3.5 w-3.5 text-slate-400" />
+                      <span>Lũy kế trước kỳ</span>
+                    </div>
+                    <span className="text-[11px] font-medium normal-case text-slate-400">
+                      Trước {formattedFromDate}
+                    </span>
+                  </div>
+                </th>
+                <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.periodQty} text-center text-blue-700 bg-blue-50/80`} rowSpan={2}>Phát sinh trong kỳ</th>
                 <th className={`${sharedTableStyles.headerTh} text-center bg-blue-50/80 text-blue-700`} colSpan={2}>Lũy kế đến nay</th>
                 {dynamicDates.length > 0 && (
                   <th className={`${sharedTableStyles.headerTh} text-center`} colSpan={dynamicDates.length}>
@@ -223,8 +235,8 @@ export default async function FieldProgressSummaryPage({
                 )}
               </tr>
               <tr>
-                <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.cumulative} border-t text-right bg-blue-50/80 text-blue-700`}>Lũy kế</th>
-                <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.percent} border-t text-right bg-blue-50/80 text-blue-700`}>%</th>
+                <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.cumulative} border-t text-center bg-blue-50/80 text-blue-700`}>Lũy kế</th>
+                <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.percent} border-t text-center bg-blue-50/80 text-blue-700`}>%</th>
                 {dynamicDates.map(d => (
                   <th key={formatWorkDate(d)} className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.dayQty} border-t text-center`}>
                     {formatWorkDateShort(d)}
@@ -254,8 +266,8 @@ export default async function FieldProgressSummaryPage({
 
                 return (
                   <tr key={item.id} className={trClass}>
-                    <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.stt} sticky left-0 z-10 ${isGroup ? 'bg-slate-50' : isOver ? 'bg-red-50/50' : 'bg-white'}`}>{idx + 1}</td>
-                    <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.content} sticky left-[56px] z-10 ${isGroup ? 'bg-slate-50' : isOver ? 'bg-red-50/50' : 'bg-white'}`} style={{ paddingLeft: `${item.displayLevel * 24 + 12}px` }}>
+                    <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.stt} sticky left-0 z-10 shadow-[1px_0_0_0_#e2e8f0] ${isGroup ? 'bg-slate-50' : isOver ? 'bg-red-50/50' : 'bg-white'}`}>{idx + 1}</td>
+                    <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.content} sticky left-[56px] z-10 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] ${isGroup ? 'bg-slate-50' : isOver ? 'bg-red-50/50' : 'bg-white'}`} style={{ paddingLeft: `${item.displayLevel * 24 + 12}px` }}>
                       {isGroup ? (
                         <div className="font-bold text-slate-900">{item.categoryName}</div>
                       ) : (
@@ -265,15 +277,19 @@ export default async function FieldProgressSummaryPage({
                         </>
                       )}
                     </td>
-                    <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.crew}`} title={item.constructionCrew || ""}>{item.constructionCrew || "-"}</td>
-                    <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.unit}`}>{isGroup ? "-" : item.unit || "-"}</td>
+                    <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.crew} truncate`} title={item.constructionCrew || "Chưa có"}>
+                      {item.constructionCrew ? <span className="text-slate-800 font-medium">{item.constructionCrew}</span> : <span className="text-slate-400">—</span>}
+                    </td>
+                    <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.unit}`}>
+                      {isGroup ? <span className="text-slate-400">—</span> : item.unit ? <span className="text-slate-800 font-medium">{item.unit}</span> : <span className="text-slate-400">—</span>}
+                    </td>
                     <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.designQty} font-semibold ${isGroup ? 'text-slate-800' : 'text-slate-700'}`}>
-                      {designQty > 0 ? formatQuantity(designQty) : "-"}
+                      {designQty > 0 ? formatQuantity(designQty) : <span className="text-slate-400">—</span>}
                     </td>
                     <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.cumulative} ${isGroup ? 'font-semibold text-slate-800' : 'text-slate-600'}`}>
-                      {formatQuantity(cumulativeBefore)}
+                      {cumulativeBefore > 0 ? formatQuantity(cumulativeBefore) : "0"}
                     </td>
-                    <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.dayQty} font-bold text-blue-700 bg-blue-50/30`}>
+                    <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.periodQty} font-bold text-blue-700 bg-blue-50/30`}>
                       {periodTotal > 0 ? formatQuantity(periodTotal) : "-"}
                     </td>
                     <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.cumulative} font-bold text-blue-800 bg-blue-50/30`}>
@@ -394,15 +410,6 @@ export default async function FieldProgressSummaryPage({
           )}
         </div>
 
-        {statusFilter !== 'APPROVED_ONLY' ? (
-          <div className="bg-amber-50 p-4 text-sm text-amber-800 border-t border-amber-200">
-            <span className="font-semibold">Lưu ý:</span> Phát sinh trong kỳ có thể bao gồm dữ liệu chưa xác nhận, còn lũy kế chính thức chỉ tính dữ liệu đã xác nhận.
-          </div>
-        ) : (
-          <div className="bg-blue-50 p-4 text-sm text-blue-800 border-t border-blue-200">
-            <span className="font-semibold">Lưu ý:</span> Lũy kế và số phát sinh hiển thị trên bảng này chỉ tính khối lượng đã xác nhận.
-          </div>
-        )}
       </div>
     </div>
   );

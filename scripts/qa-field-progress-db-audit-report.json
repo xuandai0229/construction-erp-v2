@@ -1,6 +1,6 @@
 {
   "summary": {
-    "totalEntries": 16,
+    "totalEntries": 12,
     "duplicatesByItemDate": 0,
     "timezoneIssues": 0,
     "orphanEntries": 0,
@@ -15,7 +15,7 @@
     "zeroNegativeQuantity": []
   },
   "softDeletedHistoricalFindings": {
-    "duplicateRemnantsCount": 3,
+    "duplicateRemnantsCount": 15,
     "timezoneIssuesCount": 1,
     "orphanDraftsCount": 3,
     "volumeTestEntriesCount": 1

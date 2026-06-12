@@ -148,7 +148,7 @@ export function DailyEntryTable({
           issueNote: "",
           proposalNote: "",
           note: "",
-          status: "DRAFT"
+          status: "EMPTY"
         };
         
         setItems(prev => [...prev, newDailyItem]);
@@ -187,7 +187,7 @@ export function DailyEntryTable({
         issueNote: e.issueNote || "",
         proposalNote: e.proposalNote || "",
         note: e.note || "",
-        status: e.status || "DRAFT",
+        status: e.status || "EMPTY",
       };
     });
     setItems(mapped);
@@ -198,10 +198,21 @@ export function DailyEntryTable({
     return Array.from(new Set(items.map((item) => item.constructionCrew).filter(Boolean))).sort() as string[];
   }, [items]);
 
+function parseVietnameseDecimalInput(raw: string): number | null {
+  if (raw === "" || raw === null || raw === undefined) return null;
+  const value = raw.trim().replace(",", ".");
+  if (value === "") return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return null;
+  return parsed;
+}
+
   const getItemMath = (item: DailyItem) => {
     const raw = item.quantity;
-    const quantity = raw === "" || raw === null || raw === undefined ? 0 : Number(raw);
-    const hasInvalidNumber = raw !== "" && Number.isNaN(quantity);
+    const parsed = parseVietnameseDecimalInput(raw);
+    const quantity = parsed === null ? 0 : parsed;
+    const isActuallyEmpty = raw === "" || raw === null || raw === undefined;
+    const hasInvalidNumber = !isActuallyEmpty && parsed === null;
     const isNegative = !hasInvalidNumber && quantity < 0;
     const hasTodayQuantity = !hasInvalidNumber && quantity > 0;
 
@@ -261,11 +272,8 @@ export function DailyEntryTable({
   const dateStatus = useMemo(() => {
     if (Object.keys(dirtyEntries).length > 0) return "Đang chỉnh sửa (Chưa lưu)";
     const entered = items.filter((i) => i.quantity !== "" && Number(i.quantity) > 0);
-    if (entered.length === 0) return "Chưa nhập ngày này";
-    if (entered.some((i) => i.status === "DRAFT")) return "Đã lưu tạm";
-    if (entered.some((i) => i.status === "SUBMITTED")) return "Chờ giám sát";
-    if (entered.some((i) => i.status === "APPROVED")) return "Đã xác nhận";
-    return "Đã lưu tạm";
+    if (entered.length === 0) return "Chưa nhập";
+    return "Đã nhập";
   }, [items, dirtyEntries]);
 
   const stats = useMemo(() => {
@@ -322,51 +330,38 @@ export function DailyEntryTable({
     }
   };
 
-  const handleSave = async (submit: boolean) => {
+  const handleSave = async () => {
     const invalidItems = items.filter((item) => {
       const math = getItemMath(item);
-      return math.hasInvalidNumber || math.isNegative;
+      return math.hasInvalidNumber || math.isNegative || !math.guard.canSubmit;
     });
 
     if (invalidItems.length > 0) {
-      alert("Có dòng nhập sai. KL hôm nay không được âm và phải là số hợp lệ.");
+      alert("Có dòng nhập không hợp lệ hoặc thiếu lý do vượt khối lượng. Vui lòng kiểm tra lại cảnh báo màu đỏ.");
       quantityRefs.current[invalidItems[0].id]?.focus();
       return;
     }
 
-    let entriesToSave = Object.values(dirtyEntries);
-    if (submit) {
-      entriesToSave = items
-        .filter((item) => getItemMath(item).hasTodayQuantity || dirtyEntries[item.id])
-        .map((item) => ({
-          itemId: item.id,
-          quantity: item.quantity,
-          issueNote: item.issueNote,
-          proposalNote: item.proposalNote,
-          note: item.note,
-        }));
-    }
+    const entriesToSave = items
+      .filter((item) => getItemMath(item).hasTodayQuantity || dirtyEntries[item.id])
+      .map((item) => ({
+        itemId: item.id,
+        quantity: parseVietnameseDecimalInput(item.quantity) === null ? "" : String(parseVietnameseDecimalInput(item.quantity)),
+        issueNote: item.issueNote,
+        proposalNote: item.proposalNote,
+        note: item.note,
+      }));
 
     if (entriesToSave.length === 0) {
-      alert("Không có khối lượng nào được nhập để lưu.");
       return;
     }
 
     setLoading(true);
-    const res = await batchSaveDailyEntries(projectId, templateId, dateStr, entriesToSave, submit);
+    const res = await batchSaveDailyEntries(projectId, templateId, dateStr, entriesToSave, true);
     if (res?.error) {
       alert(res.error);
     } else {
-      const savedIds = new Set(entriesToSave.map((entry: any) => entry.itemId));
-      setItems((prev) =>
-        prev.map((item) =>
-          savedIds.has(item.id) ? { ...item, status: submit ? "SUBMITTED" : "DRAFT" } : item
-        )
-      );
       setDirtyEntries({});
-      const dParts = dateStr.split("-");
-      const fmtDate = `${dParts[2]}/${dParts[1]}/${dParts[0]}`;
-      alert(submit ? `Đã gửi số liệu ngày ${fmtDate} cho giám sát.` : `Đã lưu tạm khối lượng ngày ${fmtDate}.`);
       router.refresh();
     }
     setLoading(false);
@@ -376,7 +371,6 @@ export function DailyEntryTable({
 
   const renderQuantityInput = (item: DailyItem, index: number, compact = false) => {
     const math = getItemMath(item);
-    const isLocked = item.status === "SUBMITTED" || item.status === "APPROVED";
 
     return (
       <div>
@@ -384,10 +378,9 @@ export function DailyEntryTable({
           ref={(el) => {
             quantityRefs.current[item.id] = el;
           }}
-          type="number"
-          step="any"
-          min="0"
-          disabled={isLocked}
+          type="text"
+          inputMode="decimal"
+          disabled={loading}
           value={item.quantity}
           onChange={(e) => patchItem(item.id, "quantity", e.target.value)}
           onFocus={(e) => e.target.select()}
@@ -429,7 +422,7 @@ export function DailyEntryTable({
         <div className="space-y-1">
           <h3 className="line-clamp-2 text-base font-bold leading-snug text-slate-900">{item.name}</h3>
           <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-            <span>Mũi: {item.constructionCrew || "-"}</span>
+            <span>Mũi: {item.constructionCrew ? <span className="text-slate-800">{item.constructionCrew}</span> : <span className="text-slate-400">—</span>}</span>
             {item.parentName && <span className="max-w-full truncate">Hạng mục: {item.parentName}</span>}
           </div>
         </div>
@@ -572,9 +565,8 @@ export function DailyEntryTable({
             <label className="block">
               <span className="mb-2 block text-sm font-bold text-slate-800">Tổng khối lượng thiết kế</span>
               <input
-                type="number"
-                step="any"
-                min="0"
+                type="text"
+                inputMode="decimal"
                 value={quickAddData.designQuantity}
                 onChange={(e) => setQuickAddData(prev => ({ ...prev, designQuantity: e.target.value }))}
                 className="w-full rounded-xl border-2 border-slate-300 bg-white p-3 text-sm text-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
@@ -673,9 +665,7 @@ export function DailyEntryTable({
               <div className="flex items-center gap-3">
                 <h2 className="text-xl font-bold text-slate-900">Nhập khối lượng theo ngày</h2>
                 <span className={`rounded-full px-3 py-1 text-xs font-semibold border ${
-                  dateStatus === 'Đã xác nhận' ? 'bg-green-50 text-green-700 border-green-200' :
-                  dateStatus === 'Chờ giám sát' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                  dateStatus === 'Đã lưu tạm' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                  dateStatus === 'Đã nhập' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                   dateStatus.includes('Chưa lưu') ? 'bg-amber-50 text-amber-700 border-amber-200' :
                   'bg-slate-100 text-slate-600 border-slate-200'
                 }`}>
@@ -765,32 +755,6 @@ export function DailyEntryTable({
         </div>
       </div>
 
-      {/* Info about save actions */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-        <div className="flex items-start gap-3">
-          <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
-            <Info className="h-5 w-5 text-blue-600" />
-          </div>
-          <div className="flex-1 text-sm">
-            <h4 className="font-bold text-blue-900 mb-2">Ý nghĩa các nút lưu</h4>
-            <div className="space-y-2 text-blue-800">
-              <div className="flex gap-2">
-                <Save className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
-                <div>
-                  <span className="font-bold">Lưu tạm:</span> Lưu dữ liệu ngày này để nhập tiếp sau. Trạng thái: <span className="bg-amber-100 px-1.5 py-0.5 rounded text-xs font-semibold">DRAFT</span>. Chưa tính vào lũy kế chính thức, có thể sửa lại.
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Send className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                <div>
-                  <span className="font-bold">Gửi giám sát:</span> Chốt số liệu ngày này để giám sát kiểm tra. Trạng thái: <span className="bg-blue-100 px-1.5 py-0.5 rounded text-xs font-semibold">SUBMITTED</span>. Chờ giám sát xác nhận, sau đó mới cộng vào lũy kế chính thức.
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div className="hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:block">
         <table className="w-full text-left text-sm whitespace-nowrap min-w-[1200px]">
           <thead className="border-b-2 border-slate-200 bg-slate-50">
@@ -825,8 +789,12 @@ export function DailyEntryTable({
                     {item.parentName && <div className="mb-0.5 text-[10px] font-medium uppercase tracking-wider text-slate-400 truncate">{item.parentName}</div>}
                     <div className="font-semibold text-slate-800 truncate" title={item.name}>{item.name}</div>
                   </td>
-                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.crew}`}>{item.constructionCrew || "-"}</td>
-                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.unit}`}>{item.unit || "-"}</td>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.crew}`}>
+                    {item.constructionCrew ? <span className="text-slate-800 truncate block w-full" title={item.constructionCrew}>{item.constructionCrew}</span> : <span className="text-slate-400">—</span>}
+                  </td>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.unit}`}>
+                    {item.unit ? <span className="text-slate-800">{item.unit}</span> : <span className="text-slate-400">—</span>}
+                  </td>
                   <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.designQty} font-semibold text-slate-700`}>
                     {item.designQuantity ? formatQuantity(item.designQuantity) : "-"}
                   </td>
@@ -891,51 +859,29 @@ export function DailyEntryTable({
       <div className="hidden flex-col items-end gap-2 lg:flex">
         <div className="flex items-center justify-end gap-3">
           <Button
-            variant="outline"
-            onClick={() => handleSave(false)}
+            onClick={() => handleSave()}
             disabled={!hasChanges || loading}
-            className={`h-11 px-5 border font-semibold ${hasChanges ? "border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100" : "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"}`}
-            title={!hasChanges ? "Không có thay đổi để lưu" : "Lưu tạm: Lưu dữ liệu để nhập tiếp sau, chưa tính vào lũy kế chính thức"}
+            className={`h-11 px-5 border border-transparent font-semibold shadow-sm ${hasChanges ? "bg-blue-600 text-white hover:bg-blue-700" : "cursor-not-allowed bg-slate-100 text-slate-400"}`}
+            title={!hasChanges ? "Không có thay đổi để lưu" : "Lưu khối lượng vào lũy kế chính thức"}
           >
-            <Save className="mr-2 h-4 w-4" /> Lưu tạm {hasChanges && `(${Object.keys(dirtyEntries).length})`}
-          </Button>
-          <Button
-            onClick={() => {
-              if (confirm("Xác nhận gửi số liệu ngày này cho giám sát? Dữ liệu sẽ chuyển sang trạng thái SUBMITTED và chưa được tính vào lũy kế chính thức cho tới khi được xác nhận.")) handleSave(true);
-            }}
-            disabled={loading || (!hasChanges && items.filter(i => i.status === "DRAFT").length === 0)}
-            className="h-11 px-5 border border-transparent bg-blue-600 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
-            title={(!hasChanges && items.filter(i => i.status === "DRAFT").length === 0) ? "Ngày này đã gửi giám sát hoặc chưa nhập khối lượng" : "Gửi giám sát: Chuyển dữ liệu sang trạng thái chờ kiểm tra để giám sát phê duyệt"}
-          >
-            <Send className="mr-2 h-4 w-4" /> Gửi giám sát
+            <Save className="mr-2 h-4 w-4" /> {loading ? "Đang lưu..." : "Lưu khối lượng"} {!loading && hasChanges && `(${Object.keys(dirtyEntries).length})`}
           </Button>
         </div>
         {(!hasChanges || loading) && (
           <p className="text-xs text-slate-500">
-            {!hasChanges ? "Nút lưu tạm chỉ bật khi có thay đổi. Nút gửi bật khi còn dữ liệu DRAFT hoặc có thay đổi mới." : "Đang xử lý dữ liệu ngày này."}
+            {!hasChanges ? "Nút lưu chỉ bật khi có thay đổi." : "Đang xử lý dữ liệu ngày này."}
           </p>
         )}
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-30 flex gap-3 border-t-2 border-slate-200 bg-white p-4 shadow-[0_-4px_12px_rgba(15,23,42,0.12)] lg:hidden">
         <Button
-          variant="outline"
-          onClick={() => handleSave(false)}
+          onClick={() => handleSave()}
           disabled={!hasChanges || loading}
-          className={`h-12 flex-1 border font-semibold ${hasChanges ? "border-amber-300 bg-amber-50 text-amber-800" : "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400"}`}
-          title={!hasChanges ? "Không có thay đổi để lưu" : "Lưu tạm: Lưu dữ liệu để nhập tiếp"}
+          className={`h-12 flex-1 border border-transparent font-semibold shadow-sm ${hasChanges ? "bg-blue-600 text-white hover:bg-blue-700" : "cursor-not-allowed bg-slate-100 text-slate-400"}`}
+          title={!hasChanges ? "Không có thay đổi để lưu" : "Lưu khối lượng vào lũy kế chính thức"}
         >
-          <Save className="mr-2 h-4 w-4" /> Lưu tạm {hasChanges && `(${Object.keys(dirtyEntries).length})`}
-        </Button>
-        <Button
-          onClick={() => {
-            if (confirm("Xác nhận gửi số liệu ngày này cho giám sát? Dữ liệu sẽ chuyển sang trạng thái SUBMITTED và chưa được tính vào lũy kế chính thức cho tới khi được xác nhận.")) handleSave(true);
-          }}
-          disabled={loading || (!hasChanges && items.filter(i => i.status === "DRAFT").length === 0)}
-          className="h-12 flex-1 border border-transparent bg-blue-600 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
-          title={(!hasChanges && items.filter(i => i.status === "DRAFT").length === 0) ? "Đã gửi giám sát" : "Gửi giám sát: Chờ kiểm tra"}
-        >
-          <Send className="mr-2 h-4 w-4" /> Gửi giám sát
+          <Save className="mr-2 h-4 w-4" /> {loading ? "Đang lưu..." : "Lưu khối lượng"} {!loading && hasChanges && `(${Object.keys(dirtyEntries).length})`}
         </Button>
       </div>
 
