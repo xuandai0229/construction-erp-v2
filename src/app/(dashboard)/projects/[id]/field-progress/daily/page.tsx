@@ -2,7 +2,7 @@ import { getSession } from "@/lib/auth";
 import { notFound, redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
-import { ArrowLeft, Table, BarChart2 } from "lucide-react";
+import { ArrowLeft, Table, BarChart2, Package } from "lucide-react";
 import { DailyEntryTable } from "@/components/field-progress/daily-entry-table";
 import { DailyStatusCalendar } from "@/components/field-progress/daily-status-calendar";
 import { addWorkDays, formatWorkDate, getWorkDateRange, parseWorkDate, todayWorkDate } from "@/lib/date/work-date";
@@ -167,6 +167,14 @@ export default async function FieldProgressDailyPage({
             <BarChart2 className="w-4 h-4 shrink-0" /> 
             <span className="sm:hidden">Tổng hợp</span>
             <span className="hidden sm:inline">Tổng hợp khối lượng</span>
+          </Link>
+          <Link
+            href={`/projects/${id}/material-requests`}
+            className="flex-1 sm:flex-none h-10 px-2 sm:px-4 bg-white border border-slate-300 text-slate-700 rounded-lg text-[13px] sm:text-sm font-semibold hover:bg-slate-50 flex items-center justify-center gap-1.5 transition-all whitespace-nowrap"
+          >
+            <Package className="w-4 h-4 shrink-0" /> 
+            <span className="sm:hidden">Vật tư</span>
+            <span className="hidden sm:inline">Đề xuất vật tư</span>
           </Link>
         </div>
       </div>

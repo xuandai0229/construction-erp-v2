@@ -2,7 +2,7 @@ import { getSession } from "@/lib/auth";
 import { notFound, redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
-import { ArrowLeft, Filter, Table, Calendar } from "lucide-react";
+import { ArrowLeft, Filter, Table, Calendar, Package } from "lucide-react";
 import { buildDateColumns, formatQuantity, groupEntriesByItemAndDate } from "@/lib/field-progress";
 import { buildFieldProgressRollupTree } from "@/lib/field-progress/rollup";
 import { addWorkDays, formatWorkDate, getWorkDateRange, parseWorkDate, todayWorkDate } from "@/lib/date/work-date";
@@ -144,6 +144,14 @@ export default async function FieldProgressSummaryPage({
           >
             <Calendar className="w-4 h-4" /> Nhập khối lượng
           </Link>
+          <Link 
+            href={`/projects/${id}/material-requests`}
+            className="flex-1 sm:flex-none h-10 px-3 sm:px-4 bg-white border border-slate-300 text-slate-700 rounded-lg text-[13px] sm:text-sm font-semibold hover:bg-slate-50 flex items-center justify-center gap-1.5 shadow-sm transition-all whitespace-nowrap"
+          >
+            <Package className="w-4 h-4" /> 
+            <span className="hidden sm:inline">Đề xuất vật tư</span>
+            <span className="sm:hidden">Vật tư</span>
+          </Link>
         </div>
       </div>
 
@@ -214,7 +222,7 @@ export default async function FieldProgressSummaryPage({
       )}
 
       <SummaryDesktopView 
-        displayItems={displayItems} 
+        displayItems={JSON.parse(JSON.stringify(displayItems))} 
         dynamicDates={dynamicDates} 
         mode={mode} 
         formattedFromDate={formattedFromDate} 
@@ -222,7 +230,7 @@ export default async function FieldProgressSummaryPage({
       />
 
       <SummaryMobileView 
-        displayItems={displayItems} 
+        displayItems={JSON.parse(JSON.stringify(displayItems))} 
         dynamicDates={dynamicDates} 
         mode={mode} 
         formattedFromDate={formattedFromDate} 

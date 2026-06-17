@@ -59,4 +59,7 @@ playwright-report/
 test-results/
 *.webm
 trace.zip
-
+storageState.json
+*.png
+*.jpg
+*.jpeg

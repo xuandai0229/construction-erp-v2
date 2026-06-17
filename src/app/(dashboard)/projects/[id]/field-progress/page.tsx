@@ -101,6 +101,14 @@ export default async function FieldProgressPage({ params }: { params: Promise<{ 
             <span className="md:hidden">Tổng hợp</span>
             <span className="hidden md:inline">Tổng hợp khối lượng</span>
           </Link>
+          <Link 
+            href={`/projects/${id}/material-requests`}
+            className="flex-1 sm:flex-none h-9 sm:h-10 px-3 sm:px-4 bg-white border border-slate-300 text-slate-700 rounded-md text-xs sm:text-sm font-semibold hover:bg-slate-50 active:bg-slate-100 active:scale-95 flex items-center justify-center gap-1.5 transition-all duration-150 ease-out"
+          >
+            <Package className="w-4 h-4" /> 
+            <span className="md:hidden">Vật tư</span>
+            <span className="hidden md:inline">Đề xuất vật tư</span>
+          </Link>
         </div>
       </div>
 

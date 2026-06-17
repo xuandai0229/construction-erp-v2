@@ -88,9 +88,11 @@ enum WBSItemStatus {
 
 enum MaterialRequestStatus {
   DRAFT
+  REQUESTED
   SUBMITTED
   APPROVED
   REJECTED
+  PROCESSING
   ISSUED
   RECEIVED
   CANCELLED
@@ -419,9 +421,12 @@ model SiteReportLine {
   @@index([wbsItemId])
 }
 
+
+
 model MaterialRequest {
   id            String                  @id @default(cuid())
   projectId     String
+  requestNo     String                  @unique
   siteReportId  String?
   requestedById String
   requestDate   DateTime
@@ -429,6 +434,7 @@ model MaterialRequest {
   status        MaterialRequestStatus   @default(DRAFT)
   priority      MaterialRequestPriority @default(MEDIUM)
   note          String?
+  cancelReason  String?
   createdAt     DateTime                @default(now())
   updatedAt     DateTime                @updatedAt
   deletedAt     DateTime?
@@ -439,28 +445,37 @@ model MaterialRequest {
   items       MaterialRequestItem[]
 
   @@index([projectId])
+  @@index([requestNo])
   @@index([siteReportId])
   @@index([requestedById])
 }
 
 model MaterialRequestItem {
-  id                String    @id @default(cuid())
-  materialRequestId String
-  wbsItemId         String?
-  materialName      String
-  unit              String
-  requestedQuantity Decimal   @db.Decimal(19, 4)
-  reason            String?
-  note              String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  deletedAt         DateTime?
+  id                  String    @id @default(cuid())
+  materialRequestId   String
+  wbsItemId           String?
+  fieldProgressItemId String?
+  workItemNameSnapshot String?
+  materialCode        String?
+  materialName        String
+  unit                String
+  requestedQuantity   Decimal   @db.Decimal(19, 4)
+  issuedQuantity      Decimal   @default(0) @db.Decimal(19, 4)
+  receivedQuantity    Decimal   @default(0) @db.Decimal(19, 4)
+  remainingQuantity   Decimal   @default(0) @db.Decimal(19, 4)
+  reason              String?
+  note                String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  deletedAt           DateTime?
 
-  materialRequest MaterialRequest @relation(fields: [materialRequestId], references: [id], onDelete: Cascade)
-  wbsItem         WBSItem?        @relation(fields: [wbsItemId], references: [id])
+  materialRequest   MaterialRequest    @relation(fields: [materialRequestId], references: [id], onDelete: Cascade)
+  wbsItem           WBSItem?           @relation(fields: [wbsItemId], references: [id])
+  fieldProgressItem FieldProgressItem? @relation(fields: [fieldProgressItemId], references: [id])
 
   @@index([materialRequestId])
   @@index([wbsItemId])
+  @@index([fieldProgressItemId])
 }
 
 model MaterialItem {
@@ -635,6 +650,7 @@ model FieldProgressItem {
   createdBy        User                   @relation("FieldItemCreator", fields: [createdById], references: [id])
   entries          FieldProgressEntry[]
   materialRequests FieldMaterialRequest[]
+  materialRequestItems MaterialRequestItem[]
 
   @@index([projectId])
   @@index([templateId])
