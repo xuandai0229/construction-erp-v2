@@ -3,8 +3,13 @@ import prisma from "../src/lib/prisma";
 async function main() {
   console.log("=== Bắt đầu Test Tích Hợp Material Requests & Field Progress ===");
 
-  const project = await prisma.project.findFirst();
-  if (!project) throw new Error("Cần có ít nhất 1 Project để test");
+  const project = await prisma.project.findFirst({
+    where: {
+      deletedAt: null,
+      fieldProgressTemplates: { some: { deletedAt: null } },
+    },
+  });
+  if (!project) throw new Error("Cần có ít nhất 1 Project active có FieldProgressTemplate để test");
 
   const template = await prisma.fieldProgressTemplate.findFirst({ where: { projectId: project.id } });
   if (!template) {
@@ -30,13 +35,13 @@ async function main() {
   const req = await prisma.materialRequest.create({
     data: {
       projectId: project.id,
-      requestNo: `TEST-INT-${Date.now()}`,
+      requestNo: `TEST_CRUD_INT_${Date.now()}`,
       requestedById: user!.id,
       requestDate: new Date(),
       status: "DRAFT",
       items: {
         create: [
-          { materialName: "Thép", unit: "Tấn", requestedQuantity: 10, fieldProgressItemId: targetWbsItem.id }
+          { materialName: "Thép", unit: "Tấn", requestedQuantity: 10, remainingQuantity: 10, fieldProgressItemId: targetWbsItem.id }
         ]
       }
     }

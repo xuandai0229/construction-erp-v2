@@ -29,6 +29,9 @@ export async function createMaterialRequest(data: any) {
           materialName: item.materialName,
           unit: item.unit,
           requestedQuantity: item.requestedQuantity,
+          issuedQuantity: item.issuedQuantity || 0,
+          receivedQuantity: item.receivedQuantity || 0,
+          remainingQuantity: Math.max(0, Number(item.requestedQuantity || 0) - Number(item.receivedQuantity || 0)),
           note: item.note,
         }))
       }
@@ -69,6 +72,9 @@ export async function updateMaterialRequest(id: string, data: any) {
             materialName: item.materialName,
             unit: item.unit,
             requestedQuantity: item.requestedQuantity,
+            issuedQuantity: item.issuedQuantity || 0,
+            receivedQuantity: item.receivedQuantity || 0,
+            remainingQuantity: Math.max(0, Number(item.requestedQuantity || 0) - Number(item.receivedQuantity || 0)),
             note: item.note,
           }))
         }

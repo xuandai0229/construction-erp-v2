@@ -444,7 +444,10 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
 
     return (
       <div>
+        <label htmlFor={`daily-quantity-${item.id}`} className="sr-only">Khối lượng ngày {dateStr}</label>
         <input
+          id={`daily-quantity-${item.id}`}
+          name={`daily-quantity-${item.id}`}
           ref={(el) => {
             quantityRefs.current[item.id] = el;
           }}
@@ -510,6 +513,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
           </div>
           <Button
             variant="ghost"
+            aria-label={`Xem chi tiết ${item.name}`}
             className="h-10 w-10 p-0 shrink-0 text-slate-500 hover:text-blue-600 bg-slate-50 rounded-full flex items-center justify-center border border-slate-100"
             onClick={() => setActiveDrawerItem(item)}
           >
@@ -631,6 +635,8 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
                 Nội dung công việc <span className="text-red-600">*</span>
               </span>
               <input
+                id="quickAdd-workContent"
+                name="quickAdd-workContent"
                 value={quickAddData.workContent}
                 onChange={(e) => setQuickAddData(prev => ({ ...prev, workContent: e.target.value }))}
                 className="w-full rounded-xl border-2 border-slate-300 bg-white p-3 text-sm text-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
@@ -639,9 +645,11 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
               />
             </label>
 
-            <label className="block">
+            <label className="block" htmlFor="quickAdd-parentId">
               <span className="mb-2 block text-sm font-bold text-slate-800">Thuộc hạng mục chính</span>
               <select
+                id="quickAdd-parentId"
+                name="quickAdd-parentId"
                 value={quickAddData.parentId}
                 onChange={(e) => setQuickAddData(prev => ({ ...prev, parentId: e.target.value }))}
                 className="w-full rounded-xl border-2 border-slate-300 bg-white p-3 text-sm text-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
@@ -657,11 +665,13 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
             </label>
 
             {quickAddData.parentId === "NEW_GROUP" && (
-              <label className="block rounded-xl bg-blue-50 border-2 border-blue-200 p-4">
+              <label className="block rounded-xl bg-blue-50 border-2 border-blue-200 p-4" htmlFor="quickAdd-newGroupName">
                 <span className="mb-2 block text-sm font-bold text-blue-800">
                   Tên hạng mục chính mới <span className="text-red-600">*</span>
                 </span>
                 <input
+                  id="quickAdd-newGroupName"
+                  name="quickAdd-newGroupName"
                   value={newGroupName}
                   onChange={(e) => setNewGroupName(e.target.value)}
                   className="w-full rounded-xl border-2 border-blue-300 bg-white p-3 text-sm text-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
@@ -672,9 +682,11 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
             )}
 
             <div className="grid grid-cols-2 gap-4">
-              <label className="block">
+              <label className="block" htmlFor="quickAdd-constructionCrew">
                 <span className="mb-2 block text-sm font-bold text-slate-800">Mũi thi công</span>
                 <input
+                  id="quickAdd-constructionCrew"
+                  name="quickAdd-constructionCrew"
                   value={quickAddData.constructionCrew}
                   onChange={(e) => setQuickAddData(prev => ({ ...prev, constructionCrew: e.target.value }))}
                   className="w-full rounded-xl border-2 border-slate-300 bg-white p-3 text-sm text-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
@@ -682,9 +694,11 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
                 />
               </label>
 
-              <label className="block">
+              <label className="block" htmlFor="quickAdd-unit">
                 <span className="mb-2 block text-sm font-bold text-slate-800">Đơn vị</span>
                 <input
+                  id="quickAdd-unit"
+                  name="quickAdd-unit"
                   value={quickAddData.unit}
                   onChange={(e) => setQuickAddData(prev => ({ ...prev, unit: e.target.value }))}
                   className="w-full rounded-xl border-2 border-slate-300 bg-white p-3 text-sm text-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
@@ -693,9 +707,11 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
               </label>
             </div>
 
-            <label className="block">
+            <label className="block" htmlFor="quickAdd-designQuantity">
               <span className="mb-2 block text-sm font-bold text-slate-800">Tổng khối lượng thiết kế</span>
               <input
+                id="quickAdd-designQuantity"
+                name="quickAdd-designQuantity"
                 type="text"
                 inputMode="decimal"
                 value={quickAddData.designQuantity}
@@ -747,11 +763,13 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
             </div>
           </div>
           <div className="mt-4 border-t border-slate-100 pt-4">
-            <label className="block max-w-xs">
+            <label className="block max-w-xs" htmlFor="daily-dateStr1">
               <span className="mb-1 flex items-center gap-1 text-xs font-semibold text-slate-600">
                 <Calendar className="h-3.5 w-3.5" /> Ngày nhập
               </span>
               <input
+                id="daily-dateStr1"
+                name="daily-dateStr1"
                 type="date"
                 value={dateStr}
                 onChange={handleDateChange}
@@ -817,11 +835,13 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
         <div className="mt-2 flex flex-col gap-2 border-t border-slate-100 pt-2 lg:flex-row lg:items-end lg:justify-between">
 
           <div className="grid gap-2 grid-cols-2 lg:grid-cols-[140px_220px]">
-            <label className="block">
+            <label className="block" htmlFor="daily-dateStr2">
               <span className="mb-1 flex items-center gap-1 text-[11px] sm:text-xs font-bold text-slate-700">
                 <Calendar className="h-3 w-3 text-blue-600" /> Ngày nhập
               </span>
               <input
+                id="daily-dateStr2"
+                name="daily-dateStr2"
                 type="date"
                 value={dateStr}
                 onChange={handleDateChange}
@@ -829,11 +849,13 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
               />
             </label>
 
-            <label className="block col-span-2 sm:col-span-1">
+            <label className="block col-span-2 sm:col-span-1" htmlFor="daily-searchTerm">
               <span className="mb-1 flex items-center gap-1 text-[11px] sm:text-xs font-bold text-slate-700">
                 <Search className="h-3 w-3 text-blue-600" /> Tìm kiếm
               </span>
               <input
+                id="daily-searchTerm"
+                name="daily-searchTerm"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="h-8 sm:h-9 w-full rounded-md border border-slate-300 bg-white px-2.5 text-xs sm:text-sm text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-100 transition-all outline-none"
@@ -953,7 +975,10 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
                     </div>
                   </td>
                   <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.dailyCols.notes} p-2`}>
+                    <label htmlFor={`daily-note-${item.id}`} className="sr-only">Ghi chú nhanh cho {item.name}</label>
                     <input
+                      id={`daily-note-${item.id}`}
+                      name={`daily-note-${item.id}`}
                       value={item.note}
                       onChange={(e) => patchItem(item.id, "note", e.target.value)}
                       className="h-9 w-full min-w-[120px] rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
@@ -961,7 +986,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
                     />
                   </td>
                   <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.dailyCols.action} bg-white border-l border-slate-100 ${math.isOver ? '!bg-red-50/60' : isDirty ? '!bg-amber-50/40' : ''}`}>
-                    <Button variant="ghost" className="h-8 w-8 p-0 text-slate-400 hover:text-blue-600 mx-auto block hover:bg-slate-100 rounded-full" onClick={() => setActiveDrawerItem(item)}>
+                    <Button variant="ghost" aria-label={`Xem chi tiết ${item.name}`} className="h-8 w-8 p-0 text-slate-400 hover:text-blue-600 mx-auto block hover:bg-slate-100 rounded-full" onClick={() => setActiveDrawerItem(item)}>
                       <Info className="h-4 w-4 mx-auto" />
                     </Button>
                   </td>

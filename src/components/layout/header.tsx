@@ -43,6 +43,7 @@ export function Header({ userName, userRole }: { userName?: string, userRole?: s
           <button
             onClick={() => setMobileMenuOpen(true)}
             className="text-slate-500 hover:text-slate-700 p-2"
+            aria-label="Mở menu"
           >
             <Menu className="h-6 w-6" />
           </button>
@@ -65,6 +66,7 @@ export function Header({ userName, userRole }: { userName?: string, userRole?: s
             onClick={handleLogout}
             className="text-slate-500 hover:text-slate-700 p-2"
             title="Đăng xuất"
+            aria-label="Đăng xuất"
           >
             <LogOut className="h-5 w-5" />
           </button>
@@ -81,6 +83,7 @@ export function Header({ userName, userRole }: { userName?: string, userRole?: s
               <button
                 onClick={() => setMobileMenuOpen(false)}
                 className="text-slate-500 hover:text-slate-700 p-2"
+                aria-label="Đóng menu"
               >
                 <X className="h-5 w-5 sm:h-6 sm:w-6" />
               </button>

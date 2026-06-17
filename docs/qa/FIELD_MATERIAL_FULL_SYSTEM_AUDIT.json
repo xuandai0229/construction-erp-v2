@@ -1,0 +1,113 @@
+{
+  "summary": {
+    "auditedAt": "2026-06-17T09:40:37.435Z",
+    "fieldProgress": {
+      "activeEntries": 14,
+      "activeWorkItems": 7
+    },
+    "materialRequests": {
+      "activeRequests": 5,
+      "activeItems": 8
+    },
+    "findingCount": 0,
+    "criticalFindingCount": 0
+  },
+  "findings": [
+    {
+      "code": "FP_DUPLICATE_ACTIVE_ENTRY_ITEM_DATE",
+      "severity": "CRITICAL",
+      "details": [],
+      "count": 0
+    },
+    {
+      "code": "FP_ENTRY_LINKED_TO_SOFT_DELETED_ITEM",
+      "severity": "HIGH",
+      "details": [],
+      "count": 0
+    },
+    {
+      "code": "FP_NEGATIVE_QUANTITY",
+      "severity": "HIGH",
+      "details": [],
+      "count": 0
+    },
+    {
+      "code": "FP_ENTRY_DATE_NOT_UTC_MIDNIGHT",
+      "severity": "MEDIUM",
+      "details": [],
+      "count": 0
+    },
+    {
+      "code": "FP_STATUS_OUTSIDE_ENUM",
+      "severity": "CRITICAL",
+      "details": [],
+      "count": 0
+    },
+    {
+      "code": "FP_ACTIVE_ITEM_APPROVED_OVER_DESIGN",
+      "severity": "MEDIUM",
+      "details": [],
+      "count": 0
+    },
+    {
+      "code": "MR_DUPLICATE_REQUEST_NO",
+      "severity": "CRITICAL",
+      "details": [],
+      "count": 0
+    },
+    {
+      "code": "MR_REQUEST_MISSING_OR_SOFT_DELETED_PROJECT",
+      "severity": "CRITICAL",
+      "details": [],
+      "count": 0
+    },
+    {
+      "code": "MR_STATUS_OUTSIDE_ENUM",
+      "severity": "CRITICAL",
+      "details": [],
+      "count": 0
+    },
+    {
+      "code": "MR_REQUEST_WITHOUT_ACTIVE_ITEMS",
+      "severity": "HIGH",
+      "details": [],
+      "count": 0
+    },
+    {
+      "code": "MR_ITEM_MISSING_REQUIRED_FIELDS",
+      "severity": "HIGH",
+      "details": [],
+      "count": 0
+    },
+    {
+      "code": "MR_ITEM_NEGATIVE_OR_ZERO_REQUESTED_QUANTITY",
+      "severity": "HIGH",
+      "details": [],
+      "count": 0
+    },
+    {
+      "code": "MR_ITEM_NEGATIVE_ISSUED_OR_RECEIVED",
+      "severity": "HIGH",
+      "details": [],
+      "count": 0
+    },
+    {
+      "code": "MR_ITEM_REMAINING_QUANTITY_MISMATCH",
+      "severity": "MEDIUM",
+      "details": [],
+      "count": 0
+    },
+    {
+      "code": "MR_ITEM_RECEIVED_OVER_REQUESTED",
+      "severity": "MEDIUM",
+      "details": [],
+      "count": 0
+    },
+    {
+      "code": "MR_ITEM_LINKED_TO_SOFT_DELETED_FIELD_PROGRESS_ITEM",
+      "severity": "MEDIUM",
+      "details": [],
+      "count": 0
+    }
+  ]
+}

@@ -1,0 +1,216 @@
+{
+  "generatedAt": "2026-06-17T10:05:15.848Z",
+  "baseUrl": "http://localhost:3000",
+  "checks": [
+    {
+      "route": "master",
+      "viewport": "mobile-360",
+      "url": "http://localhost:3000/projects/cmq6hstwf000fn8wkwhzoj472/field-progress",
+      "bodyScrollWidth": 360,
+      "clientWidth": 360,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0
+    },
+    {
+      "route": "master",
+      "viewport": "mobile-390",
+      "url": "http://localhost:3000/projects/cmq6hstwf000fn8wkwhzoj472/field-progress",
+      "bodyScrollWidth": 390,
+      "clientWidth": 390,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0
+    },
+    {
+      "route": "daily",
+      "viewport": "mobile-360",
+      "url": "http://localhost:3000/projects/cmq6hstwf000fn8wkwhzoj472/field-progress/daily",
+      "bodyScrollWidth": 360,
+      "clientWidth": 360,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0
+    },
+    {
+      "route": "daily",
+      "viewport": "mobile-390",
+      "url": "http://localhost:3000/projects/cmq6hstwf000fn8wkwhzoj472/field-progress/daily",
+      "bodyScrollWidth": 390,
+      "clientWidth": 390,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0
+    },
+    {
+      "route": "summary",
+      "viewport": "mobile-360",
+      "url": "http://localhost:3000/projects/cmq6hstwf000fn8wkwhzoj472/field-progress/summary",
+      "bodyScrollWidth": 360,
+      "clientWidth": 360,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0
+    },
+    {
+      "route": "summary",
+      "viewport": "mobile-390",
+      "url": "http://localhost:3000/projects/cmq6hstwf000fn8wkwhzoj472/field-progress/summary",
+      "bodyScrollWidth": 390,
+      "clientWidth": 390,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0
+    },
+    {
+      "route": "material",
+      "viewport": "mobile-360",
+      "url": "http://localhost:3000/projects/cmq6hstwf000fn8wkwhzoj472/material-requests",
+      "bodyScrollWidth": 360,
+      "clientWidth": 360,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0
+    },
+    {
+      "route": "material-form",
+      "viewport": "mobile-390",
+      "url": "http://localhost:3000/projects/cmq6hstwf000fn8wkwhzoj472/material-requests",
+      "bodyScrollWidth": 390,
+      "clientWidth": 390,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0
+    },
+    {
+      "route": "material-detail",
+      "viewport": "mobile-390",
+      "url": "http://localhost:3000/projects/cmq6hstwf000fn8wkwhzoj472/material-requests",
+      "bodyScrollWidth": 390,
+      "clientWidth": 390,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0
+    },
+    {
+      "route": "master",
+      "viewport": "desktop-1366",
+      "url": "http://localhost:3000/projects/cmq6hstwf000fn8wkwhzoj472/field-progress",
+      "bodyScrollWidth": 1607,
+      "clientWidth": 1366,
+      "hasPageHorizontalScroll": true,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0
+    },
+    {
+      "route": "daily",
+      "viewport": "desktop-1366",
+      "url": "http://localhost:3000/projects/cmq6hstwf000fn8wkwhzoj472/field-progress/daily",
+      "bodyScrollWidth": 1702,
+      "clientWidth": 1366,
+      "hasPageHorizontalScroll": true,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0
+    },
+    {
+      "route": "summary",
+      "viewport": "desktop-1366",
+      "url": "http://localhost:3000/projects/cmq6hstwf000fn8wkwhzoj472/field-progress/summary",
+      "bodyScrollWidth": 1366,
+      "clientWidth": 1366,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0
+    },
+    {
+      "route": "material",
+      "viewport": "desktop-1366",
+      "url": "http://localhost:3000/projects/cmq6hstwf000fn8wkwhzoj472/material-requests",
+      "bodyScrollWidth": 1366,
+      "clientWidth": 1366,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0
+    },
+    {
+      "route": "material-form",
+      "viewport": "desktop-1366",
+      "url": "http://localhost:3000/projects/cmq6hstwf000fn8wkwhzoj472/material-requests",
+      "bodyScrollWidth": 1366,
+      "clientWidth": 1366,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0
+    },
+    {
+      "route": "material-detail",
+      "viewport": "desktop-1366",
+      "url": "http://localhost:3000/projects/cmq6hstwf000fn8wkwhzoj472/material-requests",
+      "bodyScrollWidth": 1366,
+      "clientWidth": 1366,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0
+    },
+    {
+      "route": "material",
+      "viewport": "desktop-1440",
+      "url": "http://localhost:3000/projects/cmq6hstwf000fn8wkwhzoj472/material-requests",
+      "bodyScrollWidth": 1440,
+      "clientWidth": 1440,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0
+    },
+    {
+      "route": "summary",
+      "viewport": "desktop-1536",
+      "url": "http://localhost:3000/projects/cmq6hstwf000fn8wkwhzoj472/field-progress/summary",
+      "bodyScrollWidth": 1536,
+      "clientWidth": 1536,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0
+    },
+    {
+      "route": "master",
+      "viewport": "desktop-1920",
+      "url": "http://localhost:3000/projects/cmq6hstwf000fn8wkwhzoj472/field-progress",
+      "bodyScrollWidth": 1920,
+      "clientWidth": 1920,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0
+    },
+    {
+      "route": "material",
+      "viewport": "mobile-375",
+      "url": "http://localhost:3000/projects/cmq6hstwf000fn8wkwhzoj472/material-requests",
+      "bodyScrollWidth": 375,
+      "clientWidth": 375,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0
+    },
+    {
+      "route": "daily",
+      "viewport": "mobile-414",
+      "url": "http://localhost:3000/projects/cmq6hstwf000fn8wkwhzoj472/field-progress/daily",
+      "bodyScrollWidth": 414,
+      "clientWidth": 414,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0
+    },
+    {
+      "route": "summary",
+      "viewport": "mobile-430",
+      "url": "http://localhost:3000/projects/cmq6hstwf000fn8wkwhzoj472/field-progress/summary",
+      "bodyScrollWidth": 430,
+      "clientWidth": 430,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0
+    }
+  ]
+}

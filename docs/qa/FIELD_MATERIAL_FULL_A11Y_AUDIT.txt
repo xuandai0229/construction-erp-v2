@@ -1,0 +1,5 @@
+FIELD MATERIAL FULL A11Y AUDIT
+Base URL: http://localhost:3000
+Generated: 2026-06-17T10:05:15.844Z
+
+PASS: No visible field id/name/label or button accessible-name issues found in audited screens.

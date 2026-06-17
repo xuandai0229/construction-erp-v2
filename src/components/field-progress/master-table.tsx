@@ -233,12 +233,15 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
                   <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.content} sticky left-[56px] z-10 ${isGroup ? 'bg-slate-50' : isDirty ? 'bg-amber-50/30' : 'bg-white'}`} style={{ paddingLeft: `${item.displayLevel * 24 + 12}px` }}>
                     <div className="flex items-center gap-1.5">
                       {isGroup && (
-                        <button onClick={() => toggleExpand(item.id)} className="p-0.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors flex-shrink-0">
+                        <button aria-label={expanded[item.id] ? "Thu gọn hạng mục" : "Mở rộng hạng mục"} onClick={() => toggleExpand(item.id)} className="p-0.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors flex-shrink-0">
                           {expanded[item.id] ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                         </button>
                       )}
                       {!isGroup && <div className="w-5 flex-shrink-0" />}
+                      <label htmlFor={`master-content-${item.id}`} className="sr-only">{isGroup ? "Tên hạng mục" : "Tên công việc"}</label>
                       <textarea 
+                        id={`master-content-${item.id}`}
+                        name={`master-content-${item.id}`}
                         rows={2}
                         value={isGroup ? (item.categoryName || "") : (item.workContent || "")} 
                         onChange={e => handleChange(item.id, isGroup ? 'categoryName' : 'workContent', e.target.value)}
@@ -251,13 +254,18 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
 
                   <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.crew} text-center ${isDirty ? 'bg-amber-50/30' : ''}`}>
                     {isGroup ? <span className="text-slate-400">—</span> : (
-                      <input 
-                        value={item.constructionCrew || ""} 
-                        onChange={e => handleChange(item.id, 'constructionCrew', e.target.value)}
-                        title={item.constructionCrew || ""}
-                        className="w-full bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded px-2 py-1 text-center text-slate-900 font-medium text-sm transition-all outline-none placeholder:font-normal placeholder:text-slate-400 text-ellipsis overflow-hidden whitespace-nowrap"
-                        placeholder="Nhập mũi..."
-                      />
+                      <>
+                        <label htmlFor={`master-crew-${item.id}`} className="sr-only">Mũi thi công</label>
+                        <input 
+                          id={`master-crew-${item.id}`}
+                          name={`master-crew-${item.id}`}
+                          value={item.constructionCrew || ""} 
+                          onChange={e => handleChange(item.id, 'constructionCrew', e.target.value)}
+                          title={item.constructionCrew || ""}
+                          className="w-full bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded px-2 py-1 text-center text-slate-900 font-medium text-sm transition-all outline-none placeholder:font-normal placeholder:text-slate-400 text-ellipsis overflow-hidden whitespace-nowrap"
+                          placeholder="Nhập mũi..."
+                        />
+                      </>
                     )}
                   </td>
 
@@ -291,14 +299,19 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
                     {isGroup ? (
                       <span className="text-slate-700 font-bold text-sm px-2">{item.rollupDesignQuantity ? formatQuantity(item.rollupDesignQuantity) : "-"}</span>
                     ) : (
-                      <input 
-                        type="number"
-                        step="any"
-                        value={item.designQuantity || ""} 
-                        onChange={e => handleChange(item.id, 'designQuantity', e.target.value)}
-                        className="w-full bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded px-2 py-1 text-right font-semibold text-slate-800 text-sm transition-all outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
-                        placeholder="0.00"
-                      />
+                      <>
+                        <label htmlFor={`master-designQty-${item.id}`} className="sr-only">Khối lượng thiết kế</label>
+                        <input 
+                          id={`master-designQty-${item.id}`}
+                          name={`master-designQty-${item.id}`}
+                          type="number"
+                          step="any"
+                          value={item.designQuantity || ""} 
+                          onChange={e => handleChange(item.id, 'designQuantity', e.target.value)}
+                          className="w-full bg-transparent hover:bg-white focus:bg-white border border-transparent hover:border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded px-2 py-1 text-right font-semibold text-slate-800 text-sm transition-all outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
+                          placeholder="0.00"
+                        />
+                      </>
                     )}
                   </td>
 
@@ -319,13 +332,18 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
 
                   <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.notes} ${isDirty ? 'bg-amber-50/30' : ''}`}>
                     {isGroup ? <span className="text-slate-400 block text-center">—</span> : (
-                      <input 
-                        value={item.note || ""} 
-                        onChange={e => handleChange(item.id, 'note', e.target.value)}
-                        title={item.note || ""}
-                        className="w-full bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded px-2 py-1 text-slate-600 text-sm transition-all outline-none text-ellipsis overflow-hidden whitespace-nowrap"
-                        placeholder="Ghi chú..."
-                      />
+                      <>
+                        <label htmlFor={`master-note-${item.id}`} className="sr-only">Ghi chú</label>
+                        <input 
+                          id={`master-note-${item.id}`}
+                          name={`master-note-${item.id}`}
+                          value={item.note || ""} 
+                          onChange={e => handleChange(item.id, 'note', e.target.value)}
+                          title={item.note || ""}
+                          className="w-full bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded px-2 py-1 text-slate-600 text-sm transition-all outline-none text-ellipsis overflow-hidden whitespace-nowrap"
+                          placeholder="Ghi chú..."
+                        />
+                      </>
                     )}
                   </td>
 
@@ -333,6 +351,7 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
                     <div className="flex items-center justify-center gap-1">
                       {isGroup && (
                         <button 
+                          aria-label="Thêm công việc con"
                           onClick={() => handleAddWork(item.id, item.displayLevel)} 
                           className="p-1.5 text-blue-600 hover:bg-blue-50 hover:text-blue-700 rounded-md transition-colors" 
                           title="Thêm công việc"
@@ -341,6 +360,7 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
                         </button>
                       )}
                       <button 
+                        aria-label="Xóa dòng"
                         onClick={() => handleDelete(item.id)} 
                         className="p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-md transition-colors" 
                         title="Xóa dòng"
@@ -381,15 +401,18 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
         {items.length > 0 && (
           <div className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur-sm px-2 pt-2 pb-1.5">
             <div className="relative">
+              <label htmlFor="master-mobileSearch" className="sr-only">Tìm kiếm</label>
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
+                id="master-mobileSearch"
+                name="master-mobileSearch"
                 value={mobileSearch}
                 onChange={e => setMobileSearch(e.target.value)}
                 placeholder="Tìm công việc, mũi thi công..."
                 className="w-full h-9 pl-9 pr-8 bg-white border border-slate-200 rounded-lg text-[13px] text-slate-900 placeholder:text-slate-400 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all duration-150 ease-out focus:shadow-sm"
               />
               {mobileSearch && (
-                <button onClick={() => setMobileSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600">
+                <button aria-label="Xóa tìm kiếm" onClick={() => setMobileSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-slate-400 hover:text-slate-600">
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -449,6 +472,7 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
               <div key={group.id} className={`rounded-xl border overflow-hidden transition-all duration-200 ease-out motion-reduce:transition-none ${isExpanded ? 'border-blue-200 bg-blue-50/30 shadow' : 'border-slate-200 bg-white shadow-sm'}`}>
                 {/* Group Header */}
                 <button
+                  aria-label={isExpanded ? "Thu gọn hạng mục" : "Mở rộng hạng mục"}
                   onClick={() => toggleMobileExpand(group.id)}
                   className="w-full flex items-center gap-2.5 px-3 py-2.5 active:bg-blue-50 active:scale-[0.99] transition-all duration-200 ease-out motion-reduce:transition-none text-left"
                 >
@@ -486,10 +510,10 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
                     </button>
                   </div>
                   <div className="flex items-center gap-1">
-                    <button onClick={() => { setEditingItemId(group.id); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 active:scale-90 transition-all duration-150" title="Sửa tên hạng mục">
+                    <button aria-label="Sửa hạng mục" onClick={() => { setEditingItemId(group.id); }} className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 active:scale-90 transition-all duration-150" title="Sửa tên hạng mục">
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
-                    <button onClick={() => handleDelete(group.id)} className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 active:scale-90 transition-all duration-150" title="Xóa hạng mục">
+                    <button aria-label="Xóa hạng mục" onClick={() => handleDelete(group.id)} className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 active:scale-90 transition-all duration-150" title="Xóa hạng mục">
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -634,8 +658,10 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
               <div className="p-5 overflow-y-auto flex flex-col gap-4">
                 {/* Name */}
                 <div>
-                  <label className="text-[11px] font-semibold text-slate-600 mb-1.5 block">{isGroup ? "Tên hạng mục" : "Tên công việc"}</label>
+                  <label htmlFor={`mobile-content-${item.id}`} className="text-[11px] font-semibold text-slate-600 mb-1.5 block">{isGroup ? "Tên hạng mục" : "Tên công việc"}</label>
                   <input
+                    id={`mobile-content-${item.id}`}
+                    name={`mobile-content-${item.id}`}
                     value={isGroup ? (item.categoryName || "") : (item.workContent || "")}
                     onChange={e => handleChange(item.id, isGroup ? 'categoryName' : 'workContent', e.target.value)}
                     placeholder={isGroup ? "Nhập tên hạng mục..." : "Nhập tên công việc..."}
@@ -647,8 +673,10 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
                   <>
                     {/* Construction Crew */}
                     <div>
-                      <label className="text-[11px] font-semibold text-slate-600 mb-1.5 block">Mũi thi công</label>
+                      <label htmlFor={`mobile-crew-${item.id}`} className="text-[11px] font-semibold text-slate-600 mb-1.5 block">Mũi thi công</label>
                       <input
+                        id={`mobile-crew-${item.id}`}
+                        name={`mobile-crew-${item.id}`}
                         value={item.constructionCrew || ""}
                         onChange={e => handleChange(item.id, 'constructionCrew', e.target.value)}
                         placeholder="Nhập mũi thi công"
@@ -669,8 +697,10 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
                         </button>
                       </div>
                       <div>
-                        <label className="text-[11px] font-semibold text-slate-600 mb-1.5 block">Khối lượng thiết kế</label>
+                        <label htmlFor={`mobile-designQty-${item.id}`} className="text-[11px] font-semibold text-slate-600 mb-1.5 block">Khối lượng thiết kế</label>
                         <input
+                          id={`mobile-designQty-${item.id}`}
+                          name={`mobile-designQty-${item.id}`}
                           type="text"
                           inputMode="decimal"
                           value={item.designQtyRaw !== undefined ? item.designQtyRaw : (item.designQuantity || "")}
@@ -695,8 +725,10 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
 
                     {/* Note */}
                     <div>
-                      <label className="text-[11px] font-semibold text-slate-600 mb-1.5 block">Ghi chú</label>
+                      <label htmlFor={`mobile-note-${item.id}`} className="text-[11px] font-semibold text-slate-600 mb-1.5 block">Ghi chú</label>
                       <input
+                        id={`mobile-note-${item.id}`}
+                        name={`mobile-note-${item.id}`}
                         value={item.note || ""}
                         onChange={e => handleChange(item.id, 'note', e.target.value)}
                         placeholder="Ghi chú..."
@@ -762,7 +794,10 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
                 <div className="mt-2 pt-5 border-t border-slate-100">
                   <label className="text-xs font-bold text-slate-500 mb-2.5 block uppercase tracking-wide">Đơn vị khác</label>
                   <div className="flex items-stretch gap-3">
+                    <label htmlFor={`mobile-customUnit-${item.id}`} className="sr-only">Đơn vị khác</label>
                     <input 
+                      id={`mobile-customUnit-${item.id}`}
+                      name={`mobile-customUnit-${item.id}`}
                       value={item._tempCustomUnit !== undefined ? item._tempCustomUnit : (isCustom ? currentUnit : "")}
                       onChange={e => {
                         setItems(prev => prev.map(it => it.id === item.id ? { ...it, _tempCustomUnit: e.target.value } : it));
