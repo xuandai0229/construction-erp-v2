@@ -128,6 +128,17 @@ export async function requireProjectAccessOrRedirect(projectId: string) {
 }
 
 /**
+ * Require user to have management access - page-level version that redirects.
+ */
+export async function requireManagementAccessOrRedirect() {
+  const session = await requireAuth();
+  if (!canManageProjects(session)) {
+    redirect("/projects");
+  }
+  return session;
+}
+
+/**
  * Get list of project IDs the user can access.
  * For high-level users, returns null (meaning all projects).
  * For others, returns array of assigned project IDs.

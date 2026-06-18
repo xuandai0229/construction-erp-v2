@@ -2,7 +2,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import prisma from "@/lib/prisma";
 import { Building2, Plus, Search } from "lucide-react";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { ProjectStatus } from "@prisma/client";
 import { format } from "date-fns";
 import { getSession } from "@/lib/auth";
@@ -57,12 +57,12 @@ export default async function ProjectsPage({
 
   const getStatusBadge = (status: ProjectStatus) => {
     switch (status) {
-      case 'PLANNING': return <Badge variant="neutral">Lập kế hoạch</Badge>;
-      case 'ACTIVE': return <Badge variant="success">Đang thi công</Badge>;
-      case 'ON_HOLD': return <Badge variant="warning">Tạm dừng</Badge>;
-      case 'COMPLETED': return <Badge variant="default">Hoàn thành</Badge>;
-      case 'CANCELLED': return <Badge variant="error">Đã hủy</Badge>;
-      default: return <Badge variant="neutral">{status}</Badge>;
+      case 'PLANNING': return <StatusBadge variant="neutral">Chuẩn bị</StatusBadge>;
+      case 'ACTIVE': return <StatusBadge variant="success">Đang thi công</StatusBadge>;
+      case 'ON_HOLD': return <StatusBadge variant="warning">Tạm dừng</StatusBadge>;
+      case 'COMPLETED': return <StatusBadge variant="success">Hoàn thành</StatusBadge>;
+      case 'CANCELLED': return <StatusBadge variant="danger">Hủy</StatusBadge>;
+      default: return <StatusBadge variant="neutral">{status}</StatusBadge>;
     }
   };
 
@@ -102,11 +102,11 @@ export default async function ProjectsPage({
                 className="flex-1 sm:w-auto px-3 py-2 text-sm text-slate-900 font-medium border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
               >
                 <option value="">Tất cả trạng thái</option>
-                <option value="PLANNING">Lập kế hoạch</option>
+                <option value="PLANNING">Chuẩn bị</option>
                 <option value="ACTIVE">Đang thi công</option>
                 <option value="ON_HOLD">Tạm dừng</option>
                 <option value="COMPLETED">Hoàn thành</option>
-                <option value="CANCELLED">Đã hủy</option>
+                <option value="CANCELLED">Hủy</option>
               </select>
               <button type="submit" className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-blue-600 text-white hover:bg-blue-700 h-10 px-4 py-2">Lọc</button>
               {(q || statusFilter) && (

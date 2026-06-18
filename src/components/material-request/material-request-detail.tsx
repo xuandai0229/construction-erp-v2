@@ -4,22 +4,23 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { X, Edit2, Package, Save, CheckCircle2, XCircle, AlertTriangle, ArrowLeft } from "lucide-react";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { updateMaterialRequestStatus, updateMaterialRequestItems } from "@/app/actions/material-request";
 
 const statusConfig = {
-  DRAFT: { label: "Nháp", color: "bg-slate-100 text-slate-700 border-slate-200" },
-  REQUESTED: { label: "Đã đề xuất", color: "bg-blue-50 text-blue-700 border-blue-200" },
-  PROCESSING: { label: "Đang xử lý", color: "bg-yellow-50 text-yellow-700 border-yellow-200" },
-  ISSUED: { label: "Đã cấp", color: "bg-indigo-50 text-indigo-700 border-indigo-200" },
-  RECEIVED: { label: "Đã nhận", color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  CANCELLED: { label: "Hủy", color: "bg-red-50 text-red-700 border-red-200" },
+  DRAFT: { label: "Nháp", variant: "neutral" as const },
+  REQUESTED: { label: "Đã đề xuất", variant: "info" as const },
+  PROCESSING: { label: "Đang xử lý", variant: "warning" as const },
+  ISSUED: { label: "Đã cấp", variant: "info" as const },
+  RECEIVED: { label: "Đã nhận", variant: "success" as const },
+  CANCELLED: { label: "Hủy", variant: "danger" as const },
 };
 
 const priorityConfig = {
-  LOW: { label: "Thấp", color: "text-slate-500 bg-slate-50 border-slate-200" },
-  MEDIUM: { label: "Trung bình", color: "text-blue-600 bg-blue-50 border-blue-200" },
-  HIGH: { label: "Cao", color: "text-orange-600 bg-orange-50 border-orange-200" },
-  URGENT: { label: "Khẩn cấp", color: "text-red-600 bg-red-50 border-red-200" },
+  LOW: { label: "Thấp", variant: "neutral" as const },
+  MEDIUM: { label: "Trung bình", variant: "info" as const },
+  HIGH: { label: "Cao", variant: "warning" as const },
+  URGENT: { label: "Khẩn cấp", variant: "danger" as const },
 };
 
 export function MaterialRequestDetail({
@@ -115,9 +116,9 @@ export function MaterialRequestDetail({
             <h2 id="detail-modal-title" className="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2">
               Chi tiết: {request.requestNo}
             </h2>
-            <span className={`hidden sm:inline-flex px-2.5 py-0.5 rounded text-xs font-semibold border ${statusConfig[request.status as keyof typeof statusConfig]?.color}`}>
+            <StatusBadge variant={statusConfig[request.status as keyof typeof statusConfig]?.variant || "neutral"} size="sm" className="hidden sm:inline-flex">
               {statusConfig[request.status as keyof typeof statusConfig]?.label}
-            </span>
+            </StatusBadge>
           </div>
           <div className="flex items-center gap-2">
             {isEditable && (
@@ -144,9 +145,9 @@ export function MaterialRequestDetail({
           )}
 
           <div className="sm:hidden mb-2">
-            <span className={`inline-flex px-2.5 py-1 rounded text-xs font-semibold border ${statusConfig[request.status as keyof typeof statusConfig]?.color}`}>
+            <StatusBadge variant={statusConfig[request.status as keyof typeof statusConfig]?.variant || "neutral"} size="md">
               {statusConfig[request.status as keyof typeof statusConfig]?.label}
-            </span>
+            </StatusBadge>
           </div>
 
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
@@ -160,9 +161,9 @@ export function MaterialRequestDetail({
             </div>
             <div>
               <p className="text-slate-500 font-medium text-xs mb-1">Mức ưu tiên</p>
-              <p className={`font-semibold ${priorityConfig[request.priority as keyof typeof priorityConfig]?.color.split(' ')[0]}`}>
+              <StatusBadge variant={priorityConfig[request.priority as keyof typeof priorityConfig]?.variant || "neutral"} size="sm">
                 {priorityConfig[request.priority as keyof typeof priorityConfig]?.label}
-              </p>
+              </StatusBadge>
             </div>
             <div>
               <p className="text-slate-500 font-medium text-xs mb-1">Người đề xuất</p>

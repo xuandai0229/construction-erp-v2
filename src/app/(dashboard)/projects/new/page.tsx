@@ -1,7 +1,9 @@
 import { ProjectForm } from "@/components/projects/project-form";
 import { Building2 } from "lucide-react";
+import { requireManagementAccessOrRedirect } from "@/lib/rbac";
 
-export default function NewProjectPage() {
+export default async function NewProjectPage() {
+  await requireManagementAccessOrRedirect();
   return (
     <div className="space-y-6">
       <div className="flex items-center space-x-2">

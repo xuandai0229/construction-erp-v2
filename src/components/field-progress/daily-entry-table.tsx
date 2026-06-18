@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { batchSaveDailyEntries } from "@/app/(dashboard)/projects/[id]/field-progress/daily/actions";
 import { createItem } from "@/app/(dashboard)/projects/[id]/field-progress/actions";
 import { formatQuantity } from "@/lib/field-progress";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { sharedTableStyles } from "./table-styles";
 import { evaluateVolumeGuard } from "@/lib/field-progress/volume-guard";
 
@@ -441,15 +442,18 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
 
   const renderQuantityInput = (item: DailyItem, index: number, compact = false) => {
     const math = getItemMath(item);
+    const idSuffix = compact ? "-mobile" : "-desktop";
 
     return (
       <div>
-        <label htmlFor={`daily-quantity-${item.id}`} className="sr-only">Khối lượng ngày {dateStr}</label>
+        <label htmlFor={`daily-quantity-${item.id}${idSuffix}`} className="sr-only">Khối lượng ngày {dateStr}</label>
         <input
-          id={`daily-quantity-${item.id}`}
-          name={`daily-quantity-${item.id}`}
+          id={`daily-quantity-${item.id}${idSuffix}`}
+          name={`daily-quantity-${item.id}${idSuffix}`}
           ref={(el) => {
-            quantityRefs.current[item.id] = el;
+            if (!compact) {
+              quantityRefs.current[item.id] = el;
+            }
           }}
           type="text"
           inputMode="decimal"
@@ -593,7 +597,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
               {over > 0 && (
                 <>
                   <span className="text-slate-300">•</span>
-                  <span className="rounded-full bg-red-100 px-1.5 text-red-700">{over} vượt thiết kế</span>
+                  <StatusBadge variant="danger" size="sm" className="rounded-full px-1.5 text-[11px]">{over} vượt thiết kế</StatusBadge>
                 </>
               )}
             </div>
@@ -813,13 +817,13 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
             <div>
               <div className="flex items-center gap-2 sm:gap-3">
                 <h2 className="text-base sm:text-lg font-bold text-slate-900 hidden sm:block">Danh sách công việc</h2>
-                <span className={`rounded-full px-2.5 py-0.5 sm:px-3 sm:py-1 text-[11px] sm:text-xs font-semibold border ${
-                  dateStatus === 'Đã nhập' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                  dateStatus.includes('Chưa lưu') ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                  'bg-slate-100 text-slate-600 border-slate-200'
-                }`}>
+                <StatusBadge variant={
+                  dateStatus === 'Đã nhập' ? 'success' :
+                  dateStatus.includes('Chưa lưu') ? 'warning' :
+                  'neutral'
+                } className="rounded-full px-2.5 py-0.5 sm:px-3 sm:py-1 text-[11px] sm:text-xs border">
                   {dateStatus}
-                </span>
+                </StatusBadge>
               </div>
             </div>
             <Button

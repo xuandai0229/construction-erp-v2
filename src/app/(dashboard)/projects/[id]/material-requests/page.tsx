@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, Calendar, BarChart2, Package, Table } from "lucide-react";
 import { MaterialRequestList } from "@/components/material-request/material-request-list";
 import { requireProjectAccessOrRedirect } from "@/lib/rbac";
+import { ProjectModuleTabs } from "@/components/project/project-module-tabs";
 
 export default async function MaterialRequestsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -63,37 +64,7 @@ export default async function MaterialRequestsPage({ params }: { params: Promise
         </div>
         
         {/* Action Buttons */}
-        <div className="flex flex-row flex-wrap items-center gap-2 ml-7 sm:ml-11 mt-2">
-          <Link 
-            href={`/projects/${id}/field-progress`}
-            className="h-9 sm:h-10 px-3 sm:px-4 bg-white border border-slate-300 text-slate-700 rounded-md text-xs sm:text-sm font-semibold hover:bg-slate-50 active:bg-slate-100 active:scale-95 flex items-center justify-center gap-1.5 transition-all duration-150 ease-out"
-          >
-            <Table className="w-4 h-4" /> 
-            <span className="md:hidden">Bảng gốc</span>
-            <span className="hidden md:inline">Bảng khối lượng gốc</span>
-          </Link>
-          <Link 
-            href={`/projects/${id}/field-progress/daily`}
-            className="h-9 sm:h-10 px-3 sm:px-4 bg-white border border-slate-300 text-slate-700 rounded-md text-xs sm:text-sm font-semibold hover:bg-slate-50 active:bg-slate-100 active:scale-95 flex items-center justify-center gap-1.5 transition-all duration-150 ease-out"
-          >
-            <Calendar className="w-4 h-4" /> 
-            <span className="md:hidden">Theo ngày</span>
-            <span className="hidden md:inline">Nhập khối lượng theo ngày</span>
-          </Link>
-          <Link 
-            href={`/projects/${id}/field-progress/summary`}
-            className="h-9 sm:h-10 px-3 sm:px-4 bg-white border border-slate-300 text-slate-700 rounded-md text-xs sm:text-sm font-semibold hover:bg-slate-50 active:bg-slate-100 active:scale-95 flex items-center justify-center gap-1.5 transition-all duration-150 ease-out"
-          >
-            <BarChart2 className="w-4 h-4" /> 
-            <span className="md:hidden">Tổng hợp</span>
-            <span className="hidden md:inline">Tổng hợp khối lượng</span>
-          </Link>
-          <div className="h-9 sm:h-10 px-3 sm:px-4 bg-blue-50 text-blue-700 border border-blue-200 rounded-md text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5">
-            <Package className="w-4 h-4" /> 
-            <span className="md:hidden">Vật tư</span>
-            <span className="hidden md:inline">Đề xuất vật tư</span>
-          </div>
-        </div>
+        <ProjectModuleTabs projectId={id} />
       </div>
 
       <MaterialRequestList 

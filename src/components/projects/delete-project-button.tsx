@@ -6,7 +6,7 @@ import { deleteProject } from "@/app/(dashboard)/projects/actions";
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-export function DeleteProjectButton({ id, projectName }: { id: string, projectName: string }) {
+export function DeleteProjectButton({ id, projectName, className }: { id: string, projectName: string, className?: string }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
 
@@ -32,6 +32,7 @@ export function DeleteProjectButton({ id, projectName }: { id: string, projectNa
         onClick={() => setShowConfirm(true)} 
         disabled={isDeleting}
         title="Xóa công trình"
+        className={className}
       >
         <Trash2 className="h-4 w-4 mr-2" />
         {isDeleting ? "Đang xóa..." : "Xóa"}

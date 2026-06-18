@@ -132,6 +132,7 @@ interface UpdateUserInput {
   phone?: string;
   role?: UserRole;
   isActive?: boolean;
+  projectIds?: string[];
   note?: string;
 }
 
@@ -158,16 +159,78 @@ export async function updateUser(userId: string, input: UpdateUserInput) {
   }
 
   try {
-    const updated = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        ...(input.name !== undefined && { name: input.name }),
-        ...(input.email !== undefined && { email: input.email }),
-        ...(input.username !== undefined && { username: input.username || null }),
-        ...(input.phone !== undefined && { phone: input.phone || null }),
-        ...(input.role !== undefined && { role: input.role }),
-        ...(input.isActive !== undefined && { isActive: input.isActive }),
-      },
+    const updated = await prisma.$transaction(async (tx) => {
+      const updatedUser = await tx.user.update({
+        where: { id: userId },
+        data: {
+          ...(input.name !== undefined && { name: input.name }),
+          ...(input.email !== undefined && { email: input.email }),
+          ...(input.username !== undefined && { username: input.username || null }),
+          ...(input.phone !== undefined && { phone: input.phone || null }),
+          ...(input.role !== undefined && { role: input.role }),
+          ...(input.isActive !== undefined && { isActive: input.isActive }),
+        },
+      });
+
+      // Handle project assignments if provided
+      if (input.projectIds !== undefined) {
+        // Find existing active projects
+        const existingMembers = await tx.projectMember.findMany({
+          where: { userId, isActive: true, deletedAt: null },
+        });
+
+        const existingProjectIds = existingMembers.map((m) => m.projectId);
+        const newProjectIds = input.projectIds;
+
+        const toAdd = newProjectIds.filter((id) => !existingProjectIds.includes(id));
+        const toRemove = existingProjectIds.filter((id) => !newProjectIds.includes(id));
+
+        const projectRole = updatedUser.role === "CHIEF_COMMANDER" ? ("CHIEF_COMMANDER" as const) : ("VIEWER" as const);
+
+        // Remove (soft delete/deactivate) unselected projects
+        if (toRemove.length > 0) {
+          await tx.projectMember.updateMany({
+            where: { userId, projectId: { in: toRemove } },
+            data: { isActive: false, deletedAt: new Date() },
+          });
+        }
+
+        // Add new projects
+        if (toAdd.length > 0) {
+          for (const projectId of toAdd) {
+            // Check if there's a soft-deleted record to reactivate
+            const existingRecord = await tx.projectMember.findUnique({
+              where: { projectId_userId: { projectId, userId } },
+            });
+
+            if (existingRecord) {
+              await tx.projectMember.update({
+                where: { id: existingRecord.id },
+                data: {
+                  isActive: true,
+                  deletedAt: null,
+                  role: projectRole,
+                  assignedById: session.id,
+                  note: input.note || null,
+                },
+              });
+            } else {
+              await tx.projectMember.create({
+                data: {
+                  projectId,
+                  userId,
+                  role: projectRole,
+                  assignedById: session.id,
+                  isActive: true,
+                  note: input.note || null,
+                },
+              });
+            }
+          }
+        }
+      }
+
+      return updatedUser;
     });
 
     await writeAuditLog({
@@ -182,6 +245,7 @@ export async function updateUser(userId: string, input: UpdateUserInput) {
     revalidatePath("/users");
     return { success: true };
   } catch (error: any) {
+    console.error("Update user error:", error);
     return { error: "Đã xảy ra lỗi khi cập nhật" };
   }
 }

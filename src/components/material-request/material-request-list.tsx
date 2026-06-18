@@ -4,23 +4,24 @@ import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { Plus, Search, Filter, Package, AlertCircle, Eye, Edit2, CheckCircle2, Clock, XCircle, FileText } from "lucide-react";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { MaterialRequestForm } from "./material-request-form";
 import { MaterialRequestDetail } from "./material-request-detail";
 
 const statusConfig = {
-  DRAFT: { label: "Nháp", color: "bg-slate-100 text-slate-700 border-slate-200", icon: FileText },
-  REQUESTED: { label: "Đã đề xuất", color: "bg-blue-50 text-blue-700 border-blue-200", icon: Clock },
-  PROCESSING: { label: "Đang xử lý", color: "bg-yellow-50 text-yellow-700 border-yellow-200", icon: AlertCircle },
-  ISSUED: { label: "Đã cấp", color: "bg-indigo-50 text-indigo-700 border-indigo-200", icon: Package },
-  RECEIVED: { label: "Đã nhận", color: "bg-emerald-50 text-emerald-700 border-emerald-200", icon: CheckCircle2 },
-  CANCELLED: { label: "Hủy", color: "bg-red-50 text-red-700 border-red-200", icon: XCircle },
+  DRAFT: { label: "Nháp", variant: "neutral" as const, icon: FileText },
+  REQUESTED: { label: "Đã đề xuất", variant: "info" as const, icon: Clock },
+  PROCESSING: { label: "Đang xử lý", variant: "warning" as const, icon: AlertCircle },
+  ISSUED: { label: "Đã cấp", variant: "info" as const, icon: Package },
+  RECEIVED: { label: "Đã nhận", variant: "success" as const, icon: CheckCircle2 },
+  CANCELLED: { label: "Hủy", variant: "danger" as const, icon: XCircle },
 };
 
 const priorityConfig = {
-  LOW: { label: "Thấp", color: "text-slate-500 bg-slate-50 border-slate-200" },
-  MEDIUM: { label: "Trung bình", color: "text-blue-600 bg-blue-50 border-blue-200" },
-  HIGH: { label: "Cao", color: "text-orange-600 bg-orange-50 border-orange-200" },
-  URGENT: { label: "Khẩn cấp", color: "text-red-600 bg-red-50 border-red-200" },
+  LOW: { label: "Thấp", variant: "neutral" as const },
+  MEDIUM: { label: "Trung bình", variant: "info" as const },
+  HIGH: { label: "Cao", variant: "warning" as const },
+  URGENT: { label: "Khẩn cấp", variant: "danger" as const },
 };
 
 export function MaterialRequestList({ 
@@ -173,15 +174,15 @@ export function MaterialRequestList({
                     </td>
                     <td className="px-4 py-3 text-slate-600">{req.items?.length || 0}</td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border ${statusConfig[req.status as keyof typeof statusConfig]?.color}`}>
+                      <StatusBadge variant={statusConfig[req.status as keyof typeof statusConfig]?.variant || "neutral"} size="sm" className="gap-1.5 px-2.5 py-1">
                         <StatusIcon className="w-3.5 h-3.5" />
                         {statusConfig[req.status as keyof typeof statusConfig]?.label}
-                      </span>
+                      </StatusBadge>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${priorityConfig[req.priority as keyof typeof priorityConfig]?.color}`}>
+                      <StatusBadge variant={priorityConfig[req.priority as keyof typeof priorityConfig]?.variant || "neutral"} size="sm">
                         {priorityConfig[req.priority as keyof typeof priorityConfig]?.label}
-                      </span>
+                      </StatusBadge>
                     </td>
                     <td className="px-4 py-3 text-slate-600 truncate max-w-[150px]">{req.requestedBy?.name}</td>
                     <td className="px-4 py-3 text-right space-x-2">
@@ -217,17 +218,17 @@ export function MaterialRequestList({
                   <h3 className="font-bold text-slate-900 text-base">{req.requestNo}</h3>
                   <p className="text-xs text-slate-500 mt-0.5">Ngày cần: {req.neededDate ? format(new Date(req.neededDate), "dd/MM/yyyy") : "-"}</p>
                 </div>
-                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium border shrink-0 ${statusConfig[req.status as keyof typeof statusConfig]?.color}`}>
+                <StatusBadge variant={statusConfig[req.status as keyof typeof statusConfig]?.variant || "neutral"} size="sm" className="gap-1">
                   <StatusIcon className="w-3 h-3" />
                   {statusConfig[req.status as keyof typeof statusConfig]?.label}
-                </span>
+                </StatusBadge>
               </div>
               <div className="flex items-center justify-between pt-3 border-t border-slate-100">
                 <div className="flex gap-2">
                   <span className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded font-medium border border-slate-200">{req.items?.length || 0} loại VT</span>
-                  <span className={`text-xs px-2 py-1 rounded font-medium border ${priorityConfig[req.priority as keyof typeof priorityConfig]?.color}`}>
+                  <StatusBadge variant={priorityConfig[req.priority as keyof typeof priorityConfig]?.variant || "neutral"} size="sm" className="rounded px-2 py-1">
                     {priorityConfig[req.priority as keyof typeof priorityConfig]?.label}
-                  </span>
+                  </StatusBadge>
                 </div>
                 <button aria-label={`Chi tiết đề xuất ${req.requestNo}`} className="text-blue-600 text-sm font-semibold flex items-center gap-1" onClick={(e) => { e.stopPropagation(); handleView(req); }}>
                   Chi tiết <ArrowRight className="w-3.5 h-3.5" />

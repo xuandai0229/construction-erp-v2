@@ -8,6 +8,7 @@ import { addWorkDays, formatWorkDate, getWorkDateRange, parseWorkDate, todayWork
 import { SummaryMobileView } from "@/components/field-progress/summary-mobile-view";
 import { SummaryDesktopView } from "@/components/field-progress/summary-desktop-view";
 import { requireProjectAccessOrRedirect } from "@/lib/rbac";
+import { ProjectModuleTabs } from "@/components/project/project-module-tabs";
 
 function formatWorkDateShort(date: Date): string {
   const dateStr = formatWorkDate(date);
@@ -130,33 +131,12 @@ export default async function FieldProgressSummaryPage({
         </div>
         
         {/* Action Buttons */}
-        <div className="flex flex-row items-center gap-2 ml-8 sm:ml-11">
-          <Link 
-            href={`/projects/${id}/field-progress`}
-            className="flex-1 sm:flex-none h-10 px-3 sm:px-4 bg-white border border-slate-300 text-slate-700 rounded-lg text-[13px] sm:text-sm font-semibold hover:bg-slate-50 flex items-center justify-center gap-1.5 transition-all"
-          >
-            <Table className="w-4 h-4" /> Bảng khối lượng
-          </Link>
-          <Link 
-            href={`/projects/${id}/field-progress/daily`}
-            className="flex-1 sm:flex-none h-10 px-3 sm:px-4 bg-blue-600 text-white rounded-lg text-[13px] sm:text-sm font-semibold hover:bg-blue-700 flex items-center justify-center gap-1.5 shadow-sm transition-all"
-          >
-            <Calendar className="w-4 h-4" /> Nhập khối lượng
-          </Link>
-          <Link 
-            href={`/projects/${id}/material-requests`}
-            className="flex-1 sm:flex-none h-10 px-3 sm:px-4 bg-white border border-slate-300 text-slate-700 rounded-lg text-[13px] sm:text-sm font-semibold hover:bg-slate-50 flex items-center justify-center gap-1.5 shadow-sm transition-all whitespace-nowrap"
-          >
-            <Package className="w-4 h-4" /> 
-            <span className="hidden sm:inline">Đề xuất vật tư</span>
-            <span className="sm:hidden">Vật tư</span>
-          </Link>
-        </div>
+        <ProjectModuleTabs projectId={id} />
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
-        <form className="flex flex-col md:flex-row md:flex-wrap items-stretch md:items-end gap-3" method="GET">
-          <div className="grid grid-cols-2 gap-3 w-full md:w-auto md:flex-1 md:flex md:gap-3">
+      <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
+        <form className="flex flex-col md:flex-row md:flex-wrap items-stretch md:items-end gap-2.5" method="GET">
+          <div className="grid grid-cols-2 gap-2.5 w-full md:w-auto md:flex-1 md:flex md:gap-3">
             <div className="col-span-1 md:flex-1 min-w-[140px]">
               <label htmlFor="filter-from" className="block text-[11px] font-bold text-slate-700 mb-1">Từ ngày</label>
               <input 
@@ -164,7 +144,7 @@ export default async function FieldProgressSummaryPage({
                 type="date" 
                 name="from" 
                 defaultValue={fromDate} 
-                className="w-full h-10 px-3 border border-slate-300 bg-white text-slate-900 rounded-lg text-sm font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none" 
+                className="w-full h-9 md:h-10 px-2.5 border border-slate-300 bg-white text-slate-900 rounded-lg text-[13px] font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none" 
               />
             </div>
             <div className="col-span-1 md:flex-1 min-w-[140px]">
@@ -174,18 +154,18 @@ export default async function FieldProgressSummaryPage({
                 type="date" 
                 name="to" 
                 defaultValue={toDate} 
-                className="w-full h-10 px-3 border border-slate-300 bg-white text-slate-900 rounded-lg text-sm font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none" 
+                className="w-full h-9 md:h-10 px-2.5 border border-slate-300 bg-white text-slate-900 rounded-lg text-[13px] font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none" 
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3 w-full md:w-auto md:flex-1 md:flex md:gap-3">
+          <div className="grid grid-cols-2 gap-2.5 w-full md:w-auto md:flex-1 md:flex md:gap-3">
             <div className="col-span-1 md:flex-1 min-w-[150px]">
               <label htmlFor="filter-mode" className="block text-[11px] font-bold text-slate-700 mb-1">Hiển thị</label>
               <select 
                 id="filter-mode"
                 name="mode" 
                 defaultValue={mode} 
-                className="w-full h-10 px-2 border border-slate-300 bg-white text-slate-900 rounded-lg text-[13px] font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
+                className="w-full h-9 md:h-10 px-2 border border-slate-300 bg-white text-slate-900 rounded-lg text-[13px] font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
               >
                 <option value="HAS_DATA_ONLY">Chỉ có số liệu</option>
                 <option value="ALL_DAYS">Tất cả</option>
@@ -197,7 +177,7 @@ export default async function FieldProgressSummaryPage({
                 id="filter-status"
                 name="status" 
                 defaultValue={statusFilter} 
-                className="w-full h-10 px-2 border border-slate-300 bg-white text-slate-900 rounded-lg text-[13px] font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
+                className="w-full h-9 md:h-10 px-2 border border-slate-300 bg-white text-slate-900 rounded-lg text-[13px] font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
               >
                 <option value="APPROVED_ONLY">Chỉ số duyệt</option>
                 <option value="ALL">Tất cả</option>
@@ -207,7 +187,7 @@ export default async function FieldProgressSummaryPage({
           <button 
             type="submit" 
             aria-label="Lọc dữ liệu tổng hợp"
-            className="h-10 mt-1 md:mt-0 w-full md:w-auto px-5 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 flex items-center justify-center gap-2 shadow-sm transition-all whitespace-nowrap"
+            className="h-9 md:h-10 mt-0.5 md:mt-0 w-full md:w-auto px-5 bg-blue-600 text-white rounded-lg text-[13px] md:text-sm font-bold hover:bg-blue-700 flex items-center justify-center gap-2 shadow-sm transition-all whitespace-nowrap"
           >
             <Filter className="w-4 h-4" /> Lọc
           </button>

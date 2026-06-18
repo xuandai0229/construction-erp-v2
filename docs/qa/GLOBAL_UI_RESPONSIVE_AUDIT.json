@@ -1,0 +1,182 @@
+{
+  "generatedAt": "2026-06-18T03:03:07.853Z",
+  "baseUrl": "http://localhost:3000",
+  "checks": [
+    {
+      "route": "project-detail",
+      "viewport": "mobile-390",
+      "url": "http://localhost:3000/projects/cmqivalne000428wkso4rjbd3",
+      "bodyScrollWidth": 390,
+      "clientWidth": 390,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0,
+      "navTabsWrapTooMuch": false
+    },
+    {
+      "route": "master",
+      "viewport": "mobile-390",
+      "url": "http://localhost:3000/projects/cmqivalne000428wkso4rjbd3/field-progress",
+      "bodyScrollWidth": 390,
+      "clientWidth": 390,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0,
+      "navTabsWrapTooMuch": false
+    },
+    {
+      "route": "daily",
+      "viewport": "mobile-390",
+      "url": "http://localhost:3000/projects/cmqivalne000428wkso4rjbd3/field-progress/daily",
+      "bodyScrollWidth": 390,
+      "clientWidth": 390,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0,
+      "navTabsWrapTooMuch": false
+    },
+    {
+      "route": "summary",
+      "viewport": "mobile-390",
+      "url": "http://localhost:3000/projects/cmqivalne000428wkso4rjbd3/field-progress/summary",
+      "bodyScrollWidth": 390,
+      "clientWidth": 390,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0,
+      "navTabsWrapTooMuch": false
+    },
+    {
+      "route": "material",
+      "viewport": "mobile-390",
+      "url": "http://localhost:3000/projects/cmqivalne000428wkso4rjbd3/material-requests",
+      "bodyScrollWidth": 390,
+      "clientWidth": 390,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0,
+      "navTabsWrapTooMuch": false
+    },
+    {
+      "route": "users",
+      "viewport": "mobile-390",
+      "url": "http://localhost:3000/users",
+      "bodyScrollWidth": 390,
+      "clientWidth": 390,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0,
+      "navTabsWrapTooMuch": false
+    },
+    {
+      "route": "summary",
+      "viewport": "mobile-430",
+      "url": "http://localhost:3000/projects/cmqivalne000428wkso4rjbd3/field-progress/summary",
+      "bodyScrollWidth": 430,
+      "clientWidth": 430,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0,
+      "navTabsWrapTooMuch": false
+    },
+    {
+      "route": "summary",
+      "viewport": "mobile-430",
+      "url": "http://localhost:3000/projects/cmqivalne000428wkso4rjbd3/field-progress/summary",
+      "bodyScrollWidth": 430,
+      "clientWidth": 430,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0,
+      "navTabsWrapTooMuch": false
+    },
+    {
+      "route": "summary",
+      "viewport": "mobile-430",
+      "url": "http://localhost:3000/projects/cmqivalne000428wkso4rjbd3/field-progress/summary",
+      "bodyScrollWidth": 430,
+      "clientWidth": 430,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0,
+      "navTabsWrapTooMuch": false
+    },
+    {
+      "route": "project-detail",
+      "viewport": "desktop-1366",
+      "url": "http://localhost:3000/projects/cmqivalne000428wkso4rjbd3",
+      "bodyScrollWidth": 1366,
+      "clientWidth": 1366,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0,
+      "navTabsWrapTooMuch": false
+    },
+    {
+      "route": "master",
+      "viewport": "desktop-1366",
+      "url": "http://localhost:3000/projects/cmqivalne000428wkso4rjbd3/field-progress",
+      "bodyScrollWidth": 1366,
+      "clientWidth": 1366,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0,
+      "navTabsWrapTooMuch": false
+    },
+    {
+      "route": "daily",
+      "viewport": "desktop-1366",
+      "url": "http://localhost:3000/projects/cmqivalne000428wkso4rjbd3/field-progress/daily",
+      "bodyScrollWidth": 1366,
+      "clientWidth": 1366,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0,
+      "navTabsWrapTooMuch": false
+    },
+    {
+      "route": "summary",
+      "viewport": "desktop-1366",
+      "url": "http://localhost:3000/projects/cmqivalne000428wkso4rjbd3/field-progress/summary",
+      "bodyScrollWidth": 1366,
+      "clientWidth": 1366,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0,
+      "navTabsWrapTooMuch": false
+    },
+    {
+      "route": "material",
+      "viewport": "desktop-1366",
+      "url": "http://localhost:3000/projects/cmqivalne000428wkso4rjbd3/material-requests",
+      "bodyScrollWidth": 1366,
+      "clientWidth": 1366,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0,
+      "navTabsWrapTooMuch": false
+    },
+    {
+      "route": "users",
+      "viewport": "desktop-1366",
+      "url": "http://localhost:3000/users",
+      "bodyScrollWidth": 1366,
+      "clientWidth": 1366,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0,
+      "navTabsWrapTooMuch": false
+    },
+    {
+      "route": "dashboard",
+      "viewport": "desktop-1366",
+      "url": "http://localhost:3000/dashboard",
+      "bodyScrollWidth": 1366,
+      "clientWidth": 1366,
+      "hasPageHorizontalScroll": false,
+      "darkInputs": 0,
+      "whiteTextOnLightBackground": 0,
+      "navTabsWrapTooMuch": false
+    }
+  ]
+}

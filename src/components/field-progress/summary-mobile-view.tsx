@@ -5,6 +5,7 @@ import { ChevronDown, ChevronUp, Search, Info, X, FileText, Calendar, CheckCircl
 import { Button } from "@/components/ui/button";
 import { formatWorkDate } from "@/lib/date/work-date";
 import { formatQuantity } from "@/lib/field-progress";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 interface SummaryMobileViewProps {
   displayItems: any[];
@@ -132,10 +133,10 @@ export function SummaryMobileView({
             <button
               key={f.id}
               onClick={() => setFilterStatus(f.id as any)}
-              className={`whitespace-nowrap px-3 py-1.5 rounded-full text-[12px] font-semibold transition-all border ${
+              className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
                 filterStatus === f.id 
-                  ? "bg-slate-800 text-white border-slate-800 shadow-sm" 
-                  : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                  ? "bg-blue-600 text-white border-blue-600 shadow-sm" 
+                  : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
               }`}
             >
               {f.label}
@@ -242,11 +243,11 @@ export function SummaryMobileView({
                               const dateStr = formatWorkDate(d);
                               const qty = item.dayTotals[dateStr];
                               return (
-                                <div key={dateStr} className="bg-white border border-slate-200 px-1.5 py-0.5 rounded text-[10px] font-semibold text-slate-700 flex items-center gap-1 shadow-sm">
+                                <StatusBadge key={dateStr} variant="info" size="sm" className="gap-1 px-1.5 py-0.5 text-[10px] rounded">
                                   <span>{dateStr.slice(8, 10)}/{dateStr.slice(5, 7)}</span>
                                   <span className="text-slate-300">·</span>
                                   <span className="text-blue-600">{formatQuantity(qty)}</span>
-                                </div>
+                                </StatusBadge>
                               );
                             })}
                             {daysWithEntries.length > 3 && (

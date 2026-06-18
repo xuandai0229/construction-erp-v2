@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Calendar, BarChart2, Package, TrendingUp, CheckCircle2, BarChart3, Info } from "lucide-react";
 import { buildTreeItems, flattenTreeForTable, calculateParentRollup, formatQuantity } from "@/lib/field-progress";
 import { requireProjectAccessOrRedirect } from "@/lib/rbac";
+import { ProjectModuleTabs } from "@/components/project/project-module-tabs";
 
 export default async function FieldProgressPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -83,32 +84,7 @@ export default async function FieldProgressPage({ params }: { params: Promise<{ 
         </div>
         
         {/* Action Buttons */}
-        <div className="flex flex-row items-center gap-2 ml-7 sm:ml-11">
-          <Link 
-            href={`/projects/${id}/field-progress/daily`}
-            className="flex-1 sm:flex-none h-9 sm:h-10 px-3 sm:px-4 bg-blue-600 text-white rounded-md text-xs sm:text-sm font-semibold hover:bg-blue-700 active:bg-blue-800 active:scale-95 flex items-center justify-center gap-1.5 shadow-sm transition-all duration-150 ease-out"
-          >
-            <Calendar className="w-4 h-4" /> 
-            <span className="md:hidden">Nhập khối lượng</span>
-            <span className="hidden md:inline">Nhập khối lượng theo ngày</span>
-          </Link>
-          <Link 
-            href={`/projects/${id}/field-progress/summary`}
-            className="flex-1 sm:flex-none h-9 sm:h-10 px-3 sm:px-4 bg-white border border-slate-300 text-slate-700 rounded-md text-xs sm:text-sm font-semibold hover:bg-slate-50 active:bg-slate-100 active:scale-95 flex items-center justify-center gap-1.5 transition-all duration-150 ease-out"
-          >
-            <BarChart2 className="w-4 h-4" /> 
-            <span className="md:hidden">Tổng hợp</span>
-            <span className="hidden md:inline">Tổng hợp khối lượng</span>
-          </Link>
-          <Link 
-            href={`/projects/${id}/material-requests`}
-            className="flex-1 sm:flex-none h-9 sm:h-10 px-3 sm:px-4 bg-white border border-slate-300 text-slate-700 rounded-md text-xs sm:text-sm font-semibold hover:bg-slate-50 active:bg-slate-100 active:scale-95 flex items-center justify-center gap-1.5 transition-all duration-150 ease-out"
-          >
-            <Package className="w-4 h-4" /> 
-            <span className="md:hidden">Vật tư</span>
-            <span className="hidden md:inline">Đề xuất vật tư</span>
-          </Link>
-        </div>
+        <ProjectModuleTabs projectId={id} />
       </div>
 
       {/* Overview Stats Bar */}

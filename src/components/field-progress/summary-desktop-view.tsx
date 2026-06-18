@@ -5,6 +5,7 @@ import { Search, X, Calendar, ChevronRight, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatWorkDate } from "@/lib/date/work-date";
 import { formatQuantity } from "@/lib/field-progress";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 interface SummaryDesktopViewProps {
   displayItems: any[];
@@ -96,9 +97,9 @@ export function SummaryDesktopView({
             <button
               key={f.id}
               onClick={() => setFilterStatus(f.id as any)}
-              className={`whitespace-nowrap px-3 py-1.5 rounded-full text-[12px] font-semibold transition-all border ${
+              className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
                 filterStatus === f.id
-                  ? "bg-slate-800 text-white border-slate-800 shadow-sm"
+                  ? "bg-blue-600 text-white border-blue-600 shadow-sm"
                   : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
               }`}
             >
@@ -218,12 +219,12 @@ export function SummaryDesktopView({
                   </td>
                   <td className={`${tdBase} text-right`}>
                     {designQty === 0 ? (
-                      <span className="text-[10px] text-amber-600 font-medium">N/A</span>
+                      <StatusBadge variant="neutral" size="sm">N/A</StatusBadge>
                     ) : (
-                      <span className={`font-bold ${isOver ? 'text-red-600' : 'text-slate-700'}`}>
-                        {isOver && <span className="text-red-600 mr-0.5">⚠</span>}
+                      <StatusBadge variant={isOver ? "danger" : (Number(percent) >= 100 ? "success" : "neutral")} size="sm">
+                        {isOver && <span className="mr-1">⚠</span>}
                         {percent}%
-                      </span>
+                      </StatusBadge>
                     )}
                   </td>
                   {!showDayColumns && (
@@ -234,9 +235,9 @@ export function SummaryDesktopView({
                             const dateStr = formatWorkDate(d);
                             const qty = item.dayTotals[dateStr];
                             return (
-                              <span key={dateStr} className="inline-flex items-center gap-0.5 bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded text-[11px] font-semibold text-blue-700 whitespace-nowrap">
+                              <StatusBadge key={dateStr} variant="info" size="sm" className="gap-0.5 px-1.5 py-0.5 text-[11px] rounded">
                                 {formatWorkDateShort(d)} · {formatQuantity(qty)}
-                              </span>
+                              </StatusBadge>
                             );
                           })}
                           {daysWithEntries.length > 3 && (

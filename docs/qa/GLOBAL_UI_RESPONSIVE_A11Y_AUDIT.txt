@@ -1,0 +1,26 @@
+--- GLOBAL UI RESPONSIVE A11Y AUDIT ---
+
+[http://localhost:3000/projects/cmqivalne000428wkso4rjbd3]
+Violations: 1
+- heading-order: Ensure the order of headings is semantically correct (1 nodes)
+
+[http://localhost:3000/projects/cmqivalne000428wkso4rjbd3/field-progress]
+Violations: 1
+- link-name: Ensure links have discernible text (1 nodes)
+
+[http://localhost:3000/projects/cmqivalne000428wkso4rjbd3/field-progress/daily]
+Violations: 2
+- heading-order: Ensure the order of headings is semantically correct (1 nodes)
+- link-name: Ensure links have discernible text (1 nodes)
+
+[http://localhost:3000/projects/cmqivalne000428wkso4rjbd3/field-progress/summary]
+Violations: 0
+
+[http://localhost:3000/projects/cmqivalne000428wkso4rjbd3/material-requests]
+Violations: 1
+- link-name: Ensure links have discernible text (1 nodes)
+
+[http://localhost:3000/users]
+Violations: 2
+- color-contrast: Ensure the contrast between foreground and background colors meets WCAG 2 AA minimum contrast ratio thresholds (5 nodes)
+- region: Ensure all page content is contained by landmarks (1 nodes)

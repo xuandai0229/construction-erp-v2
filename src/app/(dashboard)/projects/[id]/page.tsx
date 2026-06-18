@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, Calendar, MapPin, User, ListTree, FolderOpen, FileText, ClipboardCheck, BarChart2, Package } from "lucide-react";
 import { DeleteProjectButton } from "@/components/projects/delete-project-button";
@@ -30,12 +30,12 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
 
   const getStatusBadge = (status: ProjectStatus) => {
     switch (status) {
-      case 'PLANNING': return <Badge variant="neutral">Lập kế hoạch</Badge>;
-      case 'ACTIVE': return <Badge variant="success">Đang thi công</Badge>;
-      case 'ON_HOLD': return <Badge variant="warning">Tạm dừng</Badge>;
-      case 'COMPLETED': return <Badge variant="default">Hoàn thành</Badge>;
-      case 'CANCELLED': return <Badge variant="error">Đã hủy</Badge>;
-      default: return <Badge variant="neutral">{status}</Badge>;
+      case 'PLANNING': return <StatusBadge variant="neutral">Chuẩn bị</StatusBadge>;
+      case 'ACTIVE': return <StatusBadge variant="success">Đang thi công</StatusBadge>;
+      case 'ON_HOLD': return <StatusBadge variant="warning">Tạm dừng</StatusBadge>;
+      case 'COMPLETED': return <StatusBadge variant="success">Hoàn thành</StatusBadge>;
+      case 'CANCELLED': return <StatusBadge variant="danger">Hủy</StatusBadge>;
+      default: return <StatusBadge variant="neutral">{status}</StatusBadge>;
     }
   };
 
@@ -43,25 +43,23 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <h1 className="text-2xl font-bold text-slate-900">{project.name}</h1>
             {getStatusBadge(project.status)}
           </div>
           <p className="text-sm text-slate-500 mt-1">Mã: {project.code}</p>
         </div>
-        <div className="flex flex-wrap gap-2 w-full sm:w-auto mt-2 sm:mt-0">
-          <Link href="/projects" className="flex-1 sm:flex-none inline-flex items-center justify-center rounded-md text-xs sm:text-sm font-medium transition-colors border border-slate-300 bg-white hover:bg-slate-100 text-slate-900 h-9 sm:h-10 px-3 sm:px-4">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+          <Link href="/projects" className="w-full sm:w-auto inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-slate-300 bg-white hover:bg-slate-100 text-slate-900 h-10 px-4">
             Quay lại
           </Link>
           {canManage && (
-            <>
-              <Link href={`/projects/${project.id}/edit`} className="flex-1 sm:flex-none inline-flex items-center justify-center rounded-md text-xs sm:text-sm font-medium transition-colors border border-slate-300 bg-white hover:bg-slate-100 text-slate-900 h-9 sm:h-10 px-3 sm:px-4">
+            <div className="grid grid-cols-2 sm:flex sm:flex-row gap-2 w-full sm:w-auto">
+              <Link href={`/projects/${project.id}/edit`} className="w-full sm:w-auto inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-slate-300 bg-white hover:bg-slate-100 text-slate-900 h-10 px-4">
                 Sửa
               </Link>
-              <div className="w-full sm:w-auto mt-2 sm:mt-0 flex justify-end">
-                <DeleteProjectButton id={project.id} projectName={project.name} />
-              </div>
-            </>
+              <DeleteProjectButton id={project.id} projectName={project.name} className="w-full sm:w-auto h-10" />
+            </div>
           )}
         </div>
       </div>
