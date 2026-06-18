@@ -5,6 +5,8 @@ import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { X, Edit2, Package, Save, CheckCircle2, XCircle, AlertTriangle, ArrowLeft } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useToast } from "@/components/ui/toast-context";
 import { updateMaterialRequestStatus, updateMaterialRequestItems } from "@/app/actions/material-request";
 
 const statusConfig = {
@@ -37,7 +39,7 @@ export function MaterialRequestDetail({
   onSuccess: () => void;
 }) {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const toast = useToast();
   
   // Local state for items to allow editing issued/received quantities
   const [items, setItems] = useState<any[]>(request.items || []);
@@ -45,29 +47,27 @@ export function MaterialRequestDetail({
   const [isCancelling, setIsCancelling] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
 
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    variant: "danger" | "warning" | "info" | "success";
+    confirmText: string;
+    cancelText?: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false, title: "", description: "", variant: "info", confirmText: "", onConfirm: () => {}
+  });
+
   const isEditable = ["DRAFT", "REQUESTED", "PROCESSING"].includes(request.status);
 
   const handleItemChange = (id: string, field: string, value: any) => {
     setItems(items.map(i => i.id === id ? { ...i, [field]: value } : i));
   };
 
-  const handleUpdateProgress = async () => {
+  const executeUpdate = async () => {
     try {
       setLoading(true);
-      setError("");
-
-      // Validate quantities
-      for (const item of items) {
-        if (Number(item.issuedQuantity) < 0 || Number(item.receivedQuantity) < 0) {
-          throw new Error(`Số lượng cấp/nhận của ${item.materialName} không được nhỏ hơn 0.`);
-        }
-        if (Number(item.issuedQuantity) > Number(item.requestedQuantity) || Number(item.receivedQuantity) > Number(item.requestedQuantity)) {
-          if (!window.confirm(`Cảnh báo: SL cấp/nhận của ${item.materialName} đang vượt quá SL đề xuất. Bạn có chắc chắn muốn lưu?`)) {
-            return;
-          }
-        }
-      }
-
       await updateMaterialRequestItems(request.id, items);
 
       // Optionally auto-update status if fully received
@@ -78,29 +78,73 @@ export function MaterialRequestDetail({
         await updateMaterialRequestStatus(request.id, "PROCESSING");
       }
 
+      toast.success("Cập nhật cấp/nhận thành công");
       onSuccess();
     } catch (err: any) {
-      setError(err.message || "Lỗi cập nhật cấp/nhận");
+      toast.error(err.message || "Lỗi cập nhật cấp/nhận");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleUpdateProgress = async () => {
+    try {
+      // Validate quantities
+      for (const item of items) {
+        if (Number(item.issuedQuantity) < 0 || Number(item.receivedQuantity) < 0) {
+          throw new Error(`Số lượng cấp/nhận của ${item.materialName} không được nhỏ hơn 0.`);
+        }
+      }
+
+      const hasExceeding = items.some(item => Number(item.issuedQuantity) > Number(item.requestedQuantity) || Number(item.receivedQuantity) > Number(item.requestedQuantity));
+      if (hasExceeding) {
+        setConfirmState({
+          isOpen: true,
+          title: "Số lượng vượt đề xuất",
+          description: "Số lượng cấp/nhận đang lớn hơn số lượng đề xuất. Vui lòng kiểm tra lại trước khi lưu.",
+          variant: "warning",
+          confirmText: "Vẫn lưu",
+          cancelText: "Kiểm tra lại",
+          onConfirm: () => {
+            setConfirmState(prev => ({ ...prev, isOpen: false }));
+            executeUpdate();
+          }
+        });
+        return;
+      }
+
+      await executeUpdate();
+    } catch (err: any) {
+      toast.error(err.message || "Lỗi cập nhật cấp/nhận");
+    }
+  };
+
   const handleCancel = async () => {
     if (!cancelReason.trim()) {
-      setError("Vui lòng nhập lý do hủy phiếu.");
+      toast.error("Vui lòng nhập lý do hủy phiếu.");
       return;
     }
-    if (!window.confirm("Bạn có chắc chắn muốn hủy phiếu này?")) return;
     
-    try {
-      setLoading(true);
-      await updateMaterialRequestStatus(request.id, "CANCELLED", cancelReason);
-      onSuccess();
-    } catch (err: any) {
-      setError(err.message || "Lỗi hủy phiếu");
-      setLoading(false);
-    }
+    setConfirmState({
+      isOpen: true,
+      title: "Hủy phiếu đề xuất vật tư?",
+      description: "Phiếu sẽ chuyển sang trạng thái hủy. Dữ liệu cũ vẫn được giữ lại để truy vết.",
+      variant: "danger",
+      confirmText: "Hủy phiếu",
+      cancelText: "Đóng",
+      onConfirm: async () => {
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+        try {
+          setLoading(true);
+          await updateMaterialRequestStatus(request.id, "CANCELLED", cancelReason);
+          toast.success("Đã hủy phiếu thành công");
+          onSuccess();
+        } catch (err: any) {
+          toast.error(err.message || "Lỗi hủy phiếu");
+          setLoading(false);
+        }
+      }
+    });
   };
 
   return (
@@ -138,11 +182,6 @@ export function MaterialRequestDetail({
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-4 sm:px-6 pb-[calc(96px+env(safe-area-inset-bottom))] sm:pb-6 space-y-6">
-          {error && (
-            <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm border border-red-200 font-medium">
-              {error}
-            </div>
-          )}
 
           <div className="sm:hidden mb-2">
             <StatusBadge variant={statusConfig[request.status as keyof typeof statusConfig]?.variant || "neutral"} size="md">
@@ -365,6 +404,18 @@ export function MaterialRequestDetail({
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={confirmState.isOpen}
+        onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+        title={confirmState.title}
+        description={confirmState.description}
+        variant={confirmState.variant}
+        confirmText={confirmState.confirmText}
+        cancelText={confirmState.cancelText}
+        onConfirm={confirmState.onConfirm}
+        isLoading={loading}
+      />
     </div>
   );
 }

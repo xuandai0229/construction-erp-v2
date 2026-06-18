@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button";
 import { deleteProject } from "@/app/(dashboard)/projects/actions";
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useToast } from "@/components/ui/toast-context";
 
 export function DeleteProjectButton({ id, projectName, className }: { id: string, projectName: string, className?: string }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
-
+  const toast = useToast();
   const [showConfirm, setShowConfirm] = useState(false);
 
   const handleDelete = async () => {
@@ -18,8 +20,10 @@ export function DeleteProjectButton({ id, projectName, className }: { id: string
     setIsDeleting(false);
 
     if (res?.error) {
-      alert(res.error);
+      toast.error(res.error);
+      setShowConfirm(false);
     } else {
+      toast.success("Đã xóa công trình");
       router.push('/projects');
       router.refresh();
     }
@@ -38,40 +42,24 @@ export function DeleteProjectButton({ id, projectName, className }: { id: string
         {isDeleting ? "Đang xóa..." : "Xóa"}
       </Button>
 
-      {showConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-xl shadow-lg max-w-sm w-full overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
-            <div className="px-5 py-4 border-b border-slate-100">
-              <h3 className="text-lg font-bold text-slate-900">Xóa công trình?</h3>
+      <ConfirmDialog
+        isOpen={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        title="Xóa công trình?"
+        description={
+          <>
+            Bạn có chắc chắn muốn xóa công trình <strong className="text-slate-900">{projectName}</strong>?
+            <div className="mt-3 p-3 bg-red-50 text-red-800 text-sm rounded-lg border border-red-100">
+              <span className="font-semibold block mb-1">Lưu ý:</span>
+              Thao tác này không xóa dữ liệu vật lý nhưng sẽ ẩn công trình khỏi danh sách.
             </div>
-            <div className="px-5 py-4">
-              <p className="text-sm text-slate-600 mb-3 leading-relaxed">
-                Bạn có chắc chắn muốn xóa công trình <strong className="text-slate-900">{projectName}</strong>?
-              </p>
-              <div className="p-3 bg-red-50 text-red-800 text-sm rounded-lg border border-red-100">
-                <span className="font-semibold block mb-1">Lưu ý:</span>
-                Thao tác này không xóa dữ liệu vật lý nhưng sẽ ẩn công trình khỏi danh sách.
-              </div>
-            </div>
-            <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
-              <button 
-                onClick={() => setShowConfirm(false)}
-                className="px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
-                disabled={isDeleting}
-              >
-                Hủy
-              </button>
-              <button 
-                onClick={handleDelete}
-                className="px-4 py-2 text-sm font-semibold text-white bg-red-600 border border-red-600 rounded-lg hover:bg-red-700 flex items-center gap-1.5 transition-colors shadow-sm"
-                disabled={isDeleting}
-              >
-                <Trash2 className="w-4 h-4" /> {isDeleting ? "Đang xóa..." : "Xóa"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          </>
+        }
+        variant="danger"
+        confirmText="Xóa"
+        onConfirm={handleDelete}
+        isLoading={isDeleting}
+      />
     </>
   );
 }

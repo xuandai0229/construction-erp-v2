@@ -10,7 +10,6 @@ export default async function UsersPage() {
   if (!canManageUsers(session)) redirect("/projects");
 
   const users = await prisma.user.findMany({
-    where: { deletedAt: null },
     include: {
       projectMembers: {
         where: { deletedAt: null, isActive: true },
@@ -28,11 +27,12 @@ export default async function UsersPage() {
     orderBy: { code: "asc" },
   });
 
-  // Count stats
-  const totalUsers = users.length;
-  const directors = users.filter(u => u.role === "DIRECTOR" || u.role === "DEPUTY_DIRECTOR").length;
-  const commanders = users.filter(u => u.role === "CHIEF_COMMANDER").length;
-  const activeUsers = users.filter(u => u.isActive).length;
+  // Count stats (exclude soft deleted from stats except total if wanted, but better exclude)
+  const activeAndLockedUsers = users.filter(u => u.deletedAt === null);
+  const totalUsers = activeAndLockedUsers.length;
+  const directors = activeAndLockedUsers.filter(u => u.role === "DIRECTOR" || u.role === "DEPUTY_DIRECTOR").length;
+  const commanders = activeAndLockedUsers.filter(u => u.role === "CHIEF_COMMANDER").length;
+  const activeUsers = activeAndLockedUsers.filter(u => u.isActive).length;
 
   const serializedUsers = JSON.parse(JSON.stringify(users.map(u => ({
     id: u.id,
@@ -43,6 +43,7 @@ export default async function UsersPage() {
     role: u.role,
     roleDisplay: ROLE_DISPLAY_NAMES[u.role],
     isActive: u.isActive,
+    deletedAt: u.deletedAt ? u.deletedAt.toISOString() : null,
     createdAt: u.createdAt.toISOString(),
     assignedProjects: u.projectMembers.map(pm => ({
       id: pm.project.id,

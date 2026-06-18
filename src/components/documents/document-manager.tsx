@@ -5,6 +5,8 @@ import { Folder, FolderOpen, FileIcon, Search, Plus, MoreVertical, FileText, Fil
 import { format } from "date-fns";
 import { createFolder, renameFolder, deleteFolder, deleteDocument } from "@/app/(dashboard)/documents/actions";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useToast } from "@/components/ui/toast-context";
 
 function formatBytes(bytes: number, decimals = 2) {
   if (!+bytes) return '0 Bytes';
@@ -22,7 +24,11 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
   const [isUploading, setIsUploading] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [showNewFolder, setShowNewFolder] = useState(false);
+  const toast = useToast();
   
+  const [deleteConfirm, setDeleteConfirm] = useState<{isOpen: boolean, type: 'folder' | 'doc', id: string}>({isOpen: false, type: 'folder', id: ''});
+  const [renameModal, setRenameModal] = useState<{isOpen: boolean, id: string, newName: string}>({isOpen: false, id: "", newName: ""});
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const rootFolders = folders.filter((f: any) => !f.parentId);
@@ -34,7 +40,7 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
     const file = e.target.files[0];
     
     if (file.size > 50 * 1024 * 1024) {
-      alert("Tệp vượt quá giới hạn 50MB");
+      toast.error("Tệp vượt quá giới hạn 50MB");
       setIsUploading(false);
       return;
     }
@@ -51,9 +57,10 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+      toast.success("Đã tải tệp lên thành công");
       window.location.reload();
     } catch (error: any) {
-      alert("Lỗi upload: " + error.message);
+      toast.error("Lỗi upload: " + error.message);
     } finally {
       setIsUploading(false);
     }
@@ -62,31 +69,47 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
   const handleCreateFolder = async () => {
     if (!newFolderName.trim()) return;
     const res = await createFolder(projectId, newFolderName, selectedFolderId || undefined);
-    if (res?.error) alert(res.error);
-    else {
+    if (res?.error) {
+      toast.error(res.error);
+    } else {
+      toast.success("Tạo thư mục thành công");
       setNewFolderName("");
       setShowNewFolder(false);
     }
   };
 
-  const handleRenameFolder = async (id: string, oldName: string) => {
-    const newName = window.prompt("Nhập tên mới cho thư mục:", oldName);
-    if (!newName || newName.trim() === "" || newName === oldName) return;
+  const handleRenameFolder = async () => {
+    const { id, newName } = renameModal;
+    if (!newName.trim()) return;
     const res = await renameFolder(projectId, id, newName);
-    if (res?.error) alert(res.error);
+    if (res?.error) {
+      toast.error(res.error);
+    } else {
+      toast.success("Đổi tên thành công");
+      setRenameModal({ isOpen: false, id: "", newName: "" });
+    }
   };
 
-  const handleDeleteFolder = async (id: string) => {
-    if (!confirm("Bạn có chắc chắn muốn xóa thư mục này?")) return;
-    const res = await deleteFolder(projectId, id);
-    if (res?.error) alert(res.error);
-    if (selectedFolderId === id) setSelectedFolderId(null);
-  };
-
-  const handleDeleteDoc = async (id: string) => {
-    if (!confirm("Bạn có chắc chắn muốn xóa tệp này?")) return;
-    const res = await deleteDocument(projectId, id);
-    if (res?.error) alert(res.error);
+  const executeDelete = async () => {
+    const { type, id } = deleteConfirm;
+    setDeleteConfirm(prev => ({ ...prev, isOpen: false }));
+    
+    if (type === 'folder') {
+      const res = await deleteFolder(projectId, id);
+      if (res?.error) {
+        toast.error(res.error);
+      } else {
+        toast.success("Xóa thư mục thành công");
+        if (selectedFolderId === id) setSelectedFolderId(null);
+      }
+    } else {
+      const res = await deleteDocument(projectId, id);
+      if (res?.error) {
+        toast.error(res.error);
+      } else {
+        toast.success("Xóa tệp thành công");
+      }
+    }
   };
 
   const displayDocs = useMemo(() => {
@@ -129,14 +152,14 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
           {canEdit && isSelected && (
             <div className="flex gap-1 bg-white shadow-sm rounded-md border border-slate-200 px-1">
               <button 
-                onClick={(e) => { e.stopPropagation(); handleRenameFolder(folder.id, folder.name); }}
+                onClick={(e) => { e.stopPropagation(); setRenameModal({ isOpen: true, id: folder.id, newName: folder.name }); }}
                 className="text-slate-400 hover:text-blue-600 transition-colors p-1"
                 title="Đổi tên thư mục"
               >
                 <Pencil className="h-3 w-3" />
               </button>
               <button 
-                onClick={(e) => { e.stopPropagation(); handleDeleteFolder(folder.id); }}
+                onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ isOpen: true, type: 'folder', id: folder.id }); }}
                 className="text-slate-400 hover:text-red-500 transition-colors p-1"
                 title="Xóa thư mục"
               >
@@ -285,7 +308,7 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
                           </a>
                           {canEdit && (
                             <button 
-                              onClick={() => handleDeleteDoc(doc.id)}
+                              onClick={() => setDeleteConfirm({ isOpen: true, type: 'doc', id: doc.id })}
                               className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
                               title="Xóa"
                             >
@@ -323,6 +346,51 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, type: 'folder', id: '' })}
+        title={deleteConfirm.type === 'folder' ? "Xóa thư mục?" : "Xóa tệp?"}
+        description={deleteConfirm.type === 'folder' ? "Bạn có chắc chắn muốn xóa thư mục này? Thao tác này không thể hoàn tác." : "Bạn có chắc chắn muốn xóa tệp này? Thao tác này không thể hoàn tác."}
+        variant="danger"
+        confirmText="Xóa"
+        onConfirm={executeDelete}
+      />
+
+      {renameModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl shadow-lg max-w-sm w-full overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            <div className="px-5 py-4 border-b border-slate-100">
+              <h3 className="text-lg font-bold text-slate-900">Đổi tên thư mục</h3>
+            </div>
+            <div className="px-5 py-4">
+              <input
+                type="text"
+                value={renameModal.newName}
+                onChange={e => setRenameModal(prev => ({ ...prev, newName: e.target.value }))}
+                onKeyDown={e => e.key === "Enter" && handleRenameFolder()}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Nhập tên mới..."
+                autoFocus
+              />
+            </div>
+            <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+              <button 
+                onClick={() => setRenameModal({ isOpen: false, id: "", newName: "" })}
+                className="px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                Hủy
+              </button>
+              <button 
+                onClick={handleRenameFolder}
+                className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 border border-blue-600 rounded-lg hover:bg-blue-700 flex items-center gap-1.5 transition-colors shadow-sm"
+              >
+                Lưu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

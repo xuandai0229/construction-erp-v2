@@ -27,6 +27,8 @@ import { formatQuantity } from "@/lib/field-progress";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { sharedTableStyles } from "./table-styles";
 import { evaluateVolumeGuard } from "@/lib/field-progress/volume-guard";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useToast } from "@/components/ui/toast-context";
 
 type DailyItem = {
   id: string;
@@ -73,6 +75,8 @@ export function DailyEntryTable({
   const [focusedItemId, setFocusedItemId] = useState<string | null>(null);
   const [groups, setGroups] = useState<any[]>(parentGroups || []);
   const [newGroupName, setNewGroupName] = useState("");
+  const toast = useToast();
+  const [confirmDateChange, setConfirmDateChange] = useState<{isOpen: boolean, targetDate: string}>({isOpen: false, targetDate: ""});
   const [quickAddData, setQuickAddData] = useState({
     workContent: "",
     parentId: "",
@@ -87,7 +91,7 @@ export function DailyEntryTable({
 
   const handleQuickAdd = async () => {
     if (!quickAddData.workContent.trim()) {
-      alert("Vui lòng nhập nội dung công việc.");
+      toast.error("Vui lòng nhập nội dung công việc.");
       return;
     }
     
@@ -98,7 +102,7 @@ export function DailyEntryTable({
       // If user wants to create a new group
       if (quickAddData.parentId === "NEW_GROUP") {
         if (!newGroupName.trim()) {
-          alert("Vui lòng nhập tên hạng mục cha mới.");
+          toast.error("Vui lòng nhập tên hạng mục cha mới.");
           setLoading(false);
           return;
         }
@@ -110,7 +114,7 @@ export function DailyEntryTable({
         });
         
         if (groupRes?.error) {
-          alert("Lỗi khi tạo hạng mục cha: " + groupRes.error);
+          toast.error("Lỗi khi tạo hạng mục cha: " + groupRes.error);
           setLoading(false);
           return;
         }
@@ -132,7 +136,7 @@ export function DailyEntryTable({
       });
       
       if (res?.error) {
-        alert("Lỗi khi tạo công việc: " + res.error);
+        toast.error("Lỗi khi tạo công việc: " + res.error);
       } else if (res?.item) {
         // Find parent category name
         const parentObj = groups.find(g => g.id === finalParentId);
@@ -165,6 +169,7 @@ export function DailyEntryTable({
           unit: "m"
         });
         setNewGroupName("");
+        toast.success("Thêm công việc thành công");
         
         // Focus the newly added item's quantity input
         setTimeout(() => {
@@ -173,7 +178,7 @@ export function DailyEntryTable({
         }, 100);
       }
     } catch (e: any) {
-      alert("Có lỗi xảy ra: " + e.message);
+      toast.error("Có lỗi xảy ra: " + e.message);
     } finally {
       setLoading(false);
     }
@@ -334,12 +339,12 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
   }, [items]);
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const targetDate = e.target.value;
     if (Object.keys(dirtyEntries).length > 0) {
-      if (!confirm("Bạn có thay đổi chưa lưu. Bạn có chắc muốn chuyển ngày?")) {
-        return;
-      }
+      setConfirmDateChange({ isOpen: true, targetDate });
+    } else {
+      router.push(`/projects/${projectId}/field-progress/daily?date=${targetDate}`);
     }
-    router.push(`/projects/${projectId}/field-progress/daily?date=${e.target.value}`);
   };
 
   const patchItem = (itemId: string, field: string, value: string) => {
@@ -390,7 +395,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
         }
       }, 100);
     } else {
-      alert("Tuyệt vời! Đã nhập hết các công việc.");
+      toast.success("Tuyệt vời! Đã nhập hết các công việc.");
     }
   };
 
@@ -408,7 +413,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
     });
 
     if (invalidItems.length > 0) {
-      alert("Có dòng nhập không hợp lệ hoặc thiếu lý do vượt khối lượng. Vui lòng kiểm tra lại cảnh báo màu đỏ.");
+      toast.error("Có dòng nhập không hợp lệ hoặc thiếu lý do vượt khối lượng. Vui lòng kiểm tra lại cảnh báo màu đỏ.");
       quantityRefs.current[invalidItems[0].id]?.focus();
       return;
     }
@@ -430,9 +435,10 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
     setLoading(true);
     const res = await batchSaveDailyEntries(projectId, templateId, dateStr, entriesToSave, true);
     if (res?.error) {
-      alert(res.error);
+      toast.error(res.error);
     } else {
       setDirtyEntries({});
+      toast.success("Lưu khối lượng thành công");
       router.refresh();
     }
     setLoading(false);
@@ -1182,6 +1188,20 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
         </div>
       )}
       {showQuickAdd && renderQuickAddModal()}
+
+      <ConfirmDialog
+        isOpen={confirmDateChange.isOpen}
+        onClose={() => setConfirmDateChange({ isOpen: false, targetDate: "" })}
+        title="Chuyển ngày nhập?"
+        description="Bạn có thay đổi chưa lưu. Bạn có chắc muốn chuyển ngày và bỏ qua các thay đổi này?"
+        variant="warning"
+        confirmText="Chuyển ngày"
+        cancelText="Hủy"
+        onConfirm={() => {
+          router.push(`/projects/${projectId}/field-progress/daily?date=${confirmDateChange.targetDate}`);
+          setConfirmDateChange({ isOpen: false, targetDate: "" });
+        }}
+      />
     </div>
   );
 }

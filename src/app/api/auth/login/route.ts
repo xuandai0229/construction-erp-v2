@@ -21,8 +21,8 @@ export async function POST(request: Request) {
       },
     });
 
-    if (!user || !user.isActive) {
-      return NextResponse.json({ error: 'Tài khoản không tồn tại hoặc đã bị khóa' }, { status: 401 });
+    if (!user || !user.isActive || user.deletedAt !== null) {
+      return NextResponse.json({ error: 'Tài khoản không tồn tại, đã bị khóa hoặc đã bị xóa' }, { status: 401 });
     }
 
     const isValidPassword = await bcrypt.compare(password, user.password);

@@ -141,6 +141,7 @@ export async function updateUser(userId: string, input: UpdateUserInput) {
 
   const existing = await prisma.user.findUnique({ where: { id: userId } });
   if (!existing) return { error: "Không tìm thấy tài khoản" };
+  if (existing.deletedAt) return { error: "Tài khoản đã bị xóa mềm. Vui lòng khôi phục trước khi chỉnh sửa." };
 
   // Check email uniqueness if changing
   if (input.email && input.email !== existing.email) {
@@ -255,6 +256,10 @@ export async function updateUser(userId: string, input: UpdateUserInput) {
 export async function resetUserPassword(userId: string, newPassword: string) {
   const session = await requireHighLevelUser();
 
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return { error: "Không tìm thấy tài khoản" };
+  if (user.deletedAt) return { error: "Tài khoản đã bị xóa mềm. Vui lòng khôi phục trước khi thao tác." };
+
   if (newPassword.length < 6) {
     return { error: "Mật khẩu phải có ít nhất 6 ký tự" };
   }
@@ -288,10 +293,26 @@ export async function toggleUserActive(userId: string) {
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) return { error: "Không tìm thấy tài khoản" };
+  if (user.deletedAt) return { error: "Tài khoản đã bị xóa mềm. Vui lòng khôi phục trước khi thao tác." };
 
   // Prevent deactivating yourself
   if (userId === session.id) {
-    return { error: "Không thể khóa tài khoản của chính mình" };
+    return { error: "Bạn không thể khóa chính tài khoản đang đăng nhập." };
+  }
+
+  // Prevent locking the last active admin
+  if (user.isActive && ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"].includes(user.role)) {
+    const activeAdmins = await prisma.user.count({
+      where: {
+        isActive: true,
+        deletedAt: null,
+        role: { in: ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"] },
+        id: { not: userId }
+      }
+    });
+    if (activeAdmins === 0) {
+      return { error: "Không thể khóa tài khoản quản trị cuối cùng đang hoạt động." };
+    }
   }
 
   const updated = await prisma.user.update({
@@ -410,4 +431,92 @@ export async function getProjectsForAssignment() {
     select: { id: true, code: true, name: true, status: true },
     orderBy: { code: "asc" },
   });
+}
+
+// ─── Soft Delete User ─────────────────────────────────────────
+
+export async function softDeleteUser(userId: string) {
+  const session = await requireHighLevelUser();
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return { error: "Không tìm thấy tài khoản" };
+  if (user.deletedAt) return { error: "Tài khoản đã bị xóa mềm" };
+
+  if (userId === session.id) {
+    return { error: "Bạn không thể xóa chính tài khoản đang đăng nhập." };
+  }
+
+  if (user.isActive && ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"].includes(user.role)) {
+    const activeAdmins = await prisma.user.count({
+      where: {
+        isActive: true,
+        deletedAt: null,
+        role: { in: ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"] },
+        id: { not: userId }
+      }
+    });
+    if (activeAdmins === 0) {
+      return { error: "Không thể xóa tài khoản quản trị cuối cùng đang hoạt động." };
+    }
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { isActive: false, deletedAt: new Date() },
+  });
+
+  await writeAuditLog({
+    userId: session.id,
+    action: "SOFT_DELETE_USER",
+    entityType: "User",
+    entityId: userId,
+  });
+
+  revalidatePath("/users");
+  return { success: true };
+}
+
+// ─── Restore User ─────────────────────────────────────────────
+
+export async function restoreUser(userId: string) {
+  const session = await requireHighLevelUser();
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return { error: "Không tìm thấy tài khoản" };
+  if (!user.deletedAt) return { error: "Tài khoản chưa bị xóa mềm" };
+
+  // Check email conflict with active users
+  const emailConflict = await prisma.user.findFirst({
+    where: { email: user.email, deletedAt: null, id: { not: userId } }
+  });
+  
+  if (emailConflict) {
+    return { error: "Không thể khôi phục vì email đã được tài khoản khác sử dụng." };
+  }
+
+  // Check username conflict with active users
+  if (user.username) {
+    const usernameConflict = await prisma.user.findFirst({
+      where: { username: user.username, deletedAt: null, id: { not: userId } }
+    });
+    
+    if (usernameConflict) {
+      return { error: "Không thể khôi phục vì tên đăng nhập đã được tài khoản khác sử dụng." };
+    }
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { deletedAt: null, isActive: true },
+  });
+
+  await writeAuditLog({
+    userId: session.id,
+    action: "RESTORE_USER",
+    entityType: "User",
+    entityId: userId,
+  });
+
+  revalidatePath("/users");
+  return { success: true };
 }

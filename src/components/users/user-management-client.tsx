@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Search, Shield, ShieldCheck, UserCog, Lock, Unlock, Key, Building2, X, ChevronDown, Eye, Edit } from "lucide-react";
+import { Plus, Search, Shield, ShieldCheck, UserCog, Lock, Unlock, Key, Building2, X, ChevronDown, Eye, Edit, Trash2, RefreshCcw } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { createUser, toggleUserActive, assignProjectToUser, unassignProjectFromUser, resetUserPassword, updateUser } from "@/app/(dashboard)/users/actions";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useToast } from "@/components/ui/toast-context";
+import { createUser, toggleUserActive, assignProjectToUser, unassignProjectFromUser, resetUserPassword, updateUser, softDeleteUser, restoreUser } from "@/app/(dashboard)/users/actions";
 
 interface UserData {
   id: string;
@@ -15,6 +17,7 @@ interface UserData {
   role: string;
   roleDisplay: string;
   isActive: boolean;
+  deletedAt: string | null;
   createdAt: string;
   assignedProjects: { id: string; code: string; name: string }[];
 }
@@ -30,12 +33,28 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all_active");
   const [showCreate, setShowCreate] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [detailUser, setDetailUser] = useState<UserData | null>(null);
   const [editUser, setEditUser] = useState<UserData | null>(null);
+  const toast = useToast();
+
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: React.ReactNode;
+    variant: "danger" | "warning" | "info" | "success";
+    confirmText: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false, title: "", description: "", variant: "info", confirmText: "", onConfirm: () => {}
+  });
+
+  const [resetPwUser, setResetPwUser] = useState<UserData | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
 
   // Create form state
   const [formName, setFormName] = useState("");
@@ -54,7 +73,16 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
   const filtered = initialUsers.filter(u => {
     const matchSearch = !search || u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()) || (u.username || "").toLowerCase().includes(search.toLowerCase()) || (u.phone || "").includes(search);
     const matchRole = !roleFilter || u.role === roleFilter;
-    const matchStatus = !statusFilter || (statusFilter === "active" ? u.isActive : !u.isActive);
+    let matchStatus = true;
+    if (statusFilter === "all_active") {
+      matchStatus = u.deletedAt === null;
+    } else if (statusFilter === "active") {
+      matchStatus = u.deletedAt === null && u.isActive;
+    } else if (statusFilter === "inactive") {
+      matchStatus = u.deletedAt === null && !u.isActive;
+    } else if (statusFilter === "deleted") {
+      matchStatus = u.deletedAt !== null;
+    }
     return matchSearch && matchRole && matchStatus;
   });
 
@@ -89,14 +117,71 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
   };
 
   const handleToggleActive = async (userId: string, isActive: boolean) => {
-    const actionName = isActive ? "khóa" : "mở khóa";
-    if (!confirm(`Bạn có chắc chắn muốn ${actionName} tài khoản này không?\n${isActive ? "Người dùng sẽ không thể đăng nhập sau khi bị khóa. Dữ liệu cũ vẫn được giữ nguyên." : "Người dùng sẽ có thể đăng nhập lại bình thường."}`)) {
-      return;
-    }
-    setLoading(true);
-    await toggleUserActive(userId);
-    setLoading(false);
-    router.refresh();
+    setConfirmState({
+      isOpen: true,
+      title: isActive ? "Khóa tài khoản?" : "Mở khóa tài khoản?",
+      description: isActive 
+        ? "Người dùng sẽ không thể đăng nhập sau khi bị khóa.\nDữ liệu cũ vẫn được giữ nguyên để truy vết." 
+        : "Người dùng sẽ có thể đăng nhập lại bình thường.",
+      variant: isActive ? "warning" : "info",
+      confirmText: isActive ? "Khóa tài khoản" : "Mở khóa",
+      onConfirm: async () => {
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+        setLoading(true);
+        const res = await toggleUserActive(userId);
+        setLoading(false);
+        if (res.error) {
+          toast.error(res.error);
+        } else {
+          toast.success(`Đã ${isActive ? 'khóa' : 'mở khóa'} tài khoản thành công`);
+        }
+        router.refresh();
+      }
+    });
+  };
+
+  const handleSoftDelete = async (user: UserData) => {
+    setConfirmState({
+      isOpen: true,
+      title: "Xóa mềm tài khoản?",
+      description: "Tài khoản sẽ bị khóa đăng nhập và ẩn khỏi danh sách mặc định.\nDữ liệu cũ vẫn được giữ lại để truy vết.\nHành động này không xóa vĩnh viễn dữ liệu.",
+      variant: "danger",
+      confirmText: "Xóa mềm tài khoản",
+      onConfirm: async () => {
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+        setLoading(true);
+        const res = await softDeleteUser(user.id);
+        setLoading(false);
+        if (res.error) {
+          toast.error(res.error);
+        } else {
+          toast.success("Đã xóa mềm tài khoản thành công");
+        }
+        router.refresh();
+      }
+    });
+  };
+
+  const handleRestore = async (user: UserData) => {
+    setConfirmState({
+      isOpen: true,
+      title: "Khôi phục tài khoản?",
+      description: "Tài khoản sẽ được hiển thị lại và có thể đăng nhập nếu đang hoạt động.",
+      variant: "success",
+      confirmText: "Khôi phục",
+      onConfirm: async () => {
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+        setLoading(true);
+        const res = await restoreUser(user.id);
+        setLoading(false);
+        if (res.error) {
+          toast.error(res.error);
+        } else {
+          toast.success("Đã khôi phục tài khoản thành công");
+        }
+        router.refresh();
+      }
+    });
   };
 
   const handleEditSubmit = async () => {
@@ -123,6 +208,10 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
   };
 
   const openEdit = (user: UserData) => {
+    if (user.deletedAt) {
+      toast.error("Tài khoản đã bị xóa mềm. Vui lòng khôi phục trước khi chỉnh sửa.");
+      return;
+    }
     setEditUser(user);
     setFormName(user.name);
     setFormEmail(user.email);
@@ -145,21 +234,52 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
   };
 
   const handleUnassign = async (userId: string, projectId: string) => {
-    if (!confirm("Xác nhận gỡ công trình?")) return;
-    setLoading(true);
-    await unassignProjectFromUser(userId, projectId);
-    setLoading(false);
-    router.refresh();
+    setConfirmState({
+      isOpen: true,
+      title: "Gỡ công trình khỏi tài khoản?",
+      description: "Người dùng sẽ không còn quyền truy cập công trình này.",
+      variant: "danger",
+      confirmText: "Gỡ công trình",
+      onConfirm: async () => {
+        setConfirmState(prev => ({ ...prev, isOpen: false }));
+        setLoading(true);
+        const res = await unassignProjectFromUser(userId, projectId);
+        setLoading(false);
+        if (res && res.error) {
+          toast.error(res.error);
+        } else {
+          toast.success("Đã gỡ công trình thành công");
+        }
+        router.refresh();
+      }
+    });
   };
 
-  const handleResetPw = async (userId: string) => {
-    const pw = prompt("Nhập mật khẩu mới (tối thiểu 6 ký tự):");
-    if (!pw || pw.length < 6) { alert("Mật khẩu phải có ít nhất 6 ký tự"); return; }
+  const handleResetPwClick = (user: UserData) => {
+    if (user.deletedAt) {
+      toast.error("Tài khoản đã bị xóa mềm. Vui lòng khôi phục trước khi thao tác.");
+      return;
+    }
+    setResetPwUser(user);
+    setNewPassword("");
+    setConfirmNewPassword("");
+  };
+
+  const handleResetPwSubmit = async () => {
+    if (!resetPwUser) return;
+    if (newPassword.length < 6) { toast.error("Mật khẩu phải có ít nhất 6 ký tự"); return; }
+    if (newPassword !== confirmNewPassword) { toast.error("Mật khẩu nhập lại không khớp"); return; }
+    
     setLoading(true);
-    const result = await resetUserPassword(userId, pw);
+    const result = await resetUserPassword(resetPwUser.id, newPassword);
     setLoading(false);
-    if (result.error) alert(result.error);
-    else alert("Đã đổi mật khẩu thành công");
+    
+    if (result.error) {
+      toast.error(result.error);
+    } else {
+      toast.success("Đã đổi mật khẩu thành công");
+      setResetPwUser(null);
+    }
   };
 
   const getRoleBadge = (role: string, roleDisplay: string) => {
@@ -190,9 +310,10 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
           <option value="CHIEF_COMMANDER">Chỉ huy trưởng</option>
         </select>
         <select id="user-status-filter" aria-label="Lọc theo trạng thái" value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="px-3 py-2 text-sm border border-slate-300 rounded-md bg-white text-slate-900">
-          <option value="">Tất cả trạng thái</option>
-          <option value="active">Đang hoạt động</option>
+          <option value="all_active">Tất cả đang dùng</option>
+          <option value="active">Hoạt động</option>
           <option value="inactive">Đã khóa</option>
+          <option value="deleted">Đã xóa</option>
         </select>
         <button onClick={() => { setShowCreate(true); resetForm(); }} className="inline-flex items-center justify-center gap-2 h-10 px-4 bg-blue-600 text-white rounded-md text-sm font-semibold hover:bg-blue-700 transition-colors">
           <Plus className="h-4 w-4" /> Tạo tài khoản
@@ -237,24 +358,37 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
                   </div>
                 </td>
                 <td className="px-4 py-3">
-                  {user.isActive
-                    ? <StatusBadge variant="success" size="sm">Hoạt động</StatusBadge>
-                    : <StatusBadge variant="danger" size="sm">Đã khóa</StatusBadge>}
+                  {user.deletedAt 
+                    ? <StatusBadge variant="danger" size="sm">Đã xóa</StatusBadge>
+                    : user.isActive
+                      ? <StatusBadge variant="success" size="sm">Hoạt động</StatusBadge>
+                      : <StatusBadge variant="danger" size="sm">Đã khóa</StatusBadge>}
                 </td>
                 <td className="px-4 py-3 text-right">
                   <div className="flex items-center justify-end gap-1">
                     <button onClick={() => setDetailUser(user)} className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500" title="Xem chi tiết" aria-label={`Xem chi tiết tài khoản ${user.name}`}>
                       <Eye className="h-4 w-4" />
                     </button>
-                    <button onClick={() => openEdit(user)} className="p-1.5 rounded-md hover:bg-blue-50 text-blue-600" title="Sửa thông tin" aria-label={`Sửa thông tin tài khoản ${user.name}`}>
-                      <Edit className="h-4 w-4" />
-                    </button>
-                    <button onClick={() => handleToggleActive(user.id, user.isActive)} className={`p-1.5 rounded-md text-xs ${user.isActive ? "hover:bg-red-50 text-red-500" : "hover:bg-green-50 text-green-600"}`} title={user.isActive ? "Khóa" : "Mở khóa"} aria-label={user.isActive ? "Khóa tài khoản" : "Mở khóa tài khoản"}>
-                      {user.isActive ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
-                    </button>
-                    <button onClick={() => handleResetPw(user.id)} className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500" title="Đổi mật khẩu" aria-label="Đổi mật khẩu">
-                      <Key className="h-4 w-4" />
-                    </button>
+                    {!user.deletedAt ? (
+                      <>
+                        <button onClick={() => openEdit(user)} className="p-1.5 rounded-md hover:bg-blue-50 text-blue-600" title="Sửa thông tin" aria-label={`Sửa thông tin tài khoản ${user.name}`}>
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button onClick={() => handleToggleActive(user.id, user.isActive)} className={`p-1.5 rounded-md text-xs ${user.isActive ? "hover:bg-amber-50 text-amber-500" : "hover:bg-green-50 text-green-600"}`} title={user.isActive ? "Khóa" : "Mở khóa"} aria-label={user.isActive ? "Khóa tài khoản" : "Mở khóa tài khoản"}>
+                          {user.isActive ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                        </button>
+                        <button onClick={() => handleResetPwClick(user)} className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500" title="Đổi mật khẩu" aria-label="Đổi mật khẩu">
+                          <Key className="h-4 w-4" />
+                        </button>
+                        <button onClick={() => handleSoftDelete(user)} className="p-1.5 rounded-md hover:bg-red-50 text-red-600" title="Xóa mềm tài khoản" aria-label={`Xóa mềm tài khoản ${user.name}`}>
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </>
+                    ) : (
+                      <button onClick={() => handleRestore(user)} className="p-1.5 rounded-md hover:bg-emerald-50 text-emerald-600" title="Khôi phục tài khoản" aria-label={`Khôi phục tài khoản ${user.name}`}>
+                        <RefreshCcw className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -275,9 +409,11 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
                 {user.phone && <p className="text-xs text-slate-400">{user.phone}</p>}
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                {user.isActive
-                  ? <StatusBadge variant="success" size="sm">Hoạt động</StatusBadge>
-                  : <StatusBadge variant="danger" size="sm">Đã khóa</StatusBadge>}
+                {user.deletedAt 
+                  ? <StatusBadge variant="danger" size="sm">Đã xóa</StatusBadge>
+                  : user.isActive
+                    ? <StatusBadge variant="success" size="sm">Hoạt động</StatusBadge>
+                    : <StatusBadge variant="danger" size="sm">Đã khóa</StatusBadge>}
                 {getRoleBadge(user.role, user.roleDisplay)}
               </div>
             </div>
@@ -292,11 +428,17 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
             </div>
             <div className="flex gap-2 pt-2 border-t border-slate-100">
               <button onClick={() => setDetailUser(user)} className="flex-1 h-8 rounded-md text-xs font-medium border border-slate-200 text-slate-600 hover:bg-slate-50" aria-label={`Xem chi tiết tài khoản ${user.name}`}>Xem</button>
-              <button onClick={() => openEdit(user)} className="flex-1 h-8 rounded-md text-xs font-medium border border-blue-200 text-blue-600 hover:bg-blue-50" aria-label={`Sửa thông tin tài khoản ${user.name}`}>Sửa</button>
-              <button onClick={() => handleToggleActive(user.id, user.isActive)} className={`flex-1 h-8 rounded-md text-xs font-medium border ${user.isActive ? "border-red-200 text-red-600 hover:bg-red-50" : "border-green-200 text-green-600 hover:bg-green-50"}`} aria-label={user.isActive ? "Khóa tài khoản" : "Mở khóa tài khoản"}>
-                {user.isActive ? "Khóa" : "Mở khóa"}
-              </button>
-              <button onClick={() => handleResetPw(user.id)} className="flex-1 h-8 rounded-md text-xs font-medium border border-slate-200 text-slate-600 hover:bg-slate-50" aria-label="Đổi mật khẩu">Đổi MK</button>
+              {!user.deletedAt ? (
+                <>
+                  <button onClick={() => openEdit(user)} className="flex-1 h-8 rounded-md text-xs font-medium border border-blue-200 text-blue-600 hover:bg-blue-50" aria-label={`Sửa thông tin tài khoản ${user.name}`}>Sửa</button>
+                  <button onClick={() => handleToggleActive(user.id, user.isActive)} className={`flex-1 h-8 rounded-md text-xs font-medium border ${user.isActive ? "border-amber-200 text-amber-600 hover:bg-amber-50" : "border-green-200 text-green-600 hover:bg-green-50"}`} aria-label={user.isActive ? "Khóa tài khoản" : "Mở khóa tài khoản"}>
+                    {user.isActive ? "Khóa" : "Mở khóa"}
+                  </button>
+                  <button onClick={() => handleSoftDelete(user)} className="flex-1 h-8 rounded-md text-xs font-medium border border-red-200 text-red-600 hover:bg-red-50" aria-label={`Xóa mềm tài khoản ${user.name}`}>Xóa</button>
+                </>
+              ) : (
+                <button onClick={() => handleRestore(user)} className="flex-1 h-8 rounded-md text-xs font-medium border border-emerald-200 text-emerald-600 hover:bg-emerald-50" aria-label={`Khôi phục tài khoản ${user.name}`}>Khôi phục</button>
+              )}
             </div>
           </div>
         ))}
@@ -414,7 +556,11 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
                 <div>
                   <p className="text-xs text-slate-500 font-medium">Trạng thái</p>
                   <div className="mt-1">
-                    {detailUser.isActive ? <StatusBadge variant="success" size="sm">Hoạt động</StatusBadge> : <StatusBadge variant="danger" size="sm">Đã khóa</StatusBadge>}
+                    {detailUser.deletedAt
+                      ? <StatusBadge variant="danger" size="sm">Đã xóa</StatusBadge>
+                      : detailUser.isActive 
+                        ? <StatusBadge variant="success" size="sm">Hoạt động</StatusBadge> 
+                        : <StatusBadge variant="danger" size="sm">Đã khóa</StatusBadge>}
                   </div>
                 </div>
                 <div>
@@ -545,6 +691,45 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
           </div>
         </div>
       )}
+
+      {/* Reset Password Modal */}
+      {resetPwUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-slate-900/60" onClick={() => setResetPwUser(null)} />
+          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-5 py-4 border-b border-slate-100">
+              <h3 className="text-lg font-bold text-slate-900">Đổi mật khẩu</h3>
+            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <label htmlFor="new-pw" className="block text-sm font-medium text-slate-700 mb-1">Mật khẩu mới</label>
+                <input id="new-pw" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500" placeholder="Tối thiểu 6 ký tự" />
+              </div>
+              <div>
+                <label htmlFor="confirm-pw" className="block text-sm font-medium text-slate-700 mb-1">Nhập lại mật khẩu mới</label>
+                <input id="confirm-pw" type="password" value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500" placeholder="Xác nhận mật khẩu mới" />
+              </div>
+            </div>
+            <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex gap-2 justify-end">
+              <button onClick={() => setResetPwUser(null)} className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50">Hủy</button>
+              <button onClick={handleResetPwSubmit} disabled={loading} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50">
+                {loading ? "Đang xử lý..." : "Cập nhật mật khẩu"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ConfirmDialog
+        isOpen={confirmState.isOpen}
+        onClose={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
+        title={confirmState.title}
+        description={confirmState.description}
+        variant={confirmState.variant}
+        confirmText={confirmState.confirmText}
+        onConfirm={confirmState.onConfirm}
+        isLoading={loading}
+      />
     </div>
   );
 }

@@ -32,12 +32,21 @@ export async function getSession(): Promise<SessionUser | null> {
         role: true,
         phone: true,
         isActive: true,
+        deletedAt: true,
       }
     });
     
-    if (!user || !user.isActive) return null;
+    if (!user || !user.isActive || user.deletedAt !== null) return null;
     
-    return user;
+    return {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      name: user.name,
+      role: user.role,
+      phone: user.phone,
+      isActive: user.isActive,
+    };
   } catch (error) {
     return null;
   }

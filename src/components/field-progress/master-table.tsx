@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { createItem, updateItem, deleteItem, batchUpdateItems } from "@/app/(dashboard)/projects/[id]/field-progress/actions";
 import { formatQuantity } from "@/lib/field-progress";
 import { sharedTableStyles } from "./table-styles";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useToast } from "@/components/ui/toast-context";
 
 const UNIT_OPTIONS = [
   "m", "m²", "m³", "kg", "tấn", "cái", "bộ", "md",
@@ -20,18 +22,11 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
   const [dirtyItems, setDirtyItems] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<any>(null);
-  const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+  const toast = useToast();
   const [activeUnitItem, setActiveUnitItem] = useState<string | null>(null);
   const [activeUnitAnchor, setActiveUnitAnchor] = useState<HTMLElement | null>(null);
   const [mobileSearch, setMobileSearch] = useState("");
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (toast) {
-      const t = setTimeout(() => setToast(null), 3000);
-      return () => clearTimeout(t);
-    }
-  }, [toast]);
 
   const [mobileExpanded, setMobileExpanded] = useState<Record<string, boolean>>({});
 
@@ -77,9 +72,10 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
     setLoading(true);
     const res = await batchUpdateItems(projectId, updates);
     if (res?.error) {
-      alert(res.error || "Không thể lưu thay đổi. Vui lòng thử lại.");
+      toast.error(res.error || "Không thể lưu thay đổi. Vui lòng thử lại.");
     } else {
       setDirtyItems({});
+      toast.success("Đã lưu thay đổi");
     }
     setLoading(false);
   };
@@ -91,7 +87,11 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
       categoryName: "Hạng mục mới",
       level: 0
     });
-    if (res?.error) alert(res.error);
+    if (res?.error) {
+      toast.error(res.error);
+    } else {
+      toast.success("Đã thêm hạng mục mới");
+    }
     setLoading(false);
   };
 
@@ -104,9 +104,12 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
       level: parentLevel + 1,
       unit: "Lần"
     });
-    if (res?.error) alert(res.error);
+    if (res?.error) {
+      toast.error(res.error);
+    }
     if (res?.item) {
       setExpanded(prev => ({ ...prev, [parentId]: true }));
+      toast.success("Đã thêm công việc mới");
     }
     setLoading(false);
   };
@@ -121,9 +124,9 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
     setLoading(true);
     const res = await deleteItem(itemToDelete.id, projectId);
     if (res?.error) {
-      setToast({ message: "Không thể xóa. Vui lòng thử lại.", type: 'error' });
+      toast.error("Không thể xóa. Vui lòng thử lại.");
     } else {
-      setToast({ message: "Đã xóa hạng mục/công việc.", type: 'success' });
+      toast.success("Đã xóa hạng mục/công việc.");
     }
     setItemToDelete(null);
     setLoading(false);
@@ -576,56 +579,26 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
         >
           <Save className="w-4 h-4 mr-2 text-white" /> {loading ? "Đang lưu..." : "Lưu thay đổi"}
         </Button>
-      </div>      {/* Delete Confirmation Modal */}
-      {itemToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-xl shadow-lg max-w-sm w-full overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
-            <div className="px-5 py-4 border-b border-slate-100">
-              <h3 className="text-lg font-bold text-slate-900">Xóa hạng mục/công việc?</h3>
+      </div>      <ConfirmDialog
+        isOpen={!!itemToDelete}
+        onClose={() => setItemToDelete(null)}
+        title="Xóa hạng mục/công việc?"
+        description={
+          <>
+            Dữ liệu sẽ được xóa mềm và không còn hiển thị trên Bảng khối lượng, Nhập theo ngày và Tổng hợp. Bạn vẫn có thể khôi phục bằng dữ liệu sao lưu nếu cần.
+            <div className="mt-3 p-3 bg-red-50 text-red-800 text-sm rounded-lg border border-red-100">
+              <span className="font-semibold block mb-1">Lưu ý:</span>
+              {itemToDelete?.itemType === 'GROUP' 
+                ? "Hạng mục này và các công việc con liên quan sẽ được ẩn khỏi các màn nhập và tổng hợp khối lượng." 
+                : "Công việc này sẽ được ẩn khỏi các màn nhập và tổng hợp khối lượng."}
             </div>
-            <div className="px-5 py-4">
-              <p className="text-sm text-slate-600 mb-3 leading-relaxed">
-                Dữ liệu sẽ được xóa mềm và không còn hiển thị trên Bảng khối lượng, Nhập theo ngày và Tổng hợp. Bạn vẫn có thể khôi phục bằng dữ liệu sao lưu nếu cần.
-              </p>
-              {itemToDelete.itemType === 'GROUP' ? (
-                <div className="p-3 bg-red-50 text-red-800 text-sm rounded-lg border border-red-100">
-                  <span className="font-semibold block mb-1">Lưu ý:</span>
-                  Hạng mục này và các công việc con liên quan sẽ được ẩn khỏi các màn nhập và tổng hợp khối lượng.
-                </div>
-              ) : (
-                <div className="p-3 bg-red-50 text-red-800 text-sm rounded-lg border border-red-100">
-                  <span className="font-semibold block mb-1">Lưu ý:</span>
-                  Công việc này sẽ được ẩn khỏi các màn nhập và tổng hợp khối lượng.
-                </div>
-              )}
-            </div>
-            <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
-              <button 
-                onClick={() => setItemToDelete(null)}
-                className="px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
-                disabled={loading}
-              >
-                Hủy
-              </button>
-              <button 
-                onClick={handleConfirmDelete}
-                className="px-4 py-2 text-sm font-semibold text-white bg-red-600 border border-red-600 rounded-lg hover:bg-red-700 flex items-center gap-1.5 transition-colors shadow-sm"
-                disabled={loading}
-              >
-                <Trash2 className="w-4 h-4" /> Xóa
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Toast Notification */}
-      {toast && (
-        <div className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl shadow-lg border flex items-center gap-2.5 text-sm font-semibold animate-in slide-in-from-bottom-5 fade-in duration-300 ${toast.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
-          {toast.type === 'success' ? <div className="w-2 h-2 rounded-full bg-emerald-500" /> : <div className="w-2 h-2 rounded-full bg-red-500" />}
-          {toast.message}
-        </div>
-      )}
+          </>
+        }
+        variant="danger"
+        confirmText="Xóa"
+        onConfirm={handleConfirmDelete}
+        isLoading={loading}
+      />
 
       {/* Edit Bottom Sheet (Mobile) */}
       {editingItemId && (() => {
