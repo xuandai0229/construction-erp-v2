@@ -23,13 +23,13 @@ const navigation = [
   { name: 'Tổng quan', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Công trình', href: '/projects', icon: Building2 },
   { name: 'Tài liệu', href: '/documents', icon: FolderOpen },
-  { name: 'Báo cáo hiện trường', href: '/reports', icon: ClipboardCheck },
-  { name: 'Hợp đồng', href: '/contracts', icon: FileText },
-  { name: 'Nhà cung cấp', href: '/suppliers', icon: Users },
-  { name: 'Vật tư', href: '/materials', icon: Package },
-  { name: 'Thanh toán', href: '/accounting', icon: CreditCard },
-  { name: 'Phê duyệt', href: '/approvals', icon: CheckSquare },
-  { name: 'Nhật ký hệ thống', href: '/audit', icon: History },
+  // { name: 'Báo cáo hiện trường', href: '/reports', icon: ClipboardCheck }, // Đang thiết kế lại
+  // { name: 'Hợp đồng', href: '/contracts', icon: FileText }, // Placeholder
+  // { name: 'Nhà cung cấp', href: '/suppliers', icon: Users }, // Placeholder
+  // { name: 'Vật tư', href: '/materials', icon: Package }, // Placeholder
+  // { name: 'Thanh toán', href: '/accounting', icon: CreditCard }, // Placeholder
+  // { name: 'Phê duyệt', href: '/approvals', icon: CheckSquare }, // Placeholder
+  // { name: 'Nhật ký hệ thống', href: '/audit', icon: History }, // Placeholder
   { name: 'Quản lý tài khoản', href: '/users', icon: UserCog },
   { name: 'Cài đặt', href: '/settings', icon: Settings },
 ];
