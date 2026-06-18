@@ -2,16 +2,17 @@
 
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { requireProjectAccess } from "@/lib/rbac";
 import { revalidatePath } from "next/cache";
 
 export async function createMaterialRequest(data: any) {
-  const session = await getSession();
-  if (!session) throw new Error("Unauthorized");
-
   const { projectId, items, ...rest } = data;
+  
+  // Guard: user must have access to this project
+  const session = await requireProjectAccess(projectId);
 
   // Generate requestNo
-  const count = await prisma.materialRequest.count({ where: { projectId } });
+  const count = await prisma.materialRequest.count();
   const requestNo = `MR-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(count + 1).padStart(4, '0')}`;
 
   const request = await prisma.materialRequest.create({
@@ -43,20 +44,20 @@ export async function createMaterialRequest(data: any) {
 }
 
 export async function updateMaterialRequest(id: string, data: any) {
-  const session = await getSession();
-  if (!session) throw new Error("Unauthorized");
-
   const { items, ...rest } = data;
 
-  // Verify status allows editing
+  // Verify exists and get projectId for access check
   const existing = await prisma.materialRequest.findUnique({ where: { id } });
   if (!existing) throw new Error("Not found");
+  
+  // Guard: user must have access to this project
+  await requireProjectAccess(existing.projectId);
+  
   if (existing.status === "RECEIVED" || existing.status === "CANCELLED") {
     throw new Error("Cannot edit request in this status");
   }
 
-  // Handle items: this is a simple drop and recreate for MVP, or we can carefully update
-  // For safety, let's delete existing items and recreate
+  // Handle items: drop and recreate for safety
   await prisma.$transaction([
     prisma.materialRequestItem.deleteMany({ where: { materialRequestId: id } }),
     prisma.materialRequest.update({
@@ -87,11 +88,11 @@ export async function updateMaterialRequest(id: string, data: any) {
 }
 
 export async function updateMaterialRequestStatus(id: string, status: any, cancelReason?: string) {
-  const session = await getSession();
-  if (!session) throw new Error("Unauthorized");
-
   const existing = await prisma.materialRequest.findUnique({ where: { id } });
   if (!existing) throw new Error("Not found");
+  
+  // Guard: user must have access to this project
+  await requireProjectAccess(existing.projectId);
 
   const updated = await prisma.materialRequest.update({
     where: { id },
@@ -103,11 +104,11 @@ export async function updateMaterialRequestStatus(id: string, status: any, cance
 }
 
 export async function updateMaterialRequestItems(id: string, itemsData: any[]) {
-  const session = await getSession();
-  if (!session) throw new Error("Unauthorized");
-
   const existing = await prisma.materialRequest.findUnique({ where: { id } });
   if (!existing) throw new Error("Not found");
+  
+  // Guard: user must have access to this project
+  await requireProjectAccess(existing.projectId);
 
   for (const item of itemsData) {
     const remaining = Number(item.requestedQuantity) - Number(item.receivedQuantity);

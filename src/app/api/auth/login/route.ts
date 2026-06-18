@@ -11,8 +11,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Email và mật khẩu không được bỏ trống' }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email }
+    // Support login by email OR username
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email },
+          { username: email },
+        ],
+      },
     });
 
     if (!user || !user.isActive) {

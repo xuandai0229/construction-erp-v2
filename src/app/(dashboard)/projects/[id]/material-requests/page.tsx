@@ -1,14 +1,13 @@
-import { getSession } from "@/lib/auth";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { ArrowLeft, Calendar, BarChart2, Package, Table } from "lucide-react";
 import { MaterialRequestList } from "@/components/material-request/material-request-list";
+import { requireProjectAccessOrRedirect } from "@/lib/rbac";
 
 export default async function MaterialRequestsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const session = await getSession();
-  if (!session) redirect("/login");
+  const session = await requireProjectAccessOrRedirect(id);
 
   const project = await prisma.project.findUnique({
     where: { id, deletedAt: null }

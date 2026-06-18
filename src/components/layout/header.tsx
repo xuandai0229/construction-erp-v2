@@ -7,9 +7,10 @@ import Link from 'next/link';
 import { 
   LayoutDashboard, Building2, FolderOpen, ClipboardCheck, 
   FileText, Users as UsersIcon, Package, CreditCard, 
-  CheckSquare, History, Settings 
+  CheckSquare, History, Settings, UserCog
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { UserRole } from '@prisma/client';
 
 const navigation = [
   { name: 'Tổng quan', href: '/dashboard', icon: LayoutDashboard },
@@ -22,13 +23,38 @@ const navigation = [
   { name: 'Thanh toán', href: '/accounting', icon: CreditCard },
   { name: 'Phê duyệt', href: '/approvals', icon: CheckSquare },
   { name: 'Nhật ký hệ thống', href: '/audit', icon: History },
+  { name: 'Quản lý tài khoản', href: '/users', icon: UserCog },
   { name: 'Cài đặt', href: '/settings', icon: Settings },
 ];
 
-export function Header({ userName, userRole }: { userName?: string, userRole?: string }) {
+const HIDDEN_FOR_COMMANDER = [
+  '/accounting',
+  '/approvals',
+  '/audit',
+  '/settings',
+  '/users',
+  '/contracts',
+  '/suppliers',
+];
+
+function getFilteredNavigation(role: UserRole) {
+  if (role === 'CHIEF_COMMANDER') {
+    return navigation.filter(item => !HIDDEN_FOR_COMMANDER.includes(item.href))
+      .map(item => {
+        if (item.href === '/projects') {
+          return { ...item, name: 'Công trình của tôi' };
+        }
+        return item;
+      });
+  }
+  return navigation;
+}
+
+export function Header({ userName, userRole, userRoleRaw }: { userName?: string, userRole?: string, userRoleRaw?: UserRole }) {
   const router = useRouter();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const filteredNav = getFilteredNavigation(userRoleRaw || 'STAFF');
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -58,8 +84,8 @@ export function Header({ userName, userRole }: { userName?: string, userRole?: s
               <User className="h-4 w-4" />
             </div>
             <div className="hidden sm:block">
-              <p className="font-medium text-slate-900">{userName || 'Tài khoản Dev'}</p>
-              <p className="text-xs text-slate-500">{userRole || 'Admin'}</p>
+              <p className="font-medium text-slate-900">{userName || 'Tài khoản'}</p>
+              <p className="text-xs text-slate-500">{userRole || 'Nhân viên'}</p>
             </div>
           </div>
           <button
@@ -90,7 +116,7 @@ export function Header({ userName, userRole }: { userName?: string, userRole?: s
             </div>
             <div className="flex flex-1 flex-col overflow-y-auto pt-4 pb-4">
               <nav className="flex-1 space-y-1 px-3">
-                {navigation.map((item) => {
+                {filteredNav.map((item) => {
                   const isActive = pathname.startsWith(item.href);
                   return (
                     <Link
@@ -101,7 +127,7 @@ export function Header({ userName, userRole }: { userName?: string, userRole?: s
                         isActive
                           ? 'bg-blue-50 text-blue-600'
                           : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900',
-                        'group flex items-center rounded-md px-3 py-2.5 text-sm font-medium'
+                        'group flex items-center rounded-md px-3 py-2.5 text-sm font-medium transition-colors'
                       )}
                     >
                       <item.icon

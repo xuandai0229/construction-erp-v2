@@ -1,7 +1,18 @@
 import { cookies } from 'next/headers';
 import prisma from './prisma';
+import { UserRole } from '@prisma/client';
 
-export async function getSession() {
+export interface SessionUser {
+  id: string;
+  email: string;
+  username: string | null;
+  name: string;
+  role: UserRole;
+  phone: string | null;
+  isActive: boolean;
+}
+
+export async function getSession(): Promise<SessionUser | null> {
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get('auth_session')?.value;
   
@@ -13,8 +24,18 @@ export async function getSession() {
     
     const user = await prisma.user.findUnique({
       where: { id: sessionData.userId },
-      select: { id: true, email: true, name: true, role: true }
+      select: { 
+        id: true, 
+        email: true, 
+        username: true,
+        name: true, 
+        role: true,
+        phone: true,
+        isActive: true,
+      }
     });
+    
+    if (!user || !user.isActive) return null;
     
     return user;
   } catch (error) {

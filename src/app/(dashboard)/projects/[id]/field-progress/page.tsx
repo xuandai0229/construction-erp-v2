@@ -1,16 +1,15 @@
-import { getSession } from "@/lib/auth";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { getOrCreateTemplate } from "./actions";
 import { MasterTable } from "@/components/field-progress/master-table";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { ArrowLeft, Calendar, BarChart2, Package, TrendingUp, CheckCircle2, BarChart3, Info } from "lucide-react";
 import { buildTreeItems, flattenTreeForTable, calculateParentRollup, formatQuantity } from "@/lib/field-progress";
+import { requireProjectAccessOrRedirect } from "@/lib/rbac";
 
 export default async function FieldProgressPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const session = await getSession();
-  if (!session) redirect("/login");
+  const session = await requireProjectAccessOrRedirect(id);
 
   const project = await prisma.project.findUnique({
     where: { id, deletedAt: null }

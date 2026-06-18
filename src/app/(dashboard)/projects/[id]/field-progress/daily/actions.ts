@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { writeAuditLog } from "@/lib/audit";
+import { requireProjectAccess } from "@/lib/rbac";
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { getWorkDateRange } from "@/lib/date/work-date";
@@ -11,8 +12,7 @@ const Decimal = Prisma.Decimal;
 
 // Safer batch save function
 export async function batchSaveDailyEntries(projectId: string, templateId: string, entryDateStr: string, entries: any[], submit: boolean = false) {
-  const session = await getSession();
-  if (!session) return { error: "Unauthorized" };
+  const session = await requireProjectAccess(projectId);
 
   try {
     const { start, end } = getWorkDateRange(entryDateStr);

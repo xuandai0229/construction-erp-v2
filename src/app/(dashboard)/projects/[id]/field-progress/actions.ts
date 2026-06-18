@@ -3,11 +3,11 @@
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { writeAuditLog } from "@/lib/audit";
+import { requireProjectAccess } from "@/lib/rbac";
 import { revalidatePath } from "next/cache";
 
 export async function getOrCreateTemplate(projectId: string) {
-  const session = await getSession();
-  if (!session) throw new Error("Unauthorized");
+  const session = await requireProjectAccess(projectId);
 
   let template = await prisma.fieldProgressTemplate.findFirst({
     where: { projectId, deletedAt: null },
@@ -39,8 +39,8 @@ export async function getOrCreateTemplate(projectId: string) {
 }
 
 export async function createItem(templateId: string, projectId: string, data: any) {
-  const session = await getSession();
-  if (!session) return { error: "Unauthorized" };
+  let session;
+  try { session = await requireProjectAccess(projectId); } catch { return { error: "Bạn không có quyền truy cập công trình này" }; }
 
   try {
     const maxOrder = await prisma.fieldProgressItem.findFirst({
@@ -86,8 +86,8 @@ export async function createItem(templateId: string, projectId: string, data: an
 }
 
 export async function updateItem(itemId: string, projectId: string, data: any) {
-  const session = await getSession();
-  if (!session) return { error: "Unauthorized" };
+  let session;
+  try { session = await requireProjectAccess(projectId); } catch { return { error: "Bạn không có quyền truy cập công trình này" }; }
 
   try {
     const before = await prisma.fieldProgressItem.findUnique({ where: { id: itemId } });
@@ -124,8 +124,8 @@ export async function updateItem(itemId: string, projectId: string, data: any) {
 }
 
 export async function deleteItem(itemId: string, projectId: string) {
-  const session = await getSession();
-  if (!session) return { error: "Unauthorized" };
+  let session;
+  try { session = await requireProjectAccess(projectId); } catch { return { error: "Bạn không có quyền truy cập công trình này" }; }
 
   try {
     const deletedTime = new Date();
@@ -172,8 +172,8 @@ export async function deleteItem(itemId: string, projectId: string) {
 
 // Bulk update for inline table editing
 export async function batchUpdateItems(projectId: string, updates: any[]) {
-  const session = await getSession();
-  if (!session) return { error: "Unauthorized" };
+  let session;
+  try { session = await requireProjectAccess(projectId); } catch { return { error: "Bạn không có quyền truy cập công trình này" }; }
 
   try {
     // using a transaction to update multiple items

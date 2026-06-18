@@ -1,4 +1,3 @@
-import { getSession } from "@/lib/auth";
 import { notFound, redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
@@ -8,6 +7,7 @@ import { buildFieldProgressRollupTree } from "@/lib/field-progress/rollup";
 import { addWorkDays, formatWorkDate, getWorkDateRange, parseWorkDate, todayWorkDate } from "@/lib/date/work-date";
 import { SummaryMobileView } from "@/components/field-progress/summary-mobile-view";
 import { SummaryDesktopView } from "@/components/field-progress/summary-desktop-view";
+import { requireProjectAccessOrRedirect } from "@/lib/rbac";
 
 function formatWorkDateShort(date: Date): string {
   const dateStr = formatWorkDate(date);
@@ -24,8 +24,7 @@ export default async function FieldProgressSummaryPage({
   const { id } = await params;
   const sp = await searchParams;
   
-  const session = await getSession();
-  if (!session) redirect("/login");
+  const session = await requireProjectAccessOrRedirect(id);
 
   const project = await prisma.project.findUnique({
     where: { id, deletedAt: null }

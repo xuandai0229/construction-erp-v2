@@ -1,11 +1,11 @@
-import { getSession } from "@/lib/auth";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { ArrowLeft, Table, BarChart2, Package } from "lucide-react";
 import { DailyEntryTable } from "@/components/field-progress/daily-entry-table";
 import { DailyStatusCalendar } from "@/components/field-progress/daily-status-calendar";
 import { addWorkDays, formatWorkDate, getWorkDateRange, parseWorkDate, todayWorkDate } from "@/lib/date/work-date";
+import { requireProjectAccessOrRedirect } from "@/lib/rbac";
 
 export default async function FieldProgressDailyPage({
   params,
@@ -17,8 +17,7 @@ export default async function FieldProgressDailyPage({
   const { id } = await params;
   const sp = await searchParams;
 
-  const session = await getSession();
-  if (!session) redirect("/login");
+  const session = await requireProjectAccessOrRedirect(id);
 
   const project = await prisma.project.findUnique({
     where: { id, deletedAt: null },

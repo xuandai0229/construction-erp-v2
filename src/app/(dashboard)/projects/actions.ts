@@ -3,6 +3,7 @@
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { writeAuditLog } from "@/lib/audit";
+import { canManageProjects } from "@/lib/rbac";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -33,7 +34,7 @@ export async function createProject(prevState: unknown, formData: FormData) {
   const session = await getSession();
   if (!session) return { error: "Vui lòng đăng nhập" };
 
-  if (session.role !== "ADMIN" && session.role !== "DIRECTOR") {
+  if (!canManageProjects(session)) {
     return { error: "Bạn không có quyền tạo công trình" };
   }
 
@@ -90,7 +91,7 @@ export async function updateProject(id: string, prevState: unknown, formData: Fo
   const session = await getSession();
   if (!session) return { error: "Vui lòng đăng nhập" };
 
-  if (session.role !== "ADMIN" && session.role !== "DIRECTOR") {
+  if (!canManageProjects(session)) {
     return { error: "Bạn không có quyền sửa công trình" };
   }
 
@@ -138,7 +139,7 @@ export async function deleteProject(id: string) {
   const session = await getSession();
   if (!session) return { error: "Vui lòng đăng nhập" };
 
-  if (session.role !== "ADMIN" && session.role !== "DIRECTOR") {
+  if (!canManageProjects(session)) {
     return { error: "Bạn không có quyền xóa công trình" };
   }
 

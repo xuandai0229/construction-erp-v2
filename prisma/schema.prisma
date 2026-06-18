@@ -10,6 +10,8 @@ datasource db {
 enum UserRole {
   ADMIN
   DIRECTOR
+  DEPUTY_DIRECTOR
+  CHIEF_COMMANDER
   MANAGER
   ENGINEER
   ACCOUNTANT
@@ -19,9 +21,12 @@ enum UserRole {
 enum ProjectRole {
   PROJECT_MANAGER
   SITE_COMMANDER
+  CHIEF_COMMANDER
+  ASSISTANT_COMMANDER
   QA_QC
   HSE
   SUPERVISOR
+  VIEWER
 }
 
 enum ProjectStatus {
@@ -149,6 +154,7 @@ enum FieldMaterialPriority {
 model User {
   id        String    @id @default(cuid())
   email     String    @unique
+  username  String?   @unique
   password  String
   name      String
   role      UserRole  @default(STAFF)
@@ -159,23 +165,25 @@ model User {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  projectMembers        ProjectMember[]
-  auditLogs             AuditLog[]
-  messages              ChatMessage[]
-  createdSiteReports    SiteReport[]            @relation("ReportCreator")
-  approvedSiteReports   SiteReport[]            @relation("ReportApprover")
-  createdWBSItems       WBSItem[]
-  materialRequests      MaterialRequest[]
-  approvalRequests      ApprovalRequest[]       @relation("Requester")
-  approvals             ApprovalRequest[]       @relation("Approver")
-  documents             Document[]
-  createdFieldTemplates FieldProgressTemplate[] @relation("FieldTemplateCreator")
-  createdFieldItems     FieldProgressItem[]     @relation("FieldItemCreator")
-  createdFieldEntries   FieldProgressEntry[]    @relation("FieldEntryCreator")
-  approvedFieldEntries  FieldProgressEntry[]    @relation("FieldEntryApprover")
-  fieldMaterialRequests FieldMaterialRequest[]  @relation("FieldMaterialRequester")
+  projectMembers         ProjectMember[]
+  assignedProjectMembers ProjectMember[]          @relation("ProjectMemberAssigner")
+  auditLogs              AuditLog[]
+  messages               ChatMessage[]
+  createdSiteReports     SiteReport[]             @relation("ReportCreator")
+  approvedSiteReports    SiteReport[]             @relation("ReportApprover")
+  createdWBSItems        WBSItem[]
+  materialRequests       MaterialRequest[]
+  approvalRequests       ApprovalRequest[]        @relation("Requester")
+  approvals              ApprovalRequest[]        @relation("Approver")
+  documents              Document[]
+  createdFieldTemplates  FieldProgressTemplate[]  @relation("FieldTemplateCreator")
+  createdFieldItems      FieldProgressItem[]      @relation("FieldItemCreator")
+  createdFieldEntries    FieldProgressEntry[]     @relation("FieldEntryCreator")
+  approvedFieldEntries   FieldProgressEntry[]     @relation("FieldEntryApprover")
+  fieldMaterialRequests  FieldMaterialRequest[]   @relation("FieldMaterialRequester")
 
   @@index([email])
+  @@index([username])
   @@index([createdAt])
 }
 
@@ -216,19 +224,27 @@ model Project {
 }
 
 model ProjectMember {
-  id        String      @id @default(cuid())
-  projectId String
-  userId    String
-  role      ProjectRole
-  joinedAt  DateTime    @default(now())
-  leftAt    DateTime?
+  id           String      @id @default(cuid())
+  projectId    String
+  userId       String
+  role         ProjectRole
+  assignedById String?
+  isActive     Boolean     @default(true)
+  note         String?
+  joinedAt     DateTime    @default(now())
+  leftAt       DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  deletedAt    DateTime?
 
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignedBy User?   @relation("ProjectMemberAssigner", fields: [assignedById], references: [id])
 
   @@unique([projectId, userId])
   @@index([projectId])
   @@index([userId])
+  @@index([assignedById])
 }
 
 model WBSItem {

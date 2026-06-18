@@ -2,14 +2,19 @@ import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Calendar, MapPin, User, ListTree, FolderOpen, FileText, ClipboardCheck, History, BarChart2 } from "lucide-react";
+import { Building2, Calendar, MapPin, User, ListTree, FolderOpen, FileText, ClipboardCheck, BarChart2, Package } from "lucide-react";
 import { DeleteProjectButton } from "@/components/projects/delete-project-button";
 import Link from "next/link";
 import { ProjectStatus } from "@prisma/client";
 import { format } from "date-fns";
+import { requireProjectAccessOrRedirect, canManageProjects } from "@/lib/rbac";
 
 export default async function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
+  const session = await requireProjectAccessOrRedirect(resolvedParams.id);
+
+  const canManage = canManageProjects(session);
+
   const project = await prisma.project.findUnique({
     where: { id: resolvedParams.id, deletedAt: null },
     include: {
@@ -34,8 +39,6 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
     }
   };
 
-  const buttonClass = "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-slate-300 bg-white hover:bg-slate-100 text-slate-900 h-10 px-4 py-2";
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -50,12 +53,16 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
           <Link href="/projects" className="flex-1 sm:flex-none inline-flex items-center justify-center rounded-md text-xs sm:text-sm font-medium transition-colors border border-slate-300 bg-white hover:bg-slate-100 text-slate-900 h-9 sm:h-10 px-3 sm:px-4">
             Quay lại
           </Link>
-          <Link href={`/projects/${project.id}/edit`} className="flex-1 sm:flex-none inline-flex items-center justify-center rounded-md text-xs sm:text-sm font-medium transition-colors border border-slate-300 bg-white hover:bg-slate-100 text-slate-900 h-9 sm:h-10 px-3 sm:px-4">
-            Sửa
-          </Link>
-          <div className="w-full sm:w-auto mt-2 sm:mt-0 flex justify-end">
-            <DeleteProjectButton id={project.id} projectName={project.name} />
-          </div>
+          {canManage && (
+            <>
+              <Link href={`/projects/${project.id}/edit`} className="flex-1 sm:flex-none inline-flex items-center justify-center rounded-md text-xs sm:text-sm font-medium transition-colors border border-slate-300 bg-white hover:bg-slate-100 text-slate-900 h-9 sm:h-10 px-3 sm:px-4">
+                Sửa
+              </Link>
+              <div className="w-full sm:w-auto mt-2 sm:mt-0 flex justify-end">
+                <DeleteProjectButton id={project.id} projectName={project.name} />
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -169,15 +176,15 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
           </Card>
         </Link>
 
-        <Link href={`/audit?project=${project.id}`} className="block group">
-          <Card className="hover:border-slate-300 transition-all h-full border border-slate-200 bg-slate-50/50">
+        <Link href={`/projects/${project.id}/material-requests`} className="block group">
+          <Card className="hover:border-amber-400 hover:shadow-lg transition-all h-full border-2 border-slate-200">
             <CardContent className="p-4 md:p-5 flex flex-row items-center md:flex-col md:text-center md:space-y-3 gap-4 md:gap-0">
-              <div className="shrink-0 bg-slate-100 w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center group-hover:bg-slate-200 group-hover:scale-110 transition-all shadow-sm">
-                <History className="h-6 w-6 md:h-7 md:w-7 text-slate-600" />
+              <div className="shrink-0 bg-amber-50 w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center group-hover:bg-amber-100 group-hover:scale-110 transition-all shadow-sm">
+                <Package className="h-6 w-6 md:h-7 md:w-7 text-amber-600" />
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-slate-900 text-sm md:text-base">Nhật ký hệ thống</h3>
-                <p className="text-xs md:text-sm text-slate-600 leading-relaxed mt-0.5 line-clamp-2 md:line-clamp-none">Xem lịch sử thay đổi dữ liệu của công trình.</p>
+                <h3 className="font-bold text-slate-900 text-sm md:text-base">Đề xuất vật tư</h3>
+                <p className="text-xs md:text-sm text-slate-600 leading-relaxed mt-0.5 line-clamp-2 md:line-clamp-none">Tạo và theo dõi yêu cầu cấp vật tư.</p>
               </div>
             </CardContent>
           </Card>
