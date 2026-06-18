@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { X, Plus, Trash2, Save, Send } from "lucide-react";
 import { createMaterialRequest, updateMaterialRequest } from "@/app/actions/material-request";
 import { format } from "date-fns";
@@ -20,6 +20,7 @@ export function MaterialRequestForm({
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const submittingRef = useRef(false);
   
   const [formData, setFormData] = useState({
     neededDate: initialData?.neededDate ? format(new Date(initialData.neededDate), "yyyy-MM-dd") : "",
@@ -50,6 +51,8 @@ export function MaterialRequestForm({
   };
 
   const handleSubmit = async (status: string) => {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     try {
       setLoading(true);
       setError("");
@@ -93,6 +96,7 @@ export function MaterialRequestForm({
     } catch (err: any) {
       setError(err.message || "Có lỗi xảy ra");
     } finally {
+      submittingRef.current = false;
       setLoading(false);
     }
   };

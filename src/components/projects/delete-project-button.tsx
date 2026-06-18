@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { deleteProject } from "@/app/(dashboard)/projects/actions";
 import { Trash2 } from "lucide-react";
@@ -13,19 +13,27 @@ export function DeleteProjectButton({ id, projectName, className }: { id: string
   const router = useRouter();
   const toast = useToast();
   const [showConfirm, setShowConfirm] = useState(false);
+  const deletingRef = useRef(false);
 
   const handleDelete = async () => {
+    if (deletingRef.current) return;
+    deletingRef.current = true;
     setIsDeleting(true);
-    const res = await deleteProject(id);
-    setIsDeleting(false);
-
-    if (res?.error) {
-      toast.error(res.error);
-      setShowConfirm(false);
-    } else {
-      toast.success("Đã xóa công trình");
-      router.push('/projects');
-      router.refresh();
+    try {
+      const res = await deleteProject(id);
+      if (res?.error) {
+        toast.error(res.error);
+        setShowConfirm(false);
+      } else {
+        toast.success("Đã xóa công trình");
+        router.push('/projects');
+        router.refresh();
+      }
+    } catch {
+      toast.error("Không thể xóa công trình. Vui lòng kiểm tra kết nối và thử lại.");
+    } finally {
+      deletingRef.current = false;
+      setIsDeleting(false);
     }
   };
 

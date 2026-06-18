@@ -30,17 +30,21 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
   const [renameModal, setRenameModal] = useState<{isOpen: boolean, id: string, newName: string}>({isOpen: false, id: "", newName: ""});
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadRef = useRef(false);
+  const mutationRef = useRef(false);
 
   const rootFolders = folders.filter((f: any) => !f.parentId);
   
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!selectedFolderId || !e.target.files || e.target.files.length === 0) return;
+    if (uploadRef.current || !selectedFolderId || !e.target.files || e.target.files.length === 0) return;
     
+    uploadRef.current = true;
     setIsUploading(true);
     const file = e.target.files[0];
     
     if (file.size > 50 * 1024 * 1024) {
       toast.error("Tệp vượt quá giới hạn 50MB");
+      uploadRef.current = false;
       setIsUploading(false);
       return;
     }
@@ -62,53 +66,76 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
     } catch (error: any) {
       toast.error("Lỗi upload: " + error.message);
     } finally {
+      uploadRef.current = false;
       setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
   const handleCreateFolder = async () => {
-    if (!newFolderName.trim()) return;
-    const res = await createFolder(projectId, newFolderName, selectedFolderId || undefined);
-    if (res?.error) {
-      toast.error(res.error);
-    } else {
-      toast.success("Tạo thư mục thành công");
-      setNewFolderName("");
-      setShowNewFolder(false);
+    if (mutationRef.current || !newFolderName.trim()) return;
+    mutationRef.current = true;
+    try {
+      const res = await createFolder(projectId, newFolderName, selectedFolderId || undefined);
+      if (res?.error) {
+        toast.error(res.error);
+      } else {
+        toast.success("Tạo thư mục thành công");
+        setNewFolderName("");
+        setShowNewFolder(false);
+      }
+    } catch {
+      toast.error("Không thể tạo thư mục. Vui lòng kiểm tra kết nối và thử lại.");
+    } finally {
+      mutationRef.current = false;
     }
   };
 
   const handleRenameFolder = async () => {
     const { id, newName } = renameModal;
-    if (!newName.trim()) return;
-    const res = await renameFolder(projectId, id, newName);
-    if (res?.error) {
-      toast.error(res.error);
-    } else {
-      toast.success("Đổi tên thành công");
-      setRenameModal({ isOpen: false, id: "", newName: "" });
+    if (mutationRef.current || !newName.trim()) return;
+    mutationRef.current = true;
+    try {
+      const res = await renameFolder(projectId, id, newName);
+      if (res?.error) {
+        toast.error(res.error);
+      } else {
+        toast.success("Đổi tên thành công");
+        setRenameModal({ isOpen: false, id: "", newName: "" });
+      }
+    } catch {
+      toast.error("Không thể đổi tên thư mục. Vui lòng kiểm tra kết nối và thử lại.");
+    } finally {
+      mutationRef.current = false;
     }
   };
 
   const executeDelete = async () => {
+    if (mutationRef.current) return;
+    mutationRef.current = true;
     const { type, id } = deleteConfirm;
     setDeleteConfirm(prev => ({ ...prev, isOpen: false }));
-    
-    if (type === 'folder') {
-      const res = await deleteFolder(projectId, id);
-      if (res?.error) {
-        toast.error(res.error);
+    try {
+      if (type === 'folder') {
+        const res = await deleteFolder(projectId, id);
+        if (res?.error) {
+          toast.error(res.error);
+        } else {
+          toast.success("Xóa thư mục thành công");
+          if (selectedFolderId === id) setSelectedFolderId(null);
+        }
       } else {
-        toast.success("Xóa thư mục thành công");
-        if (selectedFolderId === id) setSelectedFolderId(null);
+        const res = await deleteDocument(projectId, id);
+        if (res?.error) {
+          toast.error(res.error);
+        } else {
+          toast.success("Xóa tệp thành công");
+        }
       }
-    } else {
-      const res = await deleteDocument(projectId, id);
-      if (res?.error) {
-        toast.error(res.error);
-      } else {
-        toast.success("Xóa tệp thành công");
-      }
+    } catch {
+      toast.error("Không thể xóa. Vui lòng kiểm tra kết nối và thử lại.");
+    } finally {
+      mutationRef.current = false;
     }
   };
 

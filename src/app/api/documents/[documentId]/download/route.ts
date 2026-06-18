@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import fs from "fs/promises";
 import mime from "mime-types";
+import { canAccessProject } from "@/lib/rbac";
 
 export async function GET(
   req: NextRequest,
@@ -24,14 +25,8 @@ export async function GET(
       return new NextResponse("Không tìm thấy tài liệu", { status: 404 });
     }
 
-    // Role check
-    if (session.role !== "ADMIN" && session.role !== "DIRECTOR") {
-      const isMember = await prisma.projectMember.findFirst({
-        where: { projectId: document.projectId, userId: session.id }
-      });
-      if (!isMember) {
-        return new NextResponse("Không có quyền truy cập", { status: 403 });
-      }
+    if (!(await canAccessProject(session, document.projectId))) {
+      return new NextResponse("Không có quyền truy cập", { status: 403 });
     }
 
     const fileBuffer = await fs.readFile(document.storagePath);

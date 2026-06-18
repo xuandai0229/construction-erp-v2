@@ -4,6 +4,7 @@ import { FolderOpen, Building2, Search } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { getAccessibleProjectIds } from "@/lib/rbac";
 
 export default async function DocumentsOverviewPage({
   searchParams
@@ -30,10 +31,9 @@ export default async function DocumentsOverviewPage({
   }
 
   // Nếu không phải ADMIN/DIRECTOR thì chỉ lấy project mà user được assign
-  if (session.role !== "ADMIN" && session.role !== "DIRECTOR") {
-    whereCondition.members = {
-      some: { userId: session.id }
-    };
+  const accessibleIds = await getAccessibleProjectIds(session);
+  if (accessibleIds !== null) {
+    whereCondition.id = { in: accessibleIds };
   }
 
   const projects = await prisma.project.findMany({

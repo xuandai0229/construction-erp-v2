@@ -1,6 +1,11 @@
 import { cookies } from 'next/headers';
 import prisma from './prisma';
 import { UserRole } from '@prisma/client';
+import {
+  createSessionToken,
+  SESSION_MAX_AGE_SECONDS,
+  verifySessionToken,
+} from './session-token';
 
 export interface SessionUser {
   id: string;
@@ -19,8 +24,8 @@ export async function getSession(): Promise<SessionUser | null> {
   if (!sessionToken) return null;
   
   try {
-    const sessionData = JSON.parse(Buffer.from(sessionToken, 'base64').toString('utf-8'));
-    if (!sessionData.userId) return null;
+    const sessionData = verifySessionToken(sessionToken);
+    if (!sessionData) return null;
     
     const user = await prisma.user.findUnique({
       where: { id: sessionData.userId },
@@ -54,14 +59,14 @@ export async function getSession(): Promise<SessionUser | null> {
 
 export async function setSession(userId: string) {
   const cookieStore = await cookies();
-  const payload = Buffer.from(JSON.stringify({ userId })).toString('base64');
+  const token = createSessionToken(userId);
   
-  cookieStore.set('auth_session', payload, {
+  cookieStore.set('auth_session', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
-    maxAge: 60 * 60 * 24 * 7 // 1 week
+    maxAge: SESSION_MAX_AGE_SECONDS
   });
 }
 

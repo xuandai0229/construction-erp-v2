@@ -1,133 +1,128 @@
-import { chromium } from 'playwright';
-import prisma from '../src/lib/prisma';
-import fs from 'fs';
-import path from 'path';
+import * as bcrypt from "bcryptjs";
+import { chromium, type Page } from "playwright";
+import prisma from "../src/lib/prisma";
+
+const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
+const PROJECT_PREFIX = "QA_RBAC_RUNTIME_";
+const USER_PREFIX = "qa-rbac-runtime-";
+const TEST_PASSWORD = "QaRbac@123456";
+
+function assert(condition: unknown, message: string): asserts condition {
+  if (!condition) throw new Error(message);
+}
+
+async function assertRedirectedAway(page: Page, restrictedPath: string) {
+  await page.goto(`${BASE_URL}${restrictedPath}`);
+  await page.waitForLoadState("networkidle");
+  const finalPath = new URL(page.url()).pathname;
+  assert(
+    finalPath !== restrictedPath &&
+      !finalPath.startsWith(`${restrictedPath}/`),
+    `Direct URL ${restrictedPath} không bị chặn; vẫn ở ${finalPath}.`
+  );
+}
+
+async function cleanupRuntimeData() {
+  await prisma.project.deleteMany({
+    where: { code: { startsWith: PROJECT_PREFIX } },
+  });
+  await prisma.user.deleteMany({
+    where: { email: { startsWith: USER_PREFIX } },
+  });
+}
 
 async function main() {
-  console.log('--- BẮT ĐẦU TEST: RBAC DIRECT URL ACCESS ---');
-
-  // Lấy dữ liệu công trình để test
-  const ct1 = await prisma.project.findFirst({ where: { code: 'QA_RBAC_CT_001' } });
-  const ct2 = await prisma.project.findFirst({ where: { code: 'QA_RBAC_CT_002' } });
-
-  if (!ct1 || !ct2) {
-    console.log('❌ LỖI: Không tìm thấy công trình test. Hãy chạy seed RBAC trước.');
-    process.exit(1);
-  }
-
-  const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext();
-  const page = await context.newPage();
-
-  const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+  console.log("=== QA RBAC DIRECT URL ACCESS TEST ===");
+  const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const email = `${USER_PREFIX}${suffix}@construction.local`;
+  let browser: Awaited<ReturnType<typeof chromium.launch>> | null = null;
 
   try {
-    console.log('1. Đăng nhập với tài khoản: commander1@construction.local (Role: CHIEF_COMMANDER)');
+    await cleanupRuntimeData();
+    const password = await bcrypt.hash(TEST_PASSWORD, 10);
+    const commander1 = await prisma.user.create({
+      data: {
+        email,
+        username: `${USER_PREFIX}${suffix}`.slice(0, 48),
+        password,
+        name: "QA RBAC Runtime Commander 1",
+        role: "CHIEF_COMMANDER",
+        isActive: true,
+      },
+    });
+    const projectA = await prisma.project.create({
+      data: {
+        code: `${PROJECT_PREFIX}CT_001`,
+        name: "Project A - Granted",
+        status: "ACTIVE",
+        members: {
+          create: {
+            userId: commander1.id,
+            role: "CHIEF_COMMANDER",
+          },
+        },
+      },
+    });
+    const projectB = await prisma.project.create({
+      data: {
+        code: `${PROJECT_PREFIX}CT_002`,
+        name: "Project B - Denied",
+        status: "ACTIVE",
+      },
+    });
+
+    browser = await chromium.launch({ headless: true });
+    const context = await browser.newContext();
+    const page = await context.newPage();
+
     await page.goto(`${BASE_URL}/login`);
-    await page.fill('input[name="email"]', 'commander1@construction.local');
-    await page.fill('input[name="password"]', 'Test@123456');
+    await page.fill('input[name="email"]', email);
+    await page.fill('input[name="password"]', TEST_PASSWORD);
     await page.click('button[type="submit"]');
-    await page.waitForURL('**/dashboard');
-    console.log('✅ Đăng nhập thành công.');
+    await page.waitForURL("**/dashboard");
+    console.log("PASS 1: commander1 login.");
 
-    console.log('2. Truy cập /projects -> Chỉ thấy QA_RBAC_CT_001');
     await page.goto(`${BASE_URL}/projects`);
-    await page.waitForSelector('table');
-    
-    const pageContent = await page.content();
-    if (!pageContent.includes('QA_RBAC_CT_001')) {
-      throw new Error('Không thấy QA_RBAC_CT_001 trong danh sách.');
-    }
-    if (pageContent.includes('QA_RBAC_CT_002')) {
-      throw new Error('LỖI: Thấy QA_RBAC_CT_002 trong danh sách! (Rò rỉ dữ liệu)');
-    }
-    console.log('✅ Danh sách công trình đã được lọc đúng.');
+    await page.waitForLoadState("networkidle");
+    const projectsBody = await page.locator("body").innerText();
+    assert(projectsBody.includes(projectA.code), "Commander không thấy Project A được giao.");
+    assert(!projectsBody.includes(projectB.code), "Commander nhìn thấy Project B không được giao.");
+    console.log("PASS 2: /projects chỉ thấy Project A.");
 
-    console.log('3. Truy cập trực tiếp /projects/[QA_RBAC_CT_002_ID]');
-    const res1 = await page.goto(`${BASE_URL}/projects/${ct2.id}`);
-    await page.waitForLoadState('networkidle');
-    if (page.url().includes(`/projects/${ct2.id}`)) {
-      if (!pageContent.includes('QA_RBAC_CT_002')) {
-        // Có thể redirect hoặc render UI báo lỗi
-        const bodyText = await page.innerText('body');
-        if (!bodyText.toLowerCase().includes('không có quyền') && !bodyText.toLowerCase().includes('not found') && !bodyText.toLowerCase().includes('từ chối')) {
-           throw new Error(`LỖI: Truy cập được chi tiết công trình ${ct2.id} mà không bị chặn!`);
-        }
-      }
-    } else {
-       console.log('✅ Bị redirect hoặc chặn thành công.');
-    }
+    await assertRedirectedAway(page, "/users");
+    console.log("PASS 3: /users bị chặn.");
 
-    console.log('4. Truy cập trực tiếp /users');
-    const resUsers = await page.goto(`${BASE_URL}/users`);
-    await page.waitForLoadState('networkidle');
-    if (page.url().includes('/users') && !(await page.innerText('body')).toLowerCase().includes('không có quyền') && !(await page.innerText('body')).toLowerCase().includes('từ chối')) {
-       // Test form filter
-       const hasFilter = await page.$('#user-status-filter');
-       if (hasFilter) {
-          throw new Error('LỖI: Truy cập được /users mà không bị chặn!');
-       }
-    }
-    console.log('✅ Bị chặn khỏi /users.');
+    await assertRedirectedAway(page, "/projects/new");
+    console.log("PASS 4: /projects/new bị chặn.");
 
-    console.log('5. Truy cập trực tiếp /projects/new');
-    await page.goto(`${BASE_URL}/projects/new`);
-    await page.waitForLoadState('networkidle');
-    if (page.url().includes('/projects/new')) {
-       const bodyText = await page.innerText('body');
-       if (!bodyText.toLowerCase().includes('từ chối') && !bodyText.toLowerCase().includes('không có quyền')) {
-          const formExists = await page.$('form');
-          if (formExists) {
-             throw new Error('LỖI: Truy cập được /projects/new mà không bị chặn!');
-          }
-       }
-    }
-    console.log('✅ Bị chặn khỏi /projects/new.');
+    await assertRedirectedAway(page, `/projects/${projectB.id}`);
+    console.log("PASS 5: direct Project B detail bị chặn.");
 
-    console.log('6. Truy cập trực tiếp /projects/[QA_RBAC_CT_002_ID]/field-progress');
-    await page.goto(`${BASE_URL}/projects/${ct2.id}/field-progress`);
-    await page.waitForLoadState('networkidle');
-    if (page.url().includes('/field-progress')) {
-      const bodyText = await page.innerText('body');
-      if (!bodyText.toLowerCase().includes('từ chối') && !bodyText.toLowerCase().includes('không có quyền')) {
-         const btn = await page.$('button:has-text("Thêm hạng mục chính")');
-         if (btn) throw new Error('LỖI: Truy cập được field-progress của dự án khác!');
-      }
-    }
-    console.log('✅ Bị chặn khỏi field-progress của dự án khác.');
+    await assertRedirectedAway(page, `/projects/${projectB.id}/field-progress`);
+    console.log("PASS 6: direct Project B field-progress bị chặn.");
 
-    console.log('7. Truy cập trực tiếp /projects/[QA_RBAC_CT_002_ID]/material-requests');
-    await page.goto(`${BASE_URL}/projects/${ct2.id}/material-requests`);
-    await page.waitForLoadState('networkidle');
-    if (page.url().includes('/material-requests')) {
-      const bodyText = await page.innerText('body');
-      if (!bodyText.toLowerCase().includes('từ chối') && !bodyText.toLowerCase().includes('không có quyền')) {
-         const btn = await page.$('button:has-text("Tạo đề xuất")');
-         if (btn) throw new Error('LỖI: Truy cập được material-requests của dự án khác!');
-      }
-    }
-    console.log('✅ Bị chặn khỏi material-requests của dự án khác.');
-
-    // Chụp screenshot access denied nếu có thể
-    const screenshotDir = path.join(process.cwd(), 'docs/qa/screenshots/global-ui-responsive-audit');
-    if (!fs.existsSync(screenshotDir)) {
-      fs.mkdirSync(screenshotDir, { recursive: true });
-    }
-    
-    await page.setViewportSize({ width: 430, height: 932 });
-    await page.goto(`${BASE_URL}/projects/${ct2.id}`);
-    await page.waitForLoadState('networkidle');
-    await page.screenshot({ path: path.join(screenshotDir, 'commander-access-denied-mobile-430.png') });
-    console.log('📸 Đã chụp ảnh màn hình access denied.');
-
-    console.log('\n🎉 TEST PASS: Tất cả các route đã chặn đúng quyền của Chief Commander!');
-
-  } catch (err: any) {
-    console.error('\n❌ TEST FAIL:', err.message);
-    process.exit(1);
+    await assertRedirectedAway(page, `/projects/${projectB.id}/material-requests`);
+    console.log("PASS 7: direct Project B material-requests bị chặn.");
   } finally {
-    await browser.close();
+    if (browser) await browser.close();
+    await cleanupRuntimeData();
+    const remainingProjects = await prisma.project.count({
+      where: { code: { startsWith: PROJECT_PREFIX } },
+    });
+    const remainingUsers = await prisma.user.count({
+      where: { email: { startsWith: USER_PREFIX } },
+    });
+    await prisma.$disconnect();
+    if (remainingProjects !== 0 || remainingUsers !== 0) {
+      throw new Error(
+        `Cleanup RBAC thất bại: projects=${remainingProjects}, users=${remainingUsers}.`
+      );
+    }
+    console.log("PASS: Cleanup runtime RBAC data; không tạo screenshot/trace.");
   }
 }
 
-main().catch(console.error);
+main().catch((error) => {
+  console.error("FAIL:", error);
+  process.exitCode = 1;
+});

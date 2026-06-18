@@ -1,31 +1,21 @@
 import prisma from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { DocumentManager } from "@/components/documents/document-manager";
+import { requireProjectAccessOrRedirect } from "@/lib/rbac";
 
 export default async function ProjectDocumentsPage({
   params
 }: {
   params: Promise<{ projectId: string }>
 }) {
-  const session = await getSession();
-  if (!session) redirect("/login");
-
   const { projectId } = await params;
+  await requireProjectAccessOrRedirect(projectId);
 
   const project = await prisma.project.findUnique({
     where: { id: projectId, deletedAt: null }
   });
 
   if (!project) notFound();
-
-  // Role check
-  if (session.role !== "ADMIN" && session.role !== "DIRECTOR") {
-    const isMember = await prisma.projectMember.findFirst({
-      where: { projectId, userId: session.id }
-    });
-    if (!isMember) redirect("/documents");
-  }
 
   const rawFolders = await prisma.documentFolder.findMany({
     where: { projectId, deletedAt: null },

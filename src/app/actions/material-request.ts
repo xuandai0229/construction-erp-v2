@@ -1,8 +1,8 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
 import { requireProjectAccess } from "@/lib/rbac";
+import { createWithUniqueMaterialRequestNo } from "@/lib/material-request-number";
 import { revalidatePath } from "next/cache";
 
 export async function createMaterialRequest(data: any) {
@@ -11,33 +11,31 @@ export async function createMaterialRequest(data: any) {
   // Guard: user must have access to this project
   const session = await requireProjectAccess(projectId);
 
-  // Generate requestNo
-  const count = await prisma.materialRequest.count();
-  const requestNo = `MR-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(count + 1).padStart(4, '0')}`;
-
-  const request = await prisma.materialRequest.create({
-    data: {
-      ...rest,
-      projectId,
-      requestNo,
-      requestedById: session.id,
-      items: {
-        create: items.map((item: any) => ({
-          wbsItemId: item.wbsItemId,
-          fieldProgressItemId: item.fieldProgressItemId,
-          workItemNameSnapshot: item.workItemNameSnapshot,
-          materialCode: item.materialCode,
-          materialName: item.materialName,
-          unit: item.unit,
-          requestedQuantity: item.requestedQuantity,
-          issuedQuantity: item.issuedQuantity || 0,
-          receivedQuantity: item.receivedQuantity || 0,
-          remainingQuantity: Math.max(0, Number(item.requestedQuantity || 0) - Number(item.receivedQuantity || 0)),
-          note: item.note,
-        }))
-      }
-    }
-  });
+  const request = await createWithUniqueMaterialRequestNo((requestNo) =>
+    prisma.materialRequest.create({
+        data: {
+          ...rest,
+          projectId,
+          requestNo,
+          requestedById: session.id,
+          items: {
+            create: items.map((item: any) => ({
+              wbsItemId: item.wbsItemId,
+              fieldProgressItemId: item.fieldProgressItemId,
+              workItemNameSnapshot: item.workItemNameSnapshot,
+              materialCode: item.materialCode,
+              materialName: item.materialName,
+              unit: item.unit,
+              requestedQuantity: item.requestedQuantity,
+              issuedQuantity: item.issuedQuantity || 0,
+              receivedQuantity: item.receivedQuantity || 0,
+              remainingQuantity: Math.max(0, Number(item.requestedQuantity || 0) - Number(item.receivedQuantity || 0)),
+              note: item.note,
+            }))
+          }
+        }
+      })
+  );
 
   revalidatePath(`/projects/${projectId}/material-requests`);
   return { success: true, data: request };

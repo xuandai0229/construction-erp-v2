@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { X, Edit2, Package, Save, CheckCircle2, XCircle, AlertTriangle, ArrowLeft } from "lucide-react";
@@ -39,6 +39,7 @@ export function MaterialRequestDetail({
   onSuccess: () => void;
 }) {
   const [loading, setLoading] = useState(false);
+  const operationRef = useRef(false);
   const toast = useToast();
   
   // Local state for items to allow editing issued/received quantities
@@ -66,6 +67,8 @@ export function MaterialRequestDetail({
   };
 
   const executeUpdate = async () => {
+    if (operationRef.current) return;
+    operationRef.current = true;
     try {
       setLoading(true);
       await updateMaterialRequestItems(request.id, items);
@@ -83,6 +86,7 @@ export function MaterialRequestDetail({
     } catch (err: any) {
       toast.error(err.message || "Lỗi cập nhật cấp/nhận");
     } finally {
+      operationRef.current = false;
       setLoading(false);
     }
   };
@@ -134,6 +138,8 @@ export function MaterialRequestDetail({
       cancelText: "Đóng",
       onConfirm: async () => {
         setConfirmState(prev => ({ ...prev, isOpen: false }));
+        if (operationRef.current) return;
+        operationRef.current = true;
         try {
           setLoading(true);
           await updateMaterialRequestStatus(request.id, "CANCELLED", cancelReason);
@@ -141,6 +147,8 @@ export function MaterialRequestDetail({
           onSuccess();
         } catch (err: any) {
           toast.error(err.message || "Lỗi hủy phiếu");
+        } finally {
+          operationRef.current = false;
           setLoading(false);
         }
       }

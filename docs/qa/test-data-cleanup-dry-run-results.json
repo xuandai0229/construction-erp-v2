@@ -1,0 +1,582 @@
+{
+  "summary": {
+    "safeToCleanup": {
+      "projects": 0,
+      "materialRequests": 0,
+      "users": 0,
+      "documentFolders": 0
+    },
+    "needsConfirmation": {
+      "projects": 6,
+      "materialRequests": 0,
+      "fieldProgressEntries": 41,
+      "documentFolders": 3,
+      "auditLogs": 0
+    },
+    "keep": {
+      "projects": 1,
+      "users": 6
+    }
+  },
+  "safeToCleanup": {
+    "projects": [],
+    "materialRequests": [],
+    "users": [],
+    "documentFolders": []
+  },
+  "needsConfirmation": {
+    "projects": [
+      {
+        "id": "cmq6hstwf000fn8wkwhzoj472",
+        "code": "ct_01",
+        "name": "Công Trình test",
+        "deletedAt": null,
+        "createdAt": "2026-06-09T10:24:06.495Z",
+        "fieldProgressTemplatesCount": 1,
+        "fieldProgressItemsCount": 17,
+        "fieldProgressEntriesCount": 7,
+        "materialRequestsCount": 0,
+        "materialRequestItemsCount": 0,
+        "documentFoldersCount": 8,
+        "documentsCount": 0,
+        "projectMembersCount": 1,
+        "auditLogsCount": 62,
+        "reason": "Contains test keywords but lacks explicit QA_ prefix"
+      },
+      {
+        "id": "cmq4o4w27000bh8wkq961gh22",
+        "code": "CT0011",
+        "name": "test1",
+        "deletedAt": "2026-06-08T10:13:36.712Z",
+        "createdAt": "2026-06-08T03:45:54.511Z",
+        "fieldProgressTemplatesCount": 0,
+        "fieldProgressItemsCount": 0,
+        "fieldProgressEntriesCount": 0,
+        "materialRequestsCount": 0,
+        "materialRequestItemsCount": 0,
+        "documentFoldersCount": 10,
+        "documentsCount": 3,
+        "projectMembersCount": 0,
+        "auditLogsCount": 11,
+        "reason": "Contains test keywords but lacks explicit QA_ prefix"
+      },
+      {
+        "id": "cmq508hob0000ucwkbc8nz9d4",
+        "code": "CT-QA-PROGRESS",
+        "name": "Công trình test tiến độ động",
+        "deletedAt": "2026-06-08T10:13:29.847Z",
+        "createdAt": "2026-06-08T09:24:37.883Z",
+        "fieldProgressTemplatesCount": 0,
+        "fieldProgressItemsCount": 0,
+        "fieldProgressEntriesCount": 0,
+        "materialRequestsCount": 0,
+        "materialRequestItemsCount": 0,
+        "documentFoldersCount": 0,
+        "documentsCount": 0,
+        "projectMembersCount": 0,
+        "auditLogsCount": 1,
+        "reason": "Contains test keywords but lacks explicit QA_ prefix"
+      },
+      {
+        "id": "cmq4oiw57000lh8wka1w5o232",
+        "code": "123",
+        "name": "test12",
+        "deletedAt": "2026-06-08T10:13:33.563Z",
+        "createdAt": "2026-06-08T03:56:47.803Z",
+        "fieldProgressTemplatesCount": 0,
+        "fieldProgressItemsCount": 0,
+        "fieldProgressEntriesCount": 0,
+        "materialRequestsCount": 0,
+        "materialRequestItemsCount": 0,
+        "documentFoldersCount": 10,
+        "documentsCount": 1,
+        "projectMembersCount": 0,
+        "auditLogsCount": 9,
+        "reason": "Contains test keywords but lacks explicit QA_ prefix"
+      },
+      {
+        "id": "cmq4ntqx10000h8wkwqq0n50b",
+        "code": "CT001",
+        "name": "CT test",
+        "deletedAt": "2026-06-08T03:39:34.210Z",
+        "createdAt": "2026-06-08T03:37:14.630Z",
+        "fieldProgressTemplatesCount": 0,
+        "fieldProgressItemsCount": 0,
+        "fieldProgressEntriesCount": 0,
+        "materialRequestsCount": 0,
+        "materialRequestItemsCount": 0,
+        "documentFoldersCount": 8,
+        "documentsCount": 0,
+        "projectMembersCount": 0,
+        "auditLogsCount": 2,
+        "reason": "Contains test keywords but lacks explicit QA_ prefix"
+      },
+      {
+        "id": "cmq4ot5nu000vh8wk7g4edmxw",
+        "code": "QA-TEST-001",
+        "name": "Test Project",
+        "deletedAt": "2026-06-08T11:05:32.232Z",
+        "createdAt": "2026-06-08T04:04:46.699Z",
+        "fieldProgressTemplatesCount": 0,
+        "fieldProgressItemsCount": 0,
+        "fieldProgressEntriesCount": 0,
+        "materialRequestsCount": 0,
+        "materialRequestItemsCount": 0,
+        "documentFoldersCount": 8,
+        "documentsCount": 0,
+        "projectMembersCount": 0,
+        "auditLogsCount": 1,
+        "reason": "Contains test keywords but lacks explicit QA_ prefix"
+      }
+    ],
+    "materialRequests": [],
+    "fieldProgressEntries": [
+      {
+        "id": "cmqacvm660000jcwkbv4vd9yq",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqb6eea20000n0wk3d9teswf",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqad6tyw0000sswk1zhcsmy4",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqb8wkfq000094wk5ga2wyel",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqb7vuli0000uowkkmoohbxc",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqj7mgdo0000l8wk23yd3fmr",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqb2424c0000u0wk6kb0cmq6",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqb1urxi0000h8wk34k5yld5",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqacgeh900001cwko0m8zvqk",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqbayctx0000wkwkgle3lodv",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqb6kxcd00004kwk8hnksu9d",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqb3dz1d0000u8wkou9i5594",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqhvqvvq00002cwk7dsy4q68",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqb37lxp0000vwwk1lmd81g9",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqb2zv1t0000zkwkxiwg3vyw",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqb7455600003kwk1wbjfbr0",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqb6psnj000068wkh8dyfhl5",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqb7qygs0000wkwkplx7ffvl",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqj0vlkq0000d0wkztt5ea4i",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqb8bjbs0000v0wki4u6fbn4",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqb6w5w50000iowkvm3p668c",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqb7i3my0000w0wkzda3b45o",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqhuaa910000sswkv0l4reup",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqb4czrd00005swkmys6i3mt",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqb3u5gw0000ykwkolybodig",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqb44ztf0000dowklyf0jw2d",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqj14vw60000jkwka1vpj1xd",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqb4l5nw0000bswk191j1bev",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqb61oaw0000nswk3c4iwqki",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqb68kj70000bowk7gpp4cvs",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqbaeo8m00007gwkbffb0x3e",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqb6x0qm0000w0wkilo6axuj",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqb8ii4q0000lgwk9gafzos7",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqb85ryz0000awwkjxqhejmq",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqb8jjti0000zwwkc34eb1jm",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqhvavak0000gswkdd5znrh8",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqhwweqt00006owk1abmglcz",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqix0zq700005cwk1v4vm0fu",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqiz49sl00000swkzdn0rfdk",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqizk0ht0000fkwk5vrn8779",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      },
+      {
+        "id": "cmqizivzo0000q8wkpltu0up7",
+        "projectId": "cmq52crh500030swk5u8cc1vd",
+        "projectName": "Du an Nguyen Trai",
+        "quantity": "266.4",
+        "note": null,
+        "reason": "Test entry on a real/demo project"
+      }
+    ],
+    "auditLogs": [],
+    "documentFolders": [
+      {
+        "id": "cmq4pbt6g0005nkwkz8v1w6l0",
+        "name": "SubFolder Test",
+        "projectId": "cmq4oiw57000lh8wka1w5o232",
+        "projectName": "test12",
+        "reason": "Test folder on a real/demo project"
+      },
+      {
+        "id": "cmq4pfpa10007nkwk6542lp5k",
+        "name": "SubFolder Test",
+        "projectId": "cmq4o4w27000bh8wkq961gh22",
+        "projectName": "test1",
+        "reason": "Test folder on a real/demo project"
+      },
+      {
+        "id": "cmq4pgw7m000bnkwki2qx0mpz",
+        "name": "SubFolder Test",
+        "projectId": "cmq4o4w27000bh8wkq961gh22",
+        "projectName": "test1",
+        "reason": "Test folder on a real/demo project"
+      }
+    ]
+  },
+  "keep": {
+    "users": [
+      {
+        "id": "cmqivalnv000728wk9sh4oxew",
+        "email": "commander2@construction.local",
+        "username": "commander_ct002_test",
+        "role": "CHIEF_COMMANDER",
+        "isActive": true,
+        "deletedAt": null,
+        "projectMembersCount": 1,
+        "auditLogsCount": 0,
+        "materialRequestsCount": 0
+      },
+      {
+        "id": "cmq4ljlku0000cwwkewrboncw",
+        "email": "admin@construction.local",
+        "username": "dev_admin_test",
+        "role": "ADMIN",
+        "isActive": true,
+        "deletedAt": null,
+        "projectMembersCount": 0,
+        "auditLogsCount": 221,
+        "materialRequestsCount": 0
+      },
+      {
+        "id": "cmqivaln5000128wksx0kdikr",
+        "email": "director@construction.local",
+        "username": "director_test",
+        "role": "DIRECTOR",
+        "isActive": true,
+        "deletedAt": null,
+        "projectMembersCount": 0,
+        "auditLogsCount": 0,
+        "materialRequestsCount": 0
+      },
+      {
+        "id": "cmqizapi2000fuswkmtxv40ra",
+        "email": "daicongtu2910@gmail.com",
+        "username": "Xdai",
+        "role": "DIRECTOR",
+        "isActive": false,
+        "deletedAt": "2026-06-18T04:30:28.909Z",
+        "projectMembersCount": 0,
+        "auditLogsCount": 0,
+        "materialRequestsCount": 0
+      },
+      {
+        "id": "cmqivaln9000228wkmcnxribj",
+        "email": "deputy@construction.local",
+        "username": "deputy_director_test",
+        "role": "DEPUTY_DIRECTOR",
+        "isActive": true,
+        "deletedAt": null,
+        "projectMembersCount": 0,
+        "auditLogsCount": 0,
+        "materialRequestsCount": 0
+      },
+      {
+        "id": "cmqivalng000528wkukjvb0ng",
+        "email": "commander1@construction.local",
+        "username": "commander_ct001_test",
+        "role": "CHIEF_COMMANDER",
+        "isActive": true,
+        "deletedAt": null,
+        "projectMembersCount": 0,
+        "auditLogsCount": 0,
+        "materialRequestsCount": 0
+      }
+    ],
+    "projects": [
+      {
+        "id": "cmq52crh500030swk5u8cc1vd",
+        "code": "CT-001",
+        "name": "Du an Nguyen Trai",
+        "deletedAt": null,
+        "createdAt": "2026-06-08T10:23:56.441Z",
+        "fieldProgressTemplatesCount": 1,
+        "fieldProgressItemsCount": 28,
+        "fieldProgressEntriesCount": 212,
+        "materialRequestsCount": 0,
+        "materialRequestItemsCount": 0,
+        "documentFoldersCount": 8,
+        "documentsCount": 0,
+        "projectMembersCount": 0,
+        "auditLogsCount": 101
+      }
+    ]
+  },
+  "risks": [
+    "Hard deleting projects will cascade delete associated items (WBS, Entries, Documents, MaterialRequests).",
+    "Ensure real projects are not accidentally classified as safe."
+  ],
+  "generatedAt": "2026-06-18T08:18:35.839Z",
+  "databaseNameMasked": "postgresql://***:***@127.0.0.1:5432/construction_erp_v2"
+}

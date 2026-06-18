@@ -3,11 +3,20 @@
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { writeAuditLog } from "@/lib/audit";
+import { canAccessProject, canManageProjects } from "@/lib/rbac";
 import { revalidatePath } from "next/cache";
 
 export async function createFolder(projectId: string, name: string, parentId?: string) {
   const session = await getSession();
   if (!session) return { error: "Vui lòng đăng nhập" };
+  if (!(await canAccessProject(session, projectId))) return { error: "Bạn không có quyền truy cập công trình này" };
+
+  if (parentId) {
+    const parent = await prisma.documentFolder.findFirst({
+      where: { id: parentId, projectId, deletedAt: null },
+    });
+    if (!parent) return { error: "Thư mục cha không hợp lệ" };
+  }
 
   try {
     const folder = await prisma.documentFolder.create({
@@ -37,9 +46,12 @@ export async function createFolder(projectId: string, name: string, parentId?: s
 export async function renameFolder(projectId: string, folderId: string, newName: string) {
   const session = await getSession();
   if (!session) return { error: "Vui lòng đăng nhập" };
+  if (!(await canAccessProject(session, projectId))) return { error: "Bạn không có quyền truy cập công trình này" };
 
   try {
-    const existing = await prisma.documentFolder.findUnique({ where: { id: folderId } });
+    const existing = await prisma.documentFolder.findFirst({
+      where: { id: folderId, projectId, deletedAt: null },
+    });
     if (!existing) return { error: "Thư mục không tồn tại" };
 
     const folder = await prisma.documentFolder.update({
@@ -67,11 +79,11 @@ export async function renameFolder(projectId: string, folderId: string, newName:
 export async function deleteFolder(projectId: string, folderId: string) {
   const session = await getSession();
   if (!session) return { error: "Vui lòng đăng nhập" };
-  if (session.role !== "ADMIN" && session.role !== "DIRECTOR") return { error: "Không có quyền xóa" };
+  if (!(await canAccessProject(session, projectId)) || !canManageProjects(session)) return { error: "Không có quyền xóa" };
 
   try {
-    const existing = await prisma.documentFolder.findUnique({ 
-      where: { id: folderId },
+    const existing = await prisma.documentFolder.findFirst({ 
+      where: { id: folderId, projectId, deletedAt: null },
       include: {
         _count: {
           select: { documents: { where: { deletedAt: null } }, children: { where: { deletedAt: null } } }
@@ -109,10 +121,12 @@ export async function deleteFolder(projectId: string, folderId: string) {
 export async function deleteDocument(projectId: string, documentId: string) {
   const session = await getSession();
   if (!session) return { error: "Vui lòng đăng nhập" };
-  if (session.role !== "ADMIN" && session.role !== "DIRECTOR") return { error: "Không có quyền xóa tệp" };
+  if (!(await canAccessProject(session, projectId)) || !canManageProjects(session)) return { error: "Không có quyền xóa tệp" };
 
   try {
-    const existing = await prisma.document.findUnique({ where: { id: documentId } });
+    const existing = await prisma.document.findFirst({
+      where: { id: documentId, projectId, deletedAt: null },
+    });
     if (!existing) return { error: "Tệp không tồn tại" };
 
     const doc = await prisma.document.update({

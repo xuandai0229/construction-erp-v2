@@ -37,8 +37,9 @@ async function main() {
     },
   });
 
+  try {
   // 1. Phiếu nháp 1 vật tư.
-  const req1 = await prisma.materialRequest.create({
+  await prisma.materialRequest.create({
     data: {
       projectId: project.id,
       requestNo: `TEST_CRUD_MR_DRAFT_${Date.now()}`,
@@ -57,7 +58,7 @@ async function main() {
   });
 
   // 2. Phiếu đã đề xuất 3 vật tư.
-  const req2 = await prisma.materialRequest.create({
+  await prisma.materialRequest.create({
     data: {
       projectId: project.id,
       requestNo: `TEST_CRUD_MR_REQ_${Date.now()}`,
@@ -78,7 +79,7 @@ async function main() {
   });
 
   // 3. Phiếu đang xử lý còn thiếu.
-  const req3 = await prisma.materialRequest.create({
+  await prisma.materialRequest.create({
     data: {
       projectId: project.id,
       requestNo: `TEST_CRUD_MR_PROC_${Date.now()}`,
@@ -98,7 +99,7 @@ async function main() {
   });
 
   // 4. Phiếu đã nhận đủ.
-  const req4 = await prisma.materialRequest.create({
+  await prisma.materialRequest.create({
     data: {
       projectId: project.id,
       requestNo: `TEST_CRUD_MR_REC_${Date.now()}`,
@@ -117,7 +118,7 @@ async function main() {
   });
 
   // 5. Phiếu hủy có lý do.
-  const req5 = await prisma.materialRequest.create({
+  await prisma.materialRequest.create({
     data: {
       projectId: project.id,
       requestNo: `TEST_CRUD_MR_CANC_${Date.now()}`,
@@ -135,6 +136,23 @@ async function main() {
   });
 
   console.log("=> Đã tạo 5 phiếu mẫu thành công để test UAT!");
+  } finally {
+    await prisma.materialRequest.deleteMany({
+      where: {
+        OR: [
+          { requestNo: { startsWith: "TEST-MR-" } },
+          { requestNo: { startsWith: "TEST_CRUD_MR_" } },
+        ],
+      },
+    });
+    const remaining = await prisma.materialRequest.count({
+      where: { requestNo: { startsWith: "TEST_CRUD_MR_" } },
+    });
+    if (remaining !== 0) {
+      throw new Error(`Cleanup CRUD material request thất bại: còn ${remaining} phiếu.`);
+    }
+    console.log("=> Cleanup TEST_CRUD_MR_* hoàn tất.");
+  }
 }
 
 main().catch(console.error).finally(() => prisma.$disconnect());

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Plus, Save, Trash2, ChevronRight, ChevronDown, ListTree, FileText, Info, X, Search, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [dirtyItems, setDirtyItems] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(false);
+  const operationRef = useRef(false);
   const [itemToDelete, setItemToDelete] = useState<any>(null);
   const toast = useToast();
   const [activeUnitItem, setActiveUnitItem] = useState<string | null>(null);
@@ -29,6 +30,21 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
 
   const [mobileExpanded, setMobileExpanded] = useState<Record<string, boolean>>({});
+
+  const withOperation = async <T,>(operation: () => Promise<T>): Promise<T | undefined> => {
+    if (operationRef.current) return undefined;
+    operationRef.current = true;
+    setLoading(true);
+    try {
+      return await operation();
+    } catch {
+      toast.error("Không thể hoàn tất thao tác. Vui lòng kiểm tra kết nối và thử lại.");
+      return undefined;
+    } finally {
+      operationRef.current = false;
+      setLoading(false);
+    }
+  };
 
   // By default expand all for desktop; mobile uses separate mobileExpanded
   useEffect(() => {
@@ -69,41 +85,39 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
     const updates = Object.values(dirtyItems);
     if (updates.length === 0) return;
     
-    setLoading(true);
-    const res = await batchUpdateItems(projectId, updates);
+    const res = await withOperation(() => batchUpdateItems(projectId, updates));
+    if (!res) return;
     if (res?.error) {
       toast.error(res.error || "Không thể lưu thay đổi. Vui lòng thử lại.");
     } else {
       setDirtyItems({});
       toast.success("Đã lưu thay đổi");
     }
-    setLoading(false);
   };
 
   const handleAddGroup = async () => {
-    setLoading(true);
-    const res = await createItem(templateId, projectId, {
+    const res = await withOperation(() => createItem(templateId, projectId, {
       itemType: "GROUP",
       categoryName: "Hạng mục mới",
       level: 0
-    });
+    }));
+    if (!res) return;
     if (res?.error) {
       toast.error(res.error);
     } else {
       toast.success("Đã thêm hạng mục mới");
     }
-    setLoading(false);
   };
 
   const handleAddWork = async (parentId: string, parentLevel: number) => {
-    setLoading(true);
-    const res = await createItem(templateId, projectId, {
+    const res = await withOperation(() => createItem(templateId, projectId, {
       parentId,
       itemType: "WORK",
       workContent: "Công việc mới",
       level: parentLevel + 1,
       unit: "Lần"
-    });
+    }));
+    if (!res) return;
     if (res?.error) {
       toast.error(res.error);
     }
@@ -111,7 +125,6 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
       setExpanded(prev => ({ ...prev, [parentId]: true }));
       toast.success("Đã thêm công việc mới");
     }
-    setLoading(false);
   };
 
   const handleDelete = (id: string) => {
@@ -121,15 +134,14 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
 
   const handleConfirmDelete = async () => {
     if (!itemToDelete) return;
-    setLoading(true);
-    const res = await deleteItem(itemToDelete.id, projectId);
+    const res = await withOperation(() => deleteItem(itemToDelete.id, projectId));
+    if (!res) return;
     if (res?.error) {
       toast.error("Không thể xóa. Vui lòng thử lại.");
     } else {
       toast.success("Đã xóa hạng mục/công việc.");
     }
     setItemToDelete(null);
-    setLoading(false);
   };
 
   // Warning when leaving page

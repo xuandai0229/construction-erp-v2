@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Search, Shield, ShieldCheck, UserCog, Lock, Unlock, Key, Building2, X, ChevronDown, Eye, Edit, Trash2, RefreshCcw } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -36,10 +36,26 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
   const [statusFilter, setStatusFilter] = useState("all_active");
   const [showCreate, setShowCreate] = useState(false);
   const [loading, setLoading] = useState(false);
+  const operationRef = useRef(false);
   const [error, setError] = useState("");
   const [detailUser, setDetailUser] = useState<UserData | null>(null);
   const [editUser, setEditUser] = useState<UserData | null>(null);
   const toast = useToast();
+
+  const withOperation = async <T,>(operation: () => Promise<T>): Promise<T | undefined> => {
+    if (operationRef.current) return undefined;
+    operationRef.current = true;
+    setLoading(true);
+    try {
+      return await operation();
+    } catch {
+      toast.error("Không thể hoàn tất thao tác. Vui lòng kiểm tra kết nối và thử lại.");
+      return undefined;
+    } finally {
+      operationRef.current = false;
+      setLoading(false);
+    }
+  };
 
   const [confirmState, setConfirmState] = useState<{
     isOpen: boolean;
@@ -61,7 +77,7 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
   const [formEmail, setFormEmail] = useState("");
   const [formUsername, setFormUsername] = useState("");
   const [formPhone, setFormPhone] = useState("");
-  const [formPassword, setFormPassword] = useState("Test@123456");
+  const [formPassword, setFormPassword] = useState("");
   const [formRole, setFormRole] = useState("CHIEF_COMMANDER");
   const [formProjectIds, setFormProjectIds] = useState<string[]>([]);
   const [formNote, setFormNote] = useState("");
@@ -87,32 +103,40 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
   });
 
   const handleCreate = async () => {
+    if (operationRef.current) return;
     if (!formName.trim() || !formEmail.trim() || !formPassword.trim()) {
       setError("Vui lòng điền đầy đủ thông tin bắt buộc");
       return;
     }
+    operationRef.current = true;
     setLoading(true);
     setError("");
-    const result = await createUser({
-      name: formName,
-      email: formEmail,
-      username: formUsername || undefined,
-      phone: formPhone || undefined,
-      password: formPassword,
-      role: formRole as any,
-      projectIds: formProjectIds.length > 0 ? formProjectIds : undefined,
-      note: formNote || undefined,
-    });
-    setLoading(false);
-    if (result.error) { setError(result.error); return; }
-    setShowCreate(false);
-    resetForm();
-    router.refresh();
+    try {
+      const result = await createUser({
+        name: formName,
+        email: formEmail,
+        username: formUsername || undefined,
+        phone: formPhone || undefined,
+        password: formPassword,
+        role: formRole as any,
+        projectIds: formProjectIds.length > 0 ? formProjectIds : undefined,
+        note: formNote || undefined,
+      });
+      if (result.error) { setError(result.error); return; }
+      setShowCreate(false);
+      resetForm();
+      router.refresh();
+    } catch {
+      setError("Không thể tạo tài khoản. Vui lòng kiểm tra kết nối và thử lại.");
+    } finally {
+      operationRef.current = false;
+      setLoading(false);
+    }
   };
 
   const resetForm = () => {
     setFormName(""); setFormEmail(""); setFormUsername(""); setFormPhone("");
-    setFormPassword("Test@123456"); setFormRole("CHIEF_COMMANDER");
+    setFormPassword(""); setFormRole("CHIEF_COMMANDER");
     setFormProjectIds([]); setFormNote(""); setError("");
   };
 
@@ -127,9 +151,8 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
       confirmText: isActive ? "Khóa tài khoản" : "Mở khóa",
       onConfirm: async () => {
         setConfirmState(prev => ({ ...prev, isOpen: false }));
-        setLoading(true);
-        const res = await toggleUserActive(userId);
-        setLoading(false);
+        const res = await withOperation(() => toggleUserActive(userId));
+        if (!res) return;
         if (res.error) {
           toast.error(res.error);
         } else {
@@ -149,9 +172,8 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
       confirmText: "Xóa mềm tài khoản",
       onConfirm: async () => {
         setConfirmState(prev => ({ ...prev, isOpen: false }));
-        setLoading(true);
-        const res = await softDeleteUser(user.id);
-        setLoading(false);
+        const res = await withOperation(() => softDeleteUser(user.id));
+        if (!res) return;
         if (res.error) {
           toast.error(res.error);
         } else {
@@ -171,9 +193,8 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
       confirmText: "Khôi phục",
       onConfirm: async () => {
         setConfirmState(prev => ({ ...prev, isOpen: false }));
-        setLoading(true);
-        const res = await restoreUser(user.id);
-        setLoading(false);
+        const res = await withOperation(() => restoreUser(user.id));
+        if (!res) return;
         if (res.error) {
           toast.error(res.error);
         } else {
@@ -185,14 +206,14 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
   };
 
   const handleEditSubmit = async () => {
+    if (operationRef.current) return;
     if (!editUser) return;
     if (!formName.trim() || !formEmail.trim()) {
       setError("Vui lòng điền đầy đủ thông tin bắt buộc");
       return;
     }
-    setLoading(true);
     setError("");
-    const result = await updateUser(editUser.id, {
+    const result = await withOperation(() => updateUser(editUser.id, {
       name: formName,
       email: formEmail,
       username: formUsername || undefined,
@@ -200,8 +221,8 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
       role: formRole as any,
       projectIds: formProjectIds,
       note: formNote || undefined,
-    });
-    setLoading(false);
+    }));
+    if (!result) return;
     if (result.error) { setError(result.error); return; }
     setEditUser(null);
     router.refresh();
@@ -225,9 +246,8 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
 
   const handleAssignProject = async () => {
     if (!assignUserId || !assignProjectId) return;
-    setLoading(true);
-    const result = await assignProjectToUser(assignUserId, assignProjectId);
-    setLoading(false);
+    const result = await withOperation(() => assignProjectToUser(assignUserId, assignProjectId));
+    if (!result) return;
     if (result.error) { setError(result.error); setTimeout(() => setError(""), 3000); }
     setAssignUserId(null); setAssignProjectId("");
     router.refresh();
@@ -242,9 +262,8 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
       confirmText: "Gỡ công trình",
       onConfirm: async () => {
         setConfirmState(prev => ({ ...prev, isOpen: false }));
-        setLoading(true);
-        const res = await unassignProjectFromUser(userId, projectId);
-        setLoading(false);
+        const res = await withOperation(() => unassignProjectFromUser(userId, projectId));
+        if (!res) return;
         if (res && res.error) {
           toast.error(res.error);
         } else {
@@ -270,9 +289,8 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
     if (newPassword.length < 6) { toast.error("Mật khẩu phải có ít nhất 6 ký tự"); return; }
     if (newPassword !== confirmNewPassword) { toast.error("Mật khẩu nhập lại không khớp"); return; }
     
-    setLoading(true);
-    const result = await resetUserPassword(resetPwUser.id, newPassword);
-    setLoading(false);
+    const result = await withOperation(() => resetUserPassword(resetPwUser.id, newPassword));
+    if (!result) return;
     
     if (result.error) {
       toast.error(result.error);
@@ -480,7 +498,7 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
                 </div>
                 <div>
                   <label htmlFor="create-password" className="block text-sm font-medium text-slate-700 mb-1">Mật khẩu *</label>
-                  <input id="create-password" type="text" value={formPassword} onChange={e => setFormPassword(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" />
+                  <input id="create-password" type="password" value={formPassword} onChange={e => setFormPassword(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" />
                   <p className="text-[11px] text-slate-500 mt-1">Vui lòng gửi MK thủ công cho người dùng.</p>
                 </div>
               </div>

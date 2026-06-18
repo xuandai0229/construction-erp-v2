@@ -9,6 +9,7 @@ import {
 import { writeAuditLog } from "@/lib/audit";
 import fs from "fs/promises";
 import path from "path";
+import { canAccessProject } from "@/lib/rbac";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
@@ -34,8 +35,13 @@ export async function POST(req: NextRequest) {
 
     const project = await prisma.project.findUnique({ where: { id: projectId, deletedAt: null } });
     if (!project) return NextResponse.json({ error: "Không tìm thấy công trình" }, { status: 404 });
+    if (!(await canAccessProject(session, projectId))) {
+      return NextResponse.json({ error: "Không có quyền truy cập công trình" }, { status: 403 });
+    }
 
-    const folder = await prisma.documentFolder.findUnique({ where: { id: folderId, deletedAt: null } });
+    const folder = await prisma.documentFolder.findFirst({
+      where: { id: folderId, projectId, deletedAt: null },
+    });
     if (!folder) return NextResponse.json({ error: "Không tìm thấy thư mục" }, { status: 404 });
 
     const originalName = file.name;

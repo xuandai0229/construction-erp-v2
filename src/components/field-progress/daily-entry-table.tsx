@@ -67,6 +67,7 @@ export function DailyEntryTable({
   const [items, setItems] = useState<DailyItem[]>([]);
   const [dirtyEntries, setDirtyEntries] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(false);
+  const operationRef = useRef(false);
   const [activeDrawerItem, setActiveDrawerItem] = useState<DailyItem | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -90,11 +91,13 @@ export function DailyEntryTable({
   }, [parentGroups]);
 
   const handleQuickAdd = async () => {
+    if (operationRef.current) return;
     if (!quickAddData.workContent.trim()) {
       toast.error("Vui lòng nhập nội dung công việc.");
       return;
     }
     
+    operationRef.current = true;
     setLoading(true);
     try {
       let finalParentId = quickAddData.parentId;
@@ -180,6 +183,7 @@ export function DailyEntryTable({
     } catch (e: any) {
       toast.error("Có lỗi xảy ra: " + e.message);
     } finally {
+      operationRef.current = false;
       setLoading(false);
     }
   };
@@ -407,6 +411,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
   };
 
   const handleSave = async () => {
+    if (operationRef.current) return;
     const invalidItems = items.filter((item) => {
       const math = getItemMath(item);
       return math.hasInvalidNumber || math.isNegative || !math.guard.canSubmit;
@@ -432,16 +437,23 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
       return;
     }
 
+    operationRef.current = true;
     setLoading(true);
-    const res = await batchSaveDailyEntries(projectId, templateId, dateStr, entriesToSave, true);
-    if (res?.error) {
-      toast.error(res.error);
-    } else {
-      setDirtyEntries({});
-      toast.success("Lưu khối lượng thành công");
-      router.refresh();
+    try {
+      const res = await batchSaveDailyEntries(projectId, templateId, dateStr, entriesToSave, true);
+      if (res?.error) {
+        toast.error(res.error);
+      } else {
+        setDirtyEntries({});
+        toast.success("Lưu khối lượng thành công");
+        router.refresh();
+      }
+    } catch {
+      toast.error("Không thể lưu khối lượng. Vui lòng kiểm tra kết nối và thử lại.");
+    } finally {
+      operationRef.current = false;
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const hasChanges = Object.keys(dirtyEntries).length > 0;

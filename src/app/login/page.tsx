@@ -1,19 +1,22 @@
 "use client";
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Building2 } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('admin@construction.local');
-  const [password, setPassword] = useState('123456');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const submittingRef = useRef(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setError('');
     setLoading(true);
 
@@ -35,6 +38,7 @@ export default function LoginPage() {
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
+      submittingRef.current = false;
       setLoading(false);
     }
   };
@@ -50,7 +54,7 @@ export default function LoginPage() {
             ERP Công trình
           </h2>
           <p className="mt-2 text-center text-sm text-slate-600">
-            Môi trường Development
+            Hệ thống quản lý nội bộ
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>

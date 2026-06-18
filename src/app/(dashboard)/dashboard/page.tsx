@@ -4,8 +4,18 @@ import prisma from '@/lib/prisma';
 import { Building2, FolderOpen, FileText, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { requireAuth, getAccessibleProjectIds } from '@/lib/rbac';
 
 export default async function DashboardPage() {
+  const session = await requireAuth();
+  const accessibleProjectIds = await getAccessibleProjectIds(session);
+  const projectWhere = accessibleProjectIds === null
+    ? { deletedAt: null }
+    : { deletedAt: null, id: { in: accessibleProjectIds } };
+  const relatedProjectWhere = accessibleProjectIds === null
+    ? { deletedAt: null }
+    : { deletedAt: null, id: { in: accessibleProjectIds } };
+
   const [
     totalProjects,
     activeProjects,
@@ -15,15 +25,17 @@ export default async function DashboardPage() {
     totalSuppliers,
     recentReports
   ] = await Promise.all([
-    prisma.project.count({ where: { deletedAt: null } }),
-    prisma.project.count({ where: { status: 'ACTIVE', deletedAt: null } }),
-    prisma.project.count({ where: { status: 'COMPLETED', deletedAt: null } }),
-    prisma.document.count({ where: { deletedAt: null } }),
-    prisma.contract.count({ where: { deletedAt: null } }),
-    prisma.supplier.count({ where: { deletedAt: null } }),
+    prisma.project.count({ where: projectWhere }),
+    prisma.project.count({ where: { ...projectWhere, status: 'ACTIVE' } }),
+    prisma.project.count({ where: { ...projectWhere, status: 'COMPLETED' } }),
+    prisma.document.count({ where: { deletedAt: null, project: relatedProjectWhere } }),
+    prisma.contract.count({ where: { deletedAt: null, project: relatedProjectWhere } }),
+    accessibleProjectIds === null
+      ? prisma.supplier.count({ where: { deletedAt: null } })
+      : Promise.resolve(0),
     prisma.siteReport.findMany({
       take: 5,
-      where: { project: { deletedAt: null } },
+      where: { project: relatedProjectWhere },
       orderBy: { createdAt: 'desc' },
       include: { createdBy: true, project: true }
     })
