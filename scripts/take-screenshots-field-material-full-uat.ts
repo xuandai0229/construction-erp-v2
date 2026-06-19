@@ -1,8 +1,10 @@
 import fs from "fs";
 import path from "path";
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright";
+import { requireQaEnv } from "./qa-env";
 
 const baseUrl = process.env.QA_BASE_URL || "http://localhost:3000";
+const adminPassword = requireQaEnv("QA_ADMIN_PASSWORD");
 const screenshotDir = path.join(process.cwd(), "docs", "qa", "screenshots", "field-material-full-uat");
 const a11yReportPath = path.join(process.cwd(), "docs", "qa", "FIELD_MATERIAL_FULL_A11Y_AUDIT.txt");
 const responsiveReportPath = path.join(process.cwd(), "docs", "qa", "FIELD_MATERIAL_FULL_RESPONSIVE_AUDIT.json");
@@ -81,7 +83,7 @@ async function loginAndResolveProject(browser: Browser): Promise<{ storageState:
 
   await page.goto(`${baseUrl}/login`, { waitUntil: "networkidle" });
   await page.locator('input[name="email"]').fill(process.env.QA_EMAIL || "admin@construction.local");
-  await page.locator('input[name="password"]').fill(process.env.QA_PASSWORD || "123456");
+  await page.locator('input[name="password"]').fill(process.env.QA_PASSWORD || adminPassword);
   await page.locator('button[type="submit"]').click();
   await page.waitForURL(/\/dashboard|\/projects/, { timeout: 15000 }).catch(() => undefined);
   await page.goto(`${baseUrl}/projects`, { waitUntil: "networkidle" });

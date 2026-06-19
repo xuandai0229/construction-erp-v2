@@ -1,6 +1,12 @@
 require('dotenv').config();
 const { chromium } = require('playwright');
 const { Client } = require('pg');
+const { requireQaEnv } = require('./qa-env');
+
+const adminEmail = process.env.QA_ADMIN_EMAIL || 'admin@construction.local';
+const adminPassword = requireQaEnv('QA_ADMIN_PASSWORD');
+const commanderEmail = process.env.QA_COMMANDER_EMAIL || 'commander1@construction.local';
+const commanderPassword = requireQaEnv('QA_COMMANDER_PASSWORD');
 
 async function login(page, email, password) {
   await page.goto('http://localhost:3000/login');
@@ -22,7 +28,7 @@ async function runEvidence() {
   const pageCmd = await contextCmd.newPage();
   
   console.log('[*] Testing RBAC (CHIEF_COMMANDER)...');
-  await login(pageCmd, 'commander1@construction.local', 'Test@123456');
+  await login(pageCmd, commanderEmail, commanderPassword);
   
   // Try to create project (Should not be allowed or button hidden)
   await pageCmd.goto('http://localhost:3000/projects');
@@ -43,7 +49,7 @@ async function runEvidence() {
   const contextAdm = await browser.newContext();
   const pageAdm = await contextAdm.newPage();
   
-  await login(pageAdm, 'admin@construction.local', '123456');
+  await login(pageAdm, adminEmail, adminPassword);
   await pageAdm.goto('http://localhost:3000/projects/new');
   
   const testCode = 'QA_TEST_EVIDENCE_001';

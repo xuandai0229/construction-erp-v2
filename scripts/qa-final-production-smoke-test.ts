@@ -1,6 +1,9 @@
 import { chromium } from "playwright";
+import { requireQaEnv } from "./qa-env";
 
 const baseUrl = process.env.BASE_URL || "http://localhost:3000";
+const adminEmail = process.env.QA_ADMIN_EMAIL || "admin@construction.local";
+const adminPassword = requireQaEnv("QA_ADMIN_PASSWORD");
 
 const viewports = [
   { width: 390, height: 844, label: "390x844" },
@@ -25,8 +28,8 @@ async function main() {
     const page = await context.newPage();
 
     await page.goto(`${baseUrl}/login`, { waitUntil: "networkidle" });
-    await page.fill('input[name="email"]', "admin@construction.local");
-    await page.fill('input[name="password"]', "123456");
+    await page.fill('input[name="email"]', adminEmail);
+    await page.fill('input[name="password"]', adminPassword);
     await page.click('button[type="submit"]');
     await page.waitForURL(/\/dashboard/);
     console.log("PASS: Login production-like.");

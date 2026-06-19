@@ -2,8 +2,11 @@ import { chromium, type Browser, type BrowserContext, type Page } from "playwrig
 import fs from "fs";
 import path from "path";
 import prisma from "../src/lib/prisma";
+import { requireQaEnv } from "./qa-env";
 
 const baseUrl = process.env.QA_BASE_URL || "http://localhost:3000";
+const adminEmail = process.env.QA_ADMIN_EMAIL || "admin@construction.local";
+const adminPassword = requireQaEnv("QA_ADMIN_PASSWORD");
 const screenshotDir = path.join(process.cwd(), "docs", "qa", "screenshots", "full-project-browser-uat");
 const a11yReportPath = path.join(process.cwd(), "docs", "qa", "FULL_PROJECT_BROWSER_UAT_A11Y_REPORT.txt");
 
@@ -82,8 +85,8 @@ async function main() {
     // Login
     console.log("Navigating to login...");
     await page.goto(`${baseUrl}/login`, { waitUntil: "networkidle" });
-    await page.locator('input[name="email"]').fill("admin@construction.local");
-    await page.locator('input[name="password"]').fill("123456");
+    await page.locator('input[name="email"]').fill(adminEmail);
+    await page.locator('input[name="password"]').fill(adminPassword);
     await page.locator('button[type="submit"]').click();
     await page.waitForURL(/\/dashboard|\/projects/);
 

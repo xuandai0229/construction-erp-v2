@@ -1,8 +1,11 @@
 import { chromium, type Browser } from "playwright";
 import prisma from "../src/lib/prisma";
+import { requireQaEnv } from "./qa-env";
 
 const baseUrl = process.env.BASE_URL || process.env.QA_BASE_URL || "http://localhost:3000";
 const testEmail = "qa-soft-delete@construction.local";
+const adminEmail = process.env.QA_ADMIN_EMAIL || "admin@construction.local";
+const adminPassword = requireQaEnv("QA_ADMIN_PASSWORD");
 
 async function cleanup() {
   await prisma.projectMember.deleteMany({
@@ -45,8 +48,8 @@ async function main() {
     const context = await browser.newContext({ viewport: { width: 1366, height: 768 } });
     const page = await context.newPage();
     await page.goto(`${baseUrl}/login`);
-    await page.fill('input[name="email"]', "admin@construction.local");
-    await page.fill('input[name="password"]', "123456");
+    await page.fill('input[name="email"]', adminEmail);
+    await page.fill('input[name="password"]', adminPassword);
     await page.click('button[type="submit"]');
     await page.waitForURL(/\/dashboard|\/projects/);
     await page.goto(`${baseUrl}/users`);
@@ -80,8 +83,8 @@ async function main() {
     });
     const mobilePage = await mobileContext.newPage();
     await mobilePage.goto(`${baseUrl}/login`);
-    await mobilePage.fill('input[name="email"]', "admin@construction.local");
-    await mobilePage.fill('input[name="password"]', "123456");
+    await mobilePage.fill('input[name="email"]', adminEmail);
+    await mobilePage.fill('input[name="password"]', adminPassword);
     await mobilePage.click('button[type="submit"]');
     await mobilePage.waitForURL(/\/dashboard|\/projects/);
     await mobilePage.goto(`${baseUrl}/users`);

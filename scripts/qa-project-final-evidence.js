@@ -1,6 +1,10 @@
 require('dotenv').config();
 const { chromium } = require('playwright');
 const { Client } = require('pg');
+const { requireQaEnv } = require('./qa-env');
+
+const adminEmail = process.env.QA_ADMIN_EMAIL || 'admin@construction.local';
+const adminPassword = requireQaEnv('QA_ADMIN_PASSWORD');
 
 async function login(page, email, password) {
   await page.goto('http://localhost:3000/login');
@@ -38,7 +42,7 @@ async function runTest() {
     console.log(`[+] Found WBS Item ${wbsId} in Project ct_01.`);
     
     // Login as admin
-    await login(page, 'admin@construction.local', '123456');
+    await login(page, adminEmail, adminPassword);
     
     await page.goto(`http://localhost:3000/projects/${projId}/field-progress/daily`);
     await page.waitForTimeout(2000);
@@ -68,7 +72,7 @@ async function runTest() {
   const testCode = 'QA_TEST_SOFT_DELETE_001';
   
   // Login as admin
-  await login(page, 'admin@construction.local', '123456');
+  await login(page, adminEmail, adminPassword);
   await page.goto('http://localhost:3000/projects/new');
   await page.fill('input[name="code"]', testCode);
   await page.fill('input[name="name"]', 'QA Test Soft Delete');

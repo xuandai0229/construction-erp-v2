@@ -1,6 +1,10 @@
 require('dotenv').config();
 const { chromium } = require('playwright');
 const { Client } = require('pg');
+const { requireQaEnv } = require('./qa-env');
+
+const adminEmail = process.env.QA_ADMIN_EMAIL || 'admin@construction.local';
+const adminPassword = requireQaEnv('QA_ADMIN_PASSWORD');
 
 async function login(page, email, password) {
   await page.goto('http://localhost:3000/login');
@@ -21,7 +25,7 @@ async function runTest() {
   const page = await context.newPage();
 
   console.log('[*] Logging in as ADMIN...');
-  await login(page, 'admin@construction.local', '123456');
+  await login(page, adminEmail, adminPassword);
 
   // 1. Create Test Project
   console.log('[*] Creating Project...');

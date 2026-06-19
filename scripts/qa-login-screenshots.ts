@@ -1,6 +1,9 @@
 import { chromium } from 'playwright';
 import path from 'path';
 import fs from 'fs';
+import { requireQaEnv } from './qa-env';
+
+const adminPassword = requireQaEnv('QA_ADMIN_PASSWORD');
 
 async function main() {
   const screenshotsDir = path.join(__dirname, '../docs/qa/screenshots');
@@ -45,7 +48,7 @@ async function main() {
 
   // Correct login
   console.log('Testing Auth: Correct Login...');
-  await page.fill('input[name="password"]', '123456'); // Wait, seed is using 123456? We don't know the exact seed but we can just test if it logs out. If it fails, we know login logic runs.
+  await page.fill('input[name="password"]', adminPassword);
   
   await browser.close();
   console.log('Done!');

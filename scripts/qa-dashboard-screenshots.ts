@@ -1,6 +1,10 @@
 import { chromium } from 'playwright';
 import path from 'path';
 import fs from 'fs';
+import { requireQaEnv } from './qa-env';
+
+const adminEmail = process.env.QA_ADMIN_EMAIL || 'admin@construction.local';
+const adminPassword = requireQaEnv('QA_ADMIN_PASSWORD');
 
 async function main() {
   const screenshotsDir = path.join(__dirname, '../docs/qa/screenshots');
@@ -18,8 +22,8 @@ async function main() {
     
     // Login
     await page.goto('http://localhost:3000/login');
-    await page.fill('input[name="email"]', 'admin@construction.local');
-    await page.fill('input[name="password"]', '123456');
+    await page.fill('input[name="email"]', adminEmail);
+    await page.fill('input[name="password"]', adminPassword);
     await page.click('button[type="submit"]');
     
     // Wait for dashboard to load

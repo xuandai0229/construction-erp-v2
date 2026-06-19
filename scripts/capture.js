@@ -1,6 +1,10 @@
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
+const { requireQaEnv } = require('./qa-env');
+
+const adminEmail = process.env.QA_ADMIN_EMAIL || 'admin@construction.local';
+const adminPassword = requireQaEnv('QA_ADMIN_PASSWORD');
 
 (async () => {
   const browser = await chromium.launch({ headless: true });
@@ -16,8 +20,8 @@ const path = require('path');
 
   // 1. Login
   await page.goto('http://localhost:3000/login');
-  await page.fill('input[name="email"]', 'admin@construction.local');
-  await page.fill('input[name="password"]', '123456');
+  await page.fill('input[name="email"]', adminEmail);
+  await page.fill('input[name="password"]', adminPassword);
   await page.click('button[type="submit"]');
   await page.waitForURL('**/dashboard**');
 
@@ -112,8 +116,8 @@ const path = require('path');
   const mobilePage = await mobileContext.newPage();
   
   await mobilePage.goto('http://localhost:3000/login');
-  await mobilePage.fill('input[name="email"]', 'admin@construction.local');
-  await mobilePage.fill('input[name="password"]', '123456');
+  await mobilePage.fill('input[name="email"]', adminEmail);
+  await mobilePage.fill('input[name="password"]', adminPassword);
   await mobilePage.click('button[type="submit"]');
   await mobilePage.waitForURL('**/dashboard**');
 

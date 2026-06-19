@@ -1,6 +1,9 @@
 import { chromium } from "playwright";
+import { requireQaEnv } from "./qa-env";
 
 const baseUrl = process.env.BASE_URL || "http://localhost:3000";
+const adminEmail = process.env.QA_ADMIN_EMAIL || "admin@construction.local";
+const adminPassword = requireQaEnv("QA_ADMIN_PASSWORD");
 
 async function main() {
   console.log("=== QA USER MANAGEMENT EDIT / DETAIL TEST ===");
@@ -8,8 +11,8 @@ async function main() {
   try {
     const page = await browser.newPage({ viewport: { width: 1366, height: 768 } });
     await page.goto(`${baseUrl}/login`);
-    await page.fill("input#email", "admin@construction.local");
-    await page.fill("input#password", "123456");
+    await page.fill("input#email", adminEmail);
+    await page.fill("input#password", adminPassword);
     await page.click('button[type="submit"]');
     await page.waitForURL("**/dashboard");
 

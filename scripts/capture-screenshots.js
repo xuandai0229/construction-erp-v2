@@ -1,6 +1,10 @@
 const { chromium, devices } = require('playwright');
 const fs = require('fs');
 const path = require('path');
+const { requireQaEnv } = require('./qa-env');
+
+const adminEmail = process.env.QA_ADMIN_EMAIL || 'admin@construction.local';
+const adminPassword = requireQaEnv('QA_ADMIN_PASSWORD');
 
 const outDir = path.join(__dirname, '../docs/qa/screenshots/field-progress-mobile-compact-rework/before');
 if (!fs.existsSync(outDir)) {
@@ -31,8 +35,8 @@ async function run() {
   
   console.log("Logging in...");
   await page.goto('http://localhost:3000/login');
-  await page.fill('input[type="email"]', 'admin@example.com');
-  await page.fill('input[type="password"]', 'admin123');
+  await page.fill('input[type="email"]', adminEmail);
+  await page.fill('input[type="password"]', adminPassword);
   await page.click('button[type="submit"]');
   await page.waitForTimeout(3000);
   console.log("Login successful!");

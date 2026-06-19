@@ -2,8 +2,11 @@ import { chromium } from 'playwright';
 import AxeBuilder from '@axe-core/playwright';
 import fs from 'fs';
 import path from 'path';
+import { requireQaEnv } from './qa-env';
 
 async function main() {
+  const adminPassword = requireQaEnv('QA_ADMIN_PASSWORD');
+  const commanderPassword = requireQaEnv('QA_COMMANDER_PASSWORD');
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -21,7 +24,7 @@ async function main() {
     // 1. Đăng nhập Admin
     await page.goto(`${BASE_URL}/login`);
     await page.fill('input[name="email"]', 'admin@construction.local');
-    await page.fill('input[name="password"]', '123456');
+    await page.fill('input[name="password"]', adminPassword);
     await page.click('button[type="submit"]');
     await page.waitForURL('**/dashboard');
 
@@ -99,7 +102,7 @@ async function main() {
     // Login Commander
     console.log('Logging in as Commander...');
     await page.fill('input[name="email"]', 'commander1@construction.local');
-    await page.fill('input[name="password"]', 'Test@123456');
+    await page.fill('input[name="password"]', commanderPassword);
     await page.click('button[type="submit"]');
     await page.waitForURL('**/dashboard');
 

@@ -1,10 +1,12 @@
 import * as bcrypt from "bcryptjs";
 import prisma from "../src/lib/prisma";
 import { createSessionToken } from "../src/lib/session-token";
+import { requireQaEnv } from "./qa-env";
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 const ADMIN_EMAIL = process.env.QA_ADMIN_EMAIL || "admin@construction.local";
-const ADMIN_PASSWORD = process.env.QA_ADMIN_PASSWORD || "123456";
+const ADMIN_PASSWORD = requireQaEnv("QA_ADMIN_PASSWORD");
+const TEST_PASSWORD = requireQaEnv("QA_AUTH_TEST_PASSWORD");
 const QA_EMAIL_PREFIX = "qa-auth-security-";
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -45,7 +47,7 @@ async function main() {
   const suffix = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const lockedEmail = `${QA_EMAIL_PREFIX}locked-${suffix}@construction.local`;
   const deletedEmail = `${QA_EMAIL_PREFIX}deleted-${suffix}@construction.local`;
-  const password = "QaAuth@123456";
+  const password = TEST_PASSWORD;
   const hashedPassword = await bcrypt.hash(password, 10);
 
   try {

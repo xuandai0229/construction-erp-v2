@@ -1,6 +1,10 @@
 import { chromium } from "playwright";
 import path from "path";
 import fs from "fs";
+import { requireQaEnv } from "./qa-env";
+
+const adminEmail = process.env.QA_ADMIN_EMAIL || "admin@construction.local";
+const adminPassword = requireQaEnv("QA_ADMIN_PASSWORD");
 
 async function main() {
   console.log("--- BẮT ĐẦU CHẠY PLAYWRIGHT TEST ---");
@@ -21,8 +25,8 @@ async function main() {
   await page.waitForTimeout(1000);
 
   console.log("Điền thông tin đăng nhập...");
-  await page.fill('input[name="email"]', "admin@construction.local");
-  await page.fill('input[name="password"]', "123456");
+  await page.fill('input[name="email"]', adminEmail);
+  await page.fill('input[name="password"]', adminPassword);
   
   await page.screenshot({ path: path.join(artifactDir, "step1_login_filled.png") });
   

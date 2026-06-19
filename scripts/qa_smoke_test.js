@@ -1,4 +1,8 @@
 const { chromium } = require('playwright');
+const { requireQaEnv } = require('./qa-env');
+
+const adminEmail = process.env.QA_ADMIN_EMAIL || 'admin@construction.local';
+const adminPassword = requireQaEnv('QA_ADMIN_PASSWORD');
 
 async function run() {
   const browser = await chromium.launch({ headless: true });
@@ -9,8 +13,8 @@ async function run() {
   
   // Login
   await page.goto(`${baseUrl}/login`);
-  await page.fill('input[name="email"]', 'admin@construction.local');
-  await page.fill('input[name="password"]', '123456');
+  await page.fill('input[name="email"]', adminEmail);
+  await page.fill('input[name="password"]', adminPassword);
   await Promise.all([
     page.waitForNavigation(),
     page.click('button[type="submit"]')

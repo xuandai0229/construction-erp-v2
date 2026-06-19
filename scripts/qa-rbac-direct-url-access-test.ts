@@ -1,11 +1,12 @@
 import * as bcrypt from "bcryptjs";
 import { chromium, type Page } from "playwright";
 import prisma from "../src/lib/prisma";
+import { requireQaEnv } from "./qa-env";
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 const PROJECT_PREFIX = "QA_RBAC_RUNTIME_";
 const USER_PREFIX = "qa-rbac-runtime-";
-const TEST_PASSWORD = "QaRbac@123456";
+const TEST_PASSWORD = requireQaEnv("QA_RBAC_TEST_PASSWORD");
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);

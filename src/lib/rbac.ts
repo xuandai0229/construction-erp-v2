@@ -8,7 +8,7 @@ const HIGH_LEVEL_ROLES: UserRole[] = ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"];
 
 // ─── Role Display Names (Vietnamese) ─────────────────────────
 export const ROLE_DISPLAY_NAMES: Record<UserRole, string> = {
-  ADMIN: "Quản trị hệ thống",
+  ADMIN: "Quản trị viên",
   DIRECTOR: "Giám đốc",
   DEPUTY_DIRECTOR: "Phó giám đốc",
   CHIEF_COMMANDER: "Chỉ huy trưởng",
