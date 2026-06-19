@@ -108,8 +108,12 @@ export function Header({ userName, userRole, userRoleRaw }: { userName?: string,
         <div className="flex items-center space-x-6">
           <div className="flex items-center space-x-3 text-sm text-right">
             <div className="hidden sm:block">
-              <p className="font-bold text-slate-900 text-[14px]">Quản trị viên</p>
-              <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider mt-0.5">Quản trị hệ thống</p>
+              <p className="max-w-48 truncate font-bold text-slate-900 text-[14px]">
+                {userName || userRole}
+              </p>
+              <p className="max-w-48 truncate text-[11px] font-medium text-slate-500 mt-0.5">
+                {userRole}
+              </p>
             </div>
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-50 text-blue-600 font-bold text-sm shrink-0 border border-blue-100">
               <User className="h-4 w-4" />

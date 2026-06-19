@@ -27,6 +27,7 @@ export default async function DashboardPage() {
     activeProjects,
     completedProjects,
     entriesToday,
+    attentionProjectsCount,
     recentProjects,
     recentDocs,
     recentEntries,
@@ -42,6 +43,28 @@ export default async function DashboardPage() {
         project: relatedProjectWhere,
         createdAt: { gte: todayStartUTC, lte: todayEndUTC }
       }
+    }),
+
+    prisma.project.count({
+      where: {
+        ...projectWhere,
+        status: 'ACTIVE',
+        OR: [
+          {
+            fieldProgressTemplates: {
+              none: { deletedAt: null },
+            },
+          },
+          {
+            fieldProgressEntries: {
+              none: {
+                deletedAt: null,
+                createdAt: { gte: todayStartUTC, lte: todayEndUTC },
+              },
+            },
+          },
+        ],
+      },
     }),
 
     // Top 3 projects to watch — include WBS/template info for status indicators
@@ -104,16 +127,8 @@ export default async function DashboardPage() {
     }
   };
 
-  // "Cần chú ý" = count of ACTIVE projects that either lack WBS or have no entry today
-  const projectsNeedingAttention = recentProjects.filter(p => {
-    const hasWBS = p.fieldProgressTemplates.length > 0;
-    const hasEntryToday = p._count.fieldProgressEntries > 0;
-    return !hasWBS || !hasEntryToday;
-  }).length;
-  // Also count any ACTIVE projects beyond the visible 3 that lack WBS
-  // For a more accurate count we'd need a dedicated query, but since
-  // the dashboard only monitors the top 3 projects, this is sufficient.
-  const totalNeedAttention = projectsNeedingAttention;
+  // Count every accessible ACTIVE project that lacks WBS or today's progress.
+  const totalNeedAttention = attentionProjectsCount;
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto bg-slate-50/30 min-h-full">

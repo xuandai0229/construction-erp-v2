@@ -95,7 +95,16 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
     }
   };
 
+  const blockCreateWhenDirty = () => {
+    if (Object.keys(dirtyItems).length === 0) return false;
+
+    toast.warning("Bạn có thay đổi chưa lưu. Vui lòng lưu trước khi thêm công việc mới.");
+    return true;
+  };
+
   const handleAddGroup = async () => {
+    if (blockCreateWhenDirty()) return;
+
     const res = await withOperation(() => createItem(templateId, projectId, {
       itemType: "GROUP",
       categoryName: "Hạng mục mới",
@@ -110,6 +119,8 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
   };
 
   const handleAddWork = async (parentId: string, parentLevel: number) => {
+    if (blockCreateWhenDirty()) return;
+
     const res = await withOperation(() => createItem(templateId, projectId, {
       parentId,
       itemType: "WORK",
