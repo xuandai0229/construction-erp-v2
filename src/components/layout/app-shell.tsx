@@ -14,18 +14,20 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   const roleDisplayName = ROLE_DISPLAY_NAMES[session.role] || session.role;
 
   return (
-    <div className="flex h-screen w-full bg-slate-50 overflow-hidden">
-      <div className="hidden lg:block">
+    <div className="flex min-h-dvh w-full bg-slate-50">
+      <div className="hidden lg:block sticky top-0 h-dvh shrink-0">
         <Sidebar userRole={session.role} />
       </div>
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col bg-slate-50">
         <Header 
           userName={session.name} 
           userRole={roleDisplayName} 
           userRoleRaw={session.role}
         />
-        <main className="flex-1 overflow-y-auto p-6">
-          {children}
+        <main className="flex-1 bg-slate-50">
+          <div className="min-h-full bg-slate-50 p-4 sm:p-6 pb-[calc(24px+env(safe-area-inset-bottom))]">
+            {children}
+          </div>
         </main>
       </div>
     </div>

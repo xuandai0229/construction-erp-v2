@@ -421,6 +421,7 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
               <input
                 id="master-mobileSearch"
                 name="master-mobileSearch"
+                autoComplete="off"
                 value={mobileSearch}
                 onChange={e => setMobileSearch(e.target.value)}
                 placeholder="Tìm công việc, mũi thi công..."
@@ -932,3 +933,4 @@ function DesktopUnitPickerPortal({
     document.body
   );
 }
+

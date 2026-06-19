@@ -41,8 +41,9 @@
 }
 
 @layer base {
-  body {
-    background-color: var(--background);
+  html, body {
+    min-height: 100%;
+    background-color: #f8fafc !important;
     color: var(--foreground);
     font-family: var(--font-sans), Arial, Helvetica, sans-serif;
   }

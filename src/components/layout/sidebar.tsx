@@ -18,20 +18,42 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { UserRole } from '@prisma/client';
+import styles from './sidebar.module.css';
 
-const navigation = [
-  { name: 'Tổng quan', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Công trình', href: '/projects', icon: Building2 },
-  { name: 'Tài liệu', href: '/documents', icon: FolderOpen },
-  // { name: 'Báo cáo hiện trường', href: '/reports', icon: ClipboardCheck }, // Đang thiết kế lại
-  // { name: 'Hợp đồng', href: '/contracts', icon: FileText }, // Placeholder
-  // { name: 'Nhà cung cấp', href: '/suppliers', icon: Users }, // Placeholder
-  // { name: 'Vật tư', href: '/materials', icon: Package }, // Placeholder
-  // { name: 'Thanh toán', href: '/accounting', icon: CreditCard }, // Placeholder
-  // { name: 'Phê duyệt', href: '/approvals', icon: CheckSquare }, // Placeholder
-  // { name: 'Nhật ký hệ thống', href: '/audit', icon: History }, // Placeholder
-  { name: 'Quản lý tài khoản', href: '/users', icon: UserCog },
-  { name: 'Cài đặt', href: '/settings', icon: Settings },
+// Navigation grouped by sections
+const navigationSections = [
+  {
+    label: null,
+    items: [
+      { name: 'Tổng quan', href: '/dashboard', icon: LayoutDashboard },
+    ],
+  },
+  {
+    label: 'QUẢN LÝ',
+    items: [
+      { name: 'Công trình', href: '/projects', icon: Building2 },
+      { name: 'Tài liệu', href: '/documents', icon: FolderOpen },
+      { name: 'Báo cáo hiện trường', href: '/reports', icon: ClipboardCheck },
+      { name: 'Vật tư', href: '/materials', icon: Package },
+      { name: 'Nhà cung cấp', href: '/suppliers', icon: Users },
+    ],
+  },
+  {
+    label: 'TÀI CHÍNH',
+    items: [
+      { name: 'Hợp đồng', href: '/contracts', icon: FileText },
+      { name: 'Thanh toán', href: '/accounting', icon: CreditCard },
+      { name: 'Phê duyệt', href: '/approvals', icon: CheckSquare },
+    ],
+  },
+  {
+    label: 'HỆ THỐNG',
+    items: [
+      { name: 'Nhật ký', href: '/audit', icon: History },
+      { name: 'Tài khoản', href: '/users', icon: UserCog },
+      { name: 'Cài đặt', href: '/settings', icon: Settings },
+    ],
+  },
 ];
 
 // Items hidden for CHIEF_COMMANDER
@@ -45,56 +67,92 @@ const HIDDEN_FOR_COMMANDER = [
   '/suppliers',
 ];
 
-function getFilteredNavigation(role: UserRole) {
-  if (role === 'CHIEF_COMMANDER') {
-    return navigation.filter(item => !HIDDEN_FOR_COMMANDER.includes(item.href))
-      .map(item => {
-        // Rename "Công trình" to "Công trình của tôi" for commanders
-        if (item.href === '/projects') {
-          return { ...item, name: 'Công trình của tôi' };
-        }
-        return item;
-      });
-  }
-  return navigation;
+function getFilteredSections(role: UserRole) {
+  return navigationSections
+    .map(section => {
+      let items = section.items;
+      if (role === 'CHIEF_COMMANDER') {
+        items = items
+          .filter(item => !HIDDEN_FOR_COMMANDER.includes(item.href))
+          .map(item => {
+            if (item.href === '/projects') {
+              return { ...item, name: 'Công trình của tôi' };
+            }
+            return item;
+          });
+      }
+      return { ...section, items };
+    })
+    .filter(section => section.items.length > 0);
 }
 
 export function Sidebar({ userRole }: { userRole: UserRole }) {
   const pathname = usePathname();
-  const filteredNav = getFilteredNavigation(userRole);
+  const filteredSections = getFilteredSections(userRole);
 
   return (
-    <div className="flex h-full w-64 flex-col border-r border-slate-200 bg-white">
-      <div className="flex h-16 shrink-0 items-center px-6 border-b border-slate-200">
-        <span className="text-xl font-bold text-blue-600">ERP Công trình</span>
+    <div className={styles.sidebarRoot}>
+      {/* Brand Header */}
+      <div className={styles.brand}>
+        <Link href="/dashboard" className={styles.brandLink}>
+          <div className={styles.brandIcon}>
+            <svg width="24" height="28" viewBox="0 0 28 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 16H8V32H4V16Z" fill="#ffffff" fillOpacity="0.7"/>
+              <path d="M12 4H16V32H12V4Z" fill="#ffffff" fillOpacity="0.9"/>
+              <path d="M20 10H24V32H20V10Z" fill="#ffffff"/>
+            </svg>
+          </div>
+          <div className="flex flex-col">
+            <span className={styles.brandName}>CT2 Hà Nội</span>
+            <span className={styles.brandSub}>ERP CÔNG TRÌNH</span>
+          </div>
+        </Link>
       </div>
-      <div className="flex flex-1 flex-col overflow-y-auto pt-4">
-        <nav className="flex-1 space-y-1 px-3">
-          {filteredNav.map((item) => {
-            const isActive = pathname.startsWith(item.href);
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  isActive
-                    ? 'bg-blue-50 text-blue-600 font-semibold shadow-sm border-r-2 border-blue-600'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-700',
-                  'group flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors'
-                )}
-              >
-                <item.icon
-                  className={cn(
-                    isActive ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-500',
-                    'mr-3 h-5 w-5 flex-shrink-0'
-                  )}
-                  aria-hidden="true"
-                />
-                {item.name}
-              </Link>
-            );
-          })}
+
+      {/* Navigation */}
+      <div className={styles.navContainer}>
+        <nav className={styles.nav}>
+          {filteredSections.map((section) => (
+            <div key={section.label || 'top'} className={styles.section}>
+              {section.label && (
+                <div className={styles.sectionLabel}>{section.label}</div>
+              )}
+              <div className={styles.sectionItems}>
+                {section.items.map((item) => {
+                  const isActive = pathname.startsWith(item.href) || (pathname === '/' && item.href === '/dashboard');
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={cn(
+                        styles.navItem,
+                        isActive && styles.navItemActive
+                      )}
+                    >
+                      <div className={cn(styles.indicator, isActive && styles.indicatorActive)} />
+                      <item.icon
+                        className={cn(
+                          styles.navIcon,
+                          isActive && styles.navIconActive
+                        )}
+                        strokeWidth={isActive ? 2.2 : 1.8}
+                        aria-hidden="true"
+                      />
+                      <span className={styles.navLabel}>{item.name}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
+      </div>
+
+      {/* Footer */}
+      <div className={styles.footer}>
+        <div className={styles.footerBadge}>
+          v2.0 · Nội bộ
+        </div>
       </div>
     </div>
   );

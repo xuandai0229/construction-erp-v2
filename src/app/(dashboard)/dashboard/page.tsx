@@ -1,10 +1,12 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { EmptyState } from '@/components/ui/empty-state';
+import { Card, CardContent } from '@/components/ui/card';
 import prisma from '@/lib/prisma';
-import { Building2, FolderOpen, FileText, Users } from 'lucide-react';
-import { format } from 'date-fns';
+import { Building2, AlertTriangle, ArrowRight, Activity, Clock, FileText, FileCheck, ClipboardList, CalendarCheck, Layers } from 'lucide-react';
+import { format, startOfDay, endOfDay } from 'date-fns';
+import { vi } from 'date-fns/locale';
 import Link from 'next/link';
 import { requireAuth, getAccessibleProjectIds } from '@/lib/rbac';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export default async function DashboardPage() {
   const session = await requireAuth();
@@ -16,130 +18,319 @@ export default async function DashboardPage() {
     ? { deletedAt: null }
     : { deletedAt: null, id: { in: accessibleProjectIds } };
 
+  // Vietnam timezone: UTC+7
+  const now = new Date();
+  const todayStartUTC = new Date(startOfDay(now).getTime() - 7 * 60 * 60 * 1000);
+  const todayEndUTC = new Date(endOfDay(now).getTime() - 7 * 60 * 60 * 1000);
+
   const [
-    totalProjects,
     activeProjects,
     completedProjects,
-    totalDocuments,
-    totalContracts,
-    totalSuppliers,
-    recentReports
+    entriesToday,
+    recentProjects,
+    recentDocs,
+    recentEntries,
+    recentContracts
   ] = await Promise.all([
-    prisma.project.count({ where: projectWhere }),
     prisma.project.count({ where: { ...projectWhere, status: 'ACTIVE' } }),
     prisma.project.count({ where: { ...projectWhere, status: 'COMPLETED' } }),
-    prisma.document.count({ where: { deletedAt: null, project: relatedProjectWhere } }),
-    prisma.contract.count({ where: { deletedAt: null, project: relatedProjectWhere } }),
-    accessibleProjectIds === null
-      ? prisma.supplier.count({ where: { deletedAt: null } })
-      : Promise.resolve(0),
-    prisma.siteReport.findMany({
-      take: 5,
-      where: { project: relatedProjectWhere },
-      orderBy: { createdAt: 'desc' },
-      include: { createdBy: true, project: true }
-    })
+
+    // Count entries created today (Vietnam time)
+    prisma.fieldProgressEntry.count({
+      where: {
+        deletedAt: null,
+        project: relatedProjectWhere,
+        createdAt: { gte: todayStartUTC, lte: todayEndUTC }
+      }
+    }),
+
+    // Top 3 projects to watch — include WBS/template info for status indicators
+    prisma.project.findMany({
+      where: { ...projectWhere, status: 'ACTIVE' },
+      orderBy: { updatedAt: 'desc' },
+      take: 3,
+      select: {
+        id: true, name: true, investor: true, status: true, startDate: true, updatedAt: true,
+        fieldProgressTemplates: {
+          where: { deletedAt: null },
+          select: { id: true },
+          take: 1,
+        },
+        _count: {
+          select: {
+            fieldProgressEntries: {
+              where: {
+                deletedAt: null,
+                createdAt: { gte: todayStartUTC, lte: todayEndUTC }
+              }
+            }
+          }
+        }
+      }
+    }),
+
+    // Recent activities (documents, entries, contracts)
+    prisma.document.findMany({ where: { deletedAt: null, project: relatedProjectWhere }, orderBy: { createdAt: 'desc' }, take: 3, include: { project: true } }),
+    prisma.fieldProgressEntry.findMany({ where: { deletedAt: null, project: relatedProjectWhere }, orderBy: { createdAt: 'desc' }, take: 3, include: { project: true, item: true } }),
+    prisma.contract.findMany({ where: { deletedAt: null, project: relatedProjectWhere }, orderBy: { createdAt: 'desc' }, take: 3, include: { project: true } })
   ]);
 
-  const hasData = totalProjects > 0 || totalDocuments > 0 || totalContracts > 0 || totalSuppliers > 0;
+  const activities = [
+    ...recentDocs.map(d => ({ type: 'DOCUMENT' as const, date: d.createdAt, title: `Tải lên tài liệu "${d.originalName}"`, project: d.project?.name || 'Hệ thống chung', status: null as string | null })),
+    ...recentEntries.map(e => ({ type: 'PROGRESS' as const, date: e.createdAt, title: `Nhập khối lượng hiện trường`, project: e.project?.name || 'Hệ thống chung', status: e.status as string | null })),
+    ...recentContracts.map(c => ({ type: 'CONTRACT' as const, date: c.createdAt, title: `Hợp đồng "${c.name}" ${c.status === 'ACTIVE' ? 'có hiệu lực' : 'đã cập nhật'}`, project: c.project?.name || 'Hệ thống chung', status: null as string | null }))
+  ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 3);
 
-  if (!hasData) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-slate-900">Tổng quan</h1>
-        <EmptyState 
-          title="Chưa có dữ liệu hệ thống" 
-          description="Hệ thống ERP vừa được khởi tạo. Hãy bắt đầu bằng cách thêm mới dự án, tài liệu hoặc nhà cung cấp." 
-        />
-      </div>
-    );
-  }
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'DOCUMENT': return <FileText className="w-4 h-4 text-blue-500" />;
+      case 'PROGRESS': return <Activity className="w-4 h-4 text-emerald-500" />;
+      case 'CONTRACT': return <FileCheck className="w-4 h-4 text-orange-500" />;
+      default: return <Clock className="w-4 h-4 text-slate-500" />;
+    }
+  };
+
+  const getActivityBadge = (activity: { type: string; status: string | null }) => {
+    if (activity.type === 'PROGRESS') {
+      if (activity.status === 'APPROVED') return <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-600">Đã duyệt</span>;
+      if (activity.status === 'SUBMITTED') return <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-600">Đã gửi</span>;
+      if (activity.status === 'DRAFT') return <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600">Nháp</span>;
+      return <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-600">Khối lượng</span>;
+    }
+    switch (activity.type) {
+      case 'DOCUMENT': return <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-600">Tài liệu</span>;
+      case 'CONTRACT': return <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-orange-50 text-orange-600">Hợp đồng</span>;
+      default: return null;
+    }
+  };
+
+  // "Cần chú ý" = count of ACTIVE projects that either lack WBS or have no entry today
+  const projectsNeedingAttention = recentProjects.filter(p => {
+    const hasWBS = p.fieldProgressTemplates.length > 0;
+    const hasEntryToday = p._count.fieldProgressEntries > 0;
+    return !hasWBS || !hasEntryToday;
+  }).length;
+  // Also count any ACTIVE projects beyond the visible 3 that lack WBS
+  // For a more accurate count we'd need a dedicated query, but since
+  // the dashboard only monitors the top 3 projects, this is sufficient.
+  const totalNeedAttention = projectsNeedingAttention;
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900">Tổng quan</h1>
-      
-      <div className="grid grid-cols-2 gap-3 md:gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-2 md:p-6 md:pb-2">
-            <CardTitle className="text-xs md:text-sm font-medium">Tổng công trình</CardTitle>
-            <Building2 className="h-4 w-4 text-slate-500 hidden sm:block" />
-          </CardHeader>
-          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
-            <div className="text-xl md:text-2xl font-bold">{totalProjects}</div>
-            <p className="text-[10px] md:text-xs text-slate-500">
-              {activeProjects} đang thi công, {completedProjects} hoàn thành
-            </p>
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto bg-slate-50/30 min-h-full">
+      {/* Header text */}
+      <div className="mb-8">
+        <h1 className="text-2xl sm:text-[28px] font-bold text-slate-900 tracking-tight mb-2">Tổng quan</h1>
+        <p className="text-sm text-slate-500 font-medium">Theo dõi nhanh tình hình công trình và cập nhật hiện trường.</p>
+      </div>
+
+      {/* 4 KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        <Card className="rounded-2xl border-slate-200/60 shadow-sm hover:shadow-md transition-shadow bg-white">
+          <CardContent className="p-5 flex justify-between items-start">
+            <div>
+              <p className="text-[13px] font-bold text-slate-900 mb-1">Công trình đang thi công</p>
+              <h3 className="text-[32px] font-extrabold text-blue-600 leading-none mb-2">{activeProjects}</h3>
+              <p className="text-[11px] font-medium text-slate-400">{activeProjects} đang thi công, {completedProjects} hoàn thành</p>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+              <Building2 className="w-5 h-5 text-blue-600" />
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-2 md:p-6 md:pb-2">
-            <CardTitle className="text-xs md:text-sm font-medium">Số tài liệu</CardTitle>
-            <FolderOpen className="h-4 w-4 text-slate-500 hidden sm:block" />
-          </CardHeader>
-          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
-            <div className="text-xl md:text-2xl font-bold">{totalDocuments}</div>
+        <Card className="rounded-2xl border-slate-200/60 shadow-sm hover:shadow-md transition-shadow bg-white">
+          <CardContent className="p-5 flex justify-between items-start">
+            <div>
+              <p className="text-[13px] font-bold text-slate-900 mb-1">Cập nhật hôm nay</p>
+              <h3 className={cn("text-[32px] font-extrabold leading-none mb-2", entriesToday > 0 ? "text-emerald-600" : "text-blue-600")}>{entriesToday}</h3>
+              <p className="text-[11px] font-medium text-slate-400">{entriesToday > 0 ? `${entriesToday} bản ghi khối lượng` : 'Chưa có cập nhật'}</p>
+            </div>
+            <div className={cn("w-10 h-10 rounded-full flex items-center justify-center shrink-0", entriesToday > 0 ? "bg-emerald-50" : "bg-slate-50")}>
+              <CalendarCheck className={cn("w-5 h-5", entriesToday > 0 ? "text-emerald-600" : "text-slate-400")} />
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-2 md:p-6 md:pb-2">
-            <CardTitle className="text-xs md:text-sm font-medium">Số hợp đồng</CardTitle>
-            <FileText className="h-4 w-4 text-slate-500 hidden sm:block" />
-          </CardHeader>
-          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
-            <div className="text-xl md:text-2xl font-bold">{totalContracts}</div>
+        <Card className="rounded-2xl border-slate-200/60 shadow-sm hover:shadow-md transition-shadow bg-white">
+          <CardContent className="p-5 flex justify-between items-start">
+            <div>
+              <p className="text-[13px] font-bold text-slate-900 mb-1">Lượt nhập hôm nay</p>
+              <h3 className={cn("text-[32px] font-extrabold leading-none mb-2", entriesToday > 0 ? "text-indigo-600" : "text-blue-600")}>{entriesToday}</h3>
+              <p className="text-[11px] font-medium text-slate-400">{entriesToday > 0 ? `${entriesToday} bản ghi khối lượng` : 'Chưa nhập khối lượng'}</p>
+            </div>
+            <div className={cn("w-10 h-10 rounded-full flex items-center justify-center shrink-0", entriesToday > 0 ? "bg-indigo-50" : "bg-slate-50")}>
+              <ClipboardList className={cn("w-5 h-5", entriesToday > 0 ? "text-indigo-600" : "text-slate-400")} />
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3 pb-2 md:p-6 md:pb-2">
-            <CardTitle className="text-xs md:text-sm font-medium">Nhà cung cấp</CardTitle>
-            <Users className="h-4 w-4 text-slate-500 hidden sm:block" />
-          </CardHeader>
-          <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
-            <div className="text-xl md:text-2xl font-bold">{totalSuppliers}</div>
+        <Card className="rounded-2xl border-slate-200/60 shadow-sm hover:shadow-md transition-shadow bg-white">
+          <CardContent className="p-5 flex justify-between items-start">
+            <div>
+              <p className="text-[13px] font-bold text-slate-900 mb-1">Cần chú ý</p>
+              <h3 className={cn("text-[32px] font-extrabold leading-none mb-2", totalNeedAttention > 0 ? "text-orange-600" : "text-blue-600")}>{totalNeedAttention}</h3>
+              <p className="text-[11px] font-medium text-slate-400">{totalNeedAttention > 0 ? "Cần kiểm tra" : "Không có việc cần xử lý"}</p>
+            </div>
+            <div className={cn("w-10 h-10 rounded-full flex items-center justify-center shrink-0", totalNeedAttention > 0 ? "bg-orange-50" : "bg-emerald-50")}>
+              <AlertTriangle className={cn("w-5 h-5", totalNeedAttention > 0 ? "text-orange-500" : "text-emerald-500")} />
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-1 md:col-span-4">
-          <CardHeader className="p-4 md:p-6">
-            <CardTitle className="text-base md:text-lg">Báo cáo hiện trường gần đây</CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
-            {recentReports.length > 0 ? (
-              <div className="space-y-4">
-                {recentReports.map(report => (
-                  <div key={report.id} className="flex items-start md:items-center justify-between border-b border-slate-100 pb-4 last:border-0 last:pb-0 flex-col md:flex-row gap-2 md:gap-0">
-                    <div>
-                      <p className="font-medium text-slate-900 text-sm md:text-base">{report.project.name}</p>
-                      <p className="text-xs md:text-sm text-slate-500">{report.title || "Báo cáo hiện trường"}</p>
-                    </div>
-                    <div className="text-left md:text-right">
-                      <p className="text-xs md:text-sm font-medium text-slate-900">{format(new Date(report.reportDate), 'dd/MM/yyyy')}</p>
-                      <p className="text-[10px] md:text-xs text-slate-500">{report.createdBy.name}</p>
-                    </div>
+      {/* Main Content Area */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 sm:gap-6 mt-6 items-start">
+
+        {/* Left Col (60%) */}
+        <div className="lg:col-span-3">
+          <Card className="rounded-2xl border-slate-200/60 shadow-sm bg-white h-fit">
+            <div className="p-5 sm:px-6 sm:py-5 border-b border-slate-100/60 flex items-center justify-between">
+              <h2 className="text-[15px] font-bold text-slate-900 flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-blue-600" /> Công trình cần theo dõi
+              </h2>
+              <Link href="/projects" className="text-[12px] font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+                Xem tất cả <ArrowRight className="w-3 h-3" />
+              </Link>
+            </div>
+            <CardContent className="p-0">
+              {recentProjects.length === 0 ? (
+                <div className="p-10 text-center">
+                  <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3 border border-slate-100">
+                    <Building2 className="w-5 h-5 text-slate-300" />
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="py-8 md:py-12 flex flex-col items-center justify-center text-center">
-                <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center mb-3">
-                  <FileText className="w-6 h-6 text-slate-400" />
+                  <p className="text-sm font-semibold text-slate-900">Chưa có công trình cần theo dõi</p>
+                  <Button asChild variant="ghost" className="text-blue-600 text-xs mt-1">
+                    <Link href="/projects">Xem danh sách công trình</Link>
+                  </Button>
                 </div>
-                <p className="text-sm md:text-base font-semibold text-slate-700">Chưa có báo cáo hiện trường</p>
-                <p className="text-xs md:text-sm text-slate-500 mt-1 mb-4">Các cập nhật tiến độ công trường sẽ hiển thị tại đây.</p>
-                <Link href="/projects" className="text-xs md:text-sm font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors">
-                  Xem danh sách Công trình
-                </Link>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              ) : (
+                <div className="divide-y divide-slate-100">
+                  {recentProjects.map(project => {
+                    const hasWBS = project.fieldProgressTemplates.length > 0;
+                    const todayEntryCount = project._count.fieldProgressEntries;
+                    return (
+                      <div key={project.id} className="p-4 sm:px-6 hover:bg-slate-50/50 transition-colors">
+                        <div className="flex items-start gap-4">
+                          {/* Thumbnail Placeholder */}
+                          <div className="w-[72px] h-[54px] rounded-lg bg-slate-100 shrink-0 border border-slate-200 overflow-hidden flex items-center justify-center relative">
+                            <Building2 className="w-6 h-6 text-slate-300 absolute" />
+                            <div className="absolute inset-0 bg-gradient-to-tr from-slate-200/40 to-transparent"></div>
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="text-[14px] font-bold text-slate-900 truncate">{project.name}</h3>
+                              <span className="hidden sm:inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 shrink-0">
+                                Đang thi công
+                              </span>
+                            </div>
+                            <p className="text-[11px] font-medium text-slate-500 flex items-center gap-1.5 truncate">
+                              <UserIcon className="w-3 h-3 text-slate-400 shrink-0" /> Chủ đầu tư: {project.investor || 'Nội bộ công ty'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Status indicators + Quick actions row */}
+                        <div className="mt-2.5 ml-0 sm:ml-[88px] flex flex-wrap items-center gap-x-4 gap-y-1.5">
+                          {/* Status indicators */}
+                          <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
+                            <Layers className="w-3 h-3" />
+                            WBS: {hasWBS
+                              ? <span className="text-emerald-600 font-semibold">Đã thiết lập</span>
+                              : <span className="text-orange-500 font-semibold">Chưa thiết lập</span>
+                            }
+                          </span>
+                          <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
+                            <CalendarCheck className="w-3 h-3" />
+                            Hôm nay: {todayEntryCount > 0
+                              ? <span className="text-emerald-600 font-semibold">Đã nhập ({todayEntryCount})</span>
+                              : <span className="text-orange-500 font-semibold">Chưa nhập</span>
+                            }
+                          </span>
+                          <span className="text-[11px] font-medium text-slate-400">
+                            Cập nhật: {format(new Date(project.updatedAt), 'dd/MM/yyyy')}
+                          </span>
+
+                          {/* Divider */}
+                          <span className="hidden sm:block w-px h-3.5 bg-slate-200"></span>
+
+                          {/* Quick action links */}
+                          <div className="flex items-center gap-3">
+                            <Link href={`/projects/${project.id}`} className="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-0.5 transition-colors">
+                              Mở <ArrowRight className="w-3 h-3" />
+                            </Link>
+                            <Link href={`/projects/${project.id}/field-progress/daily`} className="text-[11px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 rounded-md transition-colors">
+                              Nhập hôm nay
+                            </Link>
+                            <Link href={`/projects/${project.id}/field-progress/summary`} className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 transition-colors">
+                              Tổng hợp
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Col (40%) */}
+        <div className="lg:col-span-2">
+          <Card className="rounded-2xl border-slate-200/60 shadow-sm bg-white h-fit">
+            <div className="p-5 sm:px-6 sm:py-5 border-b border-slate-100/60 flex items-center justify-between">
+              <h2 className="text-[15px] font-bold text-slate-900 flex items-center gap-2">
+                <Activity className="w-4 h-4 text-blue-600" /> Hoạt động gần đây
+              </h2>
+            </div>
+            <CardContent className="p-5 sm:p-6">
+              {activities.length === 0 ? (
+                <div className="py-6 text-center">
+                  <div className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-2 border border-slate-100">
+                    <Clock className="w-4 h-4 text-slate-300" />
+                  </div>
+                  <p className="text-[13px] font-medium text-slate-500">Chưa có hoạt động gần đây.</p>
+                </div>
+              ) : (
+                <div className="relative space-y-5 before:absolute before:inset-0 before:ml-[15px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
+                  {activities.map((activity, index) => (
+                    <div key={index} className="relative flex items-start gap-3.5">
+                      {/* Timeline Icon */}
+                      <div className="relative z-10 w-8 h-8 flex items-center justify-center bg-white rounded-full border shadow-sm shrink-0 border-slate-200">
+                        {getActivityIcon(activity.type)}
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0 pt-0.5 pb-1">
+                        <div className="flex items-start justify-between gap-2 mb-0.5">
+                          <p className="text-[10px] font-bold text-slate-400 tracking-wider">
+                            {format(activity.date, 'dd/MM/yyyy')}
+                          </p>
+                          {getActivityBadge(activity)}
+                        </div>
+                        <h4 className="text-[13px] font-bold text-slate-900 leading-snug mb-0.5 pr-2 line-clamp-1">
+                          {activity.title}
+                        </h4>
+                        <p className="text-[11px] font-medium text-slate-500 truncate">
+                          {activity.project}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
       </div>
     </div>
+  );
+}
+
+function UserIcon(props: any) {
+  return (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
   );
 }

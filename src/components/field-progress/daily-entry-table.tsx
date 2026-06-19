@@ -473,7 +473,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
               quantityRefs.current[item.id] = el;
             }
           }}
-          type="text"
+          type="text" autoComplete="off"
           inputMode="decimal"
           value={item.quantity}
           onChange={(e) => patchItem(item.id, "quantity", e.target.value)}
@@ -736,6 +736,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
                 name="quickAdd-designQuantity"
                 type="text"
                 inputMode="decimal"
+                autoComplete="off"
                 value={quickAddData.designQuantity}
                 onChange={(e) => setQuickAddData(prev => ({ ...prev, designQuantity: e.target.value }))}
                 className="w-full rounded-xl border-2 border-slate-300 bg-white p-3 text-sm text-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
@@ -1217,3 +1218,4 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
     </div>
   );
 }
+

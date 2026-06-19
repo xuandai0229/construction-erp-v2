@@ -58,13 +58,13 @@ export function DeleteProjectButton({ id, projectName, className }: { id: string
           <>
             Bạn có chắc chắn muốn xóa công trình <strong className="text-slate-900">{projectName}</strong>?
             <div className="mt-3 p-3 bg-red-50 text-red-800 text-sm rounded-lg border border-red-100">
-              <span className="font-semibold block mb-1">Lưu ý:</span>
-              Thao tác này không xóa dữ liệu vật lý nhưng sẽ ẩn công trình khỏi danh sách.
+              Dữ liệu sẽ được ẩn khỏi danh sách nhưng vẫn được lưu trong hệ thống để truy vết.
             </div>
           </>
         }
         variant="danger"
-        confirmText="Xóa"
+        confirmText="Xóa công trình"
+        cancelText="Hủy"
         onConfirm={handleDelete}
         isLoading={isDeleting}
       />

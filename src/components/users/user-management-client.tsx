@@ -318,7 +318,7 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <input id="user-search" type="text" placeholder="Tìm tên, email, SĐT..." aria-label="Tìm kiếm người dùng" value={search} onChange={e => setSearch(e.target.value)} className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white text-slate-900 placeholder:text-slate-400" />
+          <input id="user-search" type="text" autoComplete="off" placeholder="Tìm tên, email, SĐT..." aria-label="Tìm kiếm người dùng" value={search} onChange={e => setSearch(e.target.value)} className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white text-slate-900 placeholder:text-slate-400" />
         </div>
         <select id="user-role-filter" aria-label="Lọc theo vai trò" value={roleFilter} onChange={e => setRoleFilter(e.target.value)} className="px-3 py-2 text-sm border border-slate-300 rounded-md bg-white text-slate-900">
           <option value="">Tất cả vai trò</option>
@@ -477,28 +477,28 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
               {error && <div className="bg-red-50 text-red-700 text-sm px-3 py-2 rounded-md">{error}</div>}
               <div>
                 <label htmlFor="create-name" className="block text-sm font-medium text-slate-700 mb-1">Họ tên *</label>
-                <input id="create-name" type="text" value={formName} onChange={e => setFormName(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="Nguyễn Văn A" />
+                <input id="create-name" type="text" autoComplete="off" value={formName} onChange={e => setFormName(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="Nguyễn Văn A" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label htmlFor="create-email" className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
-                  <input id="create-email" type="email" value={formEmail} onChange={e => setFormEmail(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="user@email.com" />
+                  <input id="create-email" type="email" autoComplete="email" value={formEmail} onChange={e => setFormEmail(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="user@email.com" />
                   <p className="text-[11px] text-slate-500 mt-1">Dùng để đăng nhập. Hệ thống không gửi email thật.</p>
                 </div>
                 <div>
                   <label htmlFor="create-username" className="block text-sm font-medium text-slate-700 mb-1">Tên đăng nhập</label>
-                  <input id="create-username" type="text" value={formUsername} onChange={e => setFormUsername(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="commander01" />
+                  <input id="create-username" type="text" autoComplete="off" value={formUsername} onChange={e => setFormUsername(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="commander01" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label htmlFor="create-phone" className="block text-sm font-medium text-slate-700 mb-1">Số điện thoại liên hệ</label>
-                  <input id="create-phone" type="tel" value={formPhone} onChange={e => setFormPhone(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="0901234567" />
+                  <input id="create-phone" type="tel" autoComplete="off" value={formPhone} onChange={e => setFormPhone(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="0901234567" />
                   <p className="text-[11px] text-slate-500 mt-1">Chưa xác minh OTP.</p>
                 </div>
                 <div>
                   <label htmlFor="create-password" className="block text-sm font-medium text-slate-700 mb-1">Mật khẩu *</label>
-                  <input id="create-password" type="password" value={formPassword} onChange={e => setFormPassword(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" />
+                  <input id="create-password" type="password" autoComplete="current-password" value={formPassword} onChange={e => setFormPassword(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" />
                   <p className="text-[11px] text-slate-500 mt-1">Vui lòng gửi MK thủ công cho người dùng.</p>
                 </div>
               </div>
@@ -629,23 +629,23 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
               {error && <div className="bg-red-50 text-red-700 text-sm px-3 py-2 rounded-md">{error}</div>}
               <div>
                 <label htmlFor="edit-name" className="block text-sm font-medium text-slate-700 mb-1">Họ tên *</label>
-                <input id="edit-name" type="text" value={formName} onChange={e => setFormName(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="Nguyễn Văn A" />
+                <input id="edit-name" type="text" autoComplete="off" value={formName} onChange={e => setFormName(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="Nguyễn Văn A" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label htmlFor="edit-email" className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
-                  <input id="edit-email" type="email" value={formEmail} onChange={e => setFormEmail(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="user@email.com" />
+                  <input id="edit-email" type="email" autoComplete="email" value={formEmail} onChange={e => setFormEmail(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="user@email.com" />
                   <p className="text-[11px] text-slate-500 mt-1">Dùng để đăng nhập. Hệ thống không gửi email thật.</p>
                 </div>
                 <div>
                   <label htmlFor="edit-username" className="block text-sm font-medium text-slate-700 mb-1">Tên đăng nhập</label>
-                  <input id="edit-username" type="text" value={formUsername} onChange={e => setFormUsername(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="commander01" />
+                  <input id="edit-username" type="text" autoComplete="off" value={formUsername} onChange={e => setFormUsername(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="commander01" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label htmlFor="edit-phone" className="block text-sm font-medium text-slate-700 mb-1">Số điện thoại liên hệ</label>
-                  <input id="edit-phone" type="tel" value={formPhone} onChange={e => setFormPhone(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="0901234567" />
+                  <input id="edit-phone" type="tel" autoComplete="off" value={formPhone} onChange={e => setFormPhone(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="0901234567" />
                 </div>
                 <div>
                   <label htmlFor="edit-role" className="block text-sm font-medium text-slate-700 mb-1">Vai trò *</label>
@@ -721,11 +721,11 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
             <div className="p-5 space-y-4">
               <div>
                 <label htmlFor="new-pw" className="block text-sm font-medium text-slate-700 mb-1">Mật khẩu mới</label>
-                <input id="new-pw" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500" placeholder="Tối thiểu 6 ký tự" />
+                <input id="new-pw" type="password" autoComplete="current-password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500" placeholder="Tối thiểu 6 ký tự" />
               </div>
               <div>
                 <label htmlFor="confirm-pw" className="block text-sm font-medium text-slate-700 mb-1">Nhập lại mật khẩu mới</label>
-                <input id="confirm-pw" type="password" value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500" placeholder="Xác nhận mật khẩu mới" />
+                <input id="confirm-pw" type="password" autoComplete="current-password" value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500" placeholder="Xác nhận mật khẩu mới" />
               </div>
             </div>
             <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex gap-2 justify-end">
@@ -751,3 +751,5 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
     </div>
   );
 }
+
+

@@ -166,21 +166,21 @@ model User {
   updatedAt DateTime  @updatedAt
 
   projectMembers         ProjectMember[]
-  assignedProjectMembers ProjectMember[]          @relation("ProjectMemberAssigner")
+  assignedProjectMembers ProjectMember[]         @relation("ProjectMemberAssigner")
   auditLogs              AuditLog[]
   messages               ChatMessage[]
-  createdSiteReports     SiteReport[]             @relation("ReportCreator")
-  approvedSiteReports    SiteReport[]             @relation("ReportApprover")
+  createdSiteReports     SiteReport[]            @relation("ReportCreator")
+  approvedSiteReports    SiteReport[]            @relation("ReportApprover")
   createdWBSItems        WBSItem[]
   materialRequests       MaterialRequest[]
-  approvalRequests       ApprovalRequest[]        @relation("Requester")
-  approvals              ApprovalRequest[]        @relation("Approver")
+  approvalRequests       ApprovalRequest[]       @relation("Requester")
+  approvals              ApprovalRequest[]       @relation("Approver")
   documents              Document[]
-  createdFieldTemplates  FieldProgressTemplate[]  @relation("FieldTemplateCreator")
-  createdFieldItems      FieldProgressItem[]      @relation("FieldItemCreator")
-  createdFieldEntries    FieldProgressEntry[]     @relation("FieldEntryCreator")
-  approvedFieldEntries   FieldProgressEntry[]     @relation("FieldEntryApprover")
-  fieldMaterialRequests  FieldMaterialRequest[]   @relation("FieldMaterialRequester")
+  createdFieldTemplates  FieldProgressTemplate[] @relation("FieldTemplateCreator")
+  createdFieldItems      FieldProgressItem[]     @relation("FieldItemCreator")
+  createdFieldEntries    FieldProgressEntry[]    @relation("FieldEntryCreator")
+  approvedFieldEntries   FieldProgressEntry[]    @relation("FieldEntryApprover")
+  fieldMaterialRequests  FieldMaterialRequest[]  @relation("FieldMaterialRequester")
 
   @@index([email])
   @@index([username])
@@ -437,8 +437,6 @@ model SiteReportLine {
   @@index([wbsItemId])
 }
 
-
-
 model MaterialRequest {
   id            String                  @id @default(cuid())
   projectId     String
@@ -467,23 +465,23 @@ model MaterialRequest {
 }
 
 model MaterialRequestItem {
-  id                  String    @id @default(cuid())
-  materialRequestId   String
-  wbsItemId           String?
-  fieldProgressItemId String?
+  id                   String    @id @default(cuid())
+  materialRequestId    String
+  wbsItemId            String?
+  fieldProgressItemId  String?
   workItemNameSnapshot String?
-  materialCode        String?
-  materialName        String
-  unit                String
-  requestedQuantity   Decimal   @db.Decimal(19, 4)
-  issuedQuantity      Decimal   @default(0) @db.Decimal(19, 4)
-  receivedQuantity    Decimal   @default(0) @db.Decimal(19, 4)
-  remainingQuantity   Decimal   @default(0) @db.Decimal(19, 4)
-  reason              String?
-  note                String?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-  deletedAt           DateTime?
+  materialCode         String?
+  materialName         String
+  unit                 String
+  requestedQuantity    Decimal   @db.Decimal(19, 4)
+  issuedQuantity       Decimal   @default(0) @db.Decimal(19, 4)
+  receivedQuantity     Decimal   @default(0) @db.Decimal(19, 4)
+  remainingQuantity    Decimal   @default(0) @db.Decimal(19, 4)
+  reason               String?
+  note                 String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  deletedAt            DateTime?
 
   materialRequest   MaterialRequest    @relation(fields: [materialRequestId], references: [id], onDelete: Cascade)
   wbsItem           WBSItem?           @relation(fields: [wbsItemId], references: [id])
@@ -659,13 +657,13 @@ model FieldProgressItem {
   updatedAt        DateTime                @updatedAt
   deletedAt        DateTime?
 
-  project          Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  template         FieldProgressTemplate  @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  parent           FieldProgressItem?     @relation("FieldItemHierarchy", fields: [parentId], references: [id])
-  children         FieldProgressItem[]    @relation("FieldItemHierarchy")
-  createdBy        User                   @relation("FieldItemCreator", fields: [createdById], references: [id])
-  entries          FieldProgressEntry[]
-  materialRequests FieldMaterialRequest[]
+  project              Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  template             FieldProgressTemplate  @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  parent               FieldProgressItem?     @relation("FieldItemHierarchy", fields: [parentId], references: [id])
+  children             FieldProgressItem[]    @relation("FieldItemHierarchy")
+  createdBy            User                   @relation("FieldItemCreator", fields: [createdById], references: [id])
+  entries              FieldProgressEntry[]
+  materialRequests     FieldMaterialRequest[]
   materialRequestItems MaterialRequestItem[]
 
   @@index([projectId])
