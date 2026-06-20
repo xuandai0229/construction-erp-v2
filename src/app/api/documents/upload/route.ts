@@ -10,6 +10,8 @@ import { writeAuditLog } from "@/lib/audit";
 import fs from "fs/promises";
 import path from "path";
 import { canAccessProject } from "@/lib/rbac";
+import { getDocumentRule } from "@/lib/document-rules";
+import { buildDocumentDisplayName } from "@/lib/document-file-utils";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
@@ -24,6 +26,7 @@ export async function POST(req: NextRequest) {
     const file = formData.get("file") as File;
     const projectId = formData.get("projectId") as string;
     const folderId = formData.get("folderId") as string;
+    const requestedDisplayName = formData.get("displayName");
 
     if (!file || !projectId || !folderId) {
       return NextResponse.json({ error: "Thiếu thông tin bắt buộc" }, { status: 400 });
@@ -44,8 +47,24 @@ export async function POST(req: NextRequest) {
     });
     if (!folder) return NextResponse.json({ error: "Không tìm thấy thư mục" }, { status: 404 });
 
-    const originalName = file.name;
-    const storedName = createStoredFileName(originalName);
+    const fileExtension = path.extname(file.name).toLowerCase();
+    const originalName = buildDocumentDisplayName(
+      typeof requestedDisplayName === "string" && requestedDisplayName.trim()
+        ? requestedDisplayName
+        : file.name,
+      fileExtension,
+    );
+    const extension = path.extname(originalName).toLowerCase();
+    
+    // Server-side validation based on folder rules
+    const rule = getDocumentRule(folder.name);
+    if (rule.allowedExtensions && rule.allowedExtensions.length > 0) {
+      if (!rule.allowedExtensions.includes(extension)) {
+        return NextResponse.json({ error: `File này không phù hợp với thư mục ${rule.title}. Chỉ cho phép: ${rule.allowedExtensions.join(", ").toUpperCase()}.` }, { status: 400 });
+      }
+    }
+
+    const storedName = createStoredFileName(file.name);
     const storagePath = resolveDocumentStoragePath(project.code, folderId, storedName);
     
     await ensureDirectoryExists(path.dirname(storagePath));
@@ -74,12 +93,24 @@ export async function POST(req: NextRequest) {
       action: "UPLOAD_DOCUMENT",
       entityType: "Document",
       entityId: document.id,
-      afterData: document as any
+      afterData: document as unknown as Record<string, unknown>
     });
 
-    return NextResponse.json({ success: true, document });
+    return NextResponse.json({
+      success: true,
+      document: {
+        ...document,
+        uploadedBy: { name: session.name },
+      },
+    });
   } catch (error) {
     console.error("Upload error:", error);
-    return NextResponse.json({ error: "Lỗi hệ thống" }, { status: 500 });
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error ? error.message : "Lỗi hệ thống",
+      },
+      { status: 500 },
+    );
   }
 }
