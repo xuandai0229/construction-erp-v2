@@ -1,19 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { 
-  createStoredFileName, 
-  resolveDocumentStoragePath, 
-  ensureDirectoryExists 
-} from "@/lib/storage";
+import { storageProvider } from "@/lib/storage/index";
 import { writeAuditLog } from "@/lib/audit";
-import fs from "fs/promises";
 import path from "path";
 import { canAccessProject } from "@/lib/rbac";
 import { getDocumentRule } from "@/lib/document-rules";
 import { buildDocumentDisplayName } from "@/lib/document-file-utils";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+
+function validateFileSignature(buffer: Buffer, extension: string): boolean {
+  const hex = buffer.toString('hex', 0, 8).toUpperCase();
+  const ext = extension.toLowerCase();
+
+  if (ext === '.pdf') {
+    return hex.startsWith('25504446'); // %PDF
+  }
+  if (ext === '.jpg' || ext === '.jpeg') {
+    return hex.startsWith('FFD8');
+  }
+  if (ext === '.png') {
+    return hex.startsWith('89504E47'); // ‰PNG
+  }
+  if (ext === '.docx' || ext === '.xlsx' || ext === '.zip') {
+    return hex.startsWith('504B0304'); // PK
+  }
+  if (ext === '.doc' || ext === '.xls') {
+    return hex.startsWith('D0CF11E0'); // OLE signature D0 CF 11 E0 A1 B1 1A E1
+  }
+  if (ext === '.webp') {
+    return hex.startsWith('52494646') && buffer.toString('hex', 8, 12).toUpperCase() === '57454250'; // RIFF...WEBP
+  }
+  // For XML, CAD, and others, we bypass strict magic-byte for now to avoid false positives.
+  return true;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -64,28 +85,47 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const storedName = createStoredFileName(file.name);
-    const storagePath = resolveDocumentStoragePath(project.code, folderId, storedName);
-    
-    await ensureDirectoryExists(path.dirname(storagePath));
-
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
-    await fs.writeFile(storagePath, buffer);
 
-    const document = await prisma.document.create({
-      data: {
+    if (!validateFileSignature(buffer, extension)) {
+      return NextResponse.json({ error: "Tệp tin không đúng định dạng chuẩn (Sai Magic-byte)" }, { status: 400 });
+    }
+
+    let storedFile;
+    try {
+      storedFile = await storageProvider.saveFile({
+        buffer,
         projectId,
+        projectCode: project.code,
         folderId,
-        originalName,
-        storedName,
-        mimeType: file.type || "application/octet-stream",
-        extension: path.extname(originalName),
-        size: file.size,
-        storagePath,
-        uploadedById: session.id,
-      }
-    });
+        originalName: file.name
+      });
+    } catch (storageError) {
+      console.error("Storage save error:", storageError);
+      return NextResponse.json({ error: "Không thể lưu tệp vật lý" }, { status: 500 });
+    }
+
+    let document;
+    try {
+      document = await prisma.document.create({
+        data: {
+          projectId,
+          folderId,
+          originalName,
+          storedName: path.basename(storedFile.objectKey),
+          mimeType: file.type || "application/octet-stream",
+          extension: path.extname(originalName),
+          size: file.size,
+          storagePath: storedFile.storagePath,
+          uploadedById: session.id,
+        }
+      });
+    } catch (dbError) {
+      // Cleanup if DB fails
+      await storageProvider.deleteFile(storedFile.storagePath).catch(console.error);
+      throw dbError;
+    }
 
     await writeAuditLog({
       userId: session.id,

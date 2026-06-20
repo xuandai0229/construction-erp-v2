@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import fs from "fs/promises";
 import mime from "mime-types";
 import { canAccessProject } from "@/lib/rbac";
+import { storageProvider } from "@/lib/storage/index";
+import { writeAuditLog } from "@/lib/audit";
 
 export async function GET(
   req: NextRequest,
@@ -29,13 +30,25 @@ export async function GET(
       return new NextResponse("Không có quyền truy cập", { status: 403 });
     }
 
-    const fileBuffer = await fs.readFile(document.storagePath);
+    const fileBuffer = await storageProvider.readFile(document.storagePath);
     
     const isPreview = req.nextUrl.searchParams.get('preview') === 'true';
     const contentType = document.mimeType || mime.lookup(document.originalName) || "application/octet-stream";
     
+    // Fire and forget audit log for view/download
+    writeAuditLog({
+      userId: session.id,
+      projectId: document.projectId,
+      action: isPreview ? "VIEW_DOCUMENT" : "DOWNLOAD_DOCUMENT",
+      entityType: "Document",
+      entityId: document.id,
+      afterData: { originalName: document.originalName }
+    }).catch(console.error);
+
     const headers = new Headers();
     headers.set("Content-Type", contentType);
+    headers.set("X-Content-Type-Options", "nosniff");
+    headers.set("Cache-Control", "private, max-age=3600"); // Basic caching for previews
     
     if (isPreview && (contentType.startsWith('image/') || contentType === 'application/pdf')) {
       headers.set("Content-Disposition", `inline; filename="${encodeURIComponent(document.originalName)}"`);
@@ -43,7 +56,7 @@ export async function GET(
       headers.set("Content-Disposition", `attachment; filename="${encodeURIComponent(document.originalName)}"`);
     }
 
-    return new NextResponse(fileBuffer, {
+    return new NextResponse(fileBuffer as unknown as BodyInit, {
       status: 200,
       headers
     });
