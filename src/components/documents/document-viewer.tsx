@@ -22,12 +22,19 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { getDocumentPreviewKind } from "@/lib/document-file-utils";
+import { getDocumentTypeLabel } from "@/lib/documents/metadata-types";
+import { DocumentStatus } from "@prisma/client";
 
 export interface DocumentListItem {
   id: string;
   projectId: string;
   folderId: string;
   originalName: string;
+  displayName: string | null;
+  documentType: string | null;
+  status: DocumentStatus;
+  metadata: any;
+  fileHash: string | null;
   storedName: string;
   mimeType: string;
   extension: string;
@@ -35,7 +42,9 @@ export interface DocumentListItem {
   version: number;
   createdAt: string | Date;
   updatedAt: string | Date;
+  uploadedById: string;
   uploadedBy?: { name: string } | null;
+  rejectedReason?: string | null;
 }
 
 interface DocumentViewerProps {
@@ -51,6 +60,10 @@ interface DocumentViewerProps {
   onRename: () => void;
   onDelete: () => void;
   onCopyLink: () => void;
+  canEditMetadata: boolean;
+  canChangeStatus: boolean;
+  onEditMetadata: () => void;
+  onChangeStatus: () => void;
 }
 
 function formatBytes(bytes: number, decimals = 2) {
@@ -133,6 +146,10 @@ export function DocumentViewer({
   onRename,
   onDelete,
   onCopyLink,
+  canEditMetadata,
+  canChangeStatus,
+  onEditMetadata,
+  onChangeStatus,
 }: DocumentViewerProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [imageScale, setImageScale] = useState(1);
@@ -184,11 +201,21 @@ export function DocumentViewer({
       >
         <header className="flex shrink-0 items-start gap-3 border-b border-slate-200 bg-white px-4 py-3 sm:px-5">
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-slate-900" title={document.originalName}>
-              {document.originalName}
+            <p className="truncate text-sm font-semibold text-slate-900" title={document.displayName || document.originalName}>
+              {document.displayName || document.originalName}
             </p>
-            <p className="mt-0.5 text-xs text-slate-500">
-              {folderName} · {formatBytes(document.size)} · {document.extension.toUpperCase()}
+            <p className="mt-0.5 text-xs text-slate-500 flex items-center gap-2">
+              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                document.status === "APPROVED" ? "bg-emerald-100 text-emerald-700" :
+                document.status === "REJECTED" ? "bg-red-100 text-red-700" :
+                document.status === "ARCHIVED" ? "bg-slate-100 text-slate-700" :
+                "bg-blue-100 text-blue-700"
+              }`}>
+                {document.status}
+              </span>
+              <span>
+                {folderName} · {formatBytes(document.size)} · {document.extension.toUpperCase()}
+              </span>
             </p>
           </div>
 
@@ -255,6 +282,26 @@ export function DocumentViewer({
             >
               <Trash2 className="h-4 w-4" />
               Xóa
+            </button>
+          )}
+          {canEditMetadata && (
+            <button
+              type="button"
+              onClick={onEditMetadata}
+              className="ml-auto inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-100"
+            >
+              <Pencil className="h-4 w-4" />
+              Sửa thông tin
+            </button>
+          )}
+          {canChangeStatus && (
+            <button
+              type="button"
+              onClick={onChangeStatus}
+              className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-100"
+            >
+              <Pencil className="h-4 w-4" />
+              Đổi trạng thái
             </button>
           )}
         </div>
@@ -352,7 +399,19 @@ export function DocumentViewer({
           </button>
         </div>
 
-        <footer className="grid shrink-0 grid-cols-2 gap-x-5 gap-y-2 border-t border-slate-200 bg-white px-4 py-3 text-xs sm:grid-cols-4 sm:px-5">
+        <footer className="grid shrink-0 grid-cols-2 gap-x-5 gap-y-2 border-t border-slate-200 bg-white px-4 py-3 text-xs sm:grid-cols-5 sm:px-5">
+          <div>
+            <p className="text-slate-400">Loại hồ sơ</p>
+            <p className="mt-0.5 font-medium text-slate-700">
+              {getDocumentTypeLabel(document.documentType)}
+            </p>
+          </div>
+          <div>
+            <p className="text-slate-400">Ghi chú</p>
+            <p className="mt-0.5 font-medium text-slate-700 truncate" title={document.metadata?.note}>
+              {document.metadata?.note || "-"}
+            </p>
+          </div>
           <div>
             <p className="text-slate-400">Người tải lên</p>
             <p className="mt-0.5 truncate font-medium text-slate-700">
@@ -366,12 +425,10 @@ export function DocumentViewer({
             </p>
           </div>
           <div>
-            <p className="text-slate-400">Thư mục</p>
-            <p className="mt-0.5 truncate font-medium text-slate-700">{folderName}</p>
-          </div>
-          <div>
-            <p className="text-slate-400">Phiên bản dữ liệu</p>
-            <p className="mt-0.5 font-medium text-slate-700">v{document.version}</p>
+            <p className="text-slate-400">File Hash (SHA-256)</p>
+            <p className="mt-0.5 font-mono text-slate-700 truncate w-24" title={document.fileHash || "-"}>
+              {document.fileHash || "-"}
+            </p>
           </div>
         </footer>
       </section>

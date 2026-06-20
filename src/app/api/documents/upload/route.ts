@@ -5,6 +5,8 @@ import { storageProvider } from "@/lib/storage/index";
 import { writeAuditLog } from "@/lib/audit";
 import path from "path";
 import { canAccessProject } from "@/lib/rbac";
+import { canUploadToFolder } from "@/lib/documents/permissions";
+import crypto from "crypto";
 import { getDocumentRule } from "@/lib/document-rules";
 import { buildDocumentDisplayName } from "@/lib/document-file-utils";
 
@@ -47,7 +49,9 @@ export async function POST(req: NextRequest) {
     const file = formData.get("file") as File;
     const projectId = formData.get("projectId") as string;
     const folderId = formData.get("folderId") as string;
-    const requestedDisplayName = formData.get("displayName");
+    const requestedDisplayName = formData.get("displayName") as string | null;
+    const documentType = formData.get("documentType") as string | null;
+    const note = formData.get("note") as string | null;
 
     if (!file || !projectId || !folderId) {
       return NextResponse.json({ error: "Thiếu thông tin bắt buộc" }, { status: 400 });
@@ -67,6 +71,12 @@ export async function POST(req: NextRequest) {
       where: { id: folderId, projectId, deletedAt: null },
     });
     if (!folder) return NextResponse.json({ error: "Không tìm thấy thư mục" }, { status: 404 });
+
+    // RBAC: Check folder permission
+    const sessionUser = { id: session.id, role: session.role as any };
+    if (!canUploadToFolder(sessionUser, { id: folder.id, name: folder.name })) {
+      return NextResponse.json({ error: "Không có quyền upload vào thư mục này." }, { status: 403 });
+    }
 
     const fileExtension = path.extname(file.name).toLowerCase();
     const originalName = buildDocumentDisplayName(
@@ -88,6 +98,9 @@ export async function POST(req: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
+    // Tính fileHash
+    const fileHash = crypto.createHash("sha256").update(buffer).digest("hex");
+
     if (!validateFileSignature(buffer, extension)) {
       return NextResponse.json({ error: "Tệp tin không đúng định dạng chuẩn (Sai Magic-byte)" }, { status: 400 });
     }
@@ -108,11 +121,17 @@ export async function POST(req: NextRequest) {
 
     let document;
     try {
+      const metadataObj = note ? { note } : null;
       document = await prisma.document.create({
         data: {
           projectId,
           folderId,
           originalName,
+          displayName: requestedDisplayName && requestedDisplayName.trim() ? requestedDisplayName.trim() : originalName,
+          documentType: documentType || null,
+          status: "SUBMITTED",
+          metadata: metadataObj ? metadataObj : undefined,
+          fileHash: fileHash,
           storedName: path.basename(storedFile.objectKey),
           mimeType: file.type || "application/octet-stream",
           extension: path.extname(originalName),

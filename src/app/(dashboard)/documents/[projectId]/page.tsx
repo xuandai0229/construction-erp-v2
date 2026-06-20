@@ -66,13 +66,7 @@ export default async function ProjectDocumentsPage({
           projectId={projectId} 
           folders={rawFolders} 
           documents={documents}
-          capabilities={{
-            canCreateFolder: true,
-            canRenameFolder: true,
-            canUpload: true,
-            canRenameDocument: true,
-            canDelete: canManageProjects(session),
-          }}
+          sessionUser={{ id: session.id, role: session.role as any }}
         />
       </Suspense>
     </div>

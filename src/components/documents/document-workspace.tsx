@@ -36,6 +36,8 @@ import {
   deleteFolder,
   renameDocument,
   renameFolder,
+  updateDocumentMetadata,
+  changeDocumentStatus,
 } from "@/app/(dashboard)/documents/actions";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -47,6 +49,18 @@ import {
   isPoorDocumentFileName,
 } from "@/lib/document-file-utils";
 import { getDocumentRule } from "@/lib/document-rules";
+import {
+  canRenameFolder,
+  canUploadToFolder,
+  canRenameDocument,
+  canDeleteDocument,
+  canDeleteFolder,
+  canEditDocumentMetadata,
+  canChangeDocumentStatus,
+  SessionUser
+} from "@/lib/documents/permissions";
+import { getDocumentTypeOptionsForFolder } from "@/lib/documents/metadata-types";
+import { DocumentStatus } from "@prisma/client";
 import {
   DocumentListItem,
   DocumentViewer,
@@ -63,19 +77,11 @@ interface FolderItem {
   };
 }
 
-interface DocumentCapabilities {
-  canCreateFolder: boolean;
-  canRenameFolder: boolean;
-  canUpload: boolean;
-  canRenameDocument: boolean;
-  canDelete: boolean;
-}
-
 interface DocumentWorkspaceProps {
   projectId: string;
   folders: FolderItem[];
   documents: DocumentListItem[];
-  capabilities: DocumentCapabilities;
+  sessionUser: SessionUser;
 }
 
 type SortOption = "NEWEST" | "OLDEST" | "NAME" | "SIZE";
@@ -148,7 +154,7 @@ export function DocumentWorkspace({
   projectId,
   folders,
   documents,
-  capabilities,
+  sessionUser,
 }: DocumentWorkspaceProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -186,7 +192,22 @@ export function DocumentWorkspace({
   const [pendingUpload, setPendingUpload] = useState<{
     file: File;
     displayName: string;
+    documentType: string;
+    note: string;
   } | null>(null);
+  const [editMetadataModal, setEditMetadataModal] = useState<{
+    isOpen: boolean;
+    id: string;
+    displayName: string;
+    documentType: string;
+    note: string;
+  }>({ isOpen: false, id: "", displayName: "", documentType: "", note: "" });
+  const [changeStatusModal, setChangeStatusModal] = useState<{
+    isOpen: boolean;
+    id: string;
+    status: DocumentStatus;
+    rejectedReason: string;
+  }>({ isOpen: false, id: "", status: "SUBMITTED", rejectedReason: "" });
   const [deleteConfirm, setDeleteConfirm] = useState<{
     isOpen: boolean;
     type: "folder" | "doc";
@@ -313,6 +334,13 @@ export function DocumentWorkspace({
     ? displayDocs.findIndex((document) => document.id === selectedDocument.id)
     : -1;
 
+  // Local Capabilities
+  const canCreateNewFolder = canRenameFolder(sessionUser, { id: "new", name: "" }); // Cấp lãnh đạo
+  const canUpload = selectedFolderData ? canUploadToFolder(sessionUser, { id: selectedFolderData.id, name: selectedFolderData.name }) : false;
+  
+  const canRenameCurrentFolder = selectedFolderData ? canRenameFolder(sessionUser, { id: selectedFolderData.id, name: selectedFolderData.name }) : false;
+  const canDeleteCurrentFolder = selectedFolderData ? canDeleteFolder(sessionUser, { id: selectedFolderData.id, name: selectedFolderData.name }) : false;
+
   const copyDocumentLink = useCallback(
     async (document: DocumentListItem) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -338,7 +366,7 @@ export function DocumentWorkspace({
       event.target.value = "";
       return;
     }
-    setPendingUpload({ file, displayName: file.name });
+    setPendingUpload({ file, displayName: file.name, documentType: "", note: "" });
   };
 
   const closeUploadDialog = () => {
@@ -558,6 +586,65 @@ export function DocumentWorkspace({
     }
   };
 
+  const handleEditMetadata = async () => {
+    if (mutationRef.current) return;
+    mutationRef.current = true;
+    try {
+      const result = await updateDocumentMetadata(
+        projectId,
+        editMetadataModal.id,
+        {
+          displayName: editMetadataModal.displayName,
+          documentType: editMetadataModal.documentType || null,
+          note: editMetadataModal.note,
+        }
+      );
+      if (result?.error) toast.error(result.error);
+      else {
+        toast.success("Đã cập nhật thông tin hồ sơ");
+        setLocalDocuments(current => current.map(item => 
+          item.id === editMetadataModal.id 
+            ? { ...item, displayName: editMetadataModal.displayName, documentType: editMetadataModal.documentType || null, metadata: { ...item.metadata, note: editMetadataModal.note } }
+            : item
+        ));
+        setEditMetadataModal({ isOpen: false, id: "", displayName: "", documentType: "", note: "" });
+        router.refresh();
+      }
+    } catch {
+      toast.error("Lỗi cập nhật thông tin");
+    } finally {
+      mutationRef.current = false;
+    }
+  };
+
+  const handleChangeStatus = async () => {
+    if (mutationRef.current) return;
+    mutationRef.current = true;
+    try {
+      const result = await changeDocumentStatus(
+        projectId,
+        changeStatusModal.id,
+        changeStatusModal.status,
+        changeStatusModal.rejectedReason
+      );
+      if (result?.error) toast.error(result.error);
+      else {
+        toast.success("Đã chuyển trạng thái hồ sơ");
+        setLocalDocuments(current => current.map(item => 
+          item.id === changeStatusModal.id 
+            ? { ...item, status: changeStatusModal.status, rejectedReason: changeStatusModal.status === "REJECTED" ? changeStatusModal.rejectedReason : null }
+            : item
+        ));
+        setChangeStatusModal({ isOpen: false, id: "", status: "SUBMITTED", rejectedReason: "" });
+        router.refresh();
+      }
+    } catch {
+      toast.error("Lỗi chuyển trạng thái");
+    } finally {
+      mutationRef.current = false;
+    }
+  };
+
   const FolderNode = ({
     folder,
     level = 0,
@@ -593,9 +680,9 @@ export function DocumentWorkspace({
             )}
           </div>
           {isSelected &&
-            (capabilities.canRenameFolder || capabilities.canDelete) && (
+            (canRenameCurrentFolder || canDeleteCurrentFolder) && (
               <div className="flex gap-1 rounded-md border border-slate-200 bg-white px-1 shadow-sm">
-                {capabilities.canRenameFolder && (
+                {canRenameCurrentFolder && (
                   <button
                     type="button"
                     onClick={(event) => {
@@ -612,7 +699,7 @@ export function DocumentWorkspace({
                     <Pencil className="h-3 w-3" />
                   </button>
                 )}
-                {capabilities.canDelete && (
+                {canDeleteCurrentFolder && (
                   <button
                     type="button"
                     onClick={(event) => {
@@ -645,7 +732,7 @@ export function DocumentWorkspace({
       <aside className="flex max-h-[210px] w-full shrink-0 flex-col overflow-y-auto border-r border-slate-200 bg-slate-50 md:h-auto md:max-h-none md:w-72">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-slate-50 p-4">
           <h2 className="font-semibold text-slate-800">Thư mục</h2>
-          {capabilities.canCreateFolder && (
+          {canCreateNewFolder && (
             <button
               type="button"
               onClick={() => setShowNewFolder((value) => !value)}
@@ -730,7 +817,7 @@ export function DocumentWorkspace({
                   </p>
                 </div>
 
-                {capabilities.canUpload && (
+                {canUpload && (
                   <div className="w-full shrink-0 sm:w-auto">
                     <input
                       type="file"
@@ -957,7 +1044,7 @@ export function DocumentWorkspace({
                             >
                               <Copy className="h-4 w-4" /> Sao chép link nội bộ
                             </button>
-                            {capabilities.canRenameDocument && (
+                            {canRenameDocument(sessionUser, { id: document.id, status: document.status, uploadedById: document.uploadedById }, { id: selectedFolderData!.id, name: selectedFolderData!.name }) && (
                               <button
                                 type="button"
                                 onClick={() => {
@@ -973,7 +1060,7 @@ export function DocumentWorkspace({
                                 <Pencil className="h-4 w-4" /> Đổi tên
                               </button>
                             )}
-                            {capabilities.canDelete && (
+                            {canDeleteDocument(sessionUser, { id: document.id, status: document.status, uploadedById: document.uploadedById }, { id: selectedFolderData!.id, name: selectedFolderData!.name }) && (
                               <button
                                 type="button"
                                 onClick={() => {
@@ -1011,7 +1098,7 @@ export function DocumentWorkspace({
                         ? "Hãy thử xóa bộ lọc hoặc tìm bằng từ khóa khác."
                         : "Hãy tải tài liệu hợp lệ theo đúng định dạng được gợi ý."}
                     </p>
-                    {capabilities.canUpload &&
+                    {canUpload &&
                       !searchQuery &&
                       filterType === "ALL" && (
                         <Button
@@ -1053,8 +1140,27 @@ export function DocumentWorkspace({
             selectedDocumentIndex >= 0 &&
             selectedDocumentIndex < displayDocs.length - 1
           }
-          canRename={capabilities.canRenameDocument}
-          canDelete={capabilities.canDelete}
+          canRename={canRenameDocument(sessionUser, { id: selectedDocument.id, status: selectedDocument.status, uploadedById: selectedDocument.uploadedById }, { id: selectedFolderData!.id, name: selectedFolderData!.name })}
+          canDelete={canDeleteDocument(sessionUser, { id: selectedDocument.id, status: selectedDocument.status, uploadedById: selectedDocument.uploadedById }, { id: selectedFolderData!.id, name: selectedFolderData!.name })}
+          canEditMetadata={canEditDocumentMetadata(sessionUser, { id: selectedDocument.id, status: selectedDocument.status, uploadedById: selectedDocument.uploadedById }, { id: selectedFolderData!.id, name: selectedFolderData!.name })}
+          canChangeStatus={canChangeDocumentStatus(sessionUser, { id: selectedDocument.id, status: selectedDocument.status, uploadedById: selectedDocument.uploadedById })}
+          onEditMetadata={() => {
+            setEditMetadataModal({
+              isOpen: true,
+              id: selectedDocument.id,
+              displayName: selectedDocument.displayName || selectedDocument.originalName,
+              documentType: selectedDocument.documentType || "",
+              note: selectedDocument.metadata?.note || "",
+            });
+          }}
+          onChangeStatus={() => {
+            setChangeStatusModal({
+              isOpen: true,
+              id: selectedDocument.id,
+              status: selectedDocument.status,
+              rejectedReason: selectedDocument.rejectedReason || "",
+            });
+          }}
           onClose={closeDocument}
           onPrevious={() => {
             if (selectedDocumentIndex > 0) {
@@ -1164,6 +1270,30 @@ export function DocumentWorkspace({
                 </p>
               </div>
 
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-slate-700">Loại hồ sơ</label>
+                <select
+                  value={pendingUpload.documentType}
+                  onChange={(e) => setPendingUpload(c => c ? { ...c, documentType: e.target.value } : c)}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                >
+                  <option value="">-- Chọn loại --</option>
+                  {getDocumentTypeOptionsForFolder(selectedFolderData.name).map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-slate-700">Ghi chú</label>
+                <textarea
+                  value={pendingUpload.note}
+                  onChange={(e) => setPendingUpload(c => c ? { ...c, note: e.target.value } : c)}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  rows={2}
+                />
+              </div>
+
               {isPoorDocumentFileName(pendingUpload.displayName) && (
                 <div className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
                   <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -1253,6 +1383,99 @@ export function DocumentWorkspace({
           }
           onSave={handleRenameDocument}
         />
+      )}
+
+      {editMetadataModal.isOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+          <div className="w-full max-w-md rounded-xl bg-white shadow-2xl">
+            <div className="border-b border-slate-200 px-5 py-4">
+              <h3 className="text-lg font-bold text-slate-900">Sửa thông tin hồ sơ</h3>
+            </div>
+            <div className="space-y-4 p-5">
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-slate-700">Tên hiển thị</label>
+                <input
+                  value={editMetadataModal.displayName}
+                  onChange={(e) => setEditMetadataModal(c => ({ ...c, displayName: e.target.value }))}
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-slate-700">Loại hồ sơ</label>
+                <select
+                  value={editMetadataModal.documentType}
+                  onChange={(e) => setEditMetadataModal(c => ({ ...c, documentType: e.target.value }))}
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="">-- Chọn loại --</option>
+                  {getDocumentTypeOptionsForFolder(selectedFolderData?.name || "").map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-slate-700">Ghi chú</label>
+                <textarea
+                  value={editMetadataModal.note}
+                  onChange={(e) => setEditMetadataModal(c => ({ ...c, note: e.target.value }))}
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  rows={3}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-4 rounded-b-xl">
+              <Button variant="outline" onClick={() => setEditMetadataModal(c => ({ ...c, isOpen: false }))}>Hủy</Button>
+              <Button onClick={handleEditMetadata}>Lưu thay đổi</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {changeStatusModal.isOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+          <div className="w-full max-w-sm rounded-xl bg-white shadow-2xl">
+            <div className="border-b border-slate-200 px-5 py-4">
+              <h3 className="text-lg font-bold text-slate-900">Đổi trạng thái</h3>
+            </div>
+            <div className="space-y-4 p-5">
+              <div>
+                <label className="mb-1 block text-sm font-semibold text-slate-700">Trạng thái mới</label>
+                <select
+                  value={changeStatusModal.status}
+                  onChange={(e) => setChangeStatusModal(c => ({ ...c, status: e.target.value as DocumentStatus }))}
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="SUBMITTED">Chờ duyệt (SUBMITTED)</option>
+                  <option value="APPROVED">Đã duyệt (APPROVED)</option>
+                  <option value="REJECTED">Từ chối (REJECTED)</option>
+                  <option value="ARCHIVED">Lưu trữ (ARCHIVED)</option>
+                  <option value="SUPERSEDED">Thay thế (SUPERSEDED)</option>
+                </select>
+              </div>
+              {changeStatusModal.status === "REJECTED" && (
+                <div>
+                  <label className="mb-1 block text-sm font-semibold text-slate-700">Lý do từ chối</label>
+                  <textarea
+                    value={changeStatusModal.rejectedReason}
+                    onChange={(e) => setChangeStatusModal(c => ({ ...c, rejectedReason: e.target.value }))}
+                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    rows={2}
+                    placeholder="Bắt buộc..."
+                  />
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-4 rounded-b-xl">
+              <Button variant="outline" onClick={() => setChangeStatusModal(c => ({ ...c, isOpen: false }))}>Hủy</Button>
+              <Button 
+                onClick={handleChangeStatus} 
+                disabled={changeStatusModal.status === "REJECTED" && !changeStatusModal.rejectedReason.trim()}
+              >
+                Xác nhận
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
