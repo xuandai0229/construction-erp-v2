@@ -236,7 +236,7 @@ export async function renameDocument(projectId: string, documentId: string, requ
 export async function updateDocumentMetadata(
   projectId: string,
   documentId: string,
-  updates: { displayName?: string; documentType?: string | null; note?: string }
+  updates: { displayName?: string; note?: string }
 ) {
   const session = await getSession();
   if (!session) return { error: "Vui lòng đăng nhập" };
@@ -266,7 +266,6 @@ export async function updateDocumentMetadata(
       where: { id: documentId },
       data: {
         displayName: updates.displayName?.trim() || existing.displayName,
-        documentType: updates.documentType !== undefined ? updates.documentType : existing.documentType,
         metadata: newMetadata,
       }
     });

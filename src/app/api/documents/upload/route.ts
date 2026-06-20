@@ -9,6 +9,7 @@ import { canUploadToFolder } from "@/lib/documents/permissions";
 import crypto from "crypto";
 import { getDocumentRule } from "@/lib/document-rules";
 import { buildDocumentDisplayName } from "@/lib/document-file-utils";
+import { getDocumentTypeOptionsForFolder } from "@/lib/documents/metadata-types";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
@@ -92,6 +93,13 @@ export async function POST(req: NextRequest) {
     if (rule.allowedExtensions && rule.allowedExtensions.length > 0) {
       if (!rule.allowedExtensions.includes(extension)) {
         return NextResponse.json({ error: `File này không phù hợp với thư mục ${rule.title}. Chỉ cho phép: ${rule.allowedExtensions.join(", ").toUpperCase()}.` }, { status: 400 });
+      }
+    }
+
+    if (documentType) {
+      const validOptions = getDocumentTypeOptionsForFolder(folder.name);
+      if (!validOptions.some(opt => opt.value === documentType)) {
+        return NextResponse.json({ error: "Loại hồ sơ không hợp lệ cho thư mục này" }, { status: 400 });
       }
     }
 

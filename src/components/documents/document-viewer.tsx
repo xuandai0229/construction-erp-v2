@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { getDocumentPreviewKind } from "@/lib/document-file-utils";
-import { getDocumentTypeLabel } from "@/lib/documents/metadata-types";
 import { DocumentStatus } from "@prisma/client";
 
 export interface DocumentListItem {
@@ -205,14 +204,18 @@ export function DocumentViewer({
               {document.displayName || document.originalName}
             </p>
             <p className="mt-0.5 text-xs text-slate-500 flex items-center gap-2">
-              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                document.status === "APPROVED" ? "bg-emerald-100 text-emerald-700" :
-                document.status === "REJECTED" ? "bg-red-100 text-red-700" :
-                document.status === "ARCHIVED" ? "bg-slate-100 text-slate-700" :
-                "bg-blue-100 text-blue-700"
-              }`}>
-                {document.status}
-              </span>
+              {document.status !== "SUBMITTED" && (
+                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                  document.status === "APPROVED" ? "bg-emerald-100 text-emerald-700" :
+                  document.status === "REJECTED" ? "bg-red-100 text-red-700" :
+                  "bg-slate-100 text-slate-700"
+                }`}>
+                  {document.status === "APPROVED" ? "Đã duyệt" : document.status === "REJECTED" ? "Từ chối" : document.status === "ARCHIVED" ? "Lưu trữ" : "Thay thế"}
+                </span>
+              )}
+              {document.status === "SUBMITTED" && (
+                <span className="text-slate-400">Mới tải lên</span>
+              )}
               <span>
                 {folderName} · {formatBytes(document.size)} · {document.extension.toUpperCase()}
               </span>
@@ -399,37 +402,45 @@ export function DocumentViewer({
           </button>
         </div>
 
-        <footer className="grid shrink-0 grid-cols-2 gap-x-5 gap-y-2 border-t border-slate-200 bg-white px-4 py-3 text-xs sm:grid-cols-5 sm:px-5">
-          <div>
-            <p className="text-slate-400">Loại hồ sơ</p>
-            <p className="mt-0.5 font-medium text-slate-700">
-              {getDocumentTypeLabel(document.documentType)}
-            </p>
+        <footer className="flex flex-col gap-3 border-t border-slate-200 bg-white px-4 py-3 text-xs sm:px-5">
+          <div className="grid grid-cols-2 gap-x-5 gap-y-2 sm:grid-cols-4">
+
+            <div>
+              <p className="text-slate-400">Ghi chú</p>
+              <p className="mt-0.5 font-medium text-slate-700 truncate" title={document.metadata?.note}>
+                {document.metadata?.note || "-"}
+              </p>
+            </div>
+            <div>
+              <p className="text-slate-400">Người tải lên</p>
+              <p className="mt-0.5 truncate font-medium text-slate-700">
+                {document.uploadedBy?.name || "Không rõ"}
+              </p>
+            </div>
+            <div>
+              <p className="text-slate-400">Ngày tải lên</p>
+              <p className="mt-0.5 font-medium text-slate-700">
+                {format(new Date(document.createdAt), "dd/MM/yyyy HH:mm")}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-slate-400">Ghi chú</p>
-            <p className="mt-0.5 font-medium text-slate-700 truncate" title={document.metadata?.note}>
-              {document.metadata?.note || "-"}
-            </p>
-          </div>
-          <div>
-            <p className="text-slate-400">Người tải lên</p>
-            <p className="mt-0.5 truncate font-medium text-slate-700">
-              {document.uploadedBy?.name || "Không rõ"}
-            </p>
-          </div>
-          <div>
-            <p className="text-slate-400">Ngày tải lên</p>
-            <p className="mt-0.5 font-medium text-slate-700">
-              {format(new Date(document.createdAt), "dd/MM/yyyy HH:mm")}
-            </p>
-          </div>
-          <div>
-            <p className="text-slate-400">File Hash (SHA-256)</p>
-            <p className="mt-0.5 font-mono text-slate-700 truncate w-24" title={document.fileHash || "-"}>
-              {document.fileHash || "-"}
-            </p>
-          </div>
+          <details className="group">
+            <summary className="cursor-pointer text-[11px] font-medium text-slate-500 hover:text-slate-700">Thông tin kỹ thuật</summary>
+            <div className="mt-2 grid grid-cols-2 gap-x-5 gap-y-2 sm:grid-cols-3 rounded-md bg-slate-50 p-2 text-[11px]">
+              <div>
+                <p className="text-slate-400">File Hash (SHA-256)</p>
+                <p className="mt-0.5 font-mono text-slate-600 truncate" title={document.fileHash || "-"}>{document.fileHash || "-"}</p>
+              </div>
+              <div>
+                <p className="text-slate-400">MIME Type</p>
+                <p className="mt-0.5 font-mono text-slate-600 truncate" title={document.mimeType}>{document.mimeType}</p>
+              </div>
+              <div>
+                <p className="text-slate-400">Storage ID</p>
+                <p className="mt-0.5 font-mono text-slate-600 truncate" title={document.storedName}>{document.storedName}</p>
+              </div>
+            </div>
+          </details>
         </footer>
       </section>
     </div>

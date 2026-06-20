@@ -126,5 +126,17 @@ export const DEFAULT_DOCUMENT_RULE: DocumentFolderRule = {
 };
 
 export function getDocumentRule(folderName: string): DocumentFolderRule {
-  return DOCUMENT_FOLDER_RULES[folderName] || DEFAULT_DOCUMENT_RULE;
+  // Direct match first
+  if (DOCUMENT_FOLDER_RULES[folderName]) {
+    return DOCUMENT_FOLDER_RULES[folderName];
+  }
+  // Normalize: strip leading digits + separator and match by keyword
+  const normalized = folderName.replace(/^\d+[._]\s*/, "").trim().toLowerCase();
+  for (const [key, rule] of Object.entries(DOCUMENT_FOLDER_RULES)) {
+    const keyNormalized = key.replace(/^\d+[._]\s*/, "").trim().toLowerCase();
+    if (keyNormalized === normalized) {
+      return rule;
+    }
+  }
+  return DEFAULT_DOCUMENT_RULE;
 }
