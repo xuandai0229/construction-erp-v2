@@ -203,12 +203,7 @@ export function DocumentWorkspace({
     displayName: string;
     note: string;
   }>({ isOpen: false, id: "", displayName: "", note: "" });
-  const [changeStatusModal, setChangeStatusModal] = useState<{
-    isOpen: boolean;
-    id: string;
-    status: DocumentStatus;
-    rejectedReason: string;
-  }>({ isOpen: false, id: "", status: "SUBMITTED", rejectedReason: "" });
+
   const [deleteConfirm, setDeleteConfirm] = useState<{
     isOpen: boolean;
     type: "folder" | "doc";
@@ -360,18 +355,7 @@ export function DocumentWorkspace({
     const groups: Record<string, DocumentListItem[]> = {};
     for (const doc of displayDocs) {
       let key = "Khác";
-      if (groupBy === "STATUS") {
-        const statusMap: Record<string, string> = {
-          SUBMITTED: "Chờ duyệt",
-          APPROVED: "Đã duyệt",
-          REJECTED: "Từ chối",
-          ARCHIVED: "Lưu trữ",
-          SUPERSEDED: "Thay thế",
-          DRAFT: "Bản nháp"
-        };
-        key = statusMap[doc.status] || doc.status;
-      }
-      else if (groupBy === "MONTH") key = format(new Date(doc.createdAt), "MM/yyyy");
+      if (groupBy === "MONTH") key = format(new Date(doc.createdAt), "MM/yyyy");
       else if (groupBy === "UPLOADER") key = doc.uploadedBy?.name || "Không rõ";
 
       if (!groups[key]) groups[key] = [];
@@ -704,33 +688,7 @@ export function DocumentWorkspace({
     }
   };
 
-  const handleChangeStatus = async () => {
-    if (mutationRef.current) return;
-    mutationRef.current = true;
-    try {
-      const result = await changeDocumentStatus(
-        projectId,
-        changeStatusModal.id,
-        changeStatusModal.status,
-        changeStatusModal.rejectedReason
-      );
-      if (result?.error) toast.error(result.error);
-      else {
-        toast.success("Đã chuyển trạng thái hồ sơ");
-        setLocalDocuments(current => current.map(item =>
-          item.id === changeStatusModal.id
-            ? { ...item, status: changeStatusModal.status, rejectedReason: changeStatusModal.status === "REJECTED" ? changeStatusModal.rejectedReason : null }
-            : item
-        ));
-        setChangeStatusModal({ isOpen: false, id: "", status: "SUBMITTED", rejectedReason: "" });
-        router.refresh();
-      }
-    } catch {
-      toast.error("Lỗi chuyển trạng thái");
-    } finally {
-      mutationRef.current = false;
-    }
-  };
+
 
   const FolderNode = ({
     folder,
@@ -1065,7 +1023,6 @@ export function DocumentWorkspace({
                             className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
                           >
                             <option className="bg-white text-slate-900 font-medium" value="NONE">Hiển thị bình thường</option>
-                            <option className="bg-white text-slate-900" value="STATUS">Gom theo trạng thái</option>
                             <option className="bg-white text-slate-900" value="MONTH">Gom theo tháng</option>
                             <option className="bg-white text-slate-900" value="UPLOADER">Gom theo người tải</option>
                           </select>
@@ -1192,14 +1149,7 @@ export function DocumentWorkspace({
                                   {document.displayName || document.originalName}
                                 </p>
                                 <p className="mt-1 flex items-center gap-2 text-xs text-slate-500">
-                                  {document.status !== "SUBMITTED" && (
-                                    <span className={`px-1.5 py-0.5 rounded font-semibold text-[10px] ${document.status === "APPROVED" ? "bg-emerald-100 text-emerald-700" :
-                                        document.status === "REJECTED" ? "bg-red-100 text-red-700" :
-                                          "bg-slate-100 text-slate-700"
-                                      }`}>
-                                      {document.status === "APPROVED" ? "Đã duyệt" : document.status === "REJECTED" ? "Từ chối" : document.status === "ARCHIVED" ? "Lưu trữ" : "Thay thế"}
-                                    </span>
-                                  )}
+
                                   <span>{formatBytes(document.size)} · {getFileTypeLabel(document.mimeType, document.extension)}</span>
                                 </p>
                               </div>
@@ -1348,21 +1298,12 @@ export function DocumentWorkspace({
           canRename={canRenameDocument(sessionUser, { id: selectedDocument.id, status: selectedDocument.status, uploadedById: selectedDocument.uploadedById }, { id: selectedFolderData!.id, name: selectedFolderData!.name })}
           canDelete={canDeleteDocument(sessionUser, { id: selectedDocument.id, status: selectedDocument.status, uploadedById: selectedDocument.uploadedById }, { id: selectedFolderData!.id, name: selectedFolderData!.name })}
           canEditMetadata={canEditDocumentMetadata(sessionUser, { id: selectedDocument.id, status: selectedDocument.status, uploadedById: selectedDocument.uploadedById }, { id: selectedFolderData!.id, name: selectedFolderData!.name })}
-          canChangeStatus={canChangeDocumentStatus(sessionUser, { id: selectedDocument.id, status: selectedDocument.status, uploadedById: selectedDocument.uploadedById })}
           onEditMetadata={() => {
             setEditMetadataModal({
               isOpen: true,
               id: selectedDocument.id,
               displayName: selectedDocument.displayName || selectedDocument.originalName,
               note: selectedDocument.metadata?.note || "",
-            });
-          }}
-          onChangeStatus={() => {
-            setChangeStatusModal({
-              isOpen: true,
-              id: selectedDocument.id,
-              status: selectedDocument.status,
-              rejectedReason: selectedDocument.rejectedReason || "",
             });
           }}
           onClose={closeDocument}
@@ -1555,7 +1496,7 @@ export function DocumentWorkspace({
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
           <div className="w-full max-w-md rounded-xl bg-white shadow-2xl">
             <div className="border-b border-slate-200 px-5 py-4">
-              <h3 className="text-lg font-bold text-slate-900">Sửa thông tin hồ sơ</h3>
+              <h3 className="text-lg font-bold text-slate-900">Đổi tên / Ghi chú</h3>
             </div>
             <div className="space-y-4 p-5">
               <div>
@@ -1563,7 +1504,7 @@ export function DocumentWorkspace({
                 <input
                   value={editMetadataModal.displayName}
                   onChange={(e) => setEditMetadataModal(c => ({ ...c, displayName: e.target.value }))}
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-md border border-slate-200 bg-white text-slate-900 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
 
@@ -1572,7 +1513,7 @@ export function DocumentWorkspace({
                 <textarea
                   value={editMetadataModal.note}
                   onChange={(e) => setEditMetadataModal(c => ({ ...c, note: e.target.value }))}
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-md border border-slate-200 bg-white text-slate-900 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   rows={3}
                 />
               </div>
@@ -1585,52 +1526,7 @@ export function DocumentWorkspace({
         </div>
       )}
 
-      {changeStatusModal.isOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
-          <div className="w-full max-w-sm rounded-xl bg-white shadow-2xl">
-            <div className="border-b border-slate-200 px-5 py-4">
-              <h3 className="text-lg font-bold text-slate-900">Đổi trạng thái</h3>
-            </div>
-            <div className="space-y-4 p-5">
-              <div>
-                <label className="mb-1 block text-sm font-semibold text-slate-700">Trạng thái mới</label>
-                <select
-                  value={changeStatusModal.status}
-                  onChange={(e) => setChangeStatusModal(c => ({ ...c, status: e.target.value as DocumentStatus }))}
-                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                >
-                  <option value="SUBMITTED">Chờ duyệt (SUBMITTED)</option>
-                  <option value="APPROVED">Đã duyệt (APPROVED)</option>
-                  <option value="REJECTED">Từ chối (REJECTED)</option>
-                  <option value="ARCHIVED">Lưu trữ (ARCHIVED)</option>
-                  <option value="SUPERSEDED">Thay thế (SUPERSEDED)</option>
-                </select>
-              </div>
-              {changeStatusModal.status === "REJECTED" && (
-                <div>
-                  <label className="mb-1 block text-sm font-semibold text-slate-700">Lý do từ chối</label>
-                  <textarea
-                    value={changeStatusModal.rejectedReason}
-                    onChange={(e) => setChangeStatusModal(c => ({ ...c, rejectedReason: e.target.value }))}
-                    className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    rows={2}
-                    placeholder="Bắt buộc..."
-                  />
-                </div>
-              )}
-            </div>
-            <div className="flex justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-4 rounded-b-xl">
-              <Button variant="outline" onClick={() => setChangeStatusModal(c => ({ ...c, isOpen: false }))}>Hủy</Button>
-              <Button
-                onClick={handleChangeStatus}
-                disabled={changeStatusModal.status === "REJECTED" && !changeStatusModal.rejectedReason.trim()}
-              >
-                Xác nhận
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 }

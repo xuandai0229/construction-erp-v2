@@ -60,9 +60,7 @@ interface DocumentViewerProps {
   onDelete: () => void;
   onCopyLink: () => void;
   canEditMetadata: boolean;
-  canChangeStatus: boolean;
   onEditMetadata: () => void;
-  onChangeStatus: () => void;
 }
 
 function formatBytes(bytes: number, decimals = 2) {
@@ -146,9 +144,7 @@ export function DocumentViewer({
   onDelete,
   onCopyLink,
   canEditMetadata,
-  canChangeStatus,
   onEditMetadata,
-  onChangeStatus,
 }: DocumentViewerProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [imageScale, setImageScale] = useState(1);
@@ -204,18 +200,6 @@ export function DocumentViewer({
               {document.displayName || document.originalName}
             </p>
             <p className="mt-0.5 text-xs text-slate-500 flex items-center gap-2">
-              {document.status !== "SUBMITTED" && (
-                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                  document.status === "APPROVED" ? "bg-emerald-100 text-emerald-700" :
-                  document.status === "REJECTED" ? "bg-red-100 text-red-700" :
-                  "bg-slate-100 text-slate-700"
-                }`}>
-                  {document.status === "APPROVED" ? "Đã duyệt" : document.status === "REJECTED" ? "Từ chối" : document.status === "ARCHIVED" ? "Lưu trữ" : "Thay thế"}
-                </span>
-              )}
-              {document.status === "SUBMITTED" && (
-                <span className="text-slate-400">Mới tải lên</span>
-              )}
               <span>
                 {folderName} · {formatBytes(document.size)} · {document.extension.toUpperCase()}
               </span>
@@ -297,16 +281,7 @@ export function DocumentViewer({
               Sửa thông tin
             </button>
           )}
-          {canChangeStatus && (
-            <button
-              type="button"
-              onClick={onChangeStatus}
-              className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 hover:bg-slate-100"
-            >
-              <Pencil className="h-4 w-4" />
-              Đổi trạng thái
-            </button>
-          )}
+
         </div>
 
         <div className="relative min-h-0 flex-1 overflow-hidden bg-slate-100">

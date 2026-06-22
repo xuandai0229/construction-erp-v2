@@ -3,7 +3,7 @@ import { addWorkDays, formatWorkDate, parseWorkDate } from "@/lib/date/work-date
 const Decimal = Prisma.Decimal;
 type Decimal = Prisma.Decimal;
 
-export function validateQuantity(quantity: any): Decimal | null {
+export function validateQuantity(quantity: unknown): Decimal | null {
   if (quantity === null || quantity === undefined || quantity === "") return null;
   const num = Number(quantity);
   if (isNaN(num)) return null;
@@ -11,7 +11,12 @@ export function validateQuantity(quantity: any): Decimal | null {
   return new Decimal(num);
 }
 
-export function calculateCumulativeQuantity(entries: any[], includeDraft = false): Decimal {
+export interface ProgressEntryInput {
+  status: string;
+  quantity?: Decimal | number | string | null;
+}
+
+export function calculateCumulativeQuantity(entries: ProgressEntryInput[], includeDraft = false): Decimal {
   let total = new Decimal(0);
   for (const entry of entries) {
     if (entry.status === "APPROVED" || (includeDraft && ["DRAFT", "SUBMITTED", "REVISION_REQUESTED"].includes(entry.status))) {
@@ -58,8 +63,8 @@ export function buildDateColumns(fromDate: Date | string, toDate: Date | string,
   return dates;
 }
 
-export function groupEntriesByItemAndDate(entries: any[]) {
-  const grouped: Record<string, Record<string, any[]>> = {};
+export function groupEntriesByItemAndDate<T extends { itemId: string; entryDate: Date | string }>(entries: T[]) {
+  const grouped: Record<string, Record<string, T[]>> = {};
   
   for (const entry of entries) {
     if (!grouped[entry.itemId]) {
@@ -75,16 +80,18 @@ export function groupEntriesByItemAndDate(entries: any[]) {
   return grouped;
 }
 
-export function buildTreeItems(items: any[]) {
-  const itemMap: Record<string, any> = {};
-  const roots: any[] = [];
+export type TreeNode<T> = T & { children: TreeNode<T>[] };
+
+export function buildTreeItems<T extends { id: string; parentId: string | null; sortOrder: number }>(items: T[]) {
+  const itemMap: Record<string, TreeNode<T>> = {};
+  const roots: TreeNode<T>[] = [];
 
   // Sort by sortOrder first
   const sortedItems = [...items].sort((a, b) => a.sortOrder - b.sortOrder);
 
   // Initialize map with empty children arrays
   for (const item of sortedItems) {
-    itemMap[item.id] = { ...item, children: [] };
+    itemMap[item.id] = { ...item, children: [] } as unknown as TreeNode<T>;
   }
 
   // Build tree
@@ -99,8 +106,8 @@ export function buildTreeItems(items: any[]) {
   return roots;
 }
 
-export function flattenTreeForTable(tree: any[], level = 0): any[] {
-  let result: any[] = [];
+export function flattenTreeForTable<T extends { children?: T[] }>(tree: T[], level = 0): (T & { displayLevel: number })[] {
+  let result: (T & { displayLevel: number })[] = [];
   for (const node of tree) {
     result.push({ ...node, displayLevel: level });
     if (node.children && node.children.length > 0) {
@@ -110,36 +117,40 @@ export function flattenTreeForTable(tree: any[], level = 0): any[] {
   return result;
 }
 
-export function calculateParentRollup(flatTree: any[], entriesMap: Record<string, any[]>) {
-  // We process from bottom up to roll up values to parents
-  // However, in our system, users input directly on WORK items.
-  // The rollup just sums designQuantity and cumulative quantity.
-  
-  // Create a quick lookup
-  const nodeMap = new Map();
-  for (const node of flatTree) {
+export interface RollupNode {
+  id: string;
+  parentId: string | null;
+  designQuantity?: Decimal | number | string | null;
+  rollupDesignQuantity?: Decimal;
+  rollupCumulative?: Decimal;
+  rollupPercent?: string | null;
+}
+
+export function calculateParentRollup<T extends { id: string; parentId: string | null; designQuantity?: Decimal | number | string | null }>(flatTree: T[], entriesMap: Record<string, ProgressEntryInput[]>) {
+  const result = flatTree as (T & RollupNode)[];
+  const nodeMap = new Map<string, T & RollupNode>();
+  for (const node of result) {
     node.rollupDesignQuantity = new Decimal(node.designQuantity || 0);
     node.rollupCumulative = calculateCumulativeQuantity(entriesMap[node.id] || [], false);
     nodeMap.set(node.id, node);
   }
 
-  // Iterate backwards (assuming flatten puts children after parents, deeper first? No, flatten puts children immediately after parent)
-  // To do proper bottom-up, reverse the array
-  const reversed = [...flatTree].reverse();
-  
+  const reversed = [...result].reverse();
   for (const node of reversed) {
     if (node.parentId && nodeMap.has(node.parentId)) {
       const parent = nodeMap.get(node.parentId);
-      parent.rollupDesignQuantity = parent.rollupDesignQuantity.add(node.rollupDesignQuantity);
-      parent.rollupCumulative = parent.rollupCumulative.add(node.rollupCumulative);
+      if (parent && parent.rollupDesignQuantity && node.rollupDesignQuantity && parent.rollupCumulative && node.rollupCumulative) {
+        parent.rollupDesignQuantity = parent.rollupDesignQuantity.add(node.rollupDesignQuantity);
+        parent.rollupCumulative = parent.rollupCumulative.add(node.rollupCumulative);
+      }
     }
   }
   
-  // Recalculate percent based on rolled up values
-  for (const node of flatTree) {
-    node.rollupPercent = calculateProgressPercent(node.rollupCumulative, node.rollupDesignQuantity);
+  for (const node of result) {
+    if (node.rollupCumulative && node.rollupDesignQuantity) {
+      node.rollupPercent = calculateProgressPercent(node.rollupCumulative, node.rollupDesignQuantity);
+    }
   }
   
-  return flatTree;
+  return result;
 }
-

@@ -1,29 +1,70 @@
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { ClipboardCheck } from "lucide-react";
+import { ReportsWorkspace } from "@/components/reports/reports-workspace";
+import { getSiteReports, getActiveProjects } from "./actions";
+import { FieldReport, ReportType, WeatherCondition, ReportStatus } from "@/components/reports/types";
+import { format } from "date-fns";
+import { SiteReportAttachment } from "@prisma/client";
 
 export const metadata = {
   title: "Báo cáo hiện trường | ERP Công trình",
+  description: "Quản lý, theo dõi và tổng hợp báo cáo công việc hằng ngày tại công trường",
 };
 
 export default async function ReportsPage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
-  return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Báo cáo hiện trường</h1>
-        <p className="text-slate-500 mt-1">Quản lý và theo dõi báo cáo công việc hàng ngày tại công trường</p>
-      </div>
+  const rawReports = await getSiteReports({});
+  const projects = await getActiveProjects();
+  
+  // Map backend model to frontend FieldReport
+  const reports: FieldReport[] = rawReports.map(r => ({
+    id: r.id,
+    reportNo: r.reportNo,
+    code: r.reportNo.length > 20 ? r.reportNo.split('-')[0].toUpperCase() : r.reportNo,
+    type: r.type as ReportType,
+    projectId: r.projectId,
+    projectName: r.project?.name || 'Không xác định',
+    date: format(r.reportDate, 'yyyy-MM-dd'),
+    time: format(r.reportDate, 'HH:mm'),
+    weekStartDate: r.weekStartDate ? format(r.weekStartDate, 'yyyy-MM-dd') : undefined,
+    weekEndDate: r.weekEndDate ? format(r.weekEndDate, 'yyyy-MM-dd') : undefined,
+    summary: r.summary || undefined,
+    creatorName: r.reporterName || 'N/A',
+    creatorRole: 'Người tạo', // Can be enhanced later
+    createdById: r.createdById,
+    weatherCondition: (r.weatherCondition as WeatherCondition) || 'SUNNY',
+    weatherTemperature: r.weatherTemperature || undefined,
+    status: r.status as ReportStatus,
+    photos: (r.attachments || []).filter((a: SiteReportAttachment) => a.kind === 'PHOTO').map((a: SiteReportAttachment) => ({
+      id: a.id,
+      url: `/api/reports/attachments/${a.id}`,
+      caption: a.caption || undefined,
+      createdAt: a.createdAt.toISOString()
+    })),
+    attachments: (r.attachments || []).filter((a: SiteReportAttachment) => a.kind === 'FILE').map((a: SiteReportAttachment) => ({
+      id: a.id,
+      name: a.originalName || a.fileName,
+      url: `/api/reports/attachments/${a.id}`,
+      type: (a.originalName || a.fileName).split('.').pop() || 'unknown',
+      size: `${(a.sizeBytes / 1024 / 1024).toFixed(2)} MB`
+    })),
+    workLines: (r.lines || []).map((l) => ({
+      id: l.id,
+      wbsItemId: l.wbsItemId || undefined,
+      workContent: l.workName || l.workContent,
+      unit: l.unit || undefined,
+      quantityToday: l.quantityToday ? Number(l.quantityToday) : undefined,
+      note: l.note || undefined,
+    })),
+    materials: r.materials || '',
+    labor: r.labor || '',
+    quality: r.quality || '',
+    issues: r.issues || '',
+    recommendations: r.recommendations || '',
+    approvalHistory: [], // Phase 4
+  }));
 
-      <div className="bg-white border border-slate-200 rounded-xl p-12 flex flex-col items-center justify-center text-slate-500 shadow-sm">
-        <ClipboardCheck className="h-16 w-16 text-blue-200 mb-4" />
-        <h2 className="text-xl font-bold text-slate-800 mb-2">Đang thiết kế lại phân hệ</h2>
-        <p className="text-slate-600 max-w-md text-center">
-          Phân hệ Báo cáo hiện trường đang được thiết kế lại theo luồng nhập liệu chuẩn ngoài công trường. Phiên bản mới sẽ sớm được cập nhật.
-        </p>
-      </div>
-    </div>
-  );
+  return <ReportsWorkspace initialReports={JSON.parse(JSON.stringify(reports))} initialProjects={projects} currentUser={{ id: session.id, name: session.name || "N/A" }} />;
 }

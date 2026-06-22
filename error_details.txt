@@ -1,0 +1,9 @@
+
+Invalid `prisma.siteReport.findMany()` invocation in
+D:\construction-erp-v2\test-findmany2.ts:8:45
+
+  5 
+  6 async function main() {
+  7   try {
+→ 8     const reports = await prisma.siteReport.findMany(
+Can't reach database server at base

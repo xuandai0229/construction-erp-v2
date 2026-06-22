@@ -13,8 +13,10 @@ export interface FieldProgressItemRaw {
   [key: string]: unknown;
 }
 
+import { Prisma } from "@prisma/client";
+
 export interface FieldProgressEntryRecord {
-  quantity?: number | string | null;
+  quantity?: number | string | null | Prisma.Decimal;
   [key: string]: unknown;
 }
 

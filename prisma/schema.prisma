@@ -83,6 +83,27 @@ enum SiteReportStatus {
   CANCELLED
 }
 
+enum SiteReportType {
+  DAILY
+  WEEKLY
+}
+
+enum WeatherCondition {
+  SUNNY
+  CLOUDY
+  OVERCAST
+  LIGHT_RAIN
+  HEAVY_RAIN
+  WINDY
+  STORM
+  OTHER
+}
+
+enum SiteReportAttachmentKind {
+  PHOTO
+  FILE
+}
+
 enum WBSItemStatus {
   PLANNED
   IN_PROGRESS
@@ -387,34 +408,58 @@ model Document {
 }
 
 model SiteReport {
-  id             String           @id @default(cuid())
-  projectId      String
-  title          String?
-  reportDate     DateTime
-  weather        String?
-  manpowerCount  Int?
-  equipmentNote  String?
-  generalNote    String?
-  status         SiteReportStatus @default(DRAFT)
-  createdById    String
-  submittedAt    DateTime?
-  approvedById   String?
-  approvedAt     DateTime?
-  rejectedReason String?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  deletedAt      DateTime?
+  id                 String           @id @default(cuid())
+  reportNo           String           @default(dbgenerated("gen_random_uuid()::text"))
+  type               SiteReportType   @default(DAILY)
+  projectId          String
+  title              String?
+  reportDate         DateTime
+  weekStartDate      DateTime?
+  weekEndDate        DateTime?
+  weatherCondition   WeatherCondition?
+  weatherTemperature Float?
+  weatherNote        String?
+  gpsLat             Float?
+  gpsLng             Float?
+  
+  summary            String?          @db.Text
+  materials          String?          @db.Text
+  labor              String?          @db.Text
+  equipment          String?          @db.Text
+  quality            String?          @db.Text
+  issues             String?          @db.Text
+  recommendations    String?          @db.Text
+  
+  reporterName       String?          
+
+  // Legacy fields
+  weather            String?
+  manpowerCount      Int?
+  equipmentNote      String?
+  generalNote        String?
+
+  status             SiteReportStatus @default(DRAFT)
+  createdById        String
+  submittedAt        DateTime?
+  approvedById       String?
+  approvedAt         DateTime?
+  rejectedReason     String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  deletedAt          DateTime?
 
   project          Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   createdBy        User              @relation("ReportCreator", fields: [createdById], references: [id])
   approvedBy       User?             @relation("ReportApprover", fields: [approvedById], references: [id])
   photos           SiteReportPhoto[]
+  attachments      SiteReportAttachment[]
   lines            SiteReportLine[]
   materialRequests MaterialRequest[]
 
   @@index([projectId])
   @@index([createdById])
   @@index([reportDate])
+  @@index([reportNo])
 }
 
 model SiteReportPhoto {
@@ -429,12 +474,33 @@ model SiteReportPhoto {
   @@index([reportId])
 }
 
+model SiteReportAttachment {
+  id           String                   @id @default(cuid())
+  reportId     String
+  kind         SiteReportAttachmentKind @default(FILE)
+  fileName     String
+  originalName String?
+  mimeType     String
+  sizeBytes    Int
+  storagePath  String
+  publicUrl    String?
+  caption      String?
+  createdAt    DateTime                 @default(now())
+
+  report SiteReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+}
+
 model SiteReportLine {
   id                 String    @id @default(cuid())
   siteReportId       String
   projectId          String
-  wbsItemId          String
+  wbsItemId          String?
+  fieldProgressItemId String?
+  workName           String?
   workContent        String
+  area               String?
   constructionCrew   String?
   unit               String?
   designQuantity     Decimal?  @db.Decimal(19, 4)
@@ -445,17 +511,20 @@ model SiteReportLine {
   note               String?
   issueNote          String?
   proposalNote       String?
+  sortOrder          Int       @default(0)
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
   deletedAt          DateTime?
 
-  siteReport SiteReport @relation(fields: [siteReportId], references: [id], onDelete: Cascade)
-  project    Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  wbsItem    WBSItem    @relation(fields: [wbsItemId], references: [id])
+  siteReport        SiteReport         @relation(fields: [siteReportId], references: [id], onDelete: Cascade)
+  project           Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  wbsItem           WBSItem?           @relation(fields: [wbsItemId], references: [id])
+  fieldProgressItem FieldProgressItem? @relation(fields: [fieldProgressItemId], references: [id])
 
   @@index([siteReportId])
   @@index([projectId])
   @@index([wbsItemId])
+  @@index([fieldProgressItemId])
 }
 
 model MaterialRequest {
@@ -686,6 +755,7 @@ model FieldProgressItem {
   entries              FieldProgressEntry[]
   materialRequests     FieldMaterialRequest[]
   materialRequestItems MaterialRequestItem[]
+  siteReportLines      SiteReportLine[]
 
   @@index([projectId])
   @@index([templateId])
