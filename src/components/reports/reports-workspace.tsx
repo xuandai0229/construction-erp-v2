@@ -5,7 +5,6 @@ import { Plus, AlertCircle, Clock, XCircle, FileEdit, CheckSquare, Filter, X } f
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast-context";
 
-import { ReportsStats } from "./reports-stats";
 import { ReportsToolbar } from "./reports-toolbar";
 import { ReportsTable } from "./reports-table";
 import { ReportsMobileCards } from "./reports-mobile-cards";
@@ -22,8 +21,10 @@ import {
   createSiteReport, 
   approveSiteReport, 
   rejectSiteReport, 
-  submitSiteReport,
-  createWeeklyReportFromApprovedDailyReports 
+  createWeeklyReportFromApprovedDailyReports,
+  updateSiteReport,
+  softDeleteSiteReport,
+  submitSiteReport
 } from "@/app/(dashboard)/reports/actions";
 import { useRouter } from "next/navigation";
 
@@ -67,6 +68,9 @@ export function ReportsWorkspace({
   
   // Dialog/drawer state
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<"create" | "edit">("create");
+  const [editReportData, setEditReportData] = useState<FieldReport | null>(null);
+  
   const [detailReport, setDetailReport] = useState<FieldReport | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
@@ -121,16 +125,16 @@ export function ReportsWorkspace({
   };
   const handleTabChange = (t: string) => {
     setTab(t);
-    // When changing tab, reset other filters for clarity, or just keep them? Let's just keep them except status/type.
     updateUrl({ tab: t === 'all' ? undefined : t, status: undefined, type: undefined, page: "1" });
-    if (t !== 'all') {
-      setStatusFilter("");
-      setTypeFilter("");
-    }
+    setStatusFilter("");
+    setTypeFilter("");
   };
+
   const handlePageChange = (p: number) => {
     updateUrl({ page: p.toString() });
   };
+  
+  const activeTab = ['daily', 'weekly'].includes(tab) ? tab : 'all';
 
   // Dynamic stats based on ALL local reports (not just filtered)
   const stats = useMemo(() => computeStats(allReportsForStats as unknown as FieldReport[]), [allReportsForStats]);
@@ -189,28 +193,12 @@ export function ReportsWorkspace({
       }
 
       let result;
-      if (data.type === "WEEKLY") {
-        if (!data.weekStartDate || !data.weekEndDate) {
-          toast.error("Vui lòng chọn ngày bắt đầu và kết thúc tuần");
-          setIsSubmitting(false);
-          return;
-        }
-        result = await createWeeklyReportFromApprovedDailyReports({
-          projectId: data.projectId,
-          weekStartDate: data.weekStartDate,
-          weekEndDate: data.weekEndDate,
-          summary: data.summary,
-          issues: data.issues,
-          recommendations: data.recommendations,
-          weatherCondition: data.weatherCondition,
-          isDraft
-        });
-      } else {
+      const createAsDraft = true;
+      
+      if (dialogMode === "edit" && editReportData) {
+        // Edit flow
         const payload: Record<string, unknown> = {
-          projectId: data.projectId,
-          type: data.type,
           date: data.date,
-          time: data.time,
           weatherCondition: data.weatherCondition,
           weatherTemperature: data.weatherTemperature,
           summary: data.summary,
@@ -219,6 +207,8 @@ export function ReportsWorkspace({
           quality: data.quality,
           issues: data.issues,
           recommendations: data.recommendations,
+          gpsLat: data.gpsLocation ? parseFloat(data.gpsLocation.split(',')[0]) : undefined,
+          gpsLng: data.gpsLocation && data.gpsLocation.split(',').length > 1 ? parseFloat(data.gpsLocation.split(',')[1]) : undefined,
           workLines: data.workLines.map(wl => ({
             workContent: wl.workContent,
             quantityToday: wl.quantityToday,
@@ -226,7 +216,48 @@ export function ReportsWorkspace({
             note: wl.note,
           })),
         };
-        result = await createSiteReport(payload, isDraft);
+        result = await updateSiteReport(editReportData.id, payload);
+      } else {
+        // Create flow
+        if (data.type === "WEEKLY") {
+          if (!data.weekStartDate || !data.weekEndDate) {
+            toast.error("Vui lòng chọn ngày bắt đầu và kết thúc tuần");
+            setIsSubmitting(false);
+            return;
+          }
+          result = await createWeeklyReportFromApprovedDailyReports({
+            projectId: data.projectId,
+            weekStartDate: data.weekStartDate,
+            weekEndDate: data.weekEndDate,
+            summary: data.summary,
+            issues: data.issues,
+            recommendations: data.recommendations,
+            weatherCondition: data.weatherCondition,
+            isDraft: createAsDraft
+          });
+        } else {
+          const payload: Record<string, unknown> = {
+            projectId: data.projectId,
+            type: data.type,
+            date: data.date,
+            time: data.time,
+            weatherCondition: data.weatherCondition,
+            weatherTemperature: data.weatherTemperature,
+            summary: data.summary,
+            materials: data.materials,
+            labor: data.labor,
+            quality: data.quality,
+            issues: data.issues,
+            recommendations: data.recommendations,
+            workLines: data.workLines.map(wl => ({
+              workContent: wl.workContent,
+              quantityToday: wl.quantityToday,
+              unit: wl.unit,
+              note: wl.note,
+            })),
+          };
+          result = await createSiteReport(payload, createAsDraft);
+        }
       }
       
       if (result.success && result.id) {
@@ -239,7 +270,17 @@ export function ReportsWorkspace({
           formData.append("kind", "PHOTO");
           data.photos.forEach(file => formData.append("files", file));
           const res = await fetch(`/api/reports/${reportId}/attachments`, { method: "POST", body: formData });
-          if (!res.ok) hasUploadError = true;
+          if (!res.ok) {
+            hasUploadError = true;
+            try {
+              const errData = await res.json();
+              if (errData.rejectedFiles) {
+                toast.error(`Lỗi tải ảnh: ${errData.rejectedFiles.join(", ")}`);
+              } else if (errData.error) {
+                toast.error(`Lỗi tải ảnh: ${errData.error}`);
+              }
+            } catch (e) {}
+          }
         }
 
         // Upload attachments
@@ -248,17 +289,47 @@ export function ReportsWorkspace({
           formData.append("kind", "FILE");
           data.attachments.forEach(file => formData.append("files", file));
           const res = await fetch(`/api/reports/${reportId}/attachments`, { method: "POST", body: formData });
-          if (!res.ok) hasUploadError = true;
+          if (!res.ok) {
+            hasUploadError = true;
+            try {
+              const errData = await res.json();
+              if (errData.rejectedFiles) {
+                toast.error(`Lỗi tải tài liệu: ${errData.rejectedFiles.join(", ")}`);
+              } else if (errData.error) {
+                toast.error(`Lỗi tải tài liệu: ${errData.error}`);
+              }
+            } catch (e) {}
+          }
         }
 
         if (hasUploadError) {
-          toast.success(isDraft ? "Đã lưu báo cáo nhưng lỗi tải file" : "Đã tạo báo cáo nhưng lỗi tải file");
-        } else {
-          toast.success(isDraft ? "Đã lưu nháp báo cáo" : "Đã tạo báo cáo thành công");
+          toast.error("Đã lưu nháp báo cáo nhưng lỗi tải ảnh/file. Vui lòng mở lại báo cáo để tải lại.");
+          // We intentionally do NOT submit if upload fails, and we do NOT close the dialog 
+          // so the user can see it's still open or just know it failed.
+          // Wait, the prompt says: "không đóng dialog nếu có thể; nếu bắt buộc đóng thì phải báo rõ report đang ở nháp."
+          // Let's close it but refresh
+          setIsCreateOpen(false);
+          router.refresh();
+          return; // Stop here, do not submit
         }
-        
-        setIsCreateOpen(false);
-        router.refresh(); // This triggers a server fetch
+
+        // If user wanted to submit (isDraft is false), and upload succeeded, we submit now
+        if (!isDraft) {
+          const submitRes = await submitSiteReport(reportId);
+          if (submitRes.success) {
+            toast.success(dialogMode === "edit" ? "Đã sửa và gửi báo cáo thành công" : "Đã tạo và gửi báo cáo thành công");
+            setIsCreateOpen(false);
+            router.refresh();
+          } else {
+            toast.error("Tải file thành công nhưng gửi báo cáo thất bại.");
+            setIsCreateOpen(false);
+            router.refresh();
+          }
+        } else {
+          toast.success(dialogMode === "edit" ? "Đã lưu thay đổi" : "Đã lưu nháp báo cáo");
+          setIsCreateOpen(false);
+          router.refresh();
+        }
       }
     } catch (error) {
       console.error(error);
@@ -310,6 +381,27 @@ export function ReportsWorkspace({
     }
   }, [router, toast]);
 
+  const handleEdit = useCallback((report: FieldReport) => {
+    setEditReportData(report);
+    setDialogMode("edit");
+    setIsCreateOpen(true);
+  }, []);
+
+  const handleDelete = useCallback(async (report: FieldReport) => {
+    if (window.confirm("Bạn chắc chắn muốn xóa báo cáo này? Báo cáo sẽ được ẩn khỏi danh sách nhưng dữ liệu vẫn được lưu trong hệ thống.")) {
+      try {
+        const res = await softDeleteSiteReport(report.id);
+        if (res.success) {
+          toast.success("Đã xóa báo cáo");
+          router.refresh();
+        }
+      } catch (e: unknown) {
+        const err = e as Error;
+        toast.error(err.message || "Lỗi khi xóa báo cáo");
+      }
+    }
+  }, [router, toast]);
+
   return (
     <div className="max-w-[1400px] mx-auto space-y-5 sm:space-y-6">
       {/* Page header */}
@@ -331,7 +423,7 @@ export function ReportsWorkspace({
               Bộ lọc
             </Button>
             <Button
-              onClick={() => setIsCreateOpen(true)}
+              onClick={() => { setDialogMode("create"); setEditReportData(null); setIsCreateOpen(true); }}
               className="bg-blue-600 hover:bg-blue-700 text-white h-9 px-3 text-sm shrink-0"
             >
               <Plus className="w-4 h-4" />
@@ -339,7 +431,7 @@ export function ReportsWorkspace({
           </div>
         </div>
         <Button
-          onClick={() => setIsCreateOpen(true)}
+          onClick={() => { setDialogMode("create"); setEditReportData(null); setIsCreateOpen(true); }}
           className="hidden sm:flex gap-1.5 bg-blue-600 hover:bg-blue-700 text-white h-10 px-5 text-sm shrink-0 self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
@@ -348,157 +440,157 @@ export function ReportsWorkspace({
       </div>
 
       {/* Dashboard / Action Center */}
-      <div className="hidden md:grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-3 sm:gap-4">
         {isLeader ? (
           <>
             <div 
               onClick={() => handleTabChange('pending')}
-              className="bg-amber-50 rounded-xl p-4 border border-amber-200 flex items-center justify-between cursor-pointer hover:bg-amber-100 transition-colors"
+              className={`rounded-xl p-3 border flex items-center justify-between cursor-pointer transition-colors ${
+                dashboardStats.pending === 0 
+                  ? 'bg-slate-50 border-slate-200 opacity-60 hover:opacity-100' 
+                  : 'bg-amber-50 border-amber-200 hover:bg-amber-100'
+              }`}
             >
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-100 text-amber-600 rounded-lg">
-                  <Clock className="w-5 h-5" />
+              <div className="flex items-center gap-2.5">
+                <div className={`p-1.5 rounded-lg ${dashboardStats.pending === 0 ? 'bg-slate-200 text-slate-500' : 'bg-amber-100 text-amber-600'}`}>
+                  <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-amber-900 text-sm">Chờ duyệt</h3>
-                  <p className="text-amber-700/80 text-xs mt-0.5">Cần xử lý ngay</p>
+                  <h3 className={`font-semibold text-sm ${dashboardStats.pending === 0 ? 'text-slate-600' : 'text-amber-900'}`}>Chờ duyệt</h3>
+                  <p className="hidden sm:block text-[10px] text-amber-700/80 mt-0.5">Cần xử lý</p>
                 </div>
               </div>
-              <span className="text-2xl font-bold text-amber-700">{dashboardStats.pending}</span>
+              <span className={`text-lg sm:text-xl font-bold ${dashboardStats.pending === 0 ? 'text-slate-500' : 'text-amber-700'}`}>{dashboardStats.pending}</span>
             </div>
             
             <div 
               onClick={() => handleTabChange('rejected')}
-              className="bg-red-50 rounded-xl p-4 border border-red-200 flex items-center justify-between cursor-pointer hover:bg-red-100 transition-colors"
+              className={`rounded-xl p-3 border flex items-center justify-between cursor-pointer transition-colors ${
+                dashboardStats.rejected === 0 
+                  ? 'bg-slate-50 border-slate-200 opacity-60 hover:opacity-100' 
+                  : 'bg-red-50 border-red-200 hover:bg-red-100'
+              }`}
             >
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-100 text-red-600 rounded-lg">
-                  <XCircle className="w-5 h-5" />
+              <div className="flex items-center gap-2.5">
+                <div className={`p-1.5 rounded-lg ${dashboardStats.rejected === 0 ? 'bg-slate-200 text-slate-500' : 'bg-red-100 text-red-600'}`}>
+                  <XCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-red-900 text-sm">Bị từ chối</h3>
-                  <p className="text-red-700/80 text-xs mt-0.5">Chưa gửi lại</p>
+                  <h3 className={`font-semibold text-sm ${dashboardStats.rejected === 0 ? 'text-slate-600' : 'text-red-900'}`}>Từ chối</h3>
+                  <p className="hidden sm:block text-[10px] text-red-700/80 mt-0.5">Chưa gửi lại</p>
                 </div>
               </div>
-              <span className="text-2xl font-bold text-red-700">{dashboardStats.rejected}</span>
+              <span className={`text-lg sm:text-xl font-bold ${dashboardStats.rejected === 0 ? 'text-slate-500' : 'text-red-700'}`}>{dashboardStats.rejected}</span>
             </div>
             
             <div 
               onClick={() => handleTabChange('issues')}
-              className="bg-rose-50 rounded-xl p-4 border border-rose-200 flex items-center justify-between cursor-pointer hover:bg-rose-100 transition-colors"
+              className={`rounded-xl p-3 border flex items-center justify-between cursor-pointer transition-colors ${
+                dashboardStats.issues === 0 
+                  ? 'bg-slate-50 border-slate-200 opacity-60 hover:opacity-100' 
+                  : 'bg-orange-50 border-orange-200 hover:bg-orange-100'
+              }`}
             >
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-rose-100 text-rose-600 rounded-lg">
-                  <AlertCircle className="w-5 h-5" />
+              <div className="flex items-center gap-2.5">
+                <div className={`p-1.5 rounded-lg ${dashboardStats.issues === 0 ? 'bg-slate-200 text-slate-500' : 'bg-orange-100 text-orange-600'}`}>
+                  <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-rose-900 text-sm">Có phát sinh</h3>
-                  <p className="text-rose-700/80 text-xs mt-0.5">Phát sinh cần xem</p>
+                  <h3 className={`font-semibold text-sm ${dashboardStats.issues === 0 ? 'text-slate-600' : 'text-orange-900'}`}>Phát sinh</h3>
+                  <p className="hidden sm:block text-[10px] text-orange-700/80 mt-0.5">Cần xem</p>
                 </div>
               </div>
-              <span className="text-2xl font-bold text-rose-700">{dashboardStats.issues}</span>
+              <span className={`text-lg sm:text-xl font-bold ${dashboardStats.issues === 0 ? 'text-slate-500' : 'text-orange-700'}`}>{dashboardStats.issues}</span>
             </div>
           </>
         ) : (
           <>
             <div 
               onClick={() => { handleTabChange('all'); handleDateRangeChange('today'); }}
-              className="bg-blue-50 rounded-xl p-4 border border-blue-200 flex items-center justify-between cursor-pointer hover:bg-blue-100 transition-colors"
+              className={`rounded-xl p-3 border flex items-center justify-between cursor-pointer transition-colors ${
+                dashboardStats.myToday === 0 
+                  ? 'bg-slate-50 border-slate-200 opacity-60 hover:opacity-100' 
+                  : 'bg-blue-50 border-blue-200 hover:bg-blue-100'
+              }`}
             >
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
-                  <CheckSquare className="w-5 h-5" />
+              <div className="flex items-center gap-2.5">
+                <div className={`p-1.5 rounded-lg ${dashboardStats.myToday === 0 ? 'bg-slate-200 text-slate-500' : 'bg-blue-100 text-blue-600'}`}>
+                  <CheckSquare className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-blue-900 text-sm">Báo cáo hôm nay</h3>
-                  <p className="text-blue-700/80 text-xs mt-0.5">Của tôi</p>
+                  <h3 className={`font-semibold text-sm ${dashboardStats.myToday === 0 ? 'text-slate-600' : 'text-blue-900'}`}>Hôm nay</h3>
                 </div>
               </div>
-              <span className="text-2xl font-bold text-blue-700">{dashboardStats.myToday}</span>
+              <span className={`text-lg sm:text-xl font-bold ${dashboardStats.myToday === 0 ? 'text-slate-500' : 'text-blue-700'}`}>{dashboardStats.myToday}</span>
             </div>
             
             <div 
               onClick={() => { handleTabChange('all'); handleStatusFilterChange('DRAFT'); }}
-              className="bg-slate-50 rounded-xl p-4 border border-slate-200 flex items-center justify-between cursor-pointer hover:bg-slate-100 transition-colors"
+              className={`rounded-xl p-3 border flex items-center justify-between cursor-pointer transition-colors ${
+                dashboardStats.myDrafts === 0 
+                  ? 'bg-slate-50 border-slate-200 opacity-60 hover:opacity-100' 
+                  : 'bg-slate-100 border-slate-300 hover:bg-slate-200'
+              }`}
             >
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-slate-200 text-slate-600 rounded-lg">
-                  <FileEdit className="w-5 h-5" />
+              <div className="flex items-center gap-2.5">
+                <div className={`p-1.5 rounded-lg ${dashboardStats.myDrafts === 0 ? 'bg-slate-200 text-slate-500' : 'bg-slate-200 text-slate-700'}`}>
+                  <FileEdit className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900 text-sm">Nháp</h3>
-                  <p className="text-slate-500 text-xs mt-0.5">Cần hoàn thiện</p>
+                  <h3 className="font-semibold text-sm text-slate-800">Nháp</h3>
                 </div>
               </div>
-              <span className="text-2xl font-bold text-slate-700">{dashboardStats.myDrafts}</span>
+              <span className={`text-lg sm:text-xl font-bold ${dashboardStats.myDrafts === 0 ? 'text-slate-500' : 'text-slate-700'}`}>{dashboardStats.myDrafts}</span>
             </div>
             
             <div 
               onClick={() => { handleTabChange('rejected'); }}
-              className="bg-red-50 rounded-xl p-4 border border-red-200 flex items-center justify-between cursor-pointer hover:bg-red-100 transition-colors"
+              className={`rounded-xl p-3 border flex items-center justify-between cursor-pointer transition-colors ${
+                dashboardStats.myRejected === 0 
+                  ? 'bg-slate-50 border-slate-200 opacity-60 hover:opacity-100' 
+                  : 'bg-red-50 border-red-200 hover:bg-red-100'
+              }`}
             >
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-100 text-red-600 rounded-lg">
-                  <XCircle className="w-5 h-5" />
+              <div className="flex items-center gap-2.5">
+                <div className={`p-1.5 rounded-lg ${dashboardStats.myRejected === 0 ? 'bg-slate-200 text-slate-500' : 'bg-red-100 text-red-600'}`}>
+                  <XCircle className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-red-900 text-sm">Bị từ chối</h3>
-                  <p className="text-red-700/80 text-xs mt-0.5">Cần sửa đổi</p>
+                  <h3 className={`font-semibold text-sm ${dashboardStats.myRejected === 0 ? 'text-slate-600' : 'text-red-900'}`}>Từ chối</h3>
                 </div>
               </div>
-              <span className="text-2xl font-bold text-red-700">{dashboardStats.myRejected}</span>
+              <span className={`text-lg sm:text-xl font-bold ${dashboardStats.myRejected === 0 ? 'text-slate-500' : 'text-red-700'}`}>{dashboardStats.myRejected}</span>
             </div>
           </>
         )}
       </div>
 
-      {/* Mobile Action Center */}
-      <div className="md:hidden bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
-        <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-          {isLeader ? 'Cần xử lý ngay' : 'Báo cáo của tôi'}
-        </h3>
-        <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
-          {isLeader ? (
-            <>
-              <span onClick={() => handleTabChange('pending')} className="text-amber-700 font-medium cursor-pointer flex items-center gap-1.5"><Clock className="w-4 h-4"/> {dashboardStats.pending} chờ duyệt</span>
-              <span onClick={() => handleTabChange('rejected')} className="text-red-700 font-medium cursor-pointer flex items-center gap-1.5"><XCircle className="w-4 h-4"/> {dashboardStats.rejected} từ chối</span>
-              <span onClick={() => handleTabChange('issues')} className="text-rose-700 font-medium cursor-pointer flex items-center gap-1.5"><AlertCircle className="w-4 h-4"/> {dashboardStats.issues} phát sinh</span>
-            </>
-          ) : (
-            <>
-              <span onClick={() => { handleTabChange('all'); handleDateRangeChange('today'); }} className="text-blue-700 font-medium cursor-pointer flex items-center gap-1.5"><CheckSquare className="w-4 h-4"/> {dashboardStats.myToday} hôm nay</span>
-              <span onClick={() => { handleTabChange('all'); handleStatusFilterChange('DRAFT'); }} className="text-slate-600 font-medium cursor-pointer flex items-center gap-1.5"><FileEdit className="w-4 h-4"/> {dashboardStats.myDrafts} nháp</span>
-              <span onClick={() => handleTabChange('rejected')} className="text-red-700 font-medium cursor-pointer flex items-center gap-1.5"><XCircle className="w-4 h-4"/> {dashboardStats.myRejected} từ chối</span>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* KPI Stats - dynamic based on local state */}
-      <ReportsStats stats={stats} />
-
       {/* Tabs */}
-      <div className="flex overflow-x-auto gap-2 pb-1 scrollbar-hide border-b border-slate-200">
-        {[
-          { id: 'all', label: 'Tất cả' },
-          { id: 'daily', label: 'Báo cáo ngày' },
-          { id: 'weekly', label: 'Báo cáo tuần' },
-          { id: 'pending', label: 'Chờ duyệt' },
-          { id: 'rejected', label: 'Từ chối' },
-          { id: 'issues', label: 'Có phát sinh' }
-        ].map(t => (
-          <button
-            key={t.id}
-            onClick={() => handleTabChange(t.id)}
-            className={`whitespace-nowrap px-3 py-1.5 text-sm font-medium border-b-2 transition-colors ${
-              tab === t.id
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+      <div className="flex items-center justify-between overflow-x-auto pb-1 scrollbar-hide border-b border-slate-200 gap-4">
+        <div className="flex gap-2">
+          {[
+            { id: 'all', label: 'Tất cả' },
+            { id: 'daily', label: 'Báo cáo ngày' },
+            { id: 'weekly', label: 'Báo cáo tuần' },
+          ].map(t => (
+            <button
+              key={t.id}
+              onClick={() => handleTabChange(t.id)}
+              className={`whitespace-nowrap px-3 py-1.5 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === t.id
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <div className="hidden sm:flex text-[11px] text-slate-500 gap-3 whitespace-nowrap">
+          <span className="font-semibold text-slate-700">Tổng: {stats.total}</span>
+          <span>Duyệt: <span className="text-emerald-600 font-medium">{stats.approved}</span></span>
+          <span>Từ chối: <span className="text-red-600 font-medium">{stats.rejected}</span></span>
+        </div>
       </div>
 
       {/* Toolbar */}
@@ -521,16 +613,19 @@ export function ReportsWorkspace({
         />
       </div>
 
-      {/* Desktop table (hidden on small screens) */}
       <div className="hidden md:block">
         <ReportsTable
           reports={reports}
           onViewDetail={handleViewDetail}
           onViewGallery={(r) => { setGalleryPhotos(r.photos); setIsGalleryOpen(true); }}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
           totalReports={totalReports}
           page={currentPage}
           pageSize={10}
           onPageChange={handlePageChange}
+          showProjectColumn={!projectFilter && activeProjects.length > 1}
+          currentUser={currentUser}
         />
       </div>
 
@@ -541,6 +636,9 @@ export function ReportsWorkspace({
             reports={reports}
             onViewDetail={handleViewDetail}
             onViewGallery={(r) => { setGalleryPhotos(r.photos); setIsGalleryOpen(true); }}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            currentUser={currentUser}
           />
         ) : (
           <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-500 text-sm">
@@ -549,14 +647,16 @@ export function ReportsWorkspace({
         )}
       </div>
 
-      {/* Create Report Dialog */}
       <CreateReportDialog
+        key={isCreateOpen ? "open" : "closed"} // Ensure remount to pick up initialReport if any
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         onSubmit={handleCreateSubmit}
         isSubmitting={isSubmitting}
         activeProjects={activeProjects}
         currentUser={currentUser}
+        mode={dialogMode}
+        initialReport={editReportData}
       />
 
       {/* Report Detail Drawer */}
@@ -567,6 +667,8 @@ export function ReportsWorkspace({
         onApprove={handleApprove}
         onReject={handleReject}
         onSubmit={handleSubmit}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
         onViewGallery={(r, index) => { setGalleryPhotos(r.photos); setGalleryIndex(index || 0); setIsGalleryOpen(true); }}
         currentUser={currentUser}
       />

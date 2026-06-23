@@ -9,6 +9,8 @@ import {
   submitSiteReportTransition,
 } from "@/lib/reports/report-transition-service";
 import { createSiteReportWithAudit } from "@/lib/reports/report-create-service";
+import { canEditReportContent, canSoftDeleteReport } from "@/lib/reports/report-workflow-policy";
+import { UserRole } from "@prisma/client";
 
 export async function getActiveProjects() {
   const session = await getSession();
@@ -577,4 +579,160 @@ export async function createWeeklyReportFromApprovedDailyReports(input: {
   });
 
   return { success: true, id: newReport.id, reportNo: newReport.reportNo };
+}
+
+// === PHASE 3B: EDIT & DELETE ===
+
+export async function updateSiteReport(reportId: string, data: Record<string, unknown>) {
+  const session = await getSession();
+  if (!session) throw new Error("Unauthorized");
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.id },
+    select: { role: true }
+  });
+  const isSystemAdmin = user && ['ADMIN', 'DIRECTOR'].includes(user.role);
+
+  const report = await prisma.siteReport.findUnique({
+    where: { id: reportId },
+    include: { lines: true }
+  });
+
+  if (!report || report.deletedAt) {
+    throw new Error("Không tìm thấy báo cáo hoặc báo cáo đã bị xóa.");
+  }
+
+  // Chuyển session user thành format cần thiết cho policy
+  const policyUser = { id: session.id, role: user?.role as UserRole };
+
+  if (!canEditReportContent(report, policyUser)) {
+    if (report.status !== "DRAFT" && report.status !== "REJECTED") {
+      throw new Error("Chỉ được sửa báo cáo nháp hoặc báo cáo bị từ chối.");
+    }
+    throw new Error("Không có quyền sửa báo cáo này.");
+  }
+
+  const workLines = (data.workLines as Record<string, unknown>[]) || [];
+
+  const updatedReport = await prisma.$transaction(async (tx) => {
+    // Delete existing lines
+    await tx.siteReportLine.deleteMany({
+      where: { siteReportId: reportId }
+    });
+
+    // Update report and create new lines
+    const result = await tx.siteReport.update({
+      where: { id: reportId },
+      data: {
+        reportDate: data.date ? new Date(String(data.date)) : undefined,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        weatherCondition: data.weatherCondition as any || undefined,
+        weatherTemperature: data.weatherTemperature ? Number(data.weatherTemperature) : undefined,
+        summary: data.summary ? String(data.summary) : null,
+        materials: data.materials ? String(data.materials) : null,
+        labor: data.labor ? String(data.labor) : null,
+        quality: data.quality ? String(data.quality) : null,
+        issues: data.issues ? String(data.issues) : null,
+        recommendations: data.recommendations ? String(data.recommendations) : null,
+        gpsLat: data.gpsLat ? Number(data.gpsLat) : null,
+        gpsLng: data.gpsLng ? Number(data.gpsLng) : null,
+        // Optional status update if sent (e.g., submit immediately) - wait, only allow DRAFT or SUBMITTED if explicitly told, but we just leave it or handle it if needed
+        // For now, do not change status unless explicit
+        lines: {
+          create: workLines.map((line, index) => ({
+            projectId: report.projectId,
+            workContent: String(line.workContent || "No content"),
+            workName: String(line.workName || line.workContent),
+            quantityToday: line.quantityToday ? Number(line.quantityToday) : 0,
+            unit: line.unit ? String(line.unit) : null,
+            note: line.note ? String(line.note) : null,
+            sortOrder: index,
+          }))
+        }
+      }
+    });
+
+    // Audit Log
+    await tx.auditLog.create({
+      data: {
+        userId: session.id,
+        projectId: report.projectId,
+        entityType: "SiteReport",
+        entityId: report.id,
+        action: "SITE_REPORT_UPDATED",
+        beforeData: JSON.stringify({
+          status: report.status,
+          reportDate: report.reportDate,
+          summary: report.summary,
+          linesCount: report.lines.length
+        }),
+        afterData: JSON.stringify({
+          status: result.status,
+          reportDate: result.reportDate,
+          summary: result.summary,
+          linesCount: workLines.length
+        }),
+      }
+    });
+
+    return result;
+  });
+
+  revalidatePath("/reports");
+  return { success: true, id: updatedReport.id, reportNo: updatedReport.reportNo };
+}
+
+export async function softDeleteSiteReport(reportId: string) {
+  const session = await getSession();
+  if (!session) throw new Error("Unauthorized");
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.id },
+    select: { role: true }
+  });
+  const isSystemAdmin = user && ['ADMIN', 'DIRECTOR'].includes(user.role);
+
+  const report = await prisma.siteReport.findUnique({
+    where: { id: reportId }
+  });
+
+  if (!report || report.deletedAt) {
+    throw new Error("Không tìm thấy báo cáo hoặc báo cáo đã bị xóa.");
+  }
+
+  const policyUser = { id: session.id, role: user?.role as UserRole };
+
+  if (!canSoftDeleteReport(report, policyUser)) {
+    if (report.status === "APPROVED" || report.status === "LOCKED" || report.status === "CANCELLED") {
+      throw new Error("Không thể xóa báo cáo đã duyệt hoặc đã khóa.");
+    }
+    throw new Error("Bạn không có quyền xóa báo cáo. Vui lòng liên hệ quản lý hoặc Admin.");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.siteReport.update({
+      where: { id: reportId },
+      data: { deletedAt: new Date() }
+    });
+
+    await tx.auditLog.create({
+      data: {
+        userId: session.id,
+        projectId: report.projectId,
+        entityType: "SiteReport",
+        entityId: report.id,
+        action: "SITE_REPORT_SOFT_DELETED",
+        beforeData: JSON.stringify({
+          status: report.status,
+          reportDate: report.reportDate,
+        }),
+        afterData: JSON.stringify({
+          deletedAt: new Date()
+        }),
+      }
+    });
+  });
+
+  revalidatePath("/reports");
+  return { success: true };
 }

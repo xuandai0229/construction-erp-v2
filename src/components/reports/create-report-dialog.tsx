@@ -43,6 +43,8 @@ interface CreateReportDialogProps {
   isSubmitting?: boolean;
   activeProjects: {id: string; name: string}[];
   currentUser: { id: string; name: string };
+  mode?: "create" | "edit";
+  initialReport?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 }
 
 interface FormErrors {
@@ -73,20 +75,45 @@ const EMPTY_FORM: CreateReportFormData = {
   attachments: [],
 };
 
-export function CreateReportDialog({ isOpen, onClose, onSubmit, isSubmitting, activeProjects, currentUser }: CreateReportDialogProps) {
+export function CreateReportDialog({ isOpen, onClose, onSubmit, isSubmitting, activeProjects, currentUser, mode = "create", initialReport }: CreateReportDialogProps) {
   if (!isOpen) return null;
-  return <CreateReportDialogInner onClose={onClose} onSubmit={onSubmit} isSubmitting={isSubmitting} activeProjects={activeProjects} currentUser={currentUser} />;
+  return <CreateReportDialogInner onClose={onClose} onSubmit={onSubmit} isSubmitting={isSubmitting} activeProjects={activeProjects} currentUser={currentUser} mode={mode} initialReport={initialReport} />;
 }
 
-function CreateReportDialogInner({ onClose, onSubmit, isSubmitting, activeProjects, currentUser }: Omit<CreateReportDialogProps, 'isOpen'>) {
+function CreateReportDialogInner({ onClose, onSubmit, isSubmitting, activeProjects, currentUser, mode, initialReport }: Omit<CreateReportDialogProps, 'isOpen'>) {
   const toast = useToast();
   const now = new Date();
-  const [form, setForm] = useState<CreateReportFormData>({
-    ...EMPTY_FORM,
-    creatorName: currentUser.name,
-    date: now.toISOString().split("T")[0],
-    time: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
-    workLines: [{ workContent: "", unit: "Lần", quantityToday: 0 }],
+  
+  const [form, setForm] = useState<CreateReportFormData>(() => {
+    if (mode === "edit" && initialReport) {
+      return {
+        type: initialReport.type || "DAILY",
+        projectId: initialReport.projectId || "",
+        date: initialReport.date || now.toISOString().split("T")[0],
+        time: initialReport.time || `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
+        creatorName: initialReport.creatorName || currentUser.name,
+        weatherCondition: initialReport.weatherCondition || "SUNNY",
+        weatherTemperature: initialReport.weatherTemperature,
+        workLines: initialReport.workLines && initialReport.workLines.length > 0 
+          ? initialReport.workLines 
+          : [{ workContent: "", unit: "Lần", quantityToday: 0 }],
+        materials: initialReport.materials || "",
+        labor: initialReport.labor || "",
+        quality: initialReport.quality || "",
+        issues: initialReport.issues || "",
+        recommendations: initialReport.recommendations || "",
+        gpsLocation: initialReport.gpsLocation || "",
+        photos: [], // Edit mode does not pre-fill file objects
+        attachments: [], // Edit mode does not pre-fill file objects
+      };
+    }
+    return {
+      ...EMPTY_FORM,
+      creatorName: currentUser.name,
+      date: now.toISOString().split("T")[0],
+      time: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
+      workLines: [{ workContent: "", unit: "Lần", quantityToday: 0 }],
+    };
   });
   
   const [workItems, setWorkItems] = useState<{id: string, name: string, unit: string}[]>([]);
@@ -252,14 +279,20 @@ function CreateReportDialogInner({ onClose, onSubmit, isSubmitting, activeProjec
 
   // File Handlers
   const handlePhotoFiles = (files: FileList | File[]) => {
-    const newFiles = Array.from(files).filter(f => f.type.startsWith("image/"));
-    if (newFiles.length !== files.length) toast.warning("Chỉ chấp nhận file ảnh");
+    const newFiles = Array.from(files).filter(f => {
+      if (!f.type.startsWith("image/") && !f.name.match(/\.(jpe?g|png|gif|webp|bmp|heic)$/i)) {
+        toast.error(`File ${f.name} không đúng định dạng. Chỉ chấp nhận ảnh.`);
+        return false;
+      }
+      return true;
+    });
     const validFiles = newFiles.filter(f => {
-      if (f.size > 10 * 1024 * 1024) { toast.error(`Ảnh vượt quá 10MB`); return false; }
+      if (f.size > 10 * 1024 * 1024) { toast.error(`Ảnh vượt quá dung lượng cho phép (10MB)`); return false; }
+      if (f.size === 0) { toast.error(`File rỗng không hợp lệ`); return false; }
       return true;
     });
     if (form.photos.length + validFiles.length > 10) {
-      toast.error("Tối đa 10 ảnh hiện trường");
+      toast.error("Chỉ được tải tối đa 10 ảnh");
       validFiles.splice(10 - form.photos.length);
     }
     if (validFiles.length > 0) {
@@ -270,12 +303,19 @@ function CreateReportDialogInner({ onClose, onSubmit, isSubmitting, activeProjec
   };
 
   const handleDocFiles = (files: FileList | File[]) => {
+    const FILE_EXTS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.txt'];
     const validFiles = Array.from(files).filter(f => {
-      if (f.size > 20 * 1024 * 1024) { toast.error(`File vượt quá 20MB`); return false; }
+      const ext = f.name.toLowerCase().substring(f.name.lastIndexOf('.'));
+      if (!FILE_EXTS.includes(ext)) {
+        toast.error(`File không đúng định dạng (${ext}). Chỉ chấp nhận PDF, Word, Excel, TXT.`);
+        return false;
+      }
+      if (f.size > 20 * 1024 * 1024) { toast.error(`Tài liệu vượt quá dung lượng cho phép (20MB)`); return false; }
+      if (f.size === 0) { toast.error(`File rỗng không hợp lệ`); return false; }
       return true;
     });
     if (form.attachments.length + validFiles.length > 5) {
-      toast.error("Tối đa 5 file đính kèm");
+      toast.error("Chỉ được tải tối đa 5 file tài liệu");
       validFiles.splice(5 - form.attachments.length);
     }
     if (validFiles.length > 0) {
@@ -299,7 +339,7 @@ function CreateReportDialogInner({ onClose, onSubmit, isSubmitting, activeProjec
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 bg-white rounded-t-2xl shrink-0 z-20 shadow-sm">
           <div>
-            <h2 className="text-lg sm:text-xl font-bold text-slate-900">Tạo báo cáo mới</h2>
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900">{mode === "edit" ? "Sửa báo cáo" : "Tạo báo cáo mới"}</h2>
             <p className="text-sm text-slate-500 mt-0.5">Điền thông tin báo cáo thi công tại công trường</p>
           </div>
           <button
@@ -603,6 +643,14 @@ function CreateReportDialogInner({ onClose, onSubmit, isSubmitting, activeProjec
               <Camera className="w-[18px] h-[18px] text-blue-600" />
               Hình ảnh & Tài liệu đính kèm
             </h4>
+            
+            {mode === "edit" && (
+              <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg mb-4">
+                <p className="text-sm text-blue-700">
+                  <span className="font-semibold">Lưu ý:</span> Ảnh/file hiện có được quản lý trong chi tiết báo cáo. Bạn chỉ có thể tải thêm ảnh/file mới tại đây.
+                </p>
+              </div>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-3">
               <div className="space-y-3">
                 <label className="text-sm font-semibold text-slate-700">Hình ảnh hiện trường ({form.photos.length}/10)</label>
@@ -615,13 +663,13 @@ function CreateReportDialogInner({ onClose, onSubmit, isSubmitting, activeProjec
                   </Button>
                 </div>
                 <input type="file" accept="image/*" capture="environment" className="hidden" ref={cameraInputRef} onChange={(e) => { if (e.target.files) handlePhotoFiles(e.target.files); e.target.value = ''; }} />
-                <input type="file" accept="image/png, image/jpeg, image/webp" multiple className="hidden" ref={photoInputRef} onChange={(e) => { if (e.target.files) handlePhotoFiles(e.target.files); e.target.value = ''; }} />
+                <input type="file" accept="image/*" multiple className="hidden" ref={photoInputRef} onChange={(e) => { if (e.target.files) handlePhotoFiles(e.target.files); e.target.value = ''; }} />
 
                 <div
                   className={`border-2 border-dashed rounded-xl p-5 text-center transition-colors ${isDraggingPhoto ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-blue-400 hover:bg-slate-50'}`}
-                  onDragOver={(e) => { e.preventDefault(); setIsDraggingPhoto(true); }}
-                  onDragLeave={() => setIsDraggingPhoto(false)}
-                  onDrop={(e) => { e.preventDefault(); setIsDraggingPhoto(false); handlePhotoFiles(e.dataTransfer.files); }}
+                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setIsDraggingPhoto(true); }}
+                  onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setIsDraggingPhoto(false); }}
+                  onDrop={(e) => { e.preventDefault(); e.stopPropagation(); setIsDraggingPhoto(false); handlePhotoFiles(e.dataTransfer.files); }}
                 >
                   <UploadCloud className="w-6 h-6 text-slate-400 mx-auto mb-2" />
                   <p className="text-sm text-slate-600">Kéo thả ảnh vào đây</p>
@@ -644,13 +692,13 @@ function CreateReportDialogInner({ onClose, onSubmit, isSubmitting, activeProjec
 
               <div className="space-y-3">
                 <label className="text-sm font-semibold text-slate-700">Tài liệu đính kèm ({form.attachments.length}/5)</label>
-                <input type="file" multiple className="hidden" ref={fileInputRef} onChange={(e) => { if (e.target.files) handleDocFiles(e.target.files); e.target.value = ''; }} />
+                <input type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.txt" className="hidden" ref={fileInputRef} onChange={(e) => { if (e.target.files) handleDocFiles(e.target.files); e.target.value = ''; }} />
                 <div
                   className={`border-2 border-dashed rounded-xl p-5 text-center transition-colors cursor-pointer h-[126px] flex flex-col justify-center ${isDraggingFile ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-blue-400 hover:bg-slate-50'}`}
                   onClick={() => fileInputRef.current?.click()}
-                  onDragOver={(e) => { e.preventDefault(); setIsDraggingFile(true); }}
-                  onDragLeave={() => setIsDraggingFile(false)}
-                  onDrop={(e) => { e.preventDefault(); setIsDraggingFile(false); handleDocFiles(e.dataTransfer.files); }}
+                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setIsDraggingFile(true); }}
+                  onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setIsDraggingFile(false); }}
+                  onDrop={(e) => { e.preventDefault(); e.stopPropagation(); setIsDraggingFile(false); handleDocFiles(e.dataTransfer.files); }}
                 >
                   <Paperclip className="w-6 h-6 text-slate-400 mx-auto mb-2" />
                   <p className="text-sm text-slate-600">Bấm hoặc kéo thả file</p>
@@ -660,7 +708,10 @@ function CreateReportDialogInner({ onClose, onSubmit, isSubmitting, activeProjec
                     {form.attachments.map((file, index) => (
                       <div key={index} className="flex items-center p-2.5 bg-slate-50 border border-slate-200 rounded-lg gap-3">
                         <FileIcon className="w-5 h-5 text-slate-400 flex-shrink-0" />
-                        <div className="min-w-0 flex-1"><p className="text-sm font-medium text-slate-700 truncate">{file.name}</p></div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-slate-700 truncate">{file.name}</p>
+                          <p className="text-xs text-slate-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                        </div>
                         <button type="button" className="p-1.5 text-slate-400 hover:text-red-500" onClick={() => updateField("attachments", form.attachments.filter((_, i) => i !== index))}><Trash2 className="w-4 h-4" /></button>
                       </div>
                     ))}
@@ -723,11 +774,15 @@ function CreateReportDialogInner({ onClose, onSubmit, isSubmitting, activeProjec
         {/* Footer */}
         <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-200 bg-white rounded-b-2xl shrink-0 z-20 shadow-[0_-4px_10px_-4px_rgba(0,0,0,0.05)]">
           <Button variant="outline" onClick={() => handleSubmit(true)} disabled={isSubmitting} className="gap-2 flex-1 sm:flex-none h-11 px-6">
-            {isSubmitting ? <Loader2 className="w-[18px] h-[18px] animate-spin" /> : <Save className="w-[18px] h-[18px]" />} Lưu nháp
+            {isSubmitting ? <Loader2 className="w-[18px] h-[18px] animate-spin" /> : <Save className="w-[18px] h-[18px]" />} 
+            {isSubmitting ? "Đang xử lý..." : "Lưu thay đổi"}
           </Button>
-          <Button onClick={() => handleSubmit(false)} disabled={isSubmitting} className="gap-2 flex-1 sm:flex-none h-11 px-6 bg-blue-600 hover:bg-blue-700 text-white">
-            {isSubmitting ? <Loader2 className="w-[18px] h-[18px] animate-spin" /> : <Send className="w-[18px] h-[18px]" />} Gửi báo cáo
-          </Button>
+          {mode === "create" && (
+            <Button onClick={() => handleSubmit(false)} disabled={isSubmitting} className="gap-2 flex-1 sm:flex-none h-11 px-6 bg-blue-600 hover:bg-blue-700 text-white">
+              {isSubmitting ? <Loader2 className="w-[18px] h-[18px] animate-spin" /> : <Send className="w-[18px] h-[18px]" />} 
+              {isSubmitting ? "Đang xử lý..." : "Gửi báo cáo"}
+            </Button>
+          )}
         </div>
       </div>
     </div>

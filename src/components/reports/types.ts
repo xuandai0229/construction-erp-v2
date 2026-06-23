@@ -28,17 +28,19 @@ export interface ReportWorkLine {
 
 export interface ReportPhoto {
   id: string;
-  url: string;
+  url: string | null;
   caption?: string;
   createdAt?: string;
+  isMissing?: boolean;
 }
 
 export interface ReportAttachment {
   id: string;
   name: string;
-  url: string;
+  url: string | null;
   type: string; // e.g. 'pdf', 'doc', 'xls'
   size: string; // e.g. '2.4 MB'
+  isMissing?: boolean;
 }
 
 export interface ApprovalHistoryEntry {

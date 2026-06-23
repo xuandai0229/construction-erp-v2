@@ -73,7 +73,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ atta
       }
     } else {
       // New relative path
-      absolutePath = path.join(process.cwd(), attachment.storagePath);
+      absolutePath = path.join(process.cwd(), attachment.storagePath.startsWith('storage') ? '' : 'storage', attachment.storagePath);
       if (!absolutePath.startsWith(storageRoot)) {
         console.error("Resolved path outside storage root:", attachment.id);
         return new NextResponse("Forbidden", { status: 403 });

@@ -29,7 +29,9 @@ import {
   CloudDrizzle,
   Wind,
   CloudLightning,
-  AlignLeft
+  AlignLeft,
+  Edit2,
+  Trash2
 } from "lucide-react";
 import type { FieldReport, ApprovalHistoryEntry, WeatherCondition } from "./types";
 import { getStatusLabel, getStatusVariant, WEATHER_OPTIONS } from "./types";
@@ -44,6 +46,8 @@ interface ReportDetailDrawerProps {
   onApprove?: (reportId: string, note?: string) => void;
   onReject?: (reportId: string, reason: string) => void;
   onSubmit?: (reportId: string) => void;
+  onEdit?: (report: FieldReport) => void;
+  onDelete?: (report: FieldReport) => void;
   onViewGallery?: (report: FieldReport, index?: number) => void;
   currentUser?: { id: string; name: string; role?: string };
 }
@@ -154,9 +158,10 @@ function ImageWithFallback({ src, caption }: { src: string; caption?: string }) 
   
   if (error) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50">
-        <Camera className="w-4 h-4 text-slate-300 mb-1" />
-        <span className="text-[10px] text-slate-400 text-center px-1">Không tải được ảnh</span>
+      <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 border border-slate-200 rounded-lg p-2 text-center">
+        <Camera className="w-5 h-5 text-slate-300 mb-1" />
+        <span className="text-[11px] text-slate-500 font-medium">Ảnh không khả dụng</span>
+        <span className="text-[9px] text-slate-400 mt-0.5">File gốc không còn trong storage</span>
       </div>
     );
   }
@@ -179,6 +184,8 @@ export function ReportDetailDrawer({
   onApprove,
   onReject,
   onSubmit,
+  onEdit,
+  onDelete,
   onViewGallery,
   currentUser
 }: ReportDetailDrawerProps) {
@@ -187,6 +194,7 @@ export function ReportDetailDrawer({
   const [rejectReason, setRejectReason] = useState("");
   const [history, setHistory] = useState<{ id: string; action: "SUBMITTED" | "APPROVED" | "REJECTED" | "RETURNED"; actor: string; role: string; timestamp: string; detail?: string }[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
@@ -269,10 +277,10 @@ export function ReportDetailDrawer({
         className="w-full max-w-xl sm:max-w-2xl bg-white h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 sm:px-6 py-4 border-b border-slate-200 shrink-0 bg-white">
+        <div className="flex items-center justify-between px-5 sm:px-6 py-3 border-b border-slate-200 shrink-0 bg-white">
           <div className="min-w-0">
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <h2 className="text-lg font-bold text-slate-900 truncate" title={report.reportNo}>{report.code}</h2>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-base font-bold text-slate-900 truncate" title={report.reportNo}>{report.code}</h2>
               <StatusBadge variant={getStatusVariant(report.status)} size="sm">
                 {getStatusLabel(report.status)}
               </StatusBadge>
@@ -280,60 +288,41 @@ export function ReportDetailDrawer({
                 {report.type === 'WEEKLY' ? 'Báo cáo tuần' : 'Báo cáo ngày'}
               </StatusBadge>
             </div>
-            <p className="text-sm text-slate-500 mt-0.5 truncate">{report.projectName}</p>
+            <p className="text-xs text-slate-500 mt-0.5 truncate">
+              {report.projectName} · {report.creatorName} · {report.type === 'WEEKLY' ? `${report.weekStartDate} - ${report.weekEndDate}` : `${report.date} ${report.time}`}
+              {report.type === 'DAILY' && report.weatherCondition && (
+                <span className="inline-flex items-center gap-1 ml-2">
+                  <WeatherIcon weather={report.weatherCondition} />
+                  {WEATHER_OPTIONS.find(o => o.value === report.weatherCondition)?.label}
+                </span>
+              )}
+            </p>
           </div>
           <button
             onClick={onClose}
             disabled={isProcessing}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors shrink-0 disabled:opacity-50"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors shrink-0 disabled:opacity-50"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-5 pb-8 space-y-6">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-slate-50 rounded-lg px-3 py-2.5 space-y-0.5">
-              <p className="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Người tạo</p>
-              <p className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-slate-400" />
-                {report.creatorName}
-              </p>
-              <p className="text-xs text-slate-500">{report.creatorRole}</p>
-            </div>
-            <div className="bg-slate-50 rounded-lg px-3 py-2.5 space-y-0.5">
-              <p className="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Thời gian</p>
-              <p className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                {report.type === 'WEEKLY' ? `${report.weekStartDate} - ${report.weekEndDate}` : report.date}
-              </p>
-              {report.type === 'DAILY' && <p className="text-xs text-slate-500">{report.time}</p>}
-            </div>
-            
-            {report.type === 'DAILY' && (
-              <div className="bg-slate-50 rounded-lg px-3 py-2.5 space-y-0.5">
-                <p className="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Thời tiết</p>
-                <p className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-                  <WeatherIcon weather={report.weatherCondition} />
-                  {weatherLabel} {report.weatherTemperature ? `${report.weatherTemperature}°C` : ''}
-                </p>
-              </div>
-            )}
-
-            {report.gpsLocation && (
-              <div className="bg-slate-50 rounded-lg px-3 py-2.5 space-y-0.5">
+        <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-6">
+          {/* We removed the redundant 4 info cards since header already contains them.
+              But we keep GPS location if available. */}
+          {report.gpsLocation && (
+            <div className="bg-slate-50 rounded-lg px-3 py-2.5 flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-slate-400" />
+              <div>
                 <p className="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Vị trí GPS</p>
-                <p className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                  {report.gpsLocation}
-                </p>
+                <p className="text-sm font-semibold text-slate-800">{report.gpsLocation}</p>
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {report.type === 'WEEKLY' && report.summary && (
             <DetailSection
-              title="Đánh giá tuần"
+              title="Tổng quan tuần"
               icon={<AlignLeft className="w-4 h-4 text-blue-600" />}
             >
               {report.summary}
@@ -345,7 +334,7 @@ export function ReportDetailDrawer({
             <div className="space-y-2">
               <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
                 <TrendingUp className="w-4 h-4 text-emerald-600" />
-                Nội dung công việc ({validWorkLines.length})
+                {report.type === 'WEEKLY' ? 'Tổng hợp công việc' : 'Nội dung công việc'} ({validWorkLines.length})
               </h4>
               <div className="pl-0 sm:pl-6">
                 <div className="border border-slate-200 rounded-lg overflow-hidden">
@@ -373,73 +362,71 @@ export function ReportDetailDrawer({
                 </div>
               </div>
             </div>
-          ) : (
+          ) : (report.workContent && report.workContent !== "No content") ? (
             <DetailSection
-              title="Nội dung công việc"
+              title={report.type === 'WEEKLY' ? "Tổng hợp công việc" : "Nội dung công việc"}
               icon={<FileText className="w-4 h-4 text-blue-600" />}
               empty={false}
             >
-              {(!report.workContent || report.workContent === "No content") ? "Chưa có nội dung công việc" : report.workContent}
+              {report.workContent}
+            </DetailSection>
+          ) : null}
+
+          {report.type === 'DAILY' && (
+            <>
+              <DetailSection
+                title="Nguồn lực & Vấn đề"
+                icon={<Package className="w-4 h-4 text-amber-600" />}
+                empty={!report.materials && !report.labor && !report.quality}
+              >
+                {report.materials && <><span className="font-semibold text-slate-700">Vật tư:</span> {report.materials}{'\n'}</>}
+                {report.labor && <><span className="font-semibold text-slate-700">Nhân công/Máy móc:</span> {report.labor}{'\n'}</>}
+                {report.quality && <><span className="font-semibold text-slate-700">Chất lượng/An toàn:</span> {report.quality}</>}
+              </DetailSection>
+            </>
+          )}
+
+          {report.issues && (
+            <DetailSection
+              title={report.type === 'WEEKLY' ? "Vấn đề phát sinh" : "Vấn đề phát sinh"}
+              icon={<AlertTriangle className="w-4 h-4 text-red-500" />}
+              empty={!report.issues}
+            >
+              {report.issues}
             </DetailSection>
           )}
 
-          <DetailSection
-            title="Vật tư sử dụng"
-            icon={<Package className="w-4 h-4 text-amber-600" />}
-            empty={!report.materials}
-          >
-            {report.materials}
-          </DetailSection>
-
-          <DetailSection
-            title="Nhân công / Máy móc"
-            icon={<Users className="w-4 h-4 text-sky-600" />}
-            empty={!report.labor}
-          >
-            {report.labor}
-          </DetailSection>
-
-          <DetailSection
-            title="Kỹ thuật / Chất lượng"
-            icon={<Wrench className="w-4 h-4 text-violet-600" />}
-            empty={!report.quality}
-          >
-            {report.quality}
-          </DetailSection>
-
-          <DetailSection
-            title="Vấn đề phát sinh"
-            icon={<AlertTriangle className="w-4 h-4 text-red-500" />}
-            empty={!report.issues}
-          >
-            {report.issues}
-          </DetailSection>
-
-          <DetailSection
-            title="Kiến nghị / Đề xuất"
-            icon={<Lightbulb className="w-4 h-4 text-amber-500" />}
-            empty={!report.recommendations}
-          >
-            {report.recommendations}
-          </DetailSection>
+          {report.recommendations && (
+            <DetailSection
+              title={report.type === 'WEEKLY' ? "Kiến nghị / kế hoạch tuần sau" : "Kiến nghị / Đề xuất"}
+              icon={<Lightbulb className="w-4 h-4 text-amber-500" />}
+              empty={!report.recommendations}
+            >
+              {report.recommendations}
+            </DetailSection>
+          )}
 
           {/* Photo gallery */}
-          <div className="space-y-2">
-            <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-              <Camera className="w-4 h-4 text-sky-600" />
-              Hình ảnh hiện trường ({report.photos?.length || 0})
-            </h4>
-            {!report.photos || report.photos.length === 0 ? (
-              <p className="text-sm text-slate-500 italic pl-0 sm:pl-6">Chưa có ảnh/file đính kèm</p>
-            ) : (
+          {report.photos && report.photos.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                <Camera className="w-4 h-4 text-sky-600" />
+                {report.type === 'WEEKLY' ? 'Ảnh tiêu biểu' : 'Hình ảnh hiện trường'} ({report.photos.length})
+              </h4>
+
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 pl-0 sm:pl-6">
                 {report.photos.map((photo, index) => (
                   <div
                     key={photo.id}
                     className="aspect-square bg-slate-100 rounded-lg flex items-center justify-center border border-slate-200 overflow-hidden hover:border-blue-300 transition-colors cursor-pointer relative group"
-                    onClick={() => onViewGallery?.(report, index)}
+                    onClick={() => { if(!photo.isMissing) onViewGallery?.(report, index); }}
                   >
-                    {photo.url ? (
+                    {photo.isMissing ? (
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 border border-slate-200">
+                        <Camera className="w-5 h-5 text-slate-300 mx-auto" />
+                        <span className="text-[10px] text-slate-500 font-medium mt-1">Ảnh lỗi</span>
+                      </div>
+                    ) : photo.url ? (
                       <ImageWithFallback src={photo.url} caption={photo.caption} />
                     ) : (
                       <div className="text-center">
@@ -455,52 +442,64 @@ export function ReportDetailDrawer({
                   </div>
                 ))}
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Attachments */}
-          <div className="space-y-2">
-            <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-              <Paperclip className="w-4 h-4 text-slate-500" />
-              File đính kèm ({report.attachments?.length || 0})
-            </h4>
-            {!report.attachments || report.attachments.length === 0 ? (
-              <p className="text-sm text-slate-500 italic pl-0 sm:pl-6">Chưa có ảnh/file đính kèm</p>
-            ) : (
+          {report.attachments && report.attachments.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                <Paperclip className="w-4 h-4 text-slate-500" />
+                File đính kèm ({report.attachments.length})
+              </h4>
+
               <div className="space-y-1.5 pl-0 sm:pl-6">
                 {report.attachments.map((att) => (
                   <div
                     key={att.id}
-                    className="flex items-center gap-3 p-2.5 bg-slate-50 rounded-lg border border-slate-100 hover:border-blue-200 transition-colors cursor-pointer group"
-                    onClick={() => { if(att.url) window.open(att.url, '_blank') }}
+                    className={`flex items-center gap-3 p-2.5 rounded-lg border transition-colors ${att.isMissing ? 'bg-slate-50/50 border-slate-200 cursor-not-allowed opacity-80' : 'bg-slate-50 border-slate-100 hover:border-blue-200 cursor-pointer group'}`}
+                    onClick={() => { if(!att.isMissing && att.url) window.open(att.url, '_blank') }}
                   >
-                    <div className="flex items-center justify-center w-8 h-8 rounded-md bg-blue-50 text-blue-500 shrink-0">
+                    <div className={`flex items-center justify-center w-8 h-8 rounded-md shrink-0 ${att.isMissing ? 'bg-slate-200 text-slate-400' : 'bg-blue-50 text-blue-500'}`}>
                       <FileText className="w-4 h-4" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-slate-700 truncate">{att.name}</p>
-                      <p className="text-xs text-slate-400">{att.size}</p>
+                      <p className={`text-sm font-medium truncate ${att.isMissing ? 'text-slate-500 line-through' : 'text-slate-700'}`}>{att.name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs text-slate-400">{att.size}</p>
+                        {att.isMissing && (
+                          <span className="text-[10px] font-medium text-amber-600 bg-amber-50 border border-amber-100 px-1.5 rounded-sm" title="File gốc không còn trong storage">File thiếu</span>
+                        )}
+                      </div>
                     </div>
-                    <Download className="w-4 h-4 text-slate-300 group-hover:text-blue-500 shrink-0 transition-colors" />
+                    {!att.isMissing && <Download className="w-4 h-4 text-slate-300 group-hover:text-blue-500 shrink-0 transition-colors" />}
                   </div>
                 ))}
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Approval History */}
           <div className="space-y-3">
-            <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+            <button 
+              onClick={() => setShowHistory(!showHistory)}
+              className="flex items-center gap-2 text-sm font-semibold text-slate-800 hover:text-blue-600 transition-colors w-full text-left"
+            >
               <History className="w-4 h-4 text-slate-500" />
               Lịch sử duyệt
-            </h4>
-            {isLoadingHistory ? (
-              <div className="flex justify-center p-4"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>
-            ) : !history || history.length === 0 ? (
-              <p className="text-sm text-slate-500 italic pl-0 sm:pl-6">Chưa có lịch sử trạng thái</p>
-            ) : (
-              <div className="pl-0 sm:pl-6">
-                <ApprovalTimeline history={history} />
+              <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full ml-1 font-medium">{history.length || 0}</span>
+            </button>
+            {showHistory && (
+              <div className="pt-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                {isLoadingHistory ? (
+                  <div className="flex justify-center p-4"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>
+                ) : !history || history.length === 0 ? (
+                  <p className="text-sm text-slate-500 italic pl-0 sm:pl-6">Chưa có lịch sử trạng thái</p>
+                ) : (
+                  <div className="pl-0 sm:pl-6">
+                    <ApprovalTimeline history={history} />
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -546,12 +545,42 @@ export function ReportDetailDrawer({
                   Đóng
                 </Button>
 
+                {/* Edit and Delete for DRAFT/REJECTED/SUBMITTED */}
+                {currentUser && (
+                  <>
+                    {(report.status === "DRAFT" || report.status === "REJECTED" || report.status === "SUBMITTED") && 
+                     ['ADMIN', 'DIRECTOR', 'DEPUTY_DIRECTOR'].includes(currentUser.role || '') && (
+                      <Button
+                        variant="outline"
+                        onClick={() => onDelete?.(report)}
+                        disabled={isProcessing}
+                        className="gap-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 border-transparent hover:border-red-200"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Xóa
+                      </Button>
+                    )}
+                    {(report.status === "DRAFT" || report.status === "REJECTED") && 
+                     (report.createdById === currentUser.id || ['ADMIN', 'DIRECTOR', 'DEPUTY_DIRECTOR'].includes(currentUser.role || '')) && (
+                      <Button
+                        variant="outline"
+                        onClick={() => { onClose(); onEdit?.(report); }}
+                        disabled={isProcessing}
+                        className="gap-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200 hover:border-blue-300"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                        Sửa
+                      </Button>
+                    )}
+                  </>
+                )}
+
                 {/* Submit button for creator in DRAFT/REJECTED */}
                 {(report.status === "DRAFT" || report.status === "REJECTED") && currentUser?.id === report.createdById && (
                   <Button
                     onClick={handleSubmit}
                     disabled={isProcessing}
-                    className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white"
+                    className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white ml-auto"
                   >
                     {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                     Gửi báo cáo
@@ -565,14 +594,14 @@ export function ReportDetailDrawer({
                       variant="outline"
                       onClick={() => setRejectMode(true)}
                       disabled={isProcessing}
-                      className="gap-1.5 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                      className="gap-1.5 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 ml-auto"
                     >
                       Từ chối
                     </Button>
                     <Button
                       onClick={handleApprove}
                       disabled={isProcessing}
-                      className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+                      className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white ml-2"
                     >
                       {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                       Duyệt

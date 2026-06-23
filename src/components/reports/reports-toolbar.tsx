@@ -1,6 +1,7 @@
 "use client";
 
-import { Search, X, Calendar } from "lucide-react";
+import { useState } from "react";
+import { Search, X, Calendar, Filter } from "lucide-react";
 import { getStatusLabel } from "./types";
 import { Button } from "@/components/ui/button";
 
@@ -51,13 +52,22 @@ export function ReportsToolbar({
   hasActiveFilters,
   tab,
 }: ReportsToolbarProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  
   const isTypeDisabled = tab === 'daily' || tab === 'weekly';
   const isStatusDisabled = tab === 'pending' || tab === 'rejected';
 
+  const filterCount = [
+    projectFilter,
+    isStatusDisabled ? '' : statusFilter,
+    isTypeDisabled ? '' : typeFilter,
+    dateRange
+  ].filter(Boolean).length;
+
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-3 sm:p-4">
-      <div className="flex flex-col xl:flex-row xl:items-center gap-3">
-        {/* Search input - takes remaining space or full width on small screens */}
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-3">
+      <div className="flex items-center gap-3">
+        {/* Search input */}
         <div className="relative flex-1 min-w-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
           <input
@@ -69,26 +79,50 @@ export function ReportsToolbar({
           />
         </div>
 
-        {/* Filter row - wraps gracefully on laptop/tablet, stack on mobile */}
-        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 sm:gap-2.5 shrink-0">
-          
-          {/* Type filter */}
+        <Button 
+          variant={filterCount > 0 ? "default" : "outline"} 
+          className="h-10 px-3 relative" 
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          <Filter className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">Bộ lọc</span>
+          {filterCount > 0 && (
+            <span className="ml-1.5 inline-flex items-center justify-center bg-blue-600 text-white text-[10px] font-bold w-4 h-4 rounded-full">
+              {filterCount}
+            </span>
+          )}
+        </Button>
+        
+        {hasActiveFilters && (
+          <Button variant="ghost" className="h-10 px-3 text-slate-500 hover:text-slate-900" onClick={onResetFilters}>
+            <X className="w-4 h-4 sm:mr-1.5" /> <span className="hidden sm:inline">Đặt lại</span>
+          </Button>
+        )}
+      </div>
+
+      {isOpen && (
+        <div className="mt-3 pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           <select
             value={typeFilter}
             onChange={(e) => onTypeFilterChange(e.target.value)}
             disabled={isTypeDisabled}
-            className={`h-10 px-3 text-sm text-slate-900 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none cursor-pointer min-w-0 sm:min-w-[160px] flex-1 sm:flex-none ${isTypeDisabled ? 'opacity-50 cursor-not-allowed bg-slate-100' : ''}`}
+            className={`h-10 px-3 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+              isTypeDisabled 
+                ? 'bg-slate-100 text-slate-500 border border-slate-200 cursor-not-allowed' 
+                : typeFilter ? 'bg-blue-50/50 text-blue-900 border border-blue-200' : 'bg-slate-50 text-slate-900 border border-slate-200'
+            }`}
           >
             {TYPE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>
 
-          {/* Project filter */}
           <select
             value={projectFilter}
             onChange={(e) => onProjectFilterChange(e.target.value)}
-            className="h-10 px-3 text-sm text-slate-900 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none cursor-pointer min-w-0 sm:min-w-[180px] flex-1 sm:flex-none"
+            className={`h-10 px-3 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+              projectFilter ? 'bg-blue-50/50 text-blue-900 border border-blue-200' : 'bg-slate-50 text-slate-900 border border-slate-200'
+            }`}
           >
             <option value="">Tất cả công trình</option>
             {projects.map((p) => (
@@ -96,46 +130,38 @@ export function ReportsToolbar({
             ))}
           </select>
 
-          {/* Date range filter */}
-          <div className="relative flex-1 sm:flex-none">
-            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          <div className="relative">
+            <Calendar className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${dateRange ? 'text-blue-500' : 'text-slate-400'}`} />
             <select
               value={dateRange}
               onChange={(e) => onDateRangeChange(e.target.value)}
-              className="w-full sm:w-[160px] h-10 pl-9 pr-3 text-sm text-slate-900 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none cursor-pointer"
+              className={`w-full h-10 pl-9 pr-3 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors appearance-none cursor-pointer ${
+                dateRange ? 'bg-blue-50/50 text-blue-900 border border-blue-200' : 'bg-slate-50 text-slate-900 border border-slate-200'
+              }`}
             >
-              <option value="">Toàn thời gian</option>
+              <option value="">Mọi thời điểm</option>
               <option value="today">Hôm nay</option>
               <option value="thisWeek">Tuần này</option>
               <option value="thisMonth">Tháng này</option>
             </select>
           </div>
 
-          {/* Status filter */}
           <select
             value={statusFilter}
             onChange={(e) => onStatusFilterChange(e.target.value)}
             disabled={isStatusDisabled}
-            className={`h-10 px-3 text-sm text-slate-900 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none cursor-pointer min-w-0 sm:min-w-[150px] flex-1 sm:flex-none ${isStatusDisabled ? 'opacity-50 cursor-not-allowed bg-slate-100' : ''}`}
+            className={`h-10 px-3 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+              isStatusDisabled 
+                ? 'bg-slate-100 text-slate-500 border border-slate-200 cursor-not-allowed' 
+                : statusFilter ? 'bg-blue-50/50 text-blue-900 border border-blue-200' : 'bg-slate-50 text-slate-900 border border-slate-200'
+            }`}
           >
             {STATUS_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>
-
-          {/* Reset Filters Button */}
-          {hasActiveFilters && (
-            <Button
-              variant="outline"
-              onClick={onResetFilters}
-              className="h-10 px-3 gap-1.5 text-sm shrink-0 border-slate-200 text-slate-600 hover:bg-slate-100 flex-1 sm:flex-none"
-            >
-              <X className="w-4 h-4" />
-              <span className="inline">Đặt lại</span>
-            </Button>
-          )}
         </div>
-      </div>
+      )}
     </div>
   );
 }

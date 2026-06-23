@@ -1,9 +1,23 @@
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import fs from "fs";
+import path from "path";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { PrintReportToolbar } from "@/components/reports/print-report-toolbar";
+
+const formatFileSize = (bytes: number | null | undefined | string | bigint) => {
+  if (bytes === undefined || bytes === null || bytes === "") return "Không rõ dung lượng";
+  const num = Number(bytes);
+  if (isNaN(num)) return "Không rõ dung lượng";
+  if (num === 0) return "0 Bytes";
+  if (num < 1024) return "< 1 KB";
+  if (num < 1024 * 1024) return `${(num / 1024).toFixed(1)} KB`;
+  const mb = num / (1024 * 1024);
+  if (mb < 0.01) return "< 0.01 MB";
+  return `${mb.toFixed(2)} MB`;
+};
 
 export const metadata = {
   title: "In Báo Cáo Hiện Trường",
@@ -45,9 +59,14 @@ export default async function PrintReportPage({ params }: { params: Promise<{ re
     );
   }
 
-  // Filter attachments
-  const photos = report.attachments.filter(a => a.kind === "PHOTO");
-  const files = report.attachments.filter(a => a.kind === "FILE");
+  const mappedAttachments = report.attachments.map(a => {
+    const physicalPath = a.storagePath ? path.join(process.cwd(), a.storagePath.startsWith('storage') ? '' : 'storage', a.storagePath) : "";
+    const isMissing = a.storagePath ? !fs.existsSync(physicalPath) : true;
+    return { ...a, isMissing };
+  });
+
+  const photos = mappedAttachments.filter(a => a.kind === "PHOTO");
+  const files = mappedAttachments.filter(a => a.kind === "FILE");
 
   // Format Status
   const getStatusText = (status: string) => {
@@ -94,8 +113,9 @@ export default async function PrintReportPage({ params }: { params: Promise<{ re
 
       {/* Header */}
       <div className="text-center mb-8 avoid-break">
+        <h2 className="text-sm font-semibold mb-2">CT2 Hà Nội</h2>
         <h1 className="text-2xl font-bold uppercase mb-2">
-          {isWeekly ? 'Báo cáo hiện trường tuần' : 'Báo cáo hiện trường ngày'}
+          {isWeekly ? 'BÁO CÁO HIỆN TRƯỜNG TUẦN' : 'BÁO CÁO HIỆN TRƯỜNG NGÀY'}
         </h1>
         <p className="text-slate-600 italic">Mã báo cáo: {report.reportNo}</p>
       </div>
@@ -120,86 +140,157 @@ export default async function PrintReportPage({ params }: { params: Promise<{ re
               {getWeatherText(report.weatherCondition)} {report.weatherTemperature ? `(${report.weatherTemperature}°C)` : ''}
             </p>
           )}
-          {isWeekly && report.summary && (
-            <p><span className="font-semibold w-24 inline-block">Đánh giá chung:</span> {report.summary}</p>
-          )}
         </div>
       </div>
 
-      {/* Work Lines Table */}
-      <div className="mb-8 avoid-break">
-        <h3 className="text-base font-bold mb-3 uppercase">1. {isWeekly ? 'Tổng hợp khối lượng công việc' : 'Chi tiết công việc'}</h3>
-        <table className="w-full border-collapse border border-slate-400 text-sm">
-          <thead>
-            <tr className="bg-slate-100">
-              <th className="border border-slate-400 py-2 px-2 w-12 text-center">STT</th>
-              <th className="border border-slate-400 py-2 px-3 text-left">Hạng mục / Công việc</th>
-              {!isWeekly && <th className="border border-slate-400 py-2 px-3 text-left w-32">Khu vực</th>}
-              <th className="border border-slate-400 py-2 px-2 text-center w-20">ĐVT</th>
-              <th className="border border-slate-400 py-2 px-3 text-right w-28">{isWeekly ? 'Khối lượng tuần' : 'Khối lượng'}</th>
-              <th className="border border-slate-400 py-2 px-3 text-left w-48">Ghi chú</th>
-            </tr>
-          </thead>
-          <tbody>
-            {report.lines.length > 0 ? report.lines.map((line, idx) => (
-              <tr key={line.id}>
-                <td className="border border-slate-400 py-1.5 px-2 text-center">{idx + 1}</td>
-                <td className="border border-slate-400 py-1.5 px-3">{line.workName || line.workContent}</td>
-                {!isWeekly && <td className="border border-slate-400 py-1.5 px-3">{line.area || '-'}</td>}
-                <td className="border border-slate-400 py-1.5 px-2 text-center">{line.unit || '-'}</td>
-                <td className="border border-slate-400 py-1.5 px-3 text-right font-medium">{Number(line.quantityToday)}</td>
-                <td className="border border-slate-400 py-1.5 px-3 text-slate-600 text-xs">{line.note || '-'}</td>
-              </tr>
-            )) : (
-              <tr>
-                <td colSpan={isWeekly ? 5 : 6} className="border border-slate-400 py-4 text-center text-slate-500">
-                  Không có dữ liệu
-                </td>
-              </tr>
+      {!isWeekly ? (
+        // ================= DAILY REPORT =================
+        <>
+          {/* 1. Chi tiết công việc */}
+          <div className="mb-8 avoid-break">
+            <h3 className="text-base font-bold mb-3 uppercase">1. Chi tiết công việc</h3>
+            <table className="w-full border-collapse border border-slate-400 text-sm">
+              <thead>
+                <tr className="bg-slate-100">
+                  <th className="border border-slate-400 py-2 px-2 w-12 text-center">STT</th>
+                  <th className="border border-slate-400 py-2 px-3 text-left">Hạng mục / Công việc</th>
+                  <th className="border border-slate-400 py-2 px-3 text-left w-32">Khu vực</th>
+                  <th className="border border-slate-400 py-2 px-2 text-center w-20">ĐVT</th>
+                  <th className="border border-slate-400 py-2 px-3 text-right w-28">Khối lượng</th>
+                  <th className="border border-slate-400 py-2 px-3 text-left w-48">Ghi chú</th>
+                </tr>
+              </thead>
+              <tbody>
+                {report.lines.length > 0 ? report.lines.map((line, idx) => (
+                  <tr key={line.id}>
+                    <td className="border border-slate-400 py-1.5 px-2 text-center">{idx + 1}</td>
+                    <td className="border border-slate-400 py-1.5 px-3">{line.workName || line.workContent}</td>
+                    <td className="border border-slate-400 py-1.5 px-3">{line.area || '-'}</td>
+                    <td className="border border-slate-400 py-1.5 px-2 text-center">{line.unit || '-'}</td>
+                    <td className="border border-slate-400 py-1.5 px-3 text-right font-medium">{Number(line.quantityToday)}</td>
+                    <td className="border border-slate-400 py-1.5 px-3 text-slate-600 text-xs">{line.note || '-'}</td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td colSpan={6} className="border border-slate-400 py-4 text-center text-slate-500">
+                      Không có dữ liệu
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* 2. Nguồn lực & Vấn đề */}
+          <div className="mb-8 avoid-break space-y-4 text-sm">
+            <h3 className="text-base font-bold mb-3 uppercase">2. Nguồn lực & Vấn đề</h3>
+            {!report.materials && !report.labor && !report.quality && !report.issues && !report.recommendations && (
+               <div className="text-slate-500 italic">Không có dữ liệu</div>
             )}
-          </tbody>
-        </table>
-      </div>
+            {report.materials && <div><span className="font-semibold underline">Vật tư:</span> {report.materials}</div>}
+            {report.labor && <div><span className="font-semibold underline">Nhân công/Máy móc:</span> {report.labor}</div>}
+            {report.quality && <div><span className="font-semibold underline">Chất lượng/An toàn:</span> {report.quality}</div>}
+            {report.issues && <div><span className="font-semibold underline">Vấn đề phát sinh:</span> {report.issues}</div>}
+            {report.recommendations && <div><span className="font-semibold underline">Kiến nghị:</span> {report.recommendations}</div>}
+          </div>
 
-      {/* Additional Details (Daily) */}
-      {!isWeekly && (report.materials || report.labor || report.quality || report.issues || report.recommendations) && (
-        <div className="mb-8 avoid-break space-y-4 text-sm">
-          <h3 className="text-base font-bold mb-3 uppercase">2. Nguồn lực & Vấn đề</h3>
-          
-          {report.materials && <div><span className="font-semibold underline">Vật tư:</span> {report.materials}</div>}
-          {report.labor && <div><span className="font-semibold underline">Nhân công/Máy móc:</span> {report.labor}</div>}
-          {report.quality && <div><span className="font-semibold underline">Chất lượng/An toàn:</span> {report.quality}</div>}
-          {report.issues && <div><span className="font-semibold underline">Vấn đề phát sinh:</span> {report.issues}</div>}
-          {report.recommendations && <div><span className="font-semibold underline">Kiến nghị:</span> {report.recommendations}</div>}
-        </div>
-      )}
+          {/* 3. Tài liệu đính kèm */}
+          <div className="mb-8 avoid-break">
+            <h3 className="text-base font-bold mb-2 uppercase">3. Tài liệu đính kèm</h3>
+            {files.length > 0 ? (
+              <ul className="list-disc pl-5 text-sm">
+                {files.map(f => (
+                  <li key={f.id}>
+                    {f.originalName || f.fileName} ({formatFileSize(f.sizeBytes)})
+                    {f.isMissing && <span className="text-amber-600 font-medium ml-2">(Tệp không khả dụng)</span>}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-slate-500 italic">Không có tài liệu</p>
+            )}
+          </div>
+        </>
+      ) : (
+        // ================= WEEKLY REPORT =================
+        <>
+          {/* 1. Tổng quan tuần & Đánh giá */}
+          <div className="mb-8 avoid-break space-y-4 text-sm">
+            <h3 className="text-base font-bold mb-3 uppercase">1. Tổng quan & Đánh giá tuần</h3>
+            <div>
+              <p className="font-semibold mb-1 underline">Đánh giá tuần:</p>
+              <div className="whitespace-pre-line border border-slate-200 p-3 rounded bg-slate-50">
+                {report.summary || 'Không có đánh giá.'}
+              </div>
+            </div>
+          </div>
 
-      {/* Additional Details (Weekly) */}
-      {isWeekly && (report.issues || report.recommendations) && (
-        <div className="mb-8 avoid-break space-y-4 text-sm">
-          <h3 className="text-base font-bold mb-3 uppercase">2. Vấn đề & Kế hoạch</h3>
-          
-          {report.issues && <div><span className="font-semibold underline">Vấn đề phát sinh tuần:</span> {report.issues}</div>}
-          {report.recommendations && <div><span className="font-semibold underline">Kế hoạch tuần tiếp theo:</span> {report.recommendations}</div>}
-        </div>
-      )}
+          {/* 2. Tổng hợp công việc */}
+          <div className="mb-8 avoid-break">
+            <h3 className="text-base font-bold mb-3 uppercase">2. Tổng hợp công việc</h3>
+            <table className="w-full border-collapse border border-slate-400 text-sm">
+              <thead>
+                <tr className="bg-slate-100">
+                  <th className="border border-slate-400 py-2 px-2 w-12 text-center">STT</th>
+                  <th className="border border-slate-400 py-2 px-3 text-left">Công việc</th>
+                  <th className="border border-slate-400 py-2 px-2 text-center w-20">ĐVT</th>
+                  <th className="border border-slate-400 py-2 px-3 text-right w-28">Khối lượng</th>
+                  <th className="border border-slate-400 py-2 px-3 text-left w-48">Ghi chú</th>
+                </tr>
+              </thead>
+              <tbody>
+                {report.lines.length > 0 ? report.lines.map((line, idx) => (
+                  <tr key={line.id}>
+                    <td className="border border-slate-400 py-1.5 px-2 text-center">{idx + 1}</td>
+                    <td className="border border-slate-400 py-1.5 px-3">{line.workName || line.workContent}</td>
+                    <td className="border border-slate-400 py-1.5 px-2 text-center">{line.unit || '-'}</td>
+                    <td className="border border-slate-400 py-1.5 px-3 text-right font-medium">{Number(line.quantityToday)}</td>
+                    <td className="border border-slate-400 py-1.5 px-3 text-slate-600 text-xs">{line.note || '-'}</td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td colSpan={5} className="border border-slate-400 py-4 text-center text-slate-500">
+                      Không có dữ liệu
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
 
-      {/* Attachments list */}
-      {files.length > 0 && (
-        <div className="mb-8 avoid-break">
-          <h3 className="text-base font-bold mb-2 uppercase">3. Tài liệu đính kèm</h3>
-          <ul className="list-disc pl-5 text-sm">
-            {files.map(f => (
-              <li key={f.id}>{f.originalName || f.fileName} ({(f.sizeBytes / 1024 / 1024).toFixed(2)} MB)</li>
-            ))}
-          </ul>
-        </div>
+          {/* 3. Vấn đề & Kế hoạch */}
+          <div className="mb-8 avoid-break space-y-4 text-sm">
+            <h3 className="text-base font-bold mb-3 uppercase">3. Vấn đề phát sinh & Kiến nghị</h3>
+            {!report.issues && !report.recommendations && (
+               <div className="text-slate-500 italic">Không có dữ liệu</div>
+            )}
+            {report.issues && <div><span className="font-semibold underline">Vấn đề phát sinh tuần:</span> {report.issues}</div>}
+            {report.recommendations && <div><span className="font-semibold underline">Kiến nghị / kế hoạch tuần sau:</span> {report.recommendations}</div>}
+          </div>
+
+          {/* 4. Tài liệu đính kèm */}
+          <div className="mb-8 avoid-break">
+            <h3 className="text-base font-bold mb-2 uppercase">4. Tài liệu đính kèm</h3>
+            {files.length > 0 ? (
+              <ul className="list-disc pl-5 text-sm">
+                {files.map(f => (
+                  <li key={f.id}>
+                    {f.originalName || f.fileName} ({formatFileSize(f.sizeBytes)})
+                    {f.isMissing && <span className="text-amber-600 font-medium ml-2">(Tệp không khả dụng)</span>}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-slate-500 italic">Không có tài liệu</p>
+            )}
+          </div>
+        </>
       )}
 
       {/* History */}
       {auditLogs.length > 0 && (
         <div className="mb-8 avoid-break">
-          <h3 className="text-base font-bold mb-2 uppercase">4. Lịch sử trạng thái</h3>
+          <h3 className="text-base font-bold mb-2 uppercase">{isWeekly ? '5' : '4'}. Lịch sử trạng thái</h3>
           <ul className="list-inside text-sm space-y-1">
             {auditLogs.map(log => {
               const actionName = log.action.replace("SITE_REPORT_", "");
@@ -226,44 +317,50 @@ export default async function PrintReportPage({ params }: { params: Promise<{ re
         </div>
       )}
 
-      {/* Signatures */}
-      <div className="grid grid-cols-3 gap-8 mt-16 text-center text-sm font-bold avoid-break pb-10">
-        <div>
-          <p className="mb-20">Người lập báo cáo</p>
-          <p className="font-normal text-slate-500">(Ký, ghi rõ họ tên)</p>
-          <p className="mt-2 text-slate-800">{report.reporterName || report.createdBy?.name || ''}</p>
-        </div>
-        <div>
-          <p className="mb-20">Chỉ huy trưởng</p>
-          <p className="font-normal text-slate-500">(Ký, ghi rõ họ tên)</p>
-        </div>
-        <div>
-          <p className="mb-20">Người phê duyệt</p>
-          <p className="font-normal text-slate-500">(Ký, ghi rõ họ tên)</p>
-        </div>
-      </div>
-
-      {/* Photos (Page Break if many) */}
+      {/* Photos */}
       {photos.length > 0 && (
-        <div className="page-break mt-8">
-          <h3 className="text-base font-bold mb-4 uppercase text-center border-b pb-2">Hình ảnh hiện trường</h3>
+        <div className="mt-8 mb-12">
+          <h3 className="text-base font-bold mb-4 uppercase text-center border-b pb-2 avoid-break">{isWeekly ? 'Ảnh tiêu biểu' : 'Hình ảnh hiện trường'}</h3>
           <div className="grid grid-cols-2 gap-4">
             {photos.map((photo, i) => (
-              <div key={photo.id} className="border p-2 avoid-break text-center rounded">
-                {/* We use standard img tag. The src points to API. On production, API auth must allow GET with cookie. */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img 
-                  src={`/api/reports/attachments/${photo.id}`} 
-                  alt={photo.caption || `Ảnh ${i+1}`} 
-                  className="max-w-full h-auto max-h-[350px] object-contain mx-auto mb-2"
-                />
-                <p className="text-xs text-slate-600">{photo.caption || `Ảnh hiện trường ${i+1}`}</p>
-                <p className="text-[10px] text-slate-400">{format(photo.createdAt, 'dd/MM/yyyy HH:mm')}</p>
+              <div key={photo.id} className="border border-slate-300 p-2 avoid-break text-center rounded">
+                {photo.isMissing ? (
+                  <div className="w-full h-[250px] flex items-center justify-center bg-slate-50 text-slate-400 mb-2">
+                    Ảnh không khả dụng
+                  </div>
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img 
+                    src={`/api/reports/attachments/${photo.id}`} 
+                    alt={photo.caption || `Ảnh ${i+1}`} 
+                    className="max-w-full h-auto max-h-[300px] object-contain mx-auto mb-2"
+                  />
+                )}
+                <p className="text-xs text-slate-600 font-medium">{photo.caption || `Ảnh ${isWeekly ? 'tiêu biểu' : 'hiện trường'} ${i+1}`}</p>
+                <p className="text-[10px] text-slate-400 mt-1">{format(photo.createdAt, 'dd/MM/yyyy HH:mm')}</p>
               </div>
             ))}
           </div>
         </div>
       )}
+
+      {/* Signatures */}
+      <div className="grid grid-cols-3 gap-4 mt-8 text-center text-sm font-bold avoid-break pb-8">
+        <div>
+          <p className="mb-16">Người lập báo cáo</p>
+          <p className="font-normal text-slate-500">(Ký, ghi rõ họ tên)</p>
+          <p className="mt-2 text-slate-800">{report.reporterName || report.createdBy?.name || ''}</p>
+        </div>
+        <div>
+          <p className="mb-16">Chỉ huy trưởng</p>
+          <p className="font-normal text-slate-500">(Ký, ghi rõ họ tên)</p>
+        </div>
+        <div>
+          <p className="mb-16">Người phê duyệt</p>
+          <p className="font-normal text-slate-500">(Ký, ghi rõ họ tên)</p>
+        </div>
+      </div>
+
 
     </div>
   );

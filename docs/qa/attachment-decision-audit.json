@@ -1,0 +1,1075 @@
+[
+  {
+    "Report": {
+      "reportId": "cmqp1gf1a002dpwwkjratfcow",
+      "reportNo": "BCN-TH1234-20260601",
+      "type": "DAILY",
+      "status": "APPROVED",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Admin (Dev)",
+      "date": "2026-06-01T00:00:00.000Z"
+    },
+    "Attachment": {
+      "attachmentId": "cmqp1gf1f002hpwwk8p7i1gvf",
+      "kind": "PHOTO",
+      "fileName": "doc_1782122050850_5gigq8.jpg",
+      "originalName": "Anh_hien_truong.jpg",
+      "mimeType": "image/jpeg",
+      "fileSize": 134,
+      "storagePath": "site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050850_5gigq8.jpg"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050850_5gigq8.jpg",
+      "fileExists": true,
+      "actualSize": 134,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": true,
+      "isApprovedReport": true,
+      "isSubmittedReport": false
+    },
+    "Classification": {
+      "group": "Group D — Storage/path issue",
+      "recommendedAction": "path_resolution_check_required",
+      "reason": "Missing storage/ prefix breaking UI"
+    }
+  },
+  {
+    "Report": {
+      "reportId": "cmqp1gf1a002dpwwkjratfcow",
+      "reportNo": "BCN-TH1234-20260601",
+      "type": "DAILY",
+      "status": "APPROVED",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Admin (Dev)",
+      "date": "2026-06-01T00:00:00.000Z"
+    },
+    "Attachment": {
+      "attachmentId": "cmqp1gf1n002ipwwkkabp3v1r",
+      "kind": "FILE",
+      "fileName": "doc_1782122050858_hrebns.pdf",
+      "originalName": "Tai_lieu_dinh_kem.pdf",
+      "mimeType": "application/pdf",
+      "fileSize": 328,
+      "storagePath": "site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050858_hrebns.pdf"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050858_hrebns.pdf",
+      "fileExists": true,
+      "actualSize": 328,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": true,
+      "isApprovedReport": true,
+      "isSubmittedReport": false
+    },
+    "Classification": {
+      "group": "Group D — Storage/path issue",
+      "recommendedAction": "path_resolution_check_required",
+      "reason": "Missing storage/ prefix breaking UI"
+    }
+  },
+  {
+    "Report": {
+      "reportId": "cmqp1gf1t002mpwwke0eb4n1z",
+      "reportNo": "BCN-TH1234-20260602",
+      "type": "DAILY",
+      "status": "APPROVED",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Admin (Dev)",
+      "date": "2026-06-02T00:00:00.000Z"
+    },
+    "Attachment": {
+      "attachmentId": "cmqp1gf1w002qpwwki4tyu5yk",
+      "kind": "PHOTO",
+      "fileName": "doc_1782122050867_p2y43w.jpg",
+      "originalName": "Anh_hien_truong.jpg",
+      "mimeType": "image/jpeg",
+      "fileSize": 134,
+      "storagePath": "site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050867_p2y43w.jpg"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050867_p2y43w.jpg",
+      "fileExists": true,
+      "actualSize": 134,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": true,
+      "isApprovedReport": true,
+      "isSubmittedReport": false
+    },
+    "Classification": {
+      "group": "Group D — Storage/path issue",
+      "recommendedAction": "path_resolution_check_required",
+      "reason": "Missing storage/ prefix breaking UI"
+    }
+  },
+  {
+    "Report": {
+      "reportId": "cmqp1gf21002upwwkgmam9r5o",
+      "reportNo": "BCN-TH1234-20260603",
+      "type": "DAILY",
+      "status": "APPROVED",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Admin (Dev)",
+      "date": "2026-06-03T00:00:00.000Z"
+    },
+    "Attachment": {
+      "attachmentId": "cmqp1gf24002zpwwk4hahq9p0",
+      "kind": "PHOTO",
+      "fileName": "doc_1782122050875_qnk4lo.jpg",
+      "originalName": "Anh_hien_truong.jpg",
+      "mimeType": "image/jpeg",
+      "fileSize": 134,
+      "storagePath": "site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050875_qnk4lo.jpg"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050875_qnk4lo.jpg",
+      "fileExists": true,
+      "actualSize": 134,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": true,
+      "isApprovedReport": true,
+      "isSubmittedReport": false
+    },
+    "Classification": {
+      "group": "Group D — Storage/path issue",
+      "recommendedAction": "path_resolution_check_required",
+      "reason": "Missing storage/ prefix breaking UI"
+    }
+  },
+  {
+    "Report": {
+      "reportId": "cmqp1gf21002upwwkgmam9r5o",
+      "reportNo": "BCN-TH1234-20260603",
+      "type": "DAILY",
+      "status": "APPROVED",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Admin (Dev)",
+      "date": "2026-06-03T00:00:00.000Z"
+    },
+    "Attachment": {
+      "attachmentId": "cmqp1gf250030pwwkhi8qbf0i",
+      "kind": "FILE",
+      "fileName": "doc_1782122050876_nk5xa.pdf",
+      "originalName": "Tai_lieu_dinh_kem.pdf",
+      "mimeType": "application/pdf",
+      "fileSize": 328,
+      "storagePath": "site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050876_nk5xa.pdf"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050876_nk5xa.pdf",
+      "fileExists": true,
+      "actualSize": 328,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": true,
+      "isApprovedReport": true,
+      "isSubmittedReport": false
+    },
+    "Classification": {
+      "group": "Group D — Storage/path issue",
+      "recommendedAction": "path_resolution_check_required",
+      "reason": "Missing storage/ prefix breaking UI"
+    }
+  },
+  {
+    "Report": {
+      "reportId": "cmqp1gf2a0034pwwktybxmikk",
+      "reportNo": "BCN-TH1234-20260604",
+      "type": "DAILY",
+      "status": "APPROVED",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Admin (Dev)",
+      "date": "2026-06-04T00:00:00.000Z"
+    },
+    "Attachment": {
+      "attachmentId": "cmqp1gf2c0037pwwkhu8azqon",
+      "kind": "PHOTO",
+      "fileName": "doc_1782122050884_i508t.jpg",
+      "originalName": "Anh_hien_truong.jpg",
+      "mimeType": "image/jpeg",
+      "fileSize": 134,
+      "storagePath": "site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050884_i508t.jpg"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050884_i508t.jpg",
+      "fileExists": true,
+      "actualSize": 134,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": true,
+      "isApprovedReport": true,
+      "isSubmittedReport": false
+    },
+    "Classification": {
+      "group": "Group D — Storage/path issue",
+      "recommendedAction": "path_resolution_check_required",
+      "reason": "Missing storage/ prefix breaking UI"
+    }
+  },
+  {
+    "Report": {
+      "reportId": "cmqp1gf2h003bpwwkh73hmcu5",
+      "reportNo": "BCN-TH1234-20260605",
+      "type": "DAILY",
+      "status": "APPROVED",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Admin (Dev)",
+      "date": "2026-06-05T00:00:00.000Z"
+    },
+    "Attachment": {
+      "attachmentId": "cmqp1gf2j003fpwwktuw5a0iv",
+      "kind": "PHOTO",
+      "fileName": "doc_1782122050890_t9c7r.jpg",
+      "originalName": "Anh_hien_truong.jpg",
+      "mimeType": "image/jpeg",
+      "fileSize": 134,
+      "storagePath": "site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050890_t9c7r.jpg"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050890_t9c7r.jpg",
+      "fileExists": true,
+      "actualSize": 134,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": true,
+      "isApprovedReport": true,
+      "isSubmittedReport": false
+    },
+    "Classification": {
+      "group": "Group D — Storage/path issue",
+      "recommendedAction": "path_resolution_check_required",
+      "reason": "Missing storage/ prefix breaking UI"
+    }
+  },
+  {
+    "Report": {
+      "reportId": "cmqp1gf2h003bpwwkh73hmcu5",
+      "reportNo": "BCN-TH1234-20260605",
+      "type": "DAILY",
+      "status": "APPROVED",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Admin (Dev)",
+      "date": "2026-06-05T00:00:00.000Z"
+    },
+    "Attachment": {
+      "attachmentId": "cmqp1gf2k003gpwwku7z9f82x",
+      "kind": "FILE",
+      "fileName": "doc_1782122050892_6rl21.pdf",
+      "originalName": "Tai_lieu_dinh_kem.pdf",
+      "mimeType": "application/pdf",
+      "fileSize": 328,
+      "storagePath": "site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050892_6rl21.pdf"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050892_6rl21.pdf",
+      "fileExists": true,
+      "actualSize": 328,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": true,
+      "isApprovedReport": true,
+      "isSubmittedReport": false
+    },
+    "Classification": {
+      "group": "Group D — Storage/path issue",
+      "recommendedAction": "path_resolution_check_required",
+      "reason": "Missing storage/ prefix breaking UI"
+    }
+  },
+  {
+    "Report": {
+      "reportId": "cmqp1gf2o003kpwwkho2c1xuh",
+      "reportNo": "BCN-TH1234-20260606",
+      "type": "DAILY",
+      "status": "APPROVED",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Admin (Dev)",
+      "date": "2026-06-06T00:00:00.000Z"
+    },
+    "Attachment": {
+      "attachmentId": "cmqp1gf2r003opwwkytk9nfq5",
+      "kind": "PHOTO",
+      "fileName": "doc_1782122050898_jgr73k.jpg",
+      "originalName": "Anh_hien_truong.jpg",
+      "mimeType": "image/jpeg",
+      "fileSize": 134,
+      "storagePath": "site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050898_jgr73k.jpg"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050898_jgr73k.jpg",
+      "fileExists": true,
+      "actualSize": 134,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": true,
+      "isApprovedReport": true,
+      "isSubmittedReport": false
+    },
+    "Classification": {
+      "group": "Group D — Storage/path issue",
+      "recommendedAction": "path_resolution_check_required",
+      "reason": "Missing storage/ prefix breaking UI"
+    }
+  },
+  {
+    "Report": {
+      "reportId": "cmqp1gf2v003spwwkvaezc9j0",
+      "reportNo": "BCN-TH1234-20260607",
+      "type": "DAILY",
+      "status": "APPROVED",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Admin (Dev)",
+      "date": "2026-06-07T00:00:00.000Z"
+    },
+    "Attachment": {
+      "attachmentId": "cmqp1gf2y003wpwwkw452bx6m",
+      "kind": "PHOTO",
+      "fileName": "doc_1782122050905_nmp5sa.jpg",
+      "originalName": "Anh_hien_truong.jpg",
+      "mimeType": "image/jpeg",
+      "fileSize": 134,
+      "storagePath": "site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050905_nmp5sa.jpg"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050905_nmp5sa.jpg",
+      "fileExists": true,
+      "actualSize": 134,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": true,
+      "isApprovedReport": true,
+      "isSubmittedReport": false
+    },
+    "Classification": {
+      "group": "Group D — Storage/path issue",
+      "recommendedAction": "path_resolution_check_required",
+      "reason": "Missing storage/ prefix breaking UI"
+    }
+  },
+  {
+    "Report": {
+      "reportId": "cmqp1gf2v003spwwkvaezc9j0",
+      "reportNo": "BCN-TH1234-20260607",
+      "type": "DAILY",
+      "status": "APPROVED",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Admin (Dev)",
+      "date": "2026-06-07T00:00:00.000Z"
+    },
+    "Attachment": {
+      "attachmentId": "cmqp1gf2z003xpwwkpqel0r6t",
+      "kind": "FILE",
+      "fileName": "doc_1782122050906_2jp6k.pdf",
+      "originalName": "Tai_lieu_dinh_kem.pdf",
+      "mimeType": "application/pdf",
+      "fileSize": 328,
+      "storagePath": "site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050906_2jp6k.pdf"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050906_2jp6k.pdf",
+      "fileExists": true,
+      "actualSize": 328,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": true,
+      "isApprovedReport": true,
+      "isSubmittedReport": false
+    },
+    "Classification": {
+      "group": "Group D — Storage/path issue",
+      "recommendedAction": "path_resolution_check_required",
+      "reason": "Missing storage/ prefix breaking UI"
+    }
+  },
+  {
+    "Report": {
+      "reportId": "cmqp1gf330041pwwkxlta3rqh",
+      "reportNo": "BCN-TH1234-20260608",
+      "type": "DAILY",
+      "status": "APPROVED",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Admin (Dev)",
+      "date": "2026-06-08T00:00:00.000Z"
+    },
+    "Attachment": {
+      "attachmentId": "cmqp1gf360045pwwksomtp1hy",
+      "kind": "PHOTO",
+      "fileName": "doc_1782122050913_rep8hn.jpg",
+      "originalName": "Anh_hien_truong.jpg",
+      "mimeType": "image/jpeg",
+      "fileSize": 134,
+      "storagePath": "site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050913_rep8hn.jpg"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050913_rep8hn.jpg",
+      "fileExists": true,
+      "actualSize": 134,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": true,
+      "isApprovedReport": true,
+      "isSubmittedReport": false
+    },
+    "Classification": {
+      "group": "Group D — Storage/path issue",
+      "recommendedAction": "path_resolution_check_required",
+      "reason": "Missing storage/ prefix breaking UI"
+    }
+  },
+  {
+    "Report": {
+      "reportId": "cmqp1gf3b0049pwwkjkjuzhv2",
+      "reportNo": "BCN-TH1234-20260609",
+      "type": "DAILY",
+      "status": "APPROVED",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Admin (Dev)",
+      "date": "2026-06-09T00:00:00.000Z"
+    },
+    "Attachment": {
+      "attachmentId": "cmqp1gf3d004dpwwk9988ra3k",
+      "kind": "PHOTO",
+      "fileName": "doc_1782122050921_5sn71y.jpg",
+      "originalName": "Anh_hien_truong.jpg",
+      "mimeType": "image/jpeg",
+      "fileSize": 134,
+      "storagePath": "site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050921_5sn71y.jpg"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050921_5sn71y.jpg",
+      "fileExists": true,
+      "actualSize": 134,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": true,
+      "isApprovedReport": true,
+      "isSubmittedReport": false
+    },
+    "Classification": {
+      "group": "Group D — Storage/path issue",
+      "recommendedAction": "path_resolution_check_required",
+      "reason": "Missing storage/ prefix breaking UI"
+    }
+  },
+  {
+    "Report": {
+      "reportId": "cmqp1gf3b0049pwwkjkjuzhv2",
+      "reportNo": "BCN-TH1234-20260609",
+      "type": "DAILY",
+      "status": "APPROVED",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Admin (Dev)",
+      "date": "2026-06-09T00:00:00.000Z"
+    },
+    "Attachment": {
+      "attachmentId": "cmqp1gf3f004epwwkjzvpb84t",
+      "kind": "FILE",
+      "fileName": "doc_1782122050922_yklqy7.pdf",
+      "originalName": "Tai_lieu_dinh_kem.pdf",
+      "mimeType": "application/pdf",
+      "fileSize": 328,
+      "storagePath": "site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050922_yklqy7.pdf"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050922_yklqy7.pdf",
+      "fileExists": true,
+      "actualSize": 328,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": true,
+      "isApprovedReport": true,
+      "isSubmittedReport": false
+    },
+    "Classification": {
+      "group": "Group D — Storage/path issue",
+      "recommendedAction": "path_resolution_check_required",
+      "reason": "Missing storage/ prefix breaking UI"
+    }
+  },
+  {
+    "Report": {
+      "reportId": "cmqp1gf3j004ipwwk9oxst6cl",
+      "reportNo": "BCN-TH1234-20260610",
+      "type": "DAILY",
+      "status": "APPROVED",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Admin (Dev)",
+      "date": "2026-06-10T00:00:00.000Z"
+    },
+    "Attachment": {
+      "attachmentId": "cmqp1gf3m004lpwwkvys7y93w",
+      "kind": "PHOTO",
+      "fileName": "doc_1782122050929_k9h3y.jpg",
+      "originalName": "Anh_hien_truong.jpg",
+      "mimeType": "image/jpeg",
+      "fileSize": 134,
+      "storagePath": "site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050929_k9h3y.jpg"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050929_k9h3y.jpg",
+      "fileExists": true,
+      "actualSize": 134,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": true,
+      "isApprovedReport": true,
+      "isSubmittedReport": false
+    },
+    "Classification": {
+      "group": "Group D — Storage/path issue",
+      "recommendedAction": "path_resolution_check_required",
+      "reason": "Missing storage/ prefix breaking UI"
+    }
+  },
+  {
+    "Report": {
+      "reportId": "cmqp1gf3q004ppwwkc4u0lpt4",
+      "reportNo": "BCN-TH1234-20260611",
+      "type": "DAILY",
+      "status": "SUBMITTED",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Admin (Dev)",
+      "date": "2026-06-11T00:00:00.000Z"
+    },
+    "Attachment": {
+      "attachmentId": "cmqp1gf3s004spwwkk6djqez3",
+      "kind": "PHOTO",
+      "fileName": "doc_1782122050935_uugpfq6.jpg",
+      "originalName": "Anh_hien_truong.jpg",
+      "mimeType": "image/jpeg",
+      "fileSize": 134,
+      "storagePath": "site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050935_uugpfq6.jpg"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050935_uugpfq6.jpg",
+      "fileExists": true,
+      "actualSize": 134,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": true,
+      "isApprovedReport": false,
+      "isSubmittedReport": true
+    },
+    "Classification": {
+      "group": "Group D — Storage/path issue",
+      "recommendedAction": "path_resolution_check_required",
+      "reason": "Missing storage/ prefix breaking UI"
+    }
+  },
+  {
+    "Report": {
+      "reportId": "cmqp1gf3q004ppwwkc4u0lpt4",
+      "reportNo": "BCN-TH1234-20260611",
+      "type": "DAILY",
+      "status": "SUBMITTED",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Admin (Dev)",
+      "date": "2026-06-11T00:00:00.000Z"
+    },
+    "Attachment": {
+      "attachmentId": "cmqp1gf3t004tpwwkzuabd2vc",
+      "kind": "FILE",
+      "fileName": "doc_1782122050936_aif5lo.pdf",
+      "originalName": "Tai_lieu_dinh_kem.pdf",
+      "mimeType": "application/pdf",
+      "fileSize": 328,
+      "storagePath": "site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050936_aif5lo.pdf"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050936_aif5lo.pdf",
+      "fileExists": true,
+      "actualSize": 328,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": true,
+      "isApprovedReport": false,
+      "isSubmittedReport": true
+    },
+    "Classification": {
+      "group": "Group D — Storage/path issue",
+      "recommendedAction": "path_resolution_check_required",
+      "reason": "Missing storage/ prefix breaking UI"
+    }
+  },
+  {
+    "Report": {
+      "reportId": "cmqp1gf3w004wpwwks58dffv3",
+      "reportNo": "BCN-TH1234-20260612",
+      "type": "DAILY",
+      "status": "SUBMITTED",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Admin (Dev)",
+      "date": "2026-06-12T00:00:00.000Z"
+    },
+    "Attachment": {
+      "attachmentId": "cmqp1gf3z0050pwwk81hklsrd",
+      "kind": "PHOTO",
+      "fileName": "doc_1782122050942_bc8gi.jpg",
+      "originalName": "Anh_hien_truong.jpg",
+      "mimeType": "image/jpeg",
+      "fileSize": 134,
+      "storagePath": "site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050942_bc8gi.jpg"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050942_bc8gi.jpg",
+      "fileExists": true,
+      "actualSize": 134,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": true,
+      "isApprovedReport": false,
+      "isSubmittedReport": true
+    },
+    "Classification": {
+      "group": "Group D — Storage/path issue",
+      "recommendedAction": "path_resolution_check_required",
+      "reason": "Missing storage/ prefix breaking UI"
+    }
+  },
+  {
+    "Report": {
+      "reportId": "cmqp1gf420053pwwkz69nq95t",
+      "reportNo": "BCN-TH1234-20260613",
+      "type": "DAILY",
+      "status": "DRAFT",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Admin (Dev)",
+      "date": "2026-06-13T00:00:00.000Z"
+    },
+    "Attachment": {
+      "attachmentId": "cmqp1gf450056pwwkirqkqhve",
+      "kind": "PHOTO",
+      "fileName": "doc_1782122050948_w20lys.jpg",
+      "originalName": "Anh_hien_truong.jpg",
+      "mimeType": "image/jpeg",
+      "fileSize": 134,
+      "storagePath": "site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050948_w20lys.jpg"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050948_w20lys.jpg",
+      "fileExists": true,
+      "actualSize": 134,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": false,
+      "isApprovedReport": false,
+      "isSubmittedReport": false
+    },
+    "Classification": {
+      "group": "Group D — Storage/path issue",
+      "recommendedAction": "path_resolution_check_required",
+      "reason": "Missing storage/ prefix breaking UI"
+    }
+  },
+  {
+    "Report": {
+      "reportId": "cmqp1gf420053pwwkz69nq95t",
+      "reportNo": "BCN-TH1234-20260613",
+      "type": "DAILY",
+      "status": "DRAFT",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Admin (Dev)",
+      "date": "2026-06-13T00:00:00.000Z"
+    },
+    "Attachment": {
+      "attachmentId": "cmqp1gf460057pwwkxs9502gb",
+      "kind": "FILE",
+      "fileName": "doc_1782122050949_vbq91.pdf",
+      "originalName": "Tai_lieu_dinh_kem.pdf",
+      "mimeType": "application/pdf",
+      "fileSize": 328,
+      "storagePath": "site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050949_vbq91.pdf"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050949_vbq91.pdf",
+      "fileExists": true,
+      "actualSize": 328,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": false,
+      "isApprovedReport": false,
+      "isSubmittedReport": false
+    },
+    "Classification": {
+      "group": "Group D — Storage/path issue",
+      "recommendedAction": "path_resolution_check_required",
+      "reason": "Missing storage/ prefix breaking UI"
+    }
+  },
+  {
+    "Report": {
+      "reportId": "cmqp1gf490059pwwkpbwrtpfc",
+      "reportNo": "BCN-TH1234-20260614",
+      "type": "DAILY",
+      "status": "REJECTED",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Admin (Dev)",
+      "date": "2026-06-14T00:00:00.000Z"
+    },
+    "Attachment": {
+      "attachmentId": "cmqp1gf4b005dpwwkh3io3p47",
+      "kind": "PHOTO",
+      "fileName": "doc_1782122050954_6tpf2m.jpg",
+      "originalName": "Anh_hien_truong.jpg",
+      "mimeType": "image/jpeg",
+      "fileSize": 134,
+      "storagePath": "site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050954_6tpf2m.jpg"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050954_6tpf2m.jpg",
+      "fileExists": true,
+      "actualSize": 134,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": false,
+      "isApprovedReport": false,
+      "isSubmittedReport": false
+    },
+    "Classification": {
+      "group": "Group D — Storage/path issue",
+      "recommendedAction": "path_resolution_check_required",
+      "reason": "Missing storage/ prefix breaking UI"
+    }
+  },
+  {
+    "Report": {
+      "reportId": "cmqp1gf4f005hpwwkwy7o5vbk",
+      "reportNo": "BCT-TH1234-20260601-20260607",
+      "type": "WEEKLY",
+      "status": "APPROVED",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Admin (Dev)",
+      "date": "Mon Jun 01 2026 07:00:00 GMT+0700 (Indochina Time) to Sun Jun 07 2026 07:00:00 GMT+0700 (Indochina Time)"
+    },
+    "Attachment": {
+      "attachmentId": "cmqp1gf4h005jpwwkbtgd35tp",
+      "kind": "PHOTO",
+      "fileName": "doc_1782122050960_4tp7cr.jpg",
+      "originalName": "Anh_hien_truong.jpg",
+      "mimeType": "image/jpeg",
+      "fileSize": 134,
+      "storagePath": "site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050960_4tp7cr.jpg"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050960_4tp7cr.jpg",
+      "fileExists": true,
+      "actualSize": 134,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": true,
+      "isApprovedReport": true,
+      "isSubmittedReport": false
+    },
+    "Classification": {
+      "group": "Group D — Storage/path issue",
+      "recommendedAction": "path_resolution_check_required",
+      "reason": "Missing storage/ prefix breaking UI"
+    }
+  },
+  {
+    "Report": {
+      "reportId": "cmqp1gf4f005hpwwkwy7o5vbk",
+      "reportNo": "BCT-TH1234-20260601-20260607",
+      "type": "WEEKLY",
+      "status": "APPROVED",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Admin (Dev)",
+      "date": "Mon Jun 01 2026 07:00:00 GMT+0700 (Indochina Time) to Sun Jun 07 2026 07:00:00 GMT+0700 (Indochina Time)"
+    },
+    "Attachment": {
+      "attachmentId": "cmqp1gf4i005kpwwkdmzpkteg",
+      "kind": "FILE",
+      "fileName": "doc_1782122050962_a26kz9.pdf",
+      "originalName": "Tai_lieu_dinh_kem.pdf",
+      "mimeType": "application/pdf",
+      "fileSize": 328,
+      "storagePath": "site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050962_a26kz9.pdf"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050962_a26kz9.pdf",
+      "fileExists": true,
+      "actualSize": 328,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": true,
+      "isApprovedReport": true,
+      "isSubmittedReport": false
+    },
+    "Classification": {
+      "group": "Group D — Storage/path issue",
+      "recommendedAction": "path_resolution_check_required",
+      "reason": "Missing storage/ prefix breaking UI"
+    }
+  },
+  {
+    "Report": {
+      "reportId": "cmqp1gf4m005opwwk8jjmanfp",
+      "reportNo": "BCT-TH1234-20260608-20260614",
+      "type": "WEEKLY",
+      "status": "SUBMITTED",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Admin (Dev)",
+      "date": "Mon Jun 08 2026 07:00:00 GMT+0700 (Indochina Time) to Sun Jun 14 2026 07:00:00 GMT+0700 (Indochina Time)"
+    },
+    "Attachment": {
+      "attachmentId": "cmqp1gf4o005qpwwkud8b28sc",
+      "kind": "PHOTO",
+      "fileName": "doc_1782122050967_kr3sp.jpg",
+      "originalName": "Anh_hien_truong.jpg",
+      "mimeType": "image/jpeg",
+      "fileSize": 134,
+      "storagePath": "site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050967_kr3sp.jpg"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050967_kr3sp.jpg",
+      "fileExists": true,
+      "actualSize": 134,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": true,
+      "isApprovedReport": false,
+      "isSubmittedReport": true
+    },
+    "Classification": {
+      "group": "Group D — Storage/path issue",
+      "recommendedAction": "path_resolution_check_required",
+      "reason": "Missing storage/ prefix breaking UI"
+    }
+  },
+  {
+    "Report": {
+      "reportId": "cmqp1gf4m005opwwk8jjmanfp",
+      "reportNo": "BCT-TH1234-20260608-20260614",
+      "type": "WEEKLY",
+      "status": "SUBMITTED",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Admin (Dev)",
+      "date": "Mon Jun 08 2026 07:00:00 GMT+0700 (Indochina Time) to Sun Jun 14 2026 07:00:00 GMT+0700 (Indochina Time)"
+    },
+    "Attachment": {
+      "attachmentId": "cmqp1gf4p005rpwwkd4s0u7m3",
+      "kind": "FILE",
+      "fileName": "doc_1782122050968_1l2tci.pdf",
+      "originalName": "Tai_lieu_dinh_kem.pdf",
+      "mimeType": "application/pdf",
+      "fileSize": 328,
+      "storagePath": "site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050968_1l2tci.pdf"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqp1gex90000pwwk17oqmjct\\doc_1782122050968_1l2tci.pdf",
+      "fileExists": true,
+      "actualSize": 328,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": true,
+      "isApprovedReport": false,
+      "isSubmittedReport": true
+    },
+    "Classification": {
+      "group": "Group D — Storage/path issue",
+      "recommendedAction": "path_resolution_check_required",
+      "reason": "Missing storage/ prefix breaking UI"
+    }
+  },
+  {
+    "Report": {
+      "reportId": "cmqq53ild000uecwkizf94c17",
+      "reportNo": "2fd329e7-0137-4ec8-8091-9b7f1f57b774",
+      "type": "DAILY",
+      "status": "DRAFT",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Nguễn Văn B",
+      "date": "2026-06-20T00:00:00.000Z"
+    },
+    "Attachment": {
+      "attachmentId": "cmqq53iw4000xecwkzxsjorfu",
+      "kind": "FILE",
+      "fileName": "20260623042353-3d959e33.pdf",
+      "originalName": "test-real.pdf",
+      "mimeType": "application/pdf",
+      "fileSize": 328,
+      "storagePath": "storage\\site-reports\\cmqq53ild000uecwkizf94c17\\20260623042353-3d959e33.pdf"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqq53ild000uecwkizf94c17\\20260623042353-3d959e33.pdf",
+      "fileExists": true,
+      "actualSize": 328,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": false,
+      "isApprovedReport": false,
+      "isSubmittedReport": false
+    },
+    "Classification": {
+      "group": "Valid",
+      "recommendedAction": "none",
+      "reason": "File exists and valid"
+    }
+  },
+  {
+    "Report": {
+      "reportId": "cmqq552gr000zecwkr3jscmis",
+      "reportNo": "9e3e6f98-b2e9-4d31-8283-cf67e8bc2cd8",
+      "type": "DAILY",
+      "status": "DRAFT",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Nguễn Văn B",
+      "date": "2026-06-23T00:00:00.000Z"
+    },
+    "Attachment": {
+      "attachmentId": "cmqq552ow0012ecwki7g8lt57",
+      "kind": "FILE",
+      "fileName": "20260623042506-cfeb4610.pdf",
+      "originalName": "test-real.pdf",
+      "mimeType": "application/pdf",
+      "fileSize": 328,
+      "storagePath": "storage\\site-reports\\cmqq552gr000zecwkr3jscmis\\20260623042506-cfeb4610.pdf"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqq552gr000zecwkr3jscmis\\20260623042506-cfeb4610.pdf",
+      "fileExists": true,
+      "actualSize": 328,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": false,
+      "isApprovedReport": false,
+      "isSubmittedReport": false
+    },
+    "Classification": {
+      "group": "Valid",
+      "recommendedAction": "none",
+      "reason": "File exists and valid"
+    }
+  },
+  {
+    "Report": {
+      "reportId": "cmqq678lp001eecwkpzgfq7w6",
+      "reportNo": "c5dd40a1-b68a-4d2c-96a6-4d75a52ebe4e",
+      "type": "DAILY",
+      "status": "SUBMITTED",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Nguễn Văn B",
+      "date": "2026-06-23T00:00:00.000Z"
+    },
+    "Attachment": {
+      "attachmentId": "cmqq678ur001hecwkpi3b1qmc",
+      "kind": "PHOTO",
+      "fileName": "20260623045447-a8e7ba7b.png",
+      "originalName": "Screenshot 2026-06-23 112510.png",
+      "mimeType": "image/png",
+      "fileSize": 604943,
+      "storagePath": "storage\\site-reports\\cmqq678lp001eecwkpzgfq7w6\\20260623045447-a8e7ba7b.png"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqq678lp001eecwkpzgfq7w6\\20260623045447-a8e7ba7b.png",
+      "fileExists": true,
+      "actualSize": 604943,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": true,
+      "isApprovedReport": false,
+      "isSubmittedReport": true
+    },
+    "Classification": {
+      "group": "Valid",
+      "recommendedAction": "none",
+      "reason": "File exists and valid"
+    }
+  },
+  {
+    "Report": {
+      "reportId": "cmqq678lp001eecwkpzgfq7w6",
+      "reportNo": "c5dd40a1-b68a-4d2c-96a6-4d75a52ebe4e",
+      "type": "DAILY",
+      "status": "SUBMITTED",
+      "projectName": "Công trường Trung học A",
+      "creatorName": "Nguễn Văn B",
+      "date": "2026-06-23T00:00:00.000Z"
+    },
+    "Attachment": {
+      "attachmentId": "cmqq67906001jecwk5he4xbip",
+      "kind": "FILE",
+      "fileName": "20260623045447-bd6413fd.pdf",
+      "originalName": "Unity2D.pdf",
+      "mimeType": "application/pdf",
+      "fileSize": 8988212,
+      "storagePath": "storage\\site-reports\\cmqq678lp001eecwkpzgfq7w6\\20260623045447-bd6413fd.pdf"
+    },
+    "Disk": {
+      "resolvedPath": "D:\\construction-erp-v2\\storage\\site-reports\\cmqq678lp001eecwkpzgfq7w6\\20260623045447-bd6413fd.pdf",
+      "fileExists": true,
+      "actualSize": 8988212,
+      "sizeMatch": true
+    },
+    "Safety": {
+      "pathSafe": true,
+      "isActiveReport": true,
+      "isApprovedReport": false,
+      "isSubmittedReport": true
+    },
+    "Classification": {
+      "group": "Valid",
+      "recommendedAction": "none",
+      "reason": "File exists and valid"
+    }
+  }
+]

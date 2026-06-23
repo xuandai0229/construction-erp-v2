@@ -1,8 +1,8 @@
 "use client";
 
-import { Eye, Printer, ChevronLeft, ChevronRight, Cloud, Sun, CloudRain, CloudDrizzle, Wind, CloudLightning, AlertCircle } from "lucide-react";
+import { Eye, Printer, ChevronLeft, ChevronRight, Cloud, Sun, CloudRain, CloudDrizzle, Wind, CloudLightning, AlertCircle, Edit2, Trash2 } from "lucide-react";
 import type { FieldReport, WeatherCondition } from "./types";
-import { getStatusLabel, getStatusVariant, WEATHER_OPTIONS } from "./types";
+import { getStatusLabel, getStatusVariant } from "./types";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { PhotoPreviewStack } from "./photo-preview-stack";
 import { useToast } from "@/components/ui/toast-context";
@@ -13,39 +13,28 @@ interface ReportsTableProps {
   reports: FieldReport[];
   onViewDetail: (report: FieldReport) => void;
   onViewGallery?: (report: FieldReport) => void;
+  onEdit?: (report: FieldReport) => void;
+  onDelete?: (report: FieldReport) => void;
   totalReports: number;
   page: number;
   pageSize: number;
   onPageChange: (page: number) => void;
-}
-
-function WeatherIcon({ weather }: { weather: WeatherCondition }) {
-  switch (weather) {
-    case 'LIGHT_RAIN':
-      return <CloudDrizzle className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" strokeWidth={1.8} />;
-    case 'HEAVY_RAIN':
-      return <CloudRain className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" strokeWidth={1.8} />;
-    case 'WINDY':
-      return <Wind className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" strokeWidth={1.8} />;
-    case 'STORM':
-      return <CloudLightning className="w-3.5 h-3.5 text-purple-600 flex-shrink-0" strokeWidth={1.8} />;
-    case 'CLOUDY':
-    case 'OVERCAST':
-      return <Cloud className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" strokeWidth={1.8} />;
-    case 'SUNNY':
-    default:
-      return <Sun className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" strokeWidth={1.8} />;
-  }
+  showProjectColumn?: boolean;
+  currentUser?: { id: string; role?: string };
 }
 
 export function ReportsTable({
   reports,
   onViewDetail,
   onViewGallery,
+  onEdit,
+  onDelete,
   totalReports,
   page,
   pageSize,
   onPageChange,
+  showProjectColumn = true,
+  currentUser,
 }: ReportsTableProps) {
   const toast = useToast();
   const totalPages = Math.ceil(totalReports / pageSize) || 1;
@@ -107,17 +96,16 @@ export function ReportsTable({
               <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wider whitespace-nowrap w-[15%]">
                 Mã BC
               </th>
-              <th className="text-left py-3 px-3 font-semibold text-slate-600 text-xs uppercase tracking-wider min-w-[150px]">
-                Công trình
-              </th>
+              {showProjectColumn && (
+                <th className="text-left py-3 px-3 font-semibold text-slate-600 text-xs uppercase tracking-wider min-w-[150px]">
+                  Công trình
+                </th>
+              )}
               <th className="text-left py-3 px-3 font-semibold text-slate-600 text-xs uppercase tracking-wider min-w-[140px]">
                 Người tạo
               </th>
               <th className="text-left py-3 px-3 font-semibold text-slate-600 text-xs uppercase tracking-wider whitespace-nowrap">
                 Thời gian
-              </th>
-              <th className="text-left py-3 px-3 font-semibold text-slate-600 text-xs uppercase tracking-wider whitespace-nowrap">
-                Thời tiết / Mục
               </th>
               <th className="text-left py-3 px-3 font-semibold text-slate-600 text-xs uppercase tracking-wider whitespace-nowrap w-[10%]">
                 Trạng thái
@@ -148,16 +136,16 @@ export function ReportsTable({
                   <Fragment key={`week-${group.start.toISOString()}`}>
                     {/* Group Header */}
                     <tr className="bg-slate-100/80 border-t border-slate-200">
-                      <td colSpan={8} className="py-2.5 px-4">
-                        <div className="flex items-center gap-3 text-sm">
+                      <td colSpan={showProjectColumn ? 7 : 6} className="py-2.5 px-4">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
                           <span className="font-semibold text-slate-800">
-                            Tuần {group.weekNumber} · {format(group.start, 'dd/MM/yyyy')} - {format(group.end, 'dd/MM/yyyy')}
+                            Tuần {group.weekNumber} · {format(group.start, 'dd/MM')} - {format(group.end, 'dd/MM/yyyy')}
                           </span>
-                          <span className="text-slate-400">·</span>
+                          <span className="text-slate-400 hidden sm:inline">·</span>
                           <span className="text-slate-600">{group.reports.length} báo cáo</span>
                           {(approvedCount > 0 || pendingCount > 0 || rejectedCount > 0 || draftCount > 0) && (
                             <>
-                              <span className="text-slate-400">·</span>
+                              <span className="text-slate-400 hidden sm:inline">·</span>
                               <div className="flex items-center gap-2 text-xs">
                                 {approvedCount > 0 && <span className="text-emerald-600 font-medium">{approvedCount} duyệt</span>}
                                 {pendingCount > 0 && <span className="text-amber-600 font-medium">{pendingCount} chờ</span>}
@@ -172,7 +160,6 @@ export function ReportsTable({
                     
                     {/* Group Rows */}
                     {group.reports.map((report) => {
-                      const weatherLabel = WEATHER_OPTIONS.find(o => o.value === report.weatherCondition)?.label || "Khác";
                       const isWeekly = report.type === 'WEEKLY';
                       
                       return (
@@ -186,27 +173,27 @@ export function ReportsTable({
                               <span className={`font-mono text-[13px] font-semibold ${isWeekly ? 'text-purple-700' : 'text-blue-700'}`}>
                                 {report.code.replace('BC-D-', 'D-').replace('BC-W-', 'W-')}
                               </span>
-                              <span className="text-[11px] text-slate-400">
-                                {isWeekly ? 'Tuần' : 'Ngày'}
-                              </span>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="text-[11px] text-slate-400">
+                                  {isWeekly ? 'Tuần' : 'Ngày'}
+                                </span>
+                                {report.isSevereIssue ? (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-red-100 text-red-700">
+                                    Nghiêm trọng
+                                  </span>
+                                ) : report.hasIssues ? (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-amber-100 text-amber-700">
+                                    Phát sinh
+                                  </span>
+                                ) : null}
+                              </div>
                             </div>
                           </td>
-                          <td className="py-2.5 px-3">
-                            <span className="text-slate-900 font-medium text-[13px] line-clamp-1">{report.projectName}</span>
-                            {report.isSevereIssue ? (
-                              <span className="inline-flex mt-1 items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700">
-                                Vấn đề nghiêm trọng
-                              </span>
-                            ) : report.hasIssues ? (
-                              <span className="inline-flex mt-1 items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700">
-                                Có phát sinh
-                              </span>
-                            ) : report.hasNotes ? (
-                              <span className="inline-flex mt-1 items-center gap-1 text-[11px] text-slate-500">
-                                <AlertCircle className="w-3 h-3 text-slate-400" /> Có ghi chú
-                              </span>
-                            ) : null}
-                          </td>
+                          {showProjectColumn && (
+                            <td className="py-2.5 px-3">
+                              <span className="text-slate-900 font-medium text-[13px] line-clamp-1">{report.projectName}</span>
+                            </td>
+                          )}
                           <td className="py-2.5 px-3">
                             <div className="flex flex-col">
                               <span className="text-slate-900 font-medium text-[13px] line-clamp-1">{report.creatorName}</span>
@@ -224,18 +211,6 @@ export function ReportsTable({
                             </div>
                           </td>
                           <td className="py-2.5 px-3 whitespace-nowrap">
-                            {report.type === 'DAILY' ? (
-                              <span className="inline-flex items-center gap-1.5 text-slate-600 text-[13px]">
-                                <WeatherIcon weather={report.weatherCondition} />
-                                <span className="truncate max-w-[80px]">
-                                  {weatherLabel} {report.weatherTemperature ? `${report.weatherTemperature}°C` : ''}
-                                </span>
-                              </span>
-                            ) : (
-                              <span className="text-slate-600 text-[13px]">{report.workLines.length} hạng mục</span>
-                            )}
-                          </td>
-                          <td className="py-2.5 px-3 whitespace-nowrap">
                             <StatusBadge
                               variant={getStatusVariant(report.status)}
                               size="sm"
@@ -244,20 +219,61 @@ export function ReportsTable({
                             </StatusBadge>
                           </td>
                           <td className="py-2.5 px-3 text-center whitespace-nowrap">
-                            <div className="flex justify-center" onClick={(e) => { e.stopPropagation(); onViewGallery?.(report); }}>
-                              <PhotoPreviewStack count={report.photos.length} />
+                            <div className="flex flex-wrap justify-center items-center gap-1.5" onClick={(e) => { e.stopPropagation(); onViewGallery?.(report); }}>
+                              {report.photos.length > 0 && (
+                                <span className="text-[11px] text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded font-medium hover:bg-slate-200 transition-colors">
+                                  {report.photos.length} ảnh
+                                </span>
+                              )}
                               {report.attachments.length > 0 && (
-                                <span className="ml-2 text-[11px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                                <span className="text-[11px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded font-medium">
                                   +{report.attachments.length} file
                                 </span>
+                              )}
+                              {(report.photos.some(p => p.isMissing) || report.attachments.some(a => a.isMissing)) && (
+                                <span className="text-[10px] text-rose-600 bg-rose-50 border border-rose-100 px-1.5 py-0.5 rounded font-medium" title="Báo cáo có file/ảnh không còn tồn tại trong storage">
+                                  File lỗi
+                                </span>
+                              )}
+                              {report.photos.length === 0 && report.attachments.length === 0 && (
+                                <span className="text-slate-300">-</span>
                               )}
                             </div>
                           </td>
                           <td className="py-2.5 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center justify-end gap-0.5">
+                              {/* Edit & Delete Buttons */}
+                              {currentUser && (
+                                <>
+                                  {(report.status === "DRAFT" || report.status === "REJECTED") && 
+                                   (report.createdById === currentUser.id || ['ADMIN', 'DIRECTOR', 'DEPUTY_DIRECTOR'].includes(currentUser.role || '')) && (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); onEdit?.(report); }}
+                                      className="p-1.5 rounded-md hover:bg-slate-100 text-slate-400 hover:text-blue-600 transition-colors"
+                                      title="Sửa báo cáo"
+                                      aria-label="Sửa báo cáo"
+                                    >
+                                      <Edit2 className="w-[18px] h-[18px]" strokeWidth={2} />
+                                    </button>
+                                  )}
+                                  
+                                  {(report.status === "DRAFT" || report.status === "REJECTED" || report.status === "SUBMITTED") && 
+                                   ['ADMIN', 'DIRECTOR', 'DEPUTY_DIRECTOR'].includes(currentUser.role || '') && (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); onDelete?.(report); }}
+                                      className="p-1.5 rounded-md hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors"
+                                      title="Xóa báo cáo"
+                                      aria-label="Xóa báo cáo"
+                                    >
+                                      <Trash2 className="w-[18px] h-[18px]" strokeWidth={2} />
+                                    </button>
+                                  )}
+                                </>
+                              )}
+                              
                               <button
-                                onClick={() => onViewDetail(report)}
-                                className="p-1.5 rounded-md hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition-colors"
+                                onClick={(e) => { e.stopPropagation(); onViewDetail(report); }}
+                                className="p-1.5 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
                                 title="Xem chi tiết"
                                 aria-label="Xem chi tiết"
                               >

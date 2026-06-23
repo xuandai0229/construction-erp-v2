@@ -5,6 +5,20 @@ import { getSiteReports, getActiveProjects, getSiteReportsPage } from "./actions
 import { FieldReport, ReportType, WeatherCondition, ReportStatus } from "@/components/reports/types";
 import { format } from "date-fns";
 import { SiteReportAttachment } from "@prisma/client";
+import fs from "fs";
+import path from "path";
+
+const formatFileSize = (bytes: number | null | undefined | string | bigint) => {
+  if (bytes === undefined || bytes === null || bytes === "") return "Không rõ dung lượng";
+  const num = Number(bytes);
+  if (isNaN(num)) return "Không rõ dung lượng";
+  if (num === 0) return "0 Bytes";
+  if (num < 1024) return "< 1 KB";
+  if (num < 1024 * 1024) return `${(num / 1024).toFixed(1)} KB`;
+  const mb = num / (1024 * 1024);
+  if (mb < 0.01) return "< 0.01 MB";
+  return `${mb.toFixed(2)} MB`;
+};
 
 export const metadata = {
   title: "Báo cáo hiện trường | ERP Công trình",
@@ -50,19 +64,31 @@ export default async function ReportsPage({ searchParams }: { searchParams: { [k
     weatherCondition: (r.weatherCondition as WeatherCondition) || 'SUNNY',
     weatherTemperature: r.weatherTemperature ? Number(r.weatherTemperature) : undefined,
     status: r.status as ReportStatus,
-    photos: ((r.attachments as Record<string, unknown>[]) || []).filter((a: Record<string, unknown>) => a.kind === 'PHOTO').map((a: Record<string, unknown>) => ({
-      id: String(a.id),
-      url: `/api/reports/attachments/${a.id}`,
-      caption: a.caption ? String(a.caption) : undefined,
-      createdAt: (a.createdAt as Date).toISOString()
-    })),
-    attachments: ((r.attachments as Record<string, unknown>[]) || []).filter((a: Record<string, unknown>) => a.kind === 'FILE').map((a: Record<string, unknown>) => ({
-      id: String(a.id),
-      name: String(a.originalName || a.fileName),
-      url: `/api/reports/attachments/${a.id}`,
-      type: String(a.originalName || a.fileName).split('.').pop() || 'unknown',
-      size: `${(Number(a.sizeBytes) / 1024 / 1024).toFixed(2)} MB`
-    })),
+    photos: ((r.attachments as Record<string, unknown>[]) || []).filter((a: Record<string, unknown>) => a.kind === 'PHOTO').map((a: Record<string, unknown>) => {
+      const storagePath = a.storagePath as string;
+      const physicalPath = storagePath ? path.join(process.cwd(), storagePath.startsWith('storage') ? '' : 'storage', storagePath) : "";
+      const isMissing = storagePath ? !fs.existsSync(physicalPath) : true;
+      return {
+        id: String(a.id),
+        url: isMissing ? null : `/api/reports/attachments/${a.id}`,
+        caption: a.caption ? String(a.caption) : undefined,
+        createdAt: (a.createdAt as Date).toISOString(),
+        isMissing
+      };
+    }),
+    attachments: ((r.attachments as Record<string, unknown>[]) || []).filter((a: Record<string, unknown>) => a.kind === 'FILE').map((a: Record<string, unknown>) => {
+      const storagePath = a.storagePath as string;
+      const physicalPath = storagePath ? path.join(process.cwd(), storagePath.startsWith('storage') ? '' : 'storage', storagePath) : "";
+      const isMissing = storagePath ? !fs.existsSync(physicalPath) : true;
+      return {
+        id: String(a.id),
+        name: String(a.originalName || a.fileName),
+        url: isMissing ? null : `/api/reports/attachments/${a.id}`,
+        type: String(a.originalName || a.fileName).split('.').pop() || 'unknown',
+        size: formatFileSize(Number(a.sizeBytes)),
+        isMissing
+      };
+    }),
     workLines: ((r.lines as Record<string, unknown>[]) || []).map((l: Record<string, unknown>) => ({
       id: l.id as string,
       wbsItemId: (l.wbsItemId as string) || undefined,
