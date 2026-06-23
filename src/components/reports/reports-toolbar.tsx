@@ -18,6 +18,7 @@ interface ReportsToolbarProps {
   projects: { id: string; name: string }[];
   onResetFilters: () => void;
   hasActiveFilters: boolean;
+  tab?: string;
 }
 
 const STATUS_OPTIONS: Array<{ value: string; label: string }> = [
@@ -48,7 +49,11 @@ export function ReportsToolbar({
   projects,
   onResetFilters,
   hasActiveFilters,
+  tab,
 }: ReportsToolbarProps) {
+  const isTypeDisabled = tab === 'daily' || tab === 'weekly';
+  const isStatusDisabled = tab === 'pending' || tab === 'rejected';
+
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-3 sm:p-4">
       <div className="flex flex-col xl:flex-row xl:items-center gap-3">
@@ -71,7 +76,8 @@ export function ReportsToolbar({
           <select
             value={typeFilter}
             onChange={(e) => onTypeFilterChange(e.target.value)}
-            className="h-10 px-3 text-sm text-slate-900 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none cursor-pointer min-w-0 sm:min-w-[160px] flex-1 sm:flex-none"
+            disabled={isTypeDisabled}
+            className={`h-10 px-3 text-sm text-slate-900 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none cursor-pointer min-w-0 sm:min-w-[160px] flex-1 sm:flex-none ${isTypeDisabled ? 'opacity-50 cursor-not-allowed bg-slate-100' : ''}`}
           >
             {TYPE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -93,20 +99,24 @@ export function ReportsToolbar({
           {/* Date range filter */}
           <div className="relative flex-1 sm:flex-none">
             <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="30 ngày gần nhất"
+            <select
               value={dateRange}
               onChange={(e) => onDateRangeChange(e.target.value)}
-              className="w-full sm:w-[160px] h-10 pl-9 pr-3 text-sm text-slate-900 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder:text-slate-500"
-            />
+              className="w-full sm:w-[160px] h-10 pl-9 pr-3 text-sm text-slate-900 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none cursor-pointer"
+            >
+              <option value="">Toàn thời gian</option>
+              <option value="today">Hôm nay</option>
+              <option value="thisWeek">Tuần này</option>
+              <option value="thisMonth">Tháng này</option>
+            </select>
           </div>
 
           {/* Status filter */}
           <select
             value={statusFilter}
             onChange={(e) => onStatusFilterChange(e.target.value)}
-            className="h-10 px-3 text-sm text-slate-900 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none cursor-pointer min-w-0 sm:min-w-[150px] flex-1 sm:flex-none"
+            disabled={isStatusDisabled}
+            className={`h-10 px-3 text-sm text-slate-900 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none cursor-pointer min-w-0 sm:min-w-[150px] flex-1 sm:flex-none ${isStatusDisabled ? 'opacity-50 cursor-not-allowed bg-slate-100' : ''}`}
           >
             {STATUS_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>

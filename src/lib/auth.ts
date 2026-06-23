@@ -52,7 +52,7 @@ export async function getSession(): Promise<SessionUser | null> {
       phone: user.phone,
       isActive: user.isActive,
     };
-  } catch (error) {
+  } catch {
     return null;
   }
 }

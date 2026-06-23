@@ -1,11 +1,13 @@
 "use client";
 
-import { Eye, Download, ChevronLeft, ChevronRight, Cloud, Sun, CloudRain, CloudDrizzle, Wind, CloudLightning } from "lucide-react";
+import { Eye, Printer, ChevronLeft, ChevronRight, Cloud, Sun, CloudRain, CloudDrizzle, Wind, CloudLightning, AlertCircle } from "lucide-react";
 import type { FieldReport, WeatherCondition } from "./types";
 import { getStatusLabel, getStatusVariant, WEATHER_OPTIONS } from "./types";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { PhotoPreviewStack } from "./photo-preview-stack";
 import { useToast } from "@/components/ui/toast-context";
+import { useMemo, Fragment } from "react";
+import { getISOWeek, startOfISOWeek, endOfISOWeek, format, parseISO } from "date-fns";
 
 interface ReportsTableProps {
   reports: FieldReport[];
@@ -68,10 +70,32 @@ export function ReportsTable({
     return pages;
   }
 
-  const handleDownload = (e: React.MouseEvent) => {
+  const handlePrint = (e: React.MouseEvent, reportId: string) => {
     e.stopPropagation();
-    toast.info("Chức năng tải xuống báo cáo sẽ được kết nối ở bước sau");
+    window.open(`/print/reports/${reportId}`, '_blank');
   };
+
+  // Group reports by week
+  const groupedReports = useMemo(() => {
+    const groups: Record<string, { weekNumber: number, start: Date, end: Date, reports: FieldReport[] }> = {};
+    
+    reports.forEach(r => {
+      // For weekly reports, we might already have weekStartDate. Use that if available, else use date
+      const d = (r.type === 'WEEKLY' && r.weekStartDate) ? parseISO(r.weekStartDate) : parseISO(r.date);
+      const weekNum = getISOWeek(d);
+      const start = startOfISOWeek(d);
+      const end = endOfISOWeek(d);
+      const key = `${start.toISOString()}_${end.toISOString()}`;
+      
+      if (!groups[key]) {
+        groups[key] = { weekNumber: weekNum, start, end, reports: [] };
+      }
+      groups[key].reports.push(r);
+    });
+    
+    // Sort groups descending by start date
+    return Object.values(groups).sort((a, b) => b.start.getTime() - a.start.getTime());
+  }, [reports]);
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
@@ -114,90 +138,145 @@ export function ReportsTable({
                 </td>
               </tr>
             ) : (
-              reports.map((report) => {
-                const weatherLabel = WEATHER_OPTIONS.find(o => o.value === report.weatherCondition)?.label || "Khác";
-                
+              groupedReports.map((group) => {
+                const approvedCount = group.reports.filter(r => r.status === 'APPROVED').length;
+                const pendingCount = group.reports.filter(r => r.status === 'SUBMITTED').length;
+                const rejectedCount = group.reports.filter(r => r.status === 'REJECTED').length;
+                const draftCount = group.reports.filter(r => r.status === 'DRAFT').length;
+
                 return (
-                  <tr
-                    key={report.id}
-                    className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
-                    onClick={() => onViewDetail(report)}
-                  >
-                    <td className="py-2.5 px-4 whitespace-nowrap">
-                      <div className="flex flex-col">
-                        <span className={`font-mono text-[13px] font-semibold ${report.type === 'WEEKLY' ? 'text-purple-700' : 'text-blue-700'}`}>
-                          {report.code.replace('BC-D-', 'D-').replace('BC-W-', 'W-')}
-                        </span>
-                        <span className="text-[11px] text-slate-400">
-                          {report.type === 'WEEKLY' ? 'Tuần' : 'Ngày'}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <span className="text-slate-900 font-medium text-[13px] line-clamp-1">{report.projectName}</span>
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <div className="flex flex-col">
-                        <span className="text-slate-900 font-medium text-[13px] line-clamp-1">{report.creatorName}</span>
-                        <span className="text-slate-400 text-[11px] truncate">{report.creatorRole}</span>
-                      </div>
-                    </td>
-                    <td className="py-2.5 px-3 whitespace-nowrap">
-                      <div className="flex flex-col">
-                        <span className="text-slate-700 text-[13px]">
-                          {report.type === 'WEEKLY' 
-                            ? `${report.weekStartDate} - ${report.weekEndDate}`
-                            : report.date}
-                        </span>
-                        {report.type === 'DAILY' && <span className="text-slate-400 text-[11px]">{report.time}</span>}
-                      </div>
-                    </td>
-                    <td className="py-2.5 px-3 whitespace-nowrap">
-                      {report.type === 'DAILY' ? (
-                        <span className="inline-flex items-center gap-1.5 text-slate-600 text-[13px]">
-                          <WeatherIcon weather={report.weatherCondition} />
-                          <span className="truncate max-w-[80px]">
-                            {weatherLabel} {report.weatherTemperature ? `${report.weatherTemperature}°C` : ''}
+                  <Fragment key={`week-${group.start.toISOString()}`}>
+                    {/* Group Header */}
+                    <tr className="bg-slate-100/80 border-t border-slate-200">
+                      <td colSpan={8} className="py-2.5 px-4">
+                        <div className="flex items-center gap-3 text-sm">
+                          <span className="font-semibold text-slate-800">
+                            Tuần {group.weekNumber} · {format(group.start, 'dd/MM/yyyy')} - {format(group.end, 'dd/MM/yyyy')}
                           </span>
-                        </span>
-                      ) : (
-                        <span className="text-slate-600 text-[13px]">{report.workLines.length} hạng mục</span>
-                      )}
-                    </td>
-                    <td className="py-2.5 px-3 whitespace-nowrap">
-                      <StatusBadge
-                        variant={getStatusVariant(report.status)}
-                        size="sm"
-                      >
-                        {getStatusLabel(report.status)}
-                      </StatusBadge>
-                    </td>
-                    <td className="py-2.5 px-3 text-center whitespace-nowrap">
-                      <div className="flex justify-center" onClick={(e) => { e.stopPropagation(); onViewGallery?.(report); }}>
-                        <PhotoPreviewStack count={report.photos.length} />
-                      </div>
-                    </td>
-                    <td className="py-2.5 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-end gap-0.5">
-                        <button
+                          <span className="text-slate-400">·</span>
+                          <span className="text-slate-600">{group.reports.length} báo cáo</span>
+                          {(approvedCount > 0 || pendingCount > 0 || rejectedCount > 0 || draftCount > 0) && (
+                            <>
+                              <span className="text-slate-400">·</span>
+                              <div className="flex items-center gap-2 text-xs">
+                                {approvedCount > 0 && <span className="text-emerald-600 font-medium">{approvedCount} duyệt</span>}
+                                {pendingCount > 0 && <span className="text-amber-600 font-medium">{pendingCount} chờ</span>}
+                                {rejectedCount > 0 && <span className="text-red-600 font-medium">{rejectedCount} từ chối</span>}
+                                {draftCount > 0 && <span className="text-slate-500 font-medium">{draftCount} nháp</span>}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                    
+                    {/* Group Rows */}
+                    {group.reports.map((report) => {
+                      const weatherLabel = WEATHER_OPTIONS.find(o => o.value === report.weatherCondition)?.label || "Khác";
+                      const isWeekly = report.type === 'WEEKLY';
+                      
+                      return (
+                        <tr
+                          key={report.id}
+                          className={`hover:bg-slate-50/80 transition-colors cursor-pointer group ${isWeekly ? 'bg-indigo-50/30' : ''}`}
                           onClick={() => onViewDetail(report)}
-                          className="p-1.5 rounded-md hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition-colors"
-                          title="Xem chi tiết"
-                          aria-label="Xem chi tiết"
                         >
-                          <Eye className="w-[18px] h-[18px]" strokeWidth={2} />
-                        </button>
-                        <button
-                          onClick={handleDownload}
-                          className="p-1.5 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
-                          title="Tải xuống PDF"
-                          aria-label="Tải xuống"
-                        >
-                          <Download className="w-[18px] h-[18px]" strokeWidth={2} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                          <td className="py-2.5 px-4 whitespace-nowrap">
+                            <div className="flex flex-col">
+                              <span className={`font-mono text-[13px] font-semibold ${isWeekly ? 'text-purple-700' : 'text-blue-700'}`}>
+                                {report.code.replace('BC-D-', 'D-').replace('BC-W-', 'W-')}
+                              </span>
+                              <span className="text-[11px] text-slate-400">
+                                {isWeekly ? 'Tuần' : 'Ngày'}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-3">
+                            <span className="text-slate-900 font-medium text-[13px] line-clamp-1">{report.projectName}</span>
+                            {report.isSevereIssue ? (
+                              <span className="inline-flex mt-1 items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700">
+                                Vấn đề nghiêm trọng
+                              </span>
+                            ) : report.hasIssues ? (
+                              <span className="inline-flex mt-1 items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700">
+                                Có phát sinh
+                              </span>
+                            ) : report.hasNotes ? (
+                              <span className="inline-flex mt-1 items-center gap-1 text-[11px] text-slate-500">
+                                <AlertCircle className="w-3 h-3 text-slate-400" /> Có ghi chú
+                              </span>
+                            ) : null}
+                          </td>
+                          <td className="py-2.5 px-3">
+                            <div className="flex flex-col">
+                              <span className="text-slate-900 font-medium text-[13px] line-clamp-1">{report.creatorName}</span>
+                              <span className="text-slate-400 text-[11px] truncate">{report.creatorRole}</span>
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-3 whitespace-nowrap">
+                            <div className="flex flex-col">
+                              <span className="text-slate-700 text-[13px] font-medium">
+                                {isWeekly 
+                                  ? `${report.weekStartDate} - ${report.weekEndDate}`
+                                  : report.date}
+                              </span>
+                              {report.type === 'DAILY' && <span className="text-slate-400 text-[11px]">{report.time}</span>}
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-3 whitespace-nowrap">
+                            {report.type === 'DAILY' ? (
+                              <span className="inline-flex items-center gap-1.5 text-slate-600 text-[13px]">
+                                <WeatherIcon weather={report.weatherCondition} />
+                                <span className="truncate max-w-[80px]">
+                                  {weatherLabel} {report.weatherTemperature ? `${report.weatherTemperature}°C` : ''}
+                                </span>
+                              </span>
+                            ) : (
+                              <span className="text-slate-600 text-[13px]">{report.workLines.length} hạng mục</span>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-3 whitespace-nowrap">
+                            <StatusBadge
+                              variant={getStatusVariant(report.status)}
+                              size="sm"
+                            >
+                              {getStatusLabel(report.status)}
+                            </StatusBadge>
+                          </td>
+                          <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                            <div className="flex justify-center" onClick={(e) => { e.stopPropagation(); onViewGallery?.(report); }}>
+                              <PhotoPreviewStack count={report.photos.length} />
+                              {report.attachments.length > 0 && (
+                                <span className="ml-2 text-[11px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                                  +{report.attachments.length} file
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-end gap-0.5">
+                              <button
+                                onClick={() => onViewDetail(report)}
+                                className="p-1.5 rounded-md hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition-colors"
+                                title="Xem chi tiết"
+                                aria-label="Xem chi tiết"
+                              >
+                                <Eye className="w-[18px] h-[18px]" strokeWidth={2} />
+                              </button>
+                              <button
+                                onClick={(e) => handlePrint(e, report.id)}
+                                className="p-1.5 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                                title="In / Xuất PDF"
+                                aria-label="In / Xuất PDF"
+                              >
+                                <Printer className="w-[18px] h-[18px]" strokeWidth={2} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </Fragment>
                 );
               })
             )}

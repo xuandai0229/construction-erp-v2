@@ -4,6 +4,10 @@ import prisma from "@/lib/prisma";
 import path from "path";
 import crypto from "crypto";
 import { promises as fs } from "fs";
+import {
+  assertReportWritableForAttachment,
+  canUploadReportAttachment,
+} from "@/lib/reports/report-workflow-policy";
 
 export const runtime = "nodejs";
 
@@ -90,9 +94,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ rep
       return NextResponse.json({ error: "Không có quyền thêm file vào báo cáo này" }, { status: 403 });
     }
 
-    // Block upload if report is already APPROVED or LOCKED
-    if (['APPROVED', 'LOCKED'].includes(report.status)) {
-      return NextResponse.json({ error: "Báo cáo đã duyệt, không thể thêm file" }, { status: 403 });
+    if (!canUploadReportAttachment(report.status)) {
+      return NextResponse.json(
+        {
+          error:
+            "Báo cáo đã gửi/đã duyệt nên không thể thêm file đính kèm.",
+        },
+        { status: 409 },
+      );
     }
 
     const formData = await req.formData();
@@ -190,8 +199,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ rep
     await fs.mkdir(baseStorageDir, { recursive: true });
 
     const savedFilePaths: string[] = [];
-    const createdAttachmentIds: string[] = [];
-    const resultAttachments: { id: string; kind: string; originalName: string | null; sizeBytes: number }[] = [];
+    const filesToInsert: {
+      safeFileName: string;
+      originalName: string;
+      mimeType: string;
+      sizeBytes: number;
+      relativeStoragePath: string;
+      kind: 'PHOTO' | 'FILE';
+    }[] = [];
 
     try {
       for (const { file, ext, buffer } of validatedFiles) {
@@ -207,47 +222,80 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ rep
         await fs.writeFile(absoluteStoragePath, buffer);
         savedFilePaths.push(absoluteStoragePath);
 
-        // Create DB record - store RELATIVE path, never absolute
-        const attachment = await prisma.siteReportAttachment.create({
-          data: {
-            reportId,
-            kind: kind as 'PHOTO' | 'FILE',
-            fileName: safeFileName,
-            originalName: file.name,
-            mimeType: file.type || "application/octet-stream",
-            sizeBytes: file.size,
-            storagePath: relativeStoragePath
-          }
-        });
-        createdAttachmentIds.push(attachment.id);
-        resultAttachments.push({
-          id: attachment.id,
-          kind: attachment.kind,
-          originalName: attachment.originalName,
-          sizeBytes: attachment.sizeBytes
+        filesToInsert.push({
+          safeFileName,
+          originalName: file.name,
+          mimeType: file.type || "application/octet-stream",
+          sizeBytes: file.size,
+          relativeStoragePath,
+          kind: kind as 'PHOTO' | 'FILE'
         });
       }
+
+      const resultAttachments = await prisma.$transaction(async (tx) => {
+        const currentReport = await tx.siteReport.findFirst({
+          where: { id: reportId, deletedAt: null },
+          select: { status: true, projectId: true },
+        });
+        if (!currentReport) {
+          throw new Error("Không tìm thấy báo cáo");
+        }
+        assertReportWritableForAttachment(currentReport);
+
+        const createdAttachments = [];
+        for (const fileData of filesToInsert) {
+          const created = await tx.siteReportAttachment.create({
+            data: {
+              reportId,
+              kind: fileData.kind,
+              fileName: fileData.safeFileName,
+              originalName: fileData.originalName,
+              mimeType: fileData.mimeType,
+              sizeBytes: fileData.sizeBytes,
+              storagePath: fileData.relativeStoragePath
+            }
+          });
+
+          await tx.auditLog.create({
+            data: {
+              userId: session.id,
+              projectId: currentReport.projectId,
+              action: "SITE_REPORT_ATTACHMENT_ADDED",
+              entityType: "SiteReport",
+              entityId: reportId,
+              afterData: JSON.stringify({
+                attachmentId: created.id,
+                kind: created.kind,
+                originalName: created.originalName,
+                sizeBytes: created.sizeBytes,
+              }),
+            },
+          });
+
+          createdAttachments.push({
+            id: created.id,
+            kind: created.kind,
+            originalName: created.originalName,
+            sizeBytes: created.sizeBytes
+          });
+        }
+        return createdAttachments;
+      });
+
+      // Return SAFE response: no storagePath, no absolute paths
+      return NextResponse.json({
+        success: true,
+        uploaded: resultAttachments.length,
+        attachments: resultAttachments,
+        ...(rejectedFiles.length > 0 ? { rejectedFiles } : {})
+      });
     } catch (error) {
       // Rollback: delete any files we wrote
       for (const filePath of savedFilePaths) {
         await fs.unlink(filePath).catch(() => {});
       }
-      // Rollback: delete any DB records we created
-      if (createdAttachmentIds.length > 0) {
-        await prisma.siteReportAttachment.deleteMany({
-          where: { id: { in: createdAttachmentIds } }
-        }).catch(() => {});
-      }
       throw error;
     }
-
-    // Return SAFE response: no storagePath, no absolute paths
-    return NextResponse.json({
-      success: true,
-      uploaded: resultAttachments.length,
-      attachments: resultAttachments,
-      ...(rejectedFiles.length > 0 ? { rejectedFiles } : {})
-    });
   } catch (error) {
     console.error("Upload report attachment error:", error);
     return NextResponse.json({ error: "Lỗi hệ thống khi upload" }, { status: 500 });

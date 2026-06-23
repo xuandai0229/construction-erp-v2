@@ -8,10 +8,11 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { getWorkDateRange } from "@/lib/date/work-date";
 import { evaluateVolumeGuard } from "@/lib/field-progress/volume-guard";
+import { assertFieldProgressEntryWritable } from "@/lib/field-progress/entry-workflow-policy";
 const Decimal = Prisma.Decimal;
 
 // Safer batch save function
-export async function batchSaveDailyEntries(projectId: string, templateId: string, entryDateStr: string, entries: any[], submit: boolean = false) {
+export async function batchSaveDailyEntries(projectId: string, templateId: string, entryDateStr: string, entries: any[], _submit: boolean = false) {
   const session = await requireProjectAccess(projectId);
 
   try {
@@ -32,12 +33,12 @@ export async function batchSaveDailyEntries(projectId: string, templateId: strin
       },
     });
 
-    const existingByItemId = new Map<string, string[]>();
+    const existingByItemId = new Map<string, typeof existing>();
     for (const entry of existing) {
       if (!existingByItemId.has(entry.itemId)) {
         existingByItemId.set(entry.itemId, []);
       }
-      existingByItemId.get(entry.itemId)!.push(entry.id);
+      existingByItemId.get(entry.itemId)!.push(entry);
     }
 
     // Fetch design quantities for validation
@@ -65,22 +66,27 @@ export async function batchSaveDailyEntries(projectId: string, templateId: strin
       const quantity = new Decimal(quantityNum);
       if (quantity.lessThan(0)) throw new Error("Khối lượng không được âm");
 
-      const existingIds = existingByItemId.get(e.itemId) || [];
+      const existingEntries = existingByItemId.get(e.itemId) || [];
       
-      if (existingIds.length > 1) {
+      if (existingEntries.length > 1) {
         throw new Error(
           `Phát hiện dữ liệu trùng lặp cho công việc (${e.itemId}) trong ngày đã chọn. ` +
           `Vui lòng chạy audit và xử lý dữ liệu trước khi nhập tiếp.`
         );
       }
 
+      const existingEntry = existingEntries[0];
+      if (existingEntry) {
+        assertFieldProgressEntryWritable(existingEntry.status);
+      }
+
       // Handle quantity = 0
       if (quantityNum === 0) {
-        if (existingIds.length === 1) {
+        if (existingEntry) {
           // Soft-delete existing entry if quantity is set to 0
           return [
             prisma.fieldProgressEntry.update({
-              where: { id: existingIds[0] },
+              where: { id: existingEntry.id },
               data: { deletedAt: new Date() }
             })
           ];
@@ -107,10 +113,10 @@ export async function batchSaveDailyEntries(projectId: string, templateId: strin
         throw new Error("Khối lượng sau khi lưu vượt giới hạn cho phép. Vui lòng nhập lý do phát sinh tối thiểu 10 ký tự hoặc điều chỉnh lại số liệu.");
       }
       
-      if (existingIds.length === 1) {
+      if (existingEntry) {
         return [
           prisma.fieldProgressEntry.update({
-            where: { id: existingIds[0] },
+            where: { id: existingEntry.id },
             data: {
               quantity,
               issueNote: e.issueNote,

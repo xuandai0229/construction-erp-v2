@@ -37,6 +37,16 @@ const FULL_ACCESS_ROLES: UserRole[] = [
   UserRole.DEPUTY_DIRECTOR
 ];
 
+const IMMUTABLE_DOCUMENT_STATUSES: DocumentStatus[] = [
+  DocumentStatus.APPROVED,
+  DocumentStatus.ARCHIVED,
+  DocumentStatus.SUPERSEDED,
+];
+
+export function isDocumentContentLocked(status: DocumentStatus) {
+  return IMMUTABLE_DOCUMENT_STATUSES.includes(status);
+}
+
 function isAccountant(role: UserRole) {
   return role === UserRole.ACCOUNTANT;
 }
@@ -74,10 +84,9 @@ export function canUploadToFolder(user: SessionUser, folder: FolderContext) {
 }
 
 export function canEditDocumentMetadata(user: SessionUser, document: DocumentContext, folder: FolderContext) {
-  if (FULL_ACCESS_ROLES.includes(user.role)) return true;
+  if (isDocumentContentLocked(document.status)) return false;
 
-  // Nếu là file đã APPROVED, chỉ FULL_ACCESS_ROLES mới được sửa
-  if (document.status === DocumentStatus.APPROVED) return false;
+  if (FULL_ACCESS_ROLES.includes(user.role)) return true;
 
   // Với ENGINEER, chỉ được sửa file của mình
   if (user.role === UserRole.ENGINEER && document.uploadedById !== user.id) {
@@ -109,11 +118,23 @@ export function canChangeDocumentStatus(user: SessionUser, document: DocumentCon
   return false;
 }
 
-export function canDeleteDocument(user: SessionUser, document: DocumentContext, folder: FolderContext) {
-  if (FULL_ACCESS_ROLES.includes(user.role)) return true;
+export function isValidDocumentStatusTransition(
+  current: DocumentStatus,
+  next: DocumentStatus,
+): boolean {
+  const allowedTransitions: Partial<Record<DocumentStatus, DocumentStatus[]>> = {
+    DRAFT: [DocumentStatus.SUBMITTED],
+    SUBMITTED: [DocumentStatus.APPROVED, DocumentStatus.REJECTED],
+    REJECTED: [DocumentStatus.SUBMITTED],
+  };
 
-  // Không ai được xóa file APPROVED ngoại trừ cấp lãnh đạo
-  if (document.status === DocumentStatus.APPROVED) return false;
+  return allowedTransitions[current]?.includes(next) ?? false;
+}
+
+export function canDeleteDocument(user: SessionUser, document: DocumentContext, folder: FolderContext) {
+  if (isDocumentContentLocked(document.status)) return false;
+
+  if (FULL_ACCESS_ROLES.includes(user.role)) return true;
 
   // Chỉ cho xóa file của chính mình
   if (document.uploadedById !== user.id) return false;

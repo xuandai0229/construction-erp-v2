@@ -3,8 +3,18 @@
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import {
+  approveSiteReportTransition,
+  rejectSiteReportTransition,
+  submitSiteReportTransition,
+} from "@/lib/reports/report-transition-service";
+import { createSiteReportWithAudit } from "@/lib/reports/report-create-service";
 
 export async function getActiveProjects() {
+  const session = await getSession();
+  if (!session) throw new Error("Unauthorized");
+  
+  // TODO: Implement Project-level RBAC (ProjectUser) here to filter projects for non-admins
   const projects = await prisma.project.findMany({
     where: { deletedAt: null, status: "ACTIVE" },
     select: { id: true, name: true, code: true },
@@ -14,6 +24,10 @@ export async function getActiveProjects() {
 }
 
 export async function getProjectWorkItems(projectId: string) {
+  const session = await getSession();
+  if (!session) throw new Error("Unauthorized");
+  // TODO: Check if user has access to this projectId
+
   // Try to fetch FieldProgressItem first
   const fieldItems = await prisma.fieldProgressItem.findMany({
     where: { projectId, deletedAt: null, itemType: "WORK" },
@@ -59,8 +73,11 @@ export async function createSiteReport(data: Record<string, unknown>, isDraft: b
     throw new Error("Daily report requires at least one work line");
   }
 
-  const report = await prisma.siteReport.create({
-    data: {
+  const status = isDraft ? "DRAFT" : "SUBMITTED";
+  const report = await createSiteReportWithAudit(
+    prisma,
+    session,
+    {
       projectId: String(data.projectId),
       type: (data.type as "DAILY" | "WEEKLY") || "DAILY",
       reportDate: new Date(String(data.date)),
@@ -74,11 +91,9 @@ export async function createSiteReport(data: Record<string, unknown>, isDraft: b
       quality: data.quality ? String(data.quality) : undefined,
       issues: data.issues ? String(data.issues) : undefined,
       recommendations: data.recommendations ? String(data.recommendations) : undefined,
-      createdById: session.id,
-      reporterName: session.name, // Snapshot
-      status: isDraft ? "DRAFT" : "SUBMITTED",
+      status,
       lines: {
-        create: ((data.workLines as Record<string, unknown>[]) || []).map((line: Record<string, unknown>, index: number) => ({
+        create: workLines.map((line, index) => ({
           projectId: String(data.projectId),
           workContent: String(line.workContent || "No content"),
           workName: String(line.workName || line.workContent),
@@ -89,7 +104,7 @@ export async function createSiteReport(data: Record<string, unknown>, isDraft: b
         }))
       }
     }
-  });
+  );
 
   revalidatePath("/reports");
   return { success: true, id: report.id, reportNo: report.reportNo };
@@ -143,43 +158,149 @@ export async function getSiteReports(filters: Record<string, unknown> = {}) {
   return reports;
 }
 
+export type ReportPageFilters = {
+  tab?: string;
+  q?: string;
+  projectId?: string;
+  type?: string;
+  status?: string;
+  dateRange?: string; // e.g. "today", "thisWeek", "thisMonth", or "YYYY-MM-DD_YYYY-MM-DD"
+  page?: number;
+  pageSize?: number;
+};
+
+export async function getSiteReportsPage(filters: ReportPageFilters) {
+  const session = await getSession();
+  if (!session) throw new Error("Unauthorized");
+  
+  const user = await prisma.user.findUnique({
+    where: { id: session.id },
+    select: { role: true }
+  });
+  
+  const isSystemAdmin = user && ['ADMIN', 'DIRECTOR', 'DEPUTY_DIRECTOR', 'CHIEF_COMMANDER'].includes(user.role);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const where: any = { deletedAt: null };
+
+  if (!isSystemAdmin) {
+    where.createdById = session.id;
+  }
+
+  // 1. Tab filtering
+  if (filters.tab === "daily") where.type = "DAILY";
+  if (filters.tab === "weekly") where.type = "WEEKLY";
+  if (filters.tab === "pending") where.status = "SUBMITTED";
+  if (filters.tab === "rejected") where.status = "REJECTED";
+  if (filters.tab === "issues") {
+    where.AND = [
+      ...(where.AND || []),
+      {
+        OR: [
+          {
+            AND: [
+              { issues: { not: null, notIn: ["", " "] } },
+              { NOT: { issues: { startsWith: "Không có" } } },
+              { NOT: { issues: { startsWith: "không có" } } },
+            ]
+          },
+          {
+            lines: {
+              some: {
+                issueNote: { not: null, notIn: ["", " "] }
+              }
+            }
+          }
+        ]
+      }
+    ];
+  }
+
+  // 2. Explicit filters
+  if (filters.projectId && filters.projectId !== "all") where.projectId = filters.projectId;
+  if (filters.type && filters.type !== "all" && !filters.tab?.match(/^(daily|weekly)$/)) where.type = filters.type;
+  if (filters.status && filters.status !== "all" && !filters.tab?.match(/^(pending|rejected)$/)) where.status = filters.status;
+
+  // 3. Search query
+  if (filters.q) {
+    const q = filters.q;
+    // We try to match multiple fields. 
+    // Prisma full text search or simple contains
+    where.OR = [
+      { reportNo: { contains: q } },
+      { title: { contains: q } },
+      { reporterName: { contains: q } },
+      { project: { name: { contains: q } } },
+      { project: { code: { contains: q } } },
+      { lines: { some: { workContent: { contains: q } } } }
+    ];
+  }
+
+  // 4. Date Range
+  if (filters.dateRange) {
+    const now = new Date();
+    // VZ Timezone approximation: add 7 hours, get date, then set bounds
+    // A simpler approach for "today", "thisWeek", "thisMonth"
+    // Since server runs in UTC or local, let's use JS Date but assume local is mostly correct 
+    // or use exact offset if needed. Next.js server might be UTC.
+    // For simplicity, we just use standard Date methods
+    if (filters.dateRange === "today") {
+      const start = new Date(now.setHours(0,0,0,0));
+      const end = new Date(now.setHours(23,59,59,999));
+      where.reportDate = { gte: start, lte: end };
+    } else if (filters.dateRange === "thisWeek") {
+      const start = new Date(now);
+      start.setDate(now.getDate() - now.getDay() + 1);
+      start.setHours(0,0,0,0);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      end.setHours(23,59,59,999);
+      where.reportDate = { gte: start, lte: end };
+    } else if (filters.dateRange === "thisMonth") {
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23,59,59,999);
+      where.reportDate = { gte: start, lte: end };
+    } else if (filters.dateRange.includes("_")) {
+      const [startStr, endStr] = filters.dateRange.split("_");
+      const start = new Date(`${startStr}T00:00:00`);
+      const end = new Date(`${endStr}T23:59:59`);
+      where.reportDate = { gte: start, lte: end };
+    }
+  }
+
+  // Count total for pagination
+  const total = await prisma.siteReport.count({ where });
+
+  const page = Math.max(1, filters.page || 1);
+  const pageSize = Math.max(1, Math.min(50, filters.pageSize || 20));
+  const skip = (page - 1) * pageSize;
+
+  const items = await prisma.siteReport.findMany({
+    where,
+    include: {
+      project: { select: { name: true } },
+      lines: { orderBy: { sortOrder: 'asc' } },
+      attachments: true
+    },
+    orderBy: { reportDate: 'desc' },
+    skip,
+    take: pageSize
+  });
+
+  return {
+    items,
+    total,
+    page,
+    pageSize,
+    totalPages: Math.ceil(total / pageSize)
+  };
+}
+
 export async function submitSiteReport(reportId: string) {
   const session = await getSession();
   if (!session) throw new Error("Unauthorized");
 
-  const report = await prisma.siteReport.findUnique({ where: { id: reportId } });
-  if (!report) throw new Error("Không tìm thấy báo cáo");
-
-  if (report.createdById !== session.id) {
-    throw new Error("Không có quyền gửi báo cáo này");
-  }
-
-  if (!["DRAFT", "REJECTED"].includes(report.status)) {
-    throw new Error("Chỉ có thể gửi báo cáo nháp hoặc bị từ chối");
-  }
-
-  const updated = await prisma.$transaction(async (tx) => {
-    const rep = await tx.siteReport.update({
-      where: { id: reportId },
-      data: {
-        status: "SUBMITTED",
-        submittedAt: new Date()
-      }
-    });
-
-    await tx.auditLog.create({
-      data: {
-        userId: session.id,
-        projectId: rep.projectId,
-        action: "SITE_REPORT_SUBMITTED",
-        entityType: "SiteReport",
-        entityId: reportId,
-        beforeData: JSON.stringify({ status: report.status }),
-        afterData: JSON.stringify({ status: "SUBMITTED" })
-      }
-    });
-    return rep;
-  });
+  const updated = await submitSiteReportTransition(prisma, reportId, session);
 
   revalidatePath("/reports");
   return { success: true, status: updated.status };
@@ -189,44 +310,7 @@ export async function approveSiteReport(reportId: string, note?: string) {
   const session = await getSession();
   if (!session) throw new Error("Unauthorized");
 
-  const user = await prisma.user.findUnique({ where: { id: session.id }, select: { role: true } });
-  const isSystemAdmin = user && ['ADMIN', 'DIRECTOR'].includes(user.role);
-  
-  if (!isSystemAdmin) {
-    throw new Error("Không có quyền duyệt báo cáo");
-  }
-
-  const report = await prisma.siteReport.findUnique({ where: { id: reportId } });
-  if (!report) throw new Error("Không tìm thấy báo cáo");
-
-  if (report.status !== "SUBMITTED") {
-    throw new Error("Báo cáo không ở trạng thái chờ duyệt");
-  }
-
-  const updated = await prisma.$transaction(async (tx) => {
-    const rep = await tx.siteReport.update({
-      where: { id: reportId },
-      data: {
-        status: "APPROVED",
-        approvedById: session.id,
-        approvedAt: new Date(),
-        // We can append the note to summary or leave it in audit log. Better in audit log.
-      }
-    });
-
-    await tx.auditLog.create({
-      data: {
-        userId: session.id,
-        projectId: rep.projectId,
-        action: "SITE_REPORT_APPROVED",
-        entityType: "SiteReport",
-        entityId: reportId,
-        beforeData: JSON.stringify({ status: report.status }),
-        afterData: JSON.stringify({ status: "APPROVED", note })
-      }
-    });
-    return rep;
-  });
+  const updated = await approveSiteReportTransition(prisma, reportId, session, note);
 
   revalidatePath("/reports");
   return { success: true, status: updated.status };
@@ -236,46 +320,12 @@ export async function rejectSiteReport(reportId: string, reason: string) {
   const session = await getSession();
   if (!session) throw new Error("Unauthorized");
 
-  if (!reason || reason.trim() === "") {
-    throw new Error("Bắt buộc nhập lý do từ chối");
-  }
-
-  const user = await prisma.user.findUnique({ where: { id: session.id }, select: { role: true } });
-  const isSystemAdmin = user && ['ADMIN', 'DIRECTOR'].includes(user.role);
-  
-  if (!isSystemAdmin) {
-    throw new Error("Không có quyền từ chối báo cáo");
-  }
-
-  const report = await prisma.siteReport.findUnique({ where: { id: reportId } });
-  if (!report) throw new Error("Không tìm thấy báo cáo");
-
-  if (report.status !== "SUBMITTED") {
-    throw new Error("Báo cáo không ở trạng thái chờ duyệt");
-  }
-
-  const updated = await prisma.$transaction(async (tx) => {
-    const rep = await tx.siteReport.update({
-      where: { id: reportId },
-      data: {
-        status: "REJECTED",
-        rejectedReason: reason
-      }
-    });
-
-    await tx.auditLog.create({
-      data: {
-        userId: session.id,
-        projectId: rep.projectId,
-        action: "SITE_REPORT_REJECTED",
-        entityType: "SiteReport",
-        entityId: reportId,
-        beforeData: JSON.stringify({ status: report.status }),
-        afterData: JSON.stringify({ status: "REJECTED", reason })
-      }
-    });
-    return rep;
-  });
+  const updated = await rejectSiteReportTransition(
+    prisma,
+    reportId,
+    session,
+    reason,
+  );
 
   revalidatePath("/reports");
   return { success: true, status: updated.status };
@@ -284,7 +334,7 @@ export async function rejectSiteReport(reportId: string, reason: string) {
 export async function getSiteReportAuditLogs(reportId: string) {
   const logs = await prisma.auditLog.findMany({
     where: { entityType: "SiteReport", entityId: reportId },
-    include: { user: { select: { name: true, avatar: true } } },
+    include: { user: { select: { name: true, avatar: true, role: true } } },
     orderBy: { createdAt: 'desc' }
   });
   
@@ -295,7 +345,7 @@ export async function getSiteReportAuditLogs(reportId: string) {
         const parsed = JSON.parse(log.afterData);
         if (parsed.reason) detail = parsed.reason;
         else if (parsed.note) detail = parsed.note;
-      } catch (e) {
+      } catch {
         // ignore
       }
     }
@@ -304,6 +354,7 @@ export async function getSiteReportAuditLogs(reportId: string) {
       id: log.id,
       action: log.action,
       actorName: log.user?.name || "Người dùng",
+      actorRole: log.user?.role || "USER",
       createdAt: log.createdAt,
       detail
     };
@@ -369,7 +420,15 @@ export async function getWeeklyReportPreview(projectId: string, weekStartDate: D
   });
 
   // Aggregate items
-  const itemMap = new Map<string, any>();
+  const itemMap = new Map<string, {
+    fieldProgressItemId?: string | null;
+    workName: string;
+    area?: string | null;
+    unit?: string | null;
+    totalQuantity: number;
+    reportCount: number;
+    sourceReportIds: Set<string>;
+  }>();
   
   for (const report of approvedReports) {
     for (const line of report.lines) {
@@ -387,8 +446,10 @@ export async function getWeeklyReportPreview(projectId: string, weekStartDate: D
       }
       
       const entry = itemMap.get(key);
-      entry.totalQuantity += Number(line.quantityToday || 0);
-      entry.sourceReportIds.add(report.id);
+      if (entry) {
+        entry.totalQuantity += Number(line.quantityToday || 0);
+        entry.sourceReportIds.add(report.id);
+      }
     }
   }
 
@@ -463,10 +524,11 @@ export async function createWeeklyReportFromApprovedDailyReports(input: {
         status,
         createdById: session.id,
         reporterName: session.name,
+        submittedAt: status === "SUBMITTED" ? new Date() : null,
         summary: input.summary,
         issues: input.issues,
         recommendations: input.recommendations,
-        weatherCondition: input.weatherCondition as any || "SUNNY",
+        weatherCondition: (input.weatherCondition as "SUNNY" | "CLOUDY" | "OVERCAST" | "LIGHT_RAIN" | "HEAVY_RAIN" | "WINDY" | "STORM" | "OTHER") || "SUNNY",
         lines: {
           create: preview.aggregatedItems.map((item, index) => ({
             projectId: input.projectId,
@@ -483,12 +545,22 @@ export async function createWeeklyReportFromApprovedDailyReports(input: {
       }
     });
 
-    // Write audit log
+    await tx.auditLog.create({
+      data: {
+        userId: session.id,
+        projectId: input.projectId,
+        entityType: "SiteReport",
+        entityId: report.id,
+        action: "SITE_REPORT_CREATED",
+        afterData: JSON.stringify({
+          status,
+          type: "WEEKLY",
+          reportNo: report.reportNo,
+        }),
+      }
+    });
+
     if (status === "SUBMITTED") {
-      await tx.siteReport.update({
-        where: { id: report.id },
-        data: { submittedAt: new Date() }
-      });
       await tx.auditLog.create({
         data: {
           userId: session.id,

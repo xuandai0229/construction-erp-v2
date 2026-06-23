@@ -90,6 +90,11 @@ export interface FieldReport {
   issues: string;
   recommendations: string;
   gpsLocation?: string;
+  
+  hasIssues?: boolean;
+  hasNotes?: boolean;
+  isSevereIssue?: boolean;
+  
   approvalHistory: ApprovalHistoryEntry[];
 }
 

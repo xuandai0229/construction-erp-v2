@@ -104,7 +104,15 @@ function CreateReportDialogInner({ onClose, onSubmit, isSubmitting, activeProjec
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
 
   // Weekly Preview state
-  const [weeklyPreview, setWeeklyPreview] = useState<any>(null);
+  const [weeklyPreview, setWeeklyPreview] = useState<{
+    approvedCount: number;
+    pendingCount: number;
+    rejectedCount: number;
+    missingDays: number;
+    totalPhotos: number;
+    totalFiles: number;
+    aggregatedItems: { workName: string; unit?: string | null; totalQuantity: number }[];
+  } | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
 
   // Fetch work items when project changes
@@ -234,8 +242,9 @@ function CreateReportDialogInner({ onClose, onSubmit, isSubmitting, activeProjec
       const preview = await getWeeklyReportPreview(form.projectId, new Date(form.weekStartDate), new Date(form.weekEndDate));
       setWeeklyPreview(preview);
       toast.success("Đã lấy dữ liệu tổng hợp tuần");
-    } catch (e: any) {
-      toast.error(e.message || "Lỗi khi lấy dữ liệu tổng hợp");
+    } catch (e: unknown) {
+      const err = e as Error;
+      toast.error(err.message || "Lỗi khi lấy dữ liệu tổng hợp");
     } finally {
       setLoadingPreview(false);
     }
@@ -516,11 +525,66 @@ function CreateReportDialogInner({ onClose, onSubmit, isSubmitting, activeProjec
               </div>
             </div>
           ) : (
-            <div className="space-y-3 bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-sm">
-              <h4 className="flex items-center gap-2 text-[15px] font-bold text-slate-800 pb-3 border-b border-slate-100">
-                <AlignLeft className="w-[18px] h-[18px] text-blue-600" />
-                Tổng hợp báo cáo tuần
-              </h4>
+            <div className="space-y-4 bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-sm">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h4 className="flex items-center gap-2 text-[15px] font-bold text-slate-800">
+                  <AlignLeft className="w-[18px] h-[18px] text-blue-600" />
+                  Tổng hợp báo cáo tuần
+                </h4>
+                <Button type="button" onClick={handlePreviewWeekly} disabled={loadingPreview} variant="outline" className="h-8">
+                  {loadingPreview ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
+                  Xem tổng hợp tuần
+                </Button>
+              </div>
+
+              {weeklyPreview && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-200">
+                      <p className="text-xs text-slate-500 uppercase font-semibold">BC Đã duyệt</p>
+                      <p className="text-xl font-bold text-emerald-600 mt-1">{weeklyPreview.approvedCount}</p>
+                    </div>
+                    <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-200">
+                      <p className="text-xs text-slate-500 uppercase font-semibold">Chưa duyệt</p>
+                      <p className="text-xl font-bold text-amber-600 mt-1">{weeklyPreview.pendingCount}</p>
+                    </div>
+                    <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-200">
+                      <p className="text-xs text-slate-500 uppercase font-semibold">Bị từ chối</p>
+                      <p className="text-xl font-bold text-red-600 mt-1">{weeklyPreview.rejectedCount}</p>
+                    </div>
+                    <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-200">
+                      <p className="text-xs text-slate-500 uppercase font-semibold">Ngày trống</p>
+                      <p className="text-xl font-bold text-slate-700 mt-1">{weeklyPreview.missingDays}</p>
+                    </div>
+                  </div>
+
+                  {weeklyPreview.aggregatedItems.length > 0 ? (
+                    <div className="border border-slate-200 rounded-lg overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead className="bg-slate-50 border-b border-slate-200">
+                          <tr>
+                            <th className="text-left px-3 py-2 text-slate-600 font-semibold">Hạng mục / Công việc</th>
+                            <th className="text-center px-3 py-2 text-slate-600 font-semibold w-24">ĐVT</th>
+                            <th className="text-right px-3 py-2 text-slate-600 font-semibold w-32">Khối lượng</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {weeklyPreview.aggregatedItems.map((item: { workName: string, unit?: string | null, totalQuantity: number }, idx: number) => (
+                            <tr key={idx}>
+                              <td className="px-3 py-2">{item.workName}</td>
+                              <td className="px-3 py-2 text-center">{item.unit || '-'}</td>
+                              <td className="px-3 py-2 text-right font-medium text-slate-900">{item.totalQuantity}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="text-center text-slate-500 text-sm py-4 border border-dashed border-slate-200 rounded-lg">Không có khối lượng công việc nào được tổng hợp (Yêu cầu báo cáo ngày phải được duyệt).</p>
+                  )}
+                </div>
+              )}
+
               <div className="space-y-1.5 pt-1">
                 <label className="text-sm font-semibold text-slate-700">Đánh giá chung</label>
                 <textarea

@@ -21,6 +21,7 @@ import {
   RotateCcw,
   Send,
   Download,
+  Printer,
   Loader2,
   Cloud,
   Sun,
@@ -148,6 +149,29 @@ function ApprovalTimeline({ history }: { history: ApprovalHistoryEntry[] }) {
     );
   }
 
+function ImageWithFallback({ src, caption }: { src: string; caption?: string }) {
+  const [error, setError] = useState(false);
+  
+  if (error) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50">
+        <Camera className="w-4 h-4 text-slate-300 mb-1" />
+        <span className="text-[10px] text-slate-400 text-center px-1">Không tải được ảnh</span>
+      </div>
+    );
+  }
+  
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img 
+      src={src} 
+      alt={caption || ''} 
+      className="w-full h-full object-cover" 
+      onError={() => setError(true)}
+    />
+  );
+}
+
 export function ReportDetailDrawer({ 
   report, 
   isOpen, 
@@ -161,12 +185,13 @@ export function ReportDetailDrawer({
   const [isProcessing, setIsProcessing] = useState(false);
   const [rejectMode, setRejectMode] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<{ id: string; action: "SUBMITTED" | "APPROVED" | "REJECTED" | "RETURNED"; actor: string; role: string; timestamp: string; detail?: string }[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
     if (isOpen && report) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRejectMode(false);
       setRejectReason("");
       
@@ -230,6 +255,10 @@ export function ReportDetailDrawer({
   }
 
   const weatherLabel = WEATHER_OPTIONS.find(o => o.value === report.weatherCondition)?.label || "Khác";
+
+  const validWorkLines = (report.workLines || []).filter(l => 
+    (l.workContent && l.workContent !== "No content") || (l.quantityToday !== undefined && l.quantityToday > 0)
+  );
 
   return (
     <div
@@ -312,11 +341,11 @@ export function ReportDetailDrawer({
           )}
 
           {/* Work Lines Table or Content */}
-          {report.workLines && report.workLines.length > 0 ? (
+          {validWorkLines.length > 0 ? (
             <div className="space-y-2">
               <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
                 <TrendingUp className="w-4 h-4 text-emerald-600" />
-                Nội dung công việc ({report.workLines.length})
+                Nội dung công việc ({validWorkLines.length})
               </h4>
               <div className="pl-0 sm:pl-6">
                 <div className="border border-slate-200 rounded-lg overflow-hidden">
@@ -329,7 +358,7 @@ export function ReportDetailDrawer({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {report.workLines.map((line, idx) => (
+                      {validWorkLines.map((line, idx) => (
                         <tr key={line.id || idx}>
                           <td className="px-3 py-2">
                             <span className="font-medium text-slate-800">{line.workContent}</span>
@@ -346,11 +375,11 @@ export function ReportDetailDrawer({
             </div>
           ) : (
             <DetailSection
-              title="Nội dung công việc (Legacy)"
+              title="Nội dung công việc"
               icon={<FileText className="w-4 h-4 text-blue-600" />}
-              empty={!report.workContent}
+              empty={false}
             >
-              {report.workContent}
+              {(!report.workContent || report.workContent === "No content") ? "Chưa có nội dung công việc" : report.workContent}
             </DetailSection>
           )}
 
@@ -411,8 +440,7 @@ export function ReportDetailDrawer({
                     onClick={() => onViewGallery?.(report, index)}
                   >
                     {photo.url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={photo.url} alt={photo.caption || ''} className="w-full h-full object-cover" />
+                      <ImageWithFallback src={photo.url} caption={photo.caption} />
                     ) : (
                       <div className="text-center">
                         <Camera className="w-5 h-5 text-slate-300 mx-auto" />
@@ -507,10 +535,10 @@ export function ReportDetailDrawer({
                 <Button
                   variant="outline"
                   className="gap-1.5"
-                  onClick={() => toast.info("Chức năng tải xuống báo cáo sẽ được kết nối ở bước sau")}
+                  onClick={() => window.open(`/print/reports/${report.id}`, '_blank')}
                 >
-                  <Download className="w-4 h-4" />
-                  Tải xuống
+                  <Printer className="w-4 h-4" />
+                  In / Xuất PDF
                 </Button>
               </div>
               <div className="flex items-center gap-2">
