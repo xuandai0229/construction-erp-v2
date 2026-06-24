@@ -84,9 +84,9 @@ export default async function ProjectsPage({
   const baseUrl = `/projects?q=${encodeURIComponent(q)}&status=${encodeURIComponent(statusFilter)}`;
 
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto">
+    <div className="app-page space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{pageTitle}</h1>
+        <h1 className="page-heading">{pageTitle}</h1>
         {canManage && (
           <Link href="/projects/new" className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-blue-600 text-white hover:bg-blue-700 h-10 px-4 py-2 shadow-sm">
             <Plus className="h-4 w-4 mr-2" />
@@ -245,7 +245,7 @@ export default async function ProjectsPage({
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
-              <div className="border-t border-slate-200 p-4 bg-white flex items-center justify-between">
+              <div className="flex flex-col gap-3 border-t border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-slate-500 font-medium">
                   Hiển thị <span className="font-semibold text-slate-900">{skip + 1}</span> đến <span className="font-semibold text-slate-900">{Math.min(skip + ITEMS_PER_PAGE, totalItems)}</span> trong số <span className="font-semibold text-slate-900">{totalItems}</span> công trình
                 </p>

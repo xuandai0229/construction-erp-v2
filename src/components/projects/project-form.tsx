@@ -7,7 +7,17 @@ import Link from "next/link";
 import { Info } from "lucide-react";
 
 interface ProjectFormProps {
-  initialData?: any;
+  initialData?: {
+    id: string;
+    code: string;
+    name: string;
+    investor?: string | null;
+    location?: string | null;
+    status?: string;
+    startDate?: Date | null;
+    endDate?: Date | null;
+    description?: string | null;
+  } | null;
 }
 
 export function ProjectForm({ initialData }: ProjectFormProps) {

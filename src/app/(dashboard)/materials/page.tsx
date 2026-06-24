@@ -3,9 +3,12 @@ import { Package } from 'lucide-react';
 
 export default function MaterialsPage() {
   return (
-    <div className="space-y-6">
+    <div className="app-page space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">Quản lý Vật tư</h1>
+        <div>
+          <h1 className="page-heading">Quản lý vật tư</h1>
+          <p className="page-description">Theo dõi vật tư, thiết bị và nhu cầu sử dụng tại công trường.</p>
+        </div>
       </div>
       <EmptyState 
         title="Chưa có dữ liệu vật tư" 

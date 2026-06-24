@@ -116,7 +116,10 @@ export async function getSiteReports(filters: Record<string, unknown> = {}) {
   const session = await getSession();
   if (!session) throw new Error("Unauthorized");
   
-  const where: Record<string, unknown> = { deletedAt: null };
+  const where: Record<string, unknown> = { 
+    deletedAt: null,
+    project: { deletedAt: null }
+  };
 
   const user = await prisma.user.findUnique({
     where: { id: session.id },
@@ -183,7 +186,10 @@ export async function getSiteReportsPage(filters: ReportPageFilters) {
   const isSystemAdmin = user && ['ADMIN', 'DIRECTOR', 'DEPUTY_DIRECTOR', 'CHIEF_COMMANDER'].includes(user.role);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const where: any = { deletedAt: null };
+  const where: any = { 
+    deletedAt: null,
+    project: { deletedAt: null }
+  };
 
   if (!isSystemAdmin) {
     where.createdById = session.id;
@@ -193,7 +199,7 @@ export async function getSiteReportsPage(filters: ReportPageFilters) {
   if (filters.tab === "daily") where.type = "DAILY";
   if (filters.tab === "weekly") where.type = "WEEKLY";
   if (filters.tab === "pending") where.status = "SUBMITTED";
-  if (filters.tab === "rejected") where.status = "REJECTED";
+  if (filters.tab === "rejected") where.status = { in: ["REJECTED", "REVISION_REQUESTED"] };
   if (filters.tab === "issues") {
     where.AND = [
       ...(where.AND || []),
@@ -221,7 +227,13 @@ export async function getSiteReportsPage(filters: ReportPageFilters) {
   // 2. Explicit filters
   if (filters.projectId && filters.projectId !== "all") where.projectId = filters.projectId;
   if (filters.type && filters.type !== "all" && !filters.tab?.match(/^(daily|weekly)$/)) where.type = filters.type;
-  if (filters.status && filters.status !== "all" && !filters.tab?.match(/^(pending|rejected)$/)) where.status = filters.status;
+  if (filters.status && filters.status !== "all" && !filters.tab?.match(/^(pending|rejected)$/)) {
+    if (filters.status === "REJECTED_AND_REVISION") {
+      where.status = { in: ["REJECTED", "REVISION_REQUESTED"] };
+    } else {
+      where.status = filters.status;
+    }
+  }
 
   // 3. Search query
   if (filters.q) {

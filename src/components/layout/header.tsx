@@ -91,11 +91,11 @@ export function Header({ userName, userRole, userRoleRaw }: { userName?: string,
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 md:px-6 shadow-sm">
+      <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200/90 bg-white/95 px-4 backdrop-blur-md md:px-6">
         <div className="flex items-center lg:hidden">
           <button
             onClick={() => setMobileMenuOpen(true)}
-            className="text-slate-500 hover:text-slate-700 p-2"
+            className="icon-button"
             aria-label="Mở menu"
           >
             <Menu className="h-6 w-6" />
@@ -105,7 +105,7 @@ export function Header({ userName, userRole, userRoleRaw }: { userName?: string,
         
         <div className="hidden lg:block"></div>
 
-        <div className="flex items-center space-x-6">
+        <div className="flex items-center gap-3 sm:gap-5">
           <div className="flex items-center space-x-3 text-sm text-right">
             <div className="hidden sm:block">
               <p className="max-w-48 truncate font-bold text-slate-900 text-[14px]">
@@ -115,13 +115,13 @@ export function Header({ userName, userRole, userRoleRaw }: { userName?: string,
                 {userRole}
               </p>
             </div>
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-50 text-blue-600 font-bold text-sm shrink-0 border border-blue-100">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-sm font-bold text-blue-600">
               <User className="h-4 w-4" />
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="text-slate-400 hover:text-slate-600 transition-colors"
+            className="icon-button"
             title="Đăng xuất"
             aria-label="Đăng xuất"
           >

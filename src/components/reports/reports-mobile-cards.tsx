@@ -69,9 +69,9 @@ export function ReportsMobileCards({ reports, onViewDetail, onViewGallery, onEdi
                 </span>
               )}
               {(report.photos.some(p => p.isMissing) || report.attachments.some(a => a.isMissing)) && (
-                <span className="text-[10px] text-rose-600 bg-rose-50 border border-rose-100 px-1.5 py-0.5 rounded font-medium" title="Báo cáo có file/ảnh không còn tồn tại trong storage">
+                <StatusBadge variant="danger" size="sm" title="Báo cáo có file/ảnh không còn tồn tại trong storage">
                   File lỗi
-                </span>
+                </StatusBadge>
               )}
               {report.photos.length === 0 && report.attachments.length === 0 && (
                 <span className="text-slate-300">-</span>
@@ -80,7 +80,7 @@ export function ReportsMobileCards({ reports, onViewDetail, onViewGallery, onEdi
             <div className="flex items-center gap-1">
               {currentUser && (
                 <>
-                  {(report.status === "DRAFT" || report.status === "REJECTED" || report.status === "SUBMITTED") && 
+                  {(report.status === "DRAFT" || report.status === "REJECTED" || report.status === "REVISION_REQUESTED" || report.status === "SUBMITTED") && 
                    ['ADMIN', 'DIRECTOR', 'DEPUTY_DIRECTOR'].includes(currentUser.role || '') && (
                     <button
                       onClick={(e) => { e.stopPropagation(); onDelete?.(report); }}
@@ -91,7 +91,7 @@ export function ReportsMobileCards({ reports, onViewDetail, onViewGallery, onEdi
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   )}
-                  {(report.status === "DRAFT" || report.status === "REJECTED") && 
+                  {(report.status === "DRAFT" || report.status === "REJECTED" || report.status === "REVISION_REQUESTED") && 
                    (report.createdById === currentUser.id || ['ADMIN', 'DIRECTOR', 'DEPUTY_DIRECTOR'].includes(currentUser.role || '')) && (
                     <button
                       onClick={(e) => { e.stopPropagation(); onEdit?.(report); }}

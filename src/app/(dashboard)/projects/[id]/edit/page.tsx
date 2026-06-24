@@ -16,10 +16,10 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
   }
 
   return (
-    <div className="space-y-6">
+    <div className="app-page space-y-6">
       <div className="flex items-center space-x-2">
         <Building2 className="h-6 w-6 text-slate-500" />
-        <h1 className="text-2xl font-bold text-slate-900">Sửa công trình: {project.name}</h1>
+        <h1 className="page-heading">Sửa công trình: {project.name}</h1>
       </div>
       
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">

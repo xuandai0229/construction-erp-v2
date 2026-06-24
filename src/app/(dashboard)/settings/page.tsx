@@ -3,9 +3,12 @@ import { Settings } from 'lucide-react';
 
 export default function SettingsPage() {
   return (
-    <div className="space-y-6">
+    <div className="app-page space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">Cài đặt hệ thống</h1>
+        <div>
+          <h1 className="page-heading">Cài đặt hệ thống</h1>
+          <p className="page-description">Quản lý các thiết lập dùng chung của hệ thống ERP.</p>
+        </div>
       </div>
       <EmptyState 
         title="Cấu hình hệ thống" 

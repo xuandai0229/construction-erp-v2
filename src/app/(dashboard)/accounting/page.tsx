@@ -3,9 +3,12 @@ import { CreditCard } from 'lucide-react';
 
 export default function AccountingPage() {
   return (
-    <div className="space-y-6">
+    <div className="app-page space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">Kế toán & Thanh toán</h1>
+        <div>
+          <h1 className="page-heading">Kế toán & thanh toán</h1>
+          <p className="page-description">Theo dõi hồ sơ, hóa đơn và kế hoạch thanh toán.</p>
+        </div>
       </div>
       <EmptyState 
         title="Chưa có hồ sơ thanh toán" 

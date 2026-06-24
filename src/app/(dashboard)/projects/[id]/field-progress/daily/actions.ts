@@ -44,9 +44,9 @@ export async function batchSaveDailyEntries(projectId: string, templateId: strin
     // Fetch design quantities for validation
     const activeItems = await prisma.fieldProgressItem.findMany({
       where: { id: { in: itemIds }, deletedAt: null },
-      select: { id: true, designQuantity: true }
+      select: { id: true, designQuantity: true, itemType: true, projectId: true, templateId: true }
     });
-    const itemsMap = new Map(activeItems.map(i => [i.id, Number(i.designQuantity || 0)]));
+    const itemsMap = new Map(activeItems.map(i => [i.id, i]));
 
     // Fetch cumulative before today (APPROVED only — matches Daily display)
     const historicalSums = await prisma.fieldProgressEntry.groupBy({
@@ -55,16 +55,26 @@ export async function batchSaveDailyEntries(projectId: string, templateId: strin
         itemId: { in: itemIds },
         deletedAt: null,
         status: "APPROVED",
-        entryDate: { lt: start }
+        OR: [
+          { entryDate: { lt: start } },
+          { entryDate: { gte: end } }
+        ]
       },
       _sum: { quantity: true }
     });
     const sumsMap = new Map(historicalSums.map(s => [s.itemId, Number(s._sum.quantity || 0)]));
 
     const operations = entries.flatMap(e => {
-      const quantityNum = Number(e.quantity || 0);
+      const item = itemsMap.get(e.itemId);
+      if (!item) throw new Error("Công việc không hợp lệ hoặc đã bị xóa");
+      if (item.projectId !== projectId || item.templateId !== templateId) throw new Error("Công việc không thuộc công trình hiện tại");
+      if (item.itemType === "GROUP") throw new Error("Không thể nhập khối lượng cho hạng mục tổng");
+
+      const rawQuantity = e.quantity === "" || e.quantity == null ? 0 : e.quantity;
+      const quantityNum = Number(rawQuantity);
+      if (!Number.isFinite(quantityNum)) throw new Error("Khối lượng phải là số hợp lệ");
+      if (quantityNum < 0) throw new Error("Khối lượng không được âm");
       const quantity = new Decimal(quantityNum);
-      if (quantity.lessThan(0)) throw new Error("Khối lượng không được âm");
 
       const existingEntries = existingByItemId.get(e.itemId) || [];
       
@@ -76,9 +86,7 @@ export async function batchSaveDailyEntries(projectId: string, templateId: strin
       }
 
       const existingEntry = existingEntries[0];
-      if (existingEntry) {
-        assertFieldProgressEntryWritable(existingEntry.status);
-      }
+      // Removed assertFieldProgressEntryWritable to allow Admin corrections
 
       // Handle quantity = 0
       if (quantityNum === 0) {
@@ -88,6 +96,17 @@ export async function batchSaveDailyEntries(projectId: string, templateId: strin
             prisma.fieldProgressEntry.update({
               where: { id: existingEntry.id },
               data: { deletedAt: new Date() }
+            }),
+            prisma.auditLog.create({
+              data: {
+                action: "CORRECT_FIELD_PROGRESS_ENTRY",
+                userId: session.id,
+                projectId,
+                entityType: "FieldProgressEntry",
+                entityId: existingEntry.id,
+                beforeData: JSON.stringify({ quantity: existingEntry.quantity }),
+                afterData: JSON.stringify({ quantity: 0, deleted: true })
+              }
             })
           ];
         }
@@ -96,7 +115,7 @@ export async function batchSaveDailyEntries(projectId: string, templateId: strin
       }
 
       // Validate Volume Guard for quantity > 0
-      const designQty = itemsMap.get(e.itemId) || 0;
+      const designQty = Number(item.designQuantity || 0);
       const cumulativeBefore = sumsMap.get(e.itemId) || 0;
       
       const guard = evaluateVolumeGuard({
@@ -126,6 +145,17 @@ export async function batchSaveDailyEntries(projectId: string, templateId: strin
               approvedAt: new Date(),
               submittedAt: null,
               deletedAt: null // Restore if it was previously soft-deleted (though our query filtered deletedAt: null anyway)
+            }
+          }),
+          prisma.auditLog.create({
+            data: {
+              action: "CORRECT_FIELD_PROGRESS_ENTRY",
+              userId: session.id,
+              projectId,
+              entityType: "FieldProgressEntry",
+              entityId: existingEntry.id,
+              beforeData: JSON.stringify({ quantity: existingEntry.quantity }),
+              afterData: JSON.stringify({ quantity: quantityNum })
             }
           })
         ];

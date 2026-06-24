@@ -309,17 +309,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
     setExpandedGroups(prev => ({ ...prev, [groupName]: !prev[groupName] }));
   };
 
-  useEffect(() => {
-    const firstId = filteredItems[0]?.id;
-    if (!firstId) return;
-
-    const timer = window.setTimeout(() => {
-      quantityRefs.current[firstId]?.focus();
-      quantityRefs.current[firstId]?.select();
-    }, 80);
-
-    return () => window.clearTimeout(timer);
-  }, [dateStr, filteredItems]);
+  // Removed auto-focus useEffect because it steals focus and resets the caret when typing.
 
   const dateStatus = useMemo(() => {
     if (Object.keys(dirtyEntries).length > 0) return "Đang chỉnh sửa (Chưa lưu)";
@@ -414,7 +404,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
     if (operationRef.current) return;
     const invalidItems = items.filter((item) => {
       const math = getItemMath(item);
-      return math.hasInvalidNumber || math.isNegative || !math.guard.canSubmit;
+      return (math.hasTodayQuantity || dirtyEntries[item.id]) && (math.hasInvalidNumber || math.isNegative || !math.guard.canSubmit);
     });
 
     if (invalidItems.length > 0) {
@@ -477,9 +467,8 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
           inputMode="decimal"
           value={item.quantity}
           onChange={(e) => patchItem(item.id, "quantity", e.target.value)}
-          onFocus={(e) => {
+          onFocus={() => {
             setFocusedItemId(item.id);
-            e.target.select();
           }}
           onBlur={() => setFocusedItemId(null)}
           onKeyDown={(e) => handleQuantityKeyDown(e, index)}

@@ -3,9 +3,12 @@ import { CheckSquare } from 'lucide-react';
 
 export default function ApprovalsPage() {
   return (
-    <div className="space-y-6">
+    <div className="app-page space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">Phê duyệt</h1>
+        <div>
+          <h1 className="page-heading">Phê duyệt</h1>
+          <p className="page-description">Tổng hợp các yêu cầu đang chờ quyết định và phản hồi.</p>
+        </div>
       </div>
       <EmptyState 
         title="Không có yêu cầu chờ duyệt" 

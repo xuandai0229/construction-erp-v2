@@ -4,6 +4,8 @@ import { useState, useMemo, useCallback } from "react";
 import { Plus, AlertCircle, Clock, XCircle, FileEdit, CheckSquare, Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast-context";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { EmptyState } from "@/components/ui/empty-state";
 
 import { ReportsToolbar } from "./reports-toolbar";
 import { ReportsTable } from "./reports-table";
@@ -48,6 +50,7 @@ export function ReportsWorkspace({
   const toast = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deleteReport, setDeleteReport] = useState<FieldReport | null>(null);
 
   // Use searchParams from URL or use local state synced with URL
   // But wait, Next.js useSearchParams requires being inside Suspense if used directly, or client component.
@@ -147,14 +150,14 @@ export function ReportsWorkspace({
     if (isLeader) {
       return {
         pending: allReportsForStats.filter(r => r.status === 'SUBMITTED').length,
-        rejected: allReportsForStats.filter(r => r.status === 'REJECTED').length,
+        rejected: allReportsForStats.filter(r => r.status === 'REJECTED' || r.status === 'REVISION_REQUESTED').length,
         issues: allReportsForStats.filter(r => r.hasIssues).length,
       }
     } else {
       return {
         myToday: allReportsForStats.filter(r => r.createdById === currentUser.id && (r.reportDate as string).startsWith(today)).length,
         myDrafts: allReportsForStats.filter(r => r.createdById === currentUser.id && r.status === 'DRAFT').length,
-        myRejected: allReportsForStats.filter(r => r.createdById === currentUser.id && r.status === 'REJECTED').length,
+        myRejected: allReportsForStats.filter(r => r.createdById === currentUser.id && (r.status === 'REJECTED' || r.status === 'REVISION_REQUESTED')).length,
       }
     }
   }, [allReportsForStats, currentUser.id, isLeader]);
@@ -387,23 +390,31 @@ export function ReportsWorkspace({
     setIsCreateOpen(true);
   }, []);
 
-  const handleDelete = useCallback(async (report: FieldReport) => {
-    if (window.confirm("Bạn chắc chắn muốn xóa báo cáo này? Báo cáo sẽ được ẩn khỏi danh sách nhưng dữ liệu vẫn được lưu trong hệ thống.")) {
-      try {
-        const res = await softDeleteSiteReport(report.id);
-        if (res.success) {
-          toast.success("Đã xóa báo cáo");
-          router.refresh();
-        }
-      } catch (e: unknown) {
-        const err = e as Error;
-        toast.error(err.message || "Lỗi khi xóa báo cáo");
+  const handleDelete = useCallback((report: FieldReport) => {
+    setDeleteReport(report);
+  }, []);
+
+  const confirmDeleteReport = useCallback(async () => {
+    if (!deleteReport) return;
+    setIsSubmitting(true);
+    try {
+      const res = await softDeleteSiteReport(deleteReport.id);
+      if (res.success) {
+        toast.success("Đã xóa báo cáo");
+        setDeleteReport(null);
+        setIsDetailOpen(false);
+        router.refresh();
       }
+    } catch (e: unknown) {
+      const err = e as Error;
+      toast.error(err.message || "Lỗi khi xóa báo cáo");
+    } finally {
+      setIsSubmitting(false);
     }
-  }, [router, toast]);
+  }, [deleteReport, router, toast]);
 
   return (
-    <div className="max-w-[1400px] mx-auto space-y-5 sm:space-y-6">
+    <div className="app-page max-w-[1400px] space-y-5 sm:space-y-6">
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto">
@@ -600,7 +611,7 @@ export function ReportsWorkspace({
           onSearchChange={handleSearchChange}
           projectFilter={projectFilter}
           onProjectFilterChange={handleProjectFilterChange}
-          statusFilter={tab === 'pending' ? 'SUBMITTED' : tab === 'rejected' ? 'REJECTED' : statusFilter}
+          statusFilter={tab === 'pending' ? 'SUBMITTED' : tab === 'rejected' ? 'REJECTED_AND_REVISION' : statusFilter}
           onStatusFilterChange={handleStatusFilterChange}
           typeFilter={tab === 'daily' ? 'DAILY' : tab === 'weekly' ? 'WEEKLY' : typeFilter}
           onTypeFilterChange={handleTypeFilterChange}
@@ -641,9 +652,11 @@ export function ReportsWorkspace({
             currentUser={currentUser}
           />
         ) : (
-          <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-500 text-sm">
-            Không tìm thấy báo cáo phù hợp
-          </div>
+          <EmptyState
+            title="Không tìm thấy báo cáo"
+            description="Thử đặt lại bộ lọc hoặc tạo báo cáo mới."
+            className="min-h-[240px]"
+          />
         )}
       </div>
 
@@ -679,6 +692,22 @@ export function ReportsWorkspace({
         onClose={() => setIsGalleryOpen(false)}
         photos={galleryPhotos}
         initialIndex={galleryIndex}
+      />
+
+      <ConfirmDialog
+        isOpen={Boolean(deleteReport)}
+        onClose={() => setDeleteReport(null)}
+        title="Xóa báo cáo?"
+        description={
+          <>
+            Báo cáo <strong className="text-slate-900">{deleteReport?.reportNo}</strong> sẽ
+            được ẩn khỏi danh sách. Dữ liệu vẫn được lưu trong hệ thống để truy vết.
+          </>
+        }
+        variant="danger"
+        confirmText="Xóa báo cáo"
+        onConfirm={confirmDeleteReport}
+        isLoading={isSubmitting}
       />
     </div>
   );

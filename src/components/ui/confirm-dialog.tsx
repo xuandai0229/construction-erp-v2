@@ -70,7 +70,7 @@ export function ConfirmDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/55 p-0 backdrop-blur-sm animate-in fade-in duration-200 sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirm-dialog-title"
@@ -80,10 +80,10 @@ export function ConfirmDialog({
       <div
         ref={dialogRef}
         tabIndex={-1}
-        className="bg-white rounded-xl shadow-lg max-w-md w-full overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 outline-none"
+        className="relative flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl shadow-slate-950/20 outline-none animate-in zoom-in-95 duration-200 sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-5 py-5 sm:p-6 flex gap-4">
+        <div className="flex gap-4 overflow-y-auto px-5 py-5 sm:p-6">
           <div className={`flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full ${colors[variant]}`}>
             {icons[variant]}
           </div>
@@ -100,14 +100,14 @@ export function ConfirmDialog({
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400"
+            className="icon-button absolute right-3 top-3"
             aria-label="Đóng hộp thoại"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
         
-        <div className="px-5 py-4 sm:px-6 bg-slate-50 border-t border-slate-100 flex flex-col-reverse sm:flex-row items-center justify-end gap-2 sm:gap-3">
+        <div className="flex flex-col-reverse items-stretch justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-4 sm:flex-row sm:items-center sm:gap-3 sm:px-6">
           <Button
             variant="outline"
             onClick={onClose}

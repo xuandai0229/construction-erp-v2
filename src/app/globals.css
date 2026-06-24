@@ -1,29 +1,21 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  color-scheme: light;
+  --background: #f8fafc;
   --foreground: #0f172a;
-  --muted-foreground: #64748b;
+  --muted-foreground: #475569;
   --input-bg: #ffffff;
   --input-border: #cbd5e1;
-  --input-focus: #3b82f6;
+  --input-focus: #2563eb;
   --placeholder: #94a3b8;
   --disabled-bg: #f1f5f9;
   --disabled-text: #64748b;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0f172a;
-    --foreground: #f8fafc;
-    --muted-foreground: #94a3b8;
-    --input-bg: #1e293b;
-    --input-border: #475569;
-    --input-focus: #3b82f6;
-    --placeholder: #64748b;
-    --disabled-bg: #0f172a;
-    --disabled-text: #475569;
-  }
+  --surface: #ffffff;
+  --surface-subtle: #f8fafc;
+  --border: #e2e8f0;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
 }
 
 @theme inline {
@@ -43,9 +35,10 @@
 @layer base {
   html, body {
     min-height: 100%;
-    background-color: #f8fafc !important;
+    background-color: var(--background);
     color: var(--foreground);
     font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+    text-rendering: optimizeLegibility;
   }
 
   input, textarea, select {
@@ -59,21 +52,114 @@
     opacity: 1;
   }
 
-  input:disabled, textarea:disabled, select:disabled, button:disabled {
+  input:disabled, textarea:disabled, select:disabled {
     background-color: var(--disabled-bg) !important;
     color: var(--disabled-text) !important;
     border-color: var(--input-border) !important;
     cursor: not-allowed;
     opacity: 1 !important;
   }
+
+  button, a, input, textarea, select, [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [role="button"]:focus-visible {
+    outline: 2px solid var(--input-focus);
+    outline-offset: 2px;
+  }
 }
 
 @layer utilities {
+  .app-page-container {
+    width: 100%;
+    max-width: 1600px;
+    min-height: 100%;
+    margin-inline: auto;
+  }
+
+  .app-page {
+    width: 100%;
+    max-width: 1600px;
+    margin-inline: auto;
+  }
+
+  .page-heading {
+    color: #0f172a;
+    font-size: 1.5rem;
+    line-height: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+  }
+
+  .page-description {
+    margin-top: 0.25rem;
+    color: #475569;
+    font-size: 0.875rem;
+    line-height: 1.375rem;
+  }
+
+  .surface-panel {
+    border: 1px solid var(--border);
+    border-radius: 0.875rem;
+    background: var(--surface);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+
+  .form-control {
+    min-height: 2.5rem;
+    width: 100%;
+    border: 1px solid var(--input-border);
+    border-radius: 0.5rem;
+    background: var(--input-bg);
+    color: var(--foreground);
+    font-size: 0.875rem;
+    transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+  }
+
+  .form-control:focus {
+    border-color: var(--input-focus);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    outline: none;
+  }
+
+  .icon-button {
+    display: inline-flex;
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    color: #64748b;
+    transition: color 150ms ease, background-color 150ms ease;
+  }
+
+  .icon-button:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+
   .hide-scrollbar {
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
   }
   .hide-scrollbar::-webkit-scrollbar {
     display: none; /* Chrome, Safari and Opera */
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

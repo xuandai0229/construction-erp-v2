@@ -38,12 +38,13 @@ export function MaterialRequestList({
   const [statusFilter, setStatusFilter] = useState("ALL");
   
   useEffect(() => {
+    // eslint-disable-next-line
     setRequests(initialRequests);
   }, [initialRequests]);
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
 
   // Filter Logic
   const filteredRequests = requests.filter(req => {
@@ -273,6 +274,6 @@ export function MaterialRequestList({
 }
 
 // ArrowRight missing import
-function ArrowRight(props: any) {
+function ArrowRight(props: React.SVGProps<SVGSVGElement>) {
   return <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
 }

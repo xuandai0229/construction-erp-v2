@@ -40,10 +40,7 @@ export function evaluateVolumeGuard(input: {
   const percent = (projectedCumulative / input.designQuantity) * 100;
   const remaining = Math.max(0, input.designQuantity - projectedCumulative);
   
-  const hasValidNote =
-    (input.note && input.note.trim().length >= 10) ||
-    (input.issueNote && input.issueNote.trim().length >= 10) ||
-    (input.proposalNote && input.proposalNote.trim().length >= 10);
+
 
   let level: VolumeGuardLevel = "OK";
   let message = "Trong giới hạn";
@@ -57,32 +54,10 @@ export function evaluateVolumeGuard(input: {
     level = "NEAR_LIMIT";
     message = "Sắp vượt khối lượng thiết kế";
     canSubmit = true;
-  } else if (percent > 100 && percent <= 110) {
-    if (input.status === "SUBMITTED" && !hasValidNote) {
-      level = "REQUIRE_NOTE";
-      message = "Cần lý do";
-      canSubmit = false;
-    } else {
-      level = "REQUIRE_NOTE";
-      message = "Vượt thiết kế";
-      canSubmit = true;
-    }
-  } else if (percent > 110) {
-    if (input.status === "DRAFT") {
-      level = "OVER_DESIGN";
-      message = "Vượt thiết kế";
-      canSubmit = false;
-    } else {
-      if (!hasValidNote) {
-        level = "BLOCK_SUBMIT";
-        message = "Chặn gửi";
-        canSubmit = false;
-      } else {
-        level = "OVER_DESIGN";
-        message = "Vượt thiết kế";
-        canSubmit = true;
-      }
-    }
+  } else if (percent > 100) {
+    level = "BLOCK_SUBMIT";
+    message = "Vượt khối lượng thiết kế";
+    canSubmit = false;
   }
 
   return {

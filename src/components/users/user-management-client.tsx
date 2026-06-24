@@ -118,7 +118,7 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
         username: formUsername || undefined,
         phone: formPhone || undefined,
         password: formPassword,
-        role: formRole as any,
+        role: formRole as "ADMIN" | "DIRECTOR" | "DEPUTY_DIRECTOR" | "CHIEF_COMMANDER" | "MANAGER" | "ENGINEER" | "STAFF",
         projectIds: formProjectIds.length > 0 ? formProjectIds : undefined,
         note: formNote || undefined,
       });
@@ -218,7 +218,7 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
       email: formEmail,
       username: formUsername || undefined,
       phone: formPhone || undefined,
-      role: formRole as any,
+      role: formRole as "ADMIN" | "DIRECTOR" | "DEPUTY_DIRECTOR" | "CHIEF_COMMANDER" | "MANAGER" | "ENGINEER" | "STAFF",
       projectIds: formProjectIds,
       note: formNote || undefined,
     }));
@@ -315,7 +315,7 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
       {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">{error}</div>}
 
       {/* Filters + Create Button */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="surface-panel flex flex-col gap-3 p-3 sm:flex-row">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input id="user-search" type="text" autoComplete="off" placeholder="Tìm tên, email, SĐT..." aria-label="Tìm kiếm người dùng" value={search} onChange={e => setSearch(e.target.value)} className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white text-slate-900 placeholder:text-slate-400" />
@@ -333,7 +333,7 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
           <option value="inactive">Đã khóa</option>
           <option value="deleted">Đã xóa</option>
         </select>
-        <button onClick={() => { setShowCreate(true); resetForm(); }} className="inline-flex items-center justify-center gap-2 h-10 px-4 bg-blue-600 text-white rounded-md text-sm font-semibold hover:bg-blue-700 transition-colors">
+        <button onClick={() => { setShowCreate(true); resetForm(); }} className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
           <Plus className="h-4 w-4" /> Tạo tài khoản
         </button>
       </div>
@@ -417,7 +417,7 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
       </div>
 
       {/* Mobile Cards */}
-      <div className="lg:hidden space-y-3">
+      <div className="space-y-3 lg:hidden">
         {filtered.map(user => (
           <div key={user.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3">
             <div className="flex items-start justify-between">
@@ -444,18 +444,18 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
               ))}
               <button onClick={() => { setAssignUserId(user.id); setAssignProjectId(""); }} className="text-xs text-blue-600 hover:underline" aria-label="Gán công trình">+ Gán</button>
             </div>
-            <div className="flex gap-2 pt-2 border-t border-slate-100">
-              <button onClick={() => setDetailUser(user)} className="flex-1 h-8 rounded-md text-xs font-medium border border-slate-200 text-slate-600 hover:bg-slate-50" aria-label={`Xem chi tiết tài khoản ${user.name}`}>Xem</button>
+            <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
+              <button onClick={() => setDetailUser(user)} className="h-9 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50" aria-label={`Xem chi tiết tài khoản ${user.name}`}>Xem</button>
               {!user.deletedAt ? (
                 <>
-                  <button onClick={() => openEdit(user)} className="flex-1 h-8 rounded-md text-xs font-medium border border-blue-200 text-blue-600 hover:bg-blue-50" aria-label={`Sửa thông tin tài khoản ${user.name}`}>Sửa</button>
-                  <button onClick={() => handleToggleActive(user.id, user.isActive)} className={`flex-1 h-8 rounded-md text-xs font-medium border ${user.isActive ? "border-amber-200 text-amber-600 hover:bg-amber-50" : "border-green-200 text-green-600 hover:bg-green-50"}`} aria-label={user.isActive ? "Khóa tài khoản" : "Mở khóa tài khoản"}>
+                  <button onClick={() => openEdit(user)} className="h-9 rounded-lg border border-blue-200 text-xs font-semibold text-blue-600 hover:bg-blue-50" aria-label={`Sửa thông tin tài khoản ${user.name}`}>Sửa</button>
+                  <button onClick={() => handleToggleActive(user.id, user.isActive)} className={`h-9 rounded-lg border text-xs font-semibold ${user.isActive ? "border-amber-200 text-amber-700 hover:bg-amber-50" : "border-emerald-200 text-emerald-700 hover:bg-emerald-50"}`} aria-label={user.isActive ? "Khóa tài khoản" : "Mở khóa tài khoản"}>
                     {user.isActive ? "Khóa" : "Mở khóa"}
                   </button>
-                  <button onClick={() => handleSoftDelete(user)} className="flex-1 h-8 rounded-md text-xs font-medium border border-red-200 text-red-600 hover:bg-red-50" aria-label={`Xóa mềm tài khoản ${user.name}`}>Xóa</button>
+                  <button onClick={() => handleSoftDelete(user)} className="h-9 rounded-lg border border-rose-200 text-xs font-semibold text-rose-700 hover:bg-rose-50" aria-label={`Xóa mềm tài khoản ${user.name}`}>Xóa</button>
                 </>
               ) : (
-                <button onClick={() => handleRestore(user)} className="flex-1 h-8 rounded-md text-xs font-medium border border-emerald-200 text-emerald-600 hover:bg-emerald-50" aria-label={`Khôi phục tài khoản ${user.name}`}>Khôi phục</button>
+                <button onClick={() => handleRestore(user)} className="h-9 rounded-lg border border-emerald-200 text-xs font-semibold text-emerald-700 hover:bg-emerald-50" aria-label={`Khôi phục tài khoản ${user.name}`}>Khôi phục</button>
               )}
             </div>
           </div>
@@ -464,9 +464,9 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
 
       {/* Create User Modal */}
       {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
           <div className="fixed inset-0 bg-slate-900/60" onClick={() => setShowCreate(false)} />
-          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div role="dialog" aria-modal="true" aria-label="Tạo tài khoản mới" className="relative max-h-[calc(100dvh-1rem)] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white shadow-2xl sm:max-h-[90dvh] sm:rounded-2xl">
             <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
               <h2 className="text-lg font-bold text-slate-900">Tạo tài khoản mới</h2>
               <button onClick={() => setShowCreate(false)} className="text-slate-400 hover:text-slate-600 p-1" aria-label="Đóng">
@@ -479,7 +479,7 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
                 <label htmlFor="create-name" className="block text-sm font-medium text-slate-700 mb-1">Họ tên *</label>
                 <input id="create-name" type="text" autoComplete="off" value={formName} onChange={e => setFormName(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="Nguyễn Văn A" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label htmlFor="create-email" className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
                   <input id="create-email" type="email" autoComplete="email" value={formEmail} onChange={e => setFormEmail(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="user@email.com" />
@@ -490,7 +490,7 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
                   <input id="create-username" type="text" autoComplete="off" value={formUsername} onChange={e => setFormUsername(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="commander01" />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label htmlFor="create-phone" className="block text-sm font-medium text-slate-700 mb-1">Số điện thoại liên hệ</label>
                   <input id="create-phone" type="tel" autoComplete="off" value={formPhone} onChange={e => setFormPhone(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="0901234567" />
@@ -544,9 +544,9 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
 
       {/* Detail User Modal */}
       {detailUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
           <div className="fixed inset-0 bg-slate-900/60" onClick={() => setDetailUser(null)} />
-          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div role="dialog" aria-modal="true" aria-label="Chi tiết tài khoản" className="relative max-h-[calc(100dvh-1rem)] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white shadow-2xl sm:max-h-[90dvh] sm:rounded-2xl">
             <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
               <h2 className="text-lg font-bold text-slate-900">Chi tiết tài khoản</h2>
               <button onClick={() => setDetailUser(null)} className="text-slate-400 hover:text-slate-600 p-1" aria-label="Đóng chi tiết">
@@ -554,7 +554,7 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
               </button>
             </div>
             <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4 border-b border-slate-100 pb-4">
+              <div className="grid grid-cols-1 gap-4 border-b border-slate-100 pb-4 sm:grid-cols-2">
                 <div>
                   <p className="text-xs text-slate-500 font-medium">Họ tên</p>
                   <p className="text-sm font-semibold text-slate-900">{detailUser.name}</p>
@@ -616,9 +616,9 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
 
       {/* Edit User Modal */}
       {editUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
           <div className="fixed inset-0 bg-slate-900/60" onClick={() => setEditUser(null)} />
-          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div role="dialog" aria-modal="true" aria-label="Sửa thông tin tài khoản" className="relative max-h-[calc(100dvh-1rem)] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white shadow-2xl sm:max-h-[90dvh] sm:rounded-2xl">
             <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
               <h2 className="text-lg font-bold text-slate-900">Sửa thông tin tài khoản</h2>
               <button onClick={() => setEditUser(null)} className="text-slate-400 hover:text-slate-600 p-1" aria-label="Đóng">
@@ -631,7 +631,7 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
                 <label htmlFor="edit-name" className="block text-sm font-medium text-slate-700 mb-1">Họ tên *</label>
                 <input id="edit-name" type="text" autoComplete="off" value={formName} onChange={e => setFormName(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="Nguyễn Văn A" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label htmlFor="edit-email" className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
                   <input id="edit-email" type="email" autoComplete="email" value={formEmail} onChange={e => setFormEmail(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="user@email.com" />
@@ -642,7 +642,7 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
                   <input id="edit-username" type="text" autoComplete="off" value={formUsername} onChange={e => setFormUsername(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="commander01" />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label htmlFor="edit-phone" className="block text-sm font-medium text-slate-700 mb-1">Số điện thoại liên hệ</label>
                   <input id="edit-phone" type="tel" autoComplete="off" value={formPhone} onChange={e => setFormPhone(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="0901234567" />
@@ -693,9 +693,9 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
 
       {/* Assign Project Modal */}
       {assignUserId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
           <div className="fixed inset-0 bg-slate-900/60" onClick={() => setAssignUserId(null)} />
-          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4">
+          <div role="dialog" aria-modal="true" aria-label="Gán công trình" className="relative w-full max-w-md space-y-4 rounded-t-2xl bg-white p-5 shadow-2xl sm:rounded-2xl sm:p-6">
             <h3 className="text-lg font-bold text-slate-900">Gán công trình</h3>
             <label htmlFor="assign-project" className="sr-only">Chọn công trình</label>
             <select id="assign-project" value={assignProjectId} onChange={e => setAssignProjectId(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900">
@@ -712,9 +712,9 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
 
       {/* Reset Password Modal */}
       {resetPwUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
           <div className="fixed inset-0 bg-slate-900/60" onClick={() => setResetPwUser(null)} />
-          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
+          <div role="dialog" aria-modal="true" aria-label="Đổi mật khẩu" className="relative w-full max-w-sm overflow-hidden rounded-t-2xl bg-white shadow-2xl animate-in zoom-in-95 duration-200 sm:rounded-2xl">
             <div className="px-5 py-4 border-b border-slate-100">
               <h3 className="text-lg font-bold text-slate-900">Đổi mật khẩu</h3>
             </div>

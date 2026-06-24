@@ -231,9 +231,9 @@ export function ReportsTable({
                                 </span>
                               )}
                               {(report.photos.some(p => p.isMissing) || report.attachments.some(a => a.isMissing)) && (
-                                <span className="text-[10px] text-rose-600 bg-rose-50 border border-rose-100 px-1.5 py-0.5 rounded font-medium" title="Báo cáo có file/ảnh không còn tồn tại trong storage">
+                                <StatusBadge variant="danger" size="sm" title="Báo cáo có file/ảnh không còn tồn tại trong storage">
                                   File lỗi
-                                </span>
+                                </StatusBadge>
                               )}
                               {report.photos.length === 0 && report.attachments.length === 0 && (
                                 <span className="text-slate-300">-</span>
@@ -245,11 +245,11 @@ export function ReportsTable({
                               {/* Edit & Delete Buttons */}
                               {currentUser && (
                                 <>
-                                  {(report.status === "DRAFT" || report.status === "REJECTED") && 
+                                  {(report.status === "DRAFT" || report.status === "REJECTED" || report.status === "REVISION_REQUESTED") && 
                                    (report.createdById === currentUser.id || ['ADMIN', 'DIRECTOR', 'DEPUTY_DIRECTOR'].includes(currentUser.role || '')) && (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); onEdit?.(report); }}
-                                      className="p-1.5 rounded-md hover:bg-slate-100 text-slate-400 hover:text-blue-600 transition-colors"
+                                      className="icon-button h-9 w-9 text-slate-500 hover:text-blue-700"
                                       title="Sửa báo cáo"
                                       aria-label="Sửa báo cáo"
                                     >
@@ -257,11 +257,11 @@ export function ReportsTable({
                                     </button>
                                   )}
                                   
-                                  {(report.status === "DRAFT" || report.status === "REJECTED" || report.status === "SUBMITTED") && 
+                                  {(report.status === "DRAFT" || report.status === "REJECTED" || report.status === "REVISION_REQUESTED" || report.status === "SUBMITTED") && 
                                    ['ADMIN', 'DIRECTOR', 'DEPUTY_DIRECTOR'].includes(currentUser.role || '') && (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); onDelete?.(report); }}
-                                      className="p-1.5 rounded-md hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors"
+                                      className="icon-button h-9 w-9 text-slate-500 hover:bg-rose-50 hover:text-rose-700"
                                       title="Xóa báo cáo"
                                       aria-label="Xóa báo cáo"
                                     >
@@ -273,7 +273,7 @@ export function ReportsTable({
                               
                               <button
                                 onClick={(e) => { e.stopPropagation(); onViewDetail(report); }}
-                                className="p-1.5 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                                className="icon-button h-9 w-9"
                                 title="Xem chi tiết"
                                 aria-label="Xem chi tiết"
                               >
@@ -281,7 +281,7 @@ export function ReportsTable({
                               </button>
                               <button
                                 onClick={(e) => handlePrint(e, report.id)}
-                                className="p-1.5 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                                className="icon-button h-9 w-9"
                                 title="In / Xuất PDF"
                                 aria-label="In / Xuất PDF"
                               >

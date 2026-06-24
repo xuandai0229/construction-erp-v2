@@ -29,7 +29,7 @@ export function MaterialRequestForm({
     status: initialData?.status || "DRAFT"
   });
 
-  const [items, setItems] = useState<any[]>(
+  const [items, setItems] = useState<any[]>(() => 
     initialData?.items?.length ? initialData.items : [
       { id: Date.now().toString(), materialName: "", unit: "Cái", requestedQuantity: "", note: "", fieldProgressItemId: "" }
     ]

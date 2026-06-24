@@ -41,7 +41,7 @@ export default async function ProjectDocumentsPage({
   });
 
   return (
-    <div className="flex flex-col h-[calc(100vh-6rem)]">
+    <div className="app-page flex min-h-[calc(100dvh-7rem)] flex-col lg:h-[calc(100dvh-7rem)]">
       <div className="mb-4">
         <nav className="flex items-center text-sm font-medium text-slate-500 mb-2">
           <Link href="/documents" className="flex items-center hover:text-blue-600 transition-colors">
@@ -53,7 +53,7 @@ export default async function ProjectDocumentsPage({
         </nav>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+            <h1 className="page-heading flex items-center gap-2">
               <FolderOpen className="h-6 w-6 text-blue-500" />
               Tài liệu: {project.name}
             </h1>

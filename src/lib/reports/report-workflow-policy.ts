@@ -3,6 +3,7 @@ export type ReportStatusLike = string;
 const CONTENT_WRITABLE_STATUSES = new Set<ReportStatusLike>([
   "DRAFT",
   "REJECTED",
+  "REVISION_REQUESTED",
 ]);
 const REVIEWABLE_STATUSES = new Set<ReportStatusLike>(["SUBMITTED"]);
 

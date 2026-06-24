@@ -59,11 +59,11 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
   };
 
   return (
-    <div className="space-y-6">
+    <div className="app-page space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{project.name}</h1>
+            <h1 className="page-heading">{project.name}</h1>
             {getStatusBadge(project.status)}
           </div>
           <div className="flex flex-wrap items-center gap-4 mt-2">
@@ -167,7 +167,7 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
       <h2 className="text-lg font-semibold text-slate-900 mt-6 md:mt-8 mb-3 md:mb-4">Các phân hệ quản lý</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <Link href={`/projects/${project.id}/field-progress`} className="block group">
-          <Card className="hover:border-blue-400 hover:shadow-lg transition-all h-full border-2 border-slate-200">
+          <Card className="h-full transition-all hover:border-blue-300 hover:shadow-md">
             <CardContent className="p-4 md:p-5 flex flex-row items-center md:flex-col md:text-center md:space-y-3 gap-4 md:gap-0">
               <div className="shrink-0 bg-blue-50 w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center group-hover:bg-blue-100 group-hover:scale-110 transition-all shadow-sm">
                 <ListTree className="h-6 w-6 md:h-7 md:w-7 text-blue-600" />
@@ -181,7 +181,7 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
         </Link>
 
         <Link href={`/projects/${project.id}/field-progress/daily`} className="block group">
-          <Card className="hover:border-emerald-400 hover:shadow-lg transition-all h-full border-2 border-slate-200">
+          <Card className="h-full transition-all hover:border-emerald-300 hover:shadow-md">
             <CardContent className="p-4 md:p-5 flex flex-row items-center md:flex-col md:text-center md:space-y-3 gap-4 md:gap-0">
               <div className="shrink-0 bg-emerald-50 w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center group-hover:bg-emerald-100 group-hover:scale-110 transition-all shadow-sm">
                 <ClipboardCheck className="h-6 w-6 md:h-7 md:w-7 text-emerald-600" />
@@ -195,7 +195,7 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
         </Link>
 
         <Link href={`/projects/${project.id}/field-progress/summary`} className="block group">
-          <Card className="hover:border-indigo-400 hover:shadow-lg transition-all h-full border-2 border-slate-200">
+          <Card className="h-full transition-all hover:border-indigo-300 hover:shadow-md">
             <CardContent className="p-4 md:p-5 flex flex-row items-center md:flex-col md:text-center md:space-y-3 gap-4 md:gap-0">
               <div className="shrink-0 bg-indigo-50 w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center group-hover:bg-indigo-100 group-hover:scale-110 transition-all shadow-sm">
                 <BarChart2 className="h-6 w-6 md:h-7 md:w-7 text-indigo-600" />
@@ -209,7 +209,7 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
         </Link>
 
         <Link href={`/projects/${project.id}/material-requests`} className="block group">
-          <Card className="hover:border-amber-400 hover:shadow-lg transition-all h-full border-2 border-slate-200">
+          <Card className="h-full transition-all hover:border-amber-300 hover:shadow-md">
             <CardContent className="p-4 md:p-5 flex flex-row items-center md:flex-col md:text-center md:space-y-3 gap-4 md:gap-0">
               <div className="shrink-0 bg-amber-50 w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center group-hover:bg-amber-100 group-hover:scale-110 transition-all shadow-sm">
                 <Package className="h-6 w-6 md:h-7 md:w-7 text-amber-600" />

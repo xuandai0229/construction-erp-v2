@@ -41,6 +41,25 @@ export default async function PrintReportPage({ params }: { params: Promise<{ re
 
   if (!report) notFound();
 
+  if (report.project?.deletedAt) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-slate-50">
+        <div className="bg-white p-8 rounded-xl shadow-md max-w-md w-full text-center border border-red-100">
+          <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h1 className="text-xl font-bold text-slate-900 mb-2">Báo cáo không khả dụng</h1>
+          <p className="text-slate-600 mb-6">Công trình của báo cáo này đã bị xóa hoặc không còn hoạt động trên hệ thống.</p>
+          <a href="/reports" className="inline-block px-4 py-2 bg-slate-900 text-white rounded-md text-sm font-medium hover:bg-slate-800 transition-colors">
+            Quay lại danh sách
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   // Fetch audit logs separately
   const auditLogs = await prisma.auditLog.findMany({
     where: { entityType: "SiteReport", entityId: reportId },
@@ -298,6 +317,7 @@ export default async function PrintReportPage({ params }: { params: Promise<{ re
               if (actionName === "SUBMITTED") actionText = "Gửi duyệt";
               else if (actionName === "APPROVED") actionText = "Đã duyệt";
               else if (actionName === "REJECTED") actionText = "Từ chối";
+              else if (actionName === "REVISION_REQUESTED") actionText = "Yêu cầu chỉnh sửa";
               
               let detailText = "";
               if (log.afterData) {

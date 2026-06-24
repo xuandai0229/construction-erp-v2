@@ -3,32 +3,37 @@ import { cn } from "@/lib/utils"
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'default' | 'outline' | 'ghost' | 'destructive';
+  size?: 'sm' | 'default' | 'lg' | 'icon';
   asChild?: boolean;
 }
 
-function Slot({ children, className, ...props }: any) {
+function Slot({ children, className, ...props }: React.PropsWithChildren<{ className?: string } & Record<string, unknown>>) {
   if (React.isValidElement(children)) {
     return React.cloneElement(children, {
-      className: cn(className, (children.props as any).className),
+      className: cn(className, (children.props as Record<string, unknown>).className as string | undefined),
       ...props,
-    } as any);
+    } as React.HTMLAttributes<HTMLElement>);
   }
   return children;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'default', asChild = false, ...props }, ref) => {
+  ({ className, variant = 'default', size = 'default', asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
     return (
       <Comp
-        ref={ref as any}
+        ref={ref}
         className={cn(
-          "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2",
+          "inline-flex shrink-0 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-[color,background-color,border-color,box-shadow,transform] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:translate-y-px disabled:pointer-events-none disabled:opacity-55 disabled:active:translate-y-0",
           {
-            'bg-blue-600 text-white hover:bg-blue-700': variant === 'default',
-            'border border-slate-300 bg-transparent hover:bg-slate-100 text-slate-900': variant === 'outline',
-            'hover:bg-slate-100 hover:text-slate-900 text-slate-700': variant === 'ghost',
-            'bg-red-600 text-white hover:bg-red-700': variant === 'destructive',
+            'bg-blue-600 text-white shadow-sm shadow-blue-950/10 hover:bg-blue-700': variant === 'default',
+            'border border-slate-300 bg-white text-slate-700 shadow-sm shadow-slate-950/5 hover:border-slate-400 hover:bg-slate-50 hover:text-slate-950': variant === 'outline',
+            'text-slate-600 hover:bg-slate-100 hover:text-slate-950': variant === 'ghost',
+            'bg-rose-600 text-white shadow-sm shadow-rose-950/10 hover:bg-rose-700': variant === 'destructive',
+            'h-9 px-3 text-xs': size === 'sm',
+            'h-10 px-4 py-2': size === 'default',
+            'h-11 px-5 text-base': size === 'lg',
+            'h-10 w-10 p-0': size === 'icon',
           },
           className
         )}

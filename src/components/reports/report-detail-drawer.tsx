@@ -98,6 +98,7 @@ function ApprovalTimeline({ history }: { history: ApprovalHistoryEntry[] }) {
     switch (action) {
       case "SUBMITTED": return <Send className="w-3.5 h-3.5 text-blue-500" />;
       case "APPROVED": return <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />;
+      case "REVISION_REQUESTED": return <XCircle className="w-3.5 h-3.5 text-yellow-500" />;
       case "REJECTED": return <XCircle className="w-3.5 h-3.5 text-red-500" />;
       case "RETURNED": return <RotateCcw className="w-3.5 h-3.5 text-amber-500" />;
     }
@@ -107,6 +108,7 @@ function ApprovalTimeline({ history }: { history: ApprovalHistoryEntry[] }) {
     switch (action) {
       case "SUBMITTED": return "Đã gửi";
       case "APPROVED": return "Đã duyệt";
+      case "REVISION_REQUESTED": return "Yêu cầu chỉnh sửa";
       case "REJECTED": return "Từ chối";
       case "RETURNED": return "Trả lại";
     }
@@ -116,6 +118,7 @@ function ApprovalTimeline({ history }: { history: ApprovalHistoryEntry[] }) {
     switch (action) {
       case "SUBMITTED": return "bg-blue-100 border-blue-200";
       case "APPROVED": return "bg-emerald-100 border-emerald-200";
+      case "REVISION_REQUESTED": return "bg-yellow-100 border-yellow-200";
       case "REJECTED": return "bg-red-100 border-red-200";
       case "RETURNED": return "bg-amber-100 border-amber-200";
     }
@@ -192,7 +195,7 @@ export function ReportDetailDrawer({
   const [isProcessing, setIsProcessing] = useState(false);
   const [rejectMode, setRejectMode] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
-  const [history, setHistory] = useState<{ id: string; action: "SUBMITTED" | "APPROVED" | "REJECTED" | "RETURNED"; actor: string; role: string; timestamp: string; detail?: string }[]>([]);
+  const [history, setHistory] = useState<{ id: string; action: "SUBMITTED" | "APPROVED" | "REJECTED" | "RETURNED" | "REVISION_REQUESTED"; actor: string; role: string; timestamp: string; detail?: string }[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const toast = useToast();
@@ -270,11 +273,14 @@ export function ReportDetailDrawer({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex justify-end bg-slate-900/30 backdrop-blur-[2px] animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex justify-end bg-slate-950/45 backdrop-blur-[2px] animate-in fade-in duration-200"
       onClick={!isProcessing ? onClose : undefined}
     >
       <div
-        className="w-full max-w-xl sm:max-w-2xl bg-white h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Chi tiết báo cáo hiện trường"
+        className="flex h-full w-full max-w-xl flex-col bg-white shadow-2xl animate-in slide-in-from-right duration-300 sm:max-w-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 sm:px-6 py-3 border-b border-slate-200 shrink-0 bg-white">
@@ -301,7 +307,9 @@ export function ReportDetailDrawer({
           <button
             onClick={onClose}
             disabled={isProcessing}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors shrink-0 disabled:opacity-50"
+            className="icon-button shrink-0 disabled:opacity-50"
+            title="Đóng"
+            aria-label="Đóng chi tiết báo cáo"
           >
             <X className="w-5 h-5" />
           </button>
@@ -505,7 +513,7 @@ export function ReportDetailDrawer({
           </div>
         </div>
 
-        <div className="shrink-0 border-t border-slate-200 bg-slate-50 px-5 sm:px-6 py-4">
+        <div className="shrink-0 border-t border-slate-200 bg-slate-50 px-4 py-3 sm:px-6 sm:py-4">
           {rejectMode ? (
             <div className="space-y-3">
               <textarea
@@ -548,7 +556,7 @@ export function ReportDetailDrawer({
                 {/* Edit and Delete for DRAFT/REJECTED/SUBMITTED */}
                 {currentUser && (
                   <>
-                    {(report.status === "DRAFT" || report.status === "REJECTED" || report.status === "SUBMITTED") && 
+                    {(report.status === "DRAFT" || report.status === "REJECTED" || report.status === "REVISION_REQUESTED" || report.status === "SUBMITTED") && 
                      ['ADMIN', 'DIRECTOR', 'DEPUTY_DIRECTOR'].includes(currentUser.role || '') && (
                       <Button
                         variant="outline"
@@ -560,7 +568,7 @@ export function ReportDetailDrawer({
                         Xóa
                       </Button>
                     )}
-                    {(report.status === "DRAFT" || report.status === "REJECTED") && 
+                    {(report.status === "DRAFT" || report.status === "REJECTED" || report.status === "REVISION_REQUESTED") && 
                      (report.createdById === currentUser.id || ['ADMIN', 'DIRECTOR', 'DEPUTY_DIRECTOR'].includes(currentUser.role || '')) && (
                       <Button
                         variant="outline"
@@ -575,8 +583,7 @@ export function ReportDetailDrawer({
                   </>
                 )}
 
-                {/* Submit button for creator in DRAFT/REJECTED */}
-                {(report.status === "DRAFT" || report.status === "REJECTED") && currentUser?.id === report.createdById && (
+                {(report.status === "DRAFT" || report.status === "REJECTED" || report.status === "REVISION_REQUESTED") && currentUser?.id === report.createdById && (
                   <Button
                     onClick={handleSubmit}
                     disabled={isProcessing}

@@ -3,9 +3,12 @@ import { History } from 'lucide-react';
 
 export default function AuditPage() {
   return (
-    <div className="space-y-6">
+    <div className="app-page space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">Nhật ký hệ thống</h1>
+        <div>
+          <h1 className="page-heading">Nhật ký hệ thống</h1>
+          <p className="page-description">Tra cứu lịch sử thao tác để hỗ trợ kiểm soát và truy vết.</p>
+        </div>
       </div>
       <EmptyState 
         title="Chưa có nhật ký hoạt động" 

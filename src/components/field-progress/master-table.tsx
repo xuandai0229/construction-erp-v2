@@ -243,7 +243,7 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
               const isGroup = item.itemType === "GROUP";
               const isDirty = !!dirtyItems[item.id];
               
-              let percentVal = item.rollupPercent;
+              const percentVal = item.rollupPercent;
               let isOver = false;
               if (percentVal && Number(percentVal) > 100) isOver = true;
 

@@ -3,9 +3,12 @@ import { Users } from 'lucide-react';
 
 export default function SuppliersPage() {
   return (
-    <div className="space-y-6">
+    <div className="app-page space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">Nhà cung cấp & Thầu phụ</h1>
+        <div>
+          <h1 className="page-heading">Nhà cung cấp & thầu phụ</h1>
+          <p className="page-description">Quản lý đối tác cung ứng và đơn vị thi công theo dự án.</p>
+        </div>
       </div>
       <EmptyState 
         title="Chưa có nhà cung cấp" 

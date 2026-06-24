@@ -52,14 +52,17 @@ export default async function DocumentsOverviewPage({
   });
 
   return (
-    <div className="space-y-6">
+    <div className="app-page space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-slate-900">Quản lý Tài liệu</h1>
+        <div>
+          <h1 className="page-heading">Quản lý tài liệu</h1>
+          <p className="page-description">Truy cập hồ sơ theo từng công trình và thư mục nghiệp vụ.</p>
+        </div>
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-        <div className="border-b border-slate-200 p-4 bg-slate-50">
-          <form className="flex gap-4 max-w-md" method="GET" action="/documents">
+        <div className="border-b border-slate-200 bg-white p-3 sm:p-4">
+          <form className="flex max-w-2xl flex-col gap-2 sm:flex-row" method="GET" action="/documents">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input 

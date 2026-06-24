@@ -1,7 +1,7 @@
 // === Field Report Types ===
 // TODO: Replace with Prisma-generated types when database model is created
 
-export type ReportStatus = 'APPROVED' | 'SUBMITTED' | 'REJECTED' | 'DRAFT';
+export type ReportStatus = 'APPROVED' | 'SUBMITTED' | 'REJECTED' | 'REVISION_REQUESTED' | 'DRAFT';
 
 export type WeatherCondition =
   | "SUNNY"
@@ -45,7 +45,7 @@ export interface ReportAttachment {
 
 export interface ApprovalHistoryEntry {
   id: string;
-  action: 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'RETURNED';
+  action: 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'RETURNED' | 'REVISION_REQUESTED';
   actor: string;
   role: string;
   timestamp: string;
@@ -164,6 +164,7 @@ export function getStatusLabel(status: ReportStatus): string {
   switch (status) {
     case 'APPROVED': return 'Đã duyệt';
     case 'SUBMITTED': return 'Chờ duyệt / Đã gửi';
+    case 'REVISION_REQUESTED': return 'Yêu cầu chỉnh sửa';
     case 'REJECTED': return 'Từ chối';
     case 'DRAFT': return 'Nháp';
     default: return status;
@@ -174,6 +175,7 @@ export function getStatusVariant(status: ReportStatus): 'success' | 'warning' | 
   switch (status) {
     case 'APPROVED': return 'success';
     case 'SUBMITTED': return 'warning';
+    case 'REVISION_REQUESTED': return 'warning';
     case 'REJECTED': return 'danger';
     case 'DRAFT': return 'neutral';
     default: return 'neutral';

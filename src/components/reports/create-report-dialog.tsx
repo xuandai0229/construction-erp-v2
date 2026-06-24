@@ -333,7 +333,7 @@ function CreateReportDialogInner({ onClose, onSubmit, isSubmitting, activeProjec
     >
       <div
         ref={dialogRef}
-        className="w-full sm:max-w-[800px] bg-slate-50 flex flex-col shadow-2xl animate-in slide-in-from-bottom-4 zoom-in-98 duration-300 rounded-t-2xl sm:rounded-2xl max-h-[95vh] sm:max-h-[90vh]"
+        className="flex max-h-[calc(100dvh-0.5rem)] w-full flex-col rounded-t-2xl bg-slate-50 shadow-2xl animate-in slide-in-from-bottom-4 zoom-in-98 duration-300 sm:max-h-[90dvh] sm:max-w-[800px] sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -681,7 +681,7 @@ function CreateReportDialogInner({ onClose, onSubmit, isSubmitting, activeProjec
                       <div key={index} className="relative aspect-square rounded-lg border border-slate-200 overflow-hidden group">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={photoPreviews[index]} alt="" className="w-full h-full object-cover" />
-                        <button type="button" className="absolute top-1 right-1 p-1 bg-black/60 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500" onClick={() => { URL.revokeObjectURL(photoPreviews[index]); const newPhotos = form.photos.filter((_, i) => i !== index); const newPreviews = photoPreviews.filter((_, i) => i !== index); updateField("photos", newPhotos); setPhotoPreviews(newPreviews); }}>
+                        <button type="button" className="absolute right-1 top-1 rounded-md bg-black/65 p-1 text-white transition-colors hover:bg-rose-600" title="Xóa ảnh" aria-label={`Xóa ảnh ${index + 1}`} onClick={() => { URL.revokeObjectURL(photoPreviews[index]); const newPhotos = form.photos.filter((_, i) => i !== index); const newPreviews = photoPreviews.filter((_, i) => i !== index); updateField("photos", newPhotos); setPhotoPreviews(newPreviews); }}>
                           <X className="w-3 h-3" />
                         </button>
                       </div>
