@@ -11,14 +11,21 @@ import {
 import { createSiteReportWithAudit } from "@/lib/reports/report-create-service";
 import { canEditReportContent, canSoftDeleteReport } from "@/lib/reports/report-workflow-policy";
 import { UserRole } from "@prisma/client";
+import { getAccessibleProjectIds } from "@/lib/rbac";
 
 export async function getActiveProjects() {
   const session = await getSession();
   if (!session) throw new Error("Unauthorized");
   
-  // TODO: Implement Project-level RBAC (ProjectUser) here to filter projects for non-admins
+  const user = { id: session.id, role: session.role as UserRole };
+  const accessibleProjectIds = await getAccessibleProjectIds(user);
+  
   const projects = await prisma.project.findMany({
-    where: { deletedAt: null, status: "ACTIVE" },
+    where: { 
+      deletedAt: null, 
+      status: "ACTIVE",
+      ...(accessibleProjectIds !== null ? { id: { in: accessibleProjectIds } } : {})
+    },
     select: { id: true, name: true, code: true },
     orderBy: { createdAt: "desc" },
   });
@@ -121,20 +128,22 @@ export async function getSiteReports(filters: Record<string, unknown> = {}) {
     project: { deletedAt: null }
   };
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.id },
-    select: { role: true }
-  });
+  const user = { id: session.id, role: session.role as UserRole };
+  const accessibleProjectIds = await getAccessibleProjectIds(user);
 
-  const isSystemAdmin = user && ['ADMIN', 'DIRECTOR'].includes(user.role);
-
-  // RBAC: Non-admins can only see their own reports (MVP)
-  if (!isSystemAdmin) {
-    where.createdById = session.id;
-  }
-  if (filters.projectId && filters.projectId !== 'ALL' && filters.projectId !== 'all') {
+  if (accessibleProjectIds !== null) {
+    if (filters.projectId && filters.projectId !== 'ALL' && filters.projectId !== 'all') {
+      if (!accessibleProjectIds.includes(filters.projectId as string)) {
+        return []; // No access
+      }
+      where.projectId = filters.projectId;
+    } else {
+      where.projectId = { in: accessibleProjectIds };
+    }
+  } else if (filters.projectId && filters.projectId !== 'ALL' && filters.projectId !== 'all') {
     where.projectId = filters.projectId;
   }
+
   if (filters.type && filters.type !== 'ALL' && filters.type !== 'all') {
     // Only accept valid enum values
     if (['DAILY', 'WEEKLY'].includes(filters.type as string)) {
@@ -178,12 +187,8 @@ export async function getSiteReportsPage(filters: ReportPageFilters) {
   const session = await getSession();
   if (!session) throw new Error("Unauthorized");
   
-  const user = await prisma.user.findUnique({
-    where: { id: session.id },
-    select: { role: true }
-  });
-  
-  const isSystemAdmin = user && ['ADMIN', 'DIRECTOR', 'DEPUTY_DIRECTOR', 'CHIEF_COMMANDER'].includes(user.role);
+  const user = { id: session.id, role: session.role as UserRole };
+  const accessibleProjectIds = await getAccessibleProjectIds(user);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const where: any = { 
@@ -191,8 +196,8 @@ export async function getSiteReportsPage(filters: ReportPageFilters) {
     project: { deletedAt: null }
   };
 
-  if (!isSystemAdmin) {
-    where.createdById = session.id;
+  if (accessibleProjectIds !== null) {
+    where.projectId = { in: accessibleProjectIds };
   }
 
   // 1. Tab filtering
@@ -225,7 +230,12 @@ export async function getSiteReportsPage(filters: ReportPageFilters) {
   }
 
   // 2. Explicit filters
-  if (filters.projectId && filters.projectId !== "all") where.projectId = filters.projectId;
+  if (filters.projectId && filters.projectId !== "all") {
+    if (accessibleProjectIds !== null && !accessibleProjectIds.includes(filters.projectId as string)) {
+      return { items: [], total: 0, page: 1, pageSize: filters.pageSize || 20, totalPages: 0 };
+    }
+    where.projectId = filters.projectId;
+  }
   if (filters.type && filters.type !== "all" && !filters.tab?.match(/^(daily|weekly)$/)) where.type = filters.type;
   if (filters.status && filters.status !== "all" && !filters.tab?.match(/^(pending|rejected)$/)) {
     if (filters.status === "REJECTED_AND_REVISION") {

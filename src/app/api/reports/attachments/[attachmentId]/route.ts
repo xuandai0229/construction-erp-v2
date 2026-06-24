@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { promises as fs } from "fs";
 import mime from "mime-types";
 import path from "path";
+import { canAccessProject } from "@/lib/rbac";
 
 export const runtime = "nodejs";
 
@@ -40,17 +41,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ atta
       return new NextResponse("Not Found", { status: 404 });
     }
 
-    // 1. RBAC - Check if User has access to this report
-    // TODO: (Phase 4) Check ProjectUser for project-specific permissions
-    const user = await prisma.user.findUnique({
-      where: { id: session.id },
-      select: { id: true, role: true }
-    });
+    const hasAccess = await canAccessProject(
+      { id: session.id, role: session.role as any },
+      attachment.report.projectId
+    );
 
-    const isCreator = attachment.report.createdById === session.id;
-    const isSystemAdmin = user && ['ADMIN', 'DIRECTOR'].includes(user.role);
-
-    if (!isCreator && !isSystemAdmin) {
+    if (!hasAccess) {
       return new NextResponse("Forbidden", { status: 403 });
     }
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { getSiteReportAuditLogs } from "@/app/(dashboard)/reports/actions";
 import prisma from "@/lib/prisma";
+import { canAccessProject } from "@/lib/rbac";
 
 export const runtime = "nodejs";
 
@@ -15,13 +16,17 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ repo
 
     const report = await prisma.siteReport.findUnique({
       where: { id: reportId },
-      select: { createdById: true }
+      select: { createdById: true, projectId: true }
     });
 
     if (!report) return new NextResponse("Not Found", { status: 404 });
     
-    // Authorization: Creator or Admin/Director
-    if (report.createdById !== session.id && !['ADMIN', 'DIRECTOR'].includes(session.role)) {
+    const hasAccess = await canAccessProject(
+      { id: session.id, role: session.role as any },
+      report.projectId
+    );
+
+    if (!hasAccess) {
       return new NextResponse("Forbidden", { status: 403 });
     }
 

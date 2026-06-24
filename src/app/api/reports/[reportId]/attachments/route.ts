@@ -8,6 +8,7 @@ import {
   assertReportWritableForAttachment,
   canUploadReportAttachment,
 } from "@/lib/reports/report-workflow-policy";
+import { canAccessProject } from "@/lib/rbac";
 
 export const runtime = "nodejs";
 
@@ -80,17 +81,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ rep
 
     if (!report) return NextResponse.json({ error: "Không tìm thấy báo cáo" }, { status: 404 });
 
-    // 1. RBAC - Check if User is Creator OR has sufficient role
-    // TODO: (Phase 4) Check ProjectUser for project-specific permissions
-    const user = await prisma.user.findUnique({
-      where: { id: session.id },
-      select: { id: true, role: true }
-    });
+    const hasAccess = await canAccessProject(
+      { id: session.id, role: session.role as any },
+      report.projectId
+    );
 
-    const isCreator = report.createdById === session.id;
-    const isSystemAdmin = user && ['ADMIN', 'DIRECTOR'].includes(user.role);
-
-    if (!isCreator && !isSystemAdmin) {
+    if (!hasAccess) {
       return NextResponse.json({ error: "Không có quyền thêm file vào báo cáo này" }, { status: 403 });
     }
 
