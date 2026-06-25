@@ -1,0 +1,6938 @@
+{
+  "generatedAt": "2026-06-25T02:06:27.163Z",
+  "results": [
+    {
+      "label": "m360:projects",
+      "url": "/projects",
+      "viewport": {
+        "vw": 360,
+        "vh": 740
+      },
+      "horizontal": false,
+      "overflow": [
+        {
+          "tag": "SPAN",
+          "cls": "font-medium text-slate-800",
+          "text": "Cong ty TNHH Phat Trien Ha Tang Tu Hiep",
+          "left": 125,
+          "right": 387,
+          "w": 262
+        },
+        {
+          "tag": "SPAN",
+          "cls": "font-medium text-slate-800",
+          "text": "Lo A3-2, Khu Cong Nghiep Tu Hiep, huyen Thanh Tri, Ha Noi",
+          "left": 86,
+          "right": 460,
+          "w": 374
+        }
+      ],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 7,
+          "text": "Mã công trìnhTên công trìnhChủ đầu tưĐịa điểmTrạng tháiThời gianThao tácQA-TUHIEP-5F-001Nha Van Phong Dieu Hanh 5 Tang -",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "m360:project-detail",
+      "url": "/projects/cmqry305q0007d4wkkycogu91",
+      "viewport": {
+        "vw": 360,
+        "vh": 740
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "m360:field-master",
+      "url": "/projects/cmqry305q0007d4wkkycogu91/field-progress",
+      "viewport": {
+        "vw": 360,
+        "vh": 740
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Thêm",
+          "w": 77,
+          "h": 32
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Thêm công việc",
+          "w": 127,
+          "h": 24
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Sửa hạng mục",
+          "w": 22,
+          "h": 22
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa hạng mục",
+          "w": 22,
+          "h": 22
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Thêm công việc",
+          "w": 127,
+          "h": 24
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Sửa hạng mục",
+          "w": 22,
+          "h": 22
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa hạng mục",
+          "w": 22,
+          "h": 22
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Thêm công việc",
+          "w": 127,
+          "h": 24
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Sửa hạng mục",
+          "w": 22,
+          "h": 22
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa hạng mục",
+          "w": 22,
+          "h": 22
+        }
+      ],
+      "texts": [
+        {
+          "tag": "BUTTON",
+          "text": "Cong tac chuan bi3 công việc·Thiết kế 2.042·62.6%"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi3 công việc·Thiết kế 2.042·62.6%"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "DIV",
+          "text": "Phan mong5 công việc·Thiết kế 44.842·75.4% Thêm công việc"
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Phan mong5 công việc·Thiết kế 44.842·75.4%"
+        },
+        {
+          "tag": "DIV",
+          "text": "Phan mong5 công việc·Thiết kế 44.842·75.4%"
+        },
+        {
+          "tag": "DIV",
+          "text": "Phan mong"
+        }
+      ],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 9,
+          "text": "STTNội dung công việc / Hạng mụcMũi thi côngĐơn vịKhối lượng thiết kếLũy kế duyệtTỷ lệ hoàn thànhGhi chúThao tác1Tên hạn",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "m360:field-daily",
+      "url": "/projects/cmqry305q0007d4wkkycogu91/field-progress/daily",
+      "viewport": {
+        "vw": 360,
+        "vh": 740
+      },
+      "horizontal": false,
+      "overflow": [
+        {
+          "tag": "DIV",
+          "cls": "flex gap-2 min-w-max",
+          "text": "18/0619/0620/0621/0622/0623/0624/0625/0626/0627/0628/0629/0630/0601/0702/07",
+          "left": 45,
+          "right": 997,
+          "w": 952
+        },
+        {
+          "tag": "A",
+          "cls": "group flex flex-col items-center gap-1 p-2 rounded-xl border transition-all active:scale-[",
+          "text": "23/06",
+          "left": 365,
+          "right": 421,
+          "w": 56
+        },
+        {
+          "tag": "DIV",
+          "cls": "text-[12px] font-bold text-slate-600 group-hover:text-blue-700 transition-colors",
+          "text": "23/06",
+          "left": 375,
+          "right": 411,
+          "w": 36
+        },
+        {
+          "tag": "svg",
+          "cls": "[object SVGAnimatedString]",
+          "text": "",
+          "left": 386,
+          "right": 400,
+          "w": 14
+        },
+        {
+          "tag": "circle",
+          "cls": "[object SVGAnimatedString]",
+          "text": "",
+          "left": 387,
+          "right": 399,
+          "w": 12
+        },
+        {
+          "tag": "A",
+          "cls": "group flex flex-col items-center gap-1 p-2 rounded-xl border transition-all active:scale-[",
+          "text": "24/06",
+          "left": 429,
+          "right": 485,
+          "w": 56
+        },
+        {
+          "tag": "DIV",
+          "cls": "text-[12px] font-bold text-slate-600 group-hover:text-blue-700 transition-colors",
+          "text": "24/06",
+          "left": 439,
+          "right": 475,
+          "w": 36
+        },
+        {
+          "tag": "svg",
+          "cls": "[object SVGAnimatedString]",
+          "text": "",
+          "left": 450,
+          "right": 464,
+          "w": 14
+        },
+        {
+          "tag": "circle",
+          "cls": "[object SVGAnimatedString]",
+          "text": "",
+          "left": 451,
+          "right": 463,
+          "w": 12
+        },
+        {
+          "tag": "A",
+          "cls": "group flex flex-col items-center gap-1 p-2 rounded-xl border transition-all active:scale-[",
+          "text": "25/06",
+          "left": 493,
+          "right": 549,
+          "w": 56
+        },
+        {
+          "tag": "DIV",
+          "cls": "text-[12px] font-bold text-blue-900 group-hover:text-blue-700 transition-colors",
+          "text": "25/06",
+          "left": 503,
+          "right": 539,
+          "w": 36
+        },
+        {
+          "tag": "svg",
+          "cls": "[object SVGAnimatedString]",
+          "text": "",
+          "left": 514,
+          "right": 528,
+          "w": 14
+        }
+      ],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Thêm phát sinhThêm công việc phát sinh",
+          "w": 136,
+          "h": 32
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tất cả",
+          "w": 57,
+          "h": 29
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chưa nhập",
+          "w": 82,
+          "h": 29
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đã nhập",
+          "w": 68,
+          "h": 29
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Vượt khối lượng",
+          "w": 108,
+          "h": 29
+        }
+      ],
+      "texts": [
+        {
+          "tag": "BUTTON",
+          "text": "Cong tac chuan bi3 công việc•3 chưa nhập"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi3 công việc•3 chưa nhập"
+        },
+        {
+          "tag": "H3",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "DIV",
+          "text": "Phan mong5 công việc•5 chưa nhập"
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Phan mong5 công việc•5 chưa nhập"
+        },
+        {
+          "tag": "DIV",
+          "text": "Phan mong5 công việc•5 chưa nhập"
+        },
+        {
+          "tag": "H3",
+          "text": "Phan mong"
+        }
+      ],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 11,
+          "text": "STTCông việcMũiĐơn vịTổng khối lượngĐã thực hiệnKhối lượng ngày nàySau nhậpTỷ lệGhi chú nhanhChi tiết1Cong tac chuan biD",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "m360:field-summary",
+      "url": "/projects/cmqry305q0007d4wkkycogu91/field-progress/summary",
+      "viewport": {
+        "vw": 360,
+        "vh": 740
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Lọc",
+          "w": 270,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tất cả",
+          "w": 62,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Có phát sinh",
+          "w": 98,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chưa phát sinh",
+          "w": 112,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đã hoàn thành",
+          "w": 109,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Vượt khối lượng",
+          "w": 117,
+          "h": 30
+        }
+      ],
+      "texts": [
+        {
+          "tag": "BUTTON",
+          "text": "Cong tac chuan bi3 công việcTrong kỳ: 0Lũy kế: 0Tỷ lệ: 0.00%"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi3 công việcTrong kỳ: 0Lũy kế: 0Tỷ lệ: 0.00%"
+        },
+        {
+          "tag": "H3",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "DIV",
+          "text": "Phan mong5 công việcTrong kỳ: 0Lũy kế: 0Tỷ lệ: 0.00%"
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Phan mong5 công việcTrong kỳ: 0Lũy kế: 0Tỷ lệ: 0.00%"
+        },
+        {
+          "tag": "DIV",
+          "text": "Phan mong5 công việcTrong kỳ: 0Lũy kế: 0Tỷ lệ: 0.00%"
+        },
+        {
+          "tag": "H3",
+          "text": "Phan mong"
+        }
+      ],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 11,
+          "text": "STTHạng mục / Công việcMũi thi côngĐVTTổng thiết kếTrước kỳTrong kỳLũy kếTỷ lệNgày phát sinhChi tiết1Cong tac chuan bi——",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "m360:reports",
+      "url": "/reports",
+      "viewport": {
+        "vw": 360,
+        "vh": 740
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Bộ lọc",
+          "w": 84,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "w": 40,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tất cả",
+          "w": 66,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Báo cáo ngày",
+          "w": 115,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Báo cáo tuần",
+          "w": 111,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa",
+          "w": 30,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 66,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 66,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 66,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 66,
+          "h": 28
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 6,
+          "text": "Mã BCNgười tạoThời gianTrạng tháiHình ảnhTác vụTuần 29 · 13/07 - 19/07/2026·1 báo cáo·1 duyệtBCNNgàyPhát sinhLe Quang Hu",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "m360:documents",
+      "url": "/documents",
+      "viewport": {
+        "vw": 360,
+        "vh": 740
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "m360:documents-project",
+      "url": "/documents/cmqry305q0007d4wkkycogu91",
+      "viewport": {
+        "vw": 360,
+        "vh": 740
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tạo thư mục",
+          "w": 28,
+          "h": 28
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "m360:material-requests",
+      "url": "/projects/cmqry305q0007d4wkkycogu91/material-requests",
+      "viewport": {
+        "vw": 360,
+        "vh": 740
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chi tiết",
+          "w": 66,
+          "h": 20
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chi tiết",
+          "w": 66,
+          "h": 20
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chi tiết",
+          "w": 66,
+          "h": 20
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chi tiết",
+          "w": 66,
+          "h": 20
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 7,
+          "text": "Mã phiếuNgày cầnSố loại VTTrạng tháiƯu tiênNgười tạoThao tácYCVT-QA-TUHIEP-20260714-00116/07/20261NhápTrung bìnhLe Quang",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "m360:users",
+      "url": "/users",
+      "viewport": {
+        "vw": 360,
+        "vh": 740
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "+ Gán",
+          "w": 34,
+          "h": 16
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 143,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Sửa",
+          "w": 143,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Khóa",
+          "w": 143,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa",
+          "w": 143,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Gỡ QA-TUHIEP-5F-001",
+          "w": 12,
+          "h": 12
+        },
+        {
+          "tag": "BUTTON",
+          "text": "+ Gán",
+          "w": 34,
+          "h": 20
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 143,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Sửa",
+          "w": 143,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Khóa",
+          "w": 143,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 7,
+          "text": "Họ tênĐăng nhập / EmailSĐTVai tròCông trìnhTrạng tháiThao tácQA User Ngoai Cong Trinhqa_outsiderqa.outsider@example.test",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "m360:materials-empty",
+      "url": "/materials",
+      "viewport": {
+        "vw": 360,
+        "vh": 740
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "m360:contracts-empty",
+      "url": "/contracts",
+      "viewport": {
+        "vw": 360,
+        "vh": 740
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "m360:approvals-empty",
+      "url": "/approvals",
+      "viewport": {
+        "vw": 360,
+        "vh": 740
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "m360:audit-empty",
+      "url": "/audit",
+      "viewport": {
+        "vw": 360,
+        "vh": 740
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "m360:login",
+      "url": "/dashboard",
+      "viewport": {
+        "vw": 360,
+        "vh": 740
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "m390:projects",
+      "url": "/projects",
+      "viewport": {
+        "vw": 390,
+        "vh": 844
+      },
+      "horizontal": false,
+      "overflow": [
+        {
+          "tag": "SPAN",
+          "cls": "font-medium text-slate-800",
+          "text": "Lo A3-2, Khu Cong Nghiep Tu Hiep, huyen Thanh Tri, Ha Noi",
+          "left": 86,
+          "right": 460,
+          "w": 374
+        }
+      ],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 7,
+          "text": "Mã công trìnhTên công trìnhChủ đầu tưĐịa điểmTrạng tháiThời gianThao tácQA-TUHIEP-5F-001Nha Van Phong Dieu Hanh 5 Tang -",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "m390:project-detail",
+      "url": "/projects/cmqry305q0007d4wkkycogu91",
+      "viewport": {
+        "vw": 390,
+        "vh": 844
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "m390:field-master",
+      "url": "/projects/cmqry305q0007d4wkkycogu91/field-progress",
+      "viewport": {
+        "vw": 390,
+        "vh": 844
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Thêm",
+          "w": 77,
+          "h": 32
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Thêm công việc",
+          "w": 127,
+          "h": 24
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Sửa hạng mục",
+          "w": 22,
+          "h": 22
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa hạng mục",
+          "w": 22,
+          "h": 22
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Thêm công việc",
+          "w": 127,
+          "h": 24
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Sửa hạng mục",
+          "w": 22,
+          "h": 22
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa hạng mục",
+          "w": 22,
+          "h": 22
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Thêm công việc",
+          "w": 127,
+          "h": 24
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Sửa hạng mục",
+          "w": 22,
+          "h": 22
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa hạng mục",
+          "w": 22,
+          "h": 22
+        }
+      ],
+      "texts": [
+        {
+          "tag": "BUTTON",
+          "text": "Cong tac chuan bi3 công việc·Thiết kế 2.042·62.6%"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi3 công việc·Thiết kế 2.042·62.6%"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "DIV",
+          "text": "Phan mong5 công việc·Thiết kế 44.842·75.4% Thêm công việc"
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Phan mong5 công việc·Thiết kế 44.842·75.4%"
+        },
+        {
+          "tag": "DIV",
+          "text": "Phan mong5 công việc·Thiết kế 44.842·75.4%"
+        },
+        {
+          "tag": "DIV",
+          "text": "Phan mong"
+        }
+      ],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 9,
+          "text": "STTNội dung công việc / Hạng mụcMũi thi côngĐơn vịKhối lượng thiết kếLũy kế duyệtTỷ lệ hoàn thànhGhi chúThao tác1Tên hạn",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "m390:field-daily",
+      "url": "/projects/cmqry305q0007d4wkkycogu91/field-progress/daily",
+      "viewport": {
+        "vw": 390,
+        "vh": 844
+      },
+      "horizontal": false,
+      "overflow": [
+        {
+          "tag": "DIV",
+          "cls": "flex gap-2 min-w-max",
+          "text": "18/0619/0620/0621/0622/0623/0624/0625/0626/0627/0628/0629/0630/0601/0702/07",
+          "left": 45,
+          "right": 997,
+          "w": 952
+        },
+        {
+          "tag": "A",
+          "cls": "group flex flex-col items-center gap-1 p-2 rounded-xl border transition-all active:scale-[",
+          "text": "23/06",
+          "left": 365,
+          "right": 421,
+          "w": 56
+        },
+        {
+          "tag": "DIV",
+          "cls": "text-[12px] font-bold text-slate-600 group-hover:text-blue-700 transition-colors",
+          "text": "23/06",
+          "left": 375,
+          "right": 411,
+          "w": 36
+        },
+        {
+          "tag": "svg",
+          "cls": "[object SVGAnimatedString]",
+          "text": "",
+          "left": 386,
+          "right": 400,
+          "w": 14
+        },
+        {
+          "tag": "circle",
+          "cls": "[object SVGAnimatedString]",
+          "text": "",
+          "left": 387,
+          "right": 399,
+          "w": 12
+        },
+        {
+          "tag": "A",
+          "cls": "group flex flex-col items-center gap-1 p-2 rounded-xl border transition-all active:scale-[",
+          "text": "24/06",
+          "left": 429,
+          "right": 485,
+          "w": 56
+        },
+        {
+          "tag": "DIV",
+          "cls": "text-[12px] font-bold text-slate-600 group-hover:text-blue-700 transition-colors",
+          "text": "24/06",
+          "left": 439,
+          "right": 475,
+          "w": 36
+        },
+        {
+          "tag": "svg",
+          "cls": "[object SVGAnimatedString]",
+          "text": "",
+          "left": 450,
+          "right": 464,
+          "w": 14
+        },
+        {
+          "tag": "circle",
+          "cls": "[object SVGAnimatedString]",
+          "text": "",
+          "left": 451,
+          "right": 463,
+          "w": 12
+        },
+        {
+          "tag": "A",
+          "cls": "group flex flex-col items-center gap-1 p-2 rounded-xl border transition-all active:scale-[",
+          "text": "25/06",
+          "left": 493,
+          "right": 549,
+          "w": 56
+        },
+        {
+          "tag": "DIV",
+          "cls": "text-[12px] font-bold text-blue-900 group-hover:text-blue-700 transition-colors",
+          "text": "25/06",
+          "left": 503,
+          "right": 539,
+          "w": 36
+        },
+        {
+          "tag": "svg",
+          "cls": "[object SVGAnimatedString]",
+          "text": "",
+          "left": 514,
+          "right": 528,
+          "w": 14
+        }
+      ],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Thêm phát sinhThêm công việc phát sinh",
+          "w": 136,
+          "h": 32
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tất cả",
+          "w": 57,
+          "h": 29
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chưa nhập",
+          "w": 82,
+          "h": 29
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đã nhập",
+          "w": 68,
+          "h": 29
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Vượt khối lượng",
+          "w": 108,
+          "h": 29
+        }
+      ],
+      "texts": [
+        {
+          "tag": "BUTTON",
+          "text": "Cong tac chuan bi3 công việc•3 chưa nhập"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi3 công việc•3 chưa nhập"
+        },
+        {
+          "tag": "H3",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "DIV",
+          "text": "Phan mong5 công việc•5 chưa nhập"
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Phan mong5 công việc•5 chưa nhập"
+        },
+        {
+          "tag": "DIV",
+          "text": "Phan mong5 công việc•5 chưa nhập"
+        },
+        {
+          "tag": "H3",
+          "text": "Phan mong"
+        }
+      ],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 11,
+          "text": "STTCông việcMũiĐơn vịTổng khối lượngĐã thực hiệnKhối lượng ngày nàySau nhậpTỷ lệGhi chú nhanhChi tiết1Cong tac chuan biD",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "m390:field-summary",
+      "url": "/projects/cmqry305q0007d4wkkycogu91/field-progress/summary",
+      "viewport": {
+        "vw": 390,
+        "vh": 844
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Lọc",
+          "w": 300,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tất cả",
+          "w": 62,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Có phát sinh",
+          "w": 98,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chưa phát sinh",
+          "w": 112,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đã hoàn thành",
+          "w": 109,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Vượt khối lượng",
+          "w": 117,
+          "h": 30
+        }
+      ],
+      "texts": [
+        {
+          "tag": "BUTTON",
+          "text": "Cong tac chuan bi3 công việcTrong kỳ: 0Lũy kế: 0Tỷ lệ: 0.00%"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi3 công việcTrong kỳ: 0Lũy kế: 0Tỷ lệ: 0.00%"
+        },
+        {
+          "tag": "H3",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "DIV",
+          "text": "Phan mong5 công việcTrong kỳ: 0Lũy kế: 0Tỷ lệ: 0.00%"
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Phan mong5 công việcTrong kỳ: 0Lũy kế: 0Tỷ lệ: 0.00%"
+        },
+        {
+          "tag": "DIV",
+          "text": "Phan mong5 công việcTrong kỳ: 0Lũy kế: 0Tỷ lệ: 0.00%"
+        },
+        {
+          "tag": "H3",
+          "text": "Phan mong"
+        }
+      ],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 11,
+          "text": "STTHạng mục / Công việcMũi thi côngĐVTTổng thiết kếTrước kỳTrong kỳLũy kếTỷ lệNgày phát sinhChi tiết1Cong tac chuan bi——",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "m390:reports",
+      "url": "/reports",
+      "viewport": {
+        "vw": 390,
+        "vh": 844
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Bộ lọc",
+          "w": 84,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "w": 40,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tất cả",
+          "w": 66,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Báo cáo ngày",
+          "w": 115,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Báo cáo tuần",
+          "w": 111,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa",
+          "w": 30,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 66,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 66,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 66,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 66,
+          "h": 28
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 6,
+          "text": "Mã BCNgười tạoThời gianTrạng tháiHình ảnhTác vụTuần 29 · 13/07 - 19/07/2026·1 báo cáo·1 duyệtBCNNgàyPhát sinhLe Quang Hu",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "m390:documents",
+      "url": "/documents",
+      "viewport": {
+        "vw": 390,
+        "vh": 844
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "m390:documents-project",
+      "url": "/documents/cmqry305q0007d4wkkycogu91",
+      "viewport": {
+        "vw": 390,
+        "vh": 844
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tạo thư mục",
+          "w": 28,
+          "h": 28
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "m390:material-requests",
+      "url": "/projects/cmqry305q0007d4wkkycogu91/material-requests",
+      "viewport": {
+        "vw": 390,
+        "vh": 844
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chi tiết",
+          "w": 66,
+          "h": 20
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chi tiết",
+          "w": 66,
+          "h": 20
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chi tiết",
+          "w": 66,
+          "h": 20
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chi tiết",
+          "w": 66,
+          "h": 20
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 7,
+          "text": "Mã phiếuNgày cầnSố loại VTTrạng tháiƯu tiênNgười tạoThao tácYCVT-QA-TUHIEP-20260714-00116/07/20261NhápTrung bìnhLe Quang",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "m390:users",
+      "url": "/users",
+      "viewport": {
+        "vw": 390,
+        "vh": 844
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "+ Gán",
+          "w": 34,
+          "h": 16
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 158,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Sửa",
+          "w": 158,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Khóa",
+          "w": 158,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa",
+          "w": 158,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Gỡ QA-TUHIEP-5F-001",
+          "w": 12,
+          "h": 12
+        },
+        {
+          "tag": "BUTTON",
+          "text": "+ Gán",
+          "w": 34,
+          "h": 20
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 158,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Sửa",
+          "w": 158,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Khóa",
+          "w": 158,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 7,
+          "text": "Họ tênĐăng nhập / EmailSĐTVai tròCông trìnhTrạng tháiThao tácQA User Ngoai Cong Trinhqa_outsiderqa.outsider@example.test",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "m390:materials-empty",
+      "url": "/materials",
+      "viewport": {
+        "vw": 390,
+        "vh": 844
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "m390:contracts-empty",
+      "url": "/contracts",
+      "viewport": {
+        "vw": 390,
+        "vh": 844
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "m390:approvals-empty",
+      "url": "/approvals",
+      "viewport": {
+        "vw": 390,
+        "vh": 844
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "m390:audit-empty",
+      "url": "/audit",
+      "viewport": {
+        "vw": 390,
+        "vh": 844
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "m390:login",
+      "url": "/dashboard",
+      "viewport": {
+        "vw": 390,
+        "vh": 844
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "m430:projects",
+      "url": "/projects",
+      "viewport": {
+        "vw": 430,
+        "vh": 932
+      },
+      "horizontal": false,
+      "overflow": [
+        {
+          "tag": "SPAN",
+          "cls": "font-medium text-slate-800",
+          "text": "Lo A3-2, Khu Cong Nghiep Tu Hiep, huyen Thanh Tri, Ha Noi",
+          "left": 86,
+          "right": 460,
+          "w": 374
+        }
+      ],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 7,
+          "text": "Mã công trìnhTên công trìnhChủ đầu tưĐịa điểmTrạng tháiThời gianThao tácQA-TUHIEP-5F-001Nha Van Phong Dieu Hanh 5 Tang -",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "m430:project-detail",
+      "url": "/projects/cmqry305q0007d4wkkycogu91",
+      "viewport": {
+        "vw": 430,
+        "vh": 932
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "m430:field-master",
+      "url": "/projects/cmqry305q0007d4wkkycogu91/field-progress",
+      "viewport": {
+        "vw": 430,
+        "vh": 932
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Thêm",
+          "w": 77,
+          "h": 32
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Thêm công việc",
+          "w": 127,
+          "h": 24
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Sửa hạng mục",
+          "w": 22,
+          "h": 22
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa hạng mục",
+          "w": 22,
+          "h": 22
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Thêm công việc",
+          "w": 127,
+          "h": 24
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Sửa hạng mục",
+          "w": 22,
+          "h": 22
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa hạng mục",
+          "w": 22,
+          "h": 22
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Thêm công việc",
+          "w": 127,
+          "h": 24
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Sửa hạng mục",
+          "w": 22,
+          "h": 22
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa hạng mục",
+          "w": 22,
+          "h": 22
+        }
+      ],
+      "texts": [
+        {
+          "tag": "BUTTON",
+          "text": "Cong tac chuan bi3 công việc·Thiết kế 2.042·62.6%"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi3 công việc·Thiết kế 2.042·62.6%"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "DIV",
+          "text": "Phan mong5 công việc·Thiết kế 44.842·75.4% Thêm công việc"
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Phan mong5 công việc·Thiết kế 44.842·75.4%"
+        },
+        {
+          "tag": "DIV",
+          "text": "Phan mong5 công việc·Thiết kế 44.842·75.4%"
+        },
+        {
+          "tag": "DIV",
+          "text": "Phan mong"
+        }
+      ],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 9,
+          "text": "STTNội dung công việc / Hạng mụcMũi thi côngĐơn vịKhối lượng thiết kếLũy kế duyệtTỷ lệ hoàn thànhGhi chúThao tác1Tên hạn",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "m430:field-daily",
+      "url": "/projects/cmqry305q0007d4wkkycogu91/field-progress/daily",
+      "viewport": {
+        "vw": 430,
+        "vh": 932
+      },
+      "horizontal": false,
+      "overflow": [
+        {
+          "tag": "DIV",
+          "cls": "flex gap-2 min-w-max",
+          "text": "18/0619/0620/0621/0622/0623/0624/0625/0626/0627/0628/0629/0630/0601/0702/07",
+          "left": 45,
+          "right": 997,
+          "w": 952
+        },
+        {
+          "tag": "A",
+          "cls": "group flex flex-col items-center gap-1 p-2 rounded-xl border transition-all active:scale-[",
+          "text": "24/06",
+          "left": 429,
+          "right": 485,
+          "w": 56
+        },
+        {
+          "tag": "DIV",
+          "cls": "text-[12px] font-bold text-slate-600 group-hover:text-blue-700 transition-colors",
+          "text": "24/06",
+          "left": 439,
+          "right": 475,
+          "w": 36
+        },
+        {
+          "tag": "svg",
+          "cls": "[object SVGAnimatedString]",
+          "text": "",
+          "left": 450,
+          "right": 464,
+          "w": 14
+        },
+        {
+          "tag": "circle",
+          "cls": "[object SVGAnimatedString]",
+          "text": "",
+          "left": 451,
+          "right": 463,
+          "w": 12
+        },
+        {
+          "tag": "A",
+          "cls": "group flex flex-col items-center gap-1 p-2 rounded-xl border transition-all active:scale-[",
+          "text": "25/06",
+          "left": 493,
+          "right": 549,
+          "w": 56
+        },
+        {
+          "tag": "DIV",
+          "cls": "text-[12px] font-bold text-blue-900 group-hover:text-blue-700 transition-colors",
+          "text": "25/06",
+          "left": 503,
+          "right": 539,
+          "w": 36
+        },
+        {
+          "tag": "svg",
+          "cls": "[object SVGAnimatedString]",
+          "text": "",
+          "left": 514,
+          "right": 528,
+          "w": 14
+        },
+        {
+          "tag": "circle",
+          "cls": "[object SVGAnimatedString]",
+          "text": "",
+          "left": 515,
+          "right": 527,
+          "w": 12
+        },
+        {
+          "tag": "A",
+          "cls": "group flex flex-col items-center gap-1 p-2 rounded-xl border transition-all active:scale-[",
+          "text": "26/06",
+          "left": 557,
+          "right": 613,
+          "w": 56
+        },
+        {
+          "tag": "DIV",
+          "cls": "text-[12px] font-bold text-slate-600 group-hover:text-blue-700 transition-colors",
+          "text": "26/06",
+          "left": 567,
+          "right": 603,
+          "w": 36
+        },
+        {
+          "tag": "svg",
+          "cls": "[object SVGAnimatedString]",
+          "text": "",
+          "left": 578,
+          "right": 592,
+          "w": 14
+        }
+      ],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Thêm phát sinhThêm công việc phát sinh",
+          "w": 136,
+          "h": 32
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tất cả",
+          "w": 57,
+          "h": 29
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chưa nhập",
+          "w": 82,
+          "h": 29
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đã nhập",
+          "w": 68,
+          "h": 29
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Vượt khối lượng",
+          "w": 108,
+          "h": 29
+        }
+      ],
+      "texts": [
+        {
+          "tag": "BUTTON",
+          "text": "Cong tac chuan bi3 công việc•3 chưa nhập"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi3 công việc•3 chưa nhập"
+        },
+        {
+          "tag": "H3",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "DIV",
+          "text": "Phan mong5 công việc•5 chưa nhập"
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Phan mong5 công việc•5 chưa nhập"
+        },
+        {
+          "tag": "DIV",
+          "text": "Phan mong5 công việc•5 chưa nhập"
+        },
+        {
+          "tag": "H3",
+          "text": "Phan mong"
+        }
+      ],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 11,
+          "text": "STTCông việcMũiĐơn vịTổng khối lượngĐã thực hiệnKhối lượng ngày nàySau nhậpTỷ lệGhi chú nhanhChi tiết1Cong tac chuan biD",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "m430:field-summary",
+      "url": "/projects/cmqry305q0007d4wkkycogu91/field-progress/summary",
+      "viewport": {
+        "vw": 430,
+        "vh": 932
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Lọc",
+          "w": 340,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tất cả",
+          "w": 62,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Có phát sinh",
+          "w": 98,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chưa phát sinh",
+          "w": 112,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đã hoàn thành",
+          "w": 109,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Vượt khối lượng",
+          "w": 117,
+          "h": 30
+        }
+      ],
+      "texts": [
+        {
+          "tag": "BUTTON",
+          "text": "Cong tac chuan bi3 công việcTrong kỳ: 0Lũy kế: 0Tỷ lệ: 0.00%"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi3 công việcTrong kỳ: 0Lũy kế: 0Tỷ lệ: 0.00%"
+        },
+        {
+          "tag": "H3",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "DIV",
+          "text": "Phan mong5 công việcTrong kỳ: 0Lũy kế: 0Tỷ lệ: 0.00%"
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Phan mong5 công việcTrong kỳ: 0Lũy kế: 0Tỷ lệ: 0.00%"
+        },
+        {
+          "tag": "DIV",
+          "text": "Phan mong5 công việcTrong kỳ: 0Lũy kế: 0Tỷ lệ: 0.00%"
+        },
+        {
+          "tag": "H3",
+          "text": "Phan mong"
+        }
+      ],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 11,
+          "text": "STTHạng mục / Công việcMũi thi côngĐVTTổng thiết kếTrước kỳTrong kỳLũy kếTỷ lệNgày phát sinhChi tiết1Cong tac chuan bi——",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "m430:reports",
+      "url": "/reports",
+      "viewport": {
+        "vw": 430,
+        "vh": 932
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Bộ lọc",
+          "w": 84,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "w": 40,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tất cả",
+          "w": 66,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Báo cáo ngày",
+          "w": 115,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Báo cáo tuần",
+          "w": 111,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa",
+          "w": 30,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 66,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 66,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 66,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 66,
+          "h": 28
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 6,
+          "text": "Mã BCNgười tạoThời gianTrạng tháiHình ảnhTác vụTuần 29 · 13/07 - 19/07/2026·1 báo cáo·1 duyệtBCNNgàyPhát sinhLe Quang Hu",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "m430:documents",
+      "url": "/documents",
+      "viewport": {
+        "vw": 430,
+        "vh": 932
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "m430:documents-project",
+      "url": "/documents/cmqry305q0007d4wkkycogu91",
+      "viewport": {
+        "vw": 430,
+        "vh": 932
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tạo thư mục",
+          "w": 28,
+          "h": 28
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "m430:material-requests",
+      "url": "/projects/cmqry305q0007d4wkkycogu91/material-requests",
+      "viewport": {
+        "vw": 430,
+        "vh": 932
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chi tiết",
+          "w": 66,
+          "h": 20
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chi tiết",
+          "w": 66,
+          "h": 20
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chi tiết",
+          "w": 66,
+          "h": 20
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chi tiết",
+          "w": 66,
+          "h": 20
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 7,
+          "text": "Mã phiếuNgày cầnSố loại VTTrạng tháiƯu tiênNgười tạoThao tácYCVT-QA-TUHIEP-20260714-00116/07/20261NhápTrung bìnhLe Quang",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "m430:users",
+      "url": "/users",
+      "viewport": {
+        "vw": 430,
+        "vh": 932
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "+ Gán",
+          "w": 34,
+          "h": 16
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 178,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Sửa",
+          "w": 178,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Khóa",
+          "w": 178,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa",
+          "w": 178,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Gỡ QA-TUHIEP-5F-001",
+          "w": 12,
+          "h": 12
+        },
+        {
+          "tag": "BUTTON",
+          "text": "+ Gán",
+          "w": 34,
+          "h": 20
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 178,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Sửa",
+          "w": 178,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Khóa",
+          "w": 178,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 7,
+          "text": "Họ tênĐăng nhập / EmailSĐTVai tròCông trìnhTrạng tháiThao tácQA User Ngoai Cong Trinhqa_outsiderqa.outsider@example.test",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "m430:materials-empty",
+      "url": "/materials",
+      "viewport": {
+        "vw": 430,
+        "vh": 932
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "m430:contracts-empty",
+      "url": "/contracts",
+      "viewport": {
+        "vw": 430,
+        "vh": 932
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "m430:approvals-empty",
+      "url": "/approvals",
+      "viewport": {
+        "vw": 430,
+        "vh": 932
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "m430:audit-empty",
+      "url": "/audit",
+      "viewport": {
+        "vw": 430,
+        "vh": 932
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "m430:login",
+      "url": "/dashboard",
+      "viewport": {
+        "vw": 430,
+        "vh": 932
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "t768:projects",
+      "url": "/projects",
+      "viewport": {
+        "vw": 768,
+        "vh": 1024
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 7,
+          "text": "Mã công trìnhTên công trìnhChủ đầu tưĐịa điểmTrạng tháiThời gianThao tácQA-TUHIEP-5F-001Nha Van Phong Dieu Hanh 5 Tang -",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "t768:project-detail",
+      "url": "/projects/cmqry305q0007d4wkkycogu91",
+      "viewport": {
+        "vw": 768,
+        "vh": 1024
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "t768:field-master",
+      "url": "/projects/cmqry305q0007d4wkkycogu91/field-progress",
+      "viewport": {
+        "vw": 768,
+        "vh": 1024
+      },
+      "horizontal": true,
+      "overflow": [
+        {
+          "tag": "A",
+          "cls": "h-10 px-4 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 transi",
+          "text": "Đề xuất vật tư",
+          "left": 696,
+          "right": 846,
+          "w": 150
+        },
+        {
+          "tag": "SPAN",
+          "cls": "",
+          "text": "Đề xuất vật tư",
+          "left": 735,
+          "right": 829,
+          "w": 94
+        },
+        {
+          "tag": "TABLE",
+          "cls": "w-full text-sm min-w-[1200px]",
+          "text": "STTNội dung công việc / Hạng mụcMũi thi côngĐơn vịKhối lượng thiết kếLũy kế duyệ",
+          "left": 49,
+          "right": 1673,
+          "w": 1624
+        },
+        {
+          "tag": "THEAD",
+          "cls": "",
+          "text": "STTNội dung công việc / Hạng mụcMũi thi côngĐơn vịKhối lượng thiết kếLũy kế duyệ",
+          "left": 49,
+          "right": 1672,
+          "w": 1623
+        },
+        {
+          "tag": "TR",
+          "cls": "bg-slate-50 border-b-2 border-slate-200 sticky top-0 z-30 shadow-sm",
+          "text": "STTNội dung công việc / Hạng mụcMũi thi côngĐơn vịKhối lượng thiết kếLũy kế duyệ",
+          "left": 49,
+          "right": 1672,
+          "w": 1623
+        },
+        {
+          "tag": "TH",
+          "cls": "align-middle px-3 py-3 text-[13px] font-semibold text-slate-600 uppercase tracking-wide bo",
+          "text": "Đơn vị",
+          "left": 733,
+          "right": 843,
+          "w": 110
+        },
+        {
+          "tag": "TH",
+          "cls": "align-middle px-3 py-3 text-[13px] font-semibold text-slate-600 uppercase tracking-wide bo",
+          "text": "Khối lượng thiết kế",
+          "left": 843,
+          "right": 1018,
+          "w": 175
+        },
+        {
+          "tag": "TH",
+          "cls": "align-middle px-3 py-3 text-[13px] font-semibold text-slate-600 uppercase tracking-wide bo",
+          "text": "Lũy kế duyệt",
+          "left": 1018,
+          "right": 1168,
+          "w": 150
+        },
+        {
+          "tag": "TH",
+          "cls": "align-middle px-3 py-3 text-[13px] font-semibold text-slate-600 uppercase tracking-wide bo",
+          "text": "Tỷ lệ hoàn thành",
+          "left": 1168,
+          "right": 1338,
+          "w": 170
+        },
+        {
+          "tag": "TH",
+          "cls": "align-middle px-3 py-3 text-[13px] font-semibold text-slate-600 uppercase tracking-wide bo",
+          "text": "Ghi chú",
+          "left": 1338,
+          "right": 1578,
+          "w": 240
+        },
+        {
+          "tag": "TH",
+          "cls": "align-middle px-3 py-3 text-[13px] font-semibold text-slate-600 uppercase tracking-wide bo",
+          "text": "Thao tác",
+          "left": 1578,
+          "right": 1672,
+          "w": 94
+        },
+        {
+          "tag": "TBODY",
+          "cls": "",
+          "text": "1Tên hạng mụcCong tac chuan bi——2.0421.27862.59%—2Tên công việcDon dep mat bang,",
+          "left": 49,
+          "right": 1672,
+          "w": 1623
+        }
+      ],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Thêm hạng mục chính",
+          "w": 206,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Lưu",
+          "w": 90,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Thu gọn hạng mục",
+          "w": 20,
+          "h": 20
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Thêm công việc con",
+          "w": 26,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa dòng",
+          "w": 26,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "m2",
+          "w": 85,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa dòng",
+          "w": 26,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "diem",
+          "w": 85,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa dòng",
+          "w": 26,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "m2",
+          "w": 85,
+          "h": 30
+        }
+      ],
+      "texts": [
+        {
+          "tag": "TR",
+          "text": "1Tên hạng mụcCong tac chuan bi——2.0421.27862.59%—"
+        },
+        {
+          "tag": "TD",
+          "text": "Tên hạng mụcCong tac chuan bi"
+        },
+        {
+          "tag": "DIV",
+          "text": "Tên hạng mụcCong tac chuan bi"
+        },
+        {
+          "tag": "TEXTAREA",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "TR",
+          "text": "5Tên hạng mụcPhan mong——44.84233.80575.39%—"
+        },
+        {
+          "tag": "TD",
+          "text": "Tên hạng mụcPhan mong"
+        },
+        {
+          "tag": "DIV",
+          "text": "Tên hạng mụcPhan mong"
+        },
+        {
+          "tag": "TEXTAREA",
+          "text": "Phan mong"
+        },
+        {
+          "tag": "TR",
+          "text": "6Tên công việcDao dat ho mong, van chuyen noi boMũi thi côngm3Khối lượng thiết kế52053.06%Ghi chú"
+        },
+        {
+          "tag": "TD",
+          "text": "Tên công việcDao dat ho mong, van chuyen noi bo"
+        },
+        {
+          "tag": "DIV",
+          "text": "Tên công việcDao dat ho mong, van chuyen noi bo"
+        },
+        {
+          "tag": "TEXTAREA",
+          "text": "Dao dat ho mong, van chuyen noi bo"
+        }
+      ],
+      "tables": [
+        {
+          "w": 1624,
+          "cols": 9,
+          "text": "STTNội dung công việc / Hạng mụcMũi thi côngĐơn vịKhối lượng thiết kếLũy kế duyệtTỷ lệ hoàn thànhGhi chúThao tác1Tên hạn",
+          "over": true
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "t768:field-daily",
+      "url": "/projects/cmqry305q0007d4wkkycogu91/field-progress/daily",
+      "viewport": {
+        "vw": 768,
+        "vh": 1024
+      },
+      "horizontal": false,
+      "overflow": [
+        {
+          "tag": "A",
+          "cls": "h-10 px-4 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 transi",
+          "text": "Đề xuất vật tư",
+          "left": 696,
+          "right": 846,
+          "w": 150
+        },
+        {
+          "tag": "SPAN",
+          "cls": "",
+          "text": "Đề xuất vật tư",
+          "left": 735,
+          "right": 829,
+          "w": 94
+        },
+        {
+          "tag": "DIV",
+          "cls": "flex gap-2 min-w-max",
+          "text": "18/0619/0620/0621/0622/0623/0624/0625/0626/0627/0628/0629/0630/0601/0702/07",
+          "left": 65,
+          "right": 1017,
+          "w": 952
+        },
+        {
+          "tag": "A",
+          "cls": "group flex flex-col items-center gap-1 p-2 rounded-xl border transition-all active:scale-[",
+          "text": "29/06",
+          "left": 769,
+          "right": 825,
+          "w": 56
+        },
+        {
+          "tag": "DIV",
+          "cls": "text-[12px] font-bold text-slate-600 group-hover:text-blue-700 transition-colors",
+          "text": "29/06",
+          "left": 779,
+          "right": 815,
+          "w": 36
+        },
+        {
+          "tag": "svg",
+          "cls": "[object SVGAnimatedString]",
+          "text": "",
+          "left": 790,
+          "right": 804,
+          "w": 14
+        },
+        {
+          "tag": "circle",
+          "cls": "[object SVGAnimatedString]",
+          "text": "",
+          "left": 791,
+          "right": 803,
+          "w": 12
+        },
+        {
+          "tag": "A",
+          "cls": "group flex flex-col items-center gap-1 p-2 rounded-xl border transition-all active:scale-[",
+          "text": "30/06",
+          "left": 833,
+          "right": 889,
+          "w": 56
+        },
+        {
+          "tag": "DIV",
+          "cls": "text-[12px] font-bold text-slate-600 group-hover:text-blue-700 transition-colors",
+          "text": "30/06",
+          "left": 843,
+          "right": 879,
+          "w": 36
+        },
+        {
+          "tag": "svg",
+          "cls": "[object SVGAnimatedString]",
+          "text": "",
+          "left": 854,
+          "right": 868,
+          "w": 14
+        },
+        {
+          "tag": "circle",
+          "cls": "[object SVGAnimatedString]",
+          "text": "",
+          "left": 855,
+          "right": 867,
+          "w": 12
+        },
+        {
+          "tag": "A",
+          "cls": "group flex flex-col items-center gap-1 p-2 rounded-xl border transition-all active:scale-[",
+          "text": "01/07",
+          "left": 897,
+          "right": 953,
+          "w": 56
+        }
+      ],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Thêm phát sinhThêm công việc phát sinh",
+          "w": 195,
+          "h": 32
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tất cả",
+          "w": 60,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chưa nhập",
+          "w": 87,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đã nhập",
+          "w": 72,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Vượt khối lượng",
+          "w": 116,
+          "h": 28
+        }
+      ],
+      "texts": [
+        {
+          "tag": "BUTTON",
+          "text": "Cong tac chuan bi3 công việc•3 chưa nhập"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi3 công việc•3 chưa nhập"
+        },
+        {
+          "tag": "H3",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "DIV",
+          "text": "Phan mong5 công việc•5 chưa nhập"
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Phan mong5 công việc•5 chưa nhập"
+        },
+        {
+          "tag": "DIV",
+          "text": "Phan mong5 công việc•5 chưa nhập"
+        },
+        {
+          "tag": "H3",
+          "text": "Phan mong"
+        }
+      ],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 11,
+          "text": "STTCông việcMũiĐơn vịTổng khối lượngĐã thực hiệnKhối lượng ngày nàySau nhậpTỷ lệGhi chú nhanhChi tiết1Cong tac chuan biD",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "t768:field-summary",
+      "url": "/projects/cmqry305q0007d4wkkycogu91/field-progress/summary",
+      "viewport": {
+        "vw": 768,
+        "vh": 1024
+      },
+      "horizontal": false,
+      "overflow": [
+        {
+          "tag": "A",
+          "cls": "h-10 px-4 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 transi",
+          "text": "Đề xuất vật tư",
+          "left": 696,
+          "right": 846,
+          "w": 150
+        },
+        {
+          "tag": "SPAN",
+          "cls": "",
+          "text": "Đề xuất vật tư",
+          "left": 735,
+          "right": 829,
+          "w": 94
+        },
+        {
+          "tag": "TABLE",
+          "cls": "w-full text-left",
+          "text": "STTHạng mục / Công việcMũi thi côngĐVTTổng thiết kếTrước kỳTrong kỳLũy kếTỷ lệNg",
+          "left": 49,
+          "right": 1547,
+          "w": 1498
+        },
+        {
+          "tag": "COLGROUP",
+          "cls": "",
+          "text": "",
+          "left": 49,
+          "right": 1547,
+          "w": 1498
+        },
+        {
+          "tag": "COL",
+          "cls": "",
+          "text": "",
+          "left": 717,
+          "right": 837,
+          "w": 120
+        },
+        {
+          "tag": "COL",
+          "cls": "",
+          "text": "",
+          "left": 837,
+          "right": 947,
+          "w": 110
+        },
+        {
+          "tag": "COL",
+          "cls": "",
+          "text": "",
+          "left": 947,
+          "right": 1057,
+          "w": 110
+        },
+        {
+          "tag": "COL",
+          "cls": "",
+          "text": "",
+          "left": 1057,
+          "right": 1167,
+          "w": 110
+        },
+        {
+          "tag": "COL",
+          "cls": "",
+          "text": "",
+          "left": 1167,
+          "right": 1267,
+          "w": 100
+        },
+        {
+          "tag": "COL",
+          "cls": "",
+          "text": "",
+          "left": 1267,
+          "right": 1467,
+          "w": 200
+        },
+        {
+          "tag": "COL",
+          "cls": "",
+          "text": "",
+          "left": 1467,
+          "right": 1547,
+          "w": 80
+        },
+        {
+          "tag": "THEAD",
+          "cls": "",
+          "text": "STTHạng mục / Công việcMũi thi côngĐVTTổng thiết kếTrước kỳTrong kỳLũy kếTỷ lệNg",
+          "left": 49,
+          "right": 1547,
+          "w": 1498
+        }
+      ],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tất cả",
+          "w": 62,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Có phát sinh",
+          "w": 98,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chưa phát sinh",
+          "w": 112,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đã hoàn thành",
+          "w": 109,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Vượt khối lượng",
+          "w": 117,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 60,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 60,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 60,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 60,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 60,
+          "h": 26
+        }
+      ],
+      "texts": [
+        {
+          "tag": "TR",
+          "text": "1Cong tac chuan bi——2.0420—00.00%—"
+        },
+        {
+          "tag": "TD",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "TR",
+          "text": "2Cong tac chuan biDon dep mat bang, boc lop huu coMui chuan bim21.8500—00.00%—Xem"
+        },
+        {
+          "tag": "TD",
+          "text": "Cong tac chuan biDon dep mat bang, boc lop huu co"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "TR",
+          "text": "3Cong tac chuan biDinh vi tim truc, cao do chuanTo trac dacdiem720—00.00%—Xem"
+        },
+        {
+          "tag": "TD",
+          "text": "Cong tac chuan biDinh vi tim truc, cao do chuan"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "TR",
+          "text": "4Cong tac chuan biLan trai, kho vat tu, dien nuoc tamMui chuan bim21200—00.00%—Xem"
+        },
+        {
+          "tag": "TD",
+          "text": "Cong tac chuan biLan trai, kho vat tu, dien nuoc tam"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi"
+        }
+      ],
+      "tables": [
+        {
+          "w": 1498,
+          "cols": 11,
+          "text": "STTHạng mục / Công việcMũi thi côngĐVTTổng thiết kếTrước kỳTrong kỳLũy kếTỷ lệNgày phát sinhChi tiết1Cong tac chuan bi——",
+          "over": true
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "t768:reports",
+      "url": "/reports",
+      "viewport": {
+        "vw": 768,
+        "vh": 1024
+      },
+      "horizontal": false,
+      "overflow": [
+        {
+          "tag": "TABLE",
+          "cls": "w-full text-sm table-auto",
+          "text": "Mã BCNgười tạoThời gianTrạng tháiHình ảnhTác vụTuần 29 · 13/07 - 19/07/2026·1 bá",
+          "left": 25,
+          "right": 868,
+          "w": 843
+        },
+        {
+          "tag": "THEAD",
+          "cls": "",
+          "text": "Mã BCNgười tạoThời gianTrạng tháiHình ảnhTác vụ",
+          "left": 25,
+          "right": 868,
+          "w": 843
+        },
+        {
+          "tag": "TR",
+          "cls": "border-b border-slate-100 bg-slate-50/80",
+          "text": "Mã BCNgười tạoThời gianTrạng tháiHình ảnhTác vụ",
+          "left": 25,
+          "right": 868,
+          "w": 843
+        },
+        {
+          "tag": "TH",
+          "cls": "text-right py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wider w-[80px",
+          "text": "Tác vụ",
+          "left": 686,
+          "right": 868,
+          "w": 182
+        },
+        {
+          "tag": "TBODY",
+          "cls": "divide-y divide-slate-100",
+          "text": "Tuần 29 · 13/07 - 19/07/2026·1 báo cáo·1 duyệtBCNNgàyPhát sinhLe Quang HuyNgười ",
+          "left": 25,
+          "right": 868,
+          "w": 843
+        },
+        {
+          "tag": "TR",
+          "cls": "bg-slate-100/80 border-t border-slate-200",
+          "text": "Tuần 29 · 13/07 - 19/07/2026·1 báo cáo·1 duyệt",
+          "left": 25,
+          "right": 868,
+          "w": 843
+        },
+        {
+          "tag": "TD",
+          "cls": "py-2.5 px-4",
+          "text": "Tuần 29 · 13/07 - 19/07/2026·1 báo cáo·1 duyệt",
+          "left": 25,
+          "right": 868,
+          "w": 843
+        },
+        {
+          "tag": "DIV",
+          "cls": "flex flex-wrap items-center gap-x-3 gap-y-1 text-sm",
+          "text": "Tuần 29 · 13/07 - 19/07/2026·1 báo cáo·1 duyệt",
+          "left": 41,
+          "right": 852,
+          "w": 811
+        },
+        {
+          "tag": "TR",
+          "cls": "hover:bg-slate-50/80 transition-colors cursor-pointer group ",
+          "text": "BCNNgàyPhát sinhLe Quang HuyNgười tạo2026-07-1307:00Đã duyệt+1 file",
+          "left": 25,
+          "right": 868,
+          "w": 843
+        },
+        {
+          "tag": "TD",
+          "cls": "py-2.5 px-4 text-right whitespace-nowrap",
+          "text": "",
+          "left": 686,
+          "right": 868,
+          "w": 182
+        },
+        {
+          "tag": "DIV",
+          "cls": "flex items-center justify-end gap-0.5",
+          "text": "",
+          "left": 702,
+          "right": 852,
+          "w": 150
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "icon-button h-9 w-9",
+          "text": "",
+          "left": 778,
+          "right": 814,
+          "w": 36
+        }
+      ],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tất cả",
+          "w": 66,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Báo cáo ngày",
+          "w": 115,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Báo cáo tuần",
+          "w": 111,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem chi tiết",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "In / Xuất PDF",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa báo cáo",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem chi tiết",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "In / Xuất PDF",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem chi tiết",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "In / Xuất PDF",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 843,
+          "cols": 6,
+          "text": "Mã BCNgười tạoThời gianTrạng tháiHình ảnhTác vụTuần 29 · 13/07 - 19/07/2026·1 báo cáo·1 duyệtBCNNgàyPhát sinhLe Quang Hu",
+          "over": true
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "t768:documents",
+      "url": "/documents",
+      "viewport": {
+        "vw": 768,
+        "vh": 1024
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "t768:documents-project",
+      "url": "/documents/cmqry305q0007d4wkkycogu91",
+      "viewport": {
+        "vw": 768,
+        "vh": 1024
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tạo thư mục",
+          "w": 28,
+          "h": 28
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "t768:material-requests",
+      "url": "/projects/cmqry305q0007d4wkkycogu91/material-requests",
+      "viewport": {
+        "vw": 768,
+        "vh": 1024
+      },
+      "horizontal": false,
+      "overflow": [
+        {
+          "tag": "A",
+          "cls": "h-10 px-4 rounded-lg text-sm font-semibold flex items-center justify-center gap-1.5 transi",
+          "text": "Đề xuất vật tư",
+          "left": 698,
+          "right": 846,
+          "w": 148
+        },
+        {
+          "tag": "SPAN",
+          "cls": "",
+          "text": "Đề xuất vật tư",
+          "left": 736,
+          "right": 830,
+          "w": 94
+        },
+        {
+          "tag": "TABLE",
+          "cls": "w-full text-left text-sm whitespace-nowrap",
+          "text": "Mã phiếuNgày cầnSố loại VTTrạng tháiƯu tiênNgười tạoThao tácYCVT-QA-TUHIEP-20260",
+          "left": 49,
+          "right": 992,
+          "w": 943
+        },
+        {
+          "tag": "THEAD",
+          "cls": "bg-slate-50 border-b border-slate-200 text-slate-500 font-medium",
+          "text": "Mã phiếuNgày cầnSố loại VTTrạng tháiƯu tiênNgười tạoThao tác",
+          "left": 49,
+          "right": 992,
+          "w": 943
+        },
+        {
+          "tag": "TR",
+          "cls": "",
+          "text": "Mã phiếuNgày cầnSố loại VTTrạng tháiƯu tiênNgười tạoThao tác",
+          "left": 49,
+          "right": 992,
+          "w": 943
+        },
+        {
+          "tag": "TH",
+          "cls": "px-4 py-3",
+          "text": "Người tạo",
+          "left": 746,
+          "right": 896,
+          "w": 150
+        },
+        {
+          "tag": "TH",
+          "cls": "px-4 py-3 text-right",
+          "text": "Thao tác",
+          "left": 896,
+          "right": 992,
+          "w": 96
+        },
+        {
+          "tag": "TBODY",
+          "cls": "divide-y divide-slate-100",
+          "text": "YCVT-QA-TUHIEP-20260714-00116/07/20261NhápTrung bìnhLe Quang HuyYCVT-QA-TUHIEP-2",
+          "left": 49,
+          "right": 992,
+          "w": 943
+        },
+        {
+          "tag": "TR",
+          "cls": "hover:bg-slate-50 transition-colors",
+          "text": "YCVT-QA-TUHIEP-20260714-00116/07/20261NhápTrung bìnhLe Quang Huy",
+          "left": 49,
+          "right": 992,
+          "w": 943
+        },
+        {
+          "tag": "TD",
+          "cls": "px-4 py-3 text-slate-600 truncate max-w-[150px]",
+          "text": "Le Quang Huy",
+          "left": 746,
+          "right": 896,
+          "w": 150
+        },
+        {
+          "tag": "TD",
+          "cls": "px-4 py-3 text-right space-x-2",
+          "text": "",
+          "left": 896,
+          "right": 992,
+          "w": 96
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors",
+          "text": "",
+          "left": 912,
+          "right": 940,
+          "w": 28
+        }
+      ],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Sửa đề xuất YCVT-QA-TUHIEP-20260714-001",
+          "w": 28,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chi tiết đề xuất YCVT-QA-TUHIEP-20260714-001",
+          "w": 28,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chi tiết đề xuất YCVT-QA-TUHIEP-20260712-001",
+          "w": 28,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chi tiết đề xuất YCVT-QA-TUHIEP-20260710-001",
+          "w": 28,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chi tiết đề xuất YCVT-QA-TUHIEP-20260706-001",
+          "w": 28,
+          "h": 28
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 943,
+          "cols": 7,
+          "text": "Mã phiếuNgày cầnSố loại VTTrạng tháiƯu tiênNgười tạoThao tácYCVT-QA-TUHIEP-20260714-00116/07/20261NhápTrung bìnhLe Quang",
+          "over": true
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "t768:users",
+      "url": "/users",
+      "viewport": {
+        "vw": 768,
+        "vh": 1024
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "+ Gán",
+          "w": 34,
+          "h": 16
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 339,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Sửa",
+          "w": 339,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Khóa",
+          "w": 339,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa",
+          "w": 339,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Gỡ QA-TUHIEP-5F-001",
+          "w": 12,
+          "h": 12
+        },
+        {
+          "tag": "BUTTON",
+          "text": "+ Gán",
+          "w": 34,
+          "h": 20
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 339,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Sửa",
+          "w": 339,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Khóa",
+          "w": 339,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 7,
+          "text": "Họ tênĐăng nhập / EmailSĐTVai tròCông trìnhTrạng tháiThao tácQA User Ngoai Cong Trinhqa_outsiderqa.outsider@example.test",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "t768:materials-empty",
+      "url": "/materials",
+      "viewport": {
+        "vw": 768,
+        "vh": 1024
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "t768:contracts-empty",
+      "url": "/contracts",
+      "viewport": {
+        "vw": 768,
+        "vh": 1024
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "t768:approvals-empty",
+      "url": "/approvals",
+      "viewport": {
+        "vw": 768,
+        "vh": 1024
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "t768:audit-empty",
+      "url": "/audit",
+      "viewport": {
+        "vw": 768,
+        "vh": 1024
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "t768:login",
+      "url": "/dashboard",
+      "viewport": {
+        "vw": 768,
+        "vh": 1024
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "l1366:projects",
+      "url": "/projects",
+      "viewport": {
+        "vw": 1366,
+        "vh": 768
+      },
+      "horizontal": false,
+      "overflow": [
+        {
+          "tag": "TABLE",
+          "cls": "w-full text-left text-sm text-slate-600",
+          "text": "Mã công trìnhTên công trìnhChủ đầu tưĐịa điểmTrạng tháiThời gianThao tácQA-TUHIE",
+          "left": 281,
+          "right": 1459,
+          "w": 1178
+        },
+        {
+          "tag": "THEAD",
+          "cls": "bg-slate-50 border-b border-slate-200 text-slate-700",
+          "text": "Mã công trìnhTên công trìnhChủ đầu tưĐịa điểmTrạng tháiThời gianThao tác",
+          "left": 281,
+          "right": 1459,
+          "w": 1178
+        },
+        {
+          "tag": "TR",
+          "cls": "",
+          "text": "Mã công trìnhTên công trìnhChủ đầu tưĐịa điểmTrạng tháiThời gianThao tác",
+          "left": 281,
+          "right": 1459,
+          "w": 1178
+        },
+        {
+          "tag": "TH",
+          "cls": "px-5 py-3.5 font-semibold text-right whitespace-nowrap",
+          "text": "Thao tác",
+          "left": 1088,
+          "right": 1459,
+          "w": 371
+        },
+        {
+          "tag": "TBODY",
+          "cls": "divide-y divide-slate-100 bg-white",
+          "text": "QA-TUHIEP-5F-001Nha Van Phong Dieu Hanh 5 Tang - Khu Cong Nghiep Tu HiepCong ty ",
+          "left": 281,
+          "right": 1459,
+          "w": 1178
+        },
+        {
+          "tag": "TR",
+          "cls": "hover:bg-slate-50/70 transition-colors group",
+          "text": "QA-TUHIEP-5F-001Nha Van Phong Dieu Hanh 5 Tang - Khu Cong Nghiep Tu HiepCong ty ",
+          "left": 281,
+          "right": 1459,
+          "w": 1178
+        },
+        {
+          "tag": "TD",
+          "cls": "px-5 py-4 text-right whitespace-nowrap",
+          "text": "Xem SửaNhập KLTổng hợp",
+          "left": 1088,
+          "right": 1459,
+          "w": 371
+        },
+        {
+          "tag": "DIV",
+          "cls": "flex items-center justify-end gap-2 opacity-100 lg:opacity-60 lg:group-hover:opacity-100 t",
+          "text": "Xem SửaNhập KLTổng hợp",
+          "left": 1108,
+          "right": 1439,
+          "w": 331
+        },
+        {
+          "tag": "A",
+          "cls": "inline-flex items-center justify-center rounded text-[13px] font-semibold transition-color",
+          "text": "Tổng hợp",
+          "left": 1359,
+          "right": 1439,
+          "w": 80
+        }
+      ],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 1178,
+          "cols": 7,
+          "text": "Mã công trìnhTên công trìnhChủ đầu tưĐịa điểmTrạng tháiThời gianThao tácQA-TUHIEP-5F-001Nha Van Phong Dieu Hanh 5 Tang -",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "l1366:project-detail",
+      "url": "/projects/cmqry305q0007d4wkkycogu91",
+      "viewport": {
+        "vw": 1366,
+        "vh": 768
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "l1366:field-master",
+      "url": "/projects/cmqry305q0007d4wkkycogu91/field-progress",
+      "viewport": {
+        "vw": 1366,
+        "vh": 768
+      },
+      "horizontal": true,
+      "overflow": [
+        {
+          "tag": "TABLE",
+          "cls": "w-full text-sm min-w-[1200px]",
+          "text": "STTNội dung công việc / Hạng mụcMũi thi côngĐơn vịKhối lượng thiết kếLũy kế duyệ",
+          "left": 305,
+          "right": 1929,
+          "w": 1624
+        },
+        {
+          "tag": "THEAD",
+          "cls": "",
+          "text": "STTNội dung công việc / Hạng mụcMũi thi côngĐơn vịKhối lượng thiết kếLũy kế duyệ",
+          "left": 305,
+          "right": 1928,
+          "w": 1623
+        },
+        {
+          "tag": "TR",
+          "cls": "bg-slate-50 border-b-2 border-slate-200 sticky top-0 z-30 shadow-sm",
+          "text": "STTNội dung công việc / Hạng mụcMũi thi côngĐơn vịKhối lượng thiết kếLũy kế duyệ",
+          "left": 305,
+          "right": 1928,
+          "w": 1623
+        },
+        {
+          "tag": "TH",
+          "cls": "align-middle px-3 py-3 text-[13px] font-semibold text-slate-600 uppercase tracking-wide bo",
+          "text": "Lũy kế duyệt",
+          "left": 1274,
+          "right": 1424,
+          "w": 150
+        },
+        {
+          "tag": "TH",
+          "cls": "align-middle px-3 py-3 text-[13px] font-semibold text-slate-600 uppercase tracking-wide bo",
+          "text": "Tỷ lệ hoàn thành",
+          "left": 1424,
+          "right": 1594,
+          "w": 170
+        },
+        {
+          "tag": "TH",
+          "cls": "align-middle px-3 py-3 text-[13px] font-semibold text-slate-600 uppercase tracking-wide bo",
+          "text": "Ghi chú",
+          "left": 1594,
+          "right": 1834,
+          "w": 240
+        },
+        {
+          "tag": "TH",
+          "cls": "align-middle px-3 py-3 text-[13px] font-semibold text-slate-600 uppercase tracking-wide bo",
+          "text": "Thao tác",
+          "left": 1834,
+          "right": 1928,
+          "w": 94
+        },
+        {
+          "tag": "TBODY",
+          "cls": "",
+          "text": "1Tên hạng mụcCong tac chuan bi——2.0421.27862.59%—2Tên công việcDon dep mat bang,",
+          "left": 305,
+          "right": 1928,
+          "w": 1623
+        },
+        {
+          "tag": "TR",
+          "cls": "bg-slate-50 border-slate-200 [&>td]:bg-slate-50",
+          "text": "1Tên hạng mụcCong tac chuan bi——2.0421.27862.59%—",
+          "left": 305,
+          "right": 1928,
+          "w": 1623
+        },
+        {
+          "tag": "TD",
+          "cls": "align-middle h-14 px-3 py-3 border-r border-slate-100 text-sm font-medium bg-white text-sl",
+          "text": "1.278",
+          "left": 1274,
+          "right": 1424,
+          "w": 150
+        },
+        {
+          "tag": "TD",
+          "cls": "align-middle h-14 px-3 py-3 border-r border-slate-100 text-sm font-medium bg-white text-sl",
+          "text": "62.59%",
+          "left": 1424,
+          "right": 1594,
+          "w": 170
+        },
+        {
+          "tag": "SPAN",
+          "cls": "font-bold text-sm text-blue-700",
+          "text": "62.59%",
+          "left": 1527,
+          "right": 1582,
+          "w": 55
+        }
+      ],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Thêm hạng mục chính",
+          "w": 206,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Lưu",
+          "w": 90,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Thu gọn hạng mục",
+          "w": 20,
+          "h": 20
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Thêm công việc con",
+          "w": 26,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa dòng",
+          "w": 26,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "m2",
+          "w": 85,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa dòng",
+          "w": 26,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "diem",
+          "w": 85,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa dòng",
+          "w": 26,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "m2",
+          "w": 85,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa dòng",
+          "w": 26,
+          "h": 26
+        }
+      ],
+      "texts": [
+        {
+          "tag": "TR",
+          "text": "1Tên hạng mụcCong tac chuan bi——2.0421.27862.59%—"
+        },
+        {
+          "tag": "TD",
+          "text": "Tên hạng mụcCong tac chuan bi"
+        },
+        {
+          "tag": "DIV",
+          "text": "Tên hạng mụcCong tac chuan bi"
+        },
+        {
+          "tag": "TEXTAREA",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "TR",
+          "text": "5Tên hạng mụcPhan mong——44.84233.80575.39%—"
+        },
+        {
+          "tag": "TD",
+          "text": "Tên hạng mụcPhan mong"
+        },
+        {
+          "tag": "DIV",
+          "text": "Tên hạng mụcPhan mong"
+        },
+        {
+          "tag": "TEXTAREA",
+          "text": "Phan mong"
+        },
+        {
+          "tag": "TR",
+          "text": "6Tên công việcDao dat ho mong, van chuyen noi boMũi thi côngm3Khối lượng thiết kế52053.06%Ghi chú"
+        },
+        {
+          "tag": "TD",
+          "text": "Tên công việcDao dat ho mong, van chuyen noi bo"
+        },
+        {
+          "tag": "DIV",
+          "text": "Tên công việcDao dat ho mong, van chuyen noi bo"
+        },
+        {
+          "tag": "TEXTAREA",
+          "text": "Dao dat ho mong, van chuyen noi bo"
+        }
+      ],
+      "tables": [
+        {
+          "w": 1624,
+          "cols": 9,
+          "text": "STTNội dung công việc / Hạng mụcMũi thi côngĐơn vịKhối lượng thiết kếLũy kế duyệtTỷ lệ hoàn thànhGhi chúThao tác1Tên hạn",
+          "over": true
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "l1366:field-daily",
+      "url": "/projects/cmqry305q0007d4wkkycogu91/field-progress/daily",
+      "viewport": {
+        "vw": 1366,
+        "vh": 768
+      },
+      "horizontal": true,
+      "overflow": [
+        {
+          "tag": "TABLE",
+          "cls": "w-full text-left text-sm whitespace-nowrap min-w-max border-collapse",
+          "text": "STTCông việcMũiĐơn vịTổng khối lượngĐã thực hiệnKhối lượng ngày nàySau nhậpTỷ lệ",
+          "left": 305,
+          "right": 2002,
+          "w": 1697
+        },
+        {
+          "tag": "THEAD",
+          "cls": "border-b-2 border-slate-200 bg-slate-50",
+          "text": "STTCông việcMũiĐơn vịTổng khối lượngĐã thực hiệnKhối lượng ngày nàySau nhậpTỷ lệ",
+          "left": 305,
+          "right": 2001,
+          "w": 1696
+        },
+        {
+          "tag": "TR",
+          "cls": "",
+          "text": "STTCông việcMũiĐơn vịTổng khối lượngĐã thực hiệnKhối lượng ngày nàySau nhậpTỷ lệ",
+          "left": 305,
+          "right": 2001,
+          "w": 1696
+        },
+        {
+          "tag": "TH",
+          "cls": "align-middle px-3 py-3 text-[13px] font-semibold text-slate-600 uppercase tracking-wide bo",
+          "text": "Khối lượng ngày này",
+          "left": 1259,
+          "right": 1409,
+          "w": 150
+        },
+        {
+          "tag": "TH",
+          "cls": "align-middle px-3 py-3 text-[13px] font-semibold text-slate-600 uppercase tracking-wide bo",
+          "text": "Sau nhập",
+          "left": 1409,
+          "right": 1549,
+          "w": 140
+        },
+        {
+          "tag": "TH",
+          "cls": "align-middle px-3 py-3 text-[13px] font-semibold text-slate-600 uppercase tracking-wide bo",
+          "text": "Tỷ lệ",
+          "left": 1549,
+          "right": 1679,
+          "w": 130
+        },
+        {
+          "tag": "TH",
+          "cls": "align-middle px-3 py-3 text-[13px] font-semibold text-slate-600 uppercase tracking-wide bo",
+          "text": "Ghi chú nhanh",
+          "left": 1679,
+          "right": 1919,
+          "w": 240
+        },
+        {
+          "tag": "TH",
+          "cls": "align-middle px-3 py-3 text-[13px] font-semibold text-slate-600 uppercase tracking-wide bo",
+          "text": "Chi tiết",
+          "left": 1919,
+          "right": 2001,
+          "w": 82
+        },
+        {
+          "tag": "TBODY",
+          "cls": "divide-y divide-slate-100",
+          "text": "1Cong tac chuan biDon dep mat bang, boc lop huu coMui chuan bim21.8500Khối lượng",
+          "left": 305,
+          "right": 2001,
+          "w": 1696
+        },
+        {
+          "tag": "TR",
+          "cls": "transition bg-white hover:bg-slate-50/50 transition-colors ",
+          "text": "1Cong tac chuan biDon dep mat bang, boc lop huu coMui chuan bim21.8500Khối lượng",
+          "left": 305,
+          "right": 2001,
+          "w": 1696
+        },
+        {
+          "tag": "TD",
+          "cls": "align-middle h-14 px-3 py-3 border-r border-slate-100 text-sm font-medium bg-white text-sl",
+          "text": "Khối lượng ngày 2026-06-25",
+          "left": 1259,
+          "right": 1409,
+          "w": 150
+        },
+        {
+          "tag": "DIV",
+          "cls": "",
+          "text": "Khối lượng ngày 2026-06-25",
+          "left": 1272,
+          "right": 1397,
+          "w": 125
+        }
+      ],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Thêm phát sinhThêm công việc phát sinh",
+          "w": 195,
+          "h": 32
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tất cả",
+          "w": 60,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chưa nhập",
+          "w": 87,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đã nhập",
+          "w": 72,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Vượt khối lượng",
+          "w": 116,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem chi tiết Don dep mat bang, boc lop huu co",
+          "w": 32,
+          "h": 32
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem chi tiết Dinh vi tim truc, cao do chuan",
+          "w": 32,
+          "h": 32
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem chi tiết Lan trai, kho vat tu, dien nuoc tam",
+          "w": 32,
+          "h": 32
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem chi tiết Dao dat ho mong, van chuyen noi bo",
+          "w": 32,
+          "h": 32
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem chi tiết Do be tong lot mong M100",
+          "w": 32,
+          "h": 32
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem chi tiết Gia cong lap dung cot thep mong",
+          "w": 32,
+          "h": 32
+        }
+      ],
+      "texts": [
+        {
+          "tag": "TR",
+          "text": "1Cong tac chuan biDon dep mat bang, boc lop huu coMui chuan bim21.8500Khối lượng ngày 2026-06-2500.0%Ghi chú nhanh cho Don dep mat bang, boc lop huu co"
+        },
+        {
+          "tag": "TD",
+          "text": "Cong tac chuan biDon dep mat bang, boc lop huu co"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "TR",
+          "text": "2Cong tac chuan biDinh vi tim truc, cao do chuanTo trac dacdiem720Khối lượng ngày 2026-06-2500.0%Ghi chú nhanh cho Dinh vi tim truc, cao do chuan"
+        },
+        {
+          "tag": "TD",
+          "text": "Cong tac chuan biDinh vi tim truc, cao do chuan"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "TR",
+          "text": "3Cong tac chuan biLan trai, kho vat tu, dien nuoc tamMui chuan bim21200Khối lượng ngày 2026-06-2500.0%Ghi chú nhanh cho Lan trai, kho vat tu, dien nuoc tam"
+        },
+        {
+          "tag": "TD",
+          "text": "Cong tac chuan biLan trai, kho vat tu, dien nuoc tam"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "TR",
+          "text": "4Phan mongDao dat ho mong, van chuyen noi boMui mong Am39800Khối lượng ngày 2026-06-2500.0%Ghi chú nhanh cho Dao dat ho mong, van chuyen noi bo"
+        },
+        {
+          "tag": "TD",
+          "text": "Phan mongDao dat ho mong, van chuyen noi bo"
+        },
+        {
+          "tag": "DIV",
+          "text": "Phan mong"
+        }
+      ],
+      "tables": [
+        {
+          "w": 1697,
+          "cols": 11,
+          "text": "STTCông việcMũiĐơn vịTổng khối lượngĐã thực hiệnKhối lượng ngày nàySau nhậpTỷ lệGhi chú nhanhChi tiết1Cong tac chuan biD",
+          "over": true
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "l1366:field-summary",
+      "url": "/projects/cmqry305q0007d4wkkycogu91/field-progress/summary",
+      "viewport": {
+        "vw": 1366,
+        "vh": 768
+      },
+      "horizontal": false,
+      "overflow": [
+        {
+          "tag": "TABLE",
+          "cls": "w-full text-left",
+          "text": "STTHạng mục / Công việcMũi thi côngĐVTTổng thiết kếTrước kỳTrong kỳLũy kếTỷ lệNg",
+          "left": 305,
+          "right": 1803,
+          "w": 1498
+        },
+        {
+          "tag": "COLGROUP",
+          "cls": "",
+          "text": "",
+          "left": 305,
+          "right": 1803,
+          "w": 1498
+        },
+        {
+          "tag": "COL",
+          "cls": "",
+          "text": "",
+          "left": 1313,
+          "right": 1423,
+          "w": 110
+        },
+        {
+          "tag": "COL",
+          "cls": "",
+          "text": "",
+          "left": 1423,
+          "right": 1523,
+          "w": 100
+        },
+        {
+          "tag": "COL",
+          "cls": "",
+          "text": "",
+          "left": 1523,
+          "right": 1723,
+          "w": 200
+        },
+        {
+          "tag": "COL",
+          "cls": "",
+          "text": "",
+          "left": 1723,
+          "right": 1803,
+          "w": 80
+        },
+        {
+          "tag": "THEAD",
+          "cls": "",
+          "text": "STTHạng mục / Công việcMũi thi côngĐVTTổng thiết kếTrước kỳTrong kỳLũy kếTỷ lệNg",
+          "left": 305,
+          "right": 1803,
+          "w": 1498
+        },
+        {
+          "tag": "TR",
+          "cls": "",
+          "text": "STTHạng mục / Công việcMũi thi côngĐVTTổng thiết kếTrước kỳTrong kỳLũy kếTỷ lệNg",
+          "left": 305,
+          "right": 1803,
+          "w": 1498
+        },
+        {
+          "tag": "TH",
+          "cls": "px-3 py-2.5 text-[12px] font-semibold text-slate-600 uppercase tracking-wide border-b bord",
+          "text": "Lũy kế",
+          "left": 1313,
+          "right": 1423,
+          "w": 110
+        },
+        {
+          "tag": "TH",
+          "cls": "px-3 py-2.5 text-[12px] font-semibold text-slate-600 uppercase tracking-wide border-b bord",
+          "text": "Tỷ lệ",
+          "left": 1423,
+          "right": 1523,
+          "w": 100
+        },
+        {
+          "tag": "TH",
+          "cls": "px-3 py-2.5 text-[12px] font-semibold text-slate-600 uppercase tracking-wide border-b bord",
+          "text": "Ngày phát sinh",
+          "left": 1523,
+          "right": 1723,
+          "w": 200
+        },
+        {
+          "tag": "TH",
+          "cls": "px-3 py-2.5 text-[12px] font-semibold text-slate-600 uppercase tracking-wide border-b bord",
+          "text": "Chi tiết",
+          "left": 1723,
+          "right": 1803,
+          "w": 80
+        }
+      ],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tất cả",
+          "w": 62,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Có phát sinh",
+          "w": 98,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chưa phát sinh",
+          "w": 112,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đã hoàn thành",
+          "w": 109,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Vượt khối lượng",
+          "w": 117,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 60,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 60,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 60,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 60,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 60,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 60,
+          "h": 26
+        }
+      ],
+      "texts": [
+        {
+          "tag": "TR",
+          "text": "1Cong tac chuan bi——2.0420—00.00%—"
+        },
+        {
+          "tag": "TD",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "TR",
+          "text": "2Cong tac chuan biDon dep mat bang, boc lop huu coMui chuan bim21.8500—00.00%—Xem"
+        },
+        {
+          "tag": "TD",
+          "text": "Cong tac chuan biDon dep mat bang, boc lop huu co"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "TR",
+          "text": "3Cong tac chuan biDinh vi tim truc, cao do chuanTo trac dacdiem720—00.00%—Xem"
+        },
+        {
+          "tag": "TD",
+          "text": "Cong tac chuan biDinh vi tim truc, cao do chuan"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "TR",
+          "text": "4Cong tac chuan biLan trai, kho vat tu, dien nuoc tamMui chuan bim21200—00.00%—Xem"
+        },
+        {
+          "tag": "TD",
+          "text": "Cong tac chuan biLan trai, kho vat tu, dien nuoc tam"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi"
+        }
+      ],
+      "tables": [
+        {
+          "w": 1498,
+          "cols": 11,
+          "text": "STTHạng mục / Công việcMũi thi côngĐVTTổng thiết kếTrước kỳTrong kỳLũy kếTỷ lệNgày phát sinhChi tiết1Cong tac chuan bi——",
+          "over": true
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "l1366:reports",
+      "url": "/reports",
+      "viewport": {
+        "vw": 1366,
+        "vh": 768
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tất cả",
+          "w": 66,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Báo cáo ngày",
+          "w": 115,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Báo cáo tuần",
+          "w": 111,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem chi tiết",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "In / Xuất PDF",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa báo cáo",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem chi tiết",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "In / Xuất PDF",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem chi tiết",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "In / Xuất PDF",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem chi tiết",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 1060,
+          "cols": 6,
+          "text": "Mã BCNgười tạoThời gianTrạng tháiHình ảnhTác vụTuần 29 · 13/07 - 19/07/2026·1 báo cáo·1 duyệtBCNNgàyPhát sinhLe Quang Hu",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "l1366:documents",
+      "url": "/documents",
+      "viewport": {
+        "vw": 1366,
+        "vh": 768
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "l1366:documents-project",
+      "url": "/documents/cmqry305q0007d4wkkycogu91",
+      "viewport": {
+        "vw": 1366,
+        "vh": 768
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tạo thư mục",
+          "w": 28,
+          "h": 28
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "l1366:material-requests",
+      "url": "/projects/cmqry305q0007d4wkkycogu91/material-requests",
+      "viewport": {
+        "vw": 1366,
+        "vh": 768
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Sửa đề xuất YCVT-QA-TUHIEP-20260714-001",
+          "w": 28,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chi tiết đề xuất YCVT-QA-TUHIEP-20260714-001",
+          "w": 28,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chi tiết đề xuất YCVT-QA-TUHIEP-20260712-001",
+          "w": 28,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chi tiết đề xuất YCVT-QA-TUHIEP-20260710-001",
+          "w": 28,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chi tiết đề xuất YCVT-QA-TUHIEP-20260706-001",
+          "w": 28,
+          "h": 28
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 996,
+          "cols": 7,
+          "text": "Mã phiếuNgày cầnSố loại VTTrạng tháiƯu tiênNgười tạoThao tácYCVT-QA-TUHIEP-20260714-00116/07/20261NhápTrung bìnhLe Quang",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "l1366:users",
+      "url": "/users",
+      "viewport": {
+        "vw": 1366,
+        "vh": 768
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Gán",
+          "w": 47,
+          "h": 20
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem chi tiết tài khoản QA User Ngoai Cong Trinh",
+          "w": 28,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Sửa thông tin tài khoản QA User Ngoai Cong Trinh",
+          "w": 28,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Khóa tài khoản",
+          "w": 28,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đổi mật khẩu",
+          "w": 28,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa mềm tài khoản QA User Ngoai Cong Trinh",
+          "w": 28,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Gỡ QA-TUHIEP-5F-001",
+          "w": 12,
+          "h": 12
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Gán",
+          "w": 47,
+          "h": 20
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem chi tiết tài khoản Pham Gia Linh",
+          "w": 28,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Sửa thông tin tài khoản Pham Gia Linh",
+          "w": 28,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Khóa tài khoản",
+          "w": 28,
+          "h": 28
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 1060,
+          "cols": 7,
+          "text": "Họ tênĐăng nhập / EmailSĐTVai tròCông trìnhTrạng tháiThao tácQA User Ngoai Cong Trinhqa_outsiderqa.outsider@example.test",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "l1366:materials-empty",
+      "url": "/materials",
+      "viewport": {
+        "vw": 1366,
+        "vh": 768
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "l1366:contracts-empty",
+      "url": "/contracts",
+      "viewport": {
+        "vw": 1366,
+        "vh": 768
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "l1366:approvals-empty",
+      "url": "/approvals",
+      "viewport": {
+        "vw": 1366,
+        "vh": 768
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "l1366:audit-empty",
+      "url": "/audit",
+      "viewport": {
+        "vw": 1366,
+        "vh": 768
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "l1366:login",
+      "url": "/dashboard",
+      "viewport": {
+        "vw": 1366,
+        "vh": 768
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "d1920:projects",
+      "url": "/projects",
+      "viewport": {
+        "vw": 1920,
+        "vh": 1080
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 1550,
+          "cols": 7,
+          "text": "Mã công trìnhTên công trìnhChủ đầu tưĐịa điểmTrạng tháiThời gianThao tácQA-TUHIEP-5F-001Nha Van Phong Dieu Hanh 5 Tang -",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "d1920:project-detail",
+      "url": "/projects/cmqry305q0007d4wkkycogu91",
+      "viewport": {
+        "vw": 1920,
+        "vh": 1080
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "d1920:field-master",
+      "url": "/projects/cmqry305q0007d4wkkycogu91/field-progress",
+      "viewport": {
+        "vw": 1920,
+        "vh": 1080
+      },
+      "horizontal": false,
+      "overflow": [
+        {
+          "tag": "TABLE",
+          "cls": "w-full text-sm min-w-[1200px]",
+          "text": "STTNội dung công việc / Hạng mụcMũi thi côngĐơn vịKhối lượng thiết kếLũy kế duyệ",
+          "left": 337,
+          "right": 1961,
+          "w": 1624
+        },
+        {
+          "tag": "THEAD",
+          "cls": "",
+          "text": "STTNội dung công việc / Hạng mụcMũi thi côngĐơn vịKhối lượng thiết kếLũy kế duyệ",
+          "left": 337,
+          "right": 1960,
+          "w": 1623
+        },
+        {
+          "tag": "TR",
+          "cls": "bg-slate-50 border-b-2 border-slate-200 sticky top-0 z-30 shadow-sm",
+          "text": "STTNội dung công việc / Hạng mụcMũi thi côngĐơn vịKhối lượng thiết kếLũy kế duyệ",
+          "left": 337,
+          "right": 1960,
+          "w": 1623
+        },
+        {
+          "tag": "TH",
+          "cls": "align-middle px-3 py-3 text-[13px] font-semibold text-slate-600 uppercase tracking-wide bo",
+          "text": "Thao tác",
+          "left": 1866,
+          "right": 1960,
+          "w": 94
+        },
+        {
+          "tag": "TBODY",
+          "cls": "",
+          "text": "1Tên hạng mụcCong tac chuan bi——2.0421.27862.59%—2Tên công việcDon dep mat bang,",
+          "left": 337,
+          "right": 1960,
+          "w": 1623
+        },
+        {
+          "tag": "TR",
+          "cls": "bg-slate-50 border-slate-200 [&>td]:bg-slate-50",
+          "text": "1Tên hạng mụcCong tac chuan bi——2.0421.27862.59%—",
+          "left": 337,
+          "right": 1960,
+          "w": 1623
+        },
+        {
+          "tag": "TD",
+          "cls": "align-middle h-14 px-3 py-3 border-r border-slate-100 text-sm font-medium bg-white text-sl",
+          "text": "",
+          "left": 1866,
+          "right": 1960,
+          "w": 94
+        },
+        {
+          "tag": "DIV",
+          "cls": "flex items-center justify-center gap-1",
+          "text": "",
+          "left": 1879,
+          "right": 1948,
+          "w": 69
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-md transition-colors",
+          "text": "",
+          "left": 1915,
+          "right": 1941,
+          "w": 26
+        },
+        {
+          "tag": "svg",
+          "cls": "[object SVGAnimatedString]",
+          "text": "",
+          "left": 1921,
+          "right": 1935,
+          "w": 14
+        },
+        {
+          "tag": "path",
+          "cls": "[object SVGAnimatedString]",
+          "text": "",
+          "left": 1924,
+          "right": 1932,
+          "w": 8
+        },
+        {
+          "tag": "path",
+          "cls": "[object SVGAnimatedString]",
+          "text": "",
+          "left": 1926,
+          "right": 1931,
+          "w": 5
+        }
+      ],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Thêm hạng mục chính",
+          "w": 206,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Lưu",
+          "w": 90,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Thu gọn hạng mục",
+          "w": 20,
+          "h": 20
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Thêm công việc con",
+          "w": 26,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa dòng",
+          "w": 26,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "m2",
+          "w": 85,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa dòng",
+          "w": 26,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "diem",
+          "w": 85,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa dòng",
+          "w": 26,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "m2",
+          "w": 85,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa dòng",
+          "w": 26,
+          "h": 26
+        }
+      ],
+      "texts": [
+        {
+          "tag": "TR",
+          "text": "1Tên hạng mụcCong tac chuan bi——2.0421.27862.59%—"
+        },
+        {
+          "tag": "TD",
+          "text": "Tên hạng mụcCong tac chuan bi"
+        },
+        {
+          "tag": "DIV",
+          "text": "Tên hạng mụcCong tac chuan bi"
+        },
+        {
+          "tag": "TEXTAREA",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "TR",
+          "text": "5Tên hạng mụcPhan mong——44.84233.80575.39%—"
+        },
+        {
+          "tag": "TD",
+          "text": "Tên hạng mụcPhan mong"
+        },
+        {
+          "tag": "DIV",
+          "text": "Tên hạng mụcPhan mong"
+        },
+        {
+          "tag": "TEXTAREA",
+          "text": "Phan mong"
+        },
+        {
+          "tag": "TR",
+          "text": "6Tên công việcDao dat ho mong, van chuyen noi boMũi thi côngm3Khối lượng thiết kế52053.06%Ghi chú"
+        },
+        {
+          "tag": "TD",
+          "text": "Tên công việcDao dat ho mong, van chuyen noi bo"
+        },
+        {
+          "tag": "DIV",
+          "text": "Tên công việcDao dat ho mong, van chuyen noi bo"
+        },
+        {
+          "tag": "TEXTAREA",
+          "text": "Dao dat ho mong, van chuyen noi bo"
+        }
+      ],
+      "tables": [
+        {
+          "w": 1624,
+          "cols": 9,
+          "text": "STTNội dung công việc / Hạng mụcMũi thi côngĐơn vịKhối lượng thiết kếLũy kế duyệtTỷ lệ hoàn thànhGhi chúThao tác1Tên hạn",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "d1920:field-daily",
+      "url": "/projects/cmqry305q0007d4wkkycogu91/field-progress/daily",
+      "viewport": {
+        "vw": 1920,
+        "vh": 1080
+      },
+      "horizontal": false,
+      "overflow": [
+        {
+          "tag": "TABLE",
+          "cls": "w-full text-left text-sm whitespace-nowrap min-w-max border-collapse",
+          "text": "STTCông việcMũiĐơn vịTổng khối lượngĐã thực hiệnKhối lượng ngày nàySau nhậpTỷ lệ",
+          "left": 337,
+          "right": 2034,
+          "w": 1697
+        },
+        {
+          "tag": "THEAD",
+          "cls": "border-b-2 border-slate-200 bg-slate-50",
+          "text": "STTCông việcMũiĐơn vịTổng khối lượngĐã thực hiệnKhối lượng ngày nàySau nhậpTỷ lệ",
+          "left": 337,
+          "right": 2033,
+          "w": 1696
+        },
+        {
+          "tag": "TR",
+          "cls": "",
+          "text": "STTCông việcMũiĐơn vịTổng khối lượngĐã thực hiệnKhối lượng ngày nàySau nhậpTỷ lệ",
+          "left": 337,
+          "right": 2033,
+          "w": 1696
+        },
+        {
+          "tag": "TH",
+          "cls": "align-middle px-3 py-3 text-[13px] font-semibold text-slate-600 uppercase tracking-wide bo",
+          "text": "Ghi chú nhanh",
+          "left": 1711,
+          "right": 1951,
+          "w": 240
+        },
+        {
+          "tag": "TH",
+          "cls": "align-middle px-3 py-3 text-[13px] font-semibold text-slate-600 uppercase tracking-wide bo",
+          "text": "Chi tiết",
+          "left": 1951,
+          "right": 2033,
+          "w": 82
+        },
+        {
+          "tag": "TBODY",
+          "cls": "divide-y divide-slate-100",
+          "text": "1Cong tac chuan biDon dep mat bang, boc lop huu coMui chuan bim21.8500Khối lượng",
+          "left": 337,
+          "right": 2033,
+          "w": 1696
+        },
+        {
+          "tag": "TR",
+          "cls": "transition bg-white hover:bg-slate-50/50 transition-colors ",
+          "text": "1Cong tac chuan biDon dep mat bang, boc lop huu coMui chuan bim21.8500Khối lượng",
+          "left": 337,
+          "right": 2033,
+          "w": 1696
+        },
+        {
+          "tag": "TD",
+          "cls": "align-middle h-14 px-3 py-3 border-r border-slate-100 text-sm font-medium bg-white text-sl",
+          "text": "Ghi chú nhanh cho Don dep mat bang, boc lop huu co",
+          "left": 1711,
+          "right": 1951,
+          "w": 240
+        },
+        {
+          "tag": "INPUT",
+          "cls": "h-9 w-full min-w-[120px] rounded-md border border-slate-200 bg-white px-3 text-sm text-sla",
+          "text": "",
+          "left": 1724,
+          "right": 1939,
+          "w": 215
+        },
+        {
+          "tag": "TD",
+          "cls": "align-middle h-14 px-3 py-3 border-r border-slate-100 text-sm font-medium bg-white text-sl",
+          "text": "",
+          "left": 1951,
+          "right": 2033,
+          "w": 82
+        },
+        {
+          "tag": "BUTTON",
+          "cls": "shrink-0 items-center justify-center gap-2 text-sm font-semibold transition-[color,backgro",
+          "text": "",
+          "left": 1976,
+          "right": 2008,
+          "w": 32
+        },
+        {
+          "tag": "svg",
+          "cls": "[object SVGAnimatedString]",
+          "text": "",
+          "left": 1984,
+          "right": 2000,
+          "w": 16
+        }
+      ],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Thêm phát sinhThêm công việc phát sinh",
+          "w": 195,
+          "h": 32
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tất cả",
+          "w": 60,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chưa nhập",
+          "w": 87,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đã nhập",
+          "w": 72,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Vượt khối lượng",
+          "w": 116,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem chi tiết Don dep mat bang, boc lop huu co",
+          "w": 32,
+          "h": 32
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem chi tiết Dinh vi tim truc, cao do chuan",
+          "w": 32,
+          "h": 32
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem chi tiết Lan trai, kho vat tu, dien nuoc tam",
+          "w": 32,
+          "h": 32
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem chi tiết Dao dat ho mong, van chuyen noi bo",
+          "w": 32,
+          "h": 32
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem chi tiết Do be tong lot mong M100",
+          "w": 32,
+          "h": 32
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem chi tiết Gia cong lap dung cot thep mong",
+          "w": 32,
+          "h": 32
+        }
+      ],
+      "texts": [
+        {
+          "tag": "TR",
+          "text": "1Cong tac chuan biDon dep mat bang, boc lop huu coMui chuan bim21.8500Khối lượng ngày 2026-06-2500.0%Ghi chú nhanh cho Don dep mat bang, boc lop huu co"
+        },
+        {
+          "tag": "TD",
+          "text": "Cong tac chuan biDon dep mat bang, boc lop huu co"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "TR",
+          "text": "2Cong tac chuan biDinh vi tim truc, cao do chuanTo trac dacdiem720Khối lượng ngày 2026-06-2500.0%Ghi chú nhanh cho Dinh vi tim truc, cao do chuan"
+        },
+        {
+          "tag": "TD",
+          "text": "Cong tac chuan biDinh vi tim truc, cao do chuan"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "TR",
+          "text": "3Cong tac chuan biLan trai, kho vat tu, dien nuoc tamMui chuan bim21200Khối lượng ngày 2026-06-2500.0%Ghi chú nhanh cho Lan trai, kho vat tu, dien nuoc tam"
+        },
+        {
+          "tag": "TD",
+          "text": "Cong tac chuan biLan trai, kho vat tu, dien nuoc tam"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "TR",
+          "text": "4Phan mongDao dat ho mong, van chuyen noi boMui mong Am39800Khối lượng ngày 2026-06-2500.0%Ghi chú nhanh cho Dao dat ho mong, van chuyen noi bo"
+        },
+        {
+          "tag": "TD",
+          "text": "Phan mongDao dat ho mong, van chuyen noi bo"
+        },
+        {
+          "tag": "DIV",
+          "text": "Phan mong"
+        }
+      ],
+      "tables": [
+        {
+          "w": 1697,
+          "cols": 11,
+          "text": "STTCông việcMũiĐơn vịTổng khối lượngĐã thực hiệnKhối lượng ngày nàySau nhậpTỷ lệGhi chú nhanhChi tiết1Cong tac chuan biD",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "d1920:field-summary",
+      "url": "/projects/cmqry305q0007d4wkkycogu91/field-progress/summary",
+      "viewport": {
+        "vw": 1920,
+        "vh": 1080
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tất cả",
+          "w": 62,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Có phát sinh",
+          "w": 98,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chưa phát sinh",
+          "w": 112,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đã hoàn thành",
+          "w": 109,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Vượt khối lượng",
+          "w": 117,
+          "h": 30
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 60,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 60,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 60,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 60,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 60,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 60,
+          "h": 26
+        }
+      ],
+      "texts": [
+        {
+          "tag": "TR",
+          "text": "1Cong tac chuan bi——2.0420—00.00%—"
+        },
+        {
+          "tag": "TD",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "TR",
+          "text": "2Cong tac chuan biDon dep mat bang, boc lop huu coMui chuan bim21.8500—00.00%—Xem"
+        },
+        {
+          "tag": "TD",
+          "text": "Cong tac chuan biDon dep mat bang, boc lop huu co"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "TR",
+          "text": "3Cong tac chuan biDinh vi tim truc, cao do chuanTo trac dacdiem720—00.00%—Xem"
+        },
+        {
+          "tag": "TD",
+          "text": "Cong tac chuan biDinh vi tim truc, cao do chuan"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi"
+        },
+        {
+          "tag": "TR",
+          "text": "4Cong tac chuan biLan trai, kho vat tu, dien nuoc tamMui chuan bim21200—00.00%—Xem"
+        },
+        {
+          "tag": "TD",
+          "text": "Cong tac chuan biLan trai, kho vat tu, dien nuoc tam"
+        },
+        {
+          "tag": "DIV",
+          "text": "Cong tac chuan bi"
+        }
+      ],
+      "tables": [
+        {
+          "w": 1502,
+          "cols": 11,
+          "text": "STTHạng mục / Công việcMũi thi côngĐVTTổng thiết kếTrước kỳTrong kỳLũy kếTỷ lệNgày phát sinhChi tiết1Cong tac chuan bi——",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "d1920:reports",
+      "url": "/reports",
+      "viewport": {
+        "vw": 1920,
+        "vh": 1080
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tất cả",
+          "w": 66,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Báo cáo ngày",
+          "w": 115,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Báo cáo tuần",
+          "w": 111,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem chi tiết",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "In / Xuất PDF",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa báo cáo",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem chi tiết",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "In / Xuất PDF",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem chi tiết",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "In / Xuất PDF",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem chi tiết",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 1550,
+          "cols": 6,
+          "text": "Mã BCNgười tạoThời gianTrạng tháiHình ảnhTác vụTuần 29 · 13/07 - 19/07/2026·1 báo cáo·1 duyệtBCNNgàyPhát sinhLe Quang Hu",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "d1920:documents",
+      "url": "/documents",
+      "viewport": {
+        "vw": 1920,
+        "vh": 1080
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "d1920:documents-project",
+      "url": "/documents/cmqry305q0007d4wkkycogu91",
+      "viewport": {
+        "vw": 1920,
+        "vh": 1080
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tạo thư mục",
+          "w": 28,
+          "h": 28
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "d1920:material-requests",
+      "url": "/projects/cmqry305q0007d4wkkycogu91/material-requests",
+      "viewport": {
+        "vw": 1920,
+        "vh": 1080
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Sửa đề xuất YCVT-QA-TUHIEP-20260714-001",
+          "w": 28,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chi tiết đề xuất YCVT-QA-TUHIEP-20260714-001",
+          "w": 28,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chi tiết đề xuất YCVT-QA-TUHIEP-20260712-001",
+          "w": 28,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chi tiết đề xuất YCVT-QA-TUHIEP-20260710-001",
+          "w": 28,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chi tiết đề xuất YCVT-QA-TUHIEP-20260706-001",
+          "w": 28,
+          "h": 28
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 1334,
+          "cols": 7,
+          "text": "Mã phiếuNgày cầnSố loại VTTrạng tháiƯu tiênNgười tạoThao tácYCVT-QA-TUHIEP-20260714-00116/07/20261NhápTrung bìnhLe Quang",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "d1920:users",
+      "url": "/users",
+      "viewport": {
+        "vw": 1920,
+        "vh": 1080
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Gán",
+          "w": 47,
+          "h": 20
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem chi tiết tài khoản QA User Ngoai Cong Trinh",
+          "w": 28,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Sửa thông tin tài khoản QA User Ngoai Cong Trinh",
+          "w": 28,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Khóa tài khoản",
+          "w": 28,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đổi mật khẩu",
+          "w": 28,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa mềm tài khoản QA User Ngoai Cong Trinh",
+          "w": 28,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Gỡ QA-TUHIEP-5F-001",
+          "w": 12,
+          "h": 12
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Gán",
+          "w": 47,
+          "h": 20
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem chi tiết tài khoản Pham Gia Linh",
+          "w": 28,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Sửa thông tin tài khoản Pham Gia Linh",
+          "w": 28,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Khóa tài khoản",
+          "w": 28,
+          "h": 28
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 1550,
+          "cols": 7,
+          "text": "Họ tênĐăng nhập / EmailSĐTVai tròCông trìnhTrạng tháiThao tácQA User Ngoai Cong Trinhqa_outsiderqa.outsider@example.test",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "d1920:materials-empty",
+      "url": "/materials",
+      "viewport": {
+        "vw": 1920,
+        "vh": 1080
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "d1920:contracts-empty",
+      "url": "/contracts",
+      "viewport": {
+        "vw": 1920,
+        "vh": 1080
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "d1920:approvals-empty",
+      "url": "/approvals",
+      "viewport": {
+        "vw": 1920,
+        "vh": 1080
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "d1920:audit-empty",
+      "url": "/audit",
+      "viewport": {
+        "vw": 1920,
+        "vh": 1080
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "d1920:login",
+      "url": "/dashboard",
+      "viewport": {
+        "vw": 1920,
+        "vh": 1080
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "m390:scenario:report-detail",
+      "url": "/reports",
+      "viewport": {
+        "vw": 390,
+        "vh": 844
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Bộ lọc",
+          "w": 84,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "w": 40,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tất cả",
+          "w": 66,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Báo cáo ngày",
+          "w": 115,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Báo cáo tuần",
+          "w": 111,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa",
+          "w": 30,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 66,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 66,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 66,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 66,
+          "h": 28
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 6,
+          "text": "Mã BCNgười tạoThời gianTrạng tháiHình ảnhTác vụTuần 29 · 13/07 - 19/07/2026·1 báo cáo·1 duyệtBCNNgàyPhát sinhLe Quang Hu",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "m390:scenario:weekly-report-detail",
+      "url": "/reports?tab=weekly",
+      "viewport": {
+        "vw": 390,
+        "vh": 844
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Bộ lọc",
+          "w": 84,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "w": 40,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tất cả",
+          "w": 66,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Báo cáo ngày",
+          "w": 115,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Báo cáo tuần",
+          "w": 111,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa",
+          "w": 30,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 66,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 66,
+          "h": 28
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 6,
+          "text": "Mã BCNgười tạoThời gianTrạng tháiHình ảnhTác vụTuần 28 · 06/07 - 12/07/2026·1 báo cáo·1 chờBCTTuầnPhát sinhNguyen Hoang ",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "m390:scenario:submitted-report-actions",
+      "url": "/reports?status=SUBMITTED",
+      "viewport": {
+        "vw": 390,
+        "vh": 844
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Bộ lọc",
+          "w": 84,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "w": 40,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tất cả",
+          "w": 66,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Báo cáo ngày",
+          "w": 115,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Báo cáo tuần",
+          "w": 111,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa",
+          "w": 30,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 66,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa",
+          "w": 30,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 66,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa",
+          "w": 30,
+          "h": 26
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 6,
+          "text": "Mã BCNgười tạoThời gianTrạng tháiHình ảnhTác vụTuần 28 · 06/07 - 12/07/2026·2 báo cáo·2 chờBCTTuầnPhát sinhNguyen Hoang ",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    },
+    {
+      "label": "m390:scenario:create-report-dialog",
+      "url": "/reports",
+      "viewport": {
+        "vw": 390,
+        "vh": 844
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đóng menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 292,
+          "h": 40
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Bộ lọc",
+          "w": 84,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "",
+          "w": 40,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tất cả",
+          "w": 66,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Báo cáo ngày",
+          "w": 115,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Báo cáo tuần",
+          "w": 111,
+          "h": 34
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xóa",
+          "w": 30,
+          "h": 26
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 66,
+          "h": 28
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Xem",
+          "w": 66,
+          "h": 28
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 6,
+          "text": "Mã BCNgười tạoThời gianTrạng tháiHình ảnhTác vụTuần 29 · 13/07 - 19/07/2026·1 báo cáo·1 duyệtBCNNgàyPhát sinhLe Quang Hu",
+          "over": false
+        }
+      ],
+      "dialogs": [
+        {
+          "w": 390,
+          "h": 844,
+          "bottom": 844,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "text": "CT2 Hà NộiERP CÔNG TRÌNHTổng quanQUẢN LÝCông trìnhTài liệuBáo cáo hiện trườngVật tưNhà cung cấpTÀI CHÍNHHợp đồngThanh toánPhê duyệtHỆ THỐNGN"
+        },
+        {
+          "w": 390,
+          "h": 844,
+          "bottom": 844,
+          "scrollHeight": 844,
+          "clientHeight": 844,
+          "text": ""
+        }
+      ]
+    },
+    {
+      "label": "m390:scenario:documents-project",
+      "url": "/documents/cmqry305q0007d4wkkycogu91",
+      "viewport": {
+        "vw": 390,
+        "vh": 844
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Tạo thư mục",
+          "w": 28,
+          "h": 28
+        }
+      ],
+      "texts": [],
+      "tables": [],
+      "dialogs": []
+    },
+    {
+      "label": "m390:scenario:material-request-detail",
+      "url": "/projects/cmqry305q0007d4wkkycogu91/material-requests",
+      "viewport": {
+        "vw": 390,
+        "vh": 844
+      },
+      "horizontal": false,
+      "overflow": [],
+      "tiny": [
+        {
+          "tag": "BUTTON",
+          "text": "Mở menu",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Đăng xuất",
+          "w": 36,
+          "h": 36
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chi tiết",
+          "w": 66,
+          "h": 20
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chi tiết",
+          "w": 66,
+          "h": 20
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chi tiết",
+          "w": 66,
+          "h": 20
+        },
+        {
+          "tag": "BUTTON",
+          "text": "Chi tiết",
+          "w": 66,
+          "h": 20
+        }
+      ],
+      "texts": [],
+      "tables": [
+        {
+          "w": 0,
+          "cols": 7,
+          "text": "Mã phiếuNgày cầnSố loại VTTrạng tháiƯu tiênNgười tạoThao tácYCVT-QA-TUHIEP-20260714-00116/07/20261NhápTrung bìnhLe Quang",
+          "over": false
+        }
+      ],
+      "dialogs": []
+    }
+  ]
+}

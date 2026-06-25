@@ -56,7 +56,7 @@ export function ReportsMobileCards({ reports, onViewDetail, onViewGallery, onEdi
           </div>
 
           {/* Bottom row: photos + action */}
-          <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+          <div className="flex items-center justify-between gap-3 pt-2 border-t border-slate-100">
             <div className="flex flex-wrap items-center gap-1.5" onClick={(e) => { e.stopPropagation(); onViewGallery?.(report); }}>
               {report.photos.length > 0 && (
                 <span className="text-[11px] text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded font-medium">
@@ -77,40 +77,40 @@ export function ReportsMobileCards({ reports, onViewDetail, onViewGallery, onEdi
                 <span className="text-slate-300">-</span>
               )}
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex shrink-0 items-center gap-1">
               {currentUser && (
                 <>
                   {(report.status === "DRAFT" || report.status === "REJECTED" || report.status === "REVISION_REQUESTED" || report.status === "SUBMITTED") && 
                    ['ADMIN', 'DIRECTOR', 'DEPUTY_DIRECTOR'].includes(currentUser.role || '') && (
                     <button
                       onClick={(e) => { e.stopPropagation(); onDelete?.(report); }}
-                      className="inline-flex items-center gap-1 text-xs font-medium text-red-600 px-2 py-1.5 rounded-md transition-colors"
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-red-600 transition-colors hover:bg-red-50"
                       aria-label="Xóa"
                       title="Xóa báo cáo"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   )}
                   {(report.status === "DRAFT" || report.status === "REJECTED" || report.status === "REVISION_REQUESTED") && 
                    (report.createdById === currentUser.id || ['ADMIN', 'DIRECTOR', 'DEPUTY_DIRECTOR'].includes(currentUser.role || '')) && (
                     <button
                       onClick={(e) => { e.stopPropagation(); onEdit?.(report); }}
-                      className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 px-2 py-1.5 rounded-md transition-colors"
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-blue-600 transition-colors hover:bg-blue-50"
                       aria-label="Sửa"
                       title="Sửa báo cáo"
                     >
-                      <Edit2 className="w-3.5 h-3.5" />
+                      <Edit2 className="w-4 h-4" />
                     </button>
                   )}
                 </>
               )}
               <button
                 onClick={(e) => { e.stopPropagation(); onViewDetail(report); }}
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 px-2.5 py-1.5 rounded-md transition-colors"
+                className="inline-flex h-11 items-center gap-1.5 rounded-lg bg-blue-50 px-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-100"
                 aria-label="Xem"
                 title="Xem chi tiết"
               >
-                <Eye className="w-3.5 h-3.5" />
+                <Eye className="w-4 h-4" />
                 Xem
               </button>
             </div>

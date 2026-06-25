@@ -78,6 +78,82 @@ interface DetailSectionProps {
   empty?: boolean;
 }
 
+type DisplayWorkLine = {
+  id: string;
+  workContent: string;
+  code?: string;
+  unit?: string;
+  quantityToday: number;
+  count: number;
+  notes: string[];
+};
+
+function getReadableWorkCode(line: FieldReport["workLines"][number]) {
+  const explicitCode = line.wbsItemId?.trim();
+  if (explicitCode && !explicitCode.startsWith("cm")) return explicitCode;
+
+  const seedCode = line.note?.match(/\b([A-Z]{2,}-\d{3}|STR-\d{3}|PRE-\d{3})\b/)?.[1];
+  return seedCode;
+}
+
+function isInternalReportLineNote(note?: string) {
+  return /^Tổng hợp từ nhật ký thi công đã nhập/i.test(note?.trim() || "");
+}
+
+function buildDisplayWorkLines(report: FieldReport): DisplayWorkLine[] {
+  const validLines = (report.workLines || []).filter((line) =>
+    (line.workContent && line.workContent !== "No content") ||
+    (line.quantityToday !== undefined && line.quantityToday > 0)
+  );
+
+  if (report.type !== "WEEKLY") {
+    return validLines.map((line, index) => ({
+      id: line.id || `${line.workContent}-${index}`,
+      workContent: line.workContent || "Công việc chưa rõ",
+      code: getReadableWorkCode(line),
+      unit: line.unit,
+      quantityToday: Number(line.quantityToday || 0),
+      count: 1,
+      notes: line.note && !isInternalReportLineNote(line.note) ? [line.note] : [],
+    }));
+  }
+
+  const grouped = new Map<string, DisplayWorkLine>();
+  validLines.forEach((line, index) => {
+    const code = getReadableWorkCode(line);
+    const key = `${line.wbsItemId || code || line.workContent || index}|${line.workContent}|${line.unit || ""}`;
+    const existing = grouped.get(key);
+    const cleanNote = line.note && !isInternalReportLineNote(line.note) ? line.note : undefined;
+
+    if (!existing) {
+      grouped.set(key, {
+        id: line.id || key,
+        workContent: line.workContent || "Công việc chưa rõ",
+        code,
+        unit: line.unit,
+        quantityToday: Number(line.quantityToday || 0),
+        count: 1,
+        notes: cleanNote ? [cleanNote] : [],
+      });
+      return;
+    }
+
+    existing.quantityToday += Number(line.quantityToday || 0);
+    existing.count += 1;
+    if (cleanNote && !existing.notes.includes(cleanNote)) {
+      existing.notes.push(cleanNote);
+    }
+  });
+
+  return Array.from(grouped.values());
+}
+
+function formatReportQuantity(value: number) {
+  return new Intl.NumberFormat("vi-VN", {
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
 function DetailSection({ title, icon, children, empty }: DetailSectionProps) {
   if (empty) return null;
   return (
@@ -267,9 +343,30 @@ export function ReportDetailDrawer({
 
   const weatherLabel = WEATHER_OPTIONS.find(o => o.value === report.weatherCondition)?.label || "Khác";
 
-  const validWorkLines = (report.workLines || []).filter(l => 
-    (l.workContent && l.workContent !== "No content") || (l.quantityToday !== undefined && l.quantityToday > 0)
-  );
+  const displayWorkLines = buildDisplayWorkLines(report);
+  const isReportDeletable =
+    !!currentUser &&
+    (report.status === "DRAFT" ||
+      report.status === "REJECTED" ||
+      report.status === "REVISION_REQUESTED" ||
+      report.status === "SUBMITTED") &&
+    ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"].includes(currentUser.role || "");
+  const isReportEditable =
+    !!currentUser &&
+    (report.status === "DRAFT" ||
+      report.status === "REJECTED" ||
+      report.status === "REVISION_REQUESTED") &&
+    (report.createdById === currentUser.id ||
+      ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"].includes(currentUser.role || ""));
+  const canSubmitReport =
+    (report.status === "DRAFT" ||
+      report.status === "REJECTED" ||
+      report.status === "REVISION_REQUESTED") &&
+    currentUser?.id === report.createdById;
+  const canModerateReport =
+    report.status === "SUBMITTED" &&
+    !!currentUser &&
+    ["ADMIN", "DIRECTOR"].includes(currentUser.role || "");
 
   return (
     <div
@@ -307,7 +404,7 @@ export function ReportDetailDrawer({
           <button
             onClick={onClose}
             disabled={isProcessing}
-            className="icon-button shrink-0 disabled:opacity-50"
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50 md:h-10 md:w-10"
             title="Đóng"
             aria-label="Đóng chi tiết báo cáo"
           >
@@ -315,7 +412,7 @@ export function ReportDetailDrawer({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 space-y-6">
+        <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 pb-6 space-y-6">
           {/* We removed the redundant 4 info cards since header already contains them.
               But we keep GPS location if available. */}
           {report.gpsLocation && (
@@ -338,31 +435,97 @@ export function ReportDetailDrawer({
           )}
 
           {/* Work Lines Table or Content */}
-          {validWorkLines.length > 0 ? (
+          {displayWorkLines.length > 0 ? (
             <div className="space-y-2">
               <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
                 <TrendingUp className="w-4 h-4 text-emerald-600" />
-                {report.type === 'WEEKLY' ? 'Tổng hợp công việc' : 'Nội dung công việc'} ({validWorkLines.length})
+                {report.type === 'WEEKLY' ? 'Tổng theo công việc' : 'Nội dung công việc'} ({displayWorkLines.length})
               </h4>
               <div className="pl-0 sm:pl-6">
-                <div className="border border-slate-200 rounded-lg overflow-hidden">
+                <div className="space-y-3 md:hidden">
+                  {displayWorkLines.map((line, idx) => (
+                    <article
+                      key={line.id || idx}
+                      className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {line.code && (
+                              <span className="rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-slate-600">
+                                {line.code}
+                              </span>
+                            )}
+                            {report.type === "WEEKLY" && line.count > 1 && (
+                              <span className="rounded-md bg-blue-50 px-1.5 py-0.5 text-[11px] font-semibold text-blue-700">
+                                {line.count} lần phát sinh
+                              </span>
+                            )}
+                          </div>
+                          <h5 className="mt-1.5 text-sm font-semibold leading-snug text-slate-900">
+                            {line.workContent}
+                          </h5>
+                          {report.type === "WEEKLY" && report.weekStartDate && report.weekEndDate && (
+                            <p className="mt-1 text-xs font-medium text-slate-500">
+                              {report.weekStartDate} - {report.weekEndDate}
+                            </p>
+                          )}
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className="text-base font-bold text-blue-700">
+                            {formatReportQuantity(line.quantityToday)}
+                          </p>
+                          <p className="text-xs font-semibold text-slate-500">
+                            {line.unit || "-"}
+                          </p>
+                        </div>
+                      </div>
+                      {line.notes.length > 0 && (
+                        <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-600">
+                          {line.notes.slice(0, 2).map((note) => (
+                            <p key={note}>{note}</p>
+                          ))}
+                        </div>
+                      )}
+                    </article>
+                  ))}
+                </div>
+
+                <div className="hidden overflow-hidden rounded-lg border border-slate-200 md:block">
                   <table className="w-full text-sm">
                     <thead className="bg-slate-50">
                       <tr>
-                        <th className="px-3 py-2 text-left font-semibold text-slate-600 border-b">Hạng mục / Công việc</th>
-                        <th className="px-3 py-2 text-right font-semibold text-slate-600 border-b w-[80px]">K.lượng</th>
-                        <th className="px-3 py-2 text-center font-semibold text-slate-600 border-b w-[60px]">Đ.vị</th>
+                        <th className="border-b px-3 py-2 text-left font-semibold text-slate-600">Hạng mục / Công việc</th>
+                        <th className="w-[96px] border-b px-3 py-2 text-right font-semibold text-slate-600">K.lượng</th>
+                        <th className="w-[68px] border-b px-3 py-2 text-center font-semibold text-slate-600">Đ.vị</th>
+                        {report.type === "WEEKLY" && (
+                          <th className="w-[92px] border-b px-3 py-2 text-center font-semibold text-slate-600">Phát sinh</th>
+                        )}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {validWorkLines.map((line, idx) => (
+                      {displayWorkLines.map((line, idx) => (
                         <tr key={line.id || idx}>
                           <td className="px-3 py-2">
-                            <span className="font-medium text-slate-800">{line.workContent}</span>
-                            {line.note && <p className="text-xs text-slate-500 mt-0.5">{line.note}</p>}
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              {line.code && (
+                                <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-slate-500">
+                                  {line.code}
+                                </span>
+                              )}
+                              <span className="font-medium text-slate-800">{line.workContent}</span>
+                            </div>
+                            {line.notes.map((note) => (
+                              <p key={note} className="mt-0.5 text-xs text-slate-500">{note}</p>
+                            ))}
                           </td>
-                          <td className="px-3 py-2 text-right font-semibold text-blue-600">{line.quantityToday}</td>
-                          <td className="px-3 py-2 text-center text-slate-500">{line.unit}</td>
+                          <td className="px-3 py-2 text-right font-semibold text-blue-600">{formatReportQuantity(line.quantityToday)}</td>
+                          <td className="px-3 py-2 text-center text-slate-500">{line.unit || "-"}</td>
+                          {report.type === "WEEKLY" && (
+                            <td className="px-3 py-2 text-center text-xs font-semibold text-slate-500">
+                              {line.count} lần
+                            </td>
+                          )}
                         </tr>
                       ))}
                     </tbody>
@@ -513,7 +676,7 @@ export function ReportDetailDrawer({
           </div>
         </div>
 
-        <div className="shrink-0 border-t border-slate-200 bg-slate-50 px-4 py-3 sm:px-6 sm:py-4">
+        <div className="shrink-0 border-t border-slate-200 bg-slate-50 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:px-6 md:py-4">
           {rejectMode ? (
             <div className="space-y-3">
               <textarea
@@ -522,14 +685,14 @@ export function ReportDetailDrawer({
                 placeholder="Nhập lý do từ chối (bắt buộc)..."
                 className="w-full min-h-[80px] p-2.5 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none resize-none"
               />
-              <div className="flex items-center gap-2 justify-end">
-                <Button variant="outline" onClick={() => setRejectMode(false)} disabled={isProcessing}>
+              <div className="flex flex-col-reverse gap-2 md:flex-row md:items-center md:justify-end">
+                <Button variant="outline" onClick={() => setRejectMode(false)} disabled={isProcessing} className="h-11 w-full md:h-10 md:w-auto">
                   Hủy
                 </Button>
                 <Button
                   onClick={handleReject}
                   disabled={isProcessing || !rejectReason.trim()}
-                  className="bg-red-600 hover:bg-red-700 text-white"
+                  className="h-11 w-full bg-red-600 text-white hover:bg-red-700 md:h-10 md:w-auto"
                 >
                   {isProcessing ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
                   Xác nhận từ chối
@@ -537,8 +700,82 @@ export function ReportDetailDrawer({
               </div>
             </div>
           ) : (
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
+            <>
+              <div className="space-y-2 md:hidden">
+                {canModerateReport && (
+                  <Button
+                    onClick={handleApprove}
+                    disabled={isProcessing}
+                    className="h-11 w-full gap-2 bg-emerald-600 text-white hover:bg-emerald-700"
+                  >
+                    {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                    Duyệt
+                  </Button>
+                )}
+
+                {canSubmitReport && (
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={isProcessing}
+                    className="h-11 w-full gap-2 bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    Gửi báo cáo
+                  </Button>
+                )}
+
+                {canModerateReport && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setRejectMode(true)}
+                    disabled={isProcessing}
+                    className="h-11 w-full border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50"
+                  >
+                    Từ chối
+                  </Button>
+                )}
+
+                {isReportDeletable && (
+                  <Button
+                    variant="outline"
+                    onClick={() => onDelete?.(report)}
+                    disabled={isProcessing}
+                    className="h-11 w-full border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Xóa
+                  </Button>
+                )}
+
+                {isReportEditable && (
+                  <Button
+                    variant="outline"
+                    onClick={() => { onClose(); onEdit?.(report); }}
+                    disabled={isProcessing}
+                    className="h-11 w-full border-blue-200 text-blue-600 hover:border-blue-300 hover:bg-blue-50"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                    Sửa
+                  </Button>
+                )}
+
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    className="h-11 gap-1.5"
+                    onClick={() => window.open(`/print/reports/${report.id}`, '_blank')}
+                  >
+                    <Printer className="w-4 h-4" />
+                    In/PDF
+                  </Button>
+                  <Button variant="outline" className="h-11" onClick={onClose} disabled={isProcessing}>
+                    Đóng
+                  </Button>
+                </div>
+              </div>
+
+              <div className="hidden items-center justify-between gap-3 md:flex">
+                <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   className="gap-1.5"
@@ -556,8 +793,7 @@ export function ReportDetailDrawer({
                 {/* Edit and Delete for DRAFT/REJECTED/SUBMITTED */}
                 {currentUser && (
                   <>
-                    {(report.status === "DRAFT" || report.status === "REJECTED" || report.status === "REVISION_REQUESTED" || report.status === "SUBMITTED") && 
-                     ['ADMIN', 'DIRECTOR', 'DEPUTY_DIRECTOR'].includes(currentUser.role || '') && (
+                    {isReportDeletable && (
                       <Button
                         variant="outline"
                         onClick={() => onDelete?.(report)}
@@ -568,8 +804,7 @@ export function ReportDetailDrawer({
                         Xóa
                       </Button>
                     )}
-                    {(report.status === "DRAFT" || report.status === "REJECTED" || report.status === "REVISION_REQUESTED") && 
-                     (report.createdById === currentUser.id || ['ADMIN', 'DIRECTOR', 'DEPUTY_DIRECTOR'].includes(currentUser.role || '')) && (
+                    {isReportEditable && (
                       <Button
                         variant="outline"
                         onClick={() => { onClose(); onEdit?.(report); }}
@@ -583,7 +818,7 @@ export function ReportDetailDrawer({
                   </>
                 )}
 
-                {(report.status === "DRAFT" || report.status === "REJECTED" || report.status === "REVISION_REQUESTED") && currentUser?.id === report.createdById && (
+                {canSubmitReport && (
                   <Button
                     onClick={handleSubmit}
                     disabled={isProcessing}
@@ -595,7 +830,7 @@ export function ReportDetailDrawer({
                 )}
 
                 {/* Approve/Reject buttons for ADMIN/DIRECTOR in SUBMITTED */}
-                {report.status === "SUBMITTED" && currentUser && ['ADMIN', 'DIRECTOR'].includes(currentUser.role || '') && (
+                {canModerateReport && (
                   <>
                     <Button
                       variant="outline"
@@ -616,7 +851,8 @@ export function ReportDetailDrawer({
                   </>
                 )}
               </div>
-            </div>
+              </div>
+            </>
           )}
         </div>
       </div>

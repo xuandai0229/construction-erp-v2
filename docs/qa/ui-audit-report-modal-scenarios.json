@@ -1,0 +1,521 @@
+[
+  {
+    "label": "report-detail-card-click",
+    "url": "/reports",
+    "text": "ERP\nBáo cáo hiện trường\nBộ lọc\nChờ duyệt\n3\nTừ chối\n1\nPhát sinh\n12\nTất cả\nBáo cáo ngày\nBáo cáo tuần\n\nBCT\n\nTuần\nChờ duyệt / Đã gửi\nNguyen Hoang Nam\n2026-07-08 - 2026-07-14\n-\nXem\n\nBCN\n\nNgày\nĐã duyệt\nLe Quang Huy\n2026-07-13\n+1 file\nXem\n\nBCN\n\nNgày\nĐã duyệt\nLe Quang Huy\n2026-07-12\n-\nXem\n\nBCN\n\nNgày\nĐã duyệt\nNguyen Hoang Nam\n2026-07-10\n1 ảnh\nXem\n\nBCN\n\nNgày\nTừ chối\nLe Quang Huy\n2026-07-09\n-\nXem\n\nBCN\n\nNgày\nChờ duyệt / Đã gửi\nLe Quang Huy\n2026-07-07\n-\nXem\n\nBCT\n\nTuần\nĐã duyệt\nNguyen Hoang Nam\n2026-07-01 - 2026-07-07\n-\nXem\n\nBCN\n\nNgày\nĐã duyệt\nNguyen Hoang Nam\n2026-07-06\n-\nXem\n\nBCN\n\nNgày\nNháp\nLe Quang Huy\n2026-07-04\n-\nXem\n\nBCN\n\nNgày\nChờ duyệt / Đã gửi\nLe Quang Huy\n2026-07-03\n-\nXem\nBCT\nChờ duyệt / Đã gửi\nBáo cáo tuần\n\nNha Van Phong Dieu Hanh 5 Tang - Khu Cong Nghiep Tu Hiep · Nguyen Hoang Nam · 2026-07-08 - 2026-07-14\n\nTổng quan tuần\nTuan 2 co nhieu hang muc near-limit va ngay 14/07 chua nhap du lieu.\nTổng hợp công việc (17)\nHạng mục / Công việc\tK.lượng\tĐ.vị\nDao dat ho mong, van chuyen noi bo\n\nSeed line FND-001\n\n\t170\tm3\nDo be tong lot mong M100\n\nSeed line FND-002\n\n\t25\tm3\nGia cong lap dung cot thep mong\n\nSeed line FND-003\n\n\t9000\tkg\nDao dat ho mong, van chuyen noi bo\n\nSeed line FND-001\n\n\t150\tm3\nLap dung cop pha mong\n\nSeed line FND-004\n\n\t300\tm2\nDao dat ho mong, van chuyen noi bo\n\nSeed line FND-001\n\n\t170\tm3\nDo be tong lot mong M100\n\nSeed line FND-002\n\n\t30\tm3\nGia cong lap dung cot thep mong\n\nSeed line FND-003\n\n\t8000\tkg\nLap dung cop pha mong\n\nSeed line FND-004\n\n\t280\tm2\nDo be tong mong M300\n\nSeed line FND-005\n\n\t120\tm3\nCot thep cot tang 1\n\nSeed line STR-101\n\n\t2500\tkg\nGia cong lap dung cot thep mong\n\nSeed line FND-003\n\n\t8500\tkg\nLap dung cop pha mong\n\nSeed line FND-004\n\n\t250\tm2\nDo be tong mong M300\n\nSeed line FND-005\n\n\t130\tm3\nDo be tong mong M300\n\nSeed line FND-005\n\n\t150\tm3\nCot thep cot tang 1\n\nSeed line STR-101\n\n\t3000\tkg\nCop pha cot tang 1\n\nSeed line STR-102\n\n\t120\tm2\nVấn đề phát sinh\nCan test guard chong vuot khoi luong FND-001/FND-004/FND-005.\nKiến nghị / kế hoạch tuần sau\nChi cho phep nh",
+    "dialogs": [
+      {
+        "w": 390,
+        "h": 844,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "text": "BCTChờ duyệt / Đã gửiBáo cáo tuầnNha Van Phong Dieu Hanh 5 Tang - Khu Cong Nghiep Tu Hiep · Nguyen Hoang Nam · 2026-07-08 - 2026-07-14Tổng quan tuầnTuan 2 co nhieu hang muc near-limit va ngay 14/07 chua nhap du lieu.Tổng hợp công việc (17)Hạng mục / Công việcK.lượngĐ.vịDao dat ho mong, van chuyen noi boSeed line FND-001170m3Do be tong lot mong M100Seed line FND-00225m3Gia cong lap dung cot thep mongSeed line FND-0039000kgDao dat ho mong, van chuyen noi boSeed line FND-001150m3Lap dung cop pha mo"
+      }
+    ],
+    "tables": [
+      {
+        "w": 0,
+        "over": false,
+        "text": "Mã BCNgười tạoThời gianTrạng tháiHình ảnhTác vụTuần 29 · 13/07 - 19/07/2026·1 báo cáo·1 duyệtBCNNgàyPhát sinhLe Quang HuyNgười tạo2026-07-1307:00Đã duyệt+1 fileTuần 28 · 06/07 - 12/07/2026·6 báo cáo·3 duyệt2 chờ1 từ chốiBCTTuầnPhát sinhNguyen Hoang NamNgười tạo2026-07-08 - 2026-07-14Chờ duyệt / Đã g"
+      },
+      {
+        "w": 348,
+        "over": false,
+        "text": "Hạng mục / Công việcK.lượngĐ.vịDao dat ho mong, van chuyen noi boSeed line FND-001170m3Do be tong lot mong M100Seed line FND-00225m3Gia cong lap dung cot thep mongSeed line FND-0039000kgDao dat ho mong, van chuyen noi boSeed line FND-001150m3Lap dung cop pha mongSeed line FND-004300m2Dao dat ho mong"
+      }
+    ],
+    "body": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "horizontal": false
+    },
+    "buttons": [
+      {
+        "text": "Xem",
+        "w": 66,
+        "h": 28,
+        "x": 291,
+        "y": 812
+      },
+      {
+        "text": "Xóa",
+        "w": 30,
+        "h": 26,
+        "x": 223,
+        "y": 960
+      },
+      {
+        "text": "Sửa",
+        "w": 30,
+        "h": 26,
+        "x": 257,
+        "y": 960
+      },
+      {
+        "text": "Xem",
+        "w": 66,
+        "h": 28,
+        "x": 291,
+        "y": 959
+      },
+      {
+        "text": "Xóa",
+        "w": 30,
+        "h": 26,
+        "x": 257,
+        "y": 1107
+      },
+      {
+        "text": "Xem",
+        "w": 66,
+        "h": 28,
+        "x": 291,
+        "y": 1106
+      },
+      {
+        "text": "Xem",
+        "w": 66,
+        "h": 28,
+        "x": 291,
+        "y": 1253
+      },
+      {
+        "text": "Xem",
+        "w": 66,
+        "h": 28,
+        "x": 291,
+        "y": 1400
+      },
+      {
+        "text": "Xóa",
+        "w": 30,
+        "h": 26,
+        "x": 223,
+        "y": 1548
+      },
+      {
+        "text": "Sửa",
+        "w": 30,
+        "h": 26,
+        "x": 257,
+        "y": 1548
+      },
+      {
+        "text": "Xem",
+        "w": 66,
+        "h": 28,
+        "x": 291,
+        "y": 1547
+      },
+      {
+        "text": "Xóa",
+        "w": 30,
+        "h": 26,
+        "x": 257,
+        "y": 1695
+      },
+      {
+        "text": "Xem",
+        "w": 66,
+        "h": 28,
+        "x": 291,
+        "y": 1694
+      },
+      {
+        "text": "Đóng chi tiết báo cáo",
+        "w": 36,
+        "h": 36,
+        "x": 334,
+        "y": 15
+      },
+      {
+        "text": "Lịch sử duyệt\n2",
+        "w": 350,
+        "h": 20,
+        "x": 20,
+        "y": 1521
+      },
+      {
+        "text": "In / Xuất PDF",
+        "w": 143,
+        "h": 40,
+        "x": 16,
+        "y": 792
+      },
+      {
+        "text": "Đóng",
+        "w": 70,
+        "h": 40,
+        "x": 116,
+        "y": 792
+      },
+      {
+        "text": "Xóa",
+        "w": 82,
+        "h": 40,
+        "x": 194,
+        "y": 792
+      },
+      {
+        "text": "Từ chối",
+        "w": 85,
+        "h": 40,
+        "x": 284,
+        "y": 792
+      },
+      {
+        "text": "Duyệt",
+        "w": 94,
+        "h": 40,
+        "x": 385,
+        "y": 792
+      }
+    ]
+  },
+  {
+    "label": "weekly-detail-card-click",
+    "url": "/reports?tab=weekly",
+    "text": "ERP\nBáo cáo hiện trường\nBộ lọc\nChờ duyệt\n3\nTừ chối\n1\nPhát sinh\n12\nTất cả\nBáo cáo ngày\nBáo cáo tuần\n\nBCT\n\nTuần\nChờ duyệt / Đã gửi\nNguyen Hoang Nam\n2026-07-08 - 2026-07-14\n-\nXem\n\nBCT\n\nTuần\nĐã duyệt\nNguyen Hoang Nam\n2026-07-01 - 2026-07-07\n-\nXem\nBCT\nChờ duyệt / Đã gửi\nBáo cáo tuần\n\nNha Van Phong Dieu Hanh 5 Tang - Khu Cong Nghiep Tu Hiep · Nguyen Hoang Nam · 2026-07-08 - 2026-07-14\n\nTổng quan tuần\nTuan 2 co nhieu hang muc near-limit va ngay 14/07 chua nhap du lieu.\nTổng hợp công việc (17)\nHạng mục / Công việc\tK.lượng\tĐ.vị\nDao dat ho mong, van chuyen noi bo\n\nSeed line FND-001\n\n\t170\tm3\nDo be tong lot mong M100\n\nSeed line FND-002\n\n\t25\tm3\nGia cong lap dung cot thep mong\n\nSeed line FND-003\n\n\t9000\tkg\nDao dat ho mong, van chuyen noi bo\n\nSeed line FND-001\n\n\t150\tm3\nLap dung cop pha mong\n\nSeed line FND-004\n\n\t300\tm2\nDao dat ho mong, van chuyen noi bo\n\nSeed line FND-001\n\n\t170\tm3\nDo be tong lot mong M100\n\nSeed line FND-002\n\n\t30\tm3\nGia cong lap dung cot thep mong\n\nSeed line FND-003\n\n\t8000\tkg\nLap dung cop pha mong\n\nSeed line FND-004\n\n\t280\tm2\nDo be tong mong M300\n\nSeed line FND-005\n\n\t120\tm3\nCot thep cot tang 1\n\nSeed line STR-101\n\n\t2500\tkg\nGia cong lap dung cot thep mong\n\nSeed line FND-003\n\n\t8500\tkg\nLap dung cop pha mong\n\nSeed line FND-004\n\n\t250\tm2\nDo be tong mong M300\n\nSeed line FND-005\n\n\t130\tm3\nDo be tong mong M300\n\nSeed line FND-005\n\n\t150\tm3\nCot thep cot tang 1\n\nSeed line STR-101\n\n\t3000\tkg\nCop pha cot tang 1\n\nSeed line STR-102\n\n\t120\tm2\nVấn đề phát sinh\nCan test guard chong vuot khoi luong FND-001/FND-004/FND-005.\nKiến nghị / kế hoạch tuần sau\nChi cho phep nhap phat sinh neu co phe duyet thay doi thiet ke.\nLịch sử duyệt\n2\nIn / Xuất PDF\nĐóng\nXóa\nTừ chối\nDuyệt",
+    "dialogs": [
+      {
+        "w": 390,
+        "h": 844,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "text": "BCTChờ duyệt / Đã gửiBáo cáo tuầnNha Van Phong Dieu Hanh 5 Tang - Khu Cong Nghiep Tu Hiep · Nguyen Hoang Nam · 2026-07-08 - 2026-07-14Tổng quan tuầnTuan 2 co nhieu hang muc near-limit va ngay 14/07 chua nhap du lieu.Tổng hợp công việc (17)Hạng mục / Công việcK.lượngĐ.vịDao dat ho mong, van chuyen noi boSeed line FND-001170m3Do be tong lot mong M100Seed line FND-00225m3Gia cong lap dung cot thep mongSeed line FND-0039000kgDao dat ho mong, van chuyen noi boSeed line FND-001150m3Lap dung cop pha mo"
+      }
+    ],
+    "tables": [
+      {
+        "w": 0,
+        "over": false,
+        "text": "Mã BCNgười tạoThời gianTrạng tháiHình ảnhTác vụTuần 28 · 06/07 - 12/07/2026·1 báo cáo·1 chờBCTTuầnPhát sinhNguyen Hoang NamNgười tạo2026-07-08 - 2026-07-14Chờ duyệt / Đã gửi-Tuần 27 · 29/06 - 05/07/2026·1 báo cáo·1 duyệtBCTTuầnPhát sinhNguyen Hoang NamNgười tạo2026-07-01 - 2026-07-07Đã duyệt-"
+      },
+      {
+        "w": 348,
+        "over": false,
+        "text": "Hạng mục / Công việcK.lượngĐ.vịDao dat ho mong, van chuyen noi boSeed line FND-001170m3Do be tong lot mong M100Seed line FND-00225m3Gia cong lap dung cot thep mongSeed line FND-0039000kgDao dat ho mong, van chuyen noi boSeed line FND-001150m3Lap dung cop pha mongSeed line FND-004300m2Dao dat ho mong"
+      }
+    ],
+    "body": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "horizontal": false
+    },
+    "buttons": [
+      {
+        "text": "Bộ lọc",
+        "w": 0,
+        "h": 0,
+        "x": 0,
+        "y": 0
+      },
+      {
+        "text": " Đặt lại",
+        "w": 0,
+        "h": 0,
+        "x": 0,
+        "y": 0
+      },
+      {
+        "text": "Xóa báo cáo",
+        "w": 0,
+        "h": 0,
+        "x": 0,
+        "y": 0
+      },
+      {
+        "text": "Xem chi tiết",
+        "w": 0,
+        "h": 0,
+        "x": 0,
+        "y": 0
+      },
+      {
+        "text": "In / Xuất PDF",
+        "w": 0,
+        "h": 0,
+        "x": 0,
+        "y": 0
+      },
+      {
+        "text": "Xem chi tiết",
+        "w": 0,
+        "h": 0,
+        "x": 0,
+        "y": 0
+      },
+      {
+        "text": "In / Xuất PDF",
+        "w": 0,
+        "h": 0,
+        "x": 0,
+        "y": 0
+      },
+      {
+        "text": "Trang trước",
+        "w": 0,
+        "h": 0,
+        "x": 0,
+        "y": 0
+      },
+      {
+        "text": "1",
+        "w": 0,
+        "h": 0,
+        "x": 0,
+        "y": 0
+      },
+      {
+        "text": "Trang sau",
+        "w": 0,
+        "h": 0,
+        "x": 0,
+        "y": 0
+      },
+      {
+        "text": "Xóa",
+        "w": 30,
+        "h": 26,
+        "x": 257,
+        "y": 372
+      },
+      {
+        "text": "Xem",
+        "w": 66,
+        "h": 28,
+        "x": 291,
+        "y": 371
+      },
+      {
+        "text": "Xem",
+        "w": 66,
+        "h": 28,
+        "x": 291,
+        "y": 518
+      },
+      {
+        "text": "Đóng chi tiết báo cáo",
+        "w": 36,
+        "h": 36,
+        "x": 334,
+        "y": 15
+      },
+      {
+        "text": "Lịch sử duyệt\n2",
+        "w": 350,
+        "h": 20,
+        "x": 20,
+        "y": 1521
+      },
+      {
+        "text": "In / Xuất PDF",
+        "w": 143,
+        "h": 40,
+        "x": 16,
+        "y": 792
+      },
+      {
+        "text": "Đóng",
+        "w": 70,
+        "h": 40,
+        "x": 116,
+        "y": 792
+      },
+      {
+        "text": "Xóa",
+        "w": 82,
+        "h": 40,
+        "x": 194,
+        "y": 792
+      },
+      {
+        "text": "Từ chối",
+        "w": 85,
+        "h": 40,
+        "x": 284,
+        "y": 792
+      },
+      {
+        "text": "Duyệt",
+        "w": 94,
+        "h": 40,
+        "x": 385,
+        "y": 792
+      }
+    ]
+  },
+  {
+    "label": "submitted-detail-card-click",
+    "url": "/reports?status=SUBMITTED",
+    "text": "ERP\nBáo cáo hiện trường\nBộ lọc\nChờ duyệt\n3\nTừ chối\n1\nPhát sinh\n12\nTất cả\nBáo cáo ngày\nBáo cáo tuần\n\nBCT\n\nTuần\nChờ duyệt / Đã gửi\nNguyen Hoang Nam\n2026-07-08 - 2026-07-14\n-\nXem\n\nBCN\n\nNgày\nChờ duyệt / Đã gửi\nLe Quang Huy\n2026-07-07\n-\nXem\n\nBCN\n\nNgày\nChờ duyệt / Đã gửi\nLe Quang Huy\n2026-07-03\n-\nXem\nBCT\nChờ duyệt / Đã gửi\nBáo cáo tuần\n\nNha Van Phong Dieu Hanh 5 Tang - Khu Cong Nghiep Tu Hiep · Nguyen Hoang Nam · 2026-07-08 - 2026-07-14\n\nTổng quan tuần\nTuan 2 co nhieu hang muc near-limit va ngay 14/07 chua nhap du lieu.\nTổng hợp công việc (17)\nHạng mục / Công việc\tK.lượng\tĐ.vị\nDao dat ho mong, van chuyen noi bo\n\nSeed line FND-001\n\n\t170\tm3\nDo be tong lot mong M100\n\nSeed line FND-002\n\n\t25\tm3\nGia cong lap dung cot thep mong\n\nSeed line FND-003\n\n\t9000\tkg\nDao dat ho mong, van chuyen noi bo\n\nSeed line FND-001\n\n\t150\tm3\nLap dung cop pha mong\n\nSeed line FND-004\n\n\t300\tm2\nDao dat ho mong, van chuyen noi bo\n\nSeed line FND-001\n\n\t170\tm3\nDo be tong lot mong M100\n\nSeed line FND-002\n\n\t30\tm3\nGia cong lap dung cot thep mong\n\nSeed line FND-003\n\n\t8000\tkg\nLap dung cop pha mong\n\nSeed line FND-004\n\n\t280\tm2\nDo be tong mong M300\n\nSeed line FND-005\n\n\t120\tm3\nCot thep cot tang 1\n\nSeed line STR-101\n\n\t2500\tkg\nGia cong lap dung cot thep mong\n\nSeed line FND-003\n\n\t8500\tkg\nLap dung cop pha mong\n\nSeed line FND-004\n\n\t250\tm2\nDo be tong mong M300\n\nSeed line FND-005\n\n\t130\tm3\nDo be tong mong M300\n\nSeed line FND-005\n\n\t150\tm3\nCot thep cot tang 1\n\nSeed line STR-101\n\n\t3000\tkg\nCop pha cot tang 1\n\nSeed line STR-102\n\n\t120\tm2\nVấn đề phát sinh\nCan test guard chong vuot khoi luong FND-001/FND-004/FND-005.\nKiến nghị / kế hoạch tuần sau\nChi cho phep nhap phat sinh neu co phe duyet thay doi thiet ke.\nLịch sử duyệt\n2\nIn / Xuất PDF\nĐóng\nXóa\nTừ chối\nDuyệt",
+    "dialogs": [
+      {
+        "w": 390,
+        "h": 844,
+        "scrollHeight": 844,
+        "clientHeight": 844,
+        "text": "BCTChờ duyệt / Đã gửiBáo cáo tuầnNha Van Phong Dieu Hanh 5 Tang - Khu Cong Nghiep Tu Hiep · Nguyen Hoang Nam · 2026-07-08 - 2026-07-14Tổng quan tuầnTuan 2 co nhieu hang muc near-limit va ngay 14/07 chua nhap du lieu.Tổng hợp công việc (17)Hạng mục / Công việcK.lượngĐ.vịDao dat ho mong, van chuyen noi boSeed line FND-001170m3Do be tong lot mong M100Seed line FND-00225m3Gia cong lap dung cot thep mongSeed line FND-0039000kgDao dat ho mong, van chuyen noi boSeed line FND-001150m3Lap dung cop pha mo"
+      }
+    ],
+    "tables": [
+      {
+        "w": 0,
+        "over": false,
+        "text": "Mã BCNgười tạoThời gianTrạng tháiHình ảnhTác vụTuần 28 · 06/07 - 12/07/2026·2 báo cáo·2 chờBCTTuầnPhát sinhNguyen Hoang NamNgười tạo2026-07-08 - 2026-07-14Chờ duyệt / Đã gửi-BCNNgàyPhát sinhLe Quang HuyNgười tạo2026-07-0707:00Chờ duyệt / Đã gửi-Tuần 27 · 29/06 - 05/07/2026·1 báo cáo·1 chờBCNNgàyPhát"
+      },
+      {
+        "w": 348,
+        "over": false,
+        "text": "Hạng mục / Công việcK.lượngĐ.vịDao dat ho mong, van chuyen noi boSeed line FND-001170m3Do be tong lot mong M100Seed line FND-00225m3Gia cong lap dung cot thep mongSeed line FND-0039000kgDao dat ho mong, van chuyen noi boSeed line FND-001150m3Lap dung cop pha mongSeed line FND-004300m2Dao dat ho mong"
+      }
+    ],
+    "body": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "horizontal": false
+    },
+    "buttons": [
+      {
+        "text": "In / Xuất PDF",
+        "w": 0,
+        "h": 0,
+        "x": 0,
+        "y": 0
+      },
+      {
+        "text": "Xóa báo cáo",
+        "w": 0,
+        "h": 0,
+        "x": 0,
+        "y": 0
+      },
+      {
+        "text": "Xem chi tiết",
+        "w": 0,
+        "h": 0,
+        "x": 0,
+        "y": 0
+      },
+      {
+        "text": "In / Xuất PDF",
+        "w": 0,
+        "h": 0,
+        "x": 0,
+        "y": 0
+      },
+      {
+        "text": "Trang trước",
+        "w": 0,
+        "h": 0,
+        "x": 0,
+        "y": 0
+      },
+      {
+        "text": "1",
+        "w": 0,
+        "h": 0,
+        "x": 0,
+        "y": 0
+      },
+      {
+        "text": "Trang sau",
+        "w": 0,
+        "h": 0,
+        "x": 0,
+        "y": 0
+      },
+      {
+        "text": "Xóa",
+        "w": 30,
+        "h": 26,
+        "x": 257,
+        "y": 372
+      },
+      {
+        "text": "Xem",
+        "w": 66,
+        "h": 28,
+        "x": 291,
+        "y": 371
+      },
+      {
+        "text": "Xóa",
+        "w": 30,
+        "h": 26,
+        "x": 257,
+        "y": 519
+      },
+      {
+        "text": "Xem",
+        "w": 66,
+        "h": 28,
+        "x": 291,
+        "y": 518
+      },
+      {
+        "text": "Xóa",
+        "w": 30,
+        "h": 26,
+        "x": 257,
+        "y": 666
+      },
+      {
+        "text": "Xem",
+        "w": 66,
+        "h": 28,
+        "x": 291,
+        "y": 665
+      },
+      {
+        "text": "Đóng chi tiết báo cáo",
+        "w": 36,
+        "h": 36,
+        "x": 334,
+        "y": 15
+      },
+      {
+        "text": "Lịch sử duyệt\n2",
+        "w": 350,
+        "h": 20,
+        "x": 20,
+        "y": 1521
+      },
+      {
+        "text": "In / Xuất PDF",
+        "w": 143,
+        "h": 40,
+        "x": 16,
+        "y": 792
+      },
+      {
+        "text": "Đóng",
+        "w": 70,
+        "h": 40,
+        "x": 116,
+        "y": 792
+      },
+      {
+        "text": "Xóa",
+        "w": 82,
+        "h": 40,
+        "x": 194,
+        "y": 792
+      },
+      {
+        "text": "Từ chối",
+        "w": 85,
+        "h": 40,
+        "x": 284,
+        "y": 792
+      },
+      {
+        "text": "Duyệt",
+        "w": 94,
+        "h": 40,
+        "x": 385,
+        "y": 792
+      }
+    ]
+  }
+]
