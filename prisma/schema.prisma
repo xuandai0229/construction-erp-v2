@@ -248,6 +248,7 @@ model Project {
   fieldProgressEntries   FieldProgressEntry[]
   fieldMaterialRequests  FieldMaterialRequest[]
   projectMaterialStocks  ProjectMaterialStock[]
+  materialItems          MaterialItem[]
 
   @@index([code])
   @@index([status])
@@ -585,18 +586,22 @@ model MaterialRequestItem {
 
 model MaterialItem {
   id          String   @id @default(cuid())
-  code        String   @unique
+  projectId   String
+  code        String
   name        String
   unit        String
   group       String?
   description String?
+  isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  project       Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
   movements     MaterialMovement[]
   projectStocks ProjectMaterialStock[]
 
-  @@index([code])
+  @@unique([projectId, code])
+  @@index([projectId])
 }
 
 model MaterialMovement {

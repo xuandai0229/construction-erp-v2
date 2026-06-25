@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
-import { Package, Plus, Search, Filter, AlertTriangle, ArrowDownRight, ArrowUpRight, CheckCircle2, Factory, ClipboardList } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { AlertTriangle, ArrowDownRight, ArrowUpRight, ClipboardList, Factory, Package, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -11,14 +11,17 @@ import { MaterialsTransactions } from "./materials-transactions";
 import { MaterialsCatalog } from "./materials-catalog";
 import { MaterialFormDialog } from "./material-form-dialog";
 import { TransactionFormDialog } from "./transaction-form-dialog";
-import { createMaterialItem, createMaterialTransaction } from "@/app/(dashboard)/materials/actions";
+import { PurchaseRequestPlaceholder } from "./purchase-request-placeholder";
+
+import { createMaterialItem, updateMaterialItem, deleteMaterialItem, createMaterialTransaction } from "@/app/(dashboard)/materials/actions";
+import type { MaterialItemDto, MaterialMovementDto, ProjectStockDto } from "@/app/(dashboard)/materials/actions";
 import { useToast } from "@/components/ui/toast-context";
 
 interface MaterialsWorkspaceProps {
   projects: { id: string; name: string; code: string }[];
-  materialItems: any[];
-  initialStocks: any[];
-  initialTransactions: any[];
+  materialItems: MaterialItemDto[];
+  initialStocks: ProjectStockDto[];
+  initialTransactions: MaterialMovementDto[];
   initialProjectId?: string;
   currentUser: { id: string; role?: string };
 }
@@ -29,207 +32,303 @@ export function MaterialsWorkspace({
   initialStocks,
   initialTransactions,
   initialProjectId,
-  currentUser,
 }: MaterialsWorkspaceProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const toast = useToast();
 
-  // URL State
   const activeTab = searchParams.get("tab") || "overview";
-  const [projectId, setProjectId] = useState(initialProjectId || (projects[0]?.id || ""));
-  
-  // Dialog state
+  const [projectId, setProjectId] = useState(initialProjectId || projects[0]?.id || "");
   const [isMaterialFormOpen, setIsMaterialFormOpen] = useState(false);
   const [transactionFormType, setTransactionFormType] = useState<"IMPORT" | "EXPORT" | null>(null);
-  const [transactionMaterialId, setTransactionMaterialId] = useState<string>("");
+  const [transactionMaterialId, setTransactionMaterialId] = useState("");
+  const [editingMaterialId, setEditingMaterialId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const toast = useToast();
-  
-  // Handlers
-  const handleTabChange = (tab: string) => {
+
+  useEffect(() => {
+    setProjectId(initialProjectId || projects[0]?.id || "");
+  }, [initialProjectId, projects]);
+
+  const selectedProject = useMemo(
+    () => projects.find((project) => project.id === projectId),
+    [projectId, projects]
+  );
+
+  const lowStockCount = useMemo(
+    () => initialStocks.filter((stock) => stock.minStockLevel > 0 && stock.stock <= stock.minStockLevel).length,
+    [initialStocks]
+  );
+
+  const updateUrl = (tab: string, nextProjectId = projectId) => {
     const params = new URLSearchParams(searchParams);
     params.set("tab", tab);
-    if (projectId) params.set("projectId", projectId);
+    if (nextProjectId) params.set("projectId", nextProjectId);
     router.push(`?${params.toString()}`);
   };
 
-  const handleProjectChange = (pid: string) => {
-    setProjectId(pid);
-    const params = new URLSearchParams(searchParams);
-    params.set("projectId", pid);
-    router.push(`?${params.toString()}`);
+  const handleProjectChange = (nextProjectId: string) => {
+    setProjectId(nextProjectId);
+    updateUrl(activeTab, nextProjectId);
   };
 
-  const handleCreateMaterial = async (data: { code: string; name: string; unit: string; group?: string; description?: string }) => {
-    setIsSubmitting(true);
-    try {
-      await createMaterialItem(data);
-      toast.success("Tạo vật tư thành công");
-      setIsMaterialFormOpen(false);
-      router.refresh();
-    } catch (err: any) {
-      throw err;
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleCreateTransaction = async (data: { materialItemId: string; type: "IMPORT" | "EXPORT"; quantity: number; movementDate: Date; notes?: string }) => {
+  const handleCreateMaterial = async (data: {
+    code?: string;
+    name: string;
+    unit: string;
+    group?: string;
+    description?: string;
+    minStockLevel?: number;
+  }) => {
     if (!projectId) {
       toast.error("Vui lòng chọn công trình trước");
       return;
     }
+
     setIsSubmitting(true);
     try {
-      await createMaterialTransaction({
-        ...data,
-        projectId,
-      });
-      toast.success(data.type === "IMPORT" ? "Nhập kho thành công" : "Xuất kho thành công");
-      setTransactionFormType(null);
-      setTransactionMaterialId("");
+      if (editingMaterialId) {
+        await updateMaterialItem(editingMaterialId, { name: data.name, unit: data.unit, group: data.group, description: data.description });
+        toast.success("Cập nhật vật tư thành công");
+      } else {
+        await createMaterialItem({ ...data, projectId });
+        toast.success("Tạo vật tư thành công");
+      }
+      setIsMaterialFormOpen(false);
+      setEditingMaterialId(null);
       router.refresh();
-    } catch (err: any) {
-      throw err;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Không thể lưu vật tư";
+      toast.error(message);
+      throw error;
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const TABS = [
+  const handleEditMaterial = (id: string) => {
+    setEditingMaterialId(id);
+    setIsMaterialFormOpen(true);
+  };
+
+  const handleDeleteMaterial = async (id: string) => {
+    setIsSubmitting(true);
+    try {
+      await deleteMaterialItem(id);
+      toast.success("Xóa vật tư thành công");
+      router.refresh();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Không thể xóa vật tư";
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCreateTransaction = async (data: {
+    materialItemId: string;
+    type: "IMPORT" | "EXPORT";
+    quantity: number;
+    unitPrice?: number;
+    movementDate: Date;
+    notes?: string;
+  }) => {
+    if (!projectId) {
+      toast.error("Vui lòng chọn công trình trước");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await createMaterialTransaction({ ...data, projectId });
+      toast.success(data.type === "IMPORT" ? "Nhập kho thành công" : "Xuất kho thành công");
+      setTransactionFormType(null);
+      setTransactionMaterialId("");
+      router.refresh();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Không thể tạo giao dịch";
+      toast.error(message);
+      throw error;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const tabs = [
     { id: "overview", label: "Tổng quan", icon: ClipboardList },
-    { id: "catalog", label: "Danh mục", icon: Package },
+    { id: "catalog", label: "Danh mục vật tư", icon: Package },
     { id: "stock", label: "Tồn kho", icon: Factory },
     { id: "transactions", label: "Nhập / Xuất", icon: ArrowDownRight },
     { id: "proposals", label: "Đề xuất mua", icon: AlertTriangle },
   ];
 
   return (
-    <div className="app-page max-w-[1400px] space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Quản lý vật tư</h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Theo dõi nhập, xuất, tồn kho và nhu cầu vật tư tại công trường.
-          </p>
-        </div>
-        
-        <div className="flex flex-col sm:flex-row items-center gap-3">
-          <select
-            value={projectId}
-            onChange={(e) => handleProjectChange(e.target.value)}
-            className="w-full sm:w-auto h-10 px-3 text-sm rounded-lg bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors shadow-sm"
-          >
-            <option value="" disabled>Chọn công trình...</option>
-            {projects.map(p => (
-              <option key={p.id} value={p.id}>{p.name} ({p.code})</option>
-            ))}
-          </select>
-          
-          <div className="flex gap-2 w-full sm:w-auto">
-            <Button variant="outline" className="w-full sm:w-auto h-10 gap-1.5" onClick={() => setTransactionFormType("IMPORT")}>
-              <ArrowDownRight className="w-4 h-4 text-emerald-600" />
-              <span className="hidden sm:inline">Nhập kho</span>
-            </Button>
-            <Button variant="outline" className="w-full sm:w-auto h-10 gap-1.5" onClick={() => setTransactionFormType("EXPORT")}>
-              <ArrowUpRight className="w-4 h-4 text-amber-600" />
-              <span className="hidden sm:inline">Xuất kho</span>
-            </Button>
-            <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white h-10 gap-1.5" onClick={() => setIsMaterialFormOpen(true)}>
-              <Plus className="w-4 h-4" />
-              <span>Thêm vật tư</span>
-            </Button>
+    <div className="app-page mx-auto max-w-[1400px] space-y-5">
+      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-950/[0.03] sm:p-5">
+        <div className="grid gap-4 xl:grid-cols-[1fr_auto] xl:items-end">
+          <div className="space-y-3">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Quản lý vật tư</h1>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">
+                Quản lý danh mục, tồn kho và nhập xuất vật tư theo công trình.
+              </p>
+            </div>
+            <div className="grid gap-2 sm:max-w-xl">
+              <label htmlFor="materials-project-select" className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Công trình đang xem
+              </label>
+              <div className="relative w-full">
+                <select
+                  id="materials-project-select"
+                  value={projectId}
+                  onChange={(event) => handleProjectChange(event.target.value)}
+                  className="h-10 w-full truncate rounded-lg border border-slate-300 bg-white px-3 pr-8 text-sm font-medium text-slate-900 shadow-sm shadow-slate-950/[0.03] outline-none transition hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                >
+                  <option value="" disabled>Chọn công trình</option>
+                  {projects.map((project) => (
+                    <option key={project.id} value={project.id}>
+                      {project.name} ({project.code})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {selectedProject && (
+                <div className="text-xs text-slate-500 mt-1">
+                  Dữ liệu của công trình: <strong className="text-slate-700">{selectedProject.code}</strong>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 xl:w-[400px]">
+            <div title={!projectId ? "Vui lòng chọn công trình" : ""}>
+              <Button className="w-full h-10 px-0 sm:px-4 justify-center bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setIsMaterialFormOpen(true)} disabled={!projectId}>
+                <Plus className="h-4 w-4 sm:mr-1.5" />
+                <span className="hidden sm:inline">Thêm vật tư</span>
+                <span className="sm:hidden text-xs">Thêm VT</span>
+              </Button>
+            </div>
+            
+            <div title={
+              !projectId ? "Vui lòng chọn công trình" : 
+              materialItems.length === 0 ? "Cần tạo mã vật tư trước khi nhập kho" : ""
+            }>
+              <Button variant="outline" className="w-full h-10 px-0 sm:px-4 justify-center text-slate-700" onClick={() => setTransactionFormType("IMPORT")} disabled={!projectId || materialItems.length === 0}>
+                <ArrowDownRight className="h-4 w-4 text-emerald-600 sm:mr-1.5" />
+                <span className="hidden sm:inline">Nhập kho</span>
+                <span className="sm:hidden text-xs">Nhập kho</span>
+              </Button>
+            </div>
+            
+            <div title={
+              !projectId ? "Vui lòng chọn công trình" : 
+              materialItems.length === 0 ? "Cần tạo mã vật tư trước khi xuất kho" :
+              initialStocks.every(s => s.stock <= 0) ? "Chưa có tồn kho để xuất" : ""
+            }>
+              <Button variant="outline" className="w-full h-10 px-0 sm:px-4 justify-center text-slate-700" onClick={() => setTransactionFormType("EXPORT")} disabled={!projectId || materialItems.length === 0 || initialStocks.every(s => s.stock <= 0)}>
+                <ArrowUpRight className="h-4 w-4 text-amber-600 sm:mr-1.5" />
+                <span className="hidden sm:inline">Xuất kho</span>
+                <span className="sm:hidden text-xs">Xuất kho</span>
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Navigation Tabs */}
-      <div className="flex overflow-x-auto pb-1 scrollbar-hide border-b border-slate-200">
-        <div className="flex gap-1 min-w-max">
-          {TABS.map((tab) => {
+      <nav className="overflow-x-auto border-b border-slate-200" aria-label="Tabs quản lý vật tư">
+        <div className="flex min-w-max gap-1">
+          {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
-                onClick={() => handleTabChange(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                  isActive 
-                    ? "border-blue-600 text-blue-700 bg-blue-50/50" 
-                    : "border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50"
-                } rounded-t-lg`}
+                onClick={() => updateUrl(tab.id)}
+                className={`flex items-center gap-2 rounded-t-lg border-b-2 px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors ${
+                  isActive
+                    ? "border-blue-600 bg-blue-50 text-blue-700"
+                    : "border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+                }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? "text-blue-600" : "text-slate-400"}`} />
+                <Icon className={`h-4 w-4 ${isActive ? "text-blue-600" : "text-slate-400"}`} />
                 {tab.label}
               </button>
-            )
+            );
           })}
         </div>
-      </div>
+      </nav>
 
-      {/* Content Area */}
       {!projectId ? (
-        <EmptyState 
-          title="Chưa chọn công trình"
-          description="Vui lòng chọn một công trình để xem dữ liệu vật tư."
-          icon={<Factory className="w-8 h-8 text-slate-300" />}
+        <EmptyState
+          title="Chưa có công trình để theo dõi vật tư"
+          description="Bạn cần được phân quyền vào một công trình đang hoạt động trước khi nhập, xuất hoặc xem tồn kho."
+          icon={<Factory className="h-8 w-8 text-slate-400" />}
         />
       ) : (
-        <div className="min-h-[400px]">
+        <section className="min-h-[420px]">
           {activeTab === "overview" && (
-            <MaterialsOverview 
-              stocks={initialStocks} 
-              transactions={initialTransactions} 
-              onNavigate={handleTabChange}
+            <MaterialsOverview
+              materialItems={materialItems}
+              stocks={initialStocks}
+              transactions={initialTransactions}
+              onNavigate={updateUrl}
+              onCreateMaterial={() => setIsMaterialFormOpen(true)}
+              onCreateImport={() => setTransactionFormType("IMPORT")}
             />
           )}
           {activeTab === "catalog" && (
-            <MaterialsCatalog 
+            <MaterialsCatalog
               materialItems={materialItems}
               stocks={initialStocks}
-              onAddMaterial={() => setIsMaterialFormOpen(true)}
+              onAddMaterial={() => {
+                setEditingMaterialId(null);
+                setIsMaterialFormOpen(true);
+              }}
+              onEditMaterial={handleEditMaterial}
+              onDeleteMaterial={handleDeleteMaterial}
+              onTransaction={(type, materialId) => {
+                setTransactionFormType(type);
+                setTransactionMaterialId(materialId || "");
+              }}
             />
           )}
           {activeTab === "stock" && (
-            <MaterialsStockTable 
-              stocks={initialStocks} 
-              onTransaction={(type, matId) => {
+            <MaterialsStockTable
+              stocks={initialStocks}
+              onTransaction={(type, materialId) => {
                 setTransactionFormType(type);
-                if (matId) setTransactionMaterialId(matId);
+                setTransactionMaterialId(materialId || "");
               }}
             />
           )}
           {activeTab === "transactions" && (
-            <MaterialsTransactions 
-              transactions={initialTransactions} 
-              materialItems={materialItems}
-              projectId={projectId}
+            <MaterialsTransactions
+              transactions={initialTransactions}
               onAddTransaction={() => setTransactionFormType("IMPORT")}
+              hasMaterials={materialItems.length > 0}
             />
           )}
-          {activeTab === "proposals" && (
-            <EmptyState 
-              title="Tính năng đang phát triển"
-              description="Phân hệ đề xuất mua vật tư từ công trường đang được xây dựng."
-              icon={<AlertTriangle className="w-8 h-8 text-amber-400" />}
-            />
-          )}
-        </div>
+          {activeTab === "proposals" && <PurchaseRequestPlaceholder lowStockCount={lowStockCount} />}
+        </section>
       )}
 
-      {/* Dialogs */}
-      <MaterialFormDialog 
+      <MaterialFormDialog
         isOpen={isMaterialFormOpen}
-        onClose={() => setIsMaterialFormOpen(false)}
+        onClose={() => {
+          setIsMaterialFormOpen(false);
+          setEditingMaterialId(null);
+        }}
         onSubmit={handleCreateMaterial}
         isSubmitting={isSubmitting}
+        initialData={editingMaterialId ? materialItems.find(m => m.id === editingMaterialId) : undefined}
       />
-      
+
       {transactionFormType && (
-        <TransactionFormDialog 
-          isOpen={true}
-          onClose={() => { setTransactionFormType(null); setTransactionMaterialId(""); }}
+        <TransactionFormDialog
+          isOpen
+          onClose={() => {
+            setTransactionFormType(null);
+            setTransactionMaterialId("");
+          }}
           onSubmit={handleCreateTransaction}
           isSubmitting={isSubmitting}
           materialItems={materialItems}

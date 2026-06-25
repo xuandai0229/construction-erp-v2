@@ -1,97 +1,104 @@
 "use client";
 
-import { useState } from "react";
-import { format } from "date-fns";
-import { ArrowDownRight, ArrowUpRight, Plus, RefreshCcw, AlertTriangle } from "lucide-react";
+import { ClipboardList, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import type { MaterialMovementDto } from "@/app/(dashboard)/materials/actions";
+import { MovementTypeBadge } from "./materials-badges";
+import { formatDateTime, formatQuantity, getMovementSign } from "./materials-formatters";
 
 interface MaterialsTransactionsProps {
-  transactions: any[];
-  materialItems: any[];
-  projectId: string;
+  transactions: MaterialMovementDto[];
   onAddTransaction: () => void;
+  hasMaterials: boolean;
 }
 
-export function MaterialsTransactions({ transactions, materialItems, projectId, onAddTransaction }: MaterialsTransactionsProps) {
-  // In a real app, we'd have a dialog here to add transactions
-  // For now, we'll just render the list to fulfill the UI requirement
-  
-  const getIcon = (type: string) => {
-    switch(type) {
-      case "IMPORT": return <div className="p-1.5 rounded bg-emerald-100 text-emerald-600"><ArrowDownRight className="w-4 h-4" /></div>;
-      case "EXPORT": return <div className="p-1.5 rounded bg-amber-100 text-amber-600"><ArrowUpRight className="w-4 h-4" /></div>;
-      case "RETURN": return <div className="p-1.5 rounded bg-blue-100 text-blue-600"><RefreshCcw className="w-4 h-4" /></div>;
-      default: return <div className="p-1.5 rounded bg-slate-100 text-slate-600"><AlertTriangle className="w-4 h-4" /></div>;
-    }
-  };
-
-  const getLabel = (type: string) => {
-    switch(type) {
-      case "IMPORT": return "Nhập kho";
-      case "EXPORT": return "Xuất kho";
-      case "TRANSFER": return "Điều chuyển";
-      case "RETURN": return "Hoàn trả";
-      default: return type;
-    }
-  };
-
+export function MaterialsTransactions({ transactions, onAddTransaction, hasMaterials }: MaterialsTransactionsProps) {
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-lg font-bold text-slate-800">Lịch sử giao dịch</h2>
-        <Button className="bg-blue-600 hover:bg-blue-700 text-white gap-2" onClick={onAddTransaction}>
-          <Plus className="w-4 h-4" />
-          <span className="hidden sm:inline">Tạo giao dịch</span>
-        </Button>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-slate-950">Lịch sử nhập / xuất</h2>
+          <p className="mt-1 text-sm text-slate-600">Lịch sử giao dịch vật tư của công trình.</p>
+        </div>
+        <div title={!hasMaterials ? "Cần tạo mã vật tư trước khi tạo giao dịch" : ""}>
+          <Button onClick={onAddTransaction} className="w-full sm:w-auto" disabled={!hasMaterials}>
+            <Plus className="h-4 w-4 mr-1.5" />
+            Tạo giao dịch
+          </Button>
+        </div>
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+      <div className="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-950/[0.03] md:block">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-medium">
+          <table className="w-full min-w-[820px] text-left text-sm">
+            <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-4 py-3">Loại</th>
                 <th className="px-4 py-3">Vật tư</th>
                 <th className="px-4 py-3 text-right">Số lượng</th>
-                <th className="px-4 py-3">Ngày GD</th>
+                <th className="px-4 py-3">Ngày giao dịch</th>
                 <th className="px-4 py-3">Ghi chú</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {transactions.map(t => (
-                <tr key={t.id} className="hover:bg-slate-50/50 transition-colors">
+              {transactions.map((transaction) => (
+                <tr key={transaction.id} className="transition hover:bg-slate-50/70">
+                  <td className="px-4 py-3"><MovementTypeBadge type={transaction.type} /></td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      {getIcon(t.type)}
-                      <span className="font-medium text-slate-700">{getLabel(t.type)}</span>
-                    </div>
+                    <div className="font-semibold text-slate-950">{transaction.materialItem.name}</div>
+                    <div className="mt-0.5 font-mono text-xs font-medium text-slate-500">{transaction.materialItem.code}</div>
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="font-medium text-slate-900">{t.materialItem?.name || "N/A"}</div>
-                    <div className="text-xs text-slate-500 font-mono mt-0.5">{t.materialItem?.code || "N/A"}</div>
+                  <td className={`px-4 py-3 text-right font-mono font-bold ${getMovementSign(transaction.type) === "+" ? "text-emerald-700" : "text-amber-700"}`}>
+                    {getMovementSign(transaction.type)}
+                    {formatQuantity(transaction.quantity)}
+                    <span className="ml-1 font-sans text-xs font-medium text-slate-500">{transaction.materialItem.unit}</span>
                   </td>
-                  <td className="px-4 py-3 text-right font-medium text-slate-900">
-                    {t.type === "EXPORT" || t.type === "TRANSFER" ? "-" : "+"}
-                    {Number(t.quantity).toLocaleString("en-US", { maximumFractionDigits: 2 })}
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">
-                    {format(new Date(t.movementDate), "dd/MM/yyyy HH:mm")}
-                  </td>
-                  <td className="px-4 py-3 text-slate-500 truncate max-w-[200px]">
-                    {t.notes || "-"}
+                  <td className="px-4 py-3 text-slate-600">{formatDateTime(transaction.movementDate)}</td>
+                  <td className="max-w-[260px] truncate px-4 py-3 text-slate-600" title={transaction.notes || ""}>
+                    {transaction.notes || "-"}
                   </td>
                 </tr>
               ))}
               {transactions.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
-                    Chưa có giao dịch nào
+                  <td colSpan={5} className="px-4 py-12 text-center">
+                    <ClipboardList className="mx-auto h-9 w-9 text-slate-300" />
+                    <div className="mt-2 font-semibold text-slate-700">Chưa có giao dịch vật tư</div>
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
+      </div>
+
+      <div className="space-y-3 md:hidden">
+        {transactions.map((transaction) => (
+          <article key={transaction.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-950/[0.03]">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <MovementTypeBadge type={transaction.type} />
+                <div className="mt-3 font-bold text-slate-950">{transaction.materialItem.name}</div>
+                <div className="mt-1 font-mono text-xs font-medium text-slate-500">{transaction.materialItem.code}</div>
+              </div>
+              <div className={`text-right font-mono text-lg font-bold ${getMovementSign(transaction.type) === "+" ? "text-emerald-700" : "text-amber-700"}`}>
+                {getMovementSign(transaction.type)}
+                {formatQuantity(transaction.quantity)}
+                <div className="font-sans text-xs font-medium text-slate-500">{transaction.materialItem.unit}</div>
+              </div>
+            </div>
+            <div className="mt-3 rounded-lg bg-slate-50 p-3 text-sm text-slate-600">
+              <div className="font-medium text-slate-900">{formatDateTime(transaction.movementDate)}</div>
+              {transaction.notes && <div className="mt-1 line-clamp-2">{transaction.notes}</div>}
+            </div>
+          </article>
+        ))}
+        {transactions.length === 0 && (
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
+            <ClipboardList className="mx-auto h-9 w-9 text-slate-300" />
+            <div className="mt-2 font-semibold text-slate-700">Chưa có giao dịch vật tư</div>
+          </div>
+        )}
       </div>
     </div>
   );

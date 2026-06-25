@@ -8,7 +8,11 @@ export const metadata = {
   description: "Theo dõi nhập, xuất, tồn kho và nhu cầu vật tư tại công trường",
 };
 
-export default async function MaterialsPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
+export default async function MaterialsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const session = await getSession();
   if (!session) redirect("/login");
 
@@ -16,20 +20,22 @@ export default async function MaterialsPage({ searchParams }: { searchParams: { 
   const initialProjectId = typeof resolvedParams.projectId === "string" ? resolvedParams.projectId : undefined;
 
   const projects = await getActiveProjects();
-  const materialItems = await getMaterialItems();
-
   let initialStocks: any[] = [];
   let initialTransactions: any[] = [];
+  let materialItems: any[] = [];
 
-  const projectIdToLoad = initialProjectId || (projects.length > 0 ? projects[0].id : undefined);
+  const accessibleProjectIds = new Set(projects.map((project) => project.id));
+  const projectIdToLoad =
+    initialProjectId && accessibleProjectIds.has(initialProjectId)
+      ? initialProjectId
+      : projects.length > 0
+        ? projects[0].id
+        : undefined;
 
   if (projectIdToLoad) {
-    try {
-      initialStocks = await getProjectStocks(projectIdToLoad);
-      initialTransactions = await getRecentTransactions(projectIdToLoad);
-    } catch (e) {
-      console.error("Failed to load project material data:", e);
-    }
+    materialItems = await getMaterialItems(projectIdToLoad);
+    initialStocks = await getProjectStocks(projectIdToLoad);
+    initialTransactions = await getRecentTransactions(projectIdToLoad);
   }
 
   return (
