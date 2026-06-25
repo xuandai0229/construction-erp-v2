@@ -925,7 +925,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
       </div>
 
       <div className="hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:block overflow-x-auto overflow-y-hidden max-w-full">
-        <table className="w-full text-left text-sm whitespace-nowrap min-w-max border-collapse">
+        <table className="w-full text-left text-sm border-collapse">
           <thead className="border-b-2 border-slate-200 bg-slate-50">
             <tr>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.stt} bg-slate-100 border-r-slate-200`}>STT</th>
@@ -956,7 +956,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
                   </td>
                   <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.dailyCols.content} bg-white ${math.isOver ? '!bg-red-50/60' : isDirty ? '!bg-amber-50/40' : ''}`}>
                     {item.parentName && <div className="mb-0.5 text-[10px] font-medium uppercase tracking-wider text-slate-400 truncate w-full">{item.parentName}</div>}
-                    <div className="font-semibold text-slate-800 truncate w-full" title={item.name}>{item.name}</div>
+                    <div className="font-semibold text-slate-800 line-clamp-2 w-full leading-tight" title={item.name}>{item.name}</div>
                     {math.isOver && (
                       <div className="mt-1 text-xs font-bold text-red-600 flex items-center gap-1.5 whitespace-nowrap">
                         <AlertCircle className="h-3.5 w-3.5" /> Vượt khối lượng thiết kế. <span className="font-medium">Cần ghi chú giải trình.</span>

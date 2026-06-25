@@ -125,22 +125,22 @@ export function SummaryDesktopView({
 
       {/* Table */}
       <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-sm bg-white">
-        <table className="w-full text-left" style={{ tableLayout: 'fixed', minWidth: showDayColumns ? `${1100 + dynamicDates.length * 100}px` : '1100px' }}>
+        <table className="w-full text-left" style={{ tableLayout: 'auto', minWidth: showDayColumns ? '100%' : '100%' }}>
           <colgroup>
-            <col style={{ width: '56px' }} />
-            <col style={{ width: showDayColumns ? '320px' : '380px' }} />
-            <col style={{ width: '160px' }} />
-            <col style={{ width: '72px' }} />
+            <col style={{ width: '48px' }} />
+            <col style={{ width: 'auto' }} />
             <col style={{ width: '120px' }} />
-            <col style={{ width: '110px' }} />
-            <col style={{ width: '110px' }} />
-            <col style={{ width: '110px' }} />
+            <col style={{ width: '64px' }} />
             <col style={{ width: '100px' }} />
-            {!showDayColumns && <col style={{ width: '200px' }} />}
+            <col style={{ width: '100px' }} />
+            <col style={{ width: '100px' }} />
+            <col style={{ width: '110px' }} />
+            <col style={{ width: '90px' }} />
+            {!showDayColumns && <col style={{ width: '160px' }} />}
             {showDayColumns && dynamicDates.map((d) => (
-              <col key={formatWorkDate(d)} style={{ width: '100px' }} />
+              <col key={formatWorkDate(d)} style={{ width: '90px' }} />
             ))}
-            <col style={{ width: '80px' }} />
+            <col style={{ width: '72px' }} />
           </colgroup>
           <thead>
             <tr>

@@ -220,7 +220,7 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
 
       {/* Table */}
       <div className="overflow-x-auto hidden md:block">
-        <table className="w-full text-sm min-w-[1200px]">
+        <table className="w-full text-sm">
           <thead>
             <tr className="bg-slate-50 border-b-2 border-slate-200 sticky top-0 z-30 shadow-sm">
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.stt} sticky left-0 z-20 text-center`}>STT</th>
