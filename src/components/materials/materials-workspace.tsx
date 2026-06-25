@@ -24,6 +24,16 @@ interface MaterialsWorkspaceProps {
   initialTransactions: MaterialMovementDto[];
   initialProjectId?: string;
   currentUser: { id: string; role?: string };
+  permissions: {
+    canView: boolean;
+    canCreate: boolean;
+    canUpdate: boolean;
+    canDelete: boolean;
+    canImport: boolean;
+    canExport: boolean;
+    canViewTransactions: boolean;
+    canViewPurchase: boolean;
+  };
 }
 
 export function MaterialsWorkspace({
@@ -32,6 +42,7 @@ export function MaterialsWorkspace({
   initialStocks,
   initialTransactions,
   initialProjectId,
+  permissions,
 }: MaterialsWorkspaceProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -154,12 +165,12 @@ export function MaterialsWorkspace({
   };
 
   const tabs = [
-    { id: "overview", label: "Tổng quan", icon: ClipboardList },
-    { id: "catalog", label: "Danh mục vật tư", icon: Package },
-    { id: "stock", label: "Tồn kho", icon: Factory },
-    { id: "transactions", label: "Nhập / Xuất", icon: ArrowDownRight },
-    { id: "proposals", label: "Đề xuất mua", icon: AlertTriangle },
-  ];
+    { id: "overview", label: "Tổng quan", icon: ClipboardList, visible: permissions.canView },
+    { id: "catalog", label: "Danh mục vật tư", icon: Package, visible: permissions.canView },
+    { id: "stock", label: "Tồn kho", icon: Factory, visible: permissions.canView },
+    { id: "transactions", label: "Nhập / Xuất", icon: ArrowDownRight, visible: permissions.canViewTransactions },
+    { id: "proposals", label: "Đề xuất mua", icon: AlertTriangle, visible: permissions.canViewPurchase },
+  ].filter(t => t.visible);
 
   return (
     <div className="app-page mx-auto max-w-[1400px] space-y-5">
@@ -199,37 +210,33 @@ export function MaterialsWorkspace({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 xl:w-[400px]">
-            <div title={!projectId ? "Vui lòng chọn công trình" : ""}>
-              <Button className="w-full h-10 px-0 sm:px-4 justify-center bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setIsMaterialFormOpen(true)} disabled={!projectId}>
-                <Plus className="h-4 w-4 sm:mr-1.5" />
-                <span className="hidden sm:inline">Thêm vật tư</span>
-                <span className="sm:hidden text-xs">Thêm VT</span>
-              </Button>
-            </div>
+          <div className="grid grid-cols-2 gap-2 xl:w-[280px]">
+            {permissions.canImport && (
+              <div title={
+                !projectId ? "Vui lòng chọn công trình" : 
+                materialItems.length === 0 ? "Cần tạo mã vật tư trước khi nhập kho" : ""
+              }>
+                <Button variant="outline" className="w-full h-10 px-0 sm:px-4 justify-center text-slate-700" onClick={() => setTransactionFormType("IMPORT")} disabled={!projectId || materialItems.length === 0}>
+                  <ArrowDownRight className="h-4 w-4 text-emerald-600 sm:mr-1.5" />
+                  <span className="hidden sm:inline">Nhập kho</span>
+                  <span className="sm:hidden text-xs">Nhập kho</span>
+                </Button>
+              </div>
+            )}
             
-            <div title={
-              !projectId ? "Vui lòng chọn công trình" : 
-              materialItems.length === 0 ? "Cần tạo mã vật tư trước khi nhập kho" : ""
-            }>
-              <Button variant="outline" className="w-full h-10 px-0 sm:px-4 justify-center text-slate-700" onClick={() => setTransactionFormType("IMPORT")} disabled={!projectId || materialItems.length === 0}>
-                <ArrowDownRight className="h-4 w-4 text-emerald-600 sm:mr-1.5" />
-                <span className="hidden sm:inline">Nhập kho</span>
-                <span className="sm:hidden text-xs">Nhập kho</span>
-              </Button>
-            </div>
-            
-            <div title={
-              !projectId ? "Vui lòng chọn công trình" : 
-              materialItems.length === 0 ? "Cần tạo mã vật tư trước khi xuất kho" :
-              initialStocks.every(s => s.stock <= 0) ? "Chưa có tồn kho để xuất" : ""
-            }>
-              <Button variant="outline" className="w-full h-10 px-0 sm:px-4 justify-center text-slate-700" onClick={() => setTransactionFormType("EXPORT")} disabled={!projectId || materialItems.length === 0 || initialStocks.every(s => s.stock <= 0)}>
-                <ArrowUpRight className="h-4 w-4 text-amber-600 sm:mr-1.5" />
-                <span className="hidden sm:inline">Xuất kho</span>
-                <span className="sm:hidden text-xs">Xuất kho</span>
-              </Button>
-            </div>
+            {permissions.canExport && (
+              <div title={
+                !projectId ? "Vui lòng chọn công trình" : 
+                materialItems.length === 0 ? "Cần tạo mã vật tư trước khi xuất kho" :
+                initialStocks.every(s => s.stock <= 0) ? "Chưa có tồn kho để xuất" : ""
+              }>
+                <Button variant="outline" className="w-full h-10 px-0 sm:px-4 justify-center text-slate-700" onClick={() => setTransactionFormType("EXPORT")} disabled={!projectId || materialItems.length === 0 || initialStocks.every(s => s.stock <= 0)}>
+                  <ArrowUpRight className="h-4 w-4 text-amber-600 sm:mr-1.5" />
+                  <span className="hidden sm:inline">Xuất kho</span>
+                  <span className="sm:hidden text-xs">Xuất kho</span>
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -271,8 +278,9 @@ export function MaterialsWorkspace({
               stocks={initialStocks}
               transactions={initialTransactions}
               onNavigate={updateUrl}
-              onCreateMaterial={() => setIsMaterialFormOpen(true)}
+              onGoToCatalog={() => updateUrl("catalog")}
               onCreateImport={() => setTransactionFormType("IMPORT")}
+              permissions={permissions}
             />
           )}
           {activeTab === "catalog" && (
@@ -285,6 +293,7 @@ export function MaterialsWorkspace({
               }}
               onEditMaterial={handleEditMaterial}
               onDeleteMaterial={handleDeleteMaterial}
+              permissions={permissions}
               onTransaction={(type, materialId) => {
                 setTransactionFormType(type);
                 setTransactionMaterialId(materialId || "");
@@ -298,6 +307,7 @@ export function MaterialsWorkspace({
                 setTransactionFormType(type);
                 setTransactionMaterialId(materialId || "");
               }}
+              permissions={permissions}
             />
           )}
           {activeTab === "transactions" && (
@@ -305,24 +315,27 @@ export function MaterialsWorkspace({
               transactions={initialTransactions}
               onAddTransaction={() => setTransactionFormType("IMPORT")}
               hasMaterials={materialItems.length > 0}
+              permissions={permissions}
             />
           )}
           {activeTab === "proposals" && <PurchaseRequestPlaceholder lowStockCount={lowStockCount} />}
         </section>
       )}
 
-      <MaterialFormDialog
-        isOpen={isMaterialFormOpen}
-        onClose={() => {
-          setIsMaterialFormOpen(false);
-          setEditingMaterialId(null);
-        }}
-        onSubmit={handleCreateMaterial}
-        isSubmitting={isSubmitting}
-        initialData={editingMaterialId ? materialItems.find(m => m.id === editingMaterialId) : undefined}
-      />
+      {(permissions.canCreate || permissions.canUpdate) && (
+        <MaterialFormDialog
+          isOpen={isMaterialFormOpen}
+          onClose={() => {
+            setIsMaterialFormOpen(false);
+            setEditingMaterialId(null);
+          }}
+          onSubmit={handleCreateMaterial}
+          isSubmitting={isSubmitting}
+          initialData={editingMaterialId ? materialItems.find(m => m.id === editingMaterialId) : undefined}
+        />
+      )}
 
-      {transactionFormType && (
+      {transactionFormType && (permissions.canImport || permissions.canExport) && (
         <TransactionFormDialog
           isOpen
           onClose={() => {
@@ -335,6 +348,7 @@ export function MaterialsWorkspace({
           stocks={initialStocks}
           type={transactionFormType}
           initialMaterialId={transactionMaterialId}
+          permissions={permissions}
         />
       )}
     </div>

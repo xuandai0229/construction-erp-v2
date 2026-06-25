@@ -14,9 +14,16 @@ interface MaterialsCatalogProps {
   onTransaction: (type: "IMPORT" | "EXPORT", materialId?: string) => void;
   onEditMaterial: (materialId: string) => void;
   onDeleteMaterial: (materialId: string) => void;
+  permissions: {
+    canCreate: boolean;
+    canUpdate: boolean;
+    canDelete: boolean;
+    canImport: boolean;
+    canExport: boolean;
+  };
 }
 
-export function MaterialsCatalog({ materialItems, stocks, onAddMaterial, onTransaction, onEditMaterial, onDeleteMaterial }: MaterialsCatalogProps) {
+export function MaterialsCatalog({ materialItems, stocks, onAddMaterial, onTransaction, onEditMaterial, onDeleteMaterial, permissions }: MaterialsCatalogProps) {
   const [search, setSearch] = useState("");
   const stockByMaterialId = useMemo(
     () => new Map(stocks.map((stock) => [stock.materialItemId, stock])),
@@ -32,44 +39,59 @@ export function MaterialsCatalog({ materialItems, stocks, onAddMaterial, onTrans
     );
   });
 
-  const renderActions = (material: MaterialItemDto, stock?: ProjectStockDto) => (
-    <div className="flex flex-wrap justify-end gap-2">
-      <button
-        type="button"
-        onClick={() => onTransaction("IMPORT", material.id)}
-        className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <ArrowDownRight className="h-3.5 w-3.5" />
-        Nhập
-      </button>
-      <button
-        type="button"
-        onClick={() => onTransaction("EXPORT", material.id)}
-        disabled={!stock || stock.stock <= 0}
-        className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400"
-      >
-        <ArrowUpRight className="h-3.5 w-3.5" />
-        Xuất
-      </button>
-      <div className="w-px bg-slate-200 mx-1"></div>
-      <button
-        type="button"
-        onClick={() => onEditMaterial(material.id)}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 hover:text-blue-600"
-        title="Sửa vật tư"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
-      </button>
-      <button
-        type="button"
-        onClick={() => onDeleteMaterial(material.id)}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600"
-        title="Xóa vật tư"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-      </button>
-    </div>
-  );
+  const hasActions = permissions.canImport || permissions.canExport || permissions.canUpdate || permissions.canDelete;
+
+  const renderActions = (material: MaterialItemDto, stock?: ProjectStockDto) => {
+    if (!hasActions) return null;
+    return (
+      <div className="flex flex-wrap justify-end gap-2">
+        {permissions.canImport && (
+          <button
+            type="button"
+            onClick={() => onTransaction("IMPORT", material.id)}
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ArrowDownRight className="h-3.5 w-3.5" />
+            Nhập
+          </button>
+        )}
+        {permissions.canExport && (
+          <button
+            type="button"
+            onClick={() => onTransaction("EXPORT", material.id)}
+            disabled={!stock || stock.stock <= 0}
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400"
+          >
+            <ArrowUpRight className="h-3.5 w-3.5" />
+            Xuất
+          </button>
+        )}
+        {(permissions.canImport || permissions.canExport) && (permissions.canUpdate || permissions.canDelete) && (
+          <div className="w-px bg-slate-200 mx-1"></div>
+        )}
+        {permissions.canUpdate && (
+          <button
+            type="button"
+            onClick={() => onEditMaterial(material.id)}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 hover:text-blue-600"
+            title="Sửa vật tư"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+          </button>
+        )}
+        {permissions.canDelete && (
+          <button
+            type="button"
+            onClick={() => onDeleteMaterial(material.id)}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600"
+            title="Xóa vật tư"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+          </button>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -86,10 +108,12 @@ export function MaterialsCatalog({ materialItems, stocks, onAddMaterial, onTrans
             className="h-10 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
           />
         </div>
-        <Button onClick={onAddMaterial} className="w-full md:w-auto">
-          <PackagePlus className="h-4 w-4" />
-          Tạo mã vật tư mới
-        </Button>
+        {permissions.canCreate && materialItems.length > 0 && (
+          <Button onClick={onAddMaterial} className="w-full md:w-auto">
+            <PackagePlus className="h-4 w-4" />
+            Thêm vật tư
+          </Button>
+        )}
       </div>
 
       <div className="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-950/[0.03] md:block">
@@ -102,7 +126,7 @@ export function MaterialsCatalog({ materialItems, stocks, onAddMaterial, onTrans
                 <th className="px-4 py-3">Đơn vị</th>
                 <th className="px-4 py-3">Nhóm</th>
                 <th className="px-4 py-3 text-right">Tồn tại công trình</th>
-                <th className="px-4 py-3 text-right">Thao tác</th>
+                {hasActions && <th className="px-4 py-3 text-right">Thao tác</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -117,16 +141,26 @@ export function MaterialsCatalog({ materialItems, stocks, onAddMaterial, onTrans
                     <td className="px-4 py-3 text-right font-mono font-semibold text-slate-950">
                       {stock ? `${formatQuantity(stock.stock)} ${material.unit}` : <span className="text-xs font-medium font-sans text-slate-400">0</span>}
                     </td>
-                    <td className="px-4 py-3">{renderActions(material, stock)}</td>
+                    {hasActions && <td className="px-4 py-3">{renderActions(material, stock)}</td>}
                   </tr>
                 );
               })}
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-500">
-                    {materialItems.length === 0 
-                      ? "Công trình này chưa có vật tư."
-                      : "Không tìm thấy vật tư phù hợp với từ khóa."}
+                    {materialItems.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center space-y-3">
+                        <p>Công trình này chưa có vật tư.</p>
+                        {permissions.canCreate && (
+                          <Button onClick={onAddMaterial} variant="outline" size="sm">
+                            <PackagePlus className="mr-2 h-4 w-4" />
+                            Thêm vật tư đầu tiên
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      "Không tìm thấy vật tư phù hợp với từ khóa."
+                    )}
                   </td>
                 </tr>
               )}
@@ -160,15 +194,25 @@ export function MaterialsCatalog({ materialItems, stocks, onAddMaterial, onTrans
                   <div className="mt-1 font-mono font-bold text-slate-900">{stock ? formatQuantity(stock.stock) : <span className="text-xs font-medium font-sans text-slate-400">0</span>}</div>
                 </div>
               </div>
-              <div className="mt-4">{renderActions(material, stock)}</div>
+              {hasActions && <div className="mt-4">{renderActions(material, stock)}</div>}
             </article>
           );
         })}
         {filtered.length === 0 && (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
-            {materialItems.length === 0 
-              ? "Công trình này chưa có vật tư."
-              : "Không tìm thấy vật tư phù hợp với từ khóa."}
+            {materialItems.length === 0 ? (
+              <div className="flex flex-col items-center justify-center space-y-3">
+                <p>Công trình này chưa có vật tư.</p>
+                {permissions.canCreate && (
+                  <Button onClick={onAddMaterial} variant="outline" size="sm">
+                    <PackagePlus className="mr-2 h-4 w-4" />
+                    Thêm vật tư đầu tiên
+                  </Button>
+                )}
+              </div>
+            ) : (
+              "Không tìm thấy vật tư phù hợp với từ khóa."
+            )}
           </div>
         )}
       </div>

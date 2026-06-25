@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth";
 import { applyMaterialMovement, parseNonNegativeQuantity, parsePositiveQuantity } from "@/lib/materials/ledger";
 import { MaterialMovementType, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { getMaterialPermissions, MaterialPermissionSet } from "@/lib/materials/materials-permissions";
 
 const MATERIALS_PATH = "/materials";
 
@@ -167,27 +168,38 @@ async function requireSession() {
   return session;
 }
 
-async function assertProjectAccess(session: Session, projectId: string) {
+export async function requireProjectPermissions(session: Session, projectId: string): Promise<MaterialPermissionSet> {
   const project = await prisma.project.findFirst({
     where: { id: projectId, deletedAt: null },
     select: { id: true },
   });
 
   if (!project) throw new Error("Không tìm thấy công trình");
-  if (session.role === "ADMIN") return;
 
-  const membership = await prisma.projectMember.findFirst({
-    where: {
-      projectId,
-      userId: session.id,
-      isActive: true,
-      deletedAt: null,
-      leftAt: null,
-    },
-    select: { id: true },
-  });
+  let projectRole = null;
+  if (session.role !== "ADMIN") {
+    const membership = await prisma.projectMember.findFirst({
+      where: {
+        projectId,
+        userId: session.id,
+        isActive: true,
+        deletedAt: null,
+        leftAt: null,
+      },
+      select: { role: true },
+    });
 
-  if (!membership) throw new Error("Bạn không có quyền thao tác công trình này");
+    if (!membership) throw new Error("Bạn không có quyền thao tác công trình này");
+    projectRole = membership.role;
+  }
+
+  return getMaterialPermissions(session.role, projectRole);
+}
+
+function assertPermission(permissions: MaterialPermissionSet, action: keyof MaterialPermissionSet) {
+  if (!permissions[action]) {
+    throw new Error("Bạn không có quyền thực hiện thao tác vật tư này.");
+  }
 }
 
 // ========================
@@ -228,7 +240,8 @@ export async function getMaterialItems(projectId: string): Promise<MaterialItemD
   if (!session) return [];
 
   if (!projectId) return [];
-  await assertProjectAccess(session, projectId);
+  const perms = await requireProjectPermissions(session, projectId);
+  if (!perms.canView) return [];
 
   const items = await prisma.materialItem.findMany({
     where: { projectId },
@@ -248,7 +261,8 @@ export async function getProjectStocks(projectId: string): Promise<ProjectStockD
   const session = await getSession();
   if (!session) return [];
 
-  await assertProjectAccess(session, projectId);
+  const perms = await requireProjectPermissions(session, projectId);
+  if (!perms.canView) return [];
 
   const stocks = await prisma.projectMaterialStock.findMany({
     where: { projectId },
@@ -286,7 +300,8 @@ export async function createMaterialItem(data: {
   if (!unit) throw new Error("Đơn vị tính là bắt buộc");
   if (!projectId) throw new Error("Vui lòng chọn công trình");
 
-  await assertProjectAccess(session, projectId);
+  const perms = await requireProjectPermissions(session, projectId);
+  assertPermission(perms, "canCreate");
 
   const requestedCode = normalizeMaterialCode(data.code);
   const code = requestedCode || (await buildUniqueMaterialCode(name, projectId));
@@ -352,7 +367,8 @@ export async function updateMaterialItem(id: string, data: { name: string; unit:
   if (!material) throw new Error("Vật tư không tồn tại");
   if (!material.projectId) throw new Error("Vật tư không thuộc công trình nào");
 
-  await assertProjectAccess(session, material.projectId);
+  const perms = await requireProjectPermissions(session, material.projectId);
+  assertPermission(perms, "canUpdate");
 
   // Cho phép sửa toàn bộ, không chặn đổi đơn vị tính
 
@@ -379,7 +395,8 @@ export async function deleteMaterialItem(id: string) {
   if (!material) throw new Error("Vật tư không tồn tại");
   if (!material.projectId) throw new Error("Vật tư không thuộc công trình nào");
 
-  await assertProjectAccess(session, material.projectId);
+  const perms = await requireProjectPermissions(session, material.projectId);
+  assertPermission(perms, "canDelete");
 
   await prisma.$transaction([
     prisma.materialMovement.deleteMany({
@@ -403,7 +420,8 @@ export async function deleteMaterialItem(id: string) {
 // ========================
 export async function setProjectMinStock(projectId: string, materialItemId: string, minStockLevel: number) {
   const session = await requireSession();
-  await assertProjectAccess(session, projectId);
+  const perms = await requireProjectPermissions(session, projectId);
+  assertPermission(perms, "canUpdate");
 
   const parsedMinStock = parseNonNegativeQuantity(minStockLevel, "Tồn tối thiểu");
 
@@ -458,7 +476,9 @@ export async function createMaterialTransaction(data: {
   if (!["IMPORT", "EXPORT", "TRANSFER", "RETURN"].includes(type)) throw new Error("Loại giao dịch không hợp lệ");
   if (Number.isNaN(movementDate.getTime())) throw new Error("Ngày giao dịch không hợp lệ");
 
-  await assertProjectAccess(session, projectId);
+  const perms = await requireProjectPermissions(session, projectId);
+  if (type === "IMPORT") assertPermission(perms, "canImport");
+  if (type === "EXPORT") assertPermission(perms, "canExport");
 
   await prisma.$transaction((tx) =>
     applyMaterialMovement(tx, {
@@ -480,7 +500,8 @@ export async function getRecentTransactions(projectId: string): Promise<Material
   const session = await getSession();
   if (!session) return [];
 
-  await assertProjectAccess(session, projectId);
+  const perms = await requireProjectPermissions(session, projectId);
+  if (!perms.canViewTransactions) return [];
 
   const movements = await prisma.materialMovement.findMany({
     where: { projectId },

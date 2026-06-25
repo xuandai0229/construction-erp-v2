@@ -9,6 +9,10 @@ import { formatDate, formatQuantity, getStockStatus } from "./materials-formatte
 interface MaterialsStockTableProps {
   stocks: ProjectStockDto[];
   onTransaction?: (type: "IMPORT" | "EXPORT", materialId?: string) => void;
+  permissions: {
+    canImport: boolean;
+    canExport: boolean;
+  };
 }
 
 type StockFilter = "ALL" | "HEALTHY" | "LOW" | "OUT";
@@ -20,7 +24,7 @@ const filters: { id: StockFilter; label: string }[] = [
   { id: "OUT", label: "Hết hàng" },
 ];
 
-export function MaterialsStockTable({ stocks, onTransaction }: MaterialsStockTableProps) {
+export function MaterialsStockTable({ stocks, onTransaction, permissions }: MaterialsStockTableProps) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<StockFilter>("ALL");
   const normalizedSearch = search.trim().toLowerCase();
@@ -42,29 +46,38 @@ export function MaterialsStockTable({ stocks, onTransaction }: MaterialsStockTab
     });
   }, [filter, normalizedSearch, stocks]);
 
-  const actionButtons = (stock: ProjectStockDto) => (
-    <div className="flex justify-end gap-2">
-      <button
-        type="button"
-        onClick={() => onTransaction?.("IMPORT", stock.materialItemId)}
-        className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
-      >
-        <ArrowDownRight className="h-3.5 w-3.5" />
-        Nhập
-      </button>
-      <div title={stock.stock <= 0 ? "Chưa có tồn kho để xuất" : ""}>
-        <button
-          type="button"
-          onClick={() => onTransaction?.("EXPORT", stock.materialItemId)}
-          disabled={stock.stock <= 0}
-          className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400"
-        >
-          <ArrowUpRight className="h-3.5 w-3.5" />
-          Xuất
-        </button>
+  const hasActions = permissions.canImport || permissions.canExport;
+
+  const actionButtons = (stock: ProjectStockDto) => {
+    if (!hasActions) return null;
+    return (
+      <div className="flex justify-end gap-2">
+        {permissions.canImport && (
+          <button
+            type="button"
+            onClick={() => onTransaction?.("IMPORT", stock.materialItemId)}
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
+          >
+            <ArrowDownRight className="h-3.5 w-3.5" />
+            Nhập
+          </button>
+        )}
+        {permissions.canExport && (
+          <div title={stock.stock <= 0 ? "Chưa có tồn kho để xuất" : ""}>
+            <button
+              type="button"
+              onClick={() => onTransaction?.("EXPORT", stock.materialItemId)}
+              disabled={stock.stock <= 0}
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400"
+            >
+              <ArrowUpRight className="h-3.5 w-3.5" />
+              Xuất
+            </button>
+          </div>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -111,7 +124,7 @@ export function MaterialsStockTable({ stocks, onTransaction }: MaterialsStockTab
                 <th className="px-4 py-3 text-right">Tồn tối thiểu</th>
                 <th className="px-4 py-3 text-center">Trạng thái</th>
                 <th className="px-4 py-3">Cập nhật</th>
-                <th className="px-4 py-3 text-right">Thao tác</th>
+                {hasActions && <th className="px-4 py-3 text-right">Thao tác</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -128,7 +141,7 @@ export function MaterialsStockTable({ stocks, onTransaction }: MaterialsStockTab
                   </td>
                   <td className="px-4 py-3 text-center"><StockStatusBadge stock={stock.stock} minStockLevel={stock.minStockLevel} /></td>
                   <td className="px-4 py-3 text-xs font-medium text-slate-500">{formatDate(stock.lastUpdated)}</td>
-                  <td className="px-4 py-3">{actionButtons(stock)}</td>
+                  {hasActions && <td className="px-4 py-3">{actionButtons(stock)}</td>}
                 </tr>
               ))}
               {filtered.length === 0 && (
@@ -171,7 +184,7 @@ export function MaterialsStockTable({ stocks, onTransaction }: MaterialsStockTab
             </div>
             <div className="mt-3 flex items-center justify-between gap-2">
               <span className="text-xs font-medium text-slate-500">Cập nhật {formatDate(stock.lastUpdated)}</span>
-              {actionButtons(stock)}
+              {hasActions && actionButtons(stock)}
             </div>
           </article>
         ))}

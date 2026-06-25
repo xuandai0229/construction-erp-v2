@@ -198,7 +198,7 @@ export function MaterialFormDialog({ isOpen, onClose, onSubmit, isSubmitting, in
           <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>Hủy</Button>
             <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white" disabled={isSubmitting}>
-              {isSubmitting ? "Đang lưu..." : (initialData ? "Lưu thay đổi" : "Tạo vật tư")}
+              {isSubmitting ? "Đang lưu..." : (initialData ? "Lưu thay đổi" : "Thêm vật tư")}
             </Button>
           </div>
         </form>

@@ -10,9 +10,14 @@ interface MaterialsTransactionsProps {
   transactions: MaterialMovementDto[];
   onAddTransaction: () => void;
   hasMaterials: boolean;
+  permissions: {
+    canImport: boolean;
+    canExport: boolean;
+  };
 }
 
-export function MaterialsTransactions({ transactions, onAddTransaction, hasMaterials }: MaterialsTransactionsProps) {
+export function MaterialsTransactions({ transactions, onAddTransaction, hasMaterials, permissions }: MaterialsTransactionsProps) {
+  const hasActions = permissions.canImport || permissions.canExport;
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -20,12 +25,14 @@ export function MaterialsTransactions({ transactions, onAddTransaction, hasMater
           <h2 className="text-lg font-bold text-slate-950">Lịch sử nhập / xuất</h2>
           <p className="mt-1 text-sm text-slate-600">Lịch sử giao dịch vật tư của công trình.</p>
         </div>
-        <div title={!hasMaterials ? "Cần tạo mã vật tư trước khi tạo giao dịch" : ""}>
-          <Button onClick={onAddTransaction} className="w-full sm:w-auto" disabled={!hasMaterials}>
-            <Plus className="h-4 w-4 mr-1.5" />
-            Tạo giao dịch
-          </Button>
-        </div>
+        {hasActions && (
+          <div title={!hasMaterials ? "Cần tạo mã vật tư trước khi tạo giao dịch" : ""}>
+            <Button onClick={onAddTransaction} className="w-full sm:w-auto" disabled={!hasMaterials}>
+              <Plus className="h-4 w-4 mr-1.5" />
+              Tạo giao dịch
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-950/[0.03] md:block">
@@ -64,6 +71,9 @@ export function MaterialsTransactions({ transactions, onAddTransaction, hasMater
                   <td colSpan={5} className="px-4 py-12 text-center">
                     <ClipboardList className="mx-auto h-9 w-9 text-slate-300" />
                     <div className="mt-2 font-semibold text-slate-700">Chưa có giao dịch vật tư</div>
+                    {!hasMaterials && (
+                      <p className="mt-1 text-sm text-slate-500">Cần tạo mã vật tư ở tab Danh mục trước khi nhập/xuất.</p>
+                    )}
                   </td>
                 </tr>
               )}
@@ -97,6 +107,9 @@ export function MaterialsTransactions({ transactions, onAddTransaction, hasMater
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
             <ClipboardList className="mx-auto h-9 w-9 text-slate-300" />
             <div className="mt-2 font-semibold text-slate-700">Chưa có giao dịch vật tư</div>
+            {!hasMaterials && (
+              <p className="mt-1 text-sm text-slate-500">Cần tạo mã vật tư ở tab Danh mục trước khi nhập/xuất.</p>
+            )}
           </div>
         )}
       </div>

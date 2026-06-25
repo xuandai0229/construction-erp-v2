@@ -13,9 +13,13 @@ interface TransactionFormDialogProps {
   stocks: any[];
   type: "IMPORT" | "EXPORT";
   initialMaterialId?: string;
+  permissions: {
+    canImport: boolean;
+    canExport: boolean;
+  };
 }
 
-export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting, materialItems, stocks, type, initialMaterialId }: TransactionFormDialogProps) {
+export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting, materialItems, stocks, type, initialMaterialId, permissions }: TransactionFormDialogProps) {
   const [formData, setFormData] = useState({
     materialItemId: initialMaterialId || "",
     quantity: "",
@@ -25,6 +29,8 @@ export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting,
   const [error, setError] = useState("");
 
   if (!isOpen) return null;
+  if (type === "IMPORT" && !permissions.canImport) return null;
+  if (type === "EXPORT" && !permissions.canExport) return null;
 
   const selectedMaterial = materialItems.find(m => m.id === formData.materialItemId);
   const currentStock = stocks.find(s => s.materialItemId === formData.materialItemId)?.stock || 0;

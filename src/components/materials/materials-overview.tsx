@@ -11,8 +11,11 @@ interface MaterialsOverviewProps {
   stocks: ProjectStockDto[];
   transactions: MaterialMovementDto[];
   onNavigate: (tab: string) => void;
-  onCreateMaterial: () => void;
+  onGoToCatalog: () => void;
   onCreateImport: () => void;
+  permissions: {
+    canViewTransactions: boolean;
+  };
 }
 
 export function MaterialsOverview({
@@ -20,8 +23,9 @@ export function MaterialsOverview({
   stocks,
   transactions,
   onNavigate,
-  onCreateMaterial,
+  onGoToCatalog,
   onCreateImport,
+  permissions,
 }: MaterialsOverviewProps) {
   const now = new Date();
   const monthlyTransactions = transactions.filter((transaction) => {
@@ -138,7 +142,9 @@ export function MaterialsOverview({
             <div>
               <h2 className="text-base font-bold text-slate-950">Giao dịch gần đây</h2>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => onNavigate("transactions")}>Lịch sử</Button>
+            {permissions.canViewTransactions && (
+              <Button variant="ghost" size="sm" onClick={() => onNavigate("transactions")}>Lịch sử</Button>
+            )}
           </div>
           <div className="divide-y divide-slate-100">
             {recentTransactions.map((transaction) => (
@@ -201,9 +207,9 @@ export function MaterialsOverview({
               </ul>
             </div>
             <div className="shrink-0 flex flex-col gap-3">
-              <Button onClick={onCreateMaterial} className="w-full bg-blue-600 hover:bg-blue-700 text-white md:w-auto">
+              <Button onClick={onGoToCatalog} className="w-full bg-blue-600 hover:bg-blue-700 text-white md:w-auto">
                 <PackagePlus className="mr-2 h-4 w-4" />
-                Thêm vật tư
+                Mở danh mục vật tư
               </Button>
               <Button onClick={onCreateImport} variant="outline" className="w-full border-blue-200 text-blue-700 hover:bg-blue-100 md:w-auto" disabled={materialItems.length === 0}>
                 <ArrowDownRight className="mr-2 h-4 w-4" />
