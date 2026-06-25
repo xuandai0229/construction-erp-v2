@@ -1,20 +1,45 @@
-import { EmptyState } from '@/components/ui/empty-state';
-import { Package } from 'lucide-react';
+import { getSession } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { getActiveProjects, getMaterialItems, getProjectStocks, getRecentTransactions } from "./actions";
+import { MaterialsWorkspace } from "@/components/materials/materials-workspace";
 
-export default function MaterialsPage() {
+export const metadata = {
+  title: "Quản lý vật tư | ERP Công trình",
+  description: "Theo dõi nhập, xuất, tồn kho và nhu cầu vật tư tại công trường",
+};
+
+export default async function MaterialsPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
+  const session = await getSession();
+  if (!session) redirect("/login");
+
+  const resolvedParams = await searchParams;
+  const initialProjectId = typeof resolvedParams.projectId === "string" ? resolvedParams.projectId : undefined;
+
+  const projects = await getActiveProjects();
+  const materialItems = await getMaterialItems();
+
+  let initialStocks: any[] = [];
+  let initialTransactions: any[] = [];
+
+  const projectIdToLoad = initialProjectId || (projects.length > 0 ? projects[0].id : undefined);
+
+  if (projectIdToLoad) {
+    try {
+      initialStocks = await getProjectStocks(projectIdToLoad);
+      initialTransactions = await getRecentTransactions(projectIdToLoad);
+    } catch (e) {
+      console.error("Failed to load project material data:", e);
+    }
+  }
+
   return (
-    <div className="app-page space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="page-heading">Quản lý vật tư</h1>
-          <p className="page-description">Theo dõi vật tư, thiết bị và nhu cầu sử dụng tại công trường.</p>
-        </div>
-      </div>
-      <EmptyState 
-        title="Chưa có dữ liệu vật tư" 
-        description="Theo dõi nhập, xuất, tồn kho vật tư thiết bị tại công trường." 
-        icon={<Package className="h-6 w-6 text-slate-500" />}
-      />
-    </div>
+    <MaterialsWorkspace 
+      projects={projects}
+      materialItems={materialItems}
+      initialStocks={initialStocks}
+      initialTransactions={initialTransactions}
+      initialProjectId={projectIdToLoad}
+      currentUser={{ id: session.id, role: session.role }}
+    />
   );
 }

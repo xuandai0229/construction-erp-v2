@@ -247,6 +247,7 @@ model Project {
   fieldProgressItems     FieldProgressItem[]
   fieldProgressEntries   FieldProgressEntry[]
   fieldMaterialRequests  FieldMaterialRequest[]
+  projectMaterialStocks  ProjectMaterialStock[]
 
   @@index([code])
   @@index([status])
@@ -408,9 +409,9 @@ model Document {
 }
 
 model SiteReport {
-  id                 String           @id @default(cuid())
-  reportNo           String           @default(dbgenerated("gen_random_uuid()::text"))
-  type               SiteReportType   @default(DAILY)
+  id                 String            @id @default(cuid())
+  reportNo           String            @default(dbgenerated("gen_random_uuid()::text"))
+  type               SiteReportType    @default(DAILY)
   projectId          String
   title              String?
   reportDate         DateTime
@@ -421,36 +422,36 @@ model SiteReport {
   weatherNote        String?
   gpsLat             Float?
   gpsLng             Float?
-  
-  summary            String?          @db.Text
-  materials          String?          @db.Text
-  labor              String?          @db.Text
-  equipment          String?          @db.Text
-  quality            String?          @db.Text
-  issues             String?          @db.Text
-  recommendations    String?          @db.Text
-  
-  reporterName       String?          
+
+  summary         String? @db.Text
+  materials       String? @db.Text
+  labor           String? @db.Text
+  equipment       String? @db.Text
+  quality         String? @db.Text
+  issues          String? @db.Text
+  recommendations String? @db.Text
+
+  reporterName String?
 
   // Legacy fields
-  weather            String?
-  manpowerCount      Int?
-  equipmentNote      String?
-  generalNote        String?
+  weather       String?
+  manpowerCount Int?
+  equipmentNote String?
+  generalNote   String?
 
-  status             SiteReportStatus @default(DRAFT)
-  createdById        String
-  submittedAt        DateTime?
-  approvedById       String?
-  approvedAt         DateTime?
-  rejectedReason     String?
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
-  deletedAt          DateTime?
+  status         SiteReportStatus @default(DRAFT)
+  createdById    String
+  submittedAt    DateTime?
+  approvedById   String?
+  approvedAt     DateTime?
+  rejectedReason String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  deletedAt      DateTime?
 
-  project          Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  createdBy        User              @relation("ReportCreator", fields: [createdById], references: [id])
-  approvedBy       User?             @relation("ReportApprover", fields: [approvedById], references: [id])
+  project          Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy        User                   @relation("ReportCreator", fields: [createdById], references: [id])
+  approvedBy       User?                  @relation("ReportApprover", fields: [approvedById], references: [id])
   photos           SiteReportPhoto[]
   attachments      SiteReportAttachment[]
   lines            SiteReportLine[]
@@ -493,28 +494,28 @@ model SiteReportAttachment {
 }
 
 model SiteReportLine {
-  id                 String    @id @default(cuid())
-  siteReportId       String
-  projectId          String
-  wbsItemId          String?
+  id                  String    @id @default(cuid())
+  siteReportId        String
+  projectId           String
+  wbsItemId           String?
   fieldProgressItemId String?
-  workName           String?
-  workContent        String
-  area               String?
-  constructionCrew   String?
-  unit               String?
-  designQuantity     Decimal?  @db.Decimal(19, 4)
-  quantityToday      Decimal   @db.Decimal(19, 4)
-  quantityBefore     Decimal   @default(0) @db.Decimal(19, 4)
-  quantityCumulative Decimal   @default(0) @db.Decimal(19, 4)
-  progressPercent    Decimal   @default(0) @db.Decimal(5, 2)
-  note               String?
-  issueNote          String?
-  proposalNote       String?
-  sortOrder          Int       @default(0)
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-  deletedAt          DateTime?
+  workName            String?
+  workContent         String
+  area                String?
+  constructionCrew    String?
+  unit                String?
+  designQuantity      Decimal?  @db.Decimal(19, 4)
+  quantityToday       Decimal   @db.Decimal(19, 4)
+  quantityBefore      Decimal   @default(0) @db.Decimal(19, 4)
+  quantityCumulative  Decimal   @default(0) @db.Decimal(19, 4)
+  progressPercent     Decimal   @default(0) @db.Decimal(5, 2)
+  note                String?
+  issueNote           String?
+  proposalNote        String?
+  sortOrder           Int       @default(0)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  deletedAt           DateTime?
 
   siteReport        SiteReport         @relation(fields: [siteReportId], references: [id], onDelete: Cascade)
   project           Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -587,11 +588,13 @@ model MaterialItem {
   code        String   @unique
   name        String
   unit        String
+  group       String?
   description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  movements MaterialMovement[]
+  movements     MaterialMovement[]
+  projectStocks ProjectMaterialStock[]
 
   @@index([code])
 }
@@ -614,6 +617,24 @@ model MaterialMovement {
   @@index([projectId])
   @@index([materialItemId])
   @@index([movementDate])
+}
+
+model ProjectMaterialStock {
+  id             String   @id @default(cuid())
+  projectId      String
+  materialItemId String
+  stock          Decimal  @default(0) @db.Decimal(19, 4)
+  minStockLevel  Decimal  @default(0) @db.Decimal(19, 4)
+  lastUpdated    DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  materialItem MaterialItem @relation(fields: [materialItemId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, materialItemId])
+  @@index([projectId])
+  @@index([materialItemId])
 }
 
 model PaymentPlan {
