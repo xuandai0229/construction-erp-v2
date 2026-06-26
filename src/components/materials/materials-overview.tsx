@@ -2,29 +2,25 @@
 
 import { AlertTriangle, ArrowDownRight, ClipboardList, Package, PackagePlus, Warehouse } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { MaterialItemDto, MaterialMovementDto, ProjectStockDto } from "@/app/(dashboard)/materials/actions";
+import type { MaterialMovementDto, ProjectStockDto } from "@/app/(dashboard)/materials/actions";
 import { MovementTypeBadge, StockStatusBadge } from "./materials-badges";
 import { formatDateTime, formatQuantity, getMovementSign } from "./materials-formatters";
 
 interface MaterialsOverviewProps {
-  materialItems: MaterialItemDto[];
   stocks: ProjectStockDto[];
   transactions: MaterialMovementDto[];
   onNavigate: (tab: string) => void;
   onGoToCatalog: () => void;
-  onCreateImport: () => void;
   permissions: {
     canViewTransactions: boolean;
   };
 }
 
 export function MaterialsOverview({
-  materialItems,
   stocks,
   transactions,
   onNavigate,
   onGoToCatalog,
-  onCreateImport,
   permissions,
 }: MaterialsOverviewProps) {
   const now = new Date();
@@ -38,28 +34,28 @@ export function MaterialsOverview({
 
   const cards = [
     {
-      label: "Mã đang theo dõi",
+      label: "Mã vật tư",
       value: stocks.length,
       unit: "mã",
       icon: Package,
       tone: "blue",
     },
     {
-      label: "Mã có tồn kho",
+      label: "Có tồn kho",
       value: activeStockCount,
       unit: "mã",
       icon: Warehouse,
       tone: "emerald",
     },
     {
-      label: "Vật tư cần bổ sung",
+      label: "Cần bổ sung",
       value: lowStocks.length,
       unit: "mục",
       icon: AlertTriangle,
       tone: lowStocks.length > 0 ? "amber" : "slate",
     },
     {
-      label: "Giao dịch tháng này",
+      label: "Giao dịch tháng",
       value: monthlyTransactions.length,
       unit: "phiếu",
       icon: ClipboardList,
@@ -165,7 +161,6 @@ export function MaterialsOverview({
               <div className="px-4 py-8 text-center">
                 <ArrowDownRight className="mx-auto h-8 w-8 text-slate-300" />
                 <p className="mt-2 text-sm font-semibold text-slate-700">Chưa có giao dịch</p>
-                <p className="mt-1 text-sm text-slate-500">Sau khi nhập hoặc xuất kho, lịch sử sẽ hiển thị tại đây.</p>
               </div>
             )}
           </div>
@@ -173,49 +168,14 @@ export function MaterialsOverview({
       </div>
 
       {stocks.length === 0 && (
-        <section className="rounded-2xl border border-blue-200 bg-blue-50/50 p-5 md:p-6">
-          <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-            <div className="max-w-2xl space-y-4">
-              <div>
-                <h2 className="text-lg font-bold text-blue-950">Công trình chưa có vật tư</h2>
-                <p className="mt-1 text-sm leading-6 text-blue-800">
-                  Hãy thêm vật tư đầu tiên để bắt đầu quản lý cho công trình này.
-                </p>
-              </div>
-              <ul className="space-y-3">
-                <li className="flex items-start gap-3">
-                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">1</div>
-                  <div>
-                    <div className="font-semibold text-blue-950">Thêm vật tư</div>
-                    <p className="mt-0.5 text-sm text-blue-800">Tạo mã vật tư đầu tiên cho công trình này.</p>
-                  </div>
-                </li>
-                <li className="flex items-start gap-3 opacity-60">
-                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-200 text-xs font-bold text-blue-800">2</div>
-                  <div>
-                    <div className="font-semibold text-blue-950">Nhập kho đầu kỳ</div>
-                    <p className="mt-0.5 text-sm text-blue-800">Chọn "Nhập kho" để ghi nhận số lượng sẵn có tại công trình.</p>
-                  </div>
-                </li>
-                <li className="flex items-start gap-3 opacity-60">
-                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-200 text-xs font-bold text-blue-800">3</div>
-                  <div>
-                    <div className="font-semibold text-blue-950">Theo dõi tồn kho</div>
-                    <p className="mt-0.5 text-sm text-blue-800">Xuất kho cho các đội thi công và hệ thống sẽ tự động trừ tồn.</p>
-                  </div>
-                </li>
-              </ul>
-            </div>
-            <div className="shrink-0 flex flex-col gap-3">
-              <Button onClick={onGoToCatalog} className="w-full bg-blue-600 hover:bg-blue-700 text-white md:w-auto">
-                <PackagePlus className="mr-2 h-4 w-4" />
-                Mở danh mục vật tư
-              </Button>
-              <Button onClick={onCreateImport} variant="outline" className="w-full border-blue-200 text-blue-700 hover:bg-blue-100 md:w-auto" disabled={materialItems.length === 0}>
-                <ArrowDownRight className="mr-2 h-4 w-4" />
-                Nhập kho đầu kỳ
-              </Button>
-            </div>
+        <section className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
+          <Warehouse className="mx-auto h-9 w-9 text-slate-300" />
+          <h2 className="mt-2 text-sm font-bold text-slate-900">Chưa có vật tư</h2>
+          <div className="mt-4 flex justify-center">
+            <Button onClick={onGoToCatalog} variant="outline" size="sm">
+              <PackagePlus className="mr-2 h-4 w-4" />
+              Mở danh mục
+            </Button>
           </div>
         </section>
       )}

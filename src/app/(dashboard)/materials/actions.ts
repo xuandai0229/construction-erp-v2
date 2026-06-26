@@ -457,7 +457,7 @@ export async function setProjectMinStock(projectId: string, materialItemId: stri
 export async function createMaterialTransaction(data: {
   projectId: string;
   materialItemId: string;
-  type: "IMPORT" | "EXPORT" | "TRANSFER" | "RETURN";
+  type: "IMPORT" | "EXPORT";
   quantity: number;
   unitPrice?: number;
   movementDate: Date;
@@ -473,7 +473,7 @@ export async function createMaterialTransaction(data: {
 
   if (!projectId) throw new Error("Vui lòng chọn công trình");
   if (!materialItemId) throw new Error("Vui lòng chọn vật tư");
-  if (!["IMPORT", "EXPORT", "TRANSFER", "RETURN"].includes(type)) throw new Error("Loại giao dịch không hợp lệ");
+  if (!["IMPORT", "EXPORT"].includes(type)) throw new Error("Loại giao dịch không hợp lệ");
   if (Number.isNaN(movementDate.getTime())) throw new Error("Ngày giao dịch không hợp lệ");
 
   const perms = await requireProjectPermissions(session, projectId);

@@ -1,16 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import type { MaterialItemDto, ProjectStockDto } from "@/app/(dashboard)/materials/actions";
 
 interface TransactionFormDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: { materialItemId: string; type: "IMPORT" | "EXPORT"; quantity: number; movementDate: Date; notes?: string }) => Promise<void>;
   isSubmitting: boolean;
-  materialItems: any[];
-  stocks: any[];
+  materialItems: MaterialItemDto[];
+  stocks: ProjectStockDto[];
   type: "IMPORT" | "EXPORT";
   initialMaterialId?: string;
   permissions: {
@@ -27,6 +28,17 @@ export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting,
     notes: "",
   });
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setError("");
+    setFormData({
+      materialItemId: initialMaterialId || "",
+      quantity: "",
+      movementDate: new Date().toISOString().slice(0, 16),
+      notes: "",
+    });
+  }, [initialMaterialId, isOpen, type]);
 
   if (!isOpen) return null;
   if (type === "IMPORT" && !permissions.canImport) return null;
@@ -57,26 +69,26 @@ export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting,
         notes: formData.notes,
       });
       setFormData({ materialItemId: "", quantity: "", movementDate: new Date().toISOString().slice(0, 16), notes: "" });
-    } catch (err: any) {
-      setError(err.message || "Đã xảy ra lỗi");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Đã xảy ra lỗi");
     }
   };
 
   const isImport = type === "IMPORT";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 backdrop-blur-sm sm:items-center sm:p-4">
+      <div className="flex max-h-[92dvh] w-full max-w-md flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl sm:rounded-xl">
         <div className="flex justify-between items-center p-4 border-b border-slate-100">
           <h2 className="text-lg font-bold text-slate-800">
             {isImport ? "Nhập kho" : "Xuất kho"}
           </h2>
-          <button onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-100">
+          <button type="button" onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-100" aria-label="Đóng form giao dịch">
             <X className="w-5 h-5" />
           </button>
         </div>
         
-        <form onSubmit={handleSubmit} className="p-4 space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto p-4">
           {error && (
             <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
               {error}
@@ -84,14 +96,15 @@ export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting,
           )}
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Vật tư <span className="text-red-500">*</span></label>
+            <label htmlFor="transaction-material" className="block text-sm font-medium text-slate-700 mb-1">Vật tư <span className="text-red-500">*</span></label>
             <select 
+              id="transaction-material"
               value={formData.materialItemId} 
               onChange={e => setFormData({ ...formData, materialItemId: e.target.value })}
               className="w-full h-10 px-3 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             >
-              <option value="" disabled>-- Chọn vật tư --</option>
+              <option value="" disabled>Chọn vật tư</option>
               {materialItems.map(m => (
                 <option key={m.id} value={m.id}>{m.name} ({m.code})</option>
               ))}
@@ -103,9 +116,10 @@ export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting,
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Số lượng <span className="text-red-500">*</span></label>
+              <label htmlFor="transaction-quantity" className="block text-sm font-medium text-slate-700 mb-1">Số lượng <span className="text-red-500">*</span></label>
               <div className="relative">
                 <input 
+                  id="transaction-quantity"
                   type="number" 
                   step="0.01"
                   min="0.01"
@@ -121,8 +135,9 @@ export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting,
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Ngày GD <span className="text-red-500">*</span></label>
+              <label htmlFor="transaction-date" className="block text-sm font-medium text-slate-700 mb-1">Ngày giao dịch <span className="text-red-500">*</span></label>
               <input 
+                id="transaction-date"
                 type="datetime-local" 
                 value={formData.movementDate} 
                 onChange={e => setFormData({ ...formData, movementDate: e.target.value })}
@@ -133,8 +148,9 @@ export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting,
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Ghi chú</label>
+            <label htmlFor="transaction-notes" className="block text-sm font-medium text-slate-700 mb-1">Ghi chú</label>
             <textarea 
+              id="transaction-notes"
               value={formData.notes} 
               onChange={e => setFormData({ ...formData, notes: e.target.value })}
               placeholder={isImport ? "Biển số xe, người giao..." : "Người nhận, hạng mục thi công..."}
@@ -147,7 +163,7 @@ export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting,
               Hủy
             </Button>
             <Button type="submit" className={`${isImport ? "bg-emerald-600 hover:bg-emerald-700" : "bg-amber-600 hover:bg-amber-700"} text-white`} disabled={isSubmitting}>
-              {isSubmitting ? "Đang xử lý..." : (isImport ? "Nhập kho" : "Xuất kho")}
+              {isSubmitting ? "Đang lưu..." : "Lưu"}
             </Button>
           </div>
         </form>

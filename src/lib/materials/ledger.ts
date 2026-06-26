@@ -41,13 +41,10 @@ export async function applyMaterialMovement(tx: MaterialLedgerTx, input: ApplyMa
 
   const material = await tx.materialItem.findUnique({
     where: { id: input.materialItemId },
-    select: { id: true, projectId: true, isActive: true },
+    select: { id: true, projectId: true },
   });
   if (!material) {
     throw new Error("Vật tư không tồn tại");
-  }
-  if (!material.isActive) {
-    throw new Error("Vật tư đã ngừng sử dụng, không thể tạo giao dịch");
   }
   if (material.projectId !== input.projectId) {
     throw new Error("Vật tư không thuộc công trình này");

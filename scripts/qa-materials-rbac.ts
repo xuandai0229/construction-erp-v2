@@ -237,6 +237,18 @@ async function runTests() {
     await assertThrow(() => createMaterialItem({ projectId: projectB.id, name: "Test", unit: "kg" }), "không có quyền thao tác");
     console.log("[PASS] Payload xuyên công trình bị chặn");
 
+    await assertThrow(
+      () => createMaterialTransaction({
+        projectId: projectA.id,
+        materialItemId: material.id,
+        type: "RETURN",
+        quantity: 1,
+        movementDate: new Date(),
+      } as any),
+      "Loại giao dịch không hợp lệ"
+    );
+    console.log("[PASS] Payload loại giao dịch ngoài Nhập/Xuất bị chặn");
+
     // --- PHASE 5: Delete and update logic ---
     currentSession = { id: users.pm.id, role: users.pm.role };
     await updateMaterialItem(material.id, { name: "Updated Name", unit: "tons" });

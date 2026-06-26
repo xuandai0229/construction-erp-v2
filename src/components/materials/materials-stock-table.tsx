@@ -120,7 +120,7 @@ export function MaterialsStockTable({ stocks, onTransaction, permissions }: Mate
                 <th className="px-4 py-3">Mã VT</th>
                 <th className="px-4 py-3">Tên vật tư</th>
                 <th className="px-4 py-3">Nhóm</th>
-                <th className="px-4 py-3 text-right">Tồn hiện tại</th>
+                <th className="px-4 py-3 text-right">Tồn kho</th>
                 <th className="px-4 py-3 text-right">Tồn tối thiểu</th>
                 <th className="px-4 py-3 text-center">Trạng thái</th>
                 <th className="px-4 py-3">Cập nhật</th>
@@ -148,7 +148,7 @@ export function MaterialsStockTable({ stocks, onTransaction, permissions }: Mate
                 <tr>
                   <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-500">
                     {stocks.length === 0 
-                      ? "Công trình này chưa có tồn kho vật tư."
+                      ? "Chưa có tồn kho."
                       : "Không tìm thấy vật tư phù hợp với bộ lọc."}
                   </td>
                 </tr>
@@ -170,7 +170,7 @@ export function MaterialsStockTable({ stocks, onTransaction, permissions }: Mate
             </div>
             <div className="mt-4 grid grid-cols-2 gap-2">
               <div className="rounded-lg bg-slate-50 p-3">
-                <div className="text-xs font-semibold text-slate-500">Tồn hiện tại</div>
+                <div className="text-xs font-semibold text-slate-500">Tồn kho</div>
                 <div className="mt-1 font-mono text-lg font-bold text-slate-950">
                   {formatQuantity(stock.stock)} <span className="font-sans text-sm font-medium text-slate-500">{stock.materialItem.unit}</span>
                 </div>
@@ -191,7 +191,7 @@ export function MaterialsStockTable({ stocks, onTransaction, permissions }: Mate
         {filtered.length === 0 && (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
             {stocks.length === 0 
-              ? "Công trình này chưa có tồn kho vật tư."
+              ? "Chưa có tồn kho."
               : "Không tìm thấy vật tư phù hợp với bộ lọc."}
           </div>
         )}

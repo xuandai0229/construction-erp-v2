@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, ArrowDownRight, ArrowUpRight, ClipboardList, Factory, Package, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import { ArrowDownRight, ClipboardList, Factory, Package } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MaterialsOverview } from "./materials-overview";
@@ -11,7 +10,6 @@ import { MaterialsTransactions } from "./materials-transactions";
 import { MaterialsCatalog } from "./materials-catalog";
 import { MaterialFormDialog } from "./material-form-dialog";
 import { TransactionFormDialog } from "./transaction-form-dialog";
-import { PurchaseRequestPlaceholder } from "./purchase-request-placeholder";
 
 import { createMaterialItem, updateMaterialItem, deleteMaterialItem, createMaterialTransaction } from "@/app/(dashboard)/materials/actions";
 import type { MaterialItemDto, MaterialMovementDto, ProjectStockDto } from "@/app/(dashboard)/materials/actions";
@@ -23,7 +21,6 @@ interface MaterialsWorkspaceProps {
   initialStocks: ProjectStockDto[];
   initialTransactions: MaterialMovementDto[];
   initialProjectId?: string;
-  currentUser: { id: string; role?: string };
   permissions: {
     canView: boolean;
     canCreate: boolean;
@@ -32,7 +29,6 @@ interface MaterialsWorkspaceProps {
     canImport: boolean;
     canExport: boolean;
     canViewTransactions: boolean;
-    canViewPurchase: boolean;
   };
 }
 
@@ -60,15 +56,14 @@ export function MaterialsWorkspace({
     setProjectId(initialProjectId || projects[0]?.id || "");
   }, [initialProjectId, projects]);
 
-  const selectedProject = useMemo(
-    () => projects.find((project) => project.id === projectId),
-    [projectId, projects]
-  );
+  const tabs = [
+    { id: "overview", label: "Tổng quan", icon: ClipboardList, visible: permissions.canView },
+    { id: "catalog", label: "Danh mục vật tư", icon: Package, visible: permissions.canView },
+    { id: "stock", label: "Tồn kho", icon: Factory, visible: permissions.canView },
+    { id: "transactions", label: "Nhập / Xuất", icon: ArrowDownRight, visible: permissions.canViewTransactions },
+  ].filter(t => t.visible);
 
-  const lowStockCount = useMemo(
-    () => initialStocks.filter((stock) => stock.minStockLevel > 0 && stock.stock <= stock.minStockLevel).length,
-    [initialStocks]
-  );
+  const currentTab = tabs.some((tab) => tab.id === activeTab) ? activeTab : "overview";
 
   const updateUrl = (tab: string, nextProjectId = projectId) => {
     const params = new URLSearchParams(searchParams);
@@ -79,7 +74,7 @@ export function MaterialsWorkspace({
 
   const handleProjectChange = (nextProjectId: string) => {
     setProjectId(nextProjectId);
-    updateUrl(activeTab, nextProjectId);
+    updateUrl(currentTab, nextProjectId);
   };
 
   const handleCreateMaterial = async (data: {
@@ -99,16 +94,16 @@ export function MaterialsWorkspace({
     try {
       if (editingMaterialId) {
         await updateMaterialItem(editingMaterialId, { name: data.name, unit: data.unit, group: data.group, description: data.description });
-        toast.success("Cập nhật vật tư thành công");
+        toast.success("Đã lưu");
       } else {
         await createMaterialItem({ ...data, projectId });
-        toast.success("Tạo vật tư thành công");
+        toast.success("Đã lưu");
       }
       setIsMaterialFormOpen(false);
       setEditingMaterialId(null);
       router.refresh();
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Không thể lưu vật tư";
+      const message = error instanceof Error ? error.message : "Có lỗi xảy ra";
       toast.error(message);
       throw error;
     } finally {
@@ -125,10 +120,10 @@ export function MaterialsWorkspace({
     setIsSubmitting(true);
     try {
       await deleteMaterialItem(id);
-      toast.success("Xóa vật tư thành công");
+      toast.success("Đã xóa");
       router.refresh();
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Không thể xóa vật tư";
+      const message = error instanceof Error ? error.message : "Có lỗi xảy ra";
       toast.error(message);
     } finally {
       setIsSubmitting(false);
@@ -151,26 +146,18 @@ export function MaterialsWorkspace({
     setIsSubmitting(true);
     try {
       await createMaterialTransaction({ ...data, projectId });
-      toast.success(data.type === "IMPORT" ? "Nhập kho thành công" : "Xuất kho thành công");
+      toast.success(data.type === "IMPORT" ? "Đã nhập kho" : "Đã xuất kho");
       setTransactionFormType(null);
       setTransactionMaterialId("");
       router.refresh();
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Không thể tạo giao dịch";
+      const message = error instanceof Error ? error.message : "Có lỗi xảy ra";
       toast.error(message);
       throw error;
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  const tabs = [
-    { id: "overview", label: "Tổng quan", icon: ClipboardList, visible: permissions.canView },
-    { id: "catalog", label: "Danh mục vật tư", icon: Package, visible: permissions.canView },
-    { id: "stock", label: "Tồn kho", icon: Factory, visible: permissions.canView },
-    { id: "transactions", label: "Nhập / Xuất", icon: ArrowDownRight, visible: permissions.canViewTransactions },
-    { id: "proposals", label: "Đề xuất mua", icon: AlertTriangle, visible: permissions.canViewPurchase },
-  ].filter(t => t.visible);
 
   return (
     <div className="app-page mx-auto max-w-[1400px] space-y-5">
@@ -202,42 +189,11 @@ export function MaterialsWorkspace({
                   ))}
                 </select>
               </div>
-              {selectedProject && (
-                <div className="text-xs text-slate-500 mt-1">
-                  Dữ liệu của công trình: <strong className="text-slate-700">{selectedProject.code}</strong>
-                </div>
-              )}
+
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 xl:w-[280px]">
-            {permissions.canImport && (
-              <div title={
-                !projectId ? "Vui lòng chọn công trình" : 
-                materialItems.length === 0 ? "Cần tạo mã vật tư trước khi nhập kho" : ""
-              }>
-                <Button variant="outline" className="w-full h-10 px-0 sm:px-4 justify-center text-slate-700" onClick={() => setTransactionFormType("IMPORT")} disabled={!projectId || materialItems.length === 0}>
-                  <ArrowDownRight className="h-4 w-4 text-emerald-600 sm:mr-1.5" />
-                  <span className="hidden sm:inline">Nhập kho</span>
-                  <span className="sm:hidden text-xs">Nhập kho</span>
-                </Button>
-              </div>
-            )}
-            
-            {permissions.canExport && (
-              <div title={
-                !projectId ? "Vui lòng chọn công trình" : 
-                materialItems.length === 0 ? "Cần tạo mã vật tư trước khi xuất kho" :
-                initialStocks.every(s => s.stock <= 0) ? "Chưa có tồn kho để xuất" : ""
-              }>
-                <Button variant="outline" className="w-full h-10 px-0 sm:px-4 justify-center text-slate-700" onClick={() => setTransactionFormType("EXPORT")} disabled={!projectId || materialItems.length === 0 || initialStocks.every(s => s.stock <= 0)}>
-                  <ArrowUpRight className="h-4 w-4 text-amber-600 sm:mr-1.5" />
-                  <span className="hidden sm:inline">Xuất kho</span>
-                  <span className="sm:hidden text-xs">Xuất kho</span>
-                </Button>
-              </div>
-            )}
-          </div>
+
         </div>
       </section>
 
@@ -245,7 +201,7 @@ export function MaterialsWorkspace({
         <div className="flex min-w-max gap-1">
           {tabs.map((tab) => {
             const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
+            const isActive = currentTab === tab.id;
             return (
               <button
                 key={tab.id}
@@ -266,24 +222,22 @@ export function MaterialsWorkspace({
 
       {!projectId ? (
         <EmptyState
-          title="Chưa có công trình để theo dõi vật tư"
-          description="Bạn cần được phân quyền vào một công trình đang hoạt động trước khi nhập, xuất hoặc xem tồn kho."
+          title="Chưa chọn công trình"
+          description="Bạn cần chọn một công trình để xem dữ liệu vật tư."
           icon={<Factory className="h-8 w-8 text-slate-400" />}
         />
       ) : (
         <section className="min-h-[420px]">
-          {activeTab === "overview" && (
+          {currentTab === "overview" && (
             <MaterialsOverview
-              materialItems={materialItems}
               stocks={initialStocks}
               transactions={initialTransactions}
               onNavigate={updateUrl}
               onGoToCatalog={() => updateUrl("catalog")}
-              onCreateImport={() => setTransactionFormType("IMPORT")}
               permissions={permissions}
             />
           )}
-          {activeTab === "catalog" && (
+          {currentTab === "catalog" && (
             <MaterialsCatalog
               materialItems={materialItems}
               stocks={initialStocks}
@@ -300,7 +254,7 @@ export function MaterialsWorkspace({
               }}
             />
           )}
-          {activeTab === "stock" && (
+          {currentTab === "stock" && (
             <MaterialsStockTable
               stocks={initialStocks}
               onTransaction={(type, materialId) => {
@@ -310,15 +264,14 @@ export function MaterialsWorkspace({
               permissions={permissions}
             />
           )}
-          {activeTab === "transactions" && (
+          {currentTab === "transactions" && (
             <MaterialsTransactions
               transactions={initialTransactions}
-              onAddTransaction={() => setTransactionFormType("IMPORT")}
+              onAddTransaction={() => setTransactionFormType(permissions.canImport ? "IMPORT" : "EXPORT")}
               hasMaterials={materialItems.length > 0}
               permissions={permissions}
             />
           )}
-          {activeTab === "proposals" && <PurchaseRequestPlaceholder lowStockCount={lowStockCount} />}
         </section>
       )}
 

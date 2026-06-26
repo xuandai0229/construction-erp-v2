@@ -23,10 +23,10 @@ export function MaterialsTransactions({ transactions, onAddTransaction, hasMater
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-bold text-slate-950">Lịch sử nhập / xuất</h2>
-          <p className="mt-1 text-sm text-slate-600">Lịch sử giao dịch vật tư của công trình.</p>
+          <p className="mt-1 text-sm text-slate-600">Lịch sử giao dịch vật tư.</p>
         </div>
         {hasActions && (
-          <div title={!hasMaterials ? "Cần tạo mã vật tư trước khi tạo giao dịch" : ""}>
+          <div title={!hasMaterials ? "Tạo vật tư ở tab Danh mục trước." : ""}>
             <Button onClick={onAddTransaction} className="w-full sm:w-auto" disabled={!hasMaterials}>
               <Plus className="h-4 w-4 mr-1.5" />
               Tạo giao dịch
@@ -70,9 +70,9 @@ export function MaterialsTransactions({ transactions, onAddTransaction, hasMater
                 <tr>
                   <td colSpan={5} className="px-4 py-12 text-center">
                     <ClipboardList className="mx-auto h-9 w-9 text-slate-300" />
-                    <div className="mt-2 font-semibold text-slate-700">Chưa có giao dịch vật tư</div>
+                    <div className="mt-2 font-semibold text-slate-700">Chưa có giao dịch.</div>
                     {!hasMaterials && (
-                      <p className="mt-1 text-sm text-slate-500">Cần tạo mã vật tư ở tab Danh mục trước khi nhập/xuất.</p>
+                      <p className="mt-1 text-sm text-slate-500">Tạo vật tư ở tab Danh mục trước.</p>
                     )}
                   </td>
                 </tr>
@@ -106,9 +106,9 @@ export function MaterialsTransactions({ transactions, onAddTransaction, hasMater
         {transactions.length === 0 && (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
             <ClipboardList className="mx-auto h-9 w-9 text-slate-300" />
-            <div className="mt-2 font-semibold text-slate-700">Chưa có giao dịch vật tư</div>
+            <div className="mt-2 font-semibold text-slate-700">Chưa có giao dịch.</div>
             {!hasMaterials && (
-              <p className="mt-1 text-sm text-slate-500">Cần tạo mã vật tư ở tab Danh mục trước khi nhập/xuất.</p>
+              <p className="mt-1 text-sm text-slate-500">Tạo vật tư ở tab Danh mục trước.</p>
             )}
           </div>
         )}

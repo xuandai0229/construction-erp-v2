@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getActiveProjects, getMaterialItems, getProjectStocks, getRecentTransactions, requireProjectPermissions } from "./actions";
+import type { MaterialItemDto, MaterialMovementDto, ProjectStockDto } from "./actions";
 import { MaterialsWorkspace } from "@/components/materials/materials-workspace";
 import { getMaterialPermissions, MaterialPermissionSet } from "@/lib/materials/materials-permissions";
 
@@ -21,9 +22,9 @@ export default async function MaterialsPage({
   const initialProjectId = typeof resolvedParams.projectId === "string" ? resolvedParams.projectId : undefined;
 
   const projects = await getActiveProjects();
-  let initialStocks: any[] = [];
-  let initialTransactions: any[] = [];
-  let materialItems: any[] = [];
+  let initialStocks: ProjectStockDto[] = [];
+  let initialTransactions: MaterialMovementDto[] = [];
+  let materialItems: MaterialItemDto[] = [];
 
   const accessibleProjectIds = new Set(projects.map((project) => project.id));
   const projectIdToLoad =
@@ -67,7 +68,6 @@ export default async function MaterialsPage({
       initialStocks={initialStocks}
       initialTransactions={initialTransactions}
       initialProjectId={projectIdToLoad}
-      currentUser={{ id: session.id, role: session.role }}
       permissions={permissions}
     />
   );
