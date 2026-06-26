@@ -182,7 +182,15 @@ export async function createContract(data: {
   if (!name) throw new Error("Tên hợp đồng là bắt buộc");
 
   const value = Number(data.value);
-  if (isNaN(value) || value < 0) throw new Error("Giá trị hợp đồng không hợp lệ");
+  if (isNaN(value) || value <= 0) throw new Error("Giá trị hợp đồng phải lớn hơn 0.");
+
+  if (data.startDate && data.endDate) {
+    const start = new Date(data.startDate);
+    const end = new Date(data.endDate);
+    if (end < start) {
+      throw new Error("Ngày kết thúc không được trước ngày bắt đầu.");
+    }
+  }
 
   const supplierId = normalizeOptionalText(data.supplierId);
 
@@ -242,7 +250,15 @@ export async function updateContract(id: string, data: {
   if (!name) throw new Error("Tên hợp đồng là bắt buộc");
 
   const value = Number(data.value);
-  if (isNaN(value) || value < 0) throw new Error("Giá trị hợp đồng không hợp lệ");
+  if (isNaN(value) || value <= 0) throw new Error("Giá trị hợp đồng phải lớn hơn 0.");
+
+  if (data.startDate && data.endDate) {
+    const start = new Date(data.startDate);
+    const end = new Date(data.endDate);
+    if (end < start) {
+      throw new Error("Ngày kết thúc không được trước ngày bắt đầu.");
+    }
+  }
 
   const supplierId = normalizeOptionalText(data.supplierId);
   const newProjectId = normalizeText(data.projectId) || contract.projectId;

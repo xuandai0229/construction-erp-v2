@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, CalendarIcon } from "lucide-react";
+import { X, CalendarIcon, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ContractDto } from "@/app/(dashboard)/contracts/actions";
+import { stripMoney, formatVndInput, getVndShortText } from "@/lib/contracts/contract-money-utils";
 
 interface ContractFormDialogProps {
   isOpen: boolean;
@@ -34,9 +35,11 @@ export function ContractFormDialog({
   const [signDate, setSignDate] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (isOpen) {
+      setError("");
       if (initialData) {
         setProjectId(initialData.projectId);
         setSupplierId(initialData.supplierId || "");
@@ -44,7 +47,8 @@ export function ContractFormDialog({
         setName(initialData.name);
         setType(initialData.type);
         setStatus(initialData.status);
-        setValue(initialData.value.toString());
+        const rawDbValue = initialData.value ? initialData.value.toString().split(".")[0] : "";
+        setValue(formatVndInput(rawDbValue));
         setSignDate(initialData.signDate ? initialData.signDate.substring(0, 10) : "");
         setStartDate(initialData.startDate ? initialData.startDate.substring(0, 10) : "");
         setEndDate(initialData.endDate ? initialData.endDate.substring(0, 10) : "");
@@ -63,22 +67,64 @@ export function ContractFormDialog({
     }
   }, [isOpen, initialData, projects]);
 
+  useEffect(() => {
+    setError("");
+  }, [isOpen, projectId, supplierId, contractNo, name, type, status, value, signDate, startDate, endDate]);
+
   if (!isOpen) return null;
+
+  const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    setValue(formatVndInput(raw));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit({
-      projectId,
-      supplierId: supplierId || undefined,
-      contractNo,
-      name,
-      type,
-      status,
-      value: Number(value),
-      signDate: signDate || undefined,
-      startDate: startDate || undefined,
-      endDate: endDate || undefined,
-    });
+    setError("");
+
+    const rawValue = stripMoney(value);
+    const numericValue = Number(rawValue);
+
+    if (!rawValue) {
+      setError("Giá trị hợp đồng là bắt buộc.");
+      return;
+    }
+
+    if (isNaN(numericValue) || numericValue <= 0) {
+      setError("Giá trị hợp đồng phải lớn hơn 0.");
+      return;
+    }
+
+    if (rawValue.length > 15) {
+      setError("Giá trị hợp đồng quá lớn.");
+      return;
+    }
+
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      if (end < start) {
+        setError("Ngày kết thúc không được trước ngày bắt đầu.");
+        return;
+      }
+    }
+
+    try {
+      await onSubmit({
+        projectId,
+        supplierId: supplierId || undefined,
+        contractNo,
+        name,
+        type,
+        status,
+        value: numericValue,
+        signDate: signDate || undefined,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+      });
+    } catch (err: any) {
+      setError(err.message || "Có lỗi xảy ra khi lưu hợp đồng.");
+    }
   };
 
   return (
@@ -178,15 +224,21 @@ export function ContractFormDialog({
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-slate-700">Giá trị hợp đồng (VNĐ) <span className="text-rose-500">*</span></label>
                 <input
-                  type="number"
-                  min="0"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
                   value={value}
-                  onChange={(e) => setValue(e.target.value)}
+                  onChange={handleValueChange}
                   className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 font-mono text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                  placeholder="VD: 1500000000"
+                  placeholder="VD: 1.500.000.000"
                   required
                   disabled={isSubmitting}
                 />
+                {value && (
+                  <p className="text-xs text-slate-500 italic mt-0.5">
+                    {getVndShortText(value)}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -202,8 +254,14 @@ export function ContractFormDialog({
                     <option key={s.id} value={s.id}>{s.code} - {s.name}</option>
                   ))}
                 </select>
-                {type === "CLIENT" && (
+                {type === "CLIENT" ? (
                   <p className="text-xs text-slate-500">Hợp đồng chủ đầu tư không cần chọn đối tác.</p>
+                ) : (
+                  !supplierId && (
+                    <p className="text-xs text-amber-600 font-medium italic mt-0.5">
+                      Nên chọn đối tác để dễ theo dõi hợp đồng.
+                    </p>
+                  )
                 )}
               </div>
 
@@ -250,16 +308,22 @@ export function ContractFormDialog({
                   </div>
                 </div>
               </div>
-
             </div>
           </div>
+
+          {error && (
+            <div className="mx-6 mb-2 rounded-lg bg-rose-50 p-3 text-sm text-rose-600 border border-rose-100 flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
 
           <div className="flex items-center justify-end gap-3 border-t border-slate-100 bg-slate-50/50 px-6 py-4 rounded-b-2xl">
             <Button type="button" variant="ghost" onClick={onClose} disabled={isSubmitting}>
               Hủy
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Đang lưu..." : initialData ? "Cập nhật" : "Thêm hợp đồng"}
+              {isSubmitting ? "Đang lưu..." : initialData ? "Lưu" : "Thêm hợp đồng"}
             </Button>
           </div>
         </form>
