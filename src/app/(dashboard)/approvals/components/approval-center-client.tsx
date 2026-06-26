@@ -1,0 +1,951 @@
+"use client";
+
+import type { FormEvent } from "react";
+import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  Eye,
+  FileCheck2,
+  Plus,
+  Search,
+  ShieldCheck,
+  X,
+  XCircle,
+  type LucideIcon,
+  Check,
+} from "lucide-react";
+import type { ApprovalPriority, ApprovalRequestStatus, ApprovalRequestType } from "@prisma/client";
+import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ReasonDialog } from "@/components/ui/reason-dialog";
+import { useToast } from "@/components/ui/toast-context";
+import {
+  approveApprovalRequest,
+  cancelApprovalRequest,
+  createApprovalRequest,
+  rejectApprovalRequest,
+  softDeleteApprovalRequest,
+  updateApprovalRequest,
+} from "../actions";
+import type {
+  ApprovalProjectOptionDto,
+  ApprovalRequestDto,
+  ApprovalSummaryDto,
+} from "@/lib/approvals/approval-dto";
+import { isApprovalOverdue } from "@/lib/approvals/approval-dto";
+
+type ApprovalsCenterClientProps = {
+  approvals: ApprovalRequestDto[];
+  projects: ApprovalProjectOptionDto[];
+  summary: ApprovalSummaryDto;
+  canCreate: boolean;
+};
+
+const TYPE_LABELS: Record<ApprovalRequestType, string> = {
+  PAYMENT: "Thanh toán",
+  MATERIAL: "Vật tư",
+  REPORT: "Báo cáo",
+  CONTRACT: "Hợp đồng",
+  CHANGE_ORDER: "Phát sinh",
+  OTHER: "Khác",
+};
+
+const SOURCE_TYPE_LABELS: Record<string, string> = {
+  PAYMENT_REQUEST: "Thanh toán",
+  MATERIAL_REQUEST: "Yêu cầu vật tư",
+  SITE_REPORT: "Báo cáo hiện trường",
+  CONTRACT: "Hợp đồng",
+  FIELD_PROGRESS: "Nghiệm thu khối lượng",
+  CHANGE_ORDER: "Phát sinh",
+  DOCUMENT: "Tài liệu",
+  PURCHASE_REQUEST: "Đề xuất mua hàng",
+};
+
+const STATUS_LABELS: Record<ApprovalRequestStatus, string> = {
+  PENDING: "Chờ duyệt",
+  APPROVED: "Đã duyệt",
+  REJECTED: "Từ chối",
+  CANCELLED: "Đã hủy",
+};
+
+const PRIORITY_LABELS: Record<ApprovalPriority, string> = {
+  LOW: "Thấp",
+  NORMAL: "Thường",
+  HIGH: "Cao",
+  URGENT: "Khẩn cấp",
+};
+
+const STATUS_STYLES: Record<ApprovalRequestStatus, string> = {
+  PENDING: "border-blue-200 bg-blue-50 text-blue-700",
+  APPROVED: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  REJECTED: "border-rose-200 bg-rose-50 text-rose-700",
+  CANCELLED: "border-slate-200 bg-slate-100 text-slate-600",
+};
+
+const PRIORITY_STYLES: Record<ApprovalPriority, string> = {
+  LOW: "border-slate-200 bg-slate-50 text-slate-600",
+  NORMAL: "border-blue-200 bg-blue-50 text-blue-700",
+  HIGH: "border-amber-200 bg-amber-50 text-amber-700",
+  URGENT: "border-rose-200 bg-rose-50 text-rose-700",
+};
+
+const TYPE_OPTIONS = Object.keys(TYPE_LABELS) as ApprovalRequestType[];
+const STATUS_OPTIONS = ["PENDING", "APPROVED", "REJECTED", "CANCELLED"] as ApprovalRequestStatus[];
+const PRIORITY_OPTIONS = Object.keys(PRIORITY_LABELS) as ApprovalPriority[];
+
+function formatCurrency(value: number | null) {
+  if (value === null) return "—";
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function formatDate(value: string | null) {
+  if (!value) return "—";
+  const datePart = value.slice(0, 10);
+  const [year, month, day] = datePart.split("-");
+  if (!year || !month || !day) return "—";
+  return `${day}/${month}/${year}`;
+}
+
+function StatusBadge({ status }: { status: ApprovalRequestStatus }) {
+  return (
+    <span className={`inline-flex items-center whitespace-nowrap rounded-md border px-2 py-1 text-[11px] font-semibold uppercase tracking-wider ${STATUS_STYLES[status]}`}>
+      {STATUS_LABELS[status]}
+    </span>
+  );
+}
+
+function PriorityBadge({ priority }: { priority: ApprovalPriority }) {
+  return (
+    <span className={`inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${PRIORITY_STYLES[priority]}`}>
+      {PRIORITY_LABELS[priority]}
+    </span>
+  );
+}
+
+function SummaryCard({
+  label,
+  value,
+  helper,
+  icon: Icon,
+  tone,
+}: {
+  label: string;
+  value: string | number;
+  helper: string;
+  icon: LucideIcon;
+  tone: "blue" | "amber" | "emerald" | "rose" | "slate";
+}) {
+  const toneClass = {
+    blue: "border-blue-100 bg-gradient-to-br from-blue-50 to-white text-blue-700",
+    amber: "border-amber-100 bg-gradient-to-br from-amber-50 to-white text-amber-700",
+    emerald: "border-emerald-100 bg-gradient-to-br from-emerald-50 to-white text-emerald-700",
+    rose: "border-rose-100 bg-gradient-to-br from-rose-50 to-white text-rose-700",
+    slate: "border-slate-200 bg-gradient-to-br from-slate-50 to-white text-slate-700",
+  }[tone];
+
+  return (
+    <div className={`rounded-2xl border ${toneClass} p-4 shadow-sm`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-slate-600">{label}</p>
+          <p className="mt-1 text-2xl font-bold tracking-tight text-slate-950">{value}</p>
+        </div>
+        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-950/5`}>
+          <Icon className="h-5 w-5" />
+        </div>
+      </div>
+      <p className="mt-3 text-xs leading-5 text-slate-500">{helper}</p>
+    </div>
+  );
+}
+
+function ApprovalFormDialog({
+  isOpen,
+  onClose,
+  projects,
+  isSubmitting,
+  onSubmit,
+  initialData,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  projects: ApprovalProjectOptionDto[];
+  isSubmitting: boolean;
+  onSubmit: (data: {
+    projectId: string;
+    title: string;
+    description: string;
+    type: ApprovalRequestType;
+    priority: ApprovalPriority;
+    amount: string;
+    dueDate: string;
+  }) => Promise<void>;
+  initialData?: ApprovalRequestDto;
+}) {
+  const [projectId, setProjectId] = useState(initialData?.projectId ?? projects[0]?.id ?? "");
+  const [title, setTitle] = useState(initialData?.title ?? "");
+  const [description, setDescription] = useState(initialData?.description ?? "");
+  const [type, setType] = useState<ApprovalRequestType>(initialData?.type ?? "PAYMENT");
+  const [priority, setPriority] = useState<ApprovalPriority>(initialData?.priority ?? "NORMAL");
+  const [amount, setAmount] = useState(initialData?.amount?.toString() ?? "");
+  const [dueDate, setDueDate] = useState(initialData?.dueDate ? new Date(initialData.dueDate).toISOString().split("T")[0] : "");
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    await onSubmit({ projectId, title, description, type, priority, amount, dueDate });
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/55 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="approval-create-title"
+      onClick={!isSubmitting ? onClose : undefined}
+    >
+      <form
+        onSubmit={handleSubmit}
+        className="max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-t-2xl bg-white shadow-2xl shadow-slate-950/20 sm:rounded-3xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-4 border-b border-slate-100 bg-slate-50/50 px-5 py-5 sm:px-6">
+          <div>
+            <h2 id="approval-create-title" className="text-xl font-bold text-slate-950">
+              {initialData ? "Sửa yêu cầu phê duyệt" : "Tạo yêu cầu phê duyệt ngoài hồ sơ nguồn"}
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              {initialData ? "Cập nhật thông tin yêu cầu phê duyệt hiện tại." : "Dùng cho các trường hợp cần xin ý kiến thủ công ngoài quy trình hệ thống."}
+            </p>
+          </div>
+          <button type="button" onClick={onClose} disabled={isSubmitting} className="icon-button shrink-0" aria-label="Đóng">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {!initialData && (
+          <div className="px-5 py-4 sm:px-6">
+             <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-800">
+               <strong>Lưu ý:</strong> Yêu cầu tạo thủ công sẽ không tự liên kết với hồ sơ nguồn. Với hồ sơ thanh toán, vật tư, hợp đồng, nên tạo trực tiếp từ module tương ứng khi chức năng đó sẵn sàng.
+             </div>
+          </div>
+        )}
+
+        <div className="grid gap-5 px-5 pb-6 sm:grid-cols-2 sm:px-6">
+          <label className="sm:col-span-2">
+            <span className="text-sm font-semibold text-slate-700">Công trình <span className="text-red-500">*</span></span>
+            <select
+              value={projectId}
+              onChange={(event) => setProjectId(event.target.value)}
+              className="mt-1.5 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              required
+            >
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>{project.code} - {project.name}</option>
+              ))}
+            </select>
+          </label>
+
+          <label className="sm:col-span-2">
+            <span className="text-sm font-semibold text-slate-700">Tiêu đề <span className="text-red-500">*</span></span>
+            <input
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              className="mt-1.5 h-10 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              placeholder="Ví dụ: Xin ý kiến phương án móng cọc dự án A..."
+              required
+            />
+          </label>
+
+          <label>
+            <span className="text-sm font-semibold text-slate-700">Loại yêu cầu</span>
+            <select
+              value={type}
+              onChange={(event) => setType(event.target.value as ApprovalRequestType)}
+              disabled={!!initialData}
+              className={`mt-1.5 h-10 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-100 ${initialData ? "bg-slate-50 text-slate-500" : "bg-white"}`}
+            >
+              {TYPE_OPTIONS.map((option) => (
+                <option key={option} value={option}>{TYPE_LABELS[option]}</option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            <span className="text-sm font-semibold text-slate-700">Ưu tiên</span>
+            <select
+              value={priority}
+              onChange={(event) => setPriority(event.target.value as ApprovalPriority)}
+              className="mt-1.5 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              {PRIORITY_OPTIONS.map((option) => (
+                <option key={option} value={option}>{PRIORITY_LABELS[option]}</option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            <span className="text-sm font-semibold text-slate-700">Số tiền (VNĐ)</span>
+            <input
+              value={amount}
+              onChange={(event) => setAmount(event.target.value)}
+              className="mt-1.5 h-10 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              inputMode="numeric"
+              placeholder="Nhập 0 nếu không áp dụng"
+              min="0"
+              type="number"
+            />
+          </label>
+
+          <label>
+            <span className="text-sm font-semibold text-slate-700">Hạn xử lý <span className="text-red-500">*</span></span>
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(event) => setDueDate(event.target.value)}
+              className="mt-1.5 h-10 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              required
+            />
+          </label>
+
+          <label className="sm:col-span-2">
+            <span className="text-sm font-semibold text-slate-700">Mô tả</span>
+            <textarea
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              className="mt-1.5 min-h-[100px] w-full resize-y rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              placeholder="Ghi rõ các nội dung trọng tâm cần cấp trên xem xét và quyết định..."
+            />
+          </label>
+        </div>
+
+        <div className="flex flex-col-reverse gap-3 border-t border-slate-100 bg-slate-50 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
+          <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>Hủy</Button>
+          <Button type="submit" disabled={isSubmitting || projects.length === 0}>
+            {isSubmitting ? "Đang xử lý..." : (initialData ? "Cập nhật" : "Tạo yêu cầu")}
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function DetailItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-slate-100 bg-slate-50/50 px-4 py-3">
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{label}</div>
+      <div className="mt-1 text-sm font-semibold text-slate-900">{value}</div>
+    </div>
+  );
+}
+
+function ApprovalDetailDrawer({
+  approval,
+  onClose,
+  onApprove,
+  onReject,
+  onCancel,
+  onEdit,
+}: {
+  approval: ApprovalRequestDto | null;
+  onClose: () => void;
+  onApprove: (approval: ApprovalRequestDto) => void;
+  onReject: (approval: ApprovalRequestDto) => void;
+  onCancel: (approval: ApprovalRequestDto) => void;
+  onEdit: (approval: ApprovalRequestDto) => void;
+}) {
+  if (!approval) return null;
+
+  const overdue = isApprovalOverdue(approval);
+  const canDecide = approval.status === "PENDING" && approval.permissions?.canApprove;
+  const canCancel = approval.status === "PENDING" && approval.permissions?.canCancel;
+  const canEdit = approval.status === "PENDING" && approval.permissions?.canEdit;
+
+  return (
+    <div className="fixed inset-0 z-[90] flex justify-end bg-slate-950/40 backdrop-blur-sm" role="dialog" aria-modal="true">
+      <div className="flex h-full w-full flex-col bg-white shadow-2xl shadow-slate-950/20 sm:max-w-[600px]">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5 bg-slate-50/50">
+          <div>
+            <div className="flex flex-wrap items-center gap-2 mb-1.5">
+              <span className="font-mono text-xs font-semibold text-slate-500 bg-white border border-slate-200 px-1.5 py-0.5 rounded">{approval.code}</span>
+              <StatusBadge status={approval.status} />
+              {overdue && (
+                <span className="inline-flex items-center rounded-md bg-red-100 px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-red-700">
+                  Quá hạn
+                </span>
+              )}
+            </div>
+            <h2 className="text-xl font-bold leading-tight text-slate-950">{approval.title}</h2>
+          </div>
+          <button type="button" onClick={onClose} className="icon-button shrink-0 bg-white shadow-sm ring-1 ring-slate-200" aria-label="Đóng chi tiết">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto px-6 py-6">
+          {approval.status === "PENDING" && (
+            <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <div className="flex gap-3">
+                <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
+                <div className="text-sm text-amber-800">
+                  <strong className="block mb-1">Cảnh báo liên kết dữ liệu</strong>
+                  Quyết định tại đây chỉ lưu ở Trung tâm phê duyệt. Hồ sơ gốc cần được cập nhật riêng tại module tương ứng.
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-8">
+            <section>
+              <h3 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+                Thông tin tổng quan
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                <DetailItem label="Công trình" value={`${approval.project.code} - ${approval.project.name}`} />
+                <DetailItem label="Người tạo" value={approval.requester.name} />
+                <DetailItem label="Giá trị" value={formatCurrency(approval.amount)} />
+                <DetailItem label="Hạn xử lý" value={formatDate(approval.dueDate)} />
+                <DetailItem label="Loại yêu cầu" value={TYPE_LABELS[approval.type]} />
+                <div className="rounded-xl border border-slate-100 bg-slate-50/50 px-4 py-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Mức ưu tiên</div>
+                  <div className="mt-1"><PriorityBadge priority={approval.priority} /></div>
+                </div>
+              </div>
+            </section>
+
+            <section>
+              <h3 className="text-sm font-bold text-slate-900 mb-3">Hồ sơ gốc liên kết</h3>
+              {(approval.sourceType || approval.sourceId) ? (
+                <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                        {SOURCE_TYPE_LABELS[approval.sourceType ?? ""] ?? approval.sourceType ?? "Nguồn"}
+                      </div>
+                      <div className="font-mono text-sm font-semibold text-slate-900">
+                        {approval.sourceId || "Không có mã"}
+                      </div>
+                    </div>
+                    {!["PaymentRequest", "Contract", "MaterialRequest"].includes(approval.sourceType ?? "") ? (
+                       <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                         Tham chiếu nội bộ
+                       </span>
+                    ) : (
+                       <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+                         Đã liên kết
+                       </span>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-slate-300 p-4 text-center text-sm text-slate-500">
+                  Yêu cầu này không liên kết với hồ sơ gốc nào.
+                </div>
+              )}
+            </section>
+            
+            <section>
+              <h3 className="text-sm font-bold text-slate-900 mb-3">Mô tả chi tiết</h3>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-relaxed text-slate-700">
+                {approval.description || <span className="text-slate-400 italic">Người tạo không cung cấp mô tả bổ sung.</span>}
+              </div>
+            </section>
+
+            {approval.status !== "PENDING" && (
+              <section>
+                <h3 className="text-sm font-bold text-slate-900 mb-3">Quyết định</h3>
+                <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold">
+                      {approval.decidedBy?.name.charAt(0) ?? "?"}
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-slate-900">{approval.decidedBy?.name ?? "Chưa rõ người quyết định"}</div>
+                      <div className="text-xs text-slate-500">{approval.decidedAt ? formatDate(approval.decidedAt) : "Chưa rõ thời gian"}</div>
+                    </div>
+                  </div>
+                  {approval.decisionNote && (
+                    <div className="rounded-lg bg-slate-50 p-3 text-sm text-slate-700 border border-slate-100">
+                      <strong>Ghi chú:</strong> {approval.decisionNote}
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
+            
+            <section>
+               <h3 className="text-sm font-bold text-slate-900 mb-3">Lịch sử thao tác (Audit Log)</h3>
+               <div className="rounded-xl border border-dashed border-slate-300 p-6 text-center">
+                 <Clock className="mx-auto h-6 w-6 text-slate-400 mb-2" />
+                 <p className="text-sm text-slate-500">Lịch sử thao tác chi tiết sẽ được hiển thị ở phase sau.</p>
+               </div>
+            </section>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="border-t border-slate-200 bg-white px-6 py-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">Đóng</Button>
+            {canEdit && (
+              <Button type="button" variant="outline" onClick={() => onEdit(approval)} className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50">Sửa</Button>
+            )}
+            {canCancel && (
+              <Button type="button" variant="outline" onClick={() => onCancel(approval)} className="w-full sm:w-auto text-slate-600">Hủy yêu cầu</Button>
+            )}
+            {canDecide && (
+              <>
+                <Button type="button" variant="outline" className="w-full sm:w-auto text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700" onClick={() => onReject(approval)}>Từ chối</Button>
+                <Button type="button" className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => onApprove(approval)}>Duyệt hồ sơ</Button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function ApprovalCenterClient({
+  approvals,
+  projects,
+  summary,
+  canCreate,
+}: ApprovalsCenterClientProps) {
+  const router = useRouter();
+  const toast = useToast();
+  const [isPending, startTransition] = useTransition();
+  const [search, setSearch] = useState("");
+  const [projectFilter, setProjectFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  
+  // Custom Tabs
+  const [activeTab, setActiveTab] = useState<"PENDING" | "RESOLVED" | "ALL">("PENDING");
+
+  const [viewing, setViewing] = useState<ApprovalRequestDto | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [editing, setEditing] = useState<ApprovalRequestDto | null>(null);
+  const [approving, setApproving] = useState<ApprovalRequestDto | null>(null);
+  const [rejecting, setRejecting] = useState<ApprovalRequestDto | null>(null);
+  const [cancelling, setCancelling] = useState<ApprovalRequestDto | null>(null);
+  const handleDeleteApproval = async (approval: ApprovalRequestDto) => {
+    if (isPending) return;
+    runAction(
+      () => softDeleteApprovalRequest(approval.id),
+      "Đã xóa yêu cầu",
+    );
+  };
+
+  const normalizedSearch = search.trim().toLowerCase();
+
+  const filteredApprovals = useMemo(() => {
+    return approvals.filter((approval) => {
+      // Tab filtering
+      if (activeTab === "PENDING" && approval.status !== "PENDING") return false;
+      if (activeTab === "RESOLVED" && approval.status === "PENDING") return false;
+
+      // Search filtering
+      const searchMatch =
+        !normalizedSearch ||
+        approval.code.toLowerCase().includes(normalizedSearch) ||
+        approval.title.toLowerCase().includes(normalizedSearch) ||
+        approval.requester.name.toLowerCase().includes(normalizedSearch) ||
+        approval.project.name.toLowerCase().includes(normalizedSearch) ||
+        approval.project.code.toLowerCase().includes(normalizedSearch);
+
+      return (
+        searchMatch &&
+        (!projectFilter || approval.projectId === projectFilter) &&
+        (!typeFilter || approval.type === typeFilter)
+      );
+    });
+  }, [approvals, normalizedSearch, projectFilter, typeFilter, activeTab]);
+
+  const runAction = (action: () => Promise<unknown>, successMessage: string, after?: () => void) => {
+    startTransition(async () => {
+      try {
+        await action();
+        toast.success(successMessage);
+        after?.();
+        router.refresh();
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Có lỗi xảy ra");
+      }
+    });
+  };
+
+  const handleCreate = async (data: {
+    projectId: string;
+    title: string;
+    description: string;
+    type: ApprovalRequestType;
+    priority: ApprovalPriority;
+    amount: string;
+    dueDate: string;
+  }) => {
+    await createApprovalRequest(data);
+    toast.success("Đã tạo yêu cầu phê duyệt");
+    setCreating(false);
+    router.refresh();
+  };
+
+  const handleUpdate = async (data: {
+    projectId: string;
+    title: string;
+    description: string;
+    type: ApprovalRequestType;
+    priority: ApprovalPriority;
+    amount: string;
+    dueDate: string;
+  }) => {
+    if (!editing) return;
+    await updateApprovalRequest({ ...data, id: editing.id });
+    toast.success("Đã cập nhật yêu cầu phê duyệt");
+    setEditing(null);
+    setViewing(null);
+    router.refresh();
+  };
+
+  return (
+    <div className="app-page mx-auto max-w-[1400px] space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2 text-sm font-medium text-blue-600 mb-2">
+            <ShieldCheck className="h-4 w-4" />
+            Trung tâm phê duyệt
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Phê duyệt</h1>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Tổng hợp các yêu cầu cần xử lý theo công trình.
+          </p>
+        </div>
+        {canCreate && projects.length > 0 && (
+          <Button type="button" onClick={() => setCreating(true)} className="w-full sm:w-auto shadow-sm">
+            <Plus className="h-4 w-4" />
+            Tạo yêu cầu
+          </Button>
+        )}
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <SummaryCard label="Cần xử lý" value={summary.pendingCount} helper="Yêu cầu chờ bạn quyết định" icon={Clock} tone="blue" />
+        <SummaryCard label="Quá hạn" value={summary.overdueCount} helper="Chưa xử lý và đã quá hạn" icon={AlertTriangle} tone="amber" />
+        <SummaryCard label="Đã duyệt" value={summary.approvedCount} helper="Yêu cầu đã được chấp thuận" icon={CheckCircle2} tone="emerald" />
+        <SummaryCard label="Từ chối" value={summary.rejectedCount} helper="Yêu cầu đã bị từ chối" icon={XCircle} tone="rose" />
+        <SummaryCard label="Giá trị chờ xử lý" value={formatCurrency(summary.pendingAmount)} helper="Tổng giá trị các yêu cầu đang chờ" icon={ShieldCheck} tone="slate" />
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+        {/* Toolbar & Tabs */}
+        <div className="flex flex-col gap-4 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="inline-flex h-9 items-center justify-center rounded-lg bg-slate-100 p-1 text-sm text-slate-500">
+             <button onClick={() => setActiveTab("PENDING")} className={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 font-medium transition-all ${activeTab === "PENDING" ? "bg-white text-slate-950 shadow-sm" : "hover:text-slate-900"}`}>
+                Cần xử lý
+             </button>
+             <button onClick={() => setActiveTab("RESOLVED")} className={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 font-medium transition-all ${activeTab === "RESOLVED" ? "bg-white text-slate-950 shadow-sm" : "hover:text-slate-900"}`}>
+                Đã xử lý
+             </button>
+             <button onClick={() => setActiveTab("ALL")} className={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 font-medium transition-all ${activeTab === "ALL" ? "bg-white text-slate-950 shadow-sm" : "hover:text-slate-900"}`}>
+                Tất cả
+             </button>
+          </div>
+          
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="relative">
+              <label htmlFor="approvals-search" className="sr-only">Tìm kiếm yêu cầu phê duyệt</label>
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                id="approvals-search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Tìm kiếm..."
+                className="h-9 w-full sm:w-64 rounded-md border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+            <select value={projectFilter} onChange={(event) => setProjectFilter(event.target.value)} className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+              <option value="">Tất cả dự án</option>
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>{project.code}</option>
+              ))}
+            </select>
+            <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)} className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+              <option value="">Loại yêu cầu</option>
+              {TYPE_OPTIONS.map((type) => (
+                <option key={type} value={type}>{TYPE_LABELS[type]}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Table Area */}
+        {filteredApprovals.length === 0 ? (
+          <div className="p-8">
+            <EmptyState
+              title={activeTab === "PENDING" ? "Hiện không có yêu cầu nào chờ duyệt" : "Không tìm thấy yêu cầu phù hợp"}
+              description={activeTab === "PENDING" ? "Bạn đã xử lý xong mọi việc. Các đề xuất mới sẽ hiển thị tại đây." : "Thử thay đổi bộ lọc hoặc tìm kiếm với từ khóa khác."}
+              icon={<FileCheck2 className="h-8 w-8 text-slate-400" />}
+            />
+          </div>
+        ) : (
+          <>
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="min-w-[800px] w-full text-left text-sm whitespace-nowrap">
+              <thead className="bg-slate-50 border-b border-slate-100 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                <tr>
+                  <th className="px-5 py-3.5">Yêu cầu</th>
+                  <th className="px-5 py-3.5">Nguồn / Công trình</th>
+                  <th className="px-5 py-3.5 text-right">Giá trị / Hạn</th>
+                  <th className="px-5 py-3.5">Trạng thái</th>
+                  <th className="px-5 py-3.5 text-right sticky right-0 bg-slate-50 z-10 border-l border-slate-100 shadow-[-5px_0_15px_-5px_rgba(0,0,0,0.05)]">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredApprovals.map((approval) => {
+                  const overdue = isApprovalOverdue(approval);
+                  const canDecide = approval.status === "PENDING" && approval.permissions?.canApprove;
+                  const canEdit = approval.status === "PENDING" && approval.permissions?.canEdit;
+                  return (
+                    <tr key={approval.id} className="group hover:bg-slate-50/50 transition-colors">
+                      <td className="px-5 py-3">
+                        <div className="flex flex-col gap-1">
+                          <button type="button" onClick={() => setViewing(approval)} className="text-left font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
+                            {approval.title}
+                          </button>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-[11px] font-medium text-slate-500">{approval.code}</span>
+                            <span className="text-[11px] text-slate-300">•</span>
+                            <span className="text-[11px] text-slate-500">{TYPE_LABELS[approval.type]}</span>
+                          </div>
+                          <div className="text-[11px] text-slate-400">Tạo bởi: {approval.requester.name}</div>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3">
+                        <div className="flex flex-col gap-1">
+                          <div className="font-medium text-slate-900 line-clamp-1 max-w-[250px]" title={`${approval.project.code} - ${approval.project.name}`}>
+                            {approval.project.code} - {approval.project.name}
+                          </div>
+                          {approval.sourceType || approval.sourceId ? (
+                            <div className="text-[11px] text-slate-500">
+                               <span className="font-medium">{SOURCE_TYPE_LABELS[approval.sourceType ?? ""] ?? approval.sourceType ?? "Nguồn"}</span>
+                               {approval.sourceId && ` • ${approval.sourceId}`}
+                            </div>
+                          ) : (
+                            <div className="text-[11px] text-slate-400 italic">Chỉ tham chiếu nội bộ</div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                         <div className="font-mono font-semibold text-slate-900 mb-1.5">{formatCurrency(approval.amount)}</div>
+                         <div className="flex items-center justify-end gap-2">
+                            <PriorityBadge priority={approval.priority} />
+                            <span className={`font-mono text-[11px] ${overdue ? "font-bold text-red-600" : "text-slate-500"}`}>
+                               {formatDate(approval.dueDate)}
+                            </span>
+                         </div>
+                      </td>
+                      <td className="px-5 py-3">
+                         <StatusBadge status={approval.status} />
+                      </td>
+                      <td className="px-5 py-3 sticky right-0 bg-white group-hover:bg-slate-50/50 transition-colors z-10 border-l border-slate-100 shadow-[-5px_0_15px_-5px_rgba(0,0,0,0.05)]">
+                        <div className="flex justify-end gap-1.5">
+                          <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-600 hover:text-blue-600" onClick={() => setViewing(approval)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          {canEdit && (
+                            <Button type="button" size="sm" variant="ghost" className="h-8 px-2 text-blue-600 hover:bg-blue-50 hover:text-blue-700 whitespace-nowrap" onClick={() => setEditing(approval)}>Sửa</Button>
+                          )}
+                          {canDecide ? (
+                            <>
+                              <Button type="button" size="sm" variant="outline" className="h-8 px-2.5 text-emerald-700 border-emerald-200 hover:bg-emerald-50 whitespace-nowrap" onClick={() => setApproving(approval)}>Duyệt</Button>
+                              <Button type="button" size="sm" variant="outline" className="h-8 px-2.5 text-rose-700 border-rose-200 hover:bg-rose-50 whitespace-nowrap" onClick={() => setRejecting(approval)}>Từ chối</Button>
+                            </>
+                          ) : approval.permissions?.canSoftDelete ? (
+                              <Button type="button" size="sm" variant="ghost" className="h-8 px-2 text-rose-600 hover:bg-rose-50 hover:text-rose-700 whitespace-nowrap" onClick={() => handleDeleteApproval(approval)} disabled={isPending}>Xóa</Button>
+                          ) : null}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div className="sm:hidden flex flex-col divide-y divide-slate-100">
+            {filteredApprovals.map((approval) => {
+              const overdue = isApprovalOverdue(approval);
+              const canDecide = approval.status === "PENDING" && approval.permissions?.canApprove;
+              const canEdit = approval.status === "PENDING" && approval.permissions?.canEdit;
+              return (
+                <div key={approval.id} className="p-4 flex flex-col gap-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                         <span className="font-mono text-[10px] font-medium text-slate-500">{approval.code}</span>
+                         <StatusBadge status={approval.status} />
+                      </div>
+                      <button type="button" onClick={() => setViewing(approval)} className="text-left font-semibold text-slate-900 leading-snug line-clamp-2">
+                        {approval.title}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-y-2 text-sm">
+                    <div className="col-span-2 text-slate-600 line-clamp-1">
+                      <span className="font-medium">{approval.project.code}</span> - {approval.project.name}
+                    </div>
+                    <div className="text-slate-500">
+                      Nguồn:
+                    </div>
+                    <div className="font-medium text-slate-900 text-right">
+                      {SOURCE_TYPE_LABELS[approval.sourceType ?? ""] ?? approval.sourceType ?? "Khác"}
+                    </div>
+                    <div className="text-slate-500">
+                      Giá trị:
+                    </div>
+                    <div className="font-mono font-semibold text-slate-900 text-right">
+                      {formatCurrency(approval.amount)}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between mt-1">
+                    <div className="flex items-center gap-2">
+                      <PriorityBadge priority={approval.priority} />
+                      <span className={`font-mono text-[11px] ${overdue ? "font-bold text-red-600" : "text-slate-500"}`}>
+                         {formatDate(approval.dueDate)}
+                      </span>
+                    </div>
+                    <div className="flex gap-1.5">
+                       {canEdit && (
+                          <Button type="button" size="sm" variant="ghost" className="h-8 px-3 text-blue-600 hover:bg-blue-50 hover:text-blue-700" onClick={() => setEditing(approval)}>Sửa</Button>
+                       )}
+                       {canDecide ? (
+                          <Button type="button" size="sm" className="h-8 px-3 bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => setApproving(approval)}>Duyệt</Button>
+                       ) : approval.permissions?.canSoftDelete ? (
+                          <Button type="button" size="sm" variant="ghost" className="h-8 px-3 text-rose-600 hover:bg-rose-50 hover:text-rose-700" onClick={() => handleDeleteApproval(approval)} disabled={isPending}>Xóa</Button>
+                       ) : (
+                          <Button type="button" variant="ghost" size="sm" className="h-8 px-3 text-slate-600 hover:bg-slate-50" onClick={() => setViewing(approval)}>Chi tiết</Button>
+                       )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          </>
+        )}
+      </div>
+
+      <ApprovalDetailDrawer
+        approval={viewing}
+        onClose={() => setViewing(null)}
+        onApprove={setApproving}
+        onReject={setRejecting}
+        onCancel={setCancelling}
+        onEdit={setEditing}
+      />
+
+      <ApprovalFormDialog
+        key={creating ? "create" : "create-closed"}
+        isOpen={creating}
+        onClose={() => setCreating(false)}
+        projects={projects}
+        isSubmitting={isPending}
+        onSubmit={handleCreate}
+      />
+
+      <ApprovalFormDialog
+        key={editing ? editing.id : "edit-closed"}
+        isOpen={!!editing}
+        onClose={() => setEditing(null)}
+        projects={projects}
+        isSubmitting={isPending}
+        initialData={editing ?? undefined}
+        onSubmit={handleUpdate}
+      />
+
+      <ConfirmDialog
+        isOpen={!!approving}
+        onClose={() => setApproving(null)}
+        title="Duyệt yêu cầu phê duyệt?"
+        description={approving ? `${approving.code} - ${approving.title}` : undefined}
+        variant="success"
+        confirmText="Duyệt hồ sơ"
+        isLoading={isPending}
+        onConfirm={() => {
+          if (!approving) return;
+          runAction(
+            () => approveApprovalRequest(approving.id),
+            "Đã duyệt yêu cầu",
+            () => {
+              setApproving(null);
+              setViewing(null);
+            },
+          );
+        }}
+      />
+
+      <ReasonDialog
+        isOpen={!!rejecting}
+        onClose={() => setRejecting(null)}
+        title="Từ chối yêu cầu"
+        description={
+          rejecting ? (
+            <div className="mb-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
+              <p className="font-semibold text-slate-900 mb-3">{rejecting.code} - {rejecting.title}</p>
+              <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-sm text-slate-600">
+                <div className="col-span-2"><span className="text-slate-500 mr-2">Công trình:</span> {rejecting.project.code}</div>
+                <div><span className="text-slate-500 mr-2">Giá trị:</span> <span className="font-mono text-slate-900 font-medium">{formatCurrency(rejecting.amount)}</span></div>
+                <div><span className="text-slate-500 mr-2">Hạn xử lý:</span> <span className="font-mono text-slate-900 font-medium">{formatDate(rejecting.dueDate)}</span></div>
+              </div>
+            </div>
+          ) : undefined
+        }
+        confirmText="Từ chối yêu cầu"
+        minLength={10}
+        isLoading={isPending}
+        placeholder="Nhập lý do từ chối để người tạo có thể chỉnh sửa hoặc bổ sung hồ sơ..."
+        onConfirm={(reason) => {
+          if (!rejecting) return;
+          runAction(
+            () => rejectApprovalRequest(rejecting.id, reason),
+            "Đã từ chối yêu cầu",
+            () => {
+              setRejecting(null);
+              setViewing(null);
+            },
+          );
+        }}
+      />
+
+      <ConfirmDialog
+        isOpen={!!cancelling}
+        onClose={() => setCancelling(null)}
+        title="Hủy yêu cầu phê duyệt?"
+        description={cancelling ? "Yêu cầu sẽ chuyển sang trạng thái Đã hủy. Dữ liệu sẽ không bị xóa cứng khỏi hệ thống." : undefined}
+        variant="warning"
+        confirmText="Hủy yêu cầu"
+        isLoading={isPending}
+        onConfirm={() => {
+          if (!cancelling) return;
+          runAction(
+            () => cancelApprovalRequest(cancelling.id),
+            "Đã hủy yêu cầu",
+            () => {
+              setCancelling(null);
+              setViewing(null);
+            },
+          );
+        }}
+      />
+    </div>
+  );
+}

@@ -83,11 +83,27 @@ enum PaymentRequestType {
   OTHER
 }
 
-enum ApprovalStatus {
-  DRAFT
+enum ApprovalRequestStatus {
   PENDING
   APPROVED
   REJECTED
+  CANCELLED
+}
+
+enum ApprovalRequestType {
+  PAYMENT
+  MATERIAL
+  REPORT
+  CONTRACT
+  CHANGE_ORDER
+  OTHER
+}
+
+enum ApprovalPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
 }
 
 enum SiteReportStatus {
@@ -269,6 +285,7 @@ model Project {
   fieldMaterialRequests  FieldMaterialRequest[]
   projectMaterialStocks  ProjectMaterialStock[]
   materialItems          MaterialItem[]
+  approvalRequests       ApprovalRequest[]
 
   @@index([code])
   @@index([status])
@@ -738,22 +755,37 @@ model PaymentRequest {
 }
 
 model ApprovalRequest {
-  id          String         @id @default(cuid())
-  requesterId String
-  approverId  String?
-  entityType  String
-  entityId    String
-  status      ApprovalStatus @default(PENDING)
-  notes       String?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  id           String                @id @default(cuid())
+  code         String                @unique
+  projectId    String
+  title        String
+  description  String?
+  type         ApprovalRequestType   @default(OTHER)
+  status       ApprovalRequestStatus @default(PENDING)
+  priority     ApprovalPriority      @default(NORMAL)
+  amount       Decimal?              @db.Decimal(19, 4)
+  dueDate      DateTime?
+  requesterId  String
+  decidedById  String?
+  decidedAt    DateTime?
+  decisionNote String?
+  sourceType   String?
+  sourceId     String?
+  deletedAt    DateTime?
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
 
-  requester User  @relation("Requester", fields: [requesterId], references: [id])
-  approver  User? @relation("Approver", fields: [approverId], references: [id])
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  requester User     @relation("Requester", fields: [requesterId], references: [id])
+  decidedBy User?    @relation("Approver", fields: [decidedById], references: [id])
 
+  @@index([projectId])
   @@index([requesterId])
-  @@index([approverId])
-  @@index([entityType, entityId])
+  @@index([decidedById])
+  @@index([status])
+  @@index([type])
+  @@index([priority])
+  @@index([sourceType, sourceId])
 }
 
 model ChatMessage {

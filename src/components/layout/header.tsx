@@ -41,7 +41,6 @@ const mobileNavSections = [
   {
     label: 'HỆ THỐNG',
     items: [
-      { name: 'Nhật ký', href: '/audit', icon: History },
       { name: 'Tài khoản', href: '/users', icon: UserCog },
       { name: 'Cài đặt', href: '/settings', icon: Settings },
     ],
@@ -51,7 +50,6 @@ const mobileNavSections = [
 const HIDDEN_FOR_COMMANDER = [
   '/accounting',
   '/approvals',
-  '/audit',
   '/settings',
   '/users',
   '/contracts',

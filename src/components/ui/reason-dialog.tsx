@@ -114,16 +114,28 @@ export function ReasonDialog({
                 setReason(e.target.value);
                 if (error) setError("");
               }}
+              onBlur={() => {
+                if (requireReason && !reason.trim()) {
+                  setError("Vui lòng nhập lý do.");
+                } else if (reason.trim() && reason.trim().length < minLength) {
+                  setError(`Lý do phải có ít nhất ${minLength} ký tự.`);
+                }
+              }}
               disabled={isLoading}
               className={`w-full rounded-xl border ${error ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 focus:ring-blue-500'} bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-transparent focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[100px] resize-y`}
               placeholder={placeholder}
             />
-            {error && (
-              <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-red-600 animate-in slide-in-from-top-1">
-                <AlertCircle className="w-3.5 h-3.5" />
-                {error}
+            <div className="mt-1.5 flex items-center justify-between">
+              {error ? (
+                <div className="flex items-center gap-1.5 text-xs font-medium text-red-600 animate-in slide-in-from-top-1">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  {error}
+                </div>
+              ) : <div />}
+              <div className={`text-xs ${reason.trim().length < minLength ? 'text-amber-600 font-medium' : 'text-slate-500'}`}>
+                {reason.trim().length}/{minLength} ký tự tối thiểu
               </div>
-            )}
+            </div>
           </div>
         </div>
         
@@ -139,7 +151,7 @@ export function ReasonDialog({
           <Button
             variant="destructive"
             onClick={handleSubmit}
-            disabled={isLoading}
+            disabled={isLoading || reason.trim().length < minLength}
             className="w-full sm:w-auto bg-red-600 hover:bg-red-700"
           >
             {isLoading ? "Đang xử lý..." : confirmText}
