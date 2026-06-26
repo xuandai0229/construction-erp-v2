@@ -1,20 +1,35 @@
-import { EmptyState } from '@/components/ui/empty-state';
-import { Users } from 'lucide-react';
+import { getSession } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { getSuppliers, getSupplierPermissionsForUser } from "./actions";
+import { SuppliersWorkspace } from "@/components/suppliers/suppliers-workspace";
 
-export default function SuppliersPage() {
-  return (
-    <div className="app-page space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="page-heading">Nhà cung cấp & thầu phụ</h1>
-          <p className="page-description">Quản lý đối tác cung ứng và đơn vị thi công theo dự án.</p>
-        </div>
+export const metadata = {
+  title: "Nhà cung cấp & thầu phụ | ERP Công trình",
+  description: "Quản lý danh bạ đối tác cung ứng và đơn vị thi công",
+};
+
+export default async function SuppliersPage() {
+  const session = await getSession();
+  if (!session) redirect("/login");
+
+  const [suppliers, permissions] = await Promise.all([
+    getSuppliers(),
+    getSupplierPermissionsForUser(),
+  ]);
+
+  if (!permissions.canView) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center p-8 text-center">
+        <h1 className="text-xl font-bold text-slate-900 mb-2">Truy cập bị từ chối</h1>
+        <p className="text-slate-500">Bạn không có quyền xem danh sách đối tác.</p>
       </div>
-      <EmptyState 
-        title="Chưa có nhà cung cấp" 
-        description="Quản lý danh sách nhà cung cấp vật tư và thầu phụ thi công." 
-        icon={<Users className="h-6 w-6 text-slate-500" />}
-      />
-    </div>
+    );
+  }
+
+  return (
+    <SuppliersWorkspace
+      suppliers={suppliers}
+      permissions={permissions}
+    />
   );
 }
