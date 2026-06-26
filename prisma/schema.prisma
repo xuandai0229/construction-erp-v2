@@ -66,6 +66,23 @@ enum PaymentStatus {
   REJECTED
 }
 
+enum PaymentRequestStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  PAID
+  REJECTED
+  CANCELLED
+}
+
+enum PaymentRequestType {
+  ADVANCE
+  PROGRESS
+  FINAL
+  RETENTION
+  OTHER
+}
+
 enum ApprovalStatus {
   DRAFT
   PENDING
@@ -206,6 +223,8 @@ model User {
   approvalRequests       ApprovalRequest[]       @relation("Requester")
   approvals              ApprovalRequest[]       @relation("Approver")
   documents              Document[]
+  createdPaymentRequests  PaymentRequest[] @relation("PaymentCreator")
+  approvedPaymentRequests PaymentRequest[] @relation("PaymentApprover")
   createdFieldTemplates  FieldProgressTemplate[] @relation("FieldTemplateCreator")
   createdFieldItems      FieldProgressItem[]     @relation("FieldItemCreator")
   createdFieldEntries    FieldProgressEntry[]    @relation("FieldEntryCreator")
@@ -242,6 +261,7 @@ model Project {
   materialRequests       MaterialRequest[]
   paymentPlans           PaymentPlan[]
   paymentRecords         PaymentRecord[]
+  paymentRequests        PaymentRequest[]
   documents              Document[]
   fieldProgressTemplates FieldProgressTemplate[]
   fieldProgressItems     FieldProgressItem[]
@@ -325,6 +345,7 @@ model Supplier {
   updatedAt     DateTime  @updatedAt
 
   contracts Contract[]
+  paymentRequests PaymentRequest[]
 
   @@index([code])
 }
@@ -348,6 +369,7 @@ model Contract {
   project      Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
   supplier     Supplier?     @relation(fields: [supplierId], references: [id])
   paymentPlans PaymentPlan[]
+  paymentRequests PaymentRequest[]
 
   @@index([projectId])
   @@index([supplierId])
@@ -677,6 +699,42 @@ model PaymentRecord {
 
   @@index([projectId])
   @@index([paymentPlanId])
+}
+
+model PaymentRequest {
+  id             String               @id @default(cuid())
+  requestCode    String               @unique
+  projectId      String
+  title          String
+  supplierId     String?
+  contractId     String?
+  type           PaymentRequestType   @default(OTHER)
+  status         PaymentRequestStatus @default(DRAFT)
+  subTotal       Decimal              @default(0) @db.Decimal(19, 4)
+  vatAmount      Decimal              @default(0) @db.Decimal(19, 4)
+  totalAmount    Decimal              @default(0) @db.Decimal(19, 4)
+  dueDate        DateTime?
+  notes          String?
+  createdById    String
+  approvedById   String?
+  approvedAt     DateTime?
+  paidAt         DateTime?
+  rejectedReason String?
+  deletedAt      DateTime?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  project    Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  supplier   Supplier? @relation(fields: [supplierId], references: [id])
+  contract   Contract? @relation(fields: [contractId], references: [id])
+  createdBy  User      @relation("PaymentCreator", fields: [createdById], references: [id])
+  approvedBy User?     @relation("PaymentApprover", fields: [approvedById], references: [id])
+
+  @@index([projectId])
+  @@index([supplierId])
+  @@index([contractId])
+  @@index([createdById])
+  @@index([status])
 }
 
 model ApprovalRequest {
