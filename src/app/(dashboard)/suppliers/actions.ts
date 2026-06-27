@@ -37,6 +37,11 @@ function normalizeOptionalText(value: unknown) {
   return text.length > 0 ? text : null;
 }
 
+function normalizeTaxCode(value: unknown) {
+  const text = normalizeText(value);
+  return text.length > 0 ? text.replace(/\s+/g, "") : null;
+}
+
 function toSupplierDto(supplier: {
   id: string;
   code: string;
@@ -155,19 +160,37 @@ export async function createSupplier(data: {
 
   const name = normalizeText(data.name);
   if (!name) throw new Error("Tên đối tác là bắt buộc");
+  if (name.length > 200) throw new Error("Tên đối tác không được vượt quá 200 ký tự");
 
   const requestedCode = normalizeText(data.code).toUpperCase();
+  if (requestedCode && requestedCode.length > 50) throw new Error("Mã đối tác không được vượt quá 50 ký tự");
   const code = requestedCode || (await buildUniqueSupplierCode(name));
+
+  const taxCode = normalizeTaxCode(data.taxCode);
+  if (taxCode) {
+    if (taxCode.length > 30) throw new Error("Mã số thuế không được vượt quá 30 ký tự");
+    const existing = await prisma.supplier.findFirst({
+      where: { taxCode, deletedAt: null },
+      select: { id: true },
+    });
+    if (existing) throw new Error("Mã số thuế đã tồn tại trong danh sách đối tác.");
+  }
+
+  const phone = normalizeOptionalText(data.phone);
+  if (phone && phone.length > 30) throw new Error("Số điện thoại không được vượt quá 30 ký tự");
+
+  const email = normalizeOptionalText(data.email)?.toLowerCase();
+  if (email && email.length > 254) throw new Error("Email không được vượt quá 254 ký tự");
 
   try {
     await prisma.supplier.create({
       data: {
         code,
         name,
-        taxCode: normalizeOptionalText(data.taxCode),
+        taxCode,
         address: normalizeOptionalText(data.address),
-        phone: normalizeOptionalText(data.phone),
-        email: normalizeOptionalText(data.email),
+        phone,
+        email,
         contactPerson: normalizeOptionalText(data.contactPerson),
       },
     });
@@ -199,6 +222,23 @@ export async function updateSupplier(id: string, data: {
 
   const name = normalizeText(data.name);
   if (!name) throw new Error("Tên đối tác là bắt buộc");
+  if (name.length > 200) throw new Error("Tên đối tác không được vượt quá 200 ký tự");
+
+  const taxCode = normalizeTaxCode(data.taxCode);
+  if (taxCode) {
+    if (taxCode.length > 30) throw new Error("Mã số thuế không được vượt quá 30 ký tự");
+    const existing = await prisma.supplier.findFirst({
+      where: { taxCode, id: { not: id }, deletedAt: null },
+      select: { id: true },
+    });
+    if (existing) throw new Error("Mã số thuế đã tồn tại trong danh sách đối tác.");
+  }
+
+  const phone = normalizeOptionalText(data.phone);
+  if (phone && phone.length > 30) throw new Error("Số điện thoại không được vượt quá 30 ký tự");
+
+  const email = normalizeOptionalText(data.email)?.toLowerCase();
+  if (email && email.length > 254) throw new Error("Email không được vượt quá 254 ký tự");
 
   const supplier = await prisma.supplier.findFirst({
     where: { id, deletedAt: null },
@@ -210,10 +250,10 @@ export async function updateSupplier(id: string, data: {
     where: { id },
     data: {
       name,
-      taxCode: normalizeOptionalText(data.taxCode),
+      taxCode,
       address: normalizeOptionalText(data.address),
-      phone: normalizeOptionalText(data.phone),
-      email: normalizeOptionalText(data.email),
+      phone,
+      email,
       contactPerson: normalizeOptionalText(data.contactPerson),
     },
   });
@@ -232,12 +272,15 @@ export async function deleteSupplier(id: string) {
 
   const supplier = await prisma.supplier.findFirst({
     where: { id, deletedAt: null },
-    include: { _count: { select: { contracts: true } } },
+    include: { _count: { select: { contracts: true, paymentRequests: true } } },
   });
   if (!supplier) throw new Error("Đối tác không tồn tại");
 
   if (supplier._count.contracts > 0) {
     throw new Error("Không thể xóa đối tác đang có hợp đồng liên kết.");
+  }
+  if (supplier._count.paymentRequests > 0) {
+    throw new Error("Không thể xóa đối tác đang có thanh toán liên kết.");
   }
 
   // Soft delete

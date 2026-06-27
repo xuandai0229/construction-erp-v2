@@ -188,6 +188,7 @@ export function SupplierFormDialog({ isOpen, onClose, onSubmit, isSubmitting, in
                 <label htmlFor="supplier-tax" className="mb-1.5 block text-sm font-semibold text-slate-700">Mã số thuế</label>
                 <input
                   id="supplier-tax"
+                  inputMode="numeric"
                   value={formData.taxCode}
                   onChange={(e) => updateField("taxCode", e.target.value)}
                   placeholder="VD: 0100112345"
