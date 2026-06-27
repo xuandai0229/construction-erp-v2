@@ -205,6 +205,50 @@ export async function getPaymentRequestsData() {
     globalPermissions: { ...globalPerms, canCreate: canCreateAny }
   };
 }
+const EDITABLE_PAYMENT_STATUSES = ["DRAFT", "REJECTED"] as const;
+
+function assertPaymentEditable(status: string) {
+  if (!EDITABLE_PAYMENT_STATUSES.includes(status as any)) {
+    throw new Error("Chỉ được sửa phiếu thanh toán ở trạng thái Nháp hoặc Bị từ chối.");
+  }
+}
+
+function assertPaymentDeletable(status: string) {
+  if (!EDITABLE_PAYMENT_STATUSES.includes(status as any)) {
+    throw new Error("Chỉ được xóa phiếu thanh toán ở trạng thái Nháp hoặc Bị từ chối.");
+  }
+}
+
+async function assertContractPaymentLimit(params: {
+  contractId: string | null | undefined;
+  totalAmount: number;
+  excludePaymentRequestId?: string;
+}) {
+  if (!params.contractId) return;
+
+  const contract = await prisma.contract.findUnique({ where: { id: params.contractId } });
+  if (!contract || contract.deletedAt) {
+    throw new Error("Hợp đồng không tồn tại hoặc đã bị xóa.");
+  }
+
+  const validStatuses = ["DRAFT", "SUBMITTED", "APPROVED", "PAID"];
+  const otherPayments = await prisma.paymentRequest.findMany({
+    where: {
+      contractId: params.contractId,
+      deletedAt: null,
+      status: { in: validStatuses as PaymentRequestStatus[] },
+      id: params.excludePaymentRequestId ? { not: params.excludePaymentRequestId } : undefined
+    },
+    select: { totalAmount: true }
+  });
+
+  const usedAmount = otherPayments.reduce((sum, p) => sum + Number(p.totalAmount), 0);
+  const nextTotal = usedAmount + params.totalAmount;
+
+  if (nextTotal > Number(contract.value)) {
+    throw new Error("Tổng đề nghị thanh toán vượt giá trị hợp đồng.");
+  }
+}
 
 export async function createPaymentRequest(data: {
   projectId: string;
@@ -242,7 +286,7 @@ export async function createPaymentRequest(data: {
     if (!contract) throw new Error("Hợp đồng không tồn tại");
     if (contract.projectId !== projectId) throw new Error("Hợp đồng không thuộc công trình này");
 
-    // Note: We're ignoring strict limit checks based on submit/status for this simple CRUD phase.
+    await assertContractPaymentLimit({ contractId, totalAmount });
   }
 
   const requestCode = `TT-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`;
@@ -301,6 +345,8 @@ export async function updatePaymentRequest(id: string, data: {
     throw new Error("Bạn không có quyền sửa hồ sơ này");
   }
 
+  assertPaymentEditable(pr.status);
+
   const title = normalizeText(data.title);
   if (!title) throw new Error("Tiêu đề là bắt buộc");
 
@@ -313,7 +359,7 @@ export async function updatePaymentRequest(id: string, data: {
     if (!contract) throw new Error("Hợp đồng không tồn tại");
     if (contract.projectId !== pr.projectId) throw new Error("Hợp đồng không thuộc công trình này");
 
-    // Skip limit check for simple CRUD phase
+    await assertContractPaymentLimit({ contractId, totalAmount, excludePaymentRequestId: id });
   }
 
   await prisma.paymentRequest.update({
@@ -419,6 +465,8 @@ export async function deletePaymentRequest(id: string) {
   if (!perms.canDelete && pr.createdById !== session.id) {
     throw new Error("Bạn không có quyền xóa hồ sơ này");
   }
+
+  assertPaymentDeletable(pr.status);
 
   await prisma.paymentRequest.update({
     where: { id },
