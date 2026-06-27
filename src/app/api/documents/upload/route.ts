@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { storageProvider } from "@/lib/storage/index";
 import { writeAuditLog } from "@/lib/audit";
 import path from "path";
+import { Readable } from "stream";
 import { canAccessProject } from "@/lib/rbac";
 import { canUploadToFolder } from "@/lib/documents/permissions";
 import crypto from "crypto";
@@ -108,20 +109,23 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    if (file.size === 0) {
+      return NextResponse.json({ error: "File rỗng (0 bytes) không hợp lệ" }, { status: 400 });
+    }
 
-    // Tính fileHash
-    const fileHash = crypto.createHash("sha256").update(buffer).digest("hex");
-
-    if (!validateFileSignature(buffer, extension)) {
+    // Đọc 16 bytes đầu tiên để check magic byte mà không load toàn bộ file vào RAM
+    const magicBuffer = Buffer.from(await file.slice(0, 16).arrayBuffer());
+    if (!validateFileSignature(magicBuffer, extension)) {
       return NextResponse.json({ error: "Tệp tin không đúng định dạng chuẩn (Sai Magic-byte)" }, { status: 400 });
     }
+
+    // Stream file trực tiếp xuống ổ cứng thay vì await file.arrayBuffer()
+    const stream = Readable.fromWeb(file.stream() as any);
 
     let storedFile;
     try {
       storedFile = await storageProvider.saveFile({
-        buffer,
+        stream,
         projectId,
         projectCode: project.code,
         folderId,
@@ -160,7 +164,7 @@ export async function POST(req: NextRequest) {
           documentType: documentType || null,
           status: "SUBMITTED",
           metadata: metadataObj ? metadataObj : undefined,
-          fileHash: fileHash,
+          fileHash: storedFile.fileHash || "",
           storedName: path.basename(storedFile.objectKey),
           mimeType: file.type || "application/octet-stream",
           extension: path.extname(originalName),

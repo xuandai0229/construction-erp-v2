@@ -5,6 +5,7 @@ import mime from "mime-types";
 import { canAccessProject } from "@/lib/rbac";
 import { storageProvider } from "@/lib/storage/index";
 import { writeAuditLog } from "@/lib/audit";
+import { Readable } from "stream";
 
 export async function GET(
   req: NextRequest,
@@ -30,7 +31,8 @@ export async function GET(
       return new NextResponse("Không có quyền truy cập", { status: 403 });
     }
 
-    const fileBuffer = await storageProvider.readFile(document.storagePath);
+    const nodeStream = storageProvider.readFileStream(document.storagePath);
+    const webStream = Readable.toWeb(nodeStream as any);
     
     const isPreview = req.nextUrl.searchParams.get('preview') === 'true';
     const contentType = document.mimeType || mime.lookup(document.originalName) || "application/octet-stream";
@@ -48,15 +50,22 @@ export async function GET(
     const headers = new Headers();
     headers.set("Content-Type", contentType);
     headers.set("X-Content-Type-Options", "nosniff");
-    headers.set("Cache-Control", "private, max-age=3600"); // Basic caching for previews
+    headers.set("Cache-Control", "private, no-store, max-age=0"); // Không cache để bảo mật tuyệt đối cho tài liệu công trình
     
+    const asciiName = document.originalName.replace(/[^\x20-\x7E]/g, '_');
+    const encodedName = encodeURIComponent(document.originalName);
+
     if (isPreview && (contentType.startsWith('image/') || contentType === 'application/pdf')) {
-      headers.set("Content-Disposition", `inline; filename="${encodeURIComponent(document.originalName)}"`);
+      headers.set("Content-Disposition", `inline; filename="${asciiName}"; filename*=UTF-8''${encodedName}`);
     } else {
-      headers.set("Content-Disposition", `attachment; filename="${encodeURIComponent(document.originalName)}"`);
+      headers.set("Content-Disposition", `attachment; filename="${asciiName}"; filename*=UTF-8''${encodedName}`);
     }
 
-    return new NextResponse(fileBuffer as unknown as BodyInit, {
+    if (document.size) {
+      headers.set("Content-Length", document.size.toString());
+    }
+
+    return new NextResponse(webStream as any, {
       status: 200,
       headers
     });

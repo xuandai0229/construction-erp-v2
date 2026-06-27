@@ -5,10 +5,12 @@ export type StoredFileResult = {
   objectKey: string;
   storagePath: string; // Mandatory for now since we don't migrate DB schema
   size: number;
+  fileHash?: string;
 };
 
 export type SaveFileInput = {
-  buffer: Buffer;
+  buffer?: Buffer;
+  stream?: NodeJS.ReadableStream;
   projectId: string;
   projectCode: string; // Needed for path generation
   folderId: string;
@@ -28,6 +30,12 @@ export interface DocumentStorageProvider {
    * @param objectKeyOrPath The physical storagePath (local) or objectKey
    */
   readFile(objectKeyOrPath: string): Promise<Buffer>;
+
+  /**
+   * Reads a file into a Stream.
+   * @param objectKeyOrPath The physical storagePath (local) or objectKey
+   */
+  readFileStream(objectKeyOrPath: string): NodeJS.ReadableStream;
 
   /**
    * Deletes a file.
