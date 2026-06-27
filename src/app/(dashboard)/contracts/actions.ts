@@ -304,7 +304,7 @@ export async function deleteContract(id: string) {
 
   const contract = await prisma.contract.findFirst({ 
     where: { id, deletedAt: null },
-    include: { _count: { select: { paymentPlans: true } } }
+    include: { _count: { select: { paymentPlans: true, paymentRequests: true } } }
   });
   if (!contract) throw new Error("Hợp đồng không tồn tại");
 
@@ -315,7 +315,11 @@ export async function deleteContract(id: string) {
   if (!perms.canDelete) throw new Error("Bạn không có quyền xóa hợp đồng này");
 
   if (contract._count.paymentPlans > 0) {
-    throw new Error("Không thể xóa hợp đồng đã có kế hoạch thanh toán");
+    throw new Error("Không thể xóa hợp đồng đang có kế hoạch thanh toán liên kết.");
+  }
+  
+  if (contract._count.paymentRequests > 0) {
+    throw new Error("Không thể xóa hợp đồng đang có đề nghị thanh toán liên kết.");
   }
 
   await prisma.contract.update({
