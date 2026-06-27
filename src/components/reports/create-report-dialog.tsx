@@ -287,7 +287,6 @@ function CreateReportDialogInner({ onClose, onSubmit, isSubmitting, activeProjec
       return true;
     });
     const validFiles = newFiles.filter(f => {
-      if (f.size > 10 * 1024 * 1024) { toast.error(`Ảnh vượt quá dung lượng cho phép (10MB)`); return false; }
       if (f.size === 0) { toast.error(`File rỗng không hợp lệ`); return false; }
       return true;
     });
@@ -310,7 +309,6 @@ function CreateReportDialogInner({ onClose, onSubmit, isSubmitting, activeProjec
         toast.error(`File không đúng định dạng (${ext}). Chỉ chấp nhận PDF, Word, Excel, TXT.`);
         return false;
       }
-      if (f.size > 20 * 1024 * 1024) { toast.error(`Tài liệu vượt quá dung lượng cho phép (20MB)`); return false; }
       if (f.size === 0) { toast.error(`File rỗng không hợp lệ`); return false; }
       return true;
     });

@@ -81,6 +81,7 @@ interface DocumentWorkspaceProps {
   folders: FolderItem[];
   documents: DocumentListItem[];
   sessionUser: SessionUser;
+  systemSettings: any;
 }
 
 type SortOption = "NEWEST" | "OLDEST" | "NAME" | "SIZE";
@@ -154,6 +155,7 @@ export function DocumentWorkspace({
   folders,
   documents,
   sessionUser,
+  systemSettings,
 }: DocumentWorkspaceProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -428,11 +430,7 @@ export function DocumentWorkspace({
   const handleFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !selectedFolderId || !selectedFolderData) return;
-    if (file.size > 50 * 1024 * 1024) {
-      toast.error("Tệp vượt quá giới hạn 50MB");
-      event.target.value = "";
-      return;
-    }
+
     setPendingUpload({
       file,
       displayName: file.name,
@@ -853,6 +851,9 @@ export function DocumentWorkspace({
                       {selectedFolderRule.warning}
                     </p>
                   )}
+                  <p className="mt-1 text-xs text-slate-500">
+                    Hệ thống: Tối đa {systemSettings?.maxUploadSizeMb || 50}MB • Đuôi tệp hợp lệ: {systemSettings?.allowedExtensions}
+                  </p>
                   <p className="mt-1 text-xs text-slate-500">
                     Gợi ý đặt tên:{" "}
                     <span className="rounded border border-slate-200 bg-slate-50 px-1 py-0.5 font-mono text-slate-700">

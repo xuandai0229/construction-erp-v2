@@ -228,24 +228,25 @@ model User {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  projectMembers         ProjectMember[]
-  assignedProjectMembers ProjectMember[]         @relation("ProjectMemberAssigner")
-  auditLogs              AuditLog[]
-  messages               ChatMessage[]
-  createdSiteReports     SiteReport[]            @relation("ReportCreator")
-  approvedSiteReports    SiteReport[]            @relation("ReportApprover")
-  createdWBSItems        WBSItem[]
-  materialRequests       MaterialRequest[]
-  approvalRequests       ApprovalRequest[]       @relation("Requester")
-  approvals              ApprovalRequest[]       @relation("Approver")
-  documents              Document[]
-  createdPaymentRequests  PaymentRequest[] @relation("PaymentCreator")
-  approvedPaymentRequests PaymentRequest[] @relation("PaymentApprover")
-  createdFieldTemplates  FieldProgressTemplate[] @relation("FieldTemplateCreator")
-  createdFieldItems      FieldProgressItem[]     @relation("FieldItemCreator")
-  createdFieldEntries    FieldProgressEntry[]    @relation("FieldEntryCreator")
-  approvedFieldEntries   FieldProgressEntry[]    @relation("FieldEntryApprover")
-  fieldMaterialRequests  FieldMaterialRequest[]  @relation("FieldMaterialRequester")
+  projectMembers          ProjectMember[]
+  assignedProjectMembers  ProjectMember[]         @relation("ProjectMemberAssigner")
+  auditLogs               AuditLog[]
+  messages                ChatMessage[]
+  createdSiteReports      SiteReport[]            @relation("ReportCreator")
+  approvedSiteReports     SiteReport[]            @relation("ReportApprover")
+  createdWBSItems         WBSItem[]
+  materialRequests        MaterialRequest[]
+  approvalRequests        ApprovalRequest[]       @relation("Requester")
+  approvals               ApprovalRequest[]       @relation("Approver")
+  documents               Document[]
+  createdPaymentRequests  PaymentRequest[]        @relation("PaymentCreator")
+  approvedPaymentRequests PaymentRequest[]        @relation("PaymentApprover")
+  createdFieldTemplates   FieldProgressTemplate[] @relation("FieldTemplateCreator")
+  createdFieldItems       FieldProgressItem[]     @relation("FieldItemCreator")
+  createdFieldEntries     FieldProgressEntry[]    @relation("FieldEntryCreator")
+  approvedFieldEntries    FieldProgressEntry[]    @relation("FieldEntryApprover")
+  fieldMaterialRequests   FieldMaterialRequest[]  @relation("FieldMaterialRequester")
+  updatedSettings         SystemSetting[]         @relation("SettingUpdater")
 
   @@index([email])
   @@index([username])
@@ -361,7 +362,7 @@ model Supplier {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  contracts Contract[]
+  contracts       Contract[]
   paymentRequests PaymentRequest[]
 
   @@index([code])
@@ -383,9 +384,9 @@ model Contract {
   createdAt  DateTime       @default(now())
   updatedAt  DateTime       @updatedAt
 
-  project      Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  supplier     Supplier?     @relation(fields: [supplierId], references: [id])
-  paymentPlans PaymentPlan[]
+  project         Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  supplier        Supplier?        @relation(fields: [supplierId], references: [id])
+  paymentPlans    PaymentPlan[]
   paymentRequests PaymentRequest[]
 
   @@index([projectId])
@@ -776,8 +777,8 @@ model ApprovalRequest {
   updatedAt    DateTime              @updatedAt
 
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  requester User     @relation("Requester", fields: [requesterId], references: [id])
-  decidedBy User?    @relation("Approver", fields: [decidedById], references: [id])
+  requester User    @relation("Requester", fields: [requesterId], references: [id])
+  decidedBy User?   @relation("Approver", fields: [decidedById], references: [id])
 
   @@index([projectId])
   @@index([requesterId])
@@ -956,4 +957,62 @@ model FieldMaterialRequestItem {
   request FieldMaterialRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
 
   @@index([requestId])
+}
+
+model SystemSetting {
+  id String @id @default(cuid())
+
+  // Organization
+  companyName          String
+  taxCode              String
+  hotline              String
+  timezone             String
+  currency             String
+  fiscalYearStartMonth String
+
+  // Security
+  requireTwoFactorForAdmins Boolean @default(true)
+  sessionTimeoutMinutes     Int     @default(60)
+  passwordRotationDays      Int     @default(90)
+  allowedIpMode             String  @default("restricted")
+  trustedDeviceReviewDays   Int     @default(30)
+  auditSensitiveActions     Boolean @default(true)
+
+  // Workflow
+  requireProjectCodeBeforeSpending Boolean @default(true)
+  materialRequestApproval          Boolean @default(true)
+  paymentTwoStepApproval           Boolean @default(true)
+  reportLockAfterApproval          Boolean @default(true)
+  contractValueThreshold           Decimal @db.Decimal(19, 4)
+
+  // Documents
+  enforceNamingConvention Boolean @default(true)
+  autoVersioning          Boolean @default(true)
+  maxUploadSizeMb         Int     @default(80)
+  allowedExtensions       String  @default("pdf, docx, xlsx, dwg, jpg, png, heic")
+  documentRetentionYears  Int     @default(10)
+
+  // Notifications
+  emailDailyDigest    Boolean @default(false)
+  approvalEscalation  Boolean @default(true)
+  fieldReportReminder Boolean @default(true)
+  reminderTime        String  @default("17:30")
+  escalationHours     Int     @default(24)
+
+  // Data
+  automaticBackup        Boolean @default(true)
+  backupFrequency        String  @default("daily")
+  retentionYears         Int     @default(7)
+  exportRequiresApproval Boolean @default(true)
+  maintenanceWindow      String  @default("22:00 - 23:00")
+
+  // Metadata
+  updatedById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  version     Int      @default(1)
+
+  updatedBy User? @relation("SettingUpdater", fields: [updatedById], references: [id])
+
+  @@index([updatedById])
 }

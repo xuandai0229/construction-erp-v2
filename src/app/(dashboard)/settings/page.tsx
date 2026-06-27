@@ -1,10 +1,26 @@
-import { EmptyState } from '@/components/ui/empty-state';
-import { Settings } from 'lucide-react';
+import { SettingsWorkspace } from "@/components/settings/settings-workspace";
+import { getSession } from "@/lib/auth";
+import { canManageUsers } from "@/lib/rbac";
+import { redirect } from "next/navigation";
+import { getSystemSettings } from "./actions";
 
-export default function SettingsPage() {
+export const metadata = {
+  title: "Cài đặt hệ thống | ERP Công trình",
+  description: "Cấu hình vận hành, bảo mật, tài liệu và dữ liệu cho ERP công trình",
+};
+
+export default async function SettingsPage() {
+  const session = await getSession();
+  if (!session) redirect("/login");
+  if (!canManageUsers(session)) redirect("/projects");
+
+  const initialSettings = await getSystemSettings();
+
+  return <SettingsWorkspace initialSettings={initialSettings as any} />;
+}
+
+/*
   return (
-    <div className="app-page space-y-6">
-      <div className="flex items-center justify-between">
         <div>
           <h1 className="page-heading">Cài đặt hệ thống</h1>
           <p className="page-description">Quản lý các thiết lập dùng chung của hệ thống ERP.</p>
@@ -18,3 +34,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+*/

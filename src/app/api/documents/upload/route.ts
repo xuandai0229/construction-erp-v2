@@ -10,8 +10,8 @@ import crypto from "crypto";
 import { getDocumentRule } from "@/lib/document-rules";
 import { buildDocumentDisplayName } from "@/lib/document-file-utils";
 import { getDocumentTypeOptionsForFolder } from "@/lib/documents/metadata-types";
-
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+import { getEnforcedSystemSettings } from "@/lib/settings/system-settings";
+import { validateDocumentUploadPolicy } from "@/lib/documents/validation";
 
 function validateFileSignature(buffer: Buffer, extension: string): boolean {
   const hex = buffer.toString('hex', 0, 8).toUpperCase();
@@ -30,7 +30,7 @@ function validateFileSignature(buffer: Buffer, extension: string): boolean {
     return hex.startsWith('504B0304'); // PK
   }
   if (ext === '.doc' || ext === '.xls') {
-    return hex.startsWith('D0CF11E0'); // OLE signature D0 CF 11 E0 A1 B1 1A E1
+    return hex.startsWith('D0CF11E0'); // OLE signature
   }
   if (ext === '.webp') {
     return hex.startsWith('52494646') && buffer.toString('hex', 8, 12).toUpperCase() === '57454250'; // RIFF...WEBP
@@ -58,8 +58,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Thiếu thông tin bắt buộc" }, { status: 400 });
     }
 
-    if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ error: "Tệp tin vượt quá giới hạn 50MB" }, { status: 400 });
+    const settings = await getEnforcedSystemSettings();
+    const validationResult = validateDocumentUploadPolicy({ name: file.name, size: file.size }, settings);
+    
+    if (!validationResult.valid) {
+      await writeAuditLog({
+        userId: session.id,
+        projectId,
+        action: "DOCUMENT_UPLOAD_BLOCKED_BY_POLICY",
+        entityType: "Document",
+        entityId: "none",
+        afterData: { reason: validationResult.reason, fileName: file.name, ...validationResult.meta } as any
+      });
+      return NextResponse.json({ error: validationResult.error }, { status: 400 });
     }
 
     const project = await prisma.project.findUnique({ where: { id: projectId, deletedAt: null } });
@@ -79,13 +90,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Không có quyền upload vào thư mục này." }, { status: 403 });
     }
 
-    const fileExtension = path.extname(file.name).toLowerCase();
-    const originalName = buildDocumentDisplayName(
-      typeof requestedDisplayName === "string" && requestedDisplayName.trim()
-        ? requestedDisplayName
-        : file.name,
-      fileExtension,
-    );
+    const originalName = file.name;
     const extension = path.extname(originalName).toLowerCase();
     
     // Server-side validation based on folder rules
@@ -127,6 +132,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Không thể lưu tệp vật lý" }, { status: 500 });
     }
 
+    let version = 1;
+    if (settings.autoVersioning) {
+      const existingDoc = await prisma.document.findFirst({
+        where: {
+          folderId,
+          projectId,
+          originalName: originalName,
+          deletedAt: null
+        },
+        orderBy: { version: 'desc' }
+      });
+      if (existingDoc) {
+        version = existingDoc.version + 1;
+      }
+    }
+
     let document;
     try {
       const metadataObj = note ? { note } : null;
@@ -146,6 +167,7 @@ export async function POST(req: NextRequest) {
           size: file.size,
           storagePath: storedFile.storagePath,
           uploadedById: session.id,
+          version: version,
         }
       });
     } catch (dbError) {

@@ -12,11 +12,8 @@ import { canAccessProject } from "@/lib/rbac";
 
 export const runtime = "nodejs";
 
-const MAX_PHOTO_SIZE = 10 * 1024 * 1024; // 10MB
-const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 const MAX_PHOTOS_PER_REPORT = 10;
 const MAX_FILES_PER_REPORT = 5;
-const TOTAL_UPLOAD_LIMIT_BYTES = 50 * 1024 * 1024; // 50MB per request limit
 
 // Valid extensions whitelist
 const PHOTO_EXTS = ['.jpg', '.jpeg', '.png', '.webp'];
@@ -133,20 +130,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ rep
       }, { status: 400 });
     }
 
-    // Calculate total upload size
-    let totalSize = 0;
-    for (const file of files) {
-      totalSize += file.size;
-    }
-    
-    if (totalSize > TOTAL_UPLOAD_LIMIT_BYTES) {
-      return NextResponse.json({
-        error: `Dung lượng upload vượt giới hạn ${TOTAL_UPLOAD_LIMIT_BYTES / 1024 / 1024}MB cho mỗi lần gửi. Vui lòng chia nhỏ hoặc giảm dung lượng file.`
-      }, { status: 413 }); // 413 Payload Too Large
-    }
-
     const allowedExts = kind === 'PHOTO' ? PHOTO_EXTS : FILE_EXTS;
-    const maxSize = kind === 'PHOTO' ? MAX_PHOTO_SIZE : MAX_FILE_SIZE;
 
     // Pre-validate all files BEFORE writing anything to disk
     const validatedFiles: { file: File; ext: string; buffer: Buffer }[] = [];
@@ -161,12 +145,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ rep
         continue;
       }
 
-      // Check size
-      if (file.size > maxSize) {
-        rejectedFiles.push(`${file.name}: vượt quá ${maxSize / 1024 / 1024}MB`);
-        continue;
-      }
-
+      // Check if file is empty
       if (file.size === 0) {
         rejectedFiles.push(`${file.name}: file rỗng`);
         continue;

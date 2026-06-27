@@ -4,6 +4,7 @@ import { DocumentWorkspace } from "@/components/documents/document-workspace";
 import { canManageProjects, requireProjectAccessOrRedirect } from "@/lib/rbac";
 import Link from "next/link";
 import { ArrowLeft, FolderOpen } from "lucide-react";
+import { getEnforcedSystemSettings } from "@/lib/settings/system-settings";
 import { Suspense } from "react";
 
 export default async function ProjectDocumentsPage({
@@ -67,6 +68,7 @@ export default async function ProjectDocumentsPage({
           folders={rawFolders} 
           documents={documents}
           sessionUser={{ id: session.id, role: session.role as any }}
+          systemSettings={await getEnforcedSystemSettings()}
         />
       </Suspense>
     </div>

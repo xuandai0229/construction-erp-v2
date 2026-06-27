@@ -67,13 +67,6 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
     setIsUploading(true);
     const file = e.target.files[0];
 
-    if (file.size > 50 * 1024 * 1024) {
-      toast.error("Tệp vượt quá giới hạn 50MB");
-      uploadRef.current = false;
-      setIsUploading(false);
-      return;
-    }
-
     const formData = new FormData();
     formData.append("file", file);
     formData.append("projectId", projectId);
