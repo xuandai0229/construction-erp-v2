@@ -67,23 +67,35 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ atta
           ? attachment.storagePath.replace(/^storage[/\\]/, '') 
           : attachment.storagePath;
 
-      const fileBuffer = await storageProvider.readFile(objectKey);
+      // Use Node.js stream for minimal RAM footprint
+      const fileStream = await storageProvider.readFileStream(objectKey);
       const ext = path.extname(attachment.fileName);
       const contentType = (mime.lookup(ext) || attachment.mimeType || "application/octet-stream") as string;
+      const originalName = attachment.originalName || attachment.fileName;
+      const fallbackName = sanitizeDispositionFilename(originalName).replace(/[^\x20-\x7E]/g, "_");
+      const encodedName = encodeURIComponent(originalName);
 
-      const safeName = sanitizeDispositionFilename(attachment.originalName || attachment.fileName);
+      // Convert Node.js Readable to Web ReadableStream for NextResponse
+      const { Readable } = require('stream');
+      const webStream = Readable.toWeb(fileStream as any);
 
-      const response = new NextResponse(fileBuffer as any);
+      const response = new NextResponse(webStream as any);
       response.headers.set("Content-Type", contentType);
       response.headers.set("X-Content-Type-Options", "nosniff");
       // Prevent caching of sensitive data
       response.headers.set("Cache-Control", "private, no-store, max-age=0");
 
-      // Photos displayed inline, files as download
-      if (attachment.kind === 'PHOTO') {
-        response.headers.set("Content-Disposition", `inline; filename="${safeName}"`);
-      } else {
-        response.headers.set("Content-Disposition", `attachment; filename="${safeName}"`);
+      const isSafeInline = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].includes(contentType);
+      const isInline = attachment.kind === 'PHOTO' && isSafeInline;
+      
+      response.headers.set(
+        "Content-Disposition",
+        `${isInline ? "inline" : "attachment"}; filename="${fallbackName}"; filename*=UTF-8''${encodedName}`
+      );
+      
+      // If we have sizeBytes, we can set Content-Length
+      if (attachment.sizeBytes) {
+        response.headers.set("Content-Length", attachment.sizeBytes.toString());
       }
       return response;
     } catch {

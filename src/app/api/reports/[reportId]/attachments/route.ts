@@ -151,15 +151,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ rep
         continue;
       }
 
-      const buffer = Buffer.from(await file.arrayBuffer());
+      const stream = file.stream();
+      // Wait, we can't easily stream for magic bytes and write at the same time without custom logic,
+      // but we can slice the file Blob!
+      const magicBytesBuffer = Buffer.from(await file.slice(0, 16).arrayBuffer());
 
       // Magic byte validation
-      if (!validateMagicBytes(buffer, ext)) {
+      if (!validateMagicBytes(magicBytesBuffer, ext)) {
         rejectedFiles.push(`${file.name}: nội dung file không khớp định dạng ${ext}`);
         continue;
       }
 
-      validatedFiles.push({ file, ext, buffer });
+      validatedFiles.push({ file, ext, buffer: Buffer.alloc(0) }); // Buffer not used anymore
     }
 
     if (validatedFiles.length === 0) {
@@ -184,7 +187,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ rep
     }[] = [];
 
     try {
-      for (const { file, ext, buffer } of validatedFiles) {
+      for (const { file, ext } of validatedFiles) {
         const timestamp = new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14);
         const randomHex = crypto.randomBytes(4).toString("hex");
         const safeFileName = `${timestamp}-${randomHex}${ext}`;
@@ -193,8 +196,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ rep
         const relativeStoragePath = path.join("storage", "site-reports", reportId, safeFileName);
         const absoluteStoragePath = path.join(process.cwd(), relativeStoragePath);
 
-        // Write file to disk
-        await fs.writeFile(absoluteStoragePath, buffer);
+        // Write file to disk using stream pipeline
+        const { pipeline } = require('stream/promises');
+        const { createWriteStream } = require('fs');
+        const { Readable } = require('stream');
+        
+        await pipeline(
+          Readable.fromWeb(file.stream() as any),
+          createWriteStream(absoluteStoragePath)
+        );
         savedFilePaths.push(absoluteStoragePath);
 
         filesToInsert.push({
