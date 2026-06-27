@@ -123,6 +123,7 @@ export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting,
                   type="number" 
                   step="0.01"
                   min="0.01"
+                  inputMode="decimal"
                   value={formData.quantity} 
                   onChange={e => setFormData({ ...formData, quantity: e.target.value })}
                   placeholder="0.00"

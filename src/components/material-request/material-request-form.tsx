@@ -239,7 +239,9 @@ export function MaterialRequestForm({
                         id={`requestedQuantity-${index}`}
                         name={`requestedQuantity-${index}`}
                         type="number" 
+                        step="0.01"
                         min="0"
+                        inputMode="decimal"
                         placeholder="SL"
                         value={item.requestedQuantity}
                         onChange={(e) => handleItemChange(item.id, 'requestedQuantity', e.target.value)}

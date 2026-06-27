@@ -264,7 +264,9 @@ export function MaterialRequestDetail({
                           id={`desktop-issued-${item.id}`}
                           name={`desktop-issued-${item.id}`}
                           type="number"
+                          step="0.01"
                           min="0"
+                          inputMode="decimal"
                           value={item.issuedQuantity}
                           onChange={(e) => handleItemChange(item.id, 'issuedQuantity', e.target.value)}
                           disabled={request.status === "RECEIVED" || request.status === "CANCELLED"}
@@ -277,7 +279,9 @@ export function MaterialRequestDetail({
                           id={`desktop-received-${item.id}`}
                           name={`desktop-received-${item.id}`}
                           type="number"
+                          step="0.01"
                           min="0"
+                          inputMode="decimal"
                           value={item.receivedQuantity}
                           onChange={(e) => handleItemChange(item.id, 'receivedQuantity', e.target.value)}
                           disabled={request.status === "RECEIVED" || request.status === "CANCELLED"}
@@ -326,7 +330,9 @@ export function MaterialRequestDetail({
                         id={`mobile-issued-${item.id}`}
                         name={`mobile-issued-${item.id}`}
                         type="number"
+                        step="0.01"
                         min="0"
+                        inputMode="decimal"
                         value={item.issuedQuantity}
                         onChange={(e) => handleItemChange(item.id, 'issuedQuantity', e.target.value)}
                         disabled={request.status === "RECEIVED" || request.status === "CANCELLED"}
@@ -339,7 +345,9 @@ export function MaterialRequestDetail({
                         id={`mobile-received-${item.id}`}
                         name={`mobile-received-${item.id}`}
                         type="number"
+                        step="0.01"
                         min="0"
+                        inputMode="decimal"
                         value={item.receivedQuantity}
                         onChange={(e) => handleItemChange(item.id, 'receivedQuantity', e.target.value)}
                         disabled={request.status === "RECEIVED" || request.status === "CANCELLED"}

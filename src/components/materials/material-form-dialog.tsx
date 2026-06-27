@@ -177,6 +177,7 @@ export function MaterialFormDialog({ isOpen, onClose, onSubmit, isSubmitting, in
                 type="number"
                 min="0"
                 step="0.01"
+                inputMode="decimal"
                 value={formData.minStockLevel}
                 onChange={(event) => updateField("minStockLevel", event.target.value)}
                 className="h-10 w-full rounded-lg border border-slate-300 px-3 text-right text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"

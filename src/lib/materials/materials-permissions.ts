@@ -62,12 +62,16 @@ export function getMaterialPermissions(
     projectRole === "CHIEF_COMMANDER" ||
     projectRole === "ASSISTANT_COMMANDER";
 
-  if (isManager) {
+  // Storekeeper and Accountant
+  const isAccountant = userRole === "ACCOUNTANT";
+  const isStorekeeper = userRole === "STAFF" && projectRole === "SUPERVISOR";
+
+  if (isManager || isAccountant || isStorekeeper) {
     return {
       canView: true,
-      canCreate: true,
-      canUpdate: true,
-      canDelete: true,
+      canCreate: isManager, // Only managers can create/update master data
+      canUpdate: isManager,
+      canDelete: isManager,
       canImport: true,
       canExport: true,
       canViewTransactions: true,
