@@ -18,6 +18,77 @@ export const ROLE_DISPLAY_NAMES: Record<UserRole, string> = {
   STAFF: "Nhân viên",
 };
 
+// ─── Role Level Hierarchy ─────────────────────────────────────
+export const USER_ROLE_LEVEL: Record<UserRole, number> = {
+  STAFF: 10,
+  ENGINEER: 20,
+  MANAGER: 30,
+  ACCOUNTANT: 40,
+  CHIEF_COMMANDER: 50,
+  DEPUTY_DIRECTOR: 80,
+  DIRECTOR: 90,
+  ADMIN: 100,
+};
+
+export function getRoleLevel(role: UserRole): number {
+  return USER_ROLE_LEVEL[role] ?? 0;
+}
+
+/**
+ * Check if actor can manage target user and optionally set a requested role.
+ * Rules:
+ * - ADMIN can manage anyone (except last admin guard, handled separately).
+ * - Non-ADMIN cannot manage users with role level >= their own.
+ * - Non-ADMIN cannot assign a role with level >= their own.
+ * - No user can change their own role (self-escalation).
+ */
+export function assertRoleHierarchy(
+  actor: { id: string; role: UserRole },
+  targetUserId: string,
+  targetRole: UserRole,
+  requestedRole?: UserRole,
+  action: string = "thao tác"
+): void {
+  const actorLevel = getRoleLevel(actor.role);
+  const targetLevel = getRoleLevel(targetRole);
+
+  // ADMIN bypasses hierarchy checks (but not self/last-admin, handled by callers)
+  if (actor.role === "ADMIN") {
+    // ADMIN can still not self-escalate role
+    if (requestedRole && actor.id === targetUserId && requestedRole !== actor.role) {
+      // ADMIN can change own role only if there's another admin (caller must check)
+    }
+    return;
+  }
+
+  // Non-ADMIN: cannot act on users with level >= own
+  if (targetLevel >= actorLevel) {
+    throw new Error(`Bạn không có quyền ${action} tài khoản có vai trò ${ROLE_DISPLAY_NAMES[targetRole]}.`);
+  }
+
+  // Non-ADMIN: cannot assign a role with level >= own
+  if (requestedRole) {
+    const requestedLevel = getRoleLevel(requestedRole);
+    if (requestedLevel >= actorLevel) {
+      throw new Error(`Bạn không có quyền cấp vai trò ${ROLE_DISPLAY_NAMES[requestedRole]}.`);
+    }
+  }
+}
+
+/**
+ * Get the list of roles an actor is allowed to assign.
+ * ADMIN can assign any role. Others can only assign roles below their own level.
+ */
+export function getAllowedRolesForActor(actorRole: UserRole): UserRole[] {
+  const actorLevel = getRoleLevel(actorRole);
+  if (actorRole === "ADMIN") {
+    return Object.keys(USER_ROLE_LEVEL) as UserRole[];
+  }
+  return (Object.entries(USER_ROLE_LEVEL) as [UserRole, number][])
+    .filter(([, level]) => level < actorLevel)
+    .map(([role]) => role);
+}
+
 // ─── Role Checks ──────────────────────────────────────────────
 
 /**

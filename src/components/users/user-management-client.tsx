@@ -8,6 +8,11 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast-context";
 import { createUser, toggleUserActive, assignProjectToUser, unassignProjectFromUser, resetUserPassword, updateUser, softDeleteUser, restoreUser } from "@/app/(dashboard)/users/actions";
 
+const ROLE_LEVEL: Record<string, number> = {
+  STAFF: 10, ENGINEER: 20, MANAGER: 30, ACCOUNTANT: 40,
+  CHIEF_COMMANDER: 50, DEPUTY_DIRECTOR: 80, DIRECTOR: 90, ADMIN: 100,
+};
+
 interface UserData {
   id: string;
   name: string;
@@ -29,7 +34,17 @@ interface ProjectData {
   status: string;
 }
 
-export function UserManagementClient({ initialUsers, projects }: { initialUsers: UserData[]; projects: ProjectData[] }) {
+export function UserManagementClient({ initialUsers, projects, currentUserRole, allowedRoles }: {
+  initialUsers: UserData[];
+  projects: ProjectData[];
+  currentUserRole: string;
+  allowedRoles: { role: string; label: string }[];
+}) {
+  const actorLevel = ROLE_LEVEL[currentUserRole] ?? 0;
+  const canManageUser = (user: UserData) => {
+    if (currentUserRole === "ADMIN") return true;
+    return (ROLE_LEVEL[user.role] ?? 0) < actorLevel;
+  };
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
@@ -78,7 +93,7 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
   const [formUsername, setFormUsername] = useState("");
   const [formPhone, setFormPhone] = useState("");
   const [formPassword, setFormPassword] = useState("");
-  const [formRole, setFormRole] = useState("CHIEF_COMMANDER");
+  const [formRole, setFormRole] = useState(allowedRoles.length > 0 ? allowedRoles[0].role : "STAFF");
   const [formProjectIds, setFormProjectIds] = useState<string[]>([]);
   const [formNote, setFormNote] = useState("");
 
@@ -388,24 +403,32 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
                       <Eye className="h-4 w-4" />
                     </button>
                     {!user.deletedAt ? (
-                      <>
-                        <button onClick={() => openEdit(user)} className="p-1.5 rounded-md hover:bg-blue-50 text-blue-600" title="Sửa thông tin" aria-label={`Sửa thông tin tài khoản ${user.name}`}>
-                          <Edit className="h-4 w-4" />
-                        </button>
-                        <button onClick={() => handleToggleActive(user.id, user.isActive)} className={`p-1.5 rounded-md text-xs ${user.isActive ? "hover:bg-amber-50 text-amber-500" : "hover:bg-green-50 text-green-600"}`} title={user.isActive ? "Khóa" : "Mở khóa"} aria-label={user.isActive ? "Khóa tài khoản" : "Mở khóa tài khoản"}>
-                          {user.isActive ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
-                        </button>
-                        <button onClick={() => handleResetPwClick(user)} className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500" title="Đổi mật khẩu" aria-label="Đổi mật khẩu">
-                          <Key className="h-4 w-4" />
-                        </button>
-                        <button onClick={() => handleSoftDelete(user)} className="p-1.5 rounded-md hover:bg-red-50 text-red-600" title="Xóa mềm tài khoản" aria-label={`Xóa mềm tài khoản ${user.name}`}>
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </>
+                      canManageUser(user) ? (
+                        <>
+                          <button onClick={() => openEdit(user)} className="p-1.5 rounded-md hover:bg-blue-50 text-blue-600" title="Sửa thông tin" aria-label={`Sửa thông tin tài khoản ${user.name}`}>
+                            <Edit className="h-4 w-4" />
+                          </button>
+                          <button onClick={() => handleToggleActive(user.id, user.isActive)} className={`p-1.5 rounded-md text-xs ${user.isActive ? "hover:bg-amber-50 text-amber-500" : "hover:bg-green-50 text-green-600"}`} title={user.isActive ? "Khóa" : "Mở khóa"} aria-label={user.isActive ? "Khóa tài khoản" : "Mở khóa tài khoản"}>
+                            {user.isActive ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                          </button>
+                          <button onClick={() => handleResetPwClick(user)} className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500" title="Đổi mật khẩu" aria-label="Đổi mật khẩu">
+                            <Key className="h-4 w-4" />
+                          </button>
+                          <button onClick={() => handleSoftDelete(user)} className="p-1.5 rounded-md hover:bg-red-50 text-red-600" title="Xóa mềm tài khoản" aria-label={`Xóa mềm tài khoản ${user.name}`}>
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-[11px] text-slate-400 italic px-1">Không có quyền</span>
+                      )
                     ) : (
-                      <button onClick={() => handleRestore(user)} className="p-1.5 rounded-md hover:bg-emerald-50 text-emerald-600" title="Khôi phục tài khoản" aria-label={`Khôi phục tài khoản ${user.name}`}>
-                        <RefreshCcw className="h-4 w-4" />
-                      </button>
+                      canManageUser(user) ? (
+                        <button onClick={() => handleRestore(user)} className="p-1.5 rounded-md hover:bg-emerald-50 text-emerald-600" title="Khôi phục tài khoản" aria-label={`Khôi phục tài khoản ${user.name}`}>
+                          <RefreshCcw className="h-4 w-4" />
+                        </button>
+                      ) : (
+                        <span className="text-[11px] text-slate-400 italic px-1">Không có quyền</span>
+                      )
                     )}
                   </div>
                 </td>
@@ -447,15 +470,23 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
             <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
               <button onClick={() => setDetailUser(user)} className="h-9 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50" aria-label={`Xem chi tiết tài khoản ${user.name}`}>Xem</button>
               {!user.deletedAt ? (
-                <>
-                  <button onClick={() => openEdit(user)} className="h-9 rounded-lg border border-blue-200 text-xs font-semibold text-blue-600 hover:bg-blue-50" aria-label={`Sửa thông tin tài khoản ${user.name}`}>Sửa</button>
-                  <button onClick={() => handleToggleActive(user.id, user.isActive)} className={`h-9 rounded-lg border text-xs font-semibold ${user.isActive ? "border-amber-200 text-amber-700 hover:bg-amber-50" : "border-emerald-200 text-emerald-700 hover:bg-emerald-50"}`} aria-label={user.isActive ? "Khóa tài khoản" : "Mở khóa tài khoản"}>
-                    {user.isActive ? "Khóa" : "Mở khóa"}
-                  </button>
-                  <button onClick={() => handleSoftDelete(user)} className="h-9 rounded-lg border border-rose-200 text-xs font-semibold text-rose-700 hover:bg-rose-50" aria-label={`Xóa mềm tài khoản ${user.name}`}>Xóa</button>
-                </>
+                canManageUser(user) ? (
+                  <>
+                    <button onClick={() => openEdit(user)} className="h-9 rounded-lg border border-blue-200 text-xs font-semibold text-blue-600 hover:bg-blue-50" aria-label={`Sửa thông tin tài khoản ${user.name}`}>Sửa</button>
+                    <button onClick={() => handleToggleActive(user.id, user.isActive)} className={`h-9 rounded-lg border text-xs font-semibold ${user.isActive ? "border-amber-200 text-amber-700 hover:bg-amber-50" : "border-emerald-200 text-emerald-700 hover:bg-emerald-50"}`} aria-label={user.isActive ? "Khóa tài khoản" : "Mở khóa tài khoản"}>
+                      {user.isActive ? "Khóa" : "Mở khóa"}
+                    </button>
+                    <button onClick={() => handleSoftDelete(user)} className="h-9 rounded-lg border border-rose-200 text-xs font-semibold text-rose-700 hover:bg-rose-50" aria-label={`Xóa mềm tài khoản ${user.name}`}>Xóa</button>
+                  </>
+                ) : (
+                  <span className="h-9 flex items-center justify-center text-xs text-slate-400 italic col-span-1">Không có quyền</span>
+                )
               ) : (
-                <button onClick={() => handleRestore(user)} className="h-9 rounded-lg border border-emerald-200 text-xs font-semibold text-emerald-700 hover:bg-emerald-50" aria-label={`Khôi phục tài khoản ${user.name}`}>Khôi phục</button>
+                canManageUser(user) ? (
+                  <button onClick={() => handleRestore(user)} className="h-9 rounded-lg border border-emerald-200 text-xs font-semibold text-emerald-700 hover:bg-emerald-50" aria-label={`Khôi phục tài khoản ${user.name}`}>Khôi phục</button>
+                ) : (
+                  <span className="h-9 flex items-center justify-center text-xs text-slate-400 italic col-span-1">Không có quyền</span>
+                )
               )}
             </div>
           </div>
@@ -505,13 +536,9 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
               <div>
                 <label htmlFor="create-role" className="block text-sm font-medium text-slate-700 mb-1">Vai trò *</label>
                 <select id="create-role" value={formRole} onChange={e => setFormRole(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500">
-                  <option value="CHIEF_COMMANDER">Chỉ huy trưởng</option>
-                  <option value="DEPUTY_DIRECTOR">Phó giám đốc</option>
-                  <option value="DIRECTOR">Giám đốc</option>
-                  <option value="ADMIN">Quản trị hệ thống</option>
-                  <option value="MANAGER">Quản lý</option>
-                  <option value="ENGINEER">Kỹ sư</option>
-                  <option value="STAFF">Nhân viên</option>
+                  {allowedRoles.map(r => (
+                    <option key={r.role} value={r.role}>{r.label}</option>
+                  ))}
                 </select>
               </div>
               <div>
@@ -650,14 +677,17 @@ export function UserManagementClient({ initialUsers, projects }: { initialUsers:
                 <div>
                   <label htmlFor="edit-role" className="block text-sm font-medium text-slate-700 mb-1">Vai trò *</label>
                   <select id="edit-role" value={formRole} onChange={e => setFormRole(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500">
-                    <option value="CHIEF_COMMANDER">Chỉ huy trưởng</option>
-                    <option value="DEPUTY_DIRECTOR">Phó giám đốc</option>
-                    <option value="DIRECTOR">Giám đốc</option>
-                    <option value="ADMIN">Quản trị hệ thống</option>
-                    <option value="MANAGER">Quản lý</option>
-                    <option value="ENGINEER">Kỹ sư</option>
-                    <option value="STAFF">Nhân viên</option>
+                    {allowedRoles.map(r => (
+                      <option key={r.role} value={r.role}>{r.label}</option>
+                    ))}
+                    {/* Keep current role visible even if not allowed to change */}
+                    {editUser && !allowedRoles.some(r => r.role === editUser.role) && (
+                      <option value={editUser.role} disabled>{editUser.roleDisplay} (không đổi được)</option>
+                    )}
                   </select>
+                  {editUser && !allowedRoles.some(r => r.role === editUser.role) && (
+                    <p className="text-[11px] text-amber-600 mt-1">Bạn không có quyền thay đổi vai trò của tài khoản này.</p>
+                  )}
                 </div>
               </div>
               <div>

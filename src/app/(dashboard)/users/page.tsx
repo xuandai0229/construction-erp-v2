@@ -1,6 +1,6 @@
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { canManageUsers, ROLE_DISPLAY_NAMES } from "@/lib/rbac";
+import { canManageUsers, ROLE_DISPLAY_NAMES, getAllowedRolesForActor } from "@/lib/rbac";
 import prisma from "@/lib/prisma";
 import { UserManagementClient } from "@/components/users/user-management-client";
 
@@ -52,6 +52,12 @@ export default async function UsersPage() {
     })),
   }))));
 
+  // Compute allowed roles for this actor
+  const allowedRoles = getAllowedRolesForActor(session.role).map(r => ({
+    role: r,
+    label: ROLE_DISPLAY_NAMES[r],
+  }));
+
   return (
     <div className="app-page space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -84,6 +90,8 @@ export default async function UsersPage() {
       <UserManagementClient 
         initialUsers={serializedUsers}
         projects={JSON.parse(JSON.stringify(projects))}
+        currentUserRole={session.role}
+        allowedRoles={allowedRoles}
       />
     </div>
   );

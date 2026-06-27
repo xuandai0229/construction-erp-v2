@@ -2,11 +2,39 @@
 
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
-import { requireHighLevelUser, canManageUsers } from "@/lib/rbac";
+import { requireHighLevelUser, assertRoleHierarchy, getAllowedRolesForActor, ROLE_DISPLAY_NAMES } from "@/lib/rbac";
 import { writeAuditLog } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 import * as bcrypt from "bcryptjs";
 import { UserRole } from "@prisma/client";
+
+const VALID_ROLES: UserRole[] = [
+  "ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR", "CHIEF_COMMANDER",
+  "MANAGER", "ENGINEER", "ACCOUNTANT", "STAFF",
+];
+
+// ─── Helpers ──────────────────────────────────────────────────
+
+async function countActiveAdmins(excludeUserId?: string) {
+  return prisma.user.count({
+    where: {
+      isActive: true,
+      deletedAt: null,
+      role: { in: ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"] },
+      ...(excludeUserId ? { id: { not: excludeUserId } } : {}),
+    },
+  });
+}
+
+/**
+ * Returns the list of roles the current actor is allowed to assign/create.
+ * Exported so the page server component can pass it to the client.
+ */
+export async function getAllowedRoles(): Promise<{ role: UserRole; label: string }[]> {
+  const session = await requireHighLevelUser();
+  const allowed = getAllowedRolesForActor(session.role);
+  return allowed.map(r => ({ role: r, label: ROLE_DISPLAY_NAMES[r] }));
+}
 
 // ─── Get Users ────────────────────────────────────────────────
 
@@ -45,9 +73,28 @@ interface CreateUserInput {
 export async function createUser(input: CreateUserInput) {
   const session = await requireHighLevelUser();
 
+  // ── Role hierarchy: actor must be allowed to assign the requested role ──
+  if (!VALID_ROLES.includes(input.role)) {
+    return { error: "Vai trò không hợp lệ" };
+  }
+  try {
+    assertRoleHierarchy(session, "", input.role, input.role, "tạo tài khoản với vai trò");
+  } catch (e: any) {
+    return { error: e.message };
+  }
+
+  // ── Validate inputs ──
+  const trimmedEmail = input.email.trim().toLowerCase();
+  const trimmedName = input.name.trim();
+  if (!trimmedName) return { error: "Họ tên không được bỏ trống" };
+  if (!trimmedEmail) return { error: "Email không được bỏ trống" };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+    return { error: "Email không đúng định dạng" };
+  }
+
   // Validate unique email
   const existingEmail = await prisma.user.findUnique({
-    where: { email: input.email },
+    where: { email: trimmedEmail },
   });
   if (existingEmail) {
     return { error: "Email đã tồn tại trong hệ thống" };
@@ -74,8 +121,8 @@ export async function createUser(input: CreateUserInput) {
     const user = await prisma.$transaction(async (tx) => {
       const newUser = await tx.user.create({
         data: {
-          name: input.name,
-          email: input.email,
+          name: trimmedName,
+          email: trimmedEmail,
           username: input.username || null,
           phone: input.phone || null,
           password: hashedPassword,
@@ -131,7 +178,6 @@ interface UpdateUserInput {
   username?: string;
   phone?: string;
   role?: UserRole;
-  isActive?: boolean;
   projectIds?: string[];
   note?: string;
 }
@@ -143,10 +189,32 @@ export async function updateUser(userId: string, input: UpdateUserInput) {
   if (!existing) return { error: "Không tìm thấy tài khoản" };
   if (existing.deletedAt) return { error: "Tài khoản đã bị xóa mềm. Vui lòng khôi phục trước khi chỉnh sửa." };
 
+  // ── Role hierarchy: actor must outrank target ──
+  try {
+    assertRoleHierarchy(session, userId, existing.role, input.role, "sửa");
+  } catch (e: any) {
+    return { error: e.message };
+  }
+
+  // ── Self role change guard ──
+  if (input.role && userId === session.id && input.role !== existing.role) {
+    return { error: "Bạn không thể tự đổi vai trò của chính mình." };
+  }
+
+  // ── Last admin guard (role downgrade) ──
+  if (input.role && existing.role === "ADMIN" && input.role !== "ADMIN") {
+    const activeAdmins = await prisma.user.count({
+      where: { isActive: true, deletedAt: null, role: "ADMIN", id: { not: userId } },
+    });
+    if (activeAdmins === 0) {
+      return { error: "Không thể hạ quyền quản trị viên cuối cùng." };
+    }
+  }
+
   // Check email uniqueness if changing
-  if (input.email && input.email !== existing.email) {
+  if (input.email && input.email.trim().toLowerCase() !== existing.email) {
     const emailConflict = await prisma.user.findUnique({
-      where: { email: input.email },
+      where: { email: input.email.trim().toLowerCase() },
     });
     if (emailConflict) return { error: "Email đã tồn tại" };
   }
@@ -165,11 +233,10 @@ export async function updateUser(userId: string, input: UpdateUserInput) {
         where: { id: userId },
         data: {
           ...(input.name !== undefined && { name: input.name }),
-          ...(input.email !== undefined && { email: input.email }),
+          ...(input.email !== undefined && { email: input.email.trim().toLowerCase() }),
           ...(input.username !== undefined && { username: input.username || null }),
           ...(input.phone !== undefined && { phone: input.phone || null }),
           ...(input.role !== undefined && { role: input.role }),
-          ...(input.isActive !== undefined && { isActive: input.isActive }),
         },
       });
 
@@ -247,7 +314,7 @@ export async function updateUser(userId: string, input: UpdateUserInput) {
     return { success: true };
   } catch (error: any) {
     console.error("Update user error:", error);
-    return { error: "Đã xảy ra lỗi khi cập nhật" };
+    return { error: error.message || "Đã xảy ra lỗi khi cập nhật" };
   }
 }
 
@@ -259,6 +326,18 @@ export async function resetUserPassword(userId: string, newPassword: string) {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) return { error: "Không tìm thấy tài khoản" };
   if (user.deletedAt) return { error: "Tài khoản đã bị xóa mềm. Vui lòng khôi phục trước khi thao tác." };
+
+  // ── Role hierarchy: cannot reset password of higher/equal role ──
+  try {
+    assertRoleHierarchy(session, userId, user.role, undefined, "đổi mật khẩu");
+  } catch (e: any) {
+    return { error: e.message };
+  }
+
+  // Self reset via admin action is not allowed (use change-password flow)
+  if (userId === session.id) {
+    return { error: "Không thể dùng chức năng này để đổi mật khẩu chính mình." };
+  }
 
   if (newPassword.length < 6) {
     return { error: "Mật khẩu phải có ít nhất 6 ký tự" };
@@ -298,6 +377,13 @@ export async function toggleUserActive(userId: string) {
   // Prevent deactivating yourself
   if (userId === session.id) {
     return { error: "Bạn không thể khóa chính tài khoản đang đăng nhập." };
+  }
+
+  // ── Role hierarchy: cannot lock/unlock higher/equal role ──
+  try {
+    assertRoleHierarchy(session, userId, user.role, undefined, "khóa/mở khóa");
+  } catch (e: any) {
+    return { error: e.message };
   }
 
   // Prevent locking the last active admin
@@ -342,6 +428,13 @@ export async function assignProjectToUser(
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) return { error: "Không tìm thấy tài khoản" };
+
+  // ── Role hierarchy: cannot manage project membership of higher/equal role ──
+  try {
+    assertRoleHierarchy(session, userId, user.role, undefined, "gán công trình cho");
+  } catch (e: any) {
+    return { error: e.message };
+  }
 
   // Check if already assigned
   const existing = await prisma.projectMember.findUnique({
@@ -398,6 +491,16 @@ export async function unassignProjectFromUser(
 ) {
   const session = await requireHighLevelUser();
 
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return { error: "Không tìm thấy tài khoản" };
+
+  // ── Role hierarchy ──
+  try {
+    assertRoleHierarchy(session, userId, user.role, undefined, "gỡ công trình của");
+  } catch (e: any) {
+    return { error: e.message };
+  }
+
   const member = await prisma.projectMember.findUnique({
     where: { projectId_userId: { projectId, userId } },
   });
@@ -446,6 +549,13 @@ export async function softDeleteUser(userId: string) {
     return { error: "Bạn không thể xóa chính tài khoản đang đăng nhập." };
   }
 
+  // ── Role hierarchy: cannot delete higher/equal role ──
+  try {
+    assertRoleHierarchy(session, userId, user.role, undefined, "xóa");
+  } catch (e: any) {
+    return { error: e.message };
+  }
+
   if (user.isActive && ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"].includes(user.role)) {
     const activeAdmins = await prisma.user.count({
       where: {
@@ -484,6 +594,13 @@ export async function restoreUser(userId: string) {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) return { error: "Không tìm thấy tài khoản" };
   if (!user.deletedAt) return { error: "Tài khoản chưa bị xóa mềm" };
+
+  // ── Role hierarchy ──
+  try {
+    assertRoleHierarchy(session, userId, user.role, undefined, "khôi phục");
+  } catch (e: any) {
+    return { error: e.message };
+  }
 
   // Check email conflict with active users
   const emailConflict = await prisma.user.findFirst({
