@@ -6,7 +6,7 @@ import { Building2, Calendar, MapPin, User, ListTree, FolderOpen, FileText, Clip
 import { DeleteProjectButton } from "@/components/projects/delete-project-button";
 import Link from "next/link";
 import { ProjectStatus } from "@prisma/client";
-import { format } from "date-fns";
+import { formatDateVN } from "@/lib/utils";
 import { requireProjectAccessOrRedirect, canManageProjects } from "@/lib/rbac";
 
 export default async function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -63,11 +63,11 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <h1 className="page-heading">{project.name}</h1>
+            <h1 className="page-heading break-words">{project.name}</h1>
             {getStatusBadge(project.status)}
           </div>
           <div className="flex flex-wrap items-center gap-4 mt-2">
-            <p className="text-sm font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded">Mã: {project.code}</p>
+            <p className="text-sm font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded break-all max-w-[200px]">Mã: {project.code}</p>
             <div className="flex items-center gap-3 text-xs font-medium">
               <span className={`flex items-center gap-1 ${project._count.fieldProgressTemplates > 0 ? 'text-emerald-600' : 'text-amber-600'}`}>
                 <div className={`w-1.5 h-1.5 rounded-full ${project._count.fieldProgressTemplates > 0 ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
@@ -78,7 +78,7 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
                 Hôm nay: {project._count.fieldProgressEntries > 0 ? `Đã nhập (${project._count.fieldProgressEntries})` : 'Chưa nhập'}
               </span>
               <span className="text-slate-400">
-                Cập nhật: {format(new Date(project.updatedAt), 'dd/MM/yyyy')}
+                Cập nhật: {formatDateVN(project.updatedAt)}
               </span>
             </div>
           </div>
@@ -107,19 +107,19 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div className="space-y-1.5">
                 <span className="text-slate-500 flex items-center"><User className="h-4 w-4 mr-1.5"/> Chủ đầu tư</span>
-                <p className="font-medium text-slate-900">{project.investor || "—"}</p>
+                <p className="font-medium text-slate-900 break-words">{project.investor || "—"}</p>
               </div>
               <div className="space-y-1.5">
                 <span className="text-slate-500 flex items-center"><MapPin className="h-4 w-4 mr-1.5"/> Địa điểm</span>
-                <p className="font-medium text-slate-900">{project.location || "—"}</p>
+                <p className="font-medium text-slate-900 break-words">{project.location || "—"}</p>
               </div>
               <div className="space-y-1.5">
                 <span className="text-slate-500 flex items-center"><Calendar className="h-4 w-4 mr-1.5"/> Ngày bắt đầu</span>
-                <p className="font-medium text-slate-900">{project.startDate ? format(new Date(project.startDate), 'dd/MM/yyyy') : "—"}</p>
+                <p className="font-medium text-slate-900">{formatDateVN(project.startDate)}</p>
               </div>
               <div className="space-y-1.5">
                 <span className="text-slate-500 flex items-center"><Calendar className="h-4 w-4 mr-1.5"/> Ngày dự kiến kết thúc</span>
-                <p className="font-medium text-slate-900">{project.endDate ? format(new Date(project.endDate), 'dd/MM/yyyy') : "—"}</p>
+                <p className="font-medium text-slate-900">{formatDateVN(project.endDate)}</p>
               </div>
             </div>
             {project.description && (

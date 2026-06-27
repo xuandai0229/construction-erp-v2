@@ -1,5 +1,6 @@
 import { UserRole, DocumentStatus } from "@prisma/client";
 
+
 export type SessionUser = {
   id: string;
   role: UserRole;
@@ -17,18 +18,41 @@ export type FolderContext = {
   name: string;
 };
 
-const ACCOUNTING_FOLDERS = [
-  "01. Hợp đồng",
-  "03. Dự toán",
-  "05. Hóa đơn",
-  "06. Thanh toán"
+const ACCOUNTING_FOLDER_KEYWORDS = [
+  "hop dong",
+  "phap ly",
+  "phu luc",
+  "bao lanh",
+  "bao hiem",
+  "du toan",
+  "hoa don",
+  "chung tu",
+  "bao gia",
+  "thanh toan",
+  "quyet toan",
+  "tam ung",
+  "ho so thanh toan",
 ];
 
-const ENGINEERING_FOLDERS = [
-  "02. Bản vẽ",
-  "04. Nghiệm thu",
-  "07. Hình ảnh hiện trường",
-  "08. Báo cáo ngày"
+const ENGINEERING_FOLDER_KEYWORDS = [
+  "ban ve",
+  "thiet ke",
+  "kien truc",
+  "ket cau",
+  "mep",
+  "pccc",
+  "shopdrawing",
+  "nghiem thu",
+  "vat lieu",
+  "vat tu",
+  "phieu nhap",
+  "phieu xuat",
+  "hinh anh",
+  "tien do",
+  "bao cao",
+  "hien truong",
+  "su co",
+  "an toan",
 ];
 
 const FULL_ACCESS_ROLES: UserRole[] = [
@@ -60,6 +84,21 @@ function isEngineerOrManager(role: UserRole) {
   return engineerRoles.includes(role);
 }
 
+function normalizeFolderName(name: string) {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[_-]+/g, " ")
+    .replace(/^\d+[\s.]+/, "")
+    .toLowerCase()
+    .trim();
+}
+
+function folderMatches(name: string, keywords: string[]) {
+  const normalized = normalizeFolderName(name);
+  return keywords.some((keyword) => normalized.includes(keyword));
+}
+
 export function canViewDocument(user: SessionUser, document: DocumentContext) {
   // Phase này mọi role đều xem được nếu có session hợp lệ
   return true;
@@ -73,11 +112,11 @@ export function canUploadToFolder(user: SessionUser, folder: FolderContext) {
   if (FULL_ACCESS_ROLES.includes(user.role)) return true;
 
   if (isAccountant(user.role)) {
-    return ACCOUNTING_FOLDERS.some(f => folder.name.includes(f));
+    return folderMatches(folder.name, ACCOUNTING_FOLDER_KEYWORDS);
   }
 
   if (isEngineerOrManager(user.role)) {
-    return ENGINEERING_FOLDERS.some(f => folder.name.includes(f));
+    return folderMatches(folder.name, ENGINEERING_FOLDER_KEYWORDS);
   }
 
   return false;
@@ -95,12 +134,12 @@ export function canEditDocumentMetadata(user: SessionUser, document: DocumentCon
 
   // Quản lý kỹ thuật hoặc kỹ sư sửa trong thư mục kỹ thuật
   if (isEngineerOrManager(user.role)) {
-    return ENGINEERING_FOLDERS.some(f => folder.name.includes(f));
+    return folderMatches(folder.name, ENGINEERING_FOLDER_KEYWORDS);
   }
 
   // Kế toán sửa trong thư mục kế toán
   if (isAccountant(user.role)) {
-    return ACCOUNTING_FOLDERS.some(f => folder.name.includes(f));
+    return folderMatches(folder.name, ACCOUNTING_FOLDER_KEYWORDS);
   }
 
   return false;
@@ -140,11 +179,11 @@ export function canDeleteDocument(user: SessionUser, document: DocumentContext, 
   if (document.uploadedById !== user.id) return false;
 
   if (isAccountant(user.role)) {
-    return ACCOUNTING_FOLDERS.some(f => folder.name.includes(f));
+    return folderMatches(folder.name, ACCOUNTING_FOLDER_KEYWORDS);
   }
 
   if (isEngineerOrManager(user.role)) {
-    return ENGINEERING_FOLDERS.some(f => folder.name.includes(f));
+    return folderMatches(folder.name, ENGINEERING_FOLDER_KEYWORDS);
   }
 
   return false;

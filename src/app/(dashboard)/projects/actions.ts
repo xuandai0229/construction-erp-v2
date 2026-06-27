@@ -9,11 +9,15 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 const projectSchema = z.object({
-  code: z.string().min(1, "Mã công trình là bắt buộc"),
-  name: z.string().min(1, "Tên công trình là bắt buộc"),
-  investor: z.string().optional(),
-  location: z.string().optional(),
-  description: z.string().optional(),
+  code: z.string()
+    .min(1, "Mã công trình là bắt buộc")
+    .max(50, "Mã công trình không được vượt quá 50 ký tự"),
+  name: z.string()
+    .min(1, "Tên công trình là bắt buộc")
+    .max(200, "Tên công trình không được vượt quá 200 ký tự"),
+  investor: z.string().max(200, "Chủ đầu tư không được vượt quá 200 ký tự").optional().or(z.literal('')),
+  location: z.string().max(200, "Địa điểm không được vượt quá 200 ký tự").optional().or(z.literal('')),
+  description: z.string().max(1000, "Mô tả không được vượt quá 1000 ký tự").optional().or(z.literal('')),
   status: z.enum(["PLANNING", "ACTIVE", "ON_HOLD", "COMPLETED", "CANCELLED"]).default("PLANNING"),
   startDate: z.string().optional().transform(val => val ? new Date(val) : null),
   endDate: z.string().optional().transform(val => val ? new Date(val) : null),
@@ -42,6 +46,11 @@ export async function createProject(prevState: unknown, formData: FormData) {
   
   try {
     const validatedData = projectSchema.parse(rawData);
+
+    // Kiểm tra tính hợp lệ của ngày (Ngày bắt đầu phải <= Ngày kết thúc, cho phép bằng nhau)
+    if (validatedData.startDate && validatedData.endDate && validatedData.startDate > validatedData.endDate) {
+      return { error: "Ngày kết thúc không được nhỏ hơn ngày bắt đầu." };
+    }
 
     const existing = await prisma.project.findUnique({ where: { code: validatedData.code } });
     if (existing) {
@@ -100,8 +109,18 @@ export async function updateProject(id: string, prevState: unknown, formData: Fo
   try {
     const validatedData = projectSchema.parse(rawData);
     
+    // Kiểm tra tính hợp lệ của ngày (Ngày bắt đầu phải <= Ngày kết thúc, cho phép bằng nhau)
+    if (validatedData.startDate && validatedData.endDate && validatedData.startDate > validatedData.endDate) {
+      return { error: "Ngày kết thúc không được nhỏ hơn ngày bắt đầu." };
+    }
+
     const existing = await prisma.project.findUnique({ where: { id } });
     if (!existing) return { error: "Không tìm thấy công trình" };
+
+    // Chặn sửa đổi nếu công trình đã hoàn thành/hủy trừ khi là Admin
+    if ((existing.status === 'COMPLETED' || existing.status === 'CANCELLED') && session.role !== 'ADMIN') {
+      return { error: "Công trình đã hoàn thành hoặc đã hủy, không thể chỉnh sửa." };
+    }
 
     if (validatedData.code !== existing.code) {
        const codeConflict = await prisma.project.findUnique({ where: { code: validatedData.code } });
@@ -145,7 +164,12 @@ export async function deleteProject(id: string) {
 
   try {
     const existing = await prisma.project.findUnique({ where: { id } });
-    if (!existing) return { error: "Không tìm thấy công trình" };
+    if (!existing || existing.deletedAt !== null) return { error: "Không tìm thấy công trình" };
+
+    // Chặn xóa nếu công trình đã hoàn thành/hủy trừ khi là Admin
+    if ((existing.status === 'COMPLETED' || existing.status === 'CANCELLED') && session.role !== 'ADMIN') {
+      return { error: "Công trình đã hoàn thành hoặc đã hủy, không thể xóa." };
+    }
 
     const deleted = await prisma.project.update({
       where: { id },

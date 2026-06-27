@@ -49,10 +49,11 @@ export class LocalStorageProvider implements DocumentStorageProvider {
     await fs.mkdir(path.dirname(absolutePath), { recursive: true });
     await fs.writeFile(absolutePath, buffer);
 
+    const normalizedRelativePath = relativePath.replace(/\\/g, '/');
     return {
       provider: "LOCAL",
-      objectKey: relativePath.replace(/\\/g, '/'), // normalize for cross-platform DB storage
-      storagePath: absolutePath, // We return this to support DB schema without migration
+      objectKey: normalizedRelativePath,
+      storagePath: normalizedRelativePath,
       size: buffer.length
     };
   }

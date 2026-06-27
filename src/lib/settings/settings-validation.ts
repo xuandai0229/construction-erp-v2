@@ -67,7 +67,7 @@ export const DEFAULT_SYSTEM_SETTINGS = {
   contractValueThreshold: 500000000,
   enforceNamingConvention: true,
   autoVersioning: true,
-  allowedExtensions: "pdf, docx, xlsx, dwg, jpg, png, heic",
+  allowedExtensions: "pdf, doc, docx, xls, xlsx, dwg, dxf, jpg, jpeg, png, heic, webp, xml",
   documentRetentionYears: 10,
   emailDailyDigest: false,
   approvalEscalation: true,

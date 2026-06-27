@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { promises as fs } from "fs";
 import mime from "mime-types";
 import path from "path";
 import { canAccessProject } from "@/lib/rbac";
+import { LocalStorageProvider } from "@/lib/storage/local-storage-provider";
 
 export const runtime = "nodejs";
 
@@ -56,34 +56,24 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ atta
       return new NextResponse("Forbidden", { status: 403 });
     }
 
-    // Resolve path: handle both legacy absolute and new relative paths
-    const storageRoot = path.join(process.cwd(), "storage");
-    let absolutePath: string;
-
-    if (path.isAbsolute(attachment.storagePath)) {
-      // Legacy record with absolute path - validate it's within storage dir
-      absolutePath = path.resolve(attachment.storagePath);
-      if (!absolutePath.startsWith(storageRoot)) {
-        console.error("Legacy path outside storage root:", attachment.id);
-        return new NextResponse("Forbidden", { status: 403 });
-      }
-    } else {
-      // New relative path
-      absolutePath = path.join(process.cwd(), attachment.storagePath.startsWith('storage') ? '' : 'storage', attachment.storagePath);
-      if (!absolutePath.startsWith(storageRoot)) {
-        console.error("Resolved path outside storage root:", attachment.id);
-        return new NextResponse("Forbidden", { status: 403 });
-      }
-    }
-
     try {
-      const fileBuffer = await fs.readFile(absolutePath);
+      const storageProvider = new LocalStorageProvider();
+      
+      // Determine correct objectKey
+      // Note: Legacy paths might be absolute, which LocalStorageProvider.resolvePath handles safely
+      const objectKey = path.isAbsolute(attachment.storagePath) 
+        ? attachment.storagePath 
+        : attachment.storagePath.startsWith('storage') 
+          ? attachment.storagePath.replace(/^storage[/\\]/, '') 
+          : attachment.storagePath;
+
+      const fileBuffer = await storageProvider.readFile(objectKey);
       const ext = path.extname(attachment.fileName);
       const contentType = (mime.lookup(ext) || attachment.mimeType || "application/octet-stream") as string;
 
       const safeName = sanitizeDispositionFilename(attachment.originalName || attachment.fileName);
 
-      const response = new NextResponse(fileBuffer);
+      const response = new NextResponse(fileBuffer as any);
       response.headers.set("Content-Type", contentType);
       response.headers.set("X-Content-Type-Options", "nosniff");
       // Prevent caching of sensitive data

@@ -4,7 +4,7 @@ import { Building2, Plus, Search, ChevronLeft, ChevronRight, PenSquare, Eye, Cli
 import Link from "next/link";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ProjectStatus } from "@prisma/client";
-import { format } from "date-fns";
+import { formatDateVN } from "@/lib/utils";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { canViewAllProjects, canManageProjects, getAccessibleProjectIds } from "@/lib/rbac";
@@ -155,19 +155,19 @@ export default async function ProjectsPage({
                 <tbody className="divide-y divide-slate-100 bg-white">
                   {projects.map(project => (
                     <tr key={project.id} className="hover:bg-slate-50/70 transition-colors group">
-                      <td className="px-5 py-4 font-semibold text-slate-900">{project.code}</td>
-                      <td className="px-5 py-4">
+                      <td className="px-5 py-4 font-semibold text-slate-900 break-all max-w-[120px]">{project.code}</td>
+                      <td className="px-5 py-4 min-w-[200px] max-w-[350px] break-words">
                         <Link href={`/projects/${project.id}`} className="font-semibold text-blue-600 hover:text-blue-800 transition-colors">
                           {project.name}
                         </Link>
                       </td>
-                      <td className="px-5 py-4 text-slate-700">{project.investor || "—"}</td>
-                      <td className="px-5 py-4 text-slate-700">{project.location || "—"}</td>
+                      <td className="px-5 py-4 text-slate-700 max-w-[180px] truncate" title={project.investor || undefined}>{project.investor || "—"}</td>
+                      <td className="px-5 py-4 text-slate-700 max-w-[220px] truncate" title={project.location || undefined}>{project.location || "—"}</td>
                       <td className="px-5 py-4">{getStatusBadge(project.status)}</td>
                       <td className="px-5 py-4">
                         <div className="flex flex-col text-[13px] text-slate-500 whitespace-nowrap gap-1">
-                          <span><span className="text-slate-400">Bắt đầu:</span> {project.startDate ? format(new Date(project.startDate), 'dd/MM/yyyy') : '—'}</span>
-                          <span><span className="text-slate-400">Kết thúc:</span> {project.endDate ? format(new Date(project.endDate), 'dd/MM/yyyy') : '—'}</span>
+                          <span><span className="text-slate-400">Bắt đầu:</span> {formatDateVN(project.startDate)}</span>
+                          <span><span className="text-slate-400">Kết thúc:</span> {formatDateVN(project.endDate)}</span>
                         </div>
                       </td>
                       <td className="px-5 py-4 text-right whitespace-nowrap">
@@ -201,23 +201,23 @@ export default async function ProjectsPage({
                 <div key={project.id} className="p-4 bg-white border border-slate-200/80 rounded-xl shadow-sm flex flex-col hover:shadow-md transition-shadow">
                   <div className="mb-3">
                     <div className="flex items-start justify-between gap-2 mb-2">
-                      <span className="text-[12px] font-bold px-2 py-0.5 bg-slate-100 text-slate-700 rounded-md shrink-0">
+                      <span className="text-[12px] font-bold px-2 py-0.5 bg-slate-100 text-slate-700 rounded-md shrink-0 break-all max-w-[120px]">
                         {project.code}
                       </span>
                       {getStatusBadge(project.status)}
                     </div>
-                    <Link href={`/projects/${project.id}`} className="text-[15px] font-bold text-blue-600 hover:text-blue-800 line-clamp-2 leading-tight">
+                    <Link href={`/projects/${project.id}`} className="text-[15px] font-bold text-blue-600 hover:text-blue-800 line-clamp-2 leading-tight break-words">
                       {project.name}
                     </Link>
                   </div>
                   
                   <div className="grid grid-cols-1 gap-1.5 text-[13px] text-slate-600 mb-4">
-                    <p className="truncate"><span className="text-slate-400">Chủ đầu tư:</span> <span className="font-medium text-slate-800">{project.investor || "—"}</span></p>
-                    <p className="truncate"><span className="text-slate-400">Vị trí:</span> <span className="font-medium text-slate-800">{project.location || "—"}</span></p>
+                    <p className="truncate" title={project.investor || undefined}><span className="text-slate-400">Chủ đầu tư:</span> <span className="font-medium text-slate-800">{project.investor || "—"}</span></p>
+                    <p className="truncate" title={project.location || undefined}><span className="text-slate-400">Vị trí:</span> <span className="font-medium text-slate-800">{project.location || "—"}</span></p>
                     <div className="flex justify-between items-center text-slate-500 mt-1 bg-slate-50 p-2 rounded-md border border-slate-100">
-                      <span>{project.startDate ? format(new Date(project.startDate), 'dd/MM/yyyy') : '—'}</span>
+                      <span>{formatDateVN(project.startDate)}</span>
                       <span className="text-slate-300">→</span>
-                      <span>{project.endDate ? format(new Date(project.endDate), 'dd/MM/yyyy') : '—'}</span>
+                      <span>{formatDateVN(project.endDate)}</span>
                     </div>
                   </div>
 

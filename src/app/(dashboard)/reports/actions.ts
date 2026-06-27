@@ -35,7 +35,12 @@ export async function getActiveProjects() {
 export async function getProjectWorkItems(projectId: string) {
   const session = await getSession();
   if (!session) throw new Error("Unauthorized");
-  // TODO: Check if user has access to this projectId
+
+  const user = { id: session.id, role: session.role as UserRole };
+  const accessibleProjectIds = await getAccessibleProjectIds(user);
+  if (accessibleProjectIds !== null && !accessibleProjectIds.includes(projectId)) {
+    throw new Error("Không có quyền truy cập dự án này");
+  }
 
   // Try to fetch FieldProgressItem first
   const fieldItems = await prisma.fieldProgressItem.findMany({
@@ -80,6 +85,13 @@ export async function createSiteReport(data: Record<string, unknown>, isDraft: b
 
   if (type === "DAILY" && workLines.length === 0) {
     throw new Error("Daily report requires at least one work line");
+  }
+
+  const pId = String(data.projectId);
+  const user = { id: session.id, role: session.role as UserRole };
+  const accessibleProjectIds = await getAccessibleProjectIds(user);
+  if (accessibleProjectIds !== null && !accessibleProjectIds.includes(pId)) {
+    throw new Error("Không có quyền truy cập dự án này");
   }
 
   const status = isDraft ? "DRAFT" : "SUBMITTED";

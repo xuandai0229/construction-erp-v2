@@ -852,7 +852,7 @@ export function DocumentWorkspace({
                     </p>
                   )}
                   <p className="mt-1 text-xs text-slate-500">
-                    Hệ thống: Tối đa {systemSettings?.maxUploadSizeMb || 50}MB • Đuôi tệp hợp lệ: {systemSettings?.allowedExtensions}
+                    Hệ thống: Đuôi tệp hợp lệ: {systemSettings?.allowedExtensions}
                   </p>
                   <p className="mt-1 text-xs text-slate-500">
                     Gợi ý đặt tên:{" "}

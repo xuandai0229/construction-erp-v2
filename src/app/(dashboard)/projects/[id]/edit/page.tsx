@@ -2,10 +2,10 @@ import { ProjectForm } from "@/components/projects/project-form";
 import prisma from "@/lib/prisma";
 import { requireManagementAccessOrRedirect } from "@/lib/rbac";
 import { Building2 } from "lucide-react";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 export default async function EditProjectPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireManagementAccessOrRedirect();
+  const session = await requireManagementAccessOrRedirect();
   const resolvedParams = await params;
   const project = await prisma.project.findUnique({
     where: { id: resolvedParams.id, deletedAt: null }
@@ -13,6 +13,10 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
 
   if (!project) {
     notFound();
+  }
+
+  if ((project.status === 'COMPLETED' || project.status === 'CANCELLED') && session.role !== 'ADMIN') {
+    redirect(`/projects/${project.id}`);
   }
 
   return (
