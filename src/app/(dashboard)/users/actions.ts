@@ -20,7 +20,7 @@ async function countActiveAdmins(excludeUserId?: string) {
     where: {
       isActive: true,
       deletedAt: null,
-      role: { in: ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"] },
+      role: "ADMIN",
       ...(excludeUserId ? { id: { not: excludeUserId } } : {}),
     },
   });
@@ -386,18 +386,18 @@ export async function toggleUserActive(userId: string) {
     return { error: e.message };
   }
 
-  // Prevent locking the last active admin
-  if (user.isActive && ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"].includes(user.role)) {
+  // Prevent locking the last active ADMIN
+  if (user.isActive && user.role === "ADMIN") {
     const activeAdmins = await prisma.user.count({
       where: {
         isActive: true,
         deletedAt: null,
-        role: { in: ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"] },
+        role: "ADMIN",
         id: { not: userId }
       }
     });
     if (activeAdmins === 0) {
-      return { error: "Không thể khóa tài khoản quản trị cuối cùng đang hoạt động." };
+      return { error: "Không thể khóa quản trị viên ADMIN cuối cùng đang hoạt động." };
     }
   }
 
@@ -556,17 +556,17 @@ export async function softDeleteUser(userId: string) {
     return { error: e.message };
   }
 
-  if (user.isActive && ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"].includes(user.role)) {
+  if (user.role === "ADMIN") {
     const activeAdmins = await prisma.user.count({
       where: {
         isActive: true,
         deletedAt: null,
-        role: { in: ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"] },
+        role: "ADMIN",
         id: { not: userId }
       }
     });
     if (activeAdmins === 0) {
-      return { error: "Không thể xóa tài khoản quản trị cuối cùng đang hoạt động." };
+      return { error: "Không thể xóa quản trị viên ADMIN cuối cùng đang hoạt động." };
     }
   }
 

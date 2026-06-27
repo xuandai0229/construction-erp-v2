@@ -4,14 +4,14 @@
 
 ## 1. Kết luận sau fix
 
-* **Users module**: **PASS**
+* **Users module**: **PASS CÓ ĐIỀU KIỆN** — đã fix P0 privilege escalation và last ADMIN guard; còn điều kiện chung là migration Approvals `20260626090000_approvals_center` failed chưa resolve (không liên quan trực tiếp đến Users).
 * **USR-BUG-001 đã fix chưa?**: **RỒI**. Mọi mutation action đều kiểm tra role hierarchy server-side.
 * **USR-BUG-002 đã fix chưa?**: **RỒI**. UI chỉ hiển thị các role mà actor được phép gán.
 * **Self role escalation còn không?**: **KHÔNG**. Chặn cứng: "Bạn không thể tự đổi vai trò của chính mình."
 * **Non-ADMIN còn tạo/sửa ADMIN được không?**: **KHÔNG**. `assertRoleHierarchy` ném lỗi nếu `requestedRole level >= actorLevel`.
 * **Non-ADMIN còn reset password ADMIN được không?**: **KHÔNG**. Kiểm tra hierarchy + chặn self-reset.
-* **Admin cuối cùng còn bị khóa/xóa/hạ quyền được không?**: **KHÔNG**. Guard kiểm tra `count active ADMIN` trước khi cho phép.
-* **Disabled/deleted user session còn an toàn không?**: **AN TOÀN**. `getSession()` fetch tươi từ DB mỗi request, kiểm tra `isActive` và `deletedAt`.
+* **Admin cuối cùng còn bị khóa/xóa/hạ quyền được không?**: **KHÔNG**. Guard chỉ đếm role `ADMIN` thật (không tính DIRECTOR/DEPUTY_DIRECTOR).
+* **Disabled/deleted user session còn an toàn không?**: **AN TOÀN**. `getSession()` fetch tươi từ DB mỗi request.
 * **Migration status còn failed không?**: **CÒN** (`20260626090000_approvals_center`), không liên quan đến Users.
 
 ---
@@ -19,7 +19,7 @@
 ## 2. File đã sửa
 
 1. `src/lib/rbac.ts` — Thêm `USER_ROLE_LEVEL`, `getRoleLevel`, `assertRoleHierarchy`, `getAllowedRolesForActor`.
-2. `src/app/(dashboard)/users/actions.ts` — Nhúng `assertRoleHierarchy` vào tất cả 7 mutation actions. Thêm self-guard, email normalize, role validation.
+2. `src/app/(dashboard)/users/actions.ts` — Nhúng `assertRoleHierarchy` vào tất cả 7 mutation actions. Thêm self-guard, email normalize, role validation. Sửa last-admin guard chỉ đếm role `ADMIN`.
 3. `src/app/(dashboard)/users/page.tsx` — Truyền `currentUserRole` và `allowedRoles` từ server xuống client.
 4. `src/components/users/user-management-client.tsx` — Lọc role dropdown theo `allowedRoles`, ẩn nút sửa/khóa/xóa/reset-password khi target role >= actor role.
 
@@ -45,10 +45,10 @@
 | Action | Role hierarchy check | Self guard | Last admin guard | Audit log | Kết quả |
 | ------ | -------------------- | ---------- | ---------------- | --------- | ------- |
 | createUser | ✅ | N/A | N/A | ✅ | PASS |
-| updateUser | ✅ | ✅ Self role change | ✅ Hạ quyền admin cuối | ✅ | PASS |
+| updateUser | ✅ | ✅ Self role change | ✅ Hạ quyền admin cuối (chỉ đếm ADMIN) | ✅ | PASS |
 | resetUserPassword | ✅ | ✅ Self reset | N/A | ✅ | PASS |
-| toggleUserActive | ✅ | ✅ Self disable | ✅ Admin cuối | ✅ | PASS |
-| softDeleteUser | ✅ | ✅ Self delete | ✅ Admin cuối | ✅ | PASS |
+| toggleUserActive | ✅ | ✅ Self disable | ✅ Admin cuối (chỉ đếm ADMIN) | ✅ | PASS |
+| softDeleteUser | ✅ | ✅ Self delete | ✅ Admin cuối (chỉ đếm ADMIN) | ✅ | PASS |
 | restoreUser | ✅ | N/A | N/A | ✅ | PASS |
 | assignProjectToUser | ✅ | N/A | N/A | ✅ | PASS |
 | unassignProjectFromUser | ✅ | N/A | N/A | ✅ | PASS |
@@ -83,6 +83,14 @@
 * **Test xác minh**: `qa-users-ui-role-filter.ts` → PASS
 * **Rủi ro còn lại**: Không còn.
 
+### Last ADMIN guard
+
+* **Trước**: Guard admin cuối cùng đếm cả `ADMIN`, `DIRECTOR`, `DEPUTY_DIRECTOR` → hệ thống 1 ADMIN + vài Director vẫn cho khóa/xóa ADMIN.
+* **Sau**: Guard chỉ đếm role `ADMIN` thật. Không thể khóa/xóa/hạ quyền ADMIN cuối cùng đang hoạt động.
+* **DIRECTOR/DEPUTY_DIRECTOR không được xem là ADMIN cuối cùng.**
+* **File sửa**: `actions.ts` (3 chỗ: `countActiveAdmins` helper, `toggleUserActive`, `softDeleteUser`)
+* **Test xác minh**: `qa-users-rbac-static.ts` có check `stillCountsDirectorAsAdmin` → PASS
+
 ---
 
 ## 7. Lệnh đã chạy
@@ -106,6 +114,7 @@
  M src/components/users/user-management-client.tsx
  M src/lib/rbac.ts
 ?? docs/qa/USERS_MODULE_FULL_AUDIT_REPORT.md
+?? docs/qa/USERS_MODULE_P0_P1_FIX_REPORT.md
 ?? scripts/qa-users-audit.ts
 ?? scripts/qa-users-auth-session.ts
 ?? scripts/qa-users-rbac-static.ts
@@ -113,11 +122,10 @@
 ```
 
 ```
- src/app/(dashboard)/users/actions.ts            | 137 +++++++++++++++--
- src/app/(dashboard)/users/page.tsx              |  10 +-
- src/components/users/user-management-client.tsx | 112 ++++++++-----
- src/lib/rbac.ts                                 |  71 +++++++++
- 4 files changed, 278 insertions(+), 52 deletions(-)
+ src/app/(dashboard)/users/actions.ts            | 4 files changed
+ src/app/(dashboard)/users/page.tsx
+ src/components/users/user-management-client.tsx
+ src/lib/rbac.ts
 ```
 
 ---

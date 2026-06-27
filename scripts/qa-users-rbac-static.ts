@@ -55,17 +55,21 @@ function main() {
   console.log(`- Self disable guard: ${selfDisableGuard ? '✅' : '❌'}`);
   console.log(`- Self delete guard: ${selfDeleteGuard ? '✅' : '❌'}`);
 
-  console.log("\n--- Last Admin Guard ---");
-  console.log(`- Last admin guard: ${lastAdminGuard ? '✅' : '❌'}`);
+  // Last admin guard accuracy — must ONLY count role "ADMIN", not Director/Deputy
+  const stillCountsDirectorAsAdmin =
+    code.includes('role: { in: ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"] }') ||
+    code.includes("role: { in: ['ADMIN', 'DIRECTOR', 'DEPUTY_DIRECTOR'] }");
+  const usesAdminOnlyGuard = code.includes('role: "ADMIN"');
 
-  console.log("\n--- Create Role Hierarchy ---");
-  console.log(`- createUser checks requested role vs actor: ${hierarchyInCreate ? '✅' : '❌'}`);
+  console.log(`- Last admin guard chỉ đếm role ADMIN thật: ${usesAdminOnlyGuard && !stillCountsDirectorAsAdmin ? '✅' : '❌'}`);
+  console.log(`- Không còn đếm DIRECTOR/DEPUTY_DIRECTOR như ADMIN cuối: ${!stillCountsDirectorAsAdmin ? '✅' : '❌'}`);
 
   const allPass = hasRoleLevelMap && hasAssertRoleHierarchy && hasGetAllowedRoles &&
     createHasRoleCheck && updateHasRoleCheck && resetPwHasRoleCheck &&
     toggleHasRoleCheck && deleteHasRoleCheck && assignHasRoleCheck && unassignHasRoleCheck &&
     selfRoleGuard && selfResetGuard && selfDisableGuard && selfDeleteGuard &&
-    lastAdminGuard && hierarchyInCreate;
+    lastAdminGuard && hierarchyInCreate &&
+    !stillCountsDirectorAsAdmin && usesAdminOnlyGuard;
 
   if (allPass) {
     console.log("\n✅ STATIC VERIFICATION PASS: RBAC role hierarchy đã được nhúng an toàn vào tất cả actions.");
