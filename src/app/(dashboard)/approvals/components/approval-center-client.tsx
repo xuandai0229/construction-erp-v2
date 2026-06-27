@@ -399,8 +399,8 @@ function ApprovalDetailDrawer({
               <div className="flex gap-3">
                 <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
                 <div className="text-sm text-amber-800">
-                  <strong className="block mb-1">Cảnh báo liên kết dữ liệu</strong>
-                  Quyết định tại đây chỉ lưu ở Trung tâm phê duyệt. Hồ sơ gốc cần được cập nhật riêng tại module tương ứng.
+                  <strong className="block mb-1">Thiếu chứng từ đính kèm</strong>
+                  Chưa có chứng từ đính kèm (hóa đơn, PDF, bảng khối lượng) trong giao diện này. Hãy kiểm tra kỹ phân hệ gốc trước khi duyệt để tránh sai sót. Quyết định tại đây sẽ đồng bộ lập tức về module gốc.
                 </div>
               </div>
             </div>

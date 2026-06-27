@@ -349,11 +349,133 @@ async function getApprovalForDecision(id: string) {
       requesterId: true,
       status: true,
       type: true,
+      sourceId: true,
+      sourceType: true,
+      amount: true,
       deletedAt: true,
     },
   });
   if (!approval) throw new Error("Yêu cầu phê duyệt không tồn tại");
   return approval;
+}
+
+async function syncSourceOnApprovalTx(
+  tx: Prisma.TransactionClient,
+  approval: { type: ApprovalRequestType; sourceId: string | null; amount: any; id: string },
+  actorId: string,
+  decision: "APPROVED" | "REJECTED",
+  note: string | null
+) {
+  if (["CHANGE_ORDER", "OTHER"].includes(approval.type)) {
+     throw new Error("Loại phê duyệt này chưa hỗ trợ đồng bộ tự động. Vui lòng xử lý ở phân hệ gốc.");
+  }
+  if (!approval.sourceId) {
+     throw new Error("Không thể duyệt vì yêu cầu phê duyệt không có bản ghi gốc để đồng bộ.");
+  }
+
+  const now = new Date();
+
+  switch (approval.type) {
+    case "PAYMENT": {
+      const payment = await tx.paymentRequest.findUnique({
+        where: { id: approval.sourceId }
+      });
+      if (!payment || payment.deletedAt) {
+        throw new Error("Không thể duyệt vì bản ghi gốc không tồn tại hoặc đã bị xóa.");
+      }
+      const validStatuses = ["SUBMITTED"]; // Adjust if DRAFT is allowed, but usually SUBMITTED
+      if (!validStatuses.includes(payment.status)) {
+        throw new Error(`Trạng thái phiếu thanh toán hiện tại (${payment.status}) không cho phép phê duyệt.`);
+      }
+
+      // Check Contract Limit only on APPROVE
+      if (decision === "APPROVED" && payment.contractId) {
+         const contract = await tx.contract.findUnique({ where: { id: payment.contractId } });
+         if (!contract || contract.deletedAt) throw new Error("Hợp đồng không tồn tại hoặc đã bị xóa.");
+         
+         const otherPayments = await tx.paymentRequest.findMany({
+           where: {
+             contractId: payment.contractId,
+             deletedAt: null,
+             status: { in: ["DRAFT", "SUBMITTED", "APPROVED", "PAID"] },
+             id: { not: payment.id }
+           },
+           select: { totalAmount: true }
+         });
+         const usedAmount = otherPayments.reduce((sum, p) => sum + Number(p.totalAmount), 0);
+         if (usedAmount + Number(payment.totalAmount) > Number(contract.value)) {
+           throw new Error("Tổng đề nghị thanh toán vượt giá trị hợp đồng.");
+         }
+      }
+
+      await tx.paymentRequest.update({
+        where: { id: payment.id },
+        data: decision === "APPROVED" ? {
+          status: "APPROVED",
+          approvedById: actorId,
+          approvedAt: now,
+        } : {
+          status: "REJECTED",
+          rejectedReason: note ?? undefined,
+        }
+      });
+      break;
+    }
+    case "CONTRACT": {
+      const contract = await tx.contract.findUnique({
+        where: { id: approval.sourceId }
+      });
+      if (!contract || contract.deletedAt) throw new Error("Không thể duyệt vì bản ghi gốc không tồn tại hoặc đã bị xóa.");
+      if (contract.status !== "DRAFT") throw new Error(`Trạng thái hợp đồng hiện tại (${contract.status}) không cho phép phê duyệt.`);
+      
+      await tx.contract.update({
+        where: { id: contract.id },
+        data: decision === "APPROVED" ? {
+          status: "ACTIVE",
+        } : {
+          status: "DRAFT", // keep draft or whatever
+        }
+      });
+      break;
+    }
+    case "MATERIAL": {
+      const matReq = await tx.materialRequest.findUnique({
+        where: { id: approval.sourceId }
+      });
+      if (!matReq || matReq.deletedAt) throw new Error("Không thể duyệt vì bản ghi gốc không tồn tại hoặc đã bị xóa.");
+      if (!["DRAFT", "REQUESTED", "SUBMITTED"].includes(matReq.status)) {
+         throw new Error(`Trạng thái phiếu yêu cầu vật tư hiện tại (${matReq.status}) không cho phép phê duyệt.`);
+      }
+      await tx.materialRequest.update({
+        where: { id: matReq.id },
+        data: decision === "APPROVED" ? {
+          status: "APPROVED",
+        } : {
+          status: "REJECTED",
+        }
+      });
+      break;
+    }
+    case "REPORT": {
+      const report = await tx.siteReport.findUnique({
+        where: { id: approval.sourceId }
+      });
+      if (!report || report.deletedAt) throw new Error("Không thể duyệt vì bản ghi gốc không tồn tại hoặc đã bị xóa.");
+      if (!["DRAFT", "SUBMITTED"].includes(report.status)) throw new Error(`Trạng thái báo cáo hiện tại (${report.status}) không cho phép phê duyệt.`);
+      await tx.siteReport.update({
+        where: { id: report.id },
+        data: decision === "APPROVED" ? {
+          status: "APPROVED",
+        } : {
+          status: "REJECTED",
+        }
+      });
+      break;
+    }
+    default: {
+      throw new Error("Loại phê duyệt này chưa hỗ trợ đồng bộ tự động. Vui lòng xử lý ở phân hệ gốc.");
+    }
+  }
 }
 
 async function getProjectRoleMapForDecision(actor: ApprovalActor, projectId: string | null) {
@@ -392,6 +514,8 @@ export async function approveApprovalRequest(id: string, note?: string) {
     if (updated.count !== 1) {
       throw new Error("Trạng thái yêu cầu đã thay đổi, vui lòng tải lại");
     }
+
+    await syncSourceOnApprovalTx(tx, approval, actor.id, "APPROVED", decisionNote);
 
     await tx.auditLog.create({
       data: {
@@ -437,6 +561,8 @@ export async function rejectApprovalRequest(id: string, reason: string) {
     if (updated.count !== 1) {
       throw new Error("Trạng thái yêu cầu đã thay đổi, vui lòng tải lại");
     }
+
+    await syncSourceOnApprovalTx(tx, approval, actor.id, "REJECTED", normalizedReason);
 
     await tx.auditLog.create({
       data: {
