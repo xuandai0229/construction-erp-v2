@@ -31,7 +31,7 @@ export default async function ProjectDocumentsPage({
     }
   });
 
-  const documents = await prisma.document.findMany({
+  const rawDocuments = await prisma.document.findMany({
     where: { projectId, deletedAt: null },
     orderBy: { createdAt: "desc" },
     include: {
@@ -40,6 +40,44 @@ export default async function ProjectDocumentsPage({
       }
     }
   });
+
+  const folders = rawFolders.map((f) => ({
+    id: f.id,
+    projectId: f.projectId,
+    parentId: f.parentId,
+    name: f.name,
+    _count: f._count,
+  }));
+
+  const documents = rawDocuments.map((d) => ({
+    id: d.id,
+    projectId: d.projectId,
+    folderId: d.folderId,
+    originalName: d.originalName,
+    displayName: d.displayName,
+    documentType: d.documentType,
+    status: d.status,
+    metadata: d.metadata,
+    fileHash: d.fileHash,
+    storedName: d.storedName,
+    mimeType: d.mimeType,
+    extension: d.extension,
+    size: d.size,
+    version: d.version,
+    createdAt: d.createdAt.toISOString(),
+    updatedAt: d.updatedAt.toISOString(),
+    uploadedById: d.uploadedById,
+    uploadedBy: d.uploadedBy,
+    rejectedReason: d.rejectedReason,
+  }));
+
+  const rawSettings: any = await getEnforcedSystemSettings();
+  const systemSettings = {
+    ...rawSettings,
+    contractValueThreshold: rawSettings.contractValueThreshold ? Number(rawSettings.contractValueThreshold) : 0,
+    createdAt: rawSettings.createdAt ? rawSettings.createdAt.toISOString() : undefined,
+    updatedAt: rawSettings.updatedAt ? rawSettings.updatedAt.toISOString() : undefined,
+  };
 
   return (
     <div className="app-page flex min-h-[calc(100dvh-7rem)] flex-col lg:h-[calc(100dvh-7rem)]">
@@ -65,10 +103,10 @@ export default async function ProjectDocumentsPage({
       <Suspense fallback={null}>
         <DocumentWorkspace
           projectId={projectId} 
-          folders={rawFolders} 
+          folders={folders} 
           documents={documents}
           sessionUser={{ id: session.id, role: session.role as any }}
-          systemSettings={await getEnforcedSystemSettings()}
+          systemSettings={systemSettings}
         />
       </Suspense>
     </div>

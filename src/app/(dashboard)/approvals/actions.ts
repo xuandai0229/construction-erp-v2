@@ -361,7 +361,7 @@ async function getApprovalForDecision(id: string) {
 
 async function syncSourceOnApprovalTx(
   tx: Prisma.TransactionClient,
-  approval: { type: ApprovalRequestType; sourceId: string | null; amount: any; id: string },
+  approval: { type: ApprovalRequestType; sourceId: string | null; amount: any; id: string; projectId: string },
   actorId: string,
   decision: "APPROVED" | "REJECTED",
   note: string | null
@@ -382,6 +382,9 @@ async function syncSourceOnApprovalTx(
       });
       if (!payment || payment.deletedAt) {
         throw new Error("Không thể duyệt vì bản ghi gốc không tồn tại hoặc đã bị xóa.");
+      }
+      if (payment.projectId !== approval.projectId) {
+        throw new Error("Bản ghi gốc không thuộc cùng công trình với yêu cầu phê duyệt.");
       }
       const validStatuses = ["SUBMITTED"]; // Adjust if DRAFT is allowed, but usually SUBMITTED
       if (!validStatuses.includes(payment.status)) {
@@ -426,6 +429,7 @@ async function syncSourceOnApprovalTx(
         where: { id: approval.sourceId }
       });
       if (!contract || contract.deletedAt) throw new Error("Không thể duyệt vì bản ghi gốc không tồn tại hoặc đã bị xóa.");
+      if (contract.projectId !== approval.projectId) throw new Error("Bản ghi gốc không thuộc cùng công trình với yêu cầu phê duyệt.");
       if (contract.status !== "DRAFT") throw new Error(`Trạng thái hợp đồng hiện tại (${contract.status}) không cho phép phê duyệt.`);
       
       await tx.contract.update({
@@ -443,6 +447,7 @@ async function syncSourceOnApprovalTx(
         where: { id: approval.sourceId }
       });
       if (!matReq || matReq.deletedAt) throw new Error("Không thể duyệt vì bản ghi gốc không tồn tại hoặc đã bị xóa.");
+      if (matReq.projectId !== approval.projectId) throw new Error("Bản ghi gốc không thuộc cùng công trình với yêu cầu phê duyệt.");
       if (!["DRAFT", "REQUESTED", "SUBMITTED"].includes(matReq.status)) {
          throw new Error(`Trạng thái phiếu yêu cầu vật tư hiện tại (${matReq.status}) không cho phép phê duyệt.`);
       }
@@ -461,6 +466,7 @@ async function syncSourceOnApprovalTx(
         where: { id: approval.sourceId }
       });
       if (!report || report.deletedAt) throw new Error("Không thể duyệt vì bản ghi gốc không tồn tại hoặc đã bị xóa.");
+      if (report.projectId !== approval.projectId) throw new Error("Bản ghi gốc không thuộc cùng công trình với yêu cầu phê duyệt.");
       if (!["DRAFT", "SUBMITTED"].includes(report.status)) throw new Error(`Trạng thái báo cáo hiện tại (${report.status}) không cho phép phê duyệt.`);
       await tx.siteReport.update({
         where: { id: report.id },

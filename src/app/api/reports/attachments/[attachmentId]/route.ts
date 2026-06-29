@@ -5,6 +5,7 @@ import mime from "mime-types";
 import path from "path";
 import { canAccessProject } from "@/lib/rbac";
 import { LocalStorageProvider } from "@/lib/storage/local-storage-provider";
+import { Readable } from "stream";
 
 export const runtime = "nodejs";
 
@@ -76,7 +77,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ atta
       const encodedName = encodeURIComponent(originalName);
 
       // Convert Node.js Readable to Web ReadableStream for NextResponse
-      const { Readable } = require('stream');
       const webStream = Readable.toWeb(fileStream as any);
 
       const response = new NextResponse(webStream as any);

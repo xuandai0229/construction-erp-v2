@@ -289,7 +289,16 @@ export async function createPaymentRequest(data: {
     await assertContractPaymentLimit({ contractId, totalAmount });
   }
 
-  const requestCode = `TT-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`;
+  let requestCode = "";
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const code = `TT-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`;
+    const existing = await prisma.paymentRequest.findUnique({ where: { requestCode: code } });
+    if (!existing) {
+      requestCode = code;
+      break;
+    }
+  }
+  if (!requestCode) requestCode = `TT-${Date.now()}`;
 
   try {
     await prisma.paymentRequest.create({

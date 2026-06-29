@@ -17,7 +17,8 @@ export async function batchSaveDailyEntries(projectId: string, templateId: strin
 
   try {
     const { start, end } = getWorkDateRange(entryDateStr);
-    const status = "APPROVED";
+    const isApprover = ["ADMIN", "DIRECTOR", "MANAGER", "SITE_MANAGER"].includes(session.role as string);
+    const status = _submit ? (isApprover ? "APPROVED" : "SUBMITTED") : "DRAFT";
     
     const itemIds = entries.map(e => e.itemId);
 
@@ -142,8 +143,8 @@ export async function batchSaveDailyEntries(projectId: string, templateId: strin
               proposalNote: e.proposalNote,
               note: e.note,
               status,
-              approvedAt: new Date(),
-              submittedAt: null,
+              approvedAt: status === "APPROVED" ? new Date() : null,
+              submittedAt: _submit ? new Date() : null,
               deletedAt: null // Restore if it was previously soft-deleted (though our query filtered deletedAt: null anyway)
             }
           }),
@@ -173,7 +174,8 @@ export async function batchSaveDailyEntries(projectId: string, templateId: strin
               note: e.note,
               status,
               createdById: session.id,
-              approvedAt: new Date()
+              approvedAt: status === "APPROVED" ? new Date() : null,
+              submittedAt: _submit ? new Date() : null
             }
           })
         ];

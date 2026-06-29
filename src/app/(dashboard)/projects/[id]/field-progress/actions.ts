@@ -92,6 +92,7 @@ export async function updateItem(itemId: string, projectId: string, data: any) {
   try {
     const before = await prisma.fieldProgressItem.findUnique({ where: { id: itemId } });
     if (!before) return { error: "Item not found" };
+    if (before.projectId !== projectId) return { error: "Item does not belong to this project" };
 
     const item = await prisma.fieldProgressItem.update({
       where: { id: itemId },
@@ -128,7 +129,25 @@ export async function deleteItem(itemId: string, projectId: string) {
   try { session = await requireProjectAccess(projectId); } catch { return { error: "Bạn không có quyền truy cập công trình này" }; }
 
   try {
+    const before = await prisma.fieldProgressItem.findUnique({ where: { id: itemId } });
+    if (!before) return { error: "Item not found" };
+    if (before.projectId !== projectId) return { error: "Item does not belong to this project" };
+
     const deletedTime = new Date();
+
+    // Find children ids to soft-delete their entries as well
+    const children = await prisma.fieldProgressItem.findMany({
+      where: { parentId: itemId },
+      select: { id: true }
+    });
+    const itemIds = [itemId, ...children.map(c => c.id)];
+
+    const entries = await prisma.fieldProgressEntry.findMany({
+      where: { itemId: { in: itemIds }, deletedAt: null }
+    });
+    if (entries.some(e => e.status === "APPROVED" || e.status === "SUBMITTED")) {
+      return { error: "Không thể xóa hạng mục đã có khối lượng được trình duyệt hoặc phê duyệt." };
+    }
 
     // Soft delete
     const item = await prisma.fieldProgressItem.update({
@@ -141,13 +160,6 @@ export async function deleteItem(itemId: string, projectId: string) {
       where: { parentId: itemId },
       data: { deletedAt: deletedTime }
     });
-
-    // Find children ids to soft-delete their entries as well
-    const children = await prisma.fieldProgressItem.findMany({
-      where: { parentId: itemId },
-      select: { id: true }
-    });
-    const itemIds = [itemId, ...children.map(c => c.id)];
 
     // Cascade soft delete entries
     await prisma.fieldProgressEntry.updateMany({
@@ -176,6 +188,14 @@ export async function batchUpdateItems(projectId: string, updates: any[]) {
   try { session = await requireProjectAccess(projectId); } catch { return { error: "Bạn không có quyền truy cập công trình này" }; }
 
   try {
+    const itemIds = updates.map(u => u.id);
+    const existingItems = await prisma.fieldProgressItem.findMany({
+      where: { id: { in: itemIds } }
+    });
+    if (existingItems.some(item => item.projectId !== projectId)) {
+      return { error: "Some items do not belong to this project" };
+    }
+
     // using a transaction to update multiple items
     await prisma.$transaction(
       updates.map(update => 

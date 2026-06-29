@@ -21,6 +21,7 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
   const startOfDayVietnam = new Date(now.getTime() + vietnamTimeOffset);
   startOfDayVietnam.setUTCHours(0, 0, 0, 0);
   startOfDayVietnam.setTime(startOfDayVietnam.getTime() - vietnamTimeOffset);
+  const endOfDayVietnam = new Date(startOfDayVietnam.getTime() + 24 * 60 * 60 * 1000);
 
   const project = await prisma.project.findUnique({
     where: { id: resolvedParams.id, deletedAt: null },
@@ -33,9 +34,11 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
           fieldProgressTemplates: true,
           fieldProgressEntries: {
             where: {
-              createdAt: {
-                gte: startOfDayVietnam
-              }
+              entryDate: {
+                gte: startOfDayVietnam,
+                lt: endOfDayVietnam
+              },
+              deletedAt: null
             }
           }
         }

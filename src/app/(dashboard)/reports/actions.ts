@@ -118,7 +118,12 @@ export async function createSiteReport(data: Record<string, unknown>, isDraft: b
           projectId: String(data.projectId),
           workContent: String(line.workContent || "No content"),
           workName: String(line.workName || line.workContent),
-          quantityToday: line.quantityToday ? Number(line.quantityToday) : 0,
+          quantityToday: (() => {
+            if (line.quantityToday === undefined || line.quantityToday === null || line.quantityToday === "") return 0;
+            const num = Number(line.quantityToday);
+            if (!Number.isFinite(num) || num < 0) throw new Error("Khối lượng hôm nay không hợp lệ");
+            return num;
+          })(),
           unit: line.unit ? String(line.unit) : undefined,
           note: line.note ? String(line.note) : undefined,
           sortOrder: index,
@@ -403,6 +408,11 @@ export async function getWeeklyReportPreview(projectId: string, weekStartDate: D
   const session = await getSession();
   if (!session) throw new Error("Unauthorized");
 
+  const accessibleProjectIds = await getAccessibleProjectIds({ id: session.id, role: session.role as UserRole });
+  if (accessibleProjectIds !== null && !accessibleProjectIds.includes(projectId)) {
+    throw new Error("Không có quyền truy cập dự án này");
+  }
+
   // 1. Check if a weekly report already exists for this period
   const existingWeekly = await prisma.siteReport.findFirst({
     where: {
@@ -677,7 +687,12 @@ export async function updateSiteReport(reportId: string, data: Record<string, un
             projectId: report.projectId,
             workContent: String(line.workContent || "No content"),
             workName: String(line.workName || line.workContent),
-            quantityToday: line.quantityToday ? Number(line.quantityToday) : 0,
+            quantityToday: (() => {
+              if (line.quantityToday === undefined || line.quantityToday === null || line.quantityToday === "") return 0;
+              const num = Number(line.quantityToday);
+              if (!Number.isFinite(num) || num < 0) throw new Error("Khối lượng hôm nay không hợp lệ");
+              return num;
+            })(),
             unit: line.unit ? String(line.unit) : null,
             note: line.note ? String(line.note) : null,
             sortOrder: index,

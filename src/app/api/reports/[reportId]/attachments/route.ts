@@ -9,6 +9,9 @@ import {
   canUploadReportAttachment,
 } from "@/lib/reports/report-workflow-policy";
 import { canAccessProject } from "@/lib/rbac";
+import { pipeline } from "stream/promises";
+import { createWriteStream } from "fs";
+import { Readable } from "stream";
 
 export const runtime = "nodejs";
 
@@ -197,10 +200,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ rep
         const absoluteStoragePath = path.join(process.cwd(), relativeStoragePath);
 
         // Write file to disk using stream pipeline
-        const { pipeline } = require('stream/promises');
-        const { createWriteStream } = require('fs');
-        const { Readable } = require('stream');
-        
         await pipeline(
           Readable.fromWeb(file.stream() as any),
           createWriteStream(absoluteStoragePath)
