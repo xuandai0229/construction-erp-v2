@@ -25,7 +25,7 @@ import type { SystemSettingsInput } from "@/lib/settings/settings-validation";
 import { updateSystemSettings } from "@/app/(dashboard)/settings/actions";
 import { DEFAULT_SYSTEM_SETTINGS } from "@/lib/settings/settings-validation";
 
-type SettingsSectionId = "organization" | "security" | "workflow" | "documents" | "notifications" | "data";
+type SettingsSectionId = "organization" | "system" | "security" | "workflow" | "documents" | "notifications" | "data";
 
 const sectionMeta: {
   id: SettingsSectionId;
@@ -36,8 +36,14 @@ const sectionMeta: {
   {
     id: "organization",
     title: "Doanh nghiệp",
-    description: "Thông tin nhận diện, tiền tệ và kỳ kế toán mặc định.",
+    description: "Thông tin nhận diện công ty/tổ chức.",
     icon: Building2,
+  },
+  {
+    id: "system",
+    title: "Hệ thống",
+    description: "Tiền tệ, múi giờ và cấu hình hệ thống chung.",
+    icon: Settings2,
   },
   {
     id: "security",
@@ -322,10 +328,17 @@ export function SettingsWorkspace({ initialSettings }: { initialSettings: System
                   value={profile.hotline || ""}
                   onChange={(value) => updateField("hotline", value)}
                 />
+              </div>
+            )}
+
+            {activeSection === "system" && (
+              <div className="grid gap-4 md:grid-cols-2">
                 <SelectField
                   label="Múi giờ"
                   value={profile.timezone}
                   onChange={(value) => updateField("timezone", value)}
+                  disabled={true}
+                  badge="Chưa kích hoạt"
                   options={[
                     ["Asia/Bangkok", "Việt Nam, Thái Lan"],
                     ["Asia/Singapore", "Singapore"],
@@ -336,6 +349,8 @@ export function SettingsWorkspace({ initialSettings }: { initialSettings: System
                   label="Tiền tệ mặc định"
                   value={profile.currency}
                   onChange={(value) => updateField("currency", value)}
+                  disabled={true}
+                  badge="Chưa kích hoạt"
                   options={[
                     ["VND", "VND"],
                     ["USD", "USD"],
@@ -345,6 +360,8 @@ export function SettingsWorkspace({ initialSettings }: { initialSettings: System
                   label="Tháng bắt đầu năm tài chính"
                   value={profile.fiscalYearStartMonth}
                   onChange={(value) => updateField("fiscalYearStartMonth", value)}
+                  disabled={true}
+                  badge="Chưa kích hoạt"
                   options={[
                     ["01", "Tháng 01"],
                     ["04", "Tháng 04"],
@@ -358,15 +375,19 @@ export function SettingsWorkspace({ initialSettings }: { initialSettings: System
               <div className="space-y-4">
                 <SwitchRow
                   title="Bắt buộc 2FA cho quản trị"
-                  description="[Cấu hình đã lưu, chưa áp dụng] - Sẽ yêu cầu Admin xác thực 2 bước."
+                  description="Sẽ yêu cầu Admin xác thực 2 bước."
                   checked={profile.requireTwoFactorForAdmins}
                   onChange={(value) => updateField("requireTwoFactorForAdmins", value)}
+                  disabled={true}
+                  badge="Chưa kích hoạt"
                 />
                 <SwitchRow
                   title="Ghi audit cho thao tác nhạy cảm"
                   description="Ghi lại thay đổi quyền, xuất dữ liệu, duyệt thanh toán và xóa mềm."
                   checked={profile.auditSensitiveActions}
                   onChange={(value) => updateField("auditSensitiveActions", value)}
+                  disabled={true}
+                  badge="Chưa kích hoạt"
                 />
                 <div className="grid gap-4 md:grid-cols-3">
                   <NumberField
@@ -374,24 +395,32 @@ export function SettingsWorkspace({ initialSettings }: { initialSettings: System
                     suffix="phút"
                     value={profile.sessionTimeoutMinutes}
                     onChange={(value) => updateField("sessionTimeoutMinutes", value)}
+                    disabled={true}
+                    badge="Chưa kích hoạt"
                   />
                   <NumberField
                     label="Đổi mật khẩu sau"
                     suffix="ngày"
                     value={profile.passwordRotationDays}
                     onChange={(value) => updateField("passwordRotationDays", value)}
+                    disabled={true}
+                    badge="Chỉ hiển thị"
                   />
                   <NumberField
                     label="Rà soát thiết bị tin cậy"
                     suffix="ngày"
                     value={profile.trustedDeviceReviewDays}
                     onChange={(value) => updateField("trustedDeviceReviewDays", value)}
+                    disabled={true}
+                    badge="Chỉ hiển thị"
                   />
                 </div>
                 <SelectField
                   label="Chế độ IP truy cập"
                   value={profile.allowedIpMode}
                   onChange={(value) => updateField("allowedIpMode", value as any)}
+                  disabled={true}
+                  badge="Chưa kích hoạt"
                   options={[
                     ["restricted", "Giới hạn theo danh sách tin cậy"],
                     ["open", "Mở cho mọi IP"],
@@ -404,39 +433,60 @@ export function SettingsWorkspace({ initialSettings }: { initialSettings: System
               <div className="space-y-4">
                 <SwitchRow
                   title="Bắt buộc mã công trình trước khi chi"
-                  description="[Sắp áp dụng] Không cho tạo đề nghị thanh toán nếu chưa chọn công trình."
+                  description="Không cho tạo đề nghị thanh toán nếu chưa chọn công trình."
                   checked={profile.requireProjectCodeBeforeSpending}
                   onChange={(value) => updateField("requireProjectCodeBeforeSpending", value)}
+                  disabled={true}
+                  badge="Chưa kích hoạt"
                 />
                 <SwitchRow
                   title="Vật tư phải qua phê duyệt"
                   description="Phiếu yêu cầu vật tư từ hiện trường cần được duyệt trước khi xuất."
                   checked={profile.materialRequestApproval}
                   onChange={(value) => updateField("materialRequestApproval", value)}
+                  disabled={true}
+                  badge="Chưa kích hoạt"
                 />
                 <SwitchRow
                   title="Thanh toán duyệt hai bước"
                   description="Tách bước kiểm tra kế toán và bước duyệt điều hành."
                   checked={profile.paymentTwoStepApproval}
                   onChange={(value) => updateField("paymentTwoStepApproval", value)}
+                  disabled={true}
+                  badge="Chưa kích hoạt"
                 />
                 <SwitchRow
                   title="Khóa báo cáo sau khi duyệt"
                   description="Báo cáo hiện trường đã duyệt chỉ được sửa bằng yêu cầu điều chỉnh."
                   checked={profile.reportLockAfterApproval}
                   onChange={(value) => updateField("reportLockAfterApproval", value)}
+                  disabled={true}
+                  badge="Chưa kích hoạt"
                 />
                 <NumberField
                   label="Ngưỡng hợp đồng cần duyệt cấp cao"
                   suffix={currencyFormatter.format(profile.contractValueThreshold)}
                   value={profile.contractValueThreshold}
                   onChange={(value) => updateField("contractValueThreshold", value)}
+                  disabled={true}
+                  badge="Chỉ hiển thị"
                 />
               </div>
             )}
 
             {activeSection === "documents" && (
               <div className="space-y-4">
+                <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="mt-0.5 h-5 w-5 text-blue-600" />
+                    <div>
+                      <h3 className="text-sm font-semibold text-blue-900">Giới hạn dung lượng tải lên</h3>
+                      <p className="mt-1 text-sm leading-6 text-blue-700">
+                        Hệ thống không đặt giới hạn dung lượng ở tầng ứng dụng. Dung lượng thực tế phụ thuộc reverse proxy, hosting và storage.
+                      </p>
+                    </div>
+                  </div>
+                </div>
                 <SwitchRow
                   title="Bắt buộc chuẩn đặt tên hồ sơ"
                   description="Cảnh báo tên file camera, chat hoặc tên quá chung."
@@ -455,6 +505,8 @@ export function SettingsWorkspace({ initialSettings }: { initialSettings: System
                     suffix="năm"
                     value={profile.documentRetentionYears}
                     onChange={(value) => updateField("documentRetentionYears", value)}
+                    disabled={true}
+                    badge="Chỉ hiển thị"
                   />
                 </div>
                 <TextField
@@ -469,33 +521,43 @@ export function SettingsWorkspace({ initialSettings }: { initialSettings: System
               <div className="space-y-4">
                 <SwitchRow
                   title="Gửi tổng hợp email hằng ngày"
-                  description="[Chưa có Cron Job] - Cấu hình sẽ lưu nhưng chưa gửi mail."
+                  description="Email tổng hợp cuối ngày"
                   checked={profile.emailDailyDigest}
                   onChange={(value) => updateField("emailDailyDigest", value)}
+                  disabled={true}
+                  badge="Chưa kích hoạt"
                 />
                 <SwitchRow
                   title="Leo thang phê duyệt quá hạn"
-                  description="[Chưa có Cron Job] - Cấu hình sẽ lưu nhưng chưa hoạt động."
+                  description="Tự động nhắc/leo thang duyệt"
                   checked={profile.approvalEscalation}
                   onChange={(value) => updateField("approvalEscalation", value)}
+                  disabled={true}
+                  badge="Chưa kích hoạt"
                 />
                 <SwitchRow
                   title="Nhắc báo cáo hiện trường"
-                  description="Nhắc chỉ huy trưởng nộp báo cáo ngày."
+                  description="Gửi push nhắc nộp báo cáo."
                   checked={profile.fieldReportReminder}
                   onChange={(value) => updateField("fieldReportReminder", value)}
+                  disabled={true}
+                  badge="Chưa kích hoạt"
                 />
                 <div className="grid gap-4 md:grid-cols-2">
                   <TextField
                     label="Giờ nhắc báo cáo"
                     value={profile.reminderTime}
                     onChange={(value) => updateField("reminderTime", value)}
+                    disabled={true}
+                    badge="Chỉ hiển thị"
                   />
                   <NumberField
                     label="Leo thang sau"
                     suffix="giờ"
                     value={profile.escalationHours}
                     onChange={(value) => updateField("escalationHours", value)}
+                    disabled={true}
+                    badge="Chỉ hiển thị"
                   />
                 </div>
               </div>
@@ -505,21 +567,27 @@ export function SettingsWorkspace({ initialSettings }: { initialSettings: System
               <div className="space-y-4">
                 <SwitchRow
                   title="Sao lưu tự động"
-                  description="[Chưa kết nối Backup Service] - Cấu hình lưu trữ trước cho server agent."
+                  description="Backup DB tự động"
                   checked={profile.automaticBackup}
                   onChange={(value) => updateField("automaticBackup", value)}
+                  disabled={true}
+                  badge="Chưa kích hoạt"
                 />
                 <SwitchRow
                   title="Xuất dữ liệu cần phê duyệt"
                   description="Giảm rủi ro rò rỉ dữ liệu khi tải hàng loạt."
                   checked={profile.exportRequiresApproval}
                   onChange={(value) => updateField("exportRequiresApproval", value)}
+                  disabled={true}
+                  badge="Chưa kích hoạt"
                 />
                 <div className="grid gap-4 md:grid-cols-2">
                   <SelectField
                     label="Tần suất sao lưu"
                     value={profile.backupFrequency}
                     onChange={(value) => updateField("backupFrequency", value as any)}
+                    disabled={true}
+                    badge="Chỉ hiển thị"
                     options={[
                       ["daily", "Hằng ngày"],
                       ["weekly", "Hằng tuần"],
@@ -530,12 +598,16 @@ export function SettingsWorkspace({ initialSettings }: { initialSettings: System
                     suffix="năm"
                     value={profile.retentionYears}
                     onChange={(value) => updateField("retentionYears", value)}
+                    disabled={true}
+                    badge="Chỉ hiển thị"
                   />
                 </div>
                 <TextField
                   label="Cửa sổ bảo trì"
                   value={profile.maintenanceWindow}
                   onChange={(value) => updateField("maintenanceWindow", value)}
+                  disabled={true}
+                  badge="Chỉ hiển thị"
                 />
               </div>
             )}
@@ -613,25 +685,38 @@ function SwitchRow({
   description,
   checked,
   onChange,
+  disabled,
+  badge,
 }: {
   title: string;
   description: string;
   checked: boolean;
   onChange: (value: boolean) => void;
+  disabled?: boolean;
+  badge?: string;
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className={cn("flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 sm:flex-row sm:items-center sm:justify-between", disabled && "opacity-75")}>
       <div className="min-w-0">
-        <p className="text-sm font-semibold text-slate-950">{title}</p>
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-semibold text-slate-950">{title}</p>
+          {badge && (
+            <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-700 uppercase tracking-wide">
+              {badge}
+            </span>
+          )}
+        </div>
         <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>
       </div>
       <button
         type="button"
+        disabled={disabled}
         aria-pressed={checked}
         onClick={() => onChange(!checked)}
         className={cn(
           "relative h-7 w-12 shrink-0 rounded-full border transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2",
           checked ? "border-blue-600 bg-blue-600" : "border-slate-300 bg-white",
+          disabled && "cursor-not-allowed opacity-50"
         )}
       >
         <span
@@ -650,18 +735,30 @@ function TextField({
   label,
   value,
   onChange,
+  disabled,
+  badge,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  disabled?: boolean;
+  badge?: string;
 }) {
   return (
-    <label className="block">
-      <span className="text-sm font-semibold text-slate-700">{label}</span>
+    <label className={cn("block", disabled && "opacity-75")}>
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-semibold text-slate-700">{label}</span>
+        {badge && (
+          <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-700 uppercase tracking-wide">
+            {badge}
+          </span>
+        )}
+      </div>
       <input
         value={value}
+        disabled={disabled}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-1 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        className="mt-1 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50"
         type="text"
       />
     </label>
@@ -673,21 +770,33 @@ function NumberField({
   value,
   suffix,
   onChange,
+  disabled,
+  badge,
 }: {
   label: string;
   value: number;
   suffix: string;
   onChange: (value: number) => void;
+  disabled?: boolean;
+  badge?: string;
 }) {
   return (
-    <label className="block">
-      <span className="text-sm font-semibold text-slate-700">{label}</span>
-      <div className="mt-1 flex overflow-hidden rounded-lg border border-slate-300 bg-white shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100">
+    <label className={cn("block", disabled && "opacity-75")}>
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-semibold text-slate-700">{label}</span>
+        {badge && (
+          <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-700 uppercase tracking-wide">
+            {badge}
+          </span>
+        )}
+      </div>
+      <div className={cn("mt-1 flex overflow-hidden rounded-lg border border-slate-300 bg-white shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100", disabled && "bg-slate-50")}>
         <input
           value={value}
           min={0}
+          disabled={disabled}
           onChange={(event) => onChange(Number(event.target.value))}
-          className="h-10 min-w-0 flex-1 border-0 px-3 text-sm text-slate-900 outline-none"
+          className="h-10 min-w-0 flex-1 border-0 bg-transparent px-3 text-sm text-slate-900 outline-none disabled:cursor-not-allowed"
           type="number"
         />
         <span className="flex max-w-[55%] items-center border-l border-slate-200 bg-slate-50 px-3 text-xs font-medium text-slate-500">
@@ -703,19 +812,31 @@ function SelectField({
   value,
   options,
   onChange,
+  disabled,
+  badge,
 }: {
   label: string;
   value: string;
   options: [string, string][];
   onChange: (value: string) => void;
+  disabled?: boolean;
+  badge?: string;
 }) {
   return (
-    <label className="block">
-      <span className="text-sm font-semibold text-slate-700">{label}</span>
+    <label className={cn("block", disabled && "opacity-75")}>
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-semibold text-slate-700">{label}</span>
+        {badge && (
+          <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-700 uppercase tracking-wide">
+            {badge}
+          </span>
+        )}
+      </div>
       <select
         value={value}
+        disabled={disabled}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-1 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        className="mt-1 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50"
       >
         {options.map(([optionValue, labelText]) => (
           <option key={optionValue} value={optionValue}>

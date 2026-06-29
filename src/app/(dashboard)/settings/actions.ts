@@ -23,6 +23,7 @@ export async function getSystemSettings() {
   if (!session) {
     throw new Error("Unauthorized");
   }
+  // Allow ADMIN, DIRECTOR, DEPUTY_DIRECTOR to view settings
   if (!canManageUsers(session)) {
     throw new Error("Forbidden");
   }
@@ -67,11 +68,45 @@ export async function getSystemSettings() {
   return plainSetting;
 }
 
+import { SETTINGS_REGISTRY, SettingDefinition } from "@/lib/settings/settings-registry";
+
+function checkUpdatePermission(
+  key: keyof SystemSettingsInput,
+  oldVal: any,
+  newVal: any,
+  role: string
+) {
+  if (oldVal === newVal) return; // No change, allow
+
+  const def = SETTINGS_REGISTRY.find(d => d.key === key);
+  if (!def) {
+    throw new Error(`Cấu hình không hợp lệ: ${key}`);
+  }
+
+  if (!def.editable || !def.implemented) {
+    throw new Error(`Cấu hình ${def.label} hiện đang ở chế độ chỉ đọc hoặc chưa được kích hoạt.`);
+  }
+
+  if (role === "ADMIN") {
+    return; // Admin can change any editable setting
+  }
+
+  if (role === "DIRECTOR") {
+    if (def.category !== "company") {
+      throw new Error(`Giám đốc chỉ được phép chỉnh sửa nhóm thông tin doanh nghiệp. Không được sửa: ${def.label}`);
+    }
+    return;
+  }
+
+  throw new Error(`Vai trò ${role} không được phép thay đổi cài đặt hệ thống.`);
+}
+
 export async function updateSystemSettings(input: SystemSettingsInput) {
   const session = await getSession();
   if (!session) {
     throw new Error("Unauthorized");
   }
+  // First layer: Must be high level user
   if (!canManageUsers(session)) {
     throw new Error("Forbidden");
   }
@@ -87,15 +122,43 @@ export async function updateSystemSettings(input: SystemSettingsInput) {
     throw new Error("Settings not initialized");
   }
 
+  // Second layer: check specific keys
+  // Convert existing threshold back to number for comparison
+  const existingValues = {
+    ...existingSetting,
+    contractValueThreshold: Number(existingSetting.contractValueThreshold.toString()),
+  };
+
+  const changedData: any = {};
+  for (const key of Object.keys(validatedData) as (keyof SystemSettingsInput)[]) {
+    const oldVal = existingValues[key];
+    const newVal = validatedData[key];
+    
+    // Loose compare for primitives
+    if (oldVal !== newVal) {
+      checkUpdatePermission(key, oldVal, newVal, session.role);
+      changedData[key] = newVal;
+    }
+  }
+
+  if (Object.keys(changedData).length === 0) {
+    // No actual changes
+    return {
+      ...existingSetting,
+      contractValueThreshold: Number(existingSetting.contractValueThreshold.toString()),
+    } as SystemSettingsInput & { id: string; updatedAt: Date; updatedById: string | null };
+  }
+
   const { ipAddress, userAgent } = await getClientIpAndUserAgent();
 
   const updatedSetting = await prisma.$transaction(async (tx) => {
+    // Only update changed data that are allowed
     const newSetting = await tx.systemSetting.update({
       where: { id: existingSetting.id },
       data: {
-        ...validatedData,
-        taxCode: validatedData.taxCode ?? "",
-        hotline: validatedData.hotline ?? "",
+        ...changedData,
+        taxCode: changedData.taxCode ?? existingSetting.taxCode,
+        hotline: changedData.hotline ?? existingSetting.hotline,
         updatedById: session.id,
         version: {
           increment: 1,
@@ -103,15 +166,17 @@ export async function updateSystemSettings(input: SystemSettingsInput) {
       },
     });
 
-    // Write audit log
+    // Write audit log with only changed data diff
     await tx.auditLog.create({
       data: {
         userId: session.id,
         action: "UPDATE_SETTINGS",
         entityType: "SystemSetting",
         entityId: existingSetting.id,
-        beforeData: JSON.stringify(existingSetting),
-        afterData: JSON.stringify(newSetting),
+        beforeData: JSON.stringify(
+          Object.keys(changedData).reduce((acc, k) => ({ ...acc, [k]: existingValues[k as keyof typeof existingValues] }), {})
+        ),
+        afterData: JSON.stringify(changedData),
         ipAddress,
         userAgent,
       },
