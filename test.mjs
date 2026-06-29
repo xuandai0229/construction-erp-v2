@@ -1,1 +1,0 @@
-import { PrismaClient } from '@prisma/client'; const prisma = new PrismaClient(); async function main() { const reqs = await prisma.materialRequest.findMany({ include: { items: true } }); console.log(JSON.stringify(reqs, null, 2)); } main();
