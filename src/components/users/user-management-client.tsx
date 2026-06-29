@@ -84,8 +84,7 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
   });
 
   const [resetPwUser, setResetPwUser] = useState<UserData | null>(null);
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [tempPassword, setTempPassword] = useState<string | null>(null);
 
   // Create form state
   const [formName, setFormName] = useState("");
@@ -295,23 +294,20 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
       return;
     }
     setResetPwUser(user);
-    setNewPassword("");
-    setConfirmNewPassword("");
+    setTempPassword(null);
   };
 
   const handleResetPwSubmit = async () => {
     if (!resetPwUser) return;
-    if (newPassword.length < 6) { toast.error("Mật khẩu phải có ít nhất 6 ký tự"); return; }
-    if (newPassword !== confirmNewPassword) { toast.error("Mật khẩu nhập lại không khớp"); return; }
     
-    const result = await withOperation(() => resetUserPassword(resetPwUser.id, newPassword));
+    const result = await withOperation(() => resetUserPassword(resetPwUser.id));
     if (!result) return;
     
     if (result.error) {
       toast.error(result.error);
     } else {
-      toast.success("Đã đổi mật khẩu thành công");
-      setResetPwUser(null);
+      toast.success("Đã tạo mật khẩu tạm thời thành công");
+      setTempPassword(result.tempPassword || null);
     }
   };
 
@@ -633,9 +629,33 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
                   <p className="text-sm text-slate-500 italic">Chưa được giao công trình nào.</p>
                 )}
               </div>
+
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <ShieldCheck className="h-5 w-5 text-amber-600 mt-0.5" />
+                  <div>
+                    <h4 className="text-sm font-semibold text-amber-800">Bảo mật tài khoản</h4>
+                    <p className="text-sm text-amber-700 mt-1">Mật khẩu hiện tại không thể xem lại vì được mã hóa một chiều. Nếu người dùng quên mật khẩu, hãy dùng chức năng Reset mật khẩu.</p>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="sticky bottom-0 bg-white border-t border-slate-200 px-6 py-4 flex justify-end rounded-b-2xl">
+            <div className="sticky bottom-0 bg-white border-t border-slate-200 px-6 py-4 flex gap-3 justify-end rounded-b-2xl">
               <button onClick={() => setDetailUser(null)} className="px-4 py-2 bg-slate-100 text-slate-700 rounded-md text-sm font-medium hover:bg-slate-200">Đóng</button>
+              {canManageUser(detailUser) ? (
+                <button 
+                  onClick={() => { setDetailUser(null); handleResetPwClick(detailUser); }} 
+                  className="px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-md text-sm font-medium hover:bg-blue-100 flex items-center gap-2"
+                >
+                  <Key className="h-4 w-4" />
+                  Reset mật khẩu
+                </button>
+              ) : (
+                <div className="px-4 py-2 text-sm text-slate-400 flex items-center italic" title="Bạn không có quyền reset mật khẩu tài khoản này.">
+                  <Key className="h-4 w-4 mr-2" />
+                  Không có quyền reset
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -749,20 +769,45 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
               <h3 className="text-lg font-bold text-slate-900">Đổi mật khẩu</h3>
             </div>
             <div className="p-5 space-y-4">
-              <div>
-                <label htmlFor="new-pw" className="block text-sm font-medium text-slate-700 mb-1">Mật khẩu mới</label>
-                <input id="new-pw" type="password" autoComplete="current-password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500" placeholder="Tối thiểu 6 ký tự" />
-              </div>
-              <div>
-                <label htmlFor="confirm-pw" className="block text-sm font-medium text-slate-700 mb-1">Nhập lại mật khẩu mới</label>
-                <input id="confirm-pw" type="password" autoComplete="current-password" value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500" placeholder="Xác nhận mật khẩu mới" />
-              </div>
+              {!tempPassword ? (
+                <>
+                  <p className="text-sm text-slate-600">
+                    Bạn sắp tạo một mật khẩu tạm thời cho tài khoản <span className="font-semibold text-slate-900">{resetPwUser.name}</span>.
+                  </p>
+                  <div className="bg-blue-50 border border-blue-200 rounded-md p-3 text-sm text-blue-800">
+                    <p>Mật khẩu tạm thời sẽ được tạo ngẫu nhiên và an toàn. Bạn sẽ cần sao chép và gửi cho người dùng.</p>
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-4">
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-md p-4 text-center space-y-2">
+                    <p className="text-sm text-emerald-800 font-medium">Mật khẩu tạm thời đã được tạo:</p>
+                    <div className="bg-white border border-emerald-300 rounded-md py-3 px-4 font-mono text-lg font-bold text-slate-900 tracking-wider flex items-center justify-between">
+                      <span>{tempPassword}</span>
+                      <button 
+                        onClick={() => { navigator.clipboard.writeText(tempPassword); toast.success("Đã copy mật khẩu"); }}
+                        className="text-sm font-sans font-medium text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-1 rounded"
+                      >
+                        Copy
+                      </button>
+                    </div>
+                  </div>
+                  <div className="bg-amber-50 border border-amber-200 rounded-md p-3 text-sm text-amber-800">
+                    <p className="font-semibold">Cảnh báo quan trọng:</p>
+                    <p className="mt-1">Mật khẩu tạm thời chỉ hiển thị một lần. Hãy sao chép và gửi riêng cho người dùng qua kênh an toàn ngay bây giờ.</p>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex gap-2 justify-end">
-              <button onClick={() => setResetPwUser(null)} className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50">Hủy</button>
-              <button onClick={handleResetPwSubmit} disabled={loading} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50">
-                {loading ? "Đang xử lý..." : "Cập nhật mật khẩu"}
+              <button onClick={() => { setResetPwUser(null); setTempPassword(null); }} className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50">
+                {tempPassword ? "Đóng" : "Hủy"}
               </button>
+              {!tempPassword && (
+                <button onClick={handleResetPwSubmit} disabled={loading} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50">
+                  {loading ? "Đang xử lý..." : "Tạo mật khẩu tạm thời"}
+                </button>
+              )}
             </div>
           </div>
         </div>

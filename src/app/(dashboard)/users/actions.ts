@@ -320,7 +320,19 @@ export async function updateUser(userId: string, input: UpdateUserInput) {
 
 // ─── Reset Password ───────────────────────────────────────────
 
-export async function resetUserPassword(userId: string, newPassword: string) {
+function generateSecurePassword(length = 12): string {
+  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+  let password = "";
+  for (let i = 0; i < length; i++) {
+    password += charset.charAt(Math.floor(Math.random() * charset.length));
+  }
+  // Ensure at least one uppercase, one lowercase, one number, one special
+  password = password.replace(/^[a-z]/, charset.charAt(Math.floor(Math.random() * 26) + 26)); // uppercase
+  password = password.replace(/^[A-Z]/, charset.charAt(Math.floor(Math.random() * 10) + 52)); // number
+  return password;
+}
+
+export async function resetUserPassword(userId: string) {
   const session = await requireHighLevelUser();
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -339,11 +351,8 @@ export async function resetUserPassword(userId: string, newPassword: string) {
     return { error: "Không thể dùng chức năng này để đổi mật khẩu chính mình." };
   }
 
-  if (newPassword.length < 6) {
-    return { error: "Mật khẩu phải có ít nhất 6 ký tự" };
-  }
-
-  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  const tempPassword = generateSecurePassword();
+  const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
   try {
     await prisma.user.update({
@@ -359,7 +368,7 @@ export async function resetUserPassword(userId: string, newPassword: string) {
     });
 
     revalidatePath("/users");
-    return { success: true };
+    return { success: true, tempPassword };
   } catch {
     return { error: "Đã xảy ra lỗi khi đổi mật khẩu" };
   }
