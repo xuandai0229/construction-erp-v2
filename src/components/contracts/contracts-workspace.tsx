@@ -11,12 +11,14 @@ import { createContract, updateContract, deleteContract } from "@/app/(dashboard
 import { useToast } from "@/components/ui/toast-context";
 import { useRouter } from "next/navigation";
 import { getContractDisplayStatus, type ContractPermissionSet } from "@/lib/contracts/contracts-permissions";
+import { setProjectContextCookie } from "@/app/actions/project-context";
 
 interface ContractsWorkspaceProps {
   contracts: ContractDto[];
   projects: { id: string; name: string; code: string }[];
   suppliers: { id: string; name: string; code: string }[];
   globalPermissions: ContractPermissionSet;
+  initialProjectId?: string;
 }
 
 const TYPE_MAP: Record<string, string> = {
@@ -48,14 +50,20 @@ function formatDate(dateString: string | null) {
   return `${day}/${month}/${year}`;
 }
 
-export function ContractsWorkspace({ contracts, projects, suppliers, globalPermissions }: ContractsWorkspaceProps) {
+export function ContractsWorkspace({ contracts, projects, suppliers, globalPermissions, initialProjectId }: ContractsWorkspaceProps) {
   const router = useRouter();
   const toast = useToast();
   
   const [search, setSearch] = useState("");
-  const [filterProject, setFilterProject] = useState("");
+  const [filterProject, setFilterProjectState] = useState(initialProjectId || "");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterType, setFilterType] = useState("");
+
+  const setFilterProject = async (projectId: string) => {
+    setFilterProjectState(projectId);
+    await setProjectContextCookie(projectId || "all");
+    router.refresh();
+  };
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingContract, setEditingContract] = useState<ContractDto | null>(null);

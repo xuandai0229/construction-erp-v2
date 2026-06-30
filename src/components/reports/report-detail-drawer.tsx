@@ -313,7 +313,7 @@ export function ReportDetailDrawer({
     return () => { document.body.style.overflow = ""; };
   }, [isOpen]);
 
-  if (!isOpen || !report) return null;
+  if (!report) return null;
 
   async function handleApprove() {
     if (!report) return;
@@ -370,14 +370,14 @@ export function ReportDetailDrawer({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex justify-end bg-slate-950/45 backdrop-blur-[2px] animate-in fade-in duration-200"
+      className={`fixed inset-0 z-50 flex justify-end bg-slate-900/20 transition-all duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       onClick={!isProcessing ? onClose : undefined}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Chi tiết báo cáo hiện trường"
-        className="flex h-full w-full max-w-xl flex-col bg-white shadow-2xl animate-in slide-in-from-right duration-300 sm:max-w-2xl"
+        className={`flex h-full w-full max-w-xl flex-col bg-white shadow-2xl transition-transform duration-300 ease-out sm:max-w-2xl ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 sm:px-6 py-3 border-b border-slate-200 shrink-0 bg-white">

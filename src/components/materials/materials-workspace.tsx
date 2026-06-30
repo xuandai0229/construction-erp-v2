@@ -14,6 +14,7 @@ import { TransactionFormDialog } from "./transaction-form-dialog";
 import { createMaterialItem, updateMaterialItem, deleteMaterialItem, createMaterialTransaction } from "@/app/(dashboard)/materials/actions";
 import type { MaterialItemDto, MaterialMovementDto, ProjectStockDto } from "@/app/(dashboard)/materials/actions";
 import { useToast } from "@/components/ui/toast-context";
+import { setProjectContextCookie } from "@/app/actions/project-context";
 
 interface MaterialsWorkspaceProps {
   projects: { id: string; name: string; code: string }[];
@@ -72,9 +73,11 @@ export function MaterialsWorkspace({
     router.push(`?${params.toString()}`);
   };
 
-  const handleProjectChange = (nextProjectId: string) => {
+  const handleProjectChange = async (nextProjectId: string) => {
     setProjectId(nextProjectId);
+    await setProjectContextCookie(nextProjectId);
     updateUrl(currentTab, nextProjectId);
+    router.refresh();
   };
 
   const handleCreateMaterial = async (data: {

@@ -198,6 +198,7 @@ export type ReportPageFilters = {
   dateRange?: string; // e.g. "today", "thisWeek", "thisMonth", or "YYYY-MM-DD_YYYY-MM-DD"
   page?: number;
   pageSize?: number;
+  reportId?: string;
 };
 
 export async function getSiteReportsPage(filters: ReportPageFilters) {
@@ -247,6 +248,10 @@ export async function getSiteReportsPage(filters: ReportPageFilters) {
   }
 
   // 2. Explicit filters
+  if (filters.reportId) {
+    where.id = filters.reportId;
+  }
+  
   if (filters.projectId && filters.projectId !== "all") {
     if (accessibleProjectIds !== null && !accessibleProjectIds.includes(filters.projectId as string)) {
       return { items: [], total: 0, page: 1, pageSize: filters.pageSize || 20, totalPages: 0 };
@@ -257,7 +262,29 @@ export async function getSiteReportsPage(filters: ReportPageFilters) {
   if (filters.status && filters.status !== "all" && !filters.tab?.match(/^(pending|rejected)$/)) {
     if (filters.status === "REJECTED_AND_REVISION") {
       where.status = { in: ["REJECTED", "REVISION_REQUESTED"] };
-    } else {
+    } else if (filters.status === "ISSUE") {
+      where.AND = [
+        ...(where.AND || []),
+        {
+          OR: [
+            {
+              AND: [
+                { issues: { not: null, notIn: ["", " "] } },
+                { NOT: { issues: { startsWith: "Không có" } } },
+                { NOT: { issues: { startsWith: "không có" } } },
+              ]
+            },
+            {
+              lines: {
+                some: {
+                  issueNote: { not: null, notIn: ["", " "] }
+                }
+              }
+            }
+          ]
+        }
+      ];
+    } else if (["DRAFT", "SUBMITTED", "APPROVED", "REJECTED", "REVISION_REQUESTED", "LOCKED", "CANCELLED"].includes(filters.status)) {
       where.status = filters.status;
     }
   }

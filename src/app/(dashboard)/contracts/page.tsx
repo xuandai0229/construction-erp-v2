@@ -3,14 +3,20 @@ import { redirect } from "next/navigation";
 import { getContractsData } from "./actions";
 import { ContractsWorkspace } from "@/components/contracts/contracts-workspace";
 
+import { getGlobalProjectContext } from "@/lib/project-context";
+
 export const metadata = {
   title: "Quản lý hợp đồng | ERP Công trình",
   description: "Theo dõi hợp đồng, giá trị và tiến độ thực hiện.",
 };
 
-export default async function ContractsPage() {
+export default async function ContractsPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
   const session = await getSession();
   if (!session) redirect("/login");
+
+  const resolvedParams = await searchParams;
+  const urlProjectId = typeof resolvedParams.projectId === "string" ? resolvedParams.projectId : undefined;
+  const globalContext = await getGlobalProjectContext(session, urlProjectId);
 
   const { contracts, projects, suppliers, globalPermissions } = await getContractsData();
 
@@ -29,6 +35,7 @@ export default async function ContractsPage() {
       projects={projects}
       suppliers={suppliers}
       globalPermissions={globalPermissions}
+      initialProjectId={globalContext.selectedProjectId || undefined}
     />
   );
 }

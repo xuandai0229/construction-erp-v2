@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 
 export default function DashboardError({
   error,
@@ -9,6 +10,10 @@ export default function DashboardError({
   error: Error & { digest?: string };
   unstable_retry: () => void;
 }) {
+  useEffect(() => {
+    console.error("Dashboard Crash:", error);
+  }, [error]);
+
   return (
     <div className="mx-auto flex min-h-[420px] w-full max-w-[900px] items-center justify-center px-4">
       <div className="w-full rounded-2xl border border-red-100 bg-white p-6 text-center shadow-sm shadow-slate-950/[0.04] sm:p-8">

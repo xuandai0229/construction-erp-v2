@@ -41,7 +41,7 @@ export function DashboardRecentSiteReports({ reports }: { reports: DashboardSite
                       <span className="text-xs font-semibold text-slate-600">{report.type === "WEEKLY" ? "Tuần" : "Ngày"}</span>
                     </div>
                     <p className="mt-2 line-clamp-1 text-sm font-bold text-slate-950">{report.title}</p>
-                    <p className="mt-1 text-xs font-medium text-slate-600">{report.projectName} · {report.reporterName}</p>
+                    <p className="mt-1 line-clamp-1 text-xs font-medium text-slate-600">{report.projectName} · {report.reporterName}</p>
                     <p className="mt-1 text-xs text-slate-600">{formatDateVNShort(report.reportDate)}</p>
                   </div>
                 </div>

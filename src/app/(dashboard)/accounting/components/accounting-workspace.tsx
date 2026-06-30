@@ -13,6 +13,7 @@ import { PaymentRequestFormDialog } from "./payment-request-form-dialog";
 import { PaymentRequestDetailDrawer } from "./payment-request-detail-drawer";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ReasonDialog } from "@/components/ui/reason-dialog";
+import { setProjectContextCookie } from "@/app/actions/project-context";
 
 interface AccountingWorkspaceProps {
   paymentRequests: PaymentRequestDto[];
@@ -21,6 +22,7 @@ interface AccountingWorkspaceProps {
   contracts: AccountingContractOptionDto[];
   globalPermissions: any;
   currentUserId: string;
+  initialProjectId?: string;
 }
 
 const TYPE_MAP: Record<string, string> = {
@@ -63,13 +65,19 @@ function isOverdue(dueDate: string | null, status: string) {
 
 
 
-export function AccountingWorkspace({ paymentRequests, projects, suppliers, contracts, globalPermissions, currentUserId }: AccountingWorkspaceProps) {
+export function AccountingWorkspace({ paymentRequests, projects, suppliers, contracts, globalPermissions, currentUserId, initialProjectId }: AccountingWorkspaceProps) {
   const router = useRouter();
   const toast = useToast();
   
   const [search, setSearch] = useState("");
-  const [filterProject, setFilterProject] = useState("");
+  const [filterProject, setFilterProjectState] = useState(initialProjectId || "");
   const [filterType, setFilterType] = useState("");
+
+  const setFilterProject = async (projectId: string) => {
+    setFilterProjectState(projectId);
+    await setProjectContextCookie(projectId || "all");
+    router.refresh();
+  };
   
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingRequest, setEditingRequest] = useState<PaymentRequestDto | null>(null);

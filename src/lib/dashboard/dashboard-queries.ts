@@ -97,6 +97,18 @@ export type DashboardActivityItem = {
   tone: "blue" | "emerald" | "amber" | "rose" | "slate" | "violet";
 };
 
+export type DashboardNotification = {
+  id: string;
+  type: string;
+  severity: "HIGH" | "MEDIUM" | "LOW" | "INFO";
+  title: string;
+  message: string | null;
+  href: string | null;
+  createdAt: Date;
+  isRead: boolean;
+  projectName: string | null;
+};
+
 export type DashboardData = {
   session: {
     id: string;
@@ -128,6 +140,9 @@ export type DashboardData = {
   recentDocuments: DashboardDocumentItem[];
   recentSiteReports: DashboardSiteReportItem[];
   activityTimeline: DashboardActivityItem[];
+  selectedProjectId: string | null;
+  accessibleProjects: { id: string; code: string; name: string; status: string }[];
+  notifications: DashboardNotification[];
 };
 
 function normalizePeriod(period: string | undefined): DashboardPeriod {
@@ -214,7 +229,14 @@ function getHealth(project: {
   if (project.itemCount === 0) return { health: "NO_DATA", warning: "Chưa thiết lập WBS" };
   if (project.daysRemaining !== null && project.daysRemaining < 0) return { health: "DELAYED", warning: "Trễ tiến độ" };
   if (project.recentEntryCount === 0) return { health: "AT_RISK", warning: "Chưa có nhập liệu gần đây" };
-  if (project.daysRemaining !== null && project.daysRemaining <= 14 && (project.progressPercent ?? 0) < 90) {
+  
+  const prog = project.progressPercent ?? 0;
+  if (project.daysRemaining !== null && project.daysRemaining > 0) {
+    if (prog < 30) return { health: "DELAYED", warning: "Rủi ro chậm tiến độ" };
+    if (prog < 50) return { health: "AT_RISK", warning: "Cần chú ý" };
+  }
+  
+  if (project.daysRemaining !== null && project.daysRemaining <= 14 && prog < 90) {
     return { health: "AT_RISK", warning: "Có nguy cơ trễ" };
   }
   return { health: "ON_TRACK", warning: "Đang ổn" };
@@ -264,10 +286,36 @@ function calculateProjectProgress(
   };
 }
 
-export async function getDashboardData(session: SessionUser, rawPeriod?: string): Promise<DashboardData> {
+export async function getDashboardData(session: SessionUser, rawPeriod?: string, rawProjectId?: string): Promise<DashboardData> {
   const period = getPeriodRange(normalizePeriod(rawPeriod));
-  const accessibleProjectIds = await getAccessibleProjectIds(session);
+  
+  // Base access
+  let accessibleProjectIds = await getAccessibleProjectIds(session);
   const scope = getDashboardProjectScope(accessibleProjectIds);
+
+  // Fetch light list of all accessible projects for the switcher
+  const allAccessibleProjectWhere: Prisma.ProjectWhereInput = accessibleProjectIds === null 
+    ? { deletedAt: null, status: { in: ["ACTIVE", "PLANNING", "ON_HOLD"] } } 
+    : { deletedAt: null, status: { in: ["ACTIVE", "PLANNING", "ON_HOLD"] }, id: { in: accessibleProjectIds } };
+    
+  const allAccessibleProjectsList = await prisma.project.findMany({
+    where: allAccessibleProjectWhere,
+    select: { id: true, code: true, name: true, status: true },
+    orderBy: { updatedAt: "desc" },
+    take: 50, // Limit to recent 50 to avoid massive payloads
+  });
+
+  // Apply project filter if requested
+  let selectedProjectId: string | null = null;
+  if (rawProjectId && rawProjectId !== 'all') {
+    if (accessibleProjectIds !== null && !accessibleProjectIds.includes(rawProjectId)) {
+      accessibleProjectIds = []; // User doesn't have access to this project
+    } else {
+      accessibleProjectIds = [rawProjectId]; // Restrict scope to this project
+      selectedProjectId = rawProjectId;
+    }
+  }
+
   const projectWhere = getProjectWhere(accessibleProjectIds);
   const today = todayWorkDate();
   const todayRange = getWorkDateRange(today);
@@ -402,7 +450,21 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string)
       include: { project: { select: { name: true } } },
     }),
     prisma.auditLog.findMany({
-      where: scope.allProjects ? {} : { projectId: { in: scope.projectIds ?? [] } },
+      where: {
+        ...(scope.allProjects ? {} : { projectId: { in: scope.projectIds ?? [] } }),
+        entityType: { 
+          in: [
+            "FieldProgressEntry", "FIELD_PROGRESS_ENTRY",
+            "Document", "DOCUMENT",
+            "SiteReport", "SITE_REPORT",
+            "ApprovalRequest", "APPROVAL_REQUEST",
+            "PaymentRequest", "PAYMENT_REQUEST",
+            "MaterialRequest", "MATERIAL_REQUEST",
+            "FieldMaterialRequest", "FIELD_MATERIAL_REQUEST"
+          ] 
+        },
+        action: { notIn: ["RESET_PASSWORD", "LOGIN", "LOGOUT", "UPDATE_PASSWORD"] },
+      },
       orderBy: { createdAt: "desc" },
       take: 8,
       include: { user: { select: { name: true } } },
@@ -485,7 +547,7 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string)
 
   const financeActions: DashboardActionItem[] =
     financeSummary?.recentPayments
-      .filter((payment) => payment.status === "SUBMITTED" || payment.status === "APPROVED")
+      .filter((payment) => payment.status === "SUBMITTED")
       .slice(0, 3)
       .map((payment) => ({
         id: `payment-${payment.id}`,
@@ -498,7 +560,36 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string)
         href: payment.href,
       })) ?? [];
 
-  const projectActions: DashboardActionItem[] = attentionProjects.slice(0, 5).map(({ project, reason, priority }) => ({
+  const wbsProjects = attentionProjects.filter(p => p.reason === "Chưa thiết lập WBS");
+  const otherAttention = attentionProjects.filter(p => p.reason !== "Chưa thiết lập WBS");
+  
+  const projectActions: DashboardActionItem[] = [];
+  
+  if (wbsProjects.length > 1) {
+    projectActions.push({
+      id: "grouped-wbs",
+      title: `${wbsProjects.length} công trình chưa thiết lập WBS`,
+      projectName: "Nhiều dự án",
+      type: "Tiến độ",
+      priority: "HIGH",
+      status: "Cần xử lý",
+      createdAt: null,
+      href: "/projects",
+    });
+  } else if (wbsProjects.length === 1) {
+    projectActions.push({
+      id: `project-${wbsProjects[0].project.id}-wbs`,
+      title: wbsProjects[0].reason,
+      projectName: wbsProjects[0].project.name,
+      type: "Tiến độ",
+      priority: wbsProjects[0].priority,
+      status: "Cần xử lý",
+      createdAt: null,
+      href: `/projects/${wbsProjects[0].project.id}/field-progress`,
+    });
+  }
+
+  projectActions.push(...otherAttention.slice(0, 5 - projectActions.length).map(({ project, reason, priority }) => ({
     id: `project-${project.id}-${reason}`,
     title: reason,
     projectName: project.name,
@@ -507,10 +598,10 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string)
     status: "Cần xử lý",
     createdAt: null,
     href: `/projects/${project.id}/field-progress`,
-  }));
+  })));
 
   const reportActions: DashboardActionItem[] = issueReports
-    .filter((report) => report.status === "SUBMITTED" || report.status === "REVISION_REQUESTED" || hasReportIssue(report))
+    .filter((report) => report.status === "SUBMITTED" || report.status === "REVISION_REQUESTED" || (hasReportIssue(report) && report.status !== "APPROVED"))
     .slice(0, 3)
     .map((report) => ({
       id: `report-${report.id}`,
@@ -546,14 +637,18 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string)
     })),
   ].slice(0, 4);
 
-  const actionItems = [...approvalItems, ...financeActions, ...projectActions, ...reportActions, ...materialActions]
+  const forbiddenStatuses = ["APPROVED", "COMPLETED", "DONE", "FINISHED", "PAID", "RESOLVED", "Đã duyệt", "Hoàn thành", "Đã thanh toán"];
+  
+  // Do NOT include approvalItems in actionItems to separate them
+  const actionItems = [...financeActions, ...projectActions, ...reportActions, ...materialActions]
+    .filter((item) => !forbiddenStatuses.includes(item.status) && !forbiddenStatuses.includes(item.status.toUpperCase()))
     .sort((a, b) => {
       const priorityScore = { HIGH: 3, MEDIUM: 2, LOW: 1 };
       const priorityDiff = priorityScore[b.priority] - priorityScore[a.priority];
       if (priorityDiff !== 0) return priorityDiff;
       return (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0);
     })
-    .slice(0, 8);
+    .slice(0, 5); // strict max 5 items
 
   const projectNameById = new Map([
     ...overviewProjects.map((project) => [project.id, project.name] as const),
@@ -568,7 +663,79 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string)
     createdAt: log.createdAt,
     href: log.projectId ? `/projects/${log.projectId}` : "/dashboard",
     tone: getAuditTone(log.action),
-  }));
+  })).slice(0, 4); // strict max 4 items
+
+  const notifications: DashboardNotification[] = [];
+
+  // 1. Pending Approvals
+  approvalItems.forEach(item => {
+    notifications.push({
+      id: `notif-${item.id}`,
+      type: 'APPROVAL',
+      severity: item.priority === 'HIGH' ? 'HIGH' : 'MEDIUM',
+      title: item.title,
+      message: 'Hồ sơ chờ phê duyệt',
+      href: item.href,
+      createdAt: item.createdAt ?? new Date(),
+      isRead: false,
+      projectName: item.projectName,
+    });
+  });
+
+  // 2. Delayed Projects (from attentionProjects)
+  attentionProjects.filter(p => p.priority === 'HIGH').forEach(p => {
+    notifications.push({
+      id: `notif-delay-${p.project.id}`,
+      type: 'PROJECT',
+      severity: 'HIGH',
+      title: `Cảnh báo: ${p.reason}`,
+      message: 'Công trình đang có nguy cơ trễ tiến độ',
+      href: `/projects/${p.project.id}/field-progress`,
+      createdAt: new Date(), // Realtime status
+      isRead: false,
+      projectName: p.project.name,
+    });
+  });
+
+  // 3. Reports with issues
+  reportActions.filter(r => r.priority === 'HIGH').forEach(r => {
+    notifications.push({
+      id: `notif-${r.id}`,
+      type: 'REPORT',
+      severity: 'HIGH',
+      title: r.title,
+      message: 'Báo cáo hiện trường có ghi nhận vấn đề',
+      href: r.href,
+      createdAt: r.createdAt ?? new Date(),
+      isRead: false,
+      projectName: r.projectName,
+    });
+  });
+
+  // 4. Pending Payments
+  if (financeSummary?.recentPayments) {
+    financeSummary.recentPayments.filter(p => p.status === 'SUBMITTED').forEach(p => {
+      notifications.push({
+        id: `notif-pay-${p.id}`,
+        type: 'PAYMENT',
+        severity: 'MEDIUM',
+        title: p.title,
+        message: 'Thanh toán chờ xử lý',
+        href: p.href,
+        createdAt: p.createdAt,
+        isRead: false,
+        projectName: p.projectName,
+      });
+    });
+  }
+
+  // Sort notifications by severity and date
+  notifications.sort((a, b) => {
+    const score = { HIGH: 3, MEDIUM: 2, LOW: 1, INFO: 0 };
+    const diff = score[b.severity] - score[a.severity];
+    if (diff !== 0) return diff;
+    return b.createdAt.getTime() - a.createdAt.getTime();
+  });
 
   const activeProjectForAction = overviewProjects[0] ?? null;
   const quickActions = [
@@ -578,57 +745,48 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string)
     canViewApprovals ? { label: "Trung tâm phê duyệt", href: "/approvals", tone: "secondary" as const } : null,
   ].filter((action): action is NonNullable<typeof action> => Boolean(action));
 
+  const atRiskCount = projectOverview.filter(p => p.health === "DELAYED").length;
+  const warningCount = projectOverview.filter(p => p.health === "AT_RISK").length;
+
   const kpis: DashboardKpi[] = [
     {
       id: "projects",
-      label: canViewCompanyWide ? "Tổng công trình" : "Công trình được truy cập",
-      value: String(allProjects),
-      description: `${activeProjects} đang thi công`,
+      label: canViewCompanyWide ? "Tổng công trình" : "Công trình",
+      value: String(activeProjects),
+      description: `${activeProjects}/${allProjects} đang thi công`,
       tone: "blue",
       href: "/projects",
     },
     {
+      id: "action-items",
+      label: "Việc cần xử lý",
+      value: String(actionItems.length),
+      description: "Yêu cầu hành động ngay",
+      tone: actionItems.length > 0 ? "rose" : "emerald",
+    },
+    {
       id: "entries-today",
-      label: "Nhập khối lượng hôm nay",
+      label: "Nhập khối lượng",
       value: String(entriesToday),
-      description: "Theo ngày nghiệp vụ hiện trường",
+      description: "Hôm nay",
       tone: entriesToday > 0 ? "emerald" : "amber",
     },
     {
-      id: "reports-period",
-      label: `Báo cáo ${period.label.toLowerCase()}`,
-      value: String(periodReports),
-      description: "Báo cáo hiện trường",
+      id: "documents-reports",
+      label: "Báo cáo / Tài liệu",
+      value: String(periodReports + periodDocuments),
+      description: `Trong ${period.label.toLowerCase()}`,
       tone: "violet",
-      href: "/reports",
-    },
-    {
-      id: "documents-period",
-      label: `Tài liệu ${period.label.toLowerCase()}`,
-      value: String(periodDocuments),
-      description: "File mới upload",
-      tone: "slate",
-      href: "/documents",
     },
     {
       id: "attention",
-      label: "Công trình cần chú ý",
-      value: String(attentionProjects.length + issueReports.filter(hasReportIssue).length),
-      description: "Thiếu WBS, thiếu nhập liệu hoặc có vấn đề",
-      tone: attentionProjects.length > 0 ? "amber" : "emerald",
+      label: "Công trình rủi ro",
+      value: String(atRiskCount + warningCount),
+      description: atRiskCount > 0 ? `${atRiskCount} rủi ro, ${warningCount} cần chú ý` : "Không có rủi ro",
+      tone: atRiskCount > 0 ? "rose" : (warningCount > 0 ? "amber" : "emerald"),
     },
   ];
 
-  if (canViewApprovals) {
-    kpis.push({
-      id: "pending-approvals",
-      label: "Đề xuất chờ duyệt",
-      value: String(pendingApprovals.length),
-      description: "Theo phạm vi công trình được phép",
-      tone: pendingApprovals.length > 0 ? "amber" : "emerald",
-      href: "/approvals",
-    });
-  }
   if (financeSummary) {
     kpis.push({
       id: "pending-payments",
@@ -670,7 +828,7 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string)
     })),
     recentSiteReports: recentSiteReports.map((report) => ({
       id: report.id,
-      title: report.title || report.reportNo,
+      title: report.title && !report.title.includes("ngày 202") ? report.title : `Báo cáo ngày ${new Intl.DateTimeFormat("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit", year: "numeric" }).format(report.reportDate)}`,
       projectName: report.project.name,
       reporterName: report.reporterName || report.createdBy.name,
       status: statusLabel(report.status),
@@ -680,6 +838,9 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string)
       href: `/reports?projectId=${report.projectId}`,
     })),
     activityTimeline,
+    selectedProjectId,
+    accessibleProjects: allAccessibleProjectsList,
+    notifications,
   };
 }
 
@@ -717,13 +878,29 @@ async function getFinanceSummary(accessibleProjectIds: string[] | null): Promise
 }
 
 function getAuditTitle(action: string, entityType: string) {
-  const normalized = action.replaceAll("_", " ").toLowerCase();
-  if (action.includes("APPROVED")) return `Đã duyệt ${entityType}`;
-  if (action.includes("REJECTED")) return `Từ chối ${entityType}`;
-  if (action.includes("CREATED") || action.includes("CREATE")) return `Tạo mới ${entityType}`;
-  if (action.includes("UPDATED") || action.includes("UPDATE")) return `Cập nhật ${entityType}`;
-  if (action.includes("DELETED") || action.includes("DELETE")) return `Xóa ${entityType}`;
-  return `${entityType}: ${normalized}`;
+  let entityName = entityType;
+  const t = entityType.toUpperCase();
+  if (t === "FIELDPROGRESSENTRY" || t === "FIELD_PROGRESS_ENTRY") entityName = "tiến độ";
+  else if (t === "DOCUMENT") entityName = "tài liệu";
+  else if (t === "SITEREPORT" || t === "SITE_REPORT") entityName = "báo cáo";
+  else if (t === "APPROVALREQUEST" || t === "APPROVAL_REQUEST") entityName = "hồ sơ";
+  else if (t === "PAYMENTREQUEST" || t === "PAYMENT_REQUEST") entityName = "hồ sơ thanh toán";
+  else if (t === "MATERIALREQUEST" || t === "MATERIAL_REQUEST" || t === "FIELDMATERIALREQUEST" || t === "FIELD_MATERIAL_REQUEST") entityName = "yêu cầu vật tư";
+  else if (t === "PROJECT") entityName = "công trình";
+
+  const act = action.toUpperCase();
+  
+  if (t === "DOCUMENT" && (act.includes("CREATED") || act.includes("UPLOAD"))) return `Upload tài liệu`;
+  if (t === "SITEREPORT" && (act.includes("CREATED") || act.includes("CREATE"))) return `Tạo báo cáo`;
+
+  if (act.includes("APPROVED")) return `Duyệt ${entityName}`;
+  if (act.includes("REJECTED")) return `Từ chối ${entityName}`;
+  if (act.includes("CREATED") || act.includes("CREATE")) return `Tạo ${entityName}`;
+  if (act.includes("UPDATED") || act.includes("UPDATE")) return `Cập nhật ${entityName}`;
+  if (act.includes("DELETED") || act.includes("DELETE")) return `Xóa ${entityName}`;
+  if (act.includes("SUBMITTED") || act.includes("SUBMIT")) return `Gửi ${entityName}`;
+  
+  return `Cập nhật ${entityName}`;
 }
 
 function getAuditTone(action: string): DashboardActivityItem["tone"] {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Plus, AlertCircle, Clock, XCircle, FileEdit, CheckSquare, Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast-context";
@@ -29,6 +29,7 @@ import {
   submitSiteReport
 } from "@/app/(dashboard)/reports/actions";
 import { useRouter } from "next/navigation";
+import { setProjectContextCookie } from "@/app/actions/project-context";
 
 interface ReportsWorkspaceProps {
   initialReports: FieldReport[];
@@ -105,14 +106,28 @@ export function ReportsWorkspace({
     }
   }, [router]);
 
+  // Auto-open report detail if reportId is in URL
+  useEffect(() => {
+    const reportIdParam = searchParams.get("reportId");
+    if (reportIdParam && !isDetailOpen && initialReports.length > 0) {
+      const found = initialReports.find(r => r.id === reportIdParam);
+      if (found) {
+        setDetailReport(found);
+        setIsDetailOpen(true);
+      }
+    }
+  }, [searchParams, initialReports, isDetailOpen]);
+
   // Local Search syncs to URL on blur/enter or via effect (handled by toolbar usually, but we do it simple here)
   const handleSearchChange = (v: string) => {
     setSearch(v);
     updateUrl({ q: v, page: "1" });
   };
-  const handleProjectFilterChange = (v: string) => {
+  const handleProjectFilterChange = async (v: string) => {
     setProjectFilter(v);
     updateUrl({ projectId: v, page: "1" });
+    await setProjectContextCookie(v);
+    router.refresh();
   };
   const handleStatusFilterChange = (v: string) => {
     setStatusFilter(v);
@@ -170,8 +185,17 @@ export function ReportsWorkspace({
 
   const handleCloseDetail = useCallback(() => {
     setIsDetailOpen(false);
+    
+    if (searchParams.has("reportId")) {
+      const current = new URLSearchParams(Array.from(searchParams.entries()));
+      current.delete("reportId");
+      const search = current.toString();
+      const query = search ? `?${search}` : "";
+      router.replace(`${window.location.pathname}${query}`, { scroll: false });
+    }
+
     setTimeout(() => setDetailReport(null), 300);
-  }, []);
+  }, [router, searchParams]);
 
   const handleResetFilters = () => {
     setSearch("");
@@ -422,6 +446,11 @@ export function ReportsWorkspace({
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Báo cáo hiện trường</h1>
             <p className="hidden sm:block text-sm text-slate-500 mt-0.5">
               Quản lý, theo dõi và tổng hợp báo cáo công việc
+              {searchParams.get("reportId") && (
+                <span className="ml-2 inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                  Đang lọc 1 báo cáo
+                </span>
+              )}
             </p>
           </div>
           <div className="flex items-center gap-2 sm:hidden">

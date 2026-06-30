@@ -26,33 +26,33 @@ export function DashboardFinanceSummaryPanel({ summary }: { summary: DashboardFi
           Mở thanh toán <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
-      <div className="grid grid-cols-1 gap-4 p-4 lg:grid-cols-3">
-        <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+      <div className="grid grid-cols-1 divide-y divide-slate-100 lg:grid-cols-3 lg:divide-x lg:divide-y-0">
+        <div className="p-4 sm:p-5">
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-700"><FileText className="h-4 w-4 text-blue-700" />Tổng giá trị hợp đồng</div>
-          <p className="mt-3 text-2xl font-extrabold tracking-tight text-slate-950">{formatCurrencyVND(summary.totalContractValue)}</p>
-          <p className="mt-1 text-sm text-slate-600">{summary.activeContracts} hợp đồng đang hiệu lực</p>
+          <p className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950">{formatCurrencyVND(summary.totalContractValue)}</p>
+          <p className="mt-1 text-xs font-medium text-slate-600">{summary.activeContracts} hợp đồng đang hiệu lực</p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+        <div className="p-4 sm:p-5">
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-700"><CreditCard className="h-4 w-4 text-amber-700" />Thanh toán cần xử lý</div>
-          <p className="mt-3 text-2xl font-extrabold tracking-tight text-slate-950">{formatCurrencyVND(summary.pendingPaymentAmount)}</p>
-          <p className="mt-1 text-sm text-slate-600">{summary.pendingPaymentCount} hồ sơ chưa hoàn tất</p>
+          <p className="mt-2 text-2xl font-extrabold tracking-tight text-slate-950">{formatCurrencyVND(summary.pendingPaymentAmount)}</p>
+          <p className="mt-1 text-xs font-medium text-slate-600">{summary.pendingPaymentCount} hồ sơ chưa hoàn tất</p>
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-4">
-          <h3 className="text-sm font-bold text-slate-950">Hồ sơ gần đây</h3>
+        <div className="p-4 sm:p-5">
+          <h3 className="mb-3 text-sm font-bold text-slate-950">Hồ sơ gần đây</h3>
           {summary.recentPayments.length === 0 ? (
-            <DashboardEmptyState title="Chưa có hồ sơ thanh toán" className="mt-3 min-h-[120px] py-5" />
+            <p className="text-sm text-slate-500">Chưa có hồ sơ thanh toán.</p>
           ) : (
-            <div className="mt-3 space-y-3">
-              {summary.recentPayments.slice(0, 3).map((payment) => (
-                <Link key={payment.id} href={payment.href} className="block rounded-lg border border-slate-200 p-3 hover:bg-slate-50">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="line-clamp-1 text-sm font-bold text-slate-950">{payment.title}</p>
-                      <p className="mt-1 text-xs font-medium text-slate-600">{payment.projectName} · {formatDateVNShort(payment.createdAt)}</p>
-                    </div>
-                    <StatusBadge variant={paymentVariant(payment.status)} size="sm">{payment.status}</StatusBadge>
+            <div className="space-y-2">
+              {summary.recentPayments.slice(0, 2).map((payment) => (
+                <Link key={payment.id} href={payment.href} className="flex items-center justify-between rounded-lg border border-slate-100 p-2 hover:bg-slate-50 transition-colors">
+                  <div className="min-w-0 flex-1">
+                    <p className="line-clamp-1 text-xs font-bold text-slate-950">{payment.title}</p>
+                    <p className="mt-0.5 line-clamp-1 text-[10px] font-medium text-slate-600">{payment.projectName} · {formatDateVNShort(payment.createdAt)}</p>
                   </div>
-                  <p className="mt-2 text-sm font-bold text-slate-900">{formatCurrencyVND(payment.amount)}</p>
+                  <div className="ml-2 flex shrink-0 flex-col items-end">
+                    <StatusBadge variant={paymentVariant(payment.status)} size="sm">{payment.status}</StatusBadge>
+                    <p className="mt-1 text-xs font-bold text-slate-900">{formatCurrencyVND(payment.amount)}</p>
+                  </div>
                 </Link>
               ))}
             </div>

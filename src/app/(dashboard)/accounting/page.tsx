@@ -3,14 +3,20 @@ import { redirect } from "next/navigation";
 import { getPaymentRequestsData } from "./actions";
 import { AccountingWorkspace } from "./components/accounting-workspace";
 
+import { getGlobalProjectContext } from "@/lib/project-context";
+
 export const metadata = {
   title: "Kế toán & thanh toán | ERP Công trình",
   description: "Quản lý hồ sơ thanh toán, hóa đơn và dòng tiền dự án.",
 };
 
-export default async function AccountingPage() {
+export default async function AccountingPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
   const session = await getSession();
   if (!session) redirect("/login");
+
+  const resolvedParams = await searchParams;
+  const urlProjectId = typeof resolvedParams.projectId === "string" ? resolvedParams.projectId : undefined;
+  const globalContext = await getGlobalProjectContext(session, urlProjectId);
 
   const data = await getPaymentRequestsData();
 
@@ -31,6 +37,7 @@ export default async function AccountingPage() {
       contracts={data.contracts}
       globalPermissions={data.globalPermissions}
       currentUserId={session.id}
+      initialProjectId={globalContext.selectedProjectId || undefined}
     />
   );
 }

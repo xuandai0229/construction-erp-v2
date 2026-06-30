@@ -25,19 +25,24 @@ export const metadata = {
   description: "Quản lý, theo dõi và tổng hợp báo cáo công việc hằng ngày tại công trường",
 };
 
+import { getGlobalProjectContext } from "@/lib/project-context";
+
 export default async function ReportsPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
   const session = await getSession();
   if (!session) redirect("/login");
 
   const resolvedParams = await searchParams;
+  const urlProjectId = typeof resolvedParams.projectId === "string" ? resolvedParams.projectId : undefined;
+  const globalContext = await getGlobalProjectContext(session, urlProjectId);
 
   const filters = {
     tab: typeof resolvedParams.tab === "string" ? resolvedParams.tab : undefined,
     q: typeof resolvedParams.q === "string" ? resolvedParams.q : undefined,
-    projectId: typeof resolvedParams.projectId === "string" ? resolvedParams.projectId : undefined,
+    projectId: globalContext.selectedProjectId || undefined,
     type: typeof resolvedParams.type === "string" ? resolvedParams.type : undefined,
     status: typeof resolvedParams.status === "string" ? resolvedParams.status : undefined,
     dateRange: typeof resolvedParams.dateRange === "string" ? resolvedParams.dateRange : undefined,
+    reportId: typeof resolvedParams.reportId === "string" ? resolvedParams.reportId : undefined,
     page: typeof resolvedParams.page === "string" ? parseInt(resolvedParams.page, 10) : 1,
     pageSize: 10,
   };
@@ -131,7 +136,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: { [k
   // "KPI tính chung tất cả report". 
   // Let's keep it simple for now and just pass paginated reports. The stats will reflect the current page if we do that,
   // which is wrong. We need global stats.
-  const allReportsForStats = await getSiteReports({});
+  const allReportsForStats = await getSiteReports({ projectId: globalContext.selectedProjectId || undefined });
   const allReportsMapped = allReportsForStats.map((r: Record<string, unknown>) => {
     const rawIssues = (r.issues as string || '').trim();
     const isIssueValid = rawIssues.length > 0 && !rawIssues.toLowerCase().startsWith('không có') && !rawIssues.toLowerCase().startsWith('không');

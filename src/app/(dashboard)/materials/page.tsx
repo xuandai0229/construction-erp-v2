@@ -5,6 +5,8 @@ import type { MaterialItemDto, MaterialMovementDto, ProjectStockDto } from "./ac
 import { MaterialsWorkspace } from "@/components/materials/materials-workspace";
 import { getMaterialPermissions, MaterialPermissionSet } from "@/lib/materials/materials-permissions";
 
+import { getGlobalProjectContext } from "@/lib/project-context";
+
 export const metadata = {
   title: "Quản lý vật tư | ERP Công trình",
   description: "Theo dõi nhập, xuất, tồn kho và nhu cầu vật tư tại công trường",
@@ -19,20 +21,16 @@ export default async function MaterialsPage({
   if (!session) redirect("/login");
 
   const resolvedParams = await searchParams;
-  const initialProjectId = typeof resolvedParams.projectId === "string" ? resolvedParams.projectId : undefined;
+  const urlProjectId = typeof resolvedParams.projectId === "string" ? resolvedParams.projectId : undefined;
 
   const projects = await getActiveProjects();
+  const globalContext = await getGlobalProjectContext(session, urlProjectId);
+  
   let initialStocks: ProjectStockDto[] = [];
   let initialTransactions: MaterialMovementDto[] = [];
   let materialItems: MaterialItemDto[] = [];
 
-  const accessibleProjectIds = new Set(projects.map((project) => project.id));
-  const projectIdToLoad =
-    initialProjectId && accessibleProjectIds.has(initialProjectId)
-      ? initialProjectId
-      : projects.length > 0
-        ? projects[0].id
-        : undefined;
+  const projectIdToLoad = globalContext.selectedProjectId || (projects.length > 0 ? projects[0].id : undefined);
 
   let permissions: MaterialPermissionSet | undefined;
 

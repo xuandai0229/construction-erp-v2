@@ -41,3 +41,26 @@ export function formatDateTimeVN(value: Date | string | null | undefined) {
     .format(date)
     .replace(",", "");
 }
+
+export function formatStatusLabel(status: string): string {
+  if (!status) return '';
+  
+  const s = status.toUpperCase();
+  
+  const statusMap: Record<string, string> = {
+    'DRAFT': 'Nháp',
+    'SUBMITTED': 'Đã gửi',
+    'PENDING': 'Chờ duyệt',
+    'APPROVED': 'Đã duyệt',
+    'REJECTED': 'Từ chối',
+    'COMPLETED': 'Hoàn tất',
+    'PAID': 'Đã thanh toán',
+    'CANCELLED': 'Đã hủy',
+    'ON_TRACK': 'Đúng tiến độ',
+    'AT_RISK': 'Cần chú ý',
+    'DELAYED': 'Rủi ro',
+    'NO_DATA': 'Chưa cập nhật'
+  };
+
+  return statusMap[s] || status;
+}

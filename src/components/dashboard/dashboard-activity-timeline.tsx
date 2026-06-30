@@ -40,7 +40,7 @@ export function DashboardActivityTimeline({ activities }: { activities: Dashboar
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="line-clamp-1 text-sm font-bold text-slate-950">{activity.title}</span>
-                  <span className="mt-1 block text-xs font-medium text-slate-600">{activity.actorName} · {activity.projectName}</span>
+                  <span className="mt-1 line-clamp-1 text-xs font-medium text-slate-600">{activity.actorName} · {activity.projectName}</span>
                   <span className="mt-1 block text-xs text-slate-600">{formatDateTimeVN(activity.createdAt)}</span>
                 </span>
                 <ArrowRight className="mt-2 h-4 w-4 shrink-0 text-slate-400 group-hover:text-blue-700" />

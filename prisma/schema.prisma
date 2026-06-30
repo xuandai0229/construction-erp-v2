@@ -247,6 +247,7 @@ model User {
   approvedFieldEntries    FieldProgressEntry[]    @relation("FieldEntryApprover")
   fieldMaterialRequests   FieldMaterialRequest[]  @relation("FieldMaterialRequester")
   updatedSettings         SystemSetting[]         @relation("SettingUpdater")
+  notifications           Notification[]
 
   @@index([email])
   @@index([username])
@@ -287,6 +288,7 @@ model Project {
   projectMaterialStocks  ProjectMaterialStock[]
   materialItems          MaterialItem[]
   approvalRequests       ApprovalRequest[]
+  notifications          Notification[]
 
   @@index([code])
   @@index([status])
@@ -787,6 +789,26 @@ model ApprovalRequest {
   @@index([type])
   @@index([priority])
   @@index([sourceType, sourceId])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String?
+  projectId String?
+  type      String
+  severity  String    @default("INFO") // INFO, WARNING, ERROR, SUCCESS
+  title     String
+  message   String?
+  href      String?
+  isRead    Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+
+  user    User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@index([projectId, createdAt])
 }
 
 model ChatMessage {
