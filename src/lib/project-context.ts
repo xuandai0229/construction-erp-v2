@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import prisma from '@/lib/prisma';
 import { getAccessibleProjectIds } from '@/lib/rbac';
 import type { SessionUser } from '@/lib/auth';
+import { getProjectStatusMeta, isPreparationProjectStatus } from '@/lib/project-status';
 
 export type GlobalProjectContext = {
   selectedProjectId: string | null;
@@ -50,8 +51,8 @@ export async function getGlobalProjectContext(
 
   // 3. Fetch light list of all accessible projects
   const allAccessibleProjectWhere = accessibleProjectIds === null 
-    ? { deletedAt: null, status: { in: ["ACTIVE", "PLANNING", "ON_HOLD"] as any[] } } 
-    : { deletedAt: null, status: { in: ["ACTIVE", "PLANNING", "ON_HOLD"] as any[] }, id: { in: accessibleProjectIds } };
+    ? { deletedAt: null } 
+    : { deletedAt: null, id: { in: accessibleProjectIds } };
     
   const accessibleProjects = await prisma.project.findMany({
     where: allAccessibleProjectWhere,
@@ -91,11 +92,14 @@ export async function getGlobalProjectContext(
       const daysRemaining = end ? Math.ceil((end - today) / 86400000) : null;
       
       let health: "ON_TRACK" | "AT_RISK" | "DELAYED" | "COMPLETED" | "NO_DATA" = "ON_TRACK";
-      let warning = "Đang thi công";
+      let warning = getProjectStatusMeta(project.status).label;
 
       if (project.status === "COMPLETED") {
         health = "COMPLETED";
         warning = "Hoàn thành";
+      } else if (isPreparationProjectStatus(project.status)) {
+        health = "NO_DATA";
+        warning = "Công tác chuẩn bị";
       } else if (noWbs) {
         health = "NO_DATA";
         warning = "Chưa thiết lập WBS";

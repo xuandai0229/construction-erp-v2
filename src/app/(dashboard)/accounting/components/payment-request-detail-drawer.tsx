@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
 import { X, Calendar, User, FileText, Building2, ShieldAlert, CheckCircle2, FileX2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { PaymentRequestDto } from "../actions";
+import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
 
 interface PaymentRequestDetailDrawerProps {
   isOpen: boolean;
@@ -15,6 +17,21 @@ export function PaymentRequestDetailDrawer({
   onClose,
   paymentRequest
 }: PaymentRequestDetailDrawerProps) {
+  useBodyScrollLock(isOpen);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen || !paymentRequest) return null;
 
   const pr = paymentRequest;
@@ -58,8 +75,8 @@ export function PaymentRequestDetailDrawer({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm sm:p-6">
-      <div className="relative w-full max-w-3xl rounded-2xl bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm sm:p-6" onMouseDown={onClose}>
+      <div className="relative w-full max-w-3xl rounded-2xl bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]" onMouseDown={(event) => event.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4 shrink-0 bg-slate-50 rounded-t-2xl">
           <div className="flex items-center gap-3">

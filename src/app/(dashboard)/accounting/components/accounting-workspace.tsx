@@ -6,7 +6,7 @@ import { Plus, Search, CheckCircle2, AlertCircle, BarChart3, AlertTriangle, Cred
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useToast } from "@/components/ui/toast-context";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { PaymentRequestDto, AccountingContractOptionDto } from "../actions";
 import { createPaymentRequest, updatePaymentRequest, deletePaymentRequest, changePaymentStatus } from "../actions";
 import { PaymentRequestFormDialog } from "./payment-request-form-dialog";
@@ -67,15 +67,29 @@ function isOverdue(dueDate: string | null, status: string) {
 
 export function AccountingWorkspace({ paymentRequests, projects, suppliers, contracts, globalPermissions, currentUserId, initialProjectId }: AccountingWorkspaceProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const toast = useToast();
   
   const [search, setSearch] = useState("");
   const [filterProject, setFilterProjectState] = useState(initialProjectId || "");
   const [filterType, setFilterType] = useState("");
 
+  useEffect(() => {
+    setFilterProjectState(initialProjectId || "");
+  }, [initialProjectId]);
+
   const setFilterProject = async (projectId: string) => {
     setFilterProjectState(projectId);
     await setProjectContextCookie(projectId || "all");
+    const params = new URLSearchParams(searchParams.toString());
+    if (projectId) {
+      params.set("projectId", projectId);
+    } else {
+      params.delete("projectId");
+    }
+    const query = params.toString();
+    router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
     router.refresh();
   };
   
@@ -128,7 +142,7 @@ export function AccountingWorkspace({ paymentRequests, projects, suppliers, cont
     let overdueCount = 0;
     const uniqueProjects = new Set();
 
-    paymentRequests.forEach(req => {
+    filtered.forEach(req => {
       totalAll += req.totalAmount;
       uniqueProjects.add(req.projectId);
       if (isOverdue(req.dueDate, req.status)) {
@@ -138,11 +152,11 @@ export function AccountingWorkspace({ paymentRequests, projects, suppliers, cont
 
     return { 
       totalAll, 
-      totalCount: paymentRequests.length, 
+      totalCount: filtered.length, 
       overdueCount, 
       uniqueProjects: uniqueProjects.size 
     };
-  }, [paymentRequests]);
+  }, [filtered]);
 
   const handleOpenCreate = () => {
     setEditingRequest(null);

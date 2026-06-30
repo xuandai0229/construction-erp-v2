@@ -5,6 +5,7 @@ import type { SessionUser } from "@/lib/auth";
 import { addWorkDays, formatWorkDate, getWorkDateRange, parseWorkDate, todayWorkDate } from "@/lib/date/work-date";
 import { groupEntriesByItemAndDate } from "@/lib/field-progress";
 import { buildFieldProgressRollupTree } from "@/lib/field-progress/rollup";
+import { isPreparationProjectStatus } from "@/lib/project-status";
 import {
   canViewApprovalDashboard,
   canViewCompanyWideDashboard,
@@ -226,6 +227,7 @@ function getHealth(project: {
   daysRemaining: number | null;
 }): { health: DashboardProjectOverview["health"]; warning: string } {
   if (project.status === "COMPLETED") return { health: "COMPLETED", warning: "Hoàn thành" };
+  if (isPreparationProjectStatus(project.status)) return { health: "NO_DATA", warning: "Công tác chuẩn bị" };
   if (project.itemCount === 0) return { health: "NO_DATA", warning: "Chưa thiết lập WBS" };
   if (project.daysRemaining !== null && project.daysRemaining < 0) return { health: "DELAYED", warning: "Trễ tiến độ" };
   if (project.recentEntryCount === 0) return { health: "AT_RISK", warning: "Chưa có nhập liệu gần đây" };
@@ -295,8 +297,8 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
 
   // Fetch light list of all accessible projects for the switcher
   const allAccessibleProjectWhere: Prisma.ProjectWhereInput = accessibleProjectIds === null 
-    ? { deletedAt: null, status: { in: ["ACTIVE", "PLANNING", "ON_HOLD"] } } 
-    : { deletedAt: null, status: { in: ["ACTIVE", "PLANNING", "ON_HOLD"] }, id: { in: accessibleProjectIds } };
+    ? { deletedAt: null } 
+    : { deletedAt: null, id: { in: accessibleProjectIds } };
     
   const allAccessibleProjectsList = await prisma.project.findMany({
     where: allAccessibleProjectWhere,
@@ -324,6 +326,10 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
   const canViewApprovals = canViewApprovalDashboard(session.role);
   const canViewCompanyWide = canViewCompanyWideDashboard(session.role);
   const activeProjectWhere: Prisma.ProjectWhereInput = { ...projectWhere, status: "ACTIVE" };
+  const visibleProjectWhere: Prisma.ProjectWhereInput = {
+    ...projectWhere,
+    status: { in: ["PLANNING", "ACTIVE", "ON_HOLD", "COMPLETED"] },
+  };
 
   const [
     allProjects,
@@ -352,10 +358,11 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
       where: { deletedAt: null, entryDate: { gte: todayRange.start, lt: todayRange.end }, ...projectIdScope(accessibleProjectIds) },
     }),
     prisma.project.findMany({
-      where: activeProjectWhere,
+      where: visibleProjectWhere,
       select: {
         id: true,
         name: true,
+        status: true,
         endDate: true,
         fieldProgressTemplates: { where: { deletedAt: null }, select: { id: true }, take: 1 },
         _count: {
@@ -367,7 +374,7 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
       orderBy: { updatedAt: "desc" },
     }),
     prisma.project.findMany({
-      where: activeProjectWhere,
+      where: visibleProjectWhere,
       orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
       take: 6,
       select: {
@@ -495,6 +502,9 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
   const attentionProjects = activeProjectsForAttention
     .map((project) => {
       const daysRemaining = getDaysRemaining(project.endDate, todayStart);
+      if (isPreparationProjectStatus(project.status)) {
+        return null;
+      }
       const noWbs = project.fieldProgressTemplates.length === 0;
       const noRecentEntry = project._count.fieldProgressEntries === 0;
       const delayed = daysRemaining !== null && daysRemaining < 0;

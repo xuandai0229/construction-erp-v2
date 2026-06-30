@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart3, HardHat, TrendingUp, CheckCircle2 } from 'lucide-react';
+import { BarChart3, Hammer, TrendingUp, CheckCircle2 } from 'lucide-react';
 
 export function LoginBackground3D() {
   return (
@@ -36,7 +36,7 @@ export function LoginBackground3D() {
         <div className="w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative">
           <div className="flex items-center gap-3 border-b border-white/40 pb-3">
             <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-              <HardHat className="w-5 h-5 text-blue-600" />
+              <Hammer className="w-5 h-5 text-blue-600" />
             </div>
             <div className="space-y-2">
               <div className="w-20 h-3 rounded bg-white/60"></div>

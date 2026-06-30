@@ -6,11 +6,12 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getAccessibleProjectIds } from "@/lib/rbac";
+import { getGlobalProjectContext } from "@/lib/project-context";
 
 export default async function DocumentsOverviewPage({
   searchParams
 }: {
-  searchParams: Promise<{ q?: string }>
+  searchParams: Promise<{ q?: string; projectId?: string }>
 }) {
   const session = await getSession();
   if (!session) {
@@ -18,6 +19,12 @@ export default async function DocumentsOverviewPage({
   }
 
   const params = await searchParams;
+  const urlProjectId = typeof params.projectId === "string" ? params.projectId : undefined;
+  const globalContext = await getGlobalProjectContext(session, urlProjectId);
+  if (globalContext.selectedProjectId) {
+    redirect(`/documents/${globalContext.selectedProjectId}`);
+  }
+
   const q = params.q || "";
 
   const whereCondition: Prisma.ProjectWhereInput = {

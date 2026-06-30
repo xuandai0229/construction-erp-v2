@@ -38,22 +38,22 @@ export function ExecutiveProjectProgress({
   projects: DashboardProjectOverview[] 
 }) {
   return (
-    <section id="project-progress" className="flex flex-col rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden">
-      <div className="flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4">
+    <section id="project-progress" className="flex flex-col h-full rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden">
+      <div className="flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4 shrink-0">
         <h3 className="font-bold text-slate-900">Tổng quan tiến độ công trình</h3>
         <Link href="/projects" className="flex items-center gap-1 text-[13px] font-medium text-blue-600 hover:text-blue-700">
           Xem tất cả <ChevronRight className="h-3.5 w-3.5" />
         </Link>
       </div>
 
-      <div className="hidden sm:block overflow-x-auto">
+      <div className="hidden sm:block overflow-x-auto flex-1">
         <table className="w-full text-left text-sm text-slate-600">
           <thead className="bg-slate-50/50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100">
             <tr>
               <th className="px-5 py-3 w-12 font-semibold">#</th>
               <th className="px-5 py-3 font-semibold">Mã công trình</th>
               <th className="px-5 py-3 font-semibold">Tên công trình</th>
-              <th className="px-5 py-3 font-semibold">Trạng thái</th>
+              <th className="px-5 py-3 font-semibold">Mức độ</th>
               <th className="px-5 py-3 w-40 font-semibold">Tiến độ</th>
               <th className="px-5 py-3 font-semibold">Cập nhật mới nhất</th>
               <th className="px-5 py-3 font-semibold text-right">Còn lại</th>

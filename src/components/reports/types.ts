@@ -60,6 +60,7 @@ export interface FieldReport {
   type: ReportType;
   projectId: string;
   projectName: string;
+  projectStatus?: string;
   date: string;       // ISO or display string
   time: string;       // e.g. '08:30'
   

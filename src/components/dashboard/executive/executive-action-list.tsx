@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { 
   ChevronRight, 
   Building2, 
-  HardHat, 
   TriangleAlert, 
   ReceiptText, 
   Wallet, 
@@ -75,8 +74,8 @@ export function ExecutiveActionList({
   count?: number
 }) {
   return (
-    <section id="action-items" className="flex flex-col rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden">
-      <div className="flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4">
+    <section id="action-items" className="flex flex-col h-full rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden">
+      <div className="flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4 shrink-0">
         <div className="flex items-center gap-3">
           <h3 className="font-bold text-slate-900">{title}</h3>
           {count !== undefined && (
@@ -90,9 +89,9 @@ export function ExecutiveActionList({
         </Link>
       </div>
 
-      <div className="flex flex-col divide-y divide-slate-100">
+      <div className="flex flex-col divide-y divide-slate-100 flex-1">
         {items.length === 0 ? (
-          <div className="px-5 py-8 text-center text-sm text-slate-500">
+          <div className="flex-1 flex items-center justify-center min-h-[200px] px-5 py-8 text-center text-sm text-slate-500">
             Không có dữ liệu
           </div>
         ) : (

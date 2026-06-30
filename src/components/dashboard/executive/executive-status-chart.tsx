@@ -35,7 +35,7 @@ export function ExecutiveStatusChart({
   const delayedOffset = atRiskOffset - atRiskStroke;
 
   return (
-    <div className="flex flex-col xl:flex-row gap-3 rounded-2xl border border-slate-100 bg-white p-3.5 shadow-sm overflow-hidden">
+    <div className="flex flex-col xl:flex-row gap-3 h-full rounded-2xl border border-slate-100 bg-white p-3.5 shadow-sm overflow-hidden">
       
       <div className="flex-1 flex flex-col justify-center border-b xl:border-b-0 xl:border-r border-slate-100 pb-3 xl:pb-0 xl:pr-3">
         <h4 className="text-[12px] font-bold text-slate-900 mb-3">Phân bổ trạng thái công trình</h4>

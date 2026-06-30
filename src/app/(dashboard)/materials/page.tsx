@@ -30,7 +30,7 @@ export default async function MaterialsPage({
   let initialTransactions: MaterialMovementDto[] = [];
   let materialItems: MaterialItemDto[] = [];
 
-  const projectIdToLoad = globalContext.selectedProjectId || (projects.length > 0 ? projects[0].id : undefined);
+  const projectIdToLoad = globalContext.selectedProjectId || undefined;
 
   let permissions: MaterialPermissionSet | undefined;
 
@@ -50,7 +50,7 @@ export default async function MaterialsPage({
     permissions = getMaterialPermissions();
   }
 
-  if (projects.length === 0 || (!permissions.canView && projects.length > 0)) {
+  if (projects.length === 0 || (projectIdToLoad && !permissions.canView)) {
     return (
       <div className="flex h-full flex-col items-center justify-center p-8 text-center">
         <h1 className="text-xl font-bold text-slate-900 mb-2">Truy cập bị từ chối</h1>

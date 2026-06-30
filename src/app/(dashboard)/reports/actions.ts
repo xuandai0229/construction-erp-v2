@@ -23,7 +23,7 @@ export async function getActiveProjects() {
   const projects = await prisma.project.findMany({
     where: { 
       deletedAt: null, 
-      status: "ACTIVE",
+      status: { in: ["PLANNING", "ACTIVE", "ON_HOLD"] },
       ...(accessibleProjectIds !== null ? { id: { in: accessibleProjectIds } } : {})
     },
     select: { id: true, name: true, code: true },
@@ -177,7 +177,7 @@ export async function getSiteReports(filters: Record<string, unknown> = {}) {
   const reports = await prisma.siteReport.findMany({
     where,
     include: {
-      project: { select: { name: true } },
+      project: { select: { name: true, status: true } },
       lines: {
         orderBy: { sortOrder: 'asc' }
       },
@@ -346,7 +346,7 @@ export async function getSiteReportsPage(filters: ReportPageFilters) {
   const items = await prisma.siteReport.findMany({
     where,
     include: {
-      project: { select: { name: true } },
+      project: { select: { name: true, status: true } },
       lines: { orderBy: { sortOrder: 'asc' } },
       attachments: true
     },

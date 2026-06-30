@@ -1,8 +1,8 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -37,12 +37,15 @@ import type {
   ApprovalSummaryDto,
 } from "@/lib/approvals/approval-dto";
 import { isApprovalOverdue } from "@/lib/approvals/approval-dto";
+import { setProjectContextCookie } from "@/app/actions/project-context";
+import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
 
 type ApprovalsCenterClientProps = {
   approvals: ApprovalRequestDto[];
   projects: ApprovalProjectOptionDto[];
   summary: ApprovalSummaryDto;
   canCreate: boolean;
+  initialProjectId?: string;
 };
 
 const TYPE_LABELS: Record<ApprovalRequestType, string> = {
@@ -363,6 +366,22 @@ function ApprovalDetailDrawer({
   onCancel: (approval: ApprovalRequestDto) => void;
   onEdit: (approval: ApprovalRequestDto) => void;
 }) {
+  const isOpen = Boolean(approval);
+  useBodyScrollLock(isOpen);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!approval) return null;
 
   const overdue = isApprovalOverdue(approval);
@@ -371,8 +390,8 @@ function ApprovalDetailDrawer({
   const canEdit = approval.status === "PENDING" && approval.permissions?.canEdit;
 
   return (
-    <div className="fixed inset-0 z-[90] flex justify-end bg-slate-950/40 backdrop-blur-sm" role="dialog" aria-modal="true">
-      <div className="flex h-full w-full flex-col bg-white shadow-2xl shadow-slate-950/20 sm:max-w-[600px]">
+    <div className="fixed inset-0 z-[90] flex justify-end bg-slate-950/40 backdrop-blur-sm" role="dialog" aria-modal="true" onMouseDown={onClose}>
+      <div className="flex h-full w-full flex-col bg-white shadow-2xl shadow-slate-950/20 sm:max-w-[600px]" onMouseDown={(event) => event.stopPropagation()}>
         {/* Header */}
         <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5 bg-slate-50/50">
           <div>
@@ -520,14 +539,16 @@ function ApprovalDetailDrawer({
 export function ApprovalCenterClient({
   approvals,
   projects,
-  summary,
   canCreate,
+  initialProjectId,
 }: ApprovalsCenterClientProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const toast = useToast();
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
-  const [projectFilter, setProjectFilter] = useState("");
+  const [projectFilter, setProjectFilterState] = useState(initialProjectId || "");
   const [typeFilter, setTypeFilter] = useState("");
   
   // Custom Tabs
@@ -539,6 +560,25 @@ export function ApprovalCenterClient({
   const [approving, setApproving] = useState<ApprovalRequestDto | null>(null);
   const [rejecting, setRejecting] = useState<ApprovalRequestDto | null>(null);
   const [cancelling, setCancelling] = useState<ApprovalRequestDto | null>(null);
+
+  useEffect(() => {
+    setProjectFilterState(initialProjectId || "");
+  }, [initialProjectId]);
+
+  const handleProjectFilterChange = async (projectId: string) => {
+    setProjectFilterState(projectId);
+    await setProjectContextCookie(projectId || "all");
+    const params = new URLSearchParams(searchParams.toString());
+    if (projectId) {
+      params.set("projectId", projectId);
+    } else {
+      params.delete("projectId");
+    }
+    const query = params.toString();
+    router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    router.refresh();
+  };
+
   const handleDeleteApproval = async (approval: ApprovalRequestDto) => {
     if (isPending) return;
     runAction(
@@ -571,6 +611,18 @@ export function ApprovalCenterClient({
       );
     });
   }, [approvals, normalizedSearch, projectFilter, typeFilter, activeTab]);
+
+  const displaySummary = useMemo(() => {
+    const pending = filteredApprovals.filter((approval) => approval.status === "PENDING");
+
+    return {
+      pendingCount: pending.length,
+      overdueCount: filteredApprovals.filter((approval) => isApprovalOverdue(approval)).length,
+      approvedCount: filteredApprovals.filter((approval) => approval.status === "APPROVED").length,
+      rejectedCount: filteredApprovals.filter((approval) => approval.status === "REJECTED").length,
+      pendingAmount: pending.reduce((sum, approval) => sum + (approval.amount ?? 0), 0),
+    };
+  }, [filteredApprovals]);
 
   const runAction = (action: () => Promise<unknown>, successMessage: string, after?: () => void) => {
     startTransition(async () => {
@@ -639,11 +691,11 @@ export function ApprovalCenterClient({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <SummaryCard label="Cần xử lý" value={summary.pendingCount} helper="Yêu cầu chờ bạn quyết định" icon={Clock} tone="blue" />
-        <SummaryCard label="Quá hạn" value={summary.overdueCount} helper="Chưa xử lý và đã quá hạn" icon={AlertTriangle} tone="amber" />
-        <SummaryCard label="Đã duyệt" value={summary.approvedCount} helper="Yêu cầu đã được chấp thuận" icon={CheckCircle2} tone="emerald" />
-        <SummaryCard label="Từ chối" value={summary.rejectedCount} helper="Yêu cầu đã bị từ chối" icon={XCircle} tone="rose" />
-        <SummaryCard label="Giá trị chờ xử lý" value={formatCurrency(summary.pendingAmount)} helper="Tổng giá trị các yêu cầu đang chờ" icon={ShieldCheck} tone="slate" />
+        <SummaryCard label="Cần xử lý" value={displaySummary.pendingCount} helper="Yêu cầu chờ bạn quyết định" icon={Clock} tone="blue" />
+        <SummaryCard label="Quá hạn" value={displaySummary.overdueCount} helper="Chưa xử lý và đã quá hạn" icon={AlertTriangle} tone="amber" />
+        <SummaryCard label="Đã duyệt" value={displaySummary.approvedCount} helper="Yêu cầu đã được chấp thuận" icon={CheckCircle2} tone="emerald" />
+        <SummaryCard label="Từ chối" value={displaySummary.rejectedCount} helper="Yêu cầu đã bị từ chối" icon={XCircle} tone="rose" />
+        <SummaryCard label="Giá trị chờ xử lý" value={formatCurrency(displaySummary.pendingAmount)} helper="Tổng giá trị các yêu cầu đang chờ" icon={ShieldCheck} tone="slate" />
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -673,7 +725,7 @@ export function ApprovalCenterClient({
                 className="h-9 w-full sm:w-64 rounded-md border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               />
             </div>
-            <select value={projectFilter} onChange={(event) => setProjectFilter(event.target.value)} className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+            <select value={projectFilter} onChange={(event) => handleProjectFilterChange(event.target.value)} className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
               <option value="">Tất cả dự án</option>
               {projects.map((project) => (
                 <option key={project.id} value={project.id}>{project.code}</option>

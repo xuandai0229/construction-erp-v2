@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Check, ChevronsUpDown, Building2, Globe, Search, HardHat, ClipboardList, PauseCircle } from 'lucide-react';
+import { Check, ChevronsUpDown, Building2, Globe, Search, Hammer, ClipboardList, PauseCircle, CheckCircle2, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { setProjectContextCookie } from '@/app/actions/project-context';
+import { getProjectStatusMeta, sortProjectStatuses } from '@/lib/project-status';
 
 export type GlobalProjectItem = {
   id: string;
@@ -27,12 +28,49 @@ export function GlobalProjectContextSwitcher({
   const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const searchParamsKey = searchParams.toString();
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
-  const filteredProjects = projects.filter(p => 
-    p.name.toLowerCase().includes(search.toLowerCase()) || 
-    p.code.toLowerCase().includes(search.toLowerCase())
+  const filteredProjects = useMemo(
+    () => projects
+      .filter(p => 
+        p.name.toLowerCase().includes(search.toLowerCase()) || 
+        p.code.toLowerCase().includes(search.toLowerCase())
+      )
+      .sort((left, right) => {
+        const statusOrder = sortProjectStatuses(left.status, right.status);
+        if (statusOrder !== 0) return statusOrder;
+        return left.name.localeCompare(right.name, "vi");
+      }),
+    [projects, search],
   );
+
+  const groupedProjects = useMemo(() => {
+    const groups = new Map<string, GlobalProjectItem[]>();
+    for (const project of filteredProjects) {
+      const meta = getProjectStatusMeta(project.status);
+      const key = meta.key;
+      groups.set(key, [...(groups.get(key) ?? []), project]);
+    }
+    return Array.from(groups.entries()).sort(([left], [right]) => sortProjectStatuses(left, right));
+  }, [filteredProjects]);
+
+  useEffect(() => {
+    setIsOpen(false);
+    setSearch("");
+  }, [pathname, searchParamsKey]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+        setSearch("");
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isOpen]);
 
   async function handleSelect(id: string | null) {
     // 1. Update cookie via server action
@@ -47,9 +85,11 @@ export function GlobalProjectContextSwitcher({
     }
     
     setIsOpen(false);
+    setSearch("");
     
     // We navigate to the current pathname with the new query param
-    router.push(`${pathname}?${params.toString()}`);
+    const query = params.toString();
+    router.push(query ? `${pathname}?${query}` : pathname);
     router.refresh();
   }
 
@@ -115,53 +155,22 @@ export function GlobalProjectContextSwitcher({
                   <div className="py-8 text-center text-sm text-slate-500">Không tìm thấy công trình</div>
                 ) : (
                   <div className="mt-2 space-y-4 pb-1">
-                    {/* Active Projects */}
-                    {filteredProjects.filter(p => p.status === "ACTIVE").length > 0 && (
-                      <div>
-                        <div className="px-3 pb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Đang thi công</div>
-                        {filteredProjects.filter(p => p.status === "ACTIVE").map(project => (
-                          <ProjectItemButton 
-                            key={project.id} 
-                            project={project} 
-                            isSelected={selectedProjectId === project.id} 
-                            onClick={() => handleSelect(project.id)} 
-                            icon={<HardHat className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-blue-500" />}
-                          />
-                        ))}
-                      </div>
-                    )}
-                    
-                    {/* Planning Projects */}
-                    {filteredProjects.filter(p => p.status === "PLANNING").length > 0 && (
-                      <div>
-                        <div className="px-3 pb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Đang chuẩn bị</div>
-                        {filteredProjects.filter(p => p.status === "PLANNING").map(project => (
-                          <ProjectItemButton 
-                            key={project.id} 
-                            project={project} 
-                            isSelected={selectedProjectId === project.id} 
-                            onClick={() => handleSelect(project.id)} 
-                            icon={<ClipboardList className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-blue-500" />}
-                          />
-                        ))}
-                      </div>
-                    )}
-
-                    {/* On Hold Projects */}
-                    {filteredProjects.filter(p => p.status === "ON_HOLD").length > 0 && (
-                      <div>
-                        <div className="px-3 pb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Tạm dừng</div>
-                        {filteredProjects.filter(p => p.status === "ON_HOLD").map(project => (
-                          <ProjectItemButton 
-                            key={project.id} 
-                            project={project} 
-                            isSelected={selectedProjectId === project.id} 
-                            onClick={() => handleSelect(project.id)} 
-                            icon={<PauseCircle className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-amber-500" />}
-                          />
-                        ))}
-                      </div>
-                    )}
+                    {groupedProjects.map(([statusKey, items]) => {
+                      const meta = getProjectStatusMeta(statusKey);
+                      return (
+                        <div key={statusKey}>
+                          <div className="px-3 pb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{meta.groupLabel}</div>
+                          {items.map(project => (
+                            <ProjectItemButton 
+                              key={project.id} 
+                              project={project} 
+                              isSelected={selectedProjectId === project.id} 
+                              onClick={() => handleSelect(project.id)} 
+                            />
+                          ))}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -198,13 +207,19 @@ function ProjectItemButton({
   project, 
   isSelected, 
   onClick, 
-  icon 
 }: { 
   project: GlobalProjectItem; 
   isSelected: boolean; 
   onClick: () => void;
-  icon: React.ReactNode;
 }) {
+  const meta = getProjectStatusMeta(project.status);
+  const StatusIcon =
+    meta.key === "ACTIVE" ? Hammer :
+    meta.key === "PLANNING" ? ClipboardList :
+    meta.key === "ON_HOLD" ? PauseCircle :
+    meta.key === "COMPLETED" ? CheckCircle2 :
+    HelpCircle;
+
   return (
     <button
       onClick={onClick}
@@ -214,12 +229,16 @@ function ProjectItemButton({
       )}
     >
       <div className="flex items-center gap-2.5 truncate pr-2">
-        {icon}
+        <StatusIcon className={cn("h-4 w-4 shrink-0", meta.iconToneClassName)} />
         <div className="truncate">
           <div className={cn("font-medium truncate transition-colors", isSelected ? "text-blue-800" : "text-slate-700 group-hover:text-blue-700")}>
             {project.name}
           </div>
-          <div className="text-[11px] text-slate-500">{project.code}</div>
+          <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
+            <span>{project.code}</span>
+            <span className={cn("h-1.5 w-1.5 rounded-full", meta.dotClassName)} />
+            <span>{meta.label}</span>
+          </div>
         </div>
       </div>
       {isSelected && <Check className="h-4 w-4 shrink-0 text-blue-600" />}

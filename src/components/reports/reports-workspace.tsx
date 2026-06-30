@@ -28,7 +28,7 @@ import {
   softDeleteSiteReport,
   submitSiteReport
 } from "@/app/(dashboard)/reports/actions";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { setProjectContextCookie } from "@/app/actions/project-context";
 
 interface ReportsWorkspaceProps {
@@ -50,14 +50,11 @@ export function ReportsWorkspace({
 }: ReportsWorkspaceProps) {
   const toast = useToast();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const searchParamsKey = searchParams.toString();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteReport, setDeleteReport] = useState<FieldReport | null>(null);
-
-  // Use searchParams from URL or use local state synced with URL
-  // But wait, Next.js useSearchParams requires being inside Suspense if used directly, or client component.
-  // We can just use local state and a debounce effect to push to router, OR better, since page.tsx is a Server Component
-  // we can use standard Next.js hooks.
-  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
 
   // Filter state synced with URL
   const [search, setSearch] = useState(searchParams.get("q") || "");
@@ -86,7 +83,7 @@ export function ReportsWorkspace({
   const activeProjects = initialProjects;
 
   const updateUrl = useCallback((newParams: Record<string, string | undefined>) => {
-    const current = new URLSearchParams(window.location.search);
+    const current = new URLSearchParams(searchParams.toString());
     let changed = false;
     for (const [key, value] of Object.entries(newParams)) {
       if (value) {
@@ -102,21 +99,37 @@ export function ReportsWorkspace({
       }
     }
     if (changed) {
-      router.push(`?${current.toString()}`, { scroll: false });
+      const query = current.toString();
+      router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
     }
-  }, [router]);
+  }, [pathname, router, searchParams]);
+
+  useEffect(() => {
+    setSearch(searchParams.get("q") || "");
+    setProjectFilter(searchParams.get("projectId") || "");
+    setStatusFilter(searchParams.get("status") || "");
+    setTypeFilter(searchParams.get("type") || "");
+    setDateRange(searchParams.get("dateRange") || "");
+    setTab(searchParams.get("tab") || "all");
+  }, [searchParamsKey]);
 
   // Auto-open report detail if reportId is in URL
   useEffect(() => {
     const reportIdParam = searchParams.get("reportId");
-    if (reportIdParam && !isDetailOpen && initialReports.length > 0) {
+    if (!reportIdParam) {
+      setIsDetailOpen(false);
+      setTimeout(() => setDetailReport(null), 300);
+      return;
+    }
+
+    if (initialReports.length > 0) {
       const found = initialReports.find(r => r.id === reportIdParam);
       if (found) {
         setDetailReport(found);
         setIsDetailOpen(true);
       }
     }
-  }, [searchParams, initialReports, isDetailOpen]);
+  }, [searchParams, searchParamsKey, initialReports]);
 
   // Local Search syncs to URL on blur/enter or via effect (handled by toolbar usually, but we do it simple here)
   const handleSearchChange = (v: string) => {
@@ -181,21 +194,21 @@ export function ReportsWorkspace({
   const handleViewDetail = useCallback((report: FieldReport) => {
     setDetailReport(report);
     setIsDetailOpen(true);
-  }, []);
+    updateUrl({ reportId: report.id });
+  }, [updateUrl]);
 
   const handleCloseDetail = useCallback(() => {
     setIsDetailOpen(false);
     
     if (searchParams.has("reportId")) {
-      const current = new URLSearchParams(Array.from(searchParams.entries()));
+      const current = new URLSearchParams(searchParams.toString());
       current.delete("reportId");
       const search = current.toString();
-      const query = search ? `?${search}` : "";
-      router.replace(`${window.location.pathname}${query}`, { scroll: false });
+      router.replace(search ? `${pathname}?${search}` : pathname, { scroll: false });
     }
 
     setTimeout(() => setDetailReport(null), 300);
-  }, [router, searchParams]);
+  }, [pathname, router, searchParams]);
 
   const handleResetFilters = () => {
     setSearch("");
@@ -204,7 +217,7 @@ export function ReportsWorkspace({
     setTypeFilter("");
     setDateRange("");
     setTab("all");
-    router.push("?");
+    router.push(pathname);
   };
 
   const handleCreateSubmit = useCallback(async (data: CreateReportFormData, isDraft: boolean) => {

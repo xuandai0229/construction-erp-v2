@@ -1,8 +1,9 @@
-import { Building2, TriangleAlert, ReceiptText, Wallet, ClipboardCheck, ArrowUp, ArrowDown, HardHat } from 'lucide-react';
+import { Building2, TriangleAlert, ReceiptText, Wallet, ClipboardCheck, ArrowUp, ArrowDown, Hammer } from 'lucide-react';
 import type { DashboardData } from '@/lib/dashboard/dashboard-queries';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { ExecutiveIcon, type IconColorTone } from './executive-icon';
+import { getProjectStatusMeta } from '@/lib/project-status';
 
 export function ExecutiveKpiGrid({ data }: { data: DashboardData }) {
   const projectsKpi = data.kpis.find(k => k.id === 'projects');
@@ -30,11 +31,68 @@ export function ExecutiveKpiGrid({ data }: { data: DashboardData }) {
     return value.toLocaleString('vi-VN');
   }
 
-  const kpis = [
+  const isSingleProject = !!data.selectedProjectId;
+  const currentProject = isSingleProject && data.projectOverview.length > 0 ? data.projectOverview[0] : null;
+  const currentProjectStatusMeta = currentProject ? getProjectStatusMeta(currentProject.status) : null;
+
+  const kpis = isSingleProject && currentProject ? [
+    {
+      label: 'Trạng thái',
+      value: currentProjectStatusMeta?.label ?? 'Chưa xác định',
+      subtext: 'Giai đoạn hiện tại',
+      icon: currentProject.status === 'PLANNING' ? ClipboardCheck : currentProject.status === 'ACTIVE' ? Hammer : currentProject.status === 'ON_HOLD' ? TriangleAlert : Building2,
+      tone: (currentProject.status === 'ACTIVE' || currentProject.status === 'COMPLETED' ? 'emerald' : currentProject.status === 'ON_HOLD' ? 'amber' : 'slate') as IconColorTone,
+      href: `/projects/${currentProject.id}`
+    },
+    {
+      label: 'Tiến độ tổng thể',
+      value: currentProject.progressPercent !== null ? `${Math.round(currentProject.progressPercent)}%` : '--',
+      subtext: currentProject.health === 'ON_TRACK' ? 'Đúng kế hoạch' : currentProject.health === 'AT_RISK' ? 'Cần chú ý' : currentProject.health === 'DELAYED' ? 'Đang chậm trễ' : 'Chưa cập nhật',
+      icon: Building2,
+      tone: (currentProject.health === 'ON_TRACK' || currentProject.health === 'COMPLETED' ? 'emerald' : currentProject.health === 'AT_RISK' ? 'amber' : 'rose') as IconColorTone,
+      trend: currentProject.health === 'DELAYED' ? 'down' : undefined,
+      href: `/projects/${currentProject.id}/field-progress`
+    },
+    {
+      label: 'Hồ sơ chờ duyệt',
+      value: data.pendingApprovals.length,
+      subtext: data.pendingApprovals.length > 0 ? 'Cần xử lý' : 'Đã duyệt hết',
+      icon: ClipboardCheck,
+      tone: (data.pendingApprovals.length > 0 ? 'amber' : 'slate') as IconColorTone,
+      trend: data.pendingApprovals.length > 0 ? 'neutral' : undefined,
+      href: '/approvals'
+    },
+    {
+      label: 'Giá trị hợp đồng',
+      value: contractValue === 0 ? '0 đ' : formatCompactCurrency(contractValue),
+      subtext: contractValue === 0 ? 'Chưa có hợp đồng' : 'Giá trị đã ký',
+      icon: ReceiptText,
+      tone: 'violet' as IconColorTone,
+      href: `/contracts?projectId=${currentProject.id}`
+    },
+    {
+      label: 'Chờ thanh toán',
+      value: pendingPayment === 0 && pendingPaymentCount === 0 ? '0 đ' : formatCompactCurrency(pendingPayment),
+      subtext: pendingPayment === 0 && pendingPaymentCount === 0 ? 'Không có hồ sơ' : `${pendingPaymentCount} hồ sơ`,
+      icon: Wallet,
+      tone: 'amber' as IconColorTone,
+      trend: pendingPaymentCount > 0 ? 'neutral' : undefined,
+      href: `/accounting?projectId=${currentProject.id}`
+    },
+    {
+      label: 'Báo cáo 7 ngày',
+      value: reportsCount,
+      subtext: 'Báo cáo hiện trường',
+      icon: ClipboardCheck,
+      tone: 'sky' as IconColorTone,
+      trend: reportsCount > 0 ? 'up' : undefined,
+      href: `/reports?projectId=${currentProject.id}`
+    }
+  ] : [
     {
       label: 'Tổng công trình',
       value: totalCount,
-      subtext: '100% danh mục',
+      subtext: 'Danh mục dự án',
       icon: Building2,
       tone: 'blue' as IconColorTone,
       href: '/projects'
@@ -43,10 +101,10 @@ export function ExecutiveKpiGrid({ data }: { data: DashboardData }) {
       label: 'Đang thi công',
       value: activeCount,
       subtext: totalCount > 0 ? `${((activeCount/totalCount)*100).toLocaleString('vi-VN', { maximumFractionDigits: 1})}% đang triển khai` : '0%',
-      icon: HardHat,
+      icon: Hammer,
       tone: 'emerald' as IconColorTone,
       trend: 'up',
-      href: '/projects'
+      href: '/projects?status=ACTIVE'
     },
     {
       label: 'Rủi ro',
@@ -60,9 +118,7 @@ export function ExecutiveKpiGrid({ data }: { data: DashboardData }) {
     {
       label: 'Giá trị hợp đồng',
       value: contractValue === 0 ? '0 đ' : formatCompactCurrency(contractValue),
-      subtext: contractValue === 0 
-        ? (data.selectedProjectId ? 'Chưa có hợp đồng trong công trình này' : 'Chưa có hợp đồng trên toàn hệ thống') 
-        : 'Tổng giá trị',
+      subtext: 'Tổng toàn hệ thống',
       icon: ReceiptText,
       tone: 'violet' as IconColorTone,
       href: '/contracts'
@@ -70,9 +126,7 @@ export function ExecutiveKpiGrid({ data }: { data: DashboardData }) {
     {
       label: 'Chờ thanh toán',
       value: pendingPayment === 0 && pendingPaymentCount === 0 ? '0 đ' : formatCompactCurrency(pendingPayment),
-      subtext: pendingPayment === 0 && pendingPaymentCount === 0 
-        ? (data.selectedProjectId ? 'Chưa có hồ sơ trong công trình này' : 'Chưa có hồ sơ thanh toán nào') 
-        : `${pendingPaymentCount} hồ sơ`,
+      subtext: pendingPayment === 0 && pendingPaymentCount === 0 ? 'Chưa có hồ sơ thanh toán nào' : `${pendingPaymentCount} hồ sơ`,
       icon: Wallet,
       tone: 'amber' as IconColorTone,
       trend: pendingPaymentCount > 0 ? 'neutral' : undefined,
@@ -81,10 +135,10 @@ export function ExecutiveKpiGrid({ data }: { data: DashboardData }) {
     {
       label: 'Báo cáo 7 ngày',
       value: reportsCount,
-      subtext: '+12 so với tuần trước',
+      subtext: 'Toàn hệ thống',
       icon: ClipboardCheck,
       tone: 'sky' as IconColorTone,
-      trend: 'up',
+      trend: reportsCount > 0 ? 'up' : undefined,
       href: '/reports'
     }
   ];

@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
 import { X, Pencil, Trash2, Building2, MapPin, Hash, User, Calendar, FileText, BadgePercent } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ContractDto } from "@/app/(dashboard)/contracts/actions";
 import { getContractDisplayStatus } from "@/lib/contracts/contracts-permissions";
+import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
 
 interface ContractDetailDrawerProps {
   isOpen: boolean;
@@ -51,6 +53,21 @@ export function ContractDetailDrawer({
   onDelete,
   isSubmitting,
 }: ContractDetailDrawerProps) {
+  useBodyScrollLock(isOpen);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !isSubmitting) {
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, isSubmitting, onClose]);
+
   if (!isOpen || !contract) return null;
 
   const displayStatus = getContractDisplayStatus(contract.status, contract.endDate);

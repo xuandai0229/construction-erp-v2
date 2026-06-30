@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pencil, Search, Trash2, Eye, Plus, FileText, CheckCircle2, AlertCircle, BarChart3, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -9,7 +9,7 @@ import { ContractFormDialog } from "./contract-form-dialog";
 import { ContractDetailDrawer } from "./contract-detail-drawer";
 import { createContract, updateContract, deleteContract } from "@/app/(dashboard)/contracts/actions";
 import { useToast } from "@/components/ui/toast-context";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { getContractDisplayStatus, type ContractPermissionSet } from "@/lib/contracts/contracts-permissions";
 import { setProjectContextCookie } from "@/app/actions/project-context";
 
@@ -52,6 +52,8 @@ function formatDate(dateString: string | null) {
 
 export function ContractsWorkspace({ contracts, projects, suppliers, globalPermissions, initialProjectId }: ContractsWorkspaceProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const toast = useToast();
   
   const [search, setSearch] = useState("");
@@ -59,9 +61,21 @@ export function ContractsWorkspace({ contracts, projects, suppliers, globalPermi
   const [filterStatus, setFilterStatus] = useState("");
   const [filterType, setFilterType] = useState("");
 
+  useEffect(() => {
+    setFilterProjectState(initialProjectId || "");
+  }, [initialProjectId]);
+
   const setFilterProject = async (projectId: string) => {
     setFilterProjectState(projectId);
     await setProjectContextCookie(projectId || "all");
+    const params = new URLSearchParams(searchParams.toString());
+    if (projectId) {
+      params.set("projectId", projectId);
+    } else {
+      params.delete("projectId");
+    }
+    const query = params.toString();
+    router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
     router.refresh();
   };
   
@@ -93,18 +107,18 @@ export function ContractsWorkspace({ contracts, projects, suppliers, globalPermi
 
   // Summary stats
   const activeCount = useMemo(() => {
-    return contracts.filter((c) => getContractDisplayStatus(c.status, c.endDate) === "ACTIVE").length;
-  }, [contracts]);
+    return filtered.filter((c) => getContractDisplayStatus(c.status, c.endDate) === "ACTIVE").length;
+  }, [filtered]);
   
   const expiringCount = useMemo(() => {
-    return contracts.filter((c) => getContractDisplayStatus(c.status, c.endDate) === "EXPIRING").length;
-  }, [contracts]);
+    return filtered.filter((c) => getContractDisplayStatus(c.status, c.endDate) === "EXPIRING").length;
+  }, [filtered]);
 
   const overdueCount = useMemo(() => {
-    return contracts.filter((c) => getContractDisplayStatus(c.status, c.endDate) === "OVERDUE").length;
-  }, [contracts]);
+    return filtered.filter((c) => getContractDisplayStatus(c.status, c.endDate) === "OVERDUE").length;
+  }, [filtered]);
   
-  const totalValue = contracts.reduce((sum, c) => sum + c.value, 0);
+  const totalValue = filtered.reduce((sum, c) => sum + c.value, 0);
 
   const handleOpenCreate = () => {
     setEditingContract(null);

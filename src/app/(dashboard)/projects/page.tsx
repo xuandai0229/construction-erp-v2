@@ -3,11 +3,11 @@ import prisma from "@/lib/prisma";
 import { Building2, Plus, Search, ChevronLeft, ChevronRight, PenSquare, Eye, ClipboardList, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { ProjectStatus } from "@prisma/client";
 import { formatDateVN } from "@/lib/utils";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { canViewAllProjects, canManageProjects, getAccessibleProjectIds } from "@/lib/rbac";
+import { getProjectStatusMeta } from "@/lib/project-status";
 
 const ITEMS_PER_PAGE = 15;
 
@@ -67,15 +67,9 @@ export default async function ProjectsPage({
     skip: skip,
   });
 
-  const getStatusBadge = (status: ProjectStatus) => {
-    switch (status) {
-      case 'PLANNING': return <StatusBadge variant="neutral">Chuẩn bị</StatusBadge>;
-      case 'ACTIVE': return <StatusBadge variant="success">Đang thi công</StatusBadge>;
-      case 'ON_HOLD': return <StatusBadge variant="warning">Tạm dừng</StatusBadge>;
-      case 'COMPLETED': return <StatusBadge variant="success">Hoàn thành</StatusBadge>;
-      case 'CANCELLED': return <StatusBadge variant="danger">Hủy</StatusBadge>;
-      default: return <StatusBadge variant="neutral">{status}</StatusBadge>;
-    }
+  const getStatusBadge = (status: string) => {
+    const meta = getProjectStatusMeta(status);
+    return <StatusBadge variant={meta.variant}>{meta.label}</StatusBadge>;
   };
 
   const pageTitle = isCommander ? "Công trình của tôi" : "Quản lý Công trình";

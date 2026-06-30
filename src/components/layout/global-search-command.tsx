@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Search, Building2, Bell, X, FileText, ClipboardCheck, ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import type { GlobalProjectContext } from "@/lib/project-context";
 import { setProjectContextCookie } from "@/app/actions/project-context";
@@ -22,15 +22,40 @@ export function GlobalSearchCommand({ globalContext }: GlobalSearchCommandProps)
     notifications: { id: string; type: string; severity: string; title: string; projectName: string; href: string }[];
     reports: { id: string; title: string; reportNo: string; projectName: string; href: string }[];
   }>({ projects: [], notifications: [], reports: [] });
-  const debounceRef = useRef<NodeJS.Timeout>(undefined);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const searchParamsKey = searchParams.toString();
+
+  const closeSearch = useCallback(() => {
+    setIsOpen(false);
+    setQuery("");
+    setResults({ projects: [], notifications: [], reports: [] });
+    setIsSearching(false);
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const focusTimer = window.setTimeout(() => inputRef.current?.focus(), 0);
+    return () => window.clearTimeout(focusTimer);
+  }, [isOpen]);
+
+  useEffect(() => {
+    closeSearch();
+  }, [pathname, searchParamsKey, closeSearch]);
 
   // Close on ESC and Click Outside
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
-        setIsOpen(false);
+        closeSearch();
       }
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
@@ -40,7 +65,7 @@ export function GlobalSearchCommand({ globalContext }: GlobalSearchCommandProps)
     
     const handlePointerDown = (e: PointerEvent | MouseEvent) => {
       if (isOpen && panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
+        closeSearch();
       }
     };
 
@@ -52,7 +77,7 @@ export function GlobalSearchCommand({ globalContext }: GlobalSearchCommandProps)
       document.removeEventListener("mousedown", handlePointerDown);
       document.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [isOpen]);
+  }, [closeSearch, isOpen]);
 
   useEffect(() => {
     if (!query.trim()) {
@@ -84,8 +109,11 @@ export function GlobalSearchCommand({ globalContext }: GlobalSearchCommandProps)
 
   const handleProjectSelect = async (projectId: string) => {
     await setProjectContextCookie(projectId);
-    setIsOpen(false);
-    setQuery("");
+    closeSearch();
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("projectId", projectId);
+    const query = params.toString();
+    router.push(query ? `${pathname}?${query}` : pathname);
     router.refresh();
   };
 
@@ -112,21 +140,28 @@ export function GlobalSearchCommand({ globalContext }: GlobalSearchCommandProps)
             ref={panelRef}
             className="relative w-full max-w-[800px] overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200 mt-2 mx-2 sm:mx-auto sm:mt-[72px] animate-in fade-in zoom-in-95 duration-200"
           >
-            <div className="flex items-center border-b border-slate-100 px-3 relative">
+            <div className="flex items-center border-b border-slate-100 px-4 relative">
               <Search className="h-5 w-5 text-slate-400 shrink-0" />
               <input
-                className="flex h-14 w-full bg-transparent py-3 pl-3 pr-10 text-slate-900 outline-none placeholder:text-slate-400 sm:text-base"
-                placeholder="Tìm kiếm công trình, báo cáo, thông báo..."
-                autoFocus
+                ref={inputRef}
+                className="flex h-14 w-full bg-transparent py-3 pl-3 pr-14 text-slate-900 outline-none placeholder:text-slate-400 sm:text-base"
+                placeholder="Tìm công trình, báo cáo, hồ sơ, thông báo..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
-              <div className="absolute right-12 top-1/2 -translate-y-1/2">
+              <div className="absolute right-16 top-1/2 -translate-y-1/2">
                 {isSearching && <Loader2 className="h-4 w-4 animate-spin text-slate-400" />}
               </div>
               <button 
-                onClick={() => setIsOpen(false)}
-                className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-500 transition-colors"
+                onClick={closeSearch}
+                className="hidden sm:flex items-center gap-1 rounded-md px-1.5 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                title="Đóng (Esc)"
+              >
+                <kbd className="font-mono text-[10px] bg-white border border-slate-200 shadow-sm px-1.5 rounded">ESC</kbd>
+              </button>
+              <button 
+                onClick={closeSearch}
+                className="sm:hidden rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-500 transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -134,47 +169,57 @@ export function GlobalSearchCommand({ globalContext }: GlobalSearchCommandProps)
 
             <div className="max-h-[60vh] overflow-y-auto p-2">
               {!query.trim() && (
-                <div className="p-2">
-                  <div className="mb-4">
-                    <div className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Gợi ý tìm kiếm</div>
-                    <div className="px-3 py-2 text-sm text-slate-600 flex flex-col gap-2">
-                      <div className="flex items-center gap-2">
-                        <kbd className="hidden sm:inline-flex items-center justify-center rounded border border-slate-200 bg-slate-100 px-1.5 font-mono text-[10px] font-medium text-slate-500">HN-TH</kbd>
-                        <span>Tìm công trình theo mã (VD: HN-TH-2026)</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <kbd className="hidden sm:inline-flex items-center justify-center rounded border border-slate-200 bg-slate-100 px-1.5 font-mono text-[10px] font-medium text-slate-500">BC-</kbd>
-                        <span>Tìm nhanh báo cáo hiện trường</span>
-                      </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 p-2">
+                  <div className="mb-2">
+                    <div className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Tìm nhanh</div>
+                    <div className="flex flex-col gap-1 mt-1">
+                      <Link href="/projects" onClick={closeSearch} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors">
+                        <Building2 className="h-4 w-4 text-slate-400" /> Công trình đang chọn
+                      </Link>
+                      <Link href="/reports" onClick={closeSearch} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors">
+                        <FileText className="h-4 w-4 text-slate-400" /> Báo cáo hiện trường
+                      </Link>
+                      <Link href="/approvals" onClick={closeSearch} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors">
+                        <ClipboardCheck className="h-4 w-4 text-slate-400" /> Hồ sơ chờ xử lý
+                      </Link>
+                      <Link href="/contracts" onClick={closeSearch} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors">
+                        <FileText className="h-4 w-4 text-slate-400" /> Hợp đồng / thanh toán
+                      </Link>
                     </div>
                   </div>
-                  {globalContext.notifications.length > 0 && (
-                    <div className="mb-2">
-                      <div className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Cần chú ý gần đây</div>
-                      {globalContext.notifications.map((n) => (
-                        <Link
-                          key={n.id}
-                          href={n.href || '#'}
-                          onClick={() => setIsOpen(false)}
-                          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm hover:bg-slate-50 hover:text-blue-600 transition-colors group"
-                        >
-                          <Bell className="h-4 w-4 text-slate-400 group-hover:text-blue-500 shrink-0" />
-                          <div className="flex-1 overflow-hidden">
-                            <div className="font-medium truncate text-slate-900 group-hover:text-blue-600">{n.title}</div>
-                            <div className="text-xs text-slate-500 truncate">{n.projectName}</div>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  )}
+                  <div>
+                    <div className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Cần chú ý gần đây</div>
+                    {globalContext.notifications.length > 0 ? (
+                      <div className="flex flex-col gap-1 mt-1">
+                        {globalContext.notifications.slice(0, 3).map((n) => (
+                          <Link
+                            key={n.id}
+                            href={n.href || '#'}
+                            onClick={closeSearch}
+                            className="flex items-start gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors group"
+                          >
+                            <Bell className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
+                            <div className="flex-1 overflow-hidden leading-tight">
+                              <div className="font-medium truncate">{n.title}</div>
+                              <div className="text-[11px] text-slate-500 truncate mt-0.5">{n.projectName}</div>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="px-3 py-4 text-sm text-slate-500 flex items-center gap-2">
+                        <Bell className="h-4 w-4 text-slate-300" /> Không có cảnh báo mới
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
               {query.trim() && !isSearching && !hasResults && (
                 <div className="py-14 text-center">
                   <Search className="mx-auto h-8 w-8 text-slate-300 mb-3" />
-                  <p className="text-sm font-medium text-slate-900">Không tìm thấy kết quả</p>
-                  <p className="text-sm text-slate-500 mt-1">Không có kết quả nào phù hợp với "{query}"</p>
+                  <p className="text-sm font-medium text-slate-900">Không tìm thấy kết quả phù hợp</p>
+                  <p className="text-sm text-slate-500 mt-1">Thử tìm theo mã công trình, tên báo cáo hoặc từ khóa nghiệp vụ</p>
                 </div>
               )}
 
@@ -207,7 +252,7 @@ export function GlobalSearchCommand({ globalContext }: GlobalSearchCommandProps)
                     <Link
                       key={n.id}
                       href={n.href}
-                      onClick={() => setIsOpen(false)}
+                      onClick={closeSearch}
                       className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-slate-50 hover:text-blue-600 transition-colors group"
                     >
                       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 group-hover:bg-blue-100 transition-colors">
@@ -235,7 +280,7 @@ export function GlobalSearchCommand({ globalContext }: GlobalSearchCommandProps)
                     <Link
                       key={r.id}
                       href={r.href}
-                      onClick={() => setIsOpen(false)}
+                      onClick={closeSearch}
                       className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-slate-50 hover:text-blue-600 transition-colors group"
                     >
                       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 group-hover:bg-blue-100 transition-colors">
@@ -251,9 +296,15 @@ export function GlobalSearchCommand({ globalContext }: GlobalSearchCommandProps)
               )}
             </div>
             
-            <div className="border-t border-slate-100 bg-slate-50 px-4 py-2 text-xs text-slate-500 flex justify-between">
-              <span>Mẹo: Sử dụng Cmd+K hoặc Ctrl+K để mở nhanh</span>
-              <span>Đang sử dụng hệ thống tìm kiếm</span>
+            <div className="border-t border-slate-100 bg-slate-50/80 px-4 py-2.5 text-[11px] font-medium text-slate-500 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="flex items-center gap-1"><kbd className="font-mono bg-white border border-slate-200 rounded px-1 text-slate-400">↑</kbd><kbd className="font-mono bg-white border border-slate-200 rounded px-1 text-slate-400">↓</kbd> chọn</span>
+                <span className="flex items-center gap-1"><kbd className="font-mono bg-white border border-slate-200 rounded px-1.5 text-slate-400">Enter</kbd> mở</span>
+                <span className="flex items-center gap-1"><kbd className="font-mono bg-white border border-slate-200 rounded px-1.5 text-slate-400">Esc</kbd> đóng</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <kbd className="font-mono bg-white border border-slate-200 rounded px-1.5 text-slate-400">Ctrl/Cmd + K</kbd>
+              </div>
             </div>
           </div>
         </div>

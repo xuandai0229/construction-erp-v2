@@ -39,8 +39,8 @@ export function ExecutiveFinancePanel({
   if (!summary) return null;
 
   return (
-    <div className="flex flex-col rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden">
-      <div className="flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4">
+    <div className="flex flex-col h-full rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden">
+      <div className="flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4 shrink-0">
         <h3 className="font-bold text-slate-900">Tài chính, hợp đồng, thanh toán</h3>
       </div>
 

@@ -5,6 +5,7 @@ import { formatDateVNShort, formatPercentVN } from "@/lib/dashboard/dashboard-fo
 import { StatusBadge, type StatusBadgeVariant } from "@/components/ui/status-badge";
 import { DashboardEmptyState } from "./dashboard-empty-state";
 import { cn } from "@/lib/utils";
+import { getProjectStatusMeta } from "@/lib/project-status";
 
 const healthMeta: Record<DashboardProjectOverview["health"], { label: string; variant: StatusBadgeVariant; bar: string }> = {
   ON_TRACK: { label: "Đúng tiến độ", variant: "success", bar: "bg-emerald-600" },
@@ -13,17 +14,6 @@ const healthMeta: Record<DashboardProjectOverview["health"], { label: string; va
   COMPLETED: { label: "Hoàn thành", variant: "success", bar: "bg-emerald-600" },
   NO_DATA: { label: "Chưa có dữ liệu", variant: "neutral", bar: "bg-slate-400" },
 };
-
-function projectStatusLabel(status: string) {
-  const labels: Record<string, string> = {
-    PLANNING: "Chuẩn bị",
-    ACTIVE: "Đang thi công",
-    ON_HOLD: "Tạm dừng",
-    COMPLETED: "Hoàn thành",
-    CANCELLED: "Hủy",
-  };
-  return labels[status] ?? status;
-}
 
 export function DashboardProjectOverviewList({ projects }: { projects: DashboardProjectOverview[] }) {
   return (
@@ -39,11 +29,12 @@ export function DashboardProjectOverviewList({ projects }: { projects: Dashboard
       </div>
       <div className="p-3 sm:p-4">
         {projects.length === 0 ? (
-          <DashboardEmptyState title="Chưa có công trình đang thi công" description="Khi có công trình active, dashboard sẽ hiển thị tiến độ tại đây." />
+          <DashboardEmptyState title="Chưa có công trình phù hợp" description="Khi có công trình trong phạm vi quyền, dashboard sẽ hiển thị tiến độ tại đây." />
         ) : (
           <div className="space-y-3">
             {projects.map((project) => {
               const meta = healthMeta[project.health];
+              const statusMeta = getProjectStatusMeta(project.status);
               const progress = project.progressPercent ?? 0;
               return (
                 <Link key={project.id} href={`/projects/${project.id}`} className="block rounded-xl border border-slate-200 bg-white p-4 transition-colors hover:border-blue-200 hover:bg-blue-50/40">
@@ -52,7 +43,7 @@ export function DashboardProjectOverviewList({ projects }: { projects: Dashboard
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-bold text-slate-700">{project.code}</span>
                         <StatusBadge variant={meta.variant} size="sm">{meta.label}</StatusBadge>
-                        <StatusBadge variant="neutral" size="sm">{projectStatusLabel(project.status)}</StatusBadge>
+                        <StatusBadge variant={statusMeta.variant} size="sm">{statusMeta.label}</StatusBadge>
                       </div>
                       <h3 className="mt-2 line-clamp-2 text-sm font-bold leading-5 text-slate-950 sm:text-base">{project.name}</h3>
                       <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-medium text-slate-600">

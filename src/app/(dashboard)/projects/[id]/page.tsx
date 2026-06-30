@@ -5,9 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, Calendar, MapPin, User, ListTree, FolderOpen, FileText, ClipboardCheck, BarChart2, Package } from "lucide-react";
 import { DeleteProjectButton } from "@/components/projects/delete-project-button";
 import Link from "next/link";
-import { ProjectStatus } from "@prisma/client";
 import { formatDateVN } from "@/lib/utils";
 import { requireProjectAccessOrRedirect, canManageProjects } from "@/lib/rbac";
+import { getProjectStatusMeta } from "@/lib/project-status";
 
 export default async function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -50,15 +50,9 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
     notFound();
   }
 
-  const getStatusBadge = (status: ProjectStatus) => {
-    switch (status) {
-      case 'PLANNING': return <StatusBadge variant="neutral">Chuẩn bị</StatusBadge>;
-      case 'ACTIVE': return <StatusBadge variant="success">Đang thi công</StatusBadge>;
-      case 'ON_HOLD': return <StatusBadge variant="warning">Tạm dừng</StatusBadge>;
-      case 'COMPLETED': return <StatusBadge variant="success">Hoàn thành</StatusBadge>;
-      case 'CANCELLED': return <StatusBadge variant="danger">Hủy</StatusBadge>;
-      default: return <StatusBadge variant="neutral">{status}</StatusBadge>;
-    }
+  const getStatusBadge = (status: string) => {
+    const meta = getProjectStatusMeta(status);
+    return <StatusBadge variant={meta.variant}>{meta.label}</StatusBadge>;
   };
 
   return (

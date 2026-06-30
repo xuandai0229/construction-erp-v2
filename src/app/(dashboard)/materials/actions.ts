@@ -209,11 +209,11 @@ export async function getActiveProjects() {
   const session = await getSession();
   if (!session) return [];
 
-  const whereClause =
+  const whereClause: Prisma.ProjectWhereInput =
     session.role === "ADMIN"
-      ? { status: "ACTIVE" as const, deletedAt: null }
+      ? { status: { in: ["PLANNING", "ACTIVE", "ON_HOLD"] }, deletedAt: null }
       : {
-          status: "ACTIVE" as const,
+          status: { in: ["PLANNING", "ACTIVE", "ON_HOLD"] },
           deletedAt: null,
           members: {
             some: {

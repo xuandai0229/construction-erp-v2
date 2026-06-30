@@ -46,7 +46,7 @@ export function MaterialsWorkspace({
   const toast = useToast();
 
   const activeTab = searchParams.get("tab") || "overview";
-  const [projectId, setProjectId] = useState(initialProjectId || projects[0]?.id || "");
+  const [projectId, setProjectId] = useState(initialProjectId || "");
   const [isMaterialFormOpen, setIsMaterialFormOpen] = useState(false);
   const [transactionFormType, setTransactionFormType] = useState<"IMPORT" | "EXPORT" | null>(null);
   const [transactionMaterialId, setTransactionMaterialId] = useState("");
@@ -54,8 +54,8 @@ export function MaterialsWorkspace({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    setProjectId(initialProjectId || projects[0]?.id || "");
-  }, [initialProjectId, projects]);
+    setProjectId(initialProjectId || "");
+  }, [initialProjectId]);
 
   const tabs = [
     { id: "overview", label: "Tổng quan", icon: ClipboardList, visible: permissions.canView },
@@ -69,8 +69,13 @@ export function MaterialsWorkspace({
   const updateUrl = (tab: string, nextProjectId = projectId) => {
     const params = new URLSearchParams(searchParams);
     params.set("tab", tab);
-    if (nextProjectId) params.set("projectId", nextProjectId);
-    router.push(`?${params.toString()}`);
+    if (nextProjectId) {
+      params.set("projectId", nextProjectId);
+    } else {
+      params.delete("projectId");
+    }
+    const query = params.toString();
+    router.push(query ? `?${query}` : "?");
   };
 
   const handleProjectChange = async (nextProjectId: string) => {

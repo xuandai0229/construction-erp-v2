@@ -23,6 +23,7 @@ import {
 import { format } from "date-fns";
 import { getDocumentPreviewKind } from "@/lib/document-file-utils";
 import { DocumentStatus } from "@prisma/client";
+import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
 
 export interface DocumentListItem {
   id: string;
@@ -148,6 +149,7 @@ export function DocumentViewer({
 }: DocumentViewerProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [imageScale, setImageScale] = useState(1);
+  useBodyScrollLock(true);
   const previewKind = getDocumentPreviewKind(
     document.mimeType,
     document.extension,

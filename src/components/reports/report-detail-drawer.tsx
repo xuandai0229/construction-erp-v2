@@ -38,6 +38,7 @@ import { getStatusLabel, getStatusVariant, WEATHER_OPTIONS } from "./types";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast-context";
+import { getProjectStatusMeta } from "@/lib/project-status";
 
 interface ReportDetailDrawerProps {
   report: FieldReport | null;
@@ -342,6 +343,7 @@ export function ReportDetailDrawer({
   }
 
   const weatherLabel = WEATHER_OPTIONS.find(o => o.value === report.weatherCondition)?.label || "Khác";
+  const projectStatusMeta = getProjectStatusMeta(report.projectStatus);
 
   const displayWorkLines = buildDisplayWorkLines(report);
   const isReportDeletable =
@@ -389,6 +391,9 @@ export function ReportDetailDrawer({
               </StatusBadge>
               <StatusBadge variant="neutral" size="sm">
                 {report.type === 'WEEKLY' ? 'Báo cáo tuần' : 'Báo cáo ngày'}
+              </StatusBadge>
+              <StatusBadge variant={projectStatusMeta.variant} size="sm">
+                {projectStatusMeta.label}
               </StatusBadge>
             </div>
             <p className="text-xs text-slate-500 mt-0.5 truncate">
