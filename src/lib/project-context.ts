@@ -3,6 +3,11 @@ import prisma from '@/lib/prisma';
 import { getAccessibleProjectIds } from '@/lib/rbac';
 import type { SessionUser } from '@/lib/auth';
 import { getProjectStatusMeta, isPreparationProjectStatus } from '@/lib/project-status';
+import {
+  buildApprovalNotificationTarget,
+  buildReportNotificationTarget,
+  type NotificationTargetType,
+} from '@/lib/notifications/notification-routing';
 
 export type GlobalProjectContext = {
   selectedProjectId: string | null;
@@ -23,8 +28,12 @@ export type GlobalProjectContext = {
     title: string;
     message: string | null;
     projectName: string | null;
+    projectId: string | null;
     createdAt: Date;
     href: string | null;
+    actionUrl: string | null;
+    targetType: NotificationTargetType;
+    targetId: string | null;
     isRead: boolean;
   }[];
 };
@@ -137,21 +146,34 @@ export async function getGlobalProjectContext(
   });
 
   pendingApprovals.forEach(app => {
+    const notificationId = `app-${app.id}`;
+    const target = buildApprovalNotificationTarget({
+      approvalId: app.id,
+      projectId: app.projectId,
+      approvalType: app.type,
+      sourceType: app.sourceType,
+      sourceId: app.sourceId,
+      notificationId,
+    });
     notifications.push({
-      id: `app-${app.id}`,
+      id: notificationId,
       type: 'APPROVAL',
       severity: app.priority === 'HIGH' || app.priority === 'URGENT' ? 'HIGH' : 'MEDIUM',
       title: app.title,
       message: 'Hồ sơ chờ phê duyệt',
       projectName: app.project.name,
+      projectId: app.projectId,
       createdAt: app.createdAt,
-      href: `/approvals?projectId=${app.projectId}&requestId=${app.id}`,
+      href: target.actionUrl,
+      actionUrl: target.actionUrl,
+      targetType: target.targetType,
+      targetId: target.targetId,
       isRead: false
     });
   });
 
   // Issue Reports
-  const issueReports = await prisma.siteReport.findMany({
+  const rawIssueReports = await prisma.siteReport.findMany({
     where: {
       deletedAt: null,
       ...(selectedProjectId ? { projectId: selectedProjectId } : (accessibleProjectIds === null ? {} : { projectId: { in: accessibleProjectIds } })),
@@ -161,33 +183,94 @@ export async function getGlobalProjectContext(
       ],
     },
     orderBy: { updatedAt: "desc" },
-    take: 3,
+    take: 20, // Fetch a bit more to account for JS filtering
     include: { project: { select: { name: true } } },
   });
+
+  const issueReports = rawIssueReports.filter(r => {
+    if (r.status === "SUBMITTED" || r.status === "REVISION_REQUESTED") return true;
+    
+    if (!r.issues) return false;
+    const cleanIssues = r.issues.trim().toLowerCase();
+    
+    const ignoredValues = ["", "không có", "khong co", "không có vấn đề", "không có vấn đề gì", "none", "n/a", "na"];
+    if (ignoredValues.includes(cleanIssues)) return false;
+    if (cleanIssues.startsWith("không có") || cleanIssues.startsWith("khong co")) return false;
+    
+    return true;
+  }).slice(0, 3); // Apply limit after filtering
 
   issueReports.forEach(r => {
     const isPending = r.status === "SUBMITTED";
     const reportDateStr = new Date(r.reportDate).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+    const notificationId = `rep-${r.id}`;
+    const target = buildReportNotificationTarget({
+      reportId: r.id,
+      projectId: r.projectId,
+      status: isPending ? "PENDING" : "ISSUE",
+      notificationId,
+    });
     notifications.push({
-      id: `rep-${r.id}`,
+      id: notificationId,
       type: 'REPORT',
       severity: 'HIGH',
       title: isPending ? `Báo cáo ngày ${reportDateStr} chờ duyệt` : `Báo cáo ngày ${reportDateStr} có vấn đề`,
       message: r.summary ? `Nội dung: ${r.summary}` : 'Báo cáo hiện trường cần chú ý',
       projectName: r.project.name,
+      projectId: r.projectId,
       createdAt: r.updatedAt,
-      href: `/reports?projectId=${r.projectId}&reportId=${r.id}&status=${isPending ? 'PENDING' : 'ISSUE'}`,
+      href: target.actionUrl,
+      actionUrl: target.actionUrl,
+      targetType: target.targetType,
+      targetId: target.targetId,
       isRead: false
     });
   });
 
-  // Sort by date
-  notifications.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  // Deduplicate and sort by date
+  const uniqueNotificationsMap = new Map<string, typeof notifications[0]>();
+  for (const notification of notifications) {
+    const dedupeKey = notification.targetType && notification.targetId 
+      ? `${notification.targetType}_${notification.targetId}` 
+      : notification.id;
+      
+    if (!uniqueNotificationsMap.has(dedupeKey)) {
+      uniqueNotificationsMap.set(dedupeKey, notification);
+    } else {
+      // If same key exists, keep the one with higher severity or newer date
+      const existing = uniqueNotificationsMap.get(dedupeKey)!;
+      if (notification.severity === 'HIGH' && existing.severity !== 'HIGH') {
+        uniqueNotificationsMap.set(dedupeKey, notification);
+      } else if (notification.severity === existing.severity) {
+        if (notification.createdAt.getTime() > existing.createdAt.getTime()) {
+           uniqueNotificationsMap.set(dedupeKey, notification);
+        }
+      }
+    }
+  }
+  
+  const uniqueNotifications = Array.from(uniqueNotificationsMap.values());
+  uniqueNotifications.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  const visibleNotifications = uniqueNotifications.slice(0, 5); // Limit to 5 max in search popup
+  const readRows = visibleNotifications.length > 0
+    ? await prisma.notification.findMany({
+        where: {
+          userId: session.id,
+          id: { in: visibleNotifications.map((notification) => `${session.id}:${notification.id}`) },
+          isRead: true,
+        },
+        select: { id: true },
+      })
+    : [];
+  const readIds = new Set(readRows.map((notification) => notification.id.replace(`${session.id}:`, "")));
 
   return {
     selectedProjectId,
     accessibleProjects,
     overviewData,
-    notifications: notifications.slice(0, 5)
+    notifications: visibleNotifications.map((notification) => ({
+      ...notification,
+      isRead: readIds.has(notification.id),
+    }))
   };
 }

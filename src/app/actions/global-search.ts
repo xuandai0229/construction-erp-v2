@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { getAccessibleProjectIds } from "@/lib/rbac";
 import type { UserRole } from "@prisma/client";
+import { buildApprovalNotificationTarget, buildReportNotificationTarget } from "@/lib/notifications/notification-routing";
 
 export async function searchSystem(query: string, globalProjectId: string | null) {
   const session = await getSession();
@@ -40,17 +41,28 @@ export async function searchSystem(query: string, globalProjectId: string | null
       ]
     },
     take: 5,
-    select: { id: true, title: true, projectId: true, project: { select: { name: true } }, priority: true, createdAt: true }
+    select: { id: true, title: true, projectId: true, type: true, sourceType: true, sourceId: true, project: { select: { name: true } }, priority: true, createdAt: true }
   });
 
-  const approvalNotifications = approvals.map(app => ({
-    id: `app-${app.id}`,
-    type: 'APPROVAL',
-    severity: app.priority === 'HIGH' || app.priority === 'URGENT' ? 'HIGH' : 'MEDIUM',
-    title: app.title,
-    projectName: app.project.name,
-    href: `/approvals?projectId=${app.projectId}&requestId=${app.id}`,
-  }));
+  const approvalNotifications = approvals.map(app => {
+    const notificationId = `app-${app.id}`;
+    const target = buildApprovalNotificationTarget({
+      approvalId: app.id,
+      projectId: app.projectId,
+      approvalType: app.type,
+      sourceType: app.sourceType,
+      sourceId: app.sourceId,
+      notificationId,
+    });
+    return {
+      id: notificationId,
+      type: 'APPROVAL',
+      severity: app.priority === 'HIGH' || app.priority === 'URGENT' ? 'HIGH' : 'MEDIUM',
+      title: app.title,
+      projectName: app.project.name,
+      href: target.actionUrl,
+    };
+  });
 
   // 3. Reports Search
   const reports = await prisma.siteReport.findMany({
@@ -67,13 +79,21 @@ export async function searchSystem(query: string, globalProjectId: string | null
     select: { id: true, reportNo: true, title: true, projectId: true, project: { select: { name: true } } }
   });
 
-  const reportResults = reports.map(r => ({
-    id: r.id,
+  const reportResults = reports.map(r => {
+    const target = buildReportNotificationTarget({
+      reportId: r.id,
+      projectId: r.projectId,
+      status: "PENDING",
+      notificationId: `rep-${r.id}`,
+    });
+    return {
+      id: r.id,
     title: r.title || `Báo cáo ${r.reportNo}`,
-    reportNo: r.reportNo,
-    projectName: r.project.name,
-    href: `/reports?projectId=${r.projectId}&reportId=${r.id}`
-  }));
+      reportNo: r.reportNo,
+      projectName: r.project.name,
+      href: target.actionUrl,
+    };
+  });
 
   return {
     projects,

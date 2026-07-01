@@ -140,28 +140,46 @@ export function GlobalSearchCommand({ globalContext }: GlobalSearchCommandProps)
             ref={panelRef}
             className="relative w-full max-w-[800px] overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200 mt-2 mx-2 sm:mx-auto sm:mt-[72px] animate-in fade-in zoom-in-95 duration-200"
           >
-            <div className="flex items-center border-b border-slate-100 px-4 relative">
+            <div className="flex items-center border-b border-slate-100 px-4 h-14 relative">
               <Search className="h-5 w-5 text-slate-400 shrink-0" />
-              <input
-                ref={inputRef}
-                className="flex h-14 w-full bg-transparent py-3 pl-3 pr-14 text-slate-900 outline-none placeholder:text-slate-400 sm:text-base"
-                placeholder="Tìm công trình, báo cáo, hồ sơ, thông báo..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
-              <div className="absolute right-16 top-1/2 -translate-y-1/2">
-                {isSearching && <Loader2 className="h-4 w-4 animate-spin text-slate-400" />}
+              <div className="relative flex-1 flex items-center h-full">
+                <input
+                  ref={inputRef}
+                  className="flex h-full w-full bg-transparent py-3 pl-3 pr-10 text-slate-900 outline-none placeholder:text-slate-400 sm:text-base"
+                  placeholder="Tìm công trình, báo cáo, hồ sơ, thông báo..."
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+                {query && !isSearching && (
+                  <button
+                    onClick={() => {
+                      setQuery("");
+                      inputRef.current?.focus();
+                    }}
+                    className="absolute right-2 flex h-6 w-6 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                    aria-label="Xóa nội dung tìm kiếm"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+                {isSearching && (
+                  <div className="absolute right-2 flex h-6 w-6 items-center justify-center">
+                    <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                  </div>
+                )}
               </div>
               <button 
                 onClick={closeSearch}
-                className="hidden sm:flex items-center gap-1 rounded-md px-1.5 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                className="hidden sm:flex shrink-0 items-center justify-center h-8 w-8 ml-2 rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                aria-label="Đóng tìm kiếm"
                 title="Đóng (Esc)"
               >
-                <kbd className="font-mono text-[10px] bg-white border border-slate-200 shadow-sm px-1.5 rounded">ESC</kbd>
+                <X className="h-5 w-5" />
               </button>
               <button 
                 onClick={closeSearch}
-                className="sm:hidden rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-500 transition-colors"
+                className="sm:hidden shrink-0 items-center justify-center h-8 w-8 ml-1 rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                aria-label="Đóng tìm kiếm"
               >
                 <X className="h-5 w-5" />
               </button>

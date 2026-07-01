@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   AlertTriangle,
@@ -23,6 +23,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ReasonDialog } from "@/components/ui/reason-dialog";
 import { useToast } from "@/components/ui/toast-context";
+import { cn } from "@/lib/utils";
 import {
   approveApprovalRequest,
   cancelApprovalRequest,
@@ -545,6 +546,7 @@ export function ApprovalCenterClient({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const searchParamsKey = searchParams.toString();
   const toast = useToast();
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
@@ -560,10 +562,75 @@ export function ApprovalCenterClient({
   const [approving, setApproving] = useState<ApprovalRequestDto | null>(null);
   const [rejecting, setRejecting] = useState<ApprovalRequestDto | null>(null);
   const [cancelling, setCancelling] = useState<ApprovalRequestDto | null>(null);
+  const [deepLinkedApprovalId, setDeepLinkedApprovalId] = useState<string | null>(null);
+  const [deepLinkMissing, setDeepLinkMissing] = useState(false);
 
   useEffect(() => {
     setProjectFilterState(initialProjectId || "");
   }, [initialProjectId]);
+
+  const clearApprovalDeepLinkParams = useCallback(() => {
+    const params = new URLSearchParams(searchParamsKey);
+    const hadDetailParams = ["approvalId", "requestId", "id", "open", "notificationId"].some((key) => params.has(key));
+    params.delete("approvalId");
+    params.delete("requestId");
+    params.delete("id");
+    params.delete("open");
+    params.delete("notificationId");
+    if (params.get("type")?.includes("-")) {
+      params.delete("type");
+    }
+    if (!hadDetailParams) return;
+
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }, [pathname, router, searchParamsKey]);
+
+  const closeApprovalDetail = useCallback(() => {
+    setViewing(null);
+    setDeepLinkedApprovalId(null);
+    setDeepLinkMissing(false);
+    clearApprovalDeepLinkParams();
+  }, [clearApprovalDeepLinkParams]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParamsKey);
+    const approvalId = params.get("approvalId") || params.get("requestId");
+    const targetId = params.get("id");
+    const shouldOpen = params.get("open") === "1" || Boolean(approvalId);
+    if (!shouldOpen && !targetId) {
+      setDeepLinkMissing(false);
+      return;
+    }
+
+    const matchedApproval = approvals.find((approval) =>
+      approval.id === approvalId ||
+      approval.id === targetId ||
+      (Boolean(targetId) && approval.sourceId === targetId)
+    );
+
+    if (!matchedApproval) {
+      setViewing(null);
+      setDeepLinkedApprovalId(null);
+      setDeepLinkMissing(true);
+      return;
+    }
+
+    setDeepLinkMissing(false);
+    setViewing(matchedApproval);
+    setDeepLinkedApprovalId(matchedApproval.id);
+    setProjectFilterState(matchedApproval.projectId);
+    setTypeFilter("");
+    setSearch("");
+    setActiveTab(matchedApproval.status === "PENDING" ? "PENDING" : "RESOLVED");
+
+    window.setTimeout(() => {
+      document.getElementById(`approval-row-${matchedApproval.id}`)?.scrollIntoView({
+        block: "center",
+        behavior: "smooth",
+      });
+    }, 100);
+  }, [approvals, searchParamsKey]);
 
   const handleProjectFilterChange = async (projectId: string) => {
     setProjectFilterState(projectId);
@@ -665,7 +732,7 @@ export function ApprovalCenterClient({
     await updateApprovalRequest({ ...data, id: editing.id });
     toast.success("Đã cập nhật yêu cầu phê duyệt");
     setEditing(null);
-    setViewing(null);
+    closeApprovalDetail();
     router.refresh();
   };
 
@@ -697,6 +764,12 @@ export function ApprovalCenterClient({
         <SummaryCard label="Từ chối" value={displaySummary.rejectedCount} helper="Yêu cầu đã bị từ chối" icon={XCircle} tone="rose" />
         <SummaryCard label="Giá trị chờ xử lý" value={formatCurrency(displaySummary.pendingAmount)} helper="Tổng giá trị các yêu cầu đang chờ" icon={ShieldCheck} tone="slate" />
       </div>
+
+      {deepLinkMissing && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
+          Không tìm thấy nội dung thông báo hoặc bạn không có quyền truy cập.
+        </div>
+      )}
 
       <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
         {/* Toolbar & Tabs */}
@@ -768,7 +841,14 @@ export function ApprovalCenterClient({
                   const canDecide = approval.status === "PENDING" && approval.permissions?.canApprove;
                   const canEdit = approval.status === "PENDING" && approval.permissions?.canEdit;
                   return (
-                    <tr key={approval.id} className="group hover:bg-slate-50/50 transition-colors">
+                    <tr
+                      id={`approval-row-${approval.id}`}
+                      key={approval.id}
+                      className={cn(
+                        "group hover:bg-slate-50/50 transition-colors",
+                        deepLinkedApprovalId === approval.id && "bg-blue-50/80 ring-2 ring-inset ring-blue-200"
+                      )}
+                    >
                       <td className="px-5 py-3">
                         <div className="flex flex-col gap-1">
                           <button type="button" onClick={() => setViewing(approval)} className="text-left font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
@@ -839,7 +919,14 @@ export function ApprovalCenterClient({
               const canDecide = approval.status === "PENDING" && approval.permissions?.canApprove;
               const canEdit = approval.status === "PENDING" && approval.permissions?.canEdit;
               return (
-                <div key={approval.id} className="p-4 flex flex-col gap-3">
+                <div
+                  id={`approval-row-${approval.id}`}
+                  key={approval.id}
+                  className={cn(
+                    "p-4 flex flex-col gap-3",
+                    deepLinkedApprovalId === approval.id && "bg-blue-50/80 ring-2 ring-inset ring-blue-200"
+                  )}
+                >
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
@@ -898,7 +985,7 @@ export function ApprovalCenterClient({
 
       <ApprovalDetailDrawer
         approval={viewing}
-        onClose={() => setViewing(null)}
+        onClose={closeApprovalDetail}
         onApprove={setApproving}
         onReject={setRejecting}
         onCancel={setCancelling}
@@ -939,7 +1026,7 @@ export function ApprovalCenterClient({
             "Đã duyệt yêu cầu",
             () => {
               setApproving(null);
-              setViewing(null);
+              closeApprovalDetail();
             },
           );
         }}
@@ -972,7 +1059,7 @@ export function ApprovalCenterClient({
             "Đã từ chối yêu cầu",
             () => {
               setRejecting(null);
-              setViewing(null);
+              closeApprovalDetail();
             },
           );
         }}
@@ -993,7 +1080,7 @@ export function ApprovalCenterClient({
             "Đã hủy yêu cầu",
             () => {
               setCancelling(null);
-              setViewing(null);
+              closeApprovalDetail();
             },
           );
         }}
