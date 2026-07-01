@@ -74,7 +74,7 @@ export function ExecutiveActionList({
   count?: number
 }) {
   return (
-    <section id="action-items" className="flex flex-col h-full rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden">
+    <section id="action-items" className="flex flex-col h-full rounded-[20px] border border-slate-200/70 bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden">
       <div className="flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4 shrink-0">
         <div className="flex items-center gap-3">
           <h3 className="font-bold text-slate-900">{title}</h3>
@@ -99,7 +99,7 @@ export function ExecutiveActionList({
             <Link 
               key={item.id} 
               href={item.href}
-              className="group flex items-center gap-4 px-5 py-3 transition-colors hover:bg-slate-50/80"
+              className="group flex items-center gap-4 px-5 py-3 transition-colors duration-150 ease-out hover:bg-slate-50"
             >
               {getIcon(item.type, item.priority)}
               
@@ -123,8 +123,8 @@ export function ExecutiveActionList({
                 </span>
               </div>
 
-              <div className="shrink-0 text-slate-300 group-hover:text-blue-600">
-                <ChevronRight className="h-4 w-4" />
+              <div className="shrink-0 text-slate-300 transition-colors duration-150 group-hover:text-blue-500">
+                <ChevronRight className="h-4 w-4 transition-transform duration-150 ease-out group-hover:translate-x-0.5" />
               </div>
             </Link>
           ))

@@ -43,7 +43,7 @@ export function ExecutiveSiteReportHighlights({
   const displayReports = reports.slice(0, 3);
 
   return (
-    <div className="flex flex-col h-full rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden">
+    <div className="flex flex-col h-full rounded-[20px] border border-slate-200/70 bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden">
       <div className="flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4 shrink-0">
         <h3 className="font-bold text-slate-900">Báo cáo hiện trường nổi bật</h3>
         <Link href="/reports" className="flex items-center gap-1 text-[13px] font-medium text-blue-600 hover:text-blue-700">
@@ -63,7 +63,7 @@ export function ExecutiveSiteReportHighlights({
                 key={report.id} 
                 href={report.href}
                 className={cn(
-                  "group flex flex-col justify-between rounded-xl border p-3.5 transition-colors",
+                  "group flex flex-col justify-between rounded-xl border p-3.5 transition-all duration-200 ease-out hover:shadow-sm hover:-translate-y-0.5",
                   getCardColor(report.status, report.hasIssue)
                 )}
               >

@@ -5,35 +5,35 @@ export type IconColorTone = 'blue' | 'emerald' | 'amber' | 'rose' | 'slate' | 'v
 
 const toneMap = {
   blue: {
-    bg: 'bg-blue-100/60 border-blue-200/60',
+    bg: 'bg-gradient-to-br from-blue-50 to-blue-100/40 border-white/60 shadow-blue-900/5',
     icon: 'text-blue-600'
   },
   emerald: {
-    bg: 'bg-emerald-100/60 border-emerald-200/60',
+    bg: 'bg-gradient-to-br from-emerald-50 to-emerald-100/40 border-white/60 shadow-emerald-900/5',
     icon: 'text-emerald-600'
   },
   amber: {
-    bg: 'bg-amber-100/60 border-amber-200/60',
+    bg: 'bg-gradient-to-br from-amber-50 to-amber-100/40 border-white/60 shadow-amber-900/5',
     icon: 'text-amber-600'
   },
   rose: {
-    bg: 'bg-rose-100/60 border-rose-200/60',
+    bg: 'bg-gradient-to-br from-rose-50 to-rose-100/40 border-white/60 shadow-rose-900/5',
     icon: 'text-rose-600'
   },
   slate: {
-    bg: 'bg-slate-100 border-slate-100',
+    bg: 'bg-gradient-to-br from-slate-50 to-slate-100/40 border-white/60 shadow-slate-900/5',
     icon: 'text-slate-600'
   },
   violet: {
-    bg: 'bg-violet-100/60 border-violet-200/60',
+    bg: 'bg-gradient-to-br from-violet-50 to-violet-100/40 border-white/60 shadow-violet-900/5',
     icon: 'text-violet-600'
   },
   orange: {
-    bg: 'bg-orange-100/60 border-orange-200/60',
+    bg: 'bg-gradient-to-br from-orange-50 to-orange-100/40 border-white/60 shadow-orange-900/5',
     icon: 'text-orange-600'
   },
   sky: {
-    bg: 'bg-sky-100/60 border-sky-200/60',
+    bg: 'bg-gradient-to-br from-sky-50 to-sky-100/40 border-white/60 shadow-sky-900/5',
     icon: 'text-sky-600'
   }
 };
@@ -49,8 +49,8 @@ export function ExecutiveIcon({
 }) {
   const styles = toneMap[tone];
   return (
-    <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border shadow-sm", styles.bg, className)}>
-      <Icon className={cn("h-5 w-5", styles.icon)} strokeWidth={2} />
+    <div className={cn("flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-2xl border shadow-sm", styles.bg, className)}>
+      <Icon className={cn("h-[18px] w-[18px]", styles.icon)} strokeWidth={2} />
     </div>
   );
 }

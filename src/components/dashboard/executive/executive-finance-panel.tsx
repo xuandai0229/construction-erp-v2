@@ -39,7 +39,7 @@ export function ExecutiveFinancePanel({
   if (!summary) return null;
 
   return (
-    <div className="flex flex-col h-full rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden">
+    <div className="flex flex-col h-full rounded-[20px] border border-slate-200/70 bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden">
       <div className="flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4 shrink-0">
         <h3 className="font-bold text-slate-900">Tài chính, hợp đồng, thanh toán</h3>
       </div>
@@ -105,7 +105,7 @@ export function ExecutiveFinancePanel({
             ) : (
               <div className="flex flex-col divide-y divide-slate-100 border-t border-slate-100">
                 {summary.recentPayments.slice(0, 3).map((payment) => (
-                  <div key={payment.id} className="group flex flex-col gap-1.5 py-2.5 hover:bg-slate-50/50 transition-colors">
+                  <div key={payment.id} className="group flex flex-col gap-1.5 py-2.5 hover:bg-slate-50 transition-colors duration-150 ease-out">
                     <div className="flex justify-between items-start gap-2">
                       <Link href={payment.href} className="text-[12px] font-bold text-slate-900 hover:text-blue-600 transition-colors line-clamp-1">
                         {payment.title}

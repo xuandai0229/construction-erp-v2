@@ -42,8 +42,8 @@ export type DashboardProjectOverview = {
   status: ProjectStatus;
   progressPercent: number | null;
   itemCount: number;
-  recentEntryCount: number;
   updatedAt: Date;
+  startDate: Date | null;
   endDate: Date | null;
   daysRemaining: number | null;
   health: "ON_TRACK" | "AT_RISK" | "DELAYED" | "COMPLETED" | "NO_DATA";
@@ -363,13 +363,9 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
         id: true,
         name: true,
         status: true,
+        startDate: true,
         endDate: true,
-        fieldProgressTemplates: { where: { deletedAt: null }, select: { id: true }, take: 1 },
-        _count: {
-          select: {
-            fieldProgressEntries: { where: { deletedAt: null, entryDate: { gte: lastSevenStart, lt: period.end } } },
-          },
-        },
+        updatedAt: true,
       },
       orderBy: { updatedAt: "desc" },
     }),
@@ -382,36 +378,9 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
         code: true,
         name: true,
         status: true,
+        startDate: true,
         endDate: true,
         updatedAt: true,
-        fieldProgressTemplates: {
-          where: { deletedAt: null },
-          orderBy: { createdAt: "desc" },
-          take: 1,
-          select: {
-            id: true,
-            items: {
-              where: { deletedAt: null },
-              orderBy: { sortOrder: "asc" },
-              select: {
-                id: true,
-                parentId: true,
-                itemType: true,
-                sortOrder: true,
-                categoryName: true,
-                workContent: true,
-                constructionCrew: true,
-                unit: true,
-                designQuantity: true,
-              },
-            },
-          },
-        },
-        _count: {
-          select: {
-            fieldProgressEntries: { where: { deletedAt: null, entryDate: { gte: lastSevenStart, lt: period.end } } },
-          },
-        },
       },
     }),
     prisma.document.findMany({
@@ -479,14 +448,7 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
   ]);
 
   const overviewProjectIds = overviewProjects.map((project) => project.id);
-  const overviewTemplateIds = overviewProjects.map((project) => project.fieldProgressTemplates[0]?.id).filter((id): id is string => Boolean(id));
-  const [overviewEntries, pendingApprovals, financeSummary] = await Promise.all([
-    overviewTemplateIds.length > 0
-      ? prisma.fieldProgressEntry.findMany({
-          where: { deletedAt: null, status: "APPROVED", projectId: { in: overviewProjectIds }, templateId: { in: overviewTemplateIds } },
-          select: { itemId: true, templateId: true, entryDate: true, quantity: true },
-        })
-      : Promise.resolve([]),
+  const [pendingApprovals, financeSummary] = await Promise.all([
     canViewApprovals
       ? prisma.approvalRequest.findMany({
           where: { deletedAt: null, status: "PENDING", ...projectIdScope(accessibleProjectIds) },
@@ -505,39 +467,40 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
       if (isPreparationProjectStatus(project.status)) {
         return null;
       }
-      const noWbs = project.fieldProgressTemplates.length === 0;
-      const noRecentEntry = project._count.fieldProgressEntries === 0;
       const delayed = daysRemaining !== null && daysRemaining < 0;
-      if (!noWbs && !noRecentEntry && !delayed) return null;
+      if (!delayed) return null;
       return {
         project,
-        reason: delayed ? "Trễ tiến độ" : noWbs ? "Chưa thiết lập WBS" : "Chưa có nhập liệu gần đây",
-        priority: delayed || noWbs ? "HIGH" as const : "MEDIUM" as const,
+        reason: "Trễ tiến độ",
+        priority: "HIGH" as const,
       };
     })
     .filter((item): item is NonNullable<typeof item> => Boolean(item));
 
+  const { calculatePlannedProgress } = await import("./progress-utils");
+
   const projectOverview = overviewProjects.map((project) => {
-    const template = project.fieldProgressTemplates[0] ?? null;
-    const entries = template ? overviewEntries.filter((entry) => entry.templateId === template.id) : [];
-    const progress = calculateProjectProgress(template, entries);
     const daysRemaining = getDaysRemaining(project.endDate, todayStart);
+    
+    const progressPercent = calculatePlannedProgress(project.startDate, project.endDate, todayStart);
+
     const health = getHealth({
       status: project.status,
-      progressPercent: progress.progressPercent,
-      itemCount: progress.itemCount,
-      recentEntryCount: project._count.fieldProgressEntries,
+      progressPercent: progressPercent,
+      itemCount: 1,
+      recentEntryCount: 1,
       daysRemaining,
     });
+    
     return {
       id: project.id,
       code: project.code,
       name: project.name,
       status: project.status,
-      progressPercent: progress.progressPercent,
-      itemCount: progress.itemCount,
-      recentEntryCount: project._count.fieldProgressEntries,
+      progressPercent,
+      itemCount: 0,
       updatedAt: project.updatedAt,
+      startDate: project.startDate,
       endDate: project.endDate,
       daysRemaining,
       ...health,
@@ -570,36 +533,9 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
         href: payment.href,
       })) ?? [];
 
-  const wbsProjects = attentionProjects.filter(p => p.reason === "Chưa thiết lập WBS");
-  const otherAttention = attentionProjects.filter(p => p.reason !== "Chưa thiết lập WBS");
-  
   const projectActions: DashboardActionItem[] = [];
   
-  if (wbsProjects.length > 1) {
-    projectActions.push({
-      id: "grouped-wbs",
-      title: `${wbsProjects.length} công trình chưa thiết lập WBS`,
-      projectName: "Nhiều dự án",
-      type: "Tiến độ",
-      priority: "HIGH",
-      status: "Cần xử lý",
-      createdAt: null,
-      href: "/projects",
-    });
-  } else if (wbsProjects.length === 1) {
-    projectActions.push({
-      id: `project-${wbsProjects[0].project.id}-wbs`,
-      title: wbsProjects[0].reason,
-      projectName: wbsProjects[0].project.name,
-      type: "Tiến độ",
-      priority: wbsProjects[0].priority,
-      status: "Cần xử lý",
-      createdAt: null,
-      href: `/projects/${wbsProjects[0].project.id}/field-progress`,
-    });
-  }
-
-  projectActions.push(...otherAttention.slice(0, 5 - projectActions.length).map(({ project, reason, priority }) => ({
+  projectActions.push(...attentionProjects.slice(0, 5).map(({ project, reason, priority }) => ({
     id: `project-${project.id}-${reason}`,
     title: reason,
     projectName: project.name,
@@ -607,7 +543,7 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
     priority,
     status: "Cần xử lý",
     createdAt: null,
-    href: `/projects/${project.id}/field-progress`,
+    href: `/projects/${project.id}`,
   })));
 
   const reportActions: DashboardActionItem[] = issueReports

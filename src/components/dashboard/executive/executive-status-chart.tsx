@@ -35,7 +35,7 @@ export function ExecutiveStatusChart({
   const delayedOffset = atRiskOffset - atRiskStroke;
 
   return (
-    <div className="flex flex-col xl:flex-row gap-3 h-full rounded-2xl border border-slate-100 bg-white p-3.5 shadow-sm overflow-hidden">
+    <div className="flex flex-col xl:flex-row gap-4 h-full rounded-[20px] border border-slate-200/70 bg-white p-5 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
       
       <div className="flex-1 flex flex-col justify-center border-b xl:border-b-0 xl:border-r border-slate-100 pb-3 xl:pb-0 xl:pr-3">
         <h4 className="text-[12px] font-bold text-slate-900 mb-3">Phân bổ trạng thái công trình</h4>
@@ -82,7 +82,7 @@ export function ExecutiveStatusChart({
       </div>
 
       <div className="flex-1 flex flex-col justify-center sm:pl-2">
-        <h4 className="text-[12px] font-bold text-slate-900 mb-1">Tiến độ trung bình danh mục</h4>
+        <h4 className="text-[12px] font-bold text-slate-900 mb-1">Tiến độ trung bình theo thời gian</h4>
         <div className="flex items-end gap-2.5 mt-0.5">
           <span className="text-[28px] font-bold text-slate-900 leading-none">{Math.round(avgProgress)}%</span>
           <div className="flex items-center gap-1 text-emerald-600 mb-0.5">

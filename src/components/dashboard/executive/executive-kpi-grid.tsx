@@ -7,17 +7,17 @@ import { getProjectStatusMeta } from '@/lib/project-status';
 
 export function ExecutiveKpiGrid({ data }: { data: DashboardData }) {
   const projectsKpi = data.kpis.find(k => k.id === 'projects');
-  
+
   const activeMatch = projectsKpi?.description.match(/(\d+)\/(\d+)/);
   const activeCount = activeMatch ? parseInt(activeMatch[1]) : 0;
   const totalCount = activeMatch ? parseInt(activeMatch[2]) : 0;
-  
+
   const atRiskCount = data.projectOverview.filter(p => p.health === 'AT_RISK' || p.health === 'DELAYED').length;
-  
+
   const contractValue = data.financeSummary?.totalContractValue || 0;
   const pendingPayment = data.financeSummary?.pendingPaymentAmount || 0;
   const pendingPaymentCount = data.financeSummary?.pendingPaymentCount || 0;
-  
+
   const reportsKpi = data.kpis.find(k => k.id === 'documents-reports');
   const reportsCount = reportsKpi ? parseInt(reportsKpi.value) : 0;
 
@@ -45,13 +45,13 @@ export function ExecutiveKpiGrid({ data }: { data: DashboardData }) {
       href: `/projects/${currentProject.id}`
     },
     {
-      label: 'Tiến độ tổng thể',
+      label: 'Lịch thi công',
       value: currentProject.progressPercent !== null ? `${Math.round(currentProject.progressPercent)}%` : '--',
-      subtext: currentProject.health === 'ON_TRACK' ? 'Đúng kế hoạch' : currentProject.health === 'AT_RISK' ? 'Cần chú ý' : currentProject.health === 'DELAYED' ? 'Đang chậm trễ' : 'Chưa cập nhật',
+      subtext: 'Theo thời gian thi công',
       icon: Building2,
       tone: (currentProject.health === 'ON_TRACK' || currentProject.health === 'COMPLETED' ? 'emerald' : currentProject.health === 'AT_RISK' ? 'amber' : 'rose') as IconColorTone,
       trend: currentProject.health === 'DELAYED' ? 'down' : undefined,
-      href: `/projects/${currentProject.id}/field-progress`
+      href: `?timeProgressDrawer=${currentProject.id}`
     },
     {
       label: 'Hồ sơ chờ duyệt',
@@ -75,7 +75,7 @@ export function ExecutiveKpiGrid({ data }: { data: DashboardData }) {
       value: pendingPayment === 0 && pendingPaymentCount === 0 ? '0 đ' : formatCompactCurrency(pendingPayment),
       subtext: pendingPayment === 0 && pendingPaymentCount === 0 ? 'Không có hồ sơ' : `${pendingPaymentCount} hồ sơ`,
       icon: Wallet,
-      tone: 'amber' as IconColorTone,
+      tone: 'orange' as IconColorTone,
       trend: pendingPaymentCount > 0 ? 'neutral' : undefined,
       href: `/accounting?projectId=${currentProject.id}`
     },
@@ -100,7 +100,7 @@ export function ExecutiveKpiGrid({ data }: { data: DashboardData }) {
     {
       label: 'Đang thi công',
       value: activeCount,
-      subtext: totalCount > 0 ? `${((activeCount/totalCount)*100).toLocaleString('vi-VN', { maximumFractionDigits: 1})}% đang triển khai` : '0%',
+      subtext: totalCount > 0 ? `${((activeCount / totalCount) * 100).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}% đang triển khai` : '0%',
       icon: Hammer,
       tone: 'emerald' as IconColorTone,
       trend: 'up',
@@ -128,7 +128,7 @@ export function ExecutiveKpiGrid({ data }: { data: DashboardData }) {
       value: pendingPayment === 0 && pendingPaymentCount === 0 ? '0 đ' : formatCompactCurrency(pendingPayment),
       subtext: pendingPayment === 0 && pendingPaymentCount === 0 ? 'Chưa có hồ sơ thanh toán nào' : `${pendingPaymentCount} hồ sơ`,
       icon: Wallet,
-      tone: 'amber' as IconColorTone,
+      tone: 'orange' as IconColorTone,
       trend: pendingPaymentCount > 0 ? 'neutral' : undefined,
       href: '/accounting'
     },
@@ -146,21 +146,28 @@ export function ExecutiveKpiGrid({ data }: { data: DashboardData }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
       {kpis.map((kpi, index) => (
-        <Link 
-          key={index} 
-          href={kpi.href || '#'} 
-          className="group flex min-h-[120px] flex-col justify-between rounded-2xl border border-slate-100 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
+        <Link
+          key={index}
+          href={kpi.href || '#'}
+          className="group flex min-h-[120px] flex-col justify-between rounded-[20px] border border-slate-200/70 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-blue-200 hover:shadow-md"
         >
           <div className="flex items-start justify-between gap-2">
-            <div className="space-y-1 overflow-hidden">
-              <p className="truncate whitespace-nowrap text-[11px] font-bold uppercase tracking-wide text-slate-500">
+            <div className="space-y-1 flex-1 min-w-0 pr-2">
+              <p className="truncate whitespace-nowrap text-[12px] font-bold uppercase tracking-wide text-slate-500">
                 {kpi.label}
               </p>
-              <h3 className="truncate text-2xl font-bold leading-none text-slate-900 mt-1.5">
+              <h3 className={cn(
+                "text-slate-900 mt-1.5",
+                typeof kpi.value === 'string' && kpi.value.length > 14 
+                  ? "text-[16px] sm:text-[17px] font-semibold leading-tight whitespace-normal break-words line-clamp-2" 
+                  : "text-[18px] sm:text-[19px] font-semibold whitespace-nowrap leading-tight"
+              )}>
                 {kpi.value}
               </h3>
             </div>
-            <ExecutiveIcon icon={kpi.icon} tone={kpi.tone} />
+            <div className="shrink-0 flex items-center justify-center">
+              <ExecutiveIcon icon={kpi.icon} tone={kpi.tone} />
+            </div>
           </div>
           <div className="mt-4 flex items-center gap-1.5">
             {kpi.trend === 'up' && <ArrowUp className="h-3 w-3 shrink-0 text-emerald-500" />}

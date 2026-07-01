@@ -30,7 +30,7 @@ export function ExecutiveActivityFeed({
   activities: DashboardActivityItem[] 
 }) {
   return (
-    <div className="flex flex-col rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden">
+    <div className="flex flex-col rounded-[20px] border border-slate-200/70 bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden">
       <div className="flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4">
         <h3 className="font-bold text-slate-900">Hoạt động điều hành gần đây</h3>
         <Link href="#" className="flex items-center gap-1 text-[13px] font-medium text-blue-600 hover:text-blue-700 pointer-events-none opacity-50">

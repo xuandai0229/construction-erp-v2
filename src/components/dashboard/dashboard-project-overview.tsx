@@ -21,7 +21,7 @@ export function DashboardProjectOverviewList({ projects }: { projects: Dashboard
       <div className="flex flex-col gap-2 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
         <div>
           <h2 className="text-base font-bold text-slate-950">Tổng quan tiến độ công trình</h2>
-          <p className="mt-1 text-sm text-slate-600">Tính theo khối lượng đã duyệt và bảng khối lượng hiện trường.</p>
+          <p className="mt-1 text-sm text-slate-600">Tính theo thời gian thi công từ ngày bắt đầu đến ngày kết thúc.</p>
         </div>
         <Link href="/projects" className="inline-flex items-center gap-1 text-sm font-semibold text-blue-700 hover:text-blue-800">
           Xem tất cả <ArrowRight className="h-4 w-4" />
@@ -47,8 +47,6 @@ export function DashboardProjectOverviewList({ projects }: { projects: Dashboard
                       </div>
                       <h3 className="mt-2 line-clamp-2 text-sm font-bold leading-5 text-slate-950 sm:text-base">{project.name}</h3>
                       <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-medium text-slate-600">
-                        <span className="inline-flex items-center gap-1"><ListTree className="h-3.5 w-3.5" />{project.itemCount} hạng mục</span>
-                        <span className="inline-flex items-center gap-1"><BarChart3 className="h-3.5 w-3.5" />{project.recentEntryCount} nhập liệu gần đây</span>
                         <span className="inline-flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" />Cập nhật {formatDateVNShort(project.updatedAt)}</span>
                       </div>
                     </div>
