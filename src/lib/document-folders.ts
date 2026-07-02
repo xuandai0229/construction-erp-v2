@@ -5,33 +5,36 @@ export type FolderTreeItem = {
 
 const FOLDER_DISPLAY_NAME_MAP: Record<string, string> = {
   "01_Hop_dong_Phap_ly": "01. Hợp đồng pháp lý",
-  "01. Hop dong Phap ly": "01. Hợp đồng pháp lý",
-  "01_Hợp đồng": "01. Hợp đồng pháp lý",
-  "01_Hop_dong": "01. Hợp đồng",
   "02_Ban_ve_Thiet_ke": "02. Bản vẽ thiết kế",
-  "02. Ban ve Thiet ke": "02. Bản vẽ thiết kế",
-  "02_Bản vẽ": "02. Bản vẽ thiết kế",
-  "02_Phu_luc_hop_dong": "02. Phụ lục hợp đồng",
   "03_Bien_ban_Nghiem_thu": "03. Biên bản nghiệm thu",
-  "03. Bien ban Nghiem thu": "03. Biên bản nghiệm thu",
-  "03_Dự toán": "03. Biên bản nghiệm thu",
-  "03_Bao_lanh_Bao_hiem": "03. Bảo lãnh bảo hiểm",
   "04_Vat_tu_Thiet_bi": "04. Vật tư thiết bị",
-  "04. Vat tu Thiet bi": "04. Vật tư thiết bị",
-  "04_Nghiệm thu": "04. Vật tư thiết bị",
   "05_Hinh_anh_Tien_do": "05. Hình ảnh tiến độ",
-  "05. Hinh anh Tien do": "05. Hình ảnh tiến độ",
-  "05_Hóa đơn": "05. Hình ảnh tiến độ",
   "06_Bao_cao_Hien_truong": "06. Báo cáo hiện trường",
-  "06. Bao cao Hien truong": "06. Báo cáo hiện trường",
-  "06_Thanh toán": "06. Báo cáo hiện trường",
   "07_Thanh_toan_Quyet_toan": "07. Thanh toán quyết toán",
-  "07. Thanh toan Quyet toan": "07. Thanh toán quyết toán",
-  "07_Hình ảnh hiện trường": "07. Thanh toán quyết toán",
+  
+  // Custom user mappings
+  "01_Hop_dong": "01. Hợp đồng",
+  "01_Hop_Đồng": "01. Hợp đồng",
+  "02_Phu_luc_hop_dong": "02. Phụ lục hợp đồng",
+  "03_Bao_lanh_Bao_hiem": "03. Bảo lãnh / Bảo hiểm",
+  "01_Kien_truc": "01. Kiến trúc",
+  "02_Ket_cau": "02. Kết cấu",
+  "03_MEP": "03. MEP",
+  "04_PCCC": "04. PCCC",
+  "05_Shopdrawing": "05. Shop drawing",
 };
 
 export function formatDocumentFolderName(name: string): string {
-  return FOLDER_DISPLAY_NAME_MAP[name] || name;
+  if (FOLDER_DISPLAY_NAME_MAP[name]) {
+    return FOLDER_DISPLAY_NAME_MAP[name];
+  }
+
+  // Fallback parsing for unmatched names
+  let formatted = name.replace(/_/g, " ");
+  // Match things like "01 " and change to "01. "
+  formatted = formatted.replace(/^(\d+)\s/, "$1. ");
+  
+  return formatted;
 }
 
 export function buildFolderAncestorChain<T extends FolderTreeItem>(

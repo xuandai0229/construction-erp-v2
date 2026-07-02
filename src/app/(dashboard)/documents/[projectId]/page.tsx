@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { DocumentWorkspace } from "@/components/documents/document-workspace";
@@ -31,13 +33,29 @@ export default async function ProjectDocumentsPage({
     }
   });
 
+  const rawDeletedFolders = await prisma.documentFolder.findMany({
+    where: { projectId, deletedAt: { not: null } },
+    orderBy: { deletedAt: "desc" },
+    include: {
+      _count: {
+        select: { documents: true, children: true }
+      }
+    }
+  });
+
   const rawDocuments = await prisma.document.findMany({
     where: { projectId, deletedAt: null },
     orderBy: { createdAt: "desc" },
     include: {
-      uploadedBy: {
-        select: { name: true }
-      }
+      uploadedBy: { select: { name: true } }
+    }
+  });
+
+  const rawDeletedDocuments = await prisma.document.findMany({
+    where: { projectId, deletedAt: { not: null } },
+    orderBy: { deletedAt: "desc" },
+    include: {
+      uploadedBy: { select: { name: true } }
     }
   });
 
@@ -66,6 +84,38 @@ export default async function ProjectDocumentsPage({
     version: d.version,
     createdAt: d.createdAt.toISOString(),
     updatedAt: d.updatedAt.toISOString(),
+    uploadedById: d.uploadedById,
+    uploadedBy: d.uploadedBy,
+    rejectedReason: d.rejectedReason,
+  }));
+
+  const deletedFolders = rawDeletedFolders.map((f) => ({
+    id: f.id,
+    projectId: f.projectId,
+    parentId: f.parentId,
+    name: f.name,
+    _count: f._count,
+    deletedAt: f.deletedAt?.toISOString(),
+  }));
+
+  const deletedDocuments = rawDeletedDocuments.map((d) => ({
+    id: d.id,
+    projectId: d.projectId,
+    folderId: d.folderId,
+    originalName: d.originalName,
+    displayName: d.displayName,
+    documentType: d.documentType,
+    status: d.status,
+    metadata: d.metadata,
+    fileHash: d.fileHash,
+    storedName: d.storedName,
+    mimeType: d.mimeType,
+    extension: d.extension,
+    size: d.size,
+    version: d.version,
+    createdAt: d.createdAt.toISOString(),
+    updatedAt: d.updatedAt.toISOString(),
+    deletedAt: d.deletedAt?.toISOString(),
     uploadedById: d.uploadedById,
     uploadedBy: d.uploadedBy,
     rejectedReason: d.rejectedReason,
@@ -106,6 +156,8 @@ export default async function ProjectDocumentsPage({
           projectName={project.name}
           folders={folders} 
           documents={documents}
+          deletedFolders={deletedFolders}
+          deletedDocuments={deletedDocuments}
           sessionUser={{ id: session.id, role: session.role as any }}
           systemSettings={systemSettings}
         />

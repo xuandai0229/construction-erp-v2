@@ -16,7 +16,7 @@ export const DOCUMENT_FOLDER_RULES: Record<string, DocumentFolderRule> = {
   "01. Hợp đồng pháp lý": {
     key: "01. Hợp đồng pháp lý",
     title: "Hồ sơ hợp đồng pháp lý",
-    description: "Chỉ lưu hợp đồng chính, phụ lục, bảo lãnh, biên bản ký kết.",
+    description: "Lưu hồ sơ hợp đồng, phụ lục,...",
     uploadLabel: "Tải hợp đồng lên",
     allowedExtensions: [".pdf", ".doc", ".docx", ".xls", ".xlsx"],
     accept: ".pdf,.doc,.docx,.xls,.xlsx",
@@ -28,7 +28,7 @@ export const DOCUMENT_FOLDER_RULES: Record<string, DocumentFolderRule> = {
   "02. Bản vẽ thiết kế": {
     key: "02. Bản vẽ thiết kế",
     title: "Bản vẽ thiết kế",
-    description: "Bản vẽ thiết kế, shopdrawing, hoàn công.",
+    description: "Lưu trữ bản vẽ thiết kế thi công, shop drawing, bản vẽ điều chỉnh, bản vẽ hoàn công và các file CAD liên quan.",
     uploadLabel: "Tải bản vẽ mới",
     allowedExtensions: [".pdf", ".dwg", ".dxf", ".jpg", ".jpeg", ".png"],
     accept: ".pdf,.dwg,.dxf,.jpg,.jpeg,.png",
@@ -40,7 +40,7 @@ export const DOCUMENT_FOLDER_RULES: Record<string, DocumentFolderRule> = {
   "03. Biên bản nghiệm thu": {
     key: "03. Biên bản nghiệm thu",
     title: "Biên bản nghiệm thu",
-    description: "Biên bản nghiệm thu, hồ sơ vật liệu, hồ sơ khối lượng.",
+    description: "Lưu trữ hồ sơ chất lượng, biên bản nghiệm thu vật liệu, nghiệm thu công việc, nghiệm thu giai đoạn và bàn giao.",
     uploadLabel: "Tải hồ sơ nghiệm thu",
     allowedExtensions: [".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png", ".xls", ".xlsx"],
     accept: ".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx",
@@ -52,7 +52,7 @@ export const DOCUMENT_FOLDER_RULES: Record<string, DocumentFolderRule> = {
   "04. Vật tư thiết bị": {
     key: "04. Vật tư thiết bị",
     title: "Vật tư thiết bị",
-    description: "Phiếu nhập xuất vật tư, tài liệu kỹ thuật thiết bị.",
+    description: "Lưu trữ hồ sơ trình duyệt vật tư, chứng chỉ CO/CQ, catalogue, báo giá và phiếu giao nhận vật tư thiết bị.",
     uploadLabel: "Tải tài liệu vật tư",
     allowedExtensions: [".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png", ".xls", ".xlsx"],
     accept: ".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx",
@@ -64,7 +64,7 @@ export const DOCUMENT_FOLDER_RULES: Record<string, DocumentFolderRule> = {
   "05. Hình ảnh tiến độ": {
     key: "05. Hình ảnh tiến độ",
     title: "Hình ảnh tiến độ",
-    description: "Ảnh công trường, ảnh vật tư, ảnh thi công theo từng giai đoạn.",
+    description: "Lưu trữ hình ảnh thi công thực tế, ảnh nghiệm thu, ảnh nhật ký công trình và hình ảnh trước/sau khi thi công.",
     uploadLabel: "Tải ảnh tiến độ",
     allowedExtensions: [".jpg", ".jpeg", ".png", ".heic", ".webp"],
     accept: "image/*,.heic,.webp",
@@ -76,7 +76,7 @@ export const DOCUMENT_FOLDER_RULES: Record<string, DocumentFolderRule> = {
   "06. Báo cáo hiện trường": {
     key: "06. Báo cáo hiện trường",
     title: "Báo cáo hiện trường",
-    description: "Báo cáo ngày/tuần/tháng, báo cáo chỉ huy trưởng.",
+    description: "Lưu trữ báo cáo tuần, báo cáo tháng, nhật ký thi công hiện trường và các biên bản xử lý phát sinh.",
     uploadLabel: "Tải báo cáo lên",
     allowedExtensions: [".pdf", ".doc", ".docx", ".xls", ".xlsx"],
     accept: ".pdf,.doc,.docx,.xls,.xlsx",
@@ -88,7 +88,7 @@ export const DOCUMENT_FOLDER_RULES: Record<string, DocumentFolderRule> = {
   "07. Thanh toán quyết toán": {
     key: "07. Thanh toán quyết toán",
     title: "Thanh toán quyết toán",
-    description: "Hóa đơn VAT, chứng từ ngân hàng, hồ sơ tạm ứng, quyết toán.",
+    description: "Lưu trữ hồ sơ thanh toán, hồ sơ quyết toán, biên bản xác nhận khối lượng, đề nghị thanh toán và hóa đơn.",
     uploadLabel: "Tải chứng từ TT/QT",
     allowedExtensions: [".pdf", ".jpg", ".jpeg", ".png", ".xml", ".xls", ".xlsx"],
     accept: ".pdf,.jpg,.jpeg,.png,.xml,.xls,.xlsx",

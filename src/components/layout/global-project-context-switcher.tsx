@@ -30,6 +30,9 @@ export function GlobalProjectContextSwitcher({
   const [search, setSearch] = useState('');
   const searchParamsKey = searchParams.toString();
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   // Deduce project ID from route if applicable
   let routeProjectId: string | null = null;
   const projectMatch = pathname.match(/^\/projects\/([^\/]+)/);
@@ -46,8 +49,9 @@ export function GlobalProjectContextSwitcher({
     isRootGlobalRoute = true;
   }
 
-  // Route project ID wins if it exists, but if we are on a known global list view, override to 'all'.
-  const displayProjectId = isRootGlobalRoute ? null : (routeProjectId || selectedProjectId);
+  // To prevent hydration mismatch, initial render strictly uses selectedProjectId (Server cookie state)
+  // After mount, we override it based on the URL.
+  const displayProjectId = mounted ? (isRootGlobalRoute ? null : (routeProjectId || selectedProjectId)) : selectedProjectId;
 
   const selectedProject = projects.find(p => p.id === displayProjectId);
 

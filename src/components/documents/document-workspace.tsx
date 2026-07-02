@@ -1,5 +1,6 @@
 "use client";
 
+import { createPortal } from "react-dom";
 import {
   useCallback,
   useEffect,
@@ -25,9 +26,9 @@ import {
   MoreVertical,
   Pencil,
   Plus,
-  Search,
+  Search, Filter,
   Trash2,
-  UploadCloud,
+  UploadCloud, FolderPlus, ArrowLeft, ArrowUp,
   X,
 } from "lucide-react";
 import { format, differenceInDays, isThisMonth, subMonths } from "date-fns";
@@ -39,6 +40,10 @@ import {
   renameFolder,
   updateDocumentMetadata,
   changeDocumentStatus,
+  restoreFolder,
+  restoreDocument,
+  permanentDeleteFolder,
+  permanentDeleteDocument,
 } from "@/app/(dashboard)/documents/actions";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -86,6 +91,8 @@ interface DocumentWorkspaceProps {
   projectName: string;
   folders: FolderItem[];
   documents: DocumentListItem[];
+  deletedFolders?: FolderItem[];
+  deletedDocuments?: DocumentListItem[];
   sessionUser: SessionUser;
   systemSettings: any;
 }
@@ -157,6 +164,8 @@ export function DocumentWorkspace({
   projectName,
   folders,
   documents,
+  deletedFolders = [],
+  deletedDocuments = [],
   sessionUser,
   systemSettings,
 }: DocumentWorkspaceProps) {
@@ -217,20 +226,30 @@ export function DocumentWorkspace({
     type: "folder" | "doc";
     id: string;
   }>({ isOpen: false, type: "folder", id: "" });
-  const [folderRenameModal, setFolderRenameModal] = useState<{
-    isOpen: boolean;
-    id: string;
-    newName: string;
-  }>({ isOpen: false, id: "", newName: "" });
+  const filterRef = useRef<HTMLDivElement>(null);
+
   const [documentRenameModal, setDocumentRenameModal] = useState<{
     isOpen: boolean;
     id: string;
     newName: string;
   }>({ isOpen: false, id: "", newName: "" });
 
+  const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
+  const [editingFolderName, setEditingFolderName] = useState("");
+
+  const [contextMenu, setContextMenu] = useState<{
+    type: "folder" | "file" | "workspace";
+    targetId?: string;
+    x: number;
+    y: number;
+  } | null>(null);
+
+  const [isTrashView, setIsTrashView] = useState(false);
+  const [selectedTrashFolderId, setSelectedTrashFolderId] = useState<string | null>(null);
+
   useEffect(() => {
-    setLocalDocuments(documents);
-  }, [documents]);
+    setLocalDocuments(isTrashView ? deletedDocuments : documents);
+  }, [documents, deletedDocuments, isTrashView]);
 
   const folderById = useMemo(
     () => new Map(folders.map((folder) => [folder.id, folder])),
@@ -301,6 +320,8 @@ export function DocumentWorkspace({
 
   const selectFolder = useCallback(
     (folder: FolderItem) => {
+      setIsTrashView(false);
+      setSelectedTrashFolderId(null);
       setSelectedFolderId(folder.id);
       if ((foldersByParentId.get(folder.id)?.length || 0) > 0) {
         setExpandedFolderIds((current) => {
@@ -361,10 +382,60 @@ export function DocumentWorkspace({
     ? getDocumentRule(formatDocumentFolderName(selectedFolderData.name))
     : null;
 
+  const deletedFolderById = useMemo(
+    () => new Map(deletedFolders.map((folder) => [folder.id, folder])),
+    [deletedFolders]
+  );
+  const selectedTrashFolderData = isTrashView && selectedTrashFolderId ? deletedFolders.find(f => f.id === selectedTrashFolderId) : null;
+  const selectedTrashFolderPath = useMemo(() => {
+    if (!isTrashView || !selectedTrashFolderId) return [];
+    const chain: FolderItem[] = [];
+    let currentId: string | null = selectedTrashFolderId;
+    while (currentId) {
+      const folder = deletedFolderById.get(currentId);
+      if (!folder) break;
+      chain.unshift(folder);
+      currentId = folder.parentId;
+    }
+    return chain;
+  }, [deletedFolderById, isTrashView, selectedTrashFolderId]);
+
+  const displayFolders = useMemo(() => {
+    let filtered = isTrashView ? deletedFolders : folders;
+    
+    if (isTrashView) {
+      if (selectedTrashFolderId) {
+        filtered = filtered.filter(f => f.parentId === selectedTrashFolderId);
+      } else {
+        filtered = filtered.filter(f => !f.parentId || !deletedFolderById.has(f.parentId));
+      }
+    } else {
+      if (selectedFolderId) {
+        filtered = filtered.filter(f => f.parentId === selectedFolderId);
+      } else {
+        filtered = filtered.filter(f => !f.parentId);
+      }
+    }
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((folder) => folder.name.toLowerCase().includes(query));
+    }
+    return filtered;
+  }, [deletedFolders, folders, isTrashView, searchQuery, selectedTrashFolderId, selectedFolderId, deletedFolderById]);
+
   const displayDocs = useMemo(() => {
-    let filtered = localDocuments.filter(
-      (document) => document.folderId === selectedFolderId,
-    );
+    let filtered = localDocuments;
+    if (isTrashView) {
+      if (selectedTrashFolderId) {
+        filtered = filtered.filter(doc => doc.folderId === selectedTrashFolderId);
+      } else {
+        // Root trash items: folder is null, or folder is not in deletedFolders
+        filtered = filtered.filter(doc => !doc.folderId || !deletedFolderById.has(doc.folderId));
+      }
+    } else {
+      filtered = filtered.filter((document) => document.folderId === selectedFolderId);
+    }
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -429,6 +500,9 @@ export function DocumentWorkspace({
     searchQuery,
     selectedFolderId,
     sortBy,
+    isTrashView,
+    selectedTrashFolderId,
+    deletedFolderById,
   ]);
 
   const groupedDocs = useMemo(() => {
@@ -623,45 +697,67 @@ export function DocumentWorkspace({
     }
   };
 
-  const handleRenameFolder = async () => {
-    const name = folderRenameModal.newName.trim();
-    if (mutationRef.current || !name) {
-      if (!name) toast.error("Tên thư mục không được để trống");
+  const startFolderRename = useCallback((folderId: string) => {
+    const folder = folders.find((f) => f.id === folderId);
+    if (!folder) return;
+    setEditingFolderId(folderId);
+    setEditingFolderName(folder.name);
+  }, [folders]);
+
+  const commitFolderRename = useCallback(async () => {
+    if (!editingFolderId || mutationRef.current) return;
+    const name = editingFolderName.trim();
+    const folder = folders.find((f) => f.id === editingFolderId);
+    if (!name) {
+      toast.error("Tên thư mục không được để trống");
+      setEditingFolderId(null);
       return;
     }
-
-    const currentFolder = folders.find(
-      (folder) => folder.id === folderRenameModal.id,
-    );
+    if (name === folder?.name) {
+      setEditingFolderId(null);
+      return;
+    }
     const isDuplicate = folders.some(
-      (folder) =>
-        folder.id !== folderRenameModal.id &&
-        folder.name.toLowerCase() === name.toLowerCase() &&
-        folder.parentId === currentFolder?.parentId,
+      (f) =>
+        f.id !== editingFolderId &&
+        f.name.toLowerCase() === name.toLowerCase() &&
+        f.parentId === folder?.parentId,
     );
     if (isDuplicate) {
       toast.error("Tên thư mục đã tồn tại trong cùng cấp");
       return;
     }
-
     mutationRef.current = true;
     try {
-      const result = await renameFolder(
-        projectId,
-        folderRenameModal.id,
-        name,
-      );
+      const result = await renameFolder(projectId, editingFolderId, name);
       if (result?.error) toast.error(result.error);
-      else {
-        toast.success("Đổi tên thư mục thành công");
-        setFolderRenameModal({ isOpen: false, id: "", newName: "" });
-      }
+      else toast.success("Đã đổi tên thư mục");
     } catch {
-      toast.error("Không thể đổi tên thư mục. Vui lòng thử lại.");
+      toast.error("Không thể đổi tên thư mục.");
     } finally {
       mutationRef.current = false;
+      setEditingFolderId(null);
     }
-  };
+  }, [editingFolderId, editingFolderName, folders, projectId]);
+
+  const cancelFolderRename = useCallback(() => {
+    setEditingFolderId(null);
+    setEditingFolderName("");
+  }, []);
+
+  useEffect(() => {
+    if (!contextMenu) return;
+    const close = () => setContextMenu(null);
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
+    window.addEventListener("click", close);
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("scroll", close, true);
+    return () => {
+      window.removeEventListener("click", close);
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("scroll", close, true);
+    };
+  }, [contextMenu]);
 
   const handleRenameDocument = async () => {
     const document = localDocuments.find(
@@ -705,39 +801,132 @@ export function DocumentWorkspace({
     }
   };
 
-  const executeDelete = async () => {
+  const executeSoftDelete = async (type: "folder" | "doc", id: string) => {
     if (mutationRef.current) return;
     mutationRef.current = true;
-    const { type, id } = deleteConfirm;
-    setDeleteConfirm((current) => ({ ...current, isOpen: false }));
-
+    
+    // Optimistic UI
+    let previousDocs = localDocuments;
+    if (type === "doc") {
+      setLocalDocuments(current => current.filter(d => d.id !== id));
+      if (selectedDocumentId === id) closeDocument();
+    }
+    // We cannot easily do optimistic folder deletion without modifying folder tree state if it's passed as prop, 
+    // but we can at least toast immediately.
+    toast.success(type === "folder" ? "Đang xóa thư mục..." : "Đang xóa tài liệu...");
+    
     try {
       if (type === "folder") {
         const result = await deleteFolder(projectId, id);
-        if (result?.error) toast.error(result.error);
-        else {
-          toast.success("Xóa thư mục thành công");
+        if (result?.error) {
+          toast.error(result.error);
+          router.refresh(); // rollback
+        } else {
+          toast.success("Đã chuyển thư mục vào Thùng rác");
           if (selectedFolderId === id) setSelectedFolderId(null);
+          router.refresh();
         }
       } else {
         const result = await deleteDocument(projectId, id);
-        if (result?.error) toast.error(result.error);
-        else {
-          setLocalDocuments((current) =>
-            current.filter((document) => document.id !== id),
-          );
-          if (selectedDocumentId === id) closeDocument();
-          toast.success("Xóa tệp thành công");
+        if (result?.error) {
+          toast.error(result.error);
+          setLocalDocuments(previousDocs); // rollback
+        } else {
+          toast.success("Đã chuyển tài liệu vào Thùng rác");
+          router.refresh();
         }
       }
     } catch {
       toast.error("Không thể xóa. Vui lòng thử lại.");
+      if (type === "doc") setLocalDocuments(previousDocs);
     } finally {
       mutationRef.current = false;
     }
   };
 
-  const handleEditMetadata = async () => {
+  const executePermanentDelete = async () => {
+    if (mutationRef.current) return;
+    mutationRef.current = true;
+    const { type, id } = deleteConfirm;
+    setDeleteConfirm((current) => ({ ...current, isOpen: false }));
+
+    let previousDocs = localDocuments;
+    if (type === "doc") {
+      setLocalDocuments(current => current.filter(d => d.id !== id));
+      if (selectedDocumentId === id) closeDocument();
+    }
+    toast.success(type === "folder" ? "Đang xóa vĩnh viễn thư mục..." : "Đang xóa vĩnh viễn tài liệu...");
+
+    try {
+      if (type === "folder") {
+        const result = await permanentDeleteFolder(projectId, id);
+        if (result?.error) {
+          toast.error(result.error);
+          router.refresh();
+        } else {
+          toast.success("Xóa vĩnh viễn thư mục thành công");
+          if (selectedFolderId === id) setSelectedFolderId(null);
+          router.refresh();
+        }
+      } else {
+        const result = await permanentDeleteDocument(projectId, id);
+        if (result?.error) {
+          toast.error(result.error);
+          setLocalDocuments(previousDocs);
+        } else {
+          toast.success("Xóa vĩnh viễn tài liệu thành công");
+          router.refresh();
+        }
+      }
+    } catch {
+      toast.error("Không thể xóa vĩnh viễn. Vui lòng thử lại.");
+      if (type === "doc") setLocalDocuments(previousDocs);
+    } finally {
+      mutationRef.current = false;
+    }
+  };
+  
+  const handleRestore = async (type: "folder" | "doc", id: string) => {
+    if (mutationRef.current) return;
+    mutationRef.current = true;
+    
+    let previousDocs = localDocuments;
+    if (type === "doc") {
+      setLocalDocuments(current => current.filter(d => d.id !== id));
+    }
+    toast.success(type === "folder" ? "Đang khôi phục thư mục..." : "Đang khôi phục tài liệu...");
+
+    try {
+      if (type === "folder") {
+        const result = await restoreFolder(projectId, id);
+        if (result?.error) {
+          toast.error(result.error);
+          router.refresh();
+        } else {
+          toast.success("Đã khôi phục thư mục");
+          // If we restored the folder we are currently viewing, or any folder, just clear the trash view state if needed.
+          if (selectedTrashFolderId === id) setSelectedTrashFolderId(null);
+          router.refresh();
+        }
+      } else {
+        const result = await restoreDocument(projectId, id);
+        if (result?.error) {
+          toast.error(result.error);
+          setLocalDocuments(previousDocs);
+        } else {
+          toast.success("Đã khôi phục tài liệu");
+          router.refresh();
+        }
+      }
+    } catch {
+      toast.error("Không thể khôi phục. Vui lòng thử lại.");
+      if (type === "doc") setLocalDocuments(previousDocs);
+    } finally {
+      mutationRef.current = false;
+    }
+  };
+
+const handleEditMetadata = async () => {
     if (mutationRef.current) return;
     mutationRef.current = true;
     try {
@@ -789,6 +978,17 @@ export function DocumentWorkspace({
             }`}
           style={{ paddingLeft: `${level * 18 + 8}px` }}
           onClick={() => selectFolder(folder)}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setContextMenu({
+              type: "folder",
+              targetId: folder.id,
+              x: e.clientX,
+              y: e.clientY,
+            });
+            selectFolder(folder);
+          }}
         >
           <div className="flex min-w-0 items-center gap-1.5">
             {hasChildren ? (
@@ -813,16 +1013,37 @@ export function DocumentWorkspace({
             ) : (
               <Folder className="h-4 w-4 shrink-0 text-slate-400" />
             )}
-            <span className="truncate text-sm font-medium" title={displayName}>
-              {displayName}
-            </span>
-            {folder._count.documents > 0 && (
+            {editingFolderId === folder.id ? (
+              <input
+                type="text"
+                autoFocus
+                value={editingFolderName}
+                onChange={(e) => setEditingFolderName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    commitFolderRename();
+                  } else if (e.key === "Escape") {
+                    e.preventDefault();
+                    cancelFolderRename();
+                  }
+                }}
+                onBlur={commitFolderRename}
+                onClick={(e) => e.stopPropagation()}
+                className="h-6 w-[140px] rounded-md border border-blue-400 bg-white px-1.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+              />
+            ) : (
+              <span className="truncate text-sm font-medium" title={displayName} onDoubleClick={(e) => { e.stopPropagation(); startFolderRename(folder.id); }}>
+                {displayName}
+              </span>
+            )}
+            {!editingFolderId && folder._count.documents > 0 && (
               <span className={`rounded-full px-1.5 py-0.5 text-[10px] ${isSelected ? "bg-blue-100 text-blue-700" : "bg-white text-slate-500"}`}>
                 {folder._count.documents}
               </span>
             )}
           </div>
-          {isSelected &&
+          {isSelected && !editingFolderId &&
             (canRenameCurrentFolder || canDeleteCurrentFolder) && (
               <div className="flex shrink-0 gap-1 rounded-md border border-slate-200 bg-white px-1 shadow-sm opacity-100 md:opacity-0 md:transition-opacity md:group-hover:opacity-100">
                 {canRenameCurrentFolder && (
@@ -830,11 +1051,7 @@ export function DocumentWorkspace({
                     type="button"
                     onClick={(event) => {
                       event.stopPropagation();
-                      setFolderRenameModal({
-                        isOpen: true,
-                        id: folder.id,
-                        newName: folder.name,
-                      });
+                      startFolderRename(folder.id);
                     }}
                     className="p-1 text-slate-400 hover:text-blue-600"
                     title="Đổi tên thư mục"
@@ -847,11 +1064,7 @@ export function DocumentWorkspace({
                     type="button"
                     onClick={(event) => {
                       event.stopPropagation();
-                      setDeleteConfirm({
-                        isOpen: true,
-                        type: "folder",
-                        id: folder.id,
-                      });
+                      executeSoftDelete("folder", folder.id);
                     }}
                     className="p-1 text-slate-400 hover:text-red-500"
                     title="Xóa thư mục"
@@ -939,42 +1152,147 @@ export function DocumentWorkspace({
             </p>
           )}
         </div>
+        
+        <div className="border-t border-slate-200 p-2">
+          <div
+            className={`group flex min-h-10 cursor-pointer items-center gap-2 rounded-lg px-2.5 py-2 transition-colors hover:bg-red-50 ${isTrashView ? "bg-red-50 text-red-700 shadow-sm ring-1 ring-red-100" : "text-slate-700"
+              }`}
+            onClick={() => {
+              setIsTrashView(true);
+              setSelectedTrashFolderId(null);
+              setSelectedFolderId(null);
+            }}
+          >
+            <Trash2 className={`h-4 w-4 shrink-0 ${isTrashView ? "text-red-600" : "text-slate-400"}`} />
+            <span className="truncate text-sm font-medium">
+              Thùng rác
+            </span>
+          </div>
+        </div>
       </aside>
 
-        <main className="flex min-w-0 flex-1 flex-col overflow-hidden bg-white">
+        <main 
+          className="flex min-w-0 flex-1 flex-col overflow-hidden bg-white"
+          onContextMenu={(e) => {
+            if (e.target === e.currentTarget || (e.target as HTMLElement).tagName === "MAIN" || (e.target as HTMLElement).closest(".empty-workspace")) {
+              e.preventDefault();
+              setContextMenu({
+                type: "workspace",
+                targetId: selectedFolderId || undefined,
+                x: e.clientX,
+                y: e.clientY,
+              });
+            }
+          }}
+        >
           <div className="border-b border-slate-200/80 bg-white p-4 sm:p-5">
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
               <div className="min-w-0">
-                <nav className="mb-2 flex min-w-0 flex-wrap items-center gap-1.5 text-xs font-medium text-slate-500">
+                <nav className="mb-3 flex min-w-0 flex-wrap items-center gap-1.5 text-xs font-medium text-slate-500">
+                  {/* Back Button */}
+                  {isTrashView ? (
+                    selectedTrashFolderId ? (
+                      <button
+                        type="button"
+                        aria-label="Quay lại"
+                        title="Quay lại"
+                        onClick={() => setSelectedTrashFolderId(selectedTrashFolderData?.parentId || null)}
+                        className="mr-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-600 shadow-sm transition-all duration-200 hover:-translate-x-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 hover:shadow-md focus:outline-none"
+                      >
+                        <ArrowLeft className="h-3 w-3" />
+                      </button>
+                    ) : null
+                  ) : (
+                    selectedFolderId ? (
+                      <button
+                        type="button"
+                        aria-label="Quay lại"
+                        title="Quay lại"
+                        onClick={() => {
+                          const url = new URL(window.location.href);
+                          if (selectedFolderData?.parentId) {
+                            url.searchParams.set("folder", selectedFolderData.parentId);
+                          } else {
+                            url.searchParams.delete("folder");
+                          }
+                          window.history.pushState({}, "", url.toString());
+                          setSelectedFolderId(selectedFolderData?.parentId || null);
+                        }}
+                        className="mr-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-600 shadow-sm transition-all duration-200 hover:-translate-x-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 hover:shadow-md focus:outline-none"
+                      >
+                        <ArrowLeft className="h-3 w-3" />
+                      </button>
+                    ) : null
+                  )}
+
                   <span className="max-w-[180px] truncate" title={projectName}>
                     {projectName}
                   </span>
-                  {selectedFolderPath.map((folder) => {
-                    const isCurrent = folder.id === selectedFolderId;
-                    const folderName = formatDocumentFolderName(folder.name);
-                    return (
-                      <span key={folder.id} className="flex min-w-0 items-center gap-1.5">
+                  {isTrashView ? (
+                    <>
+                      <span className="flex min-w-0 items-center gap-1.5">
                         <span className="text-slate-300">/</span>
                         <button
                           type="button"
-                          onClick={() => !isCurrent && setSelectedFolderId(folder.id)}
+                          onClick={() => setSelectedTrashFolderId(null)}
                           className={`max-w-[180px] truncate text-left transition-colors ${
-                            isCurrent
-                              ? "font-semibold text-slate-900"
-                              : "hover:text-blue-600"
+                            !selectedTrashFolderId ? "font-semibold text-slate-900" : "hover:text-blue-600 hover:underline"
                           }`}
-                          title={folderName}
                         >
-                          {folderName}
+                          Thùng rác
                         </button>
                       </span>
-                    );
-                  })}
+                      {selectedTrashFolderPath.map((folder) => {
+                        const isCurrent = folder.id === selectedTrashFolderId;
+                        return (
+                          <span key={folder.id} className="flex min-w-0 items-center gap-1.5">
+                            <span className="text-slate-300">/</span>
+                            <button
+                              type="button"
+                              onClick={() => !isCurrent && setSelectedTrashFolderId(folder.id)}
+                              className={`max-w-[180px] truncate text-left transition-colors ${
+                                isCurrent
+                                  ? "font-semibold text-slate-900"
+                                  : "hover:text-blue-600 hover:underline"
+                              }`}
+                              title={formatDocumentFolderName(folder.name)}
+                            >
+                              {formatDocumentFolderName(folder.name)}
+                            </button>
+                          </span>
+                        );
+                      })}
+                    </>
+                  ) : (
+                    selectedFolderPath.map((folder) => {
+                      const isCurrent = folder.id === selectedFolderId;
+                      const folderName = formatDocumentFolderName(folder.name);
+                      return (
+                        <span key={folder.id} className="flex min-w-0 items-center gap-1.5">
+                          <span className="text-slate-300">/</span>
+                          <button
+                            type="button"
+                            onClick={() => !isCurrent && setSelectedFolderId(folder.id)}
+                            className={`max-w-[180px] truncate text-left transition-colors ${
+                              isCurrent
+                                ? "font-semibold text-slate-900"
+                                : "hover:text-blue-600"
+                            }`}
+                            title={folderName}
+                          >
+                            {folderName}
+                          </button>
+                        </span>
+                      );
+                    })
+                  )}
                 </nav>
 
                 <div className="flex min-w-0 items-start gap-3">
-                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-blue-100 bg-blue-50 text-blue-600">
-                    {selectedFolderId ? (
+                  <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${isTrashView ? "border-red-100 bg-red-50 text-red-600" : "border-blue-100 bg-blue-50 text-blue-600"}`}>
+                    {isTrashView ? (
+                      <Trash2 className="h-5 w-5" />
+                    ) : selectedFolderId ? (
                       <FolderOpen className="h-5 w-5" />
                     ) : (
                       <Folder className="h-5 w-5" />
@@ -982,23 +1300,34 @@ export function DocumentWorkspace({
                   </div>
                   <div className="min-w-0">
                     <h2 className="truncate text-2xl font-bold tracking-tight text-slate-950">
-                      {selectedFolderId && selectedFolderData
+                      {isTrashView
+                        ? (selectedTrashFolderData ? formatDocumentFolderName(selectedTrashFolderData.name) : "Thùng rác")
+                        : selectedFolderId && selectedFolderData
                         ? selectedFolderDisplayName
                         : "Tất cả tài liệu"}
                     </h2>
+                    {isTrashView && selectedTrashFolderData && (selectedTrashFolderData as any).deletedAt && (
+                      <p className="mt-1 text-sm text-slate-500">
+                        Đã xóa lúc: {format(new Date((selectedTrashFolderData as any).deletedAt), "dd/MM/yyyy HH:mm")}
+                      </p>
+                    )}
                     <p className="mt-1 text-sm text-slate-500">
-                      {selectedFolderId && selectedFolderData
+                      {isTrashView
+                        ? selectedTrashFolderId 
+                          ? "Xem nội dung đã xóa bên trong thư mục này." 
+                          : "Các tài liệu và thư mục đã xóa tạm thời. Admin có thể khôi phục dữ liệu tại đây."
+                        : selectedFolderId && selectedFolderData
                         ? selectedParentFolder
-                          ? `Thư mục con trong ${formatDocumentFolderName(selectedParentFolder.name)}`
+                          ? `Tài liệu và mục bên trong của ${formatDocumentFolderName(selectedParentFolder.name)}`
                           : selectedFolderRule?.description || "Thư mục hồ sơ chính của dự án."
-                        : "Chọn thư mục bên trái để xem hoặc tải hồ sơ theo đúng vị trí."}
+                        : "Chọn thư mục bên trái hoặc mở trực tiếp các thư mục bên dưới."}
                     </p>
                   </div>
                 </div>
               </div>
 
               <div className="flex w-full shrink-0 items-center justify-end gap-2 sm:w-auto">
-                {selectedFolderRule && (
+                {!isTrashView && selectedFolderRule && (
                   <div className="group relative hidden sm:block">
                     <button
                       type="button"
@@ -1029,7 +1358,7 @@ export function DocumentWorkspace({
                   </div>
                 )}
 
-                {canUpload ? (
+                {!isTrashView && canUpload ? (
                   <>
                     <input
                       type="file"
@@ -1043,14 +1372,28 @@ export function DocumentWorkspace({
                           : undefined
                       }
                     />
-                    <Button
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isUploading}
-                      className="h-10 w-full rounded-lg shadow-sm shadow-blue-600/20 sm:w-auto"
-                    >
-                      <UploadCloud className="mr-2 h-4 w-4" />
-                      {isUploading ? "Đang tải..." : "Tải tài liệu lên thư mục này"}
-                    </Button>
+                    <div className="flex flex-col sm:flex-row items-center gap-2">
+                      {selectedFolderId && (
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowNewFolder(true)}
+                          className="h-10 w-full rounded-lg sm:w-auto border-slate-200 text-slate-700 bg-white hover:bg-slate-50"
+                        >
+                          <FolderPlus className="mr-2 h-4 w-4" />
+                          Tạo mục bên trong
+                        </Button>
+                      )}
+                      
+                      <Button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading || !selectedFolderId}
+                        className={`h-10 w-full rounded-lg shadow-sm sm:w-auto ${!selectedFolderId ? 'opacity-70 cursor-not-allowed' : 'shadow-blue-600/20'}`}
+                        title={!selectedFolderId ? "Hãy chọn hoặc mở một thư mục để tải tài liệu lên" : undefined}
+                      >
+                        <UploadCloud className="mr-2 h-4 w-4" />
+                        {isUploading ? "Đang tải..." : selectedFolderId ? "Tải tài liệu lên thư mục này" : "Tải tài liệu lên"}
+                      </Button>
+                    </div>
                   </>
                 ) : null}
               </div>
@@ -1058,12 +1401,6 @@ export function DocumentWorkspace({
           </div>
 
             {(() => {
-              const activeFilters = [];
-              if (filterType !== "ALL") activeFilters.push({ id: "type", label: "Loại file", value: filterType });
-              if (filterDateRange !== "ALL") activeFilters.push({ id: "date", label: "Thời gian", value: filterDateRange === "TODAY" ? "Hôm nay" : filterDateRange === "LAST_7_DAYS" ? "7 ngày qua" : filterDateRange === "THIS_MONTH" ? "Tháng này" : "Tháng trước" });
-              if (filterUploader !== "ALL") activeFilters.push({ id: "uploader", label: "Người tải lên", value: availableUploaders.find(u => u.id === filterUploader)?.name || filterUploader });
-
-              const activeFilterCount = activeFilters.length;
               return (
                 <>
                   {smartSuggestions.length > 0 && (
@@ -1073,156 +1410,154 @@ export function DocumentWorkspace({
                     </div>
                   )}
 
-                  <div className="flex flex-col gap-3 border-b border-slate-200 bg-white px-4 py-3">
-                    <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-                      <div className="relative min-w-0 flex-1">
-                        <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                        <input
-                          type="text"
-                          placeholder="Tìm tên hiển thị hoặc file gốc..."
-                          value={searchQuery}
-                          onChange={(event) => setSearchQuery(event.target.value)}
-                          className="w-full rounded-md border border-slate-300 bg-white py-1.5 pl-8 pr-3 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        />
-                      </div>
-
-                      <div className="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0">
-                        <button
-                          type="button"
-                          onClick={() => setShowFilters(!showFilters)}
-                          className={`shrink-0 rounded-md border px-3 py-1.5 text-sm font-medium flex items-center gap-1.5 transition-colors ${activeFilterCount > 0 || showFilters
-                              ? "border-blue-300 bg-blue-50 text-blue-700"
-                              : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-                            }`}
-                        >
-                          Bộ lọc {activeFilterCount > 0 && `(${activeFilterCount})`}
-                        </button>
-
-                        <select
-                          value={sortBy}
-                          onChange={(event) => setSortBy(event.target.value as SortOption)}
-                          className="shrink-0 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        >
-                          <option className="bg-white text-slate-900" value="NEWEST">Mới nhất</option>
-                          <option className="bg-white text-slate-900" value="OLDEST">Cũ nhất</option>
-                          <option className="bg-white text-slate-900" value="NAME">Tên A-Z</option>
-                          <option className="bg-white text-slate-900" value="SIZE">Kích thước</option>
-                        </select>
-                      </div>
+                  {/* Advanced filters can be reintroduced as a polished popover later. */}
+                  <div className="flex items-center gap-3 border-t border-slate-100 bg-white px-4 py-3">
+                    <div className="relative min-w-0 flex-1">
+                      <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="text"
+                        placeholder="Tìm tài liệu, thư mục hoặc file gốc..."
+                        value={searchQuery}
+                        onChange={(event) => setSearchQuery(event.target.value)}
+                        className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/60 pl-10 pr-4 text-sm font-medium text-slate-900 placeholder:text-slate-400 outline-none transition-all focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+                      />
                     </div>
 
-                    {activeFilterCount > 0 && (
-                      <div className="flex flex-wrap items-center gap-2 text-[13px] text-slate-600">
-                        <span>Đang lọc:</span>
-                        <span className="font-medium text-slate-800">
-                          {activeFilters.map(f => f.value).join(" · ")}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setFilterType("ALL");
-                            setFilterDateRange("ALL");
-                            setFilterUploader("ALL");
-                          }}
-                          className="text-xs font-medium text-blue-600 hover:underline ml-1"
-                        >
-                          [Xóa]
-                        </button>
-                      </div>
-                    )}
+                    <select
+                      value={sortBy}
+                      onChange={(event) => setSortBy(event.target.value as SortOption)}
+                      className="h-10 w-[150px] shrink-0 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm outline-none transition-all hover:bg-slate-50 focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
+                    >
+                      <option className="bg-white text-slate-900" value="NEWEST">Mới nhất</option>
+                      <option className="bg-white text-slate-900" value="OLDEST">Cũ nhất</option>
+                      <option className="bg-white text-slate-900" value="NAME">Tên A-Z</option>
+                      <option className="bg-white text-slate-900" value="SIZE">Kích thước</option>
+                    </select>
                   </div>
 
-                  {showFilters && (
-                    <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
-                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Loại file</label>
-                          <select
-                            value={filterType}
-                            onChange={(event) => setFilterType(event.target.value)}
-                            className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                          >
-                            <option className="bg-white text-slate-900 font-medium" value="ALL">Tất cả loại file</option>
-                            <option className="bg-white text-slate-900" value="IMAGE">Ảnh</option>
-                            <option className="bg-white text-slate-900" value="PDF">PDF</option>
-                            <option className="bg-white text-slate-900" value="WORD">Word</option>
-                            <option className="bg-white text-slate-900" value="EXCEL">Excel</option>
-                            <option className="bg-white text-slate-900" value="CAD">CAD</option>
-                            <option className="bg-white text-slate-900" value="XML">XML</option>
-                          </select>
-                        </div>
-
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Thời gian</label>
-                          <select
-                            value={filterDateRange}
-                            onChange={(event) => setFilterDateRange(event.target.value)}
-                            className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                          >
-                            <option className="bg-white text-slate-900 font-medium" value="ALL">Tất cả thời gian</option>
-                            <option className="bg-white text-slate-900" value="TODAY">Hôm nay</option>
-                            <option className="bg-white text-slate-900" value="LAST_7_DAYS">7 ngày qua</option>
-                            <option className="bg-white text-slate-900" value="THIS_MONTH">Tháng này</option>
-                            <option className="bg-white text-slate-900" value="LAST_MONTH">Tháng trước</option>
-                          </select>
-                        </div>
-
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Người tải lên</label>
-                          <select
-                            value={filterUploader}
-                            onChange={(event) => setFilterUploader(event.target.value)}
-                            className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                          >
-                            <option className="bg-white text-slate-900 font-medium" value="ALL">Tất cả người tải</option>
-                            {availableUploaders.map(u => (
-                              <option className="bg-white text-slate-900" key={u.id} value={u.id}>{u.name}</option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Gom nhóm hiển thị</label>
-                          <select
-                            value={groupBy}
-                            onChange={(event) => setGroupBy(event.target.value)}
-                            className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                          >
-                            <option className="bg-white text-slate-900 font-medium" value="NONE">Hiển thị bình thường</option>
-                            <option className="bg-white text-slate-900" value="MONTH">Gom theo tháng</option>
-                            <option className="bg-white text-slate-900" value="UPLOADER">Gom theo người tải</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div className="mt-4 flex justify-end border-t border-slate-200 pt-3">
-                        <button
-                          type="button"
-                          onClick={() => setShowFilters(false)}
-                          className="rounded-md bg-slate-800 px-4 py-1.5 text-xs font-semibold text-white hover:bg-slate-700 shadow-sm"
-                        >
-                          Hoàn tất
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </>
               );
             })()}
 
             <div className="flex-1 overflow-y-auto bg-slate-50 p-4">
-              {displayDocs.length > 0 ? (
+              {(() => {
+                const totalVisibleItems = displayFolders.length + displayDocs.length;
+                const density = totalVisibleItems >= 18 ? "list" : totalVisibleItems >= 8 ? "compact" : "comfortable";
+                
+                return displayDocs.length > 0 || displayFolders.length > 0 ? (
+
                 <div className="space-y-8">
+                  {displayFolders.length > 0 && (
+                    <div>
+                      <div className="mb-3 flex items-center gap-2">
+                        <h3 className="text-sm font-bold text-slate-700">
+                          {isTrashView
+                            ? selectedTrashFolderData
+                              ? `Thư mục trong ${selectedTrashFolderData.name}`
+                              : "Thư mục đã xóa"
+                            : selectedFolderId 
+                              ? "Thư mục con" 
+                              : "Thư mục gốc"}
+                        </h3>
+                        <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-600">
+                          {displayFolders.length} mục
+                        </span>
+                      </div>
+                      <div className={`${density === 'list' ? 'flex flex-col gap-2' : density === 'compact' ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5' : 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
+                          {displayFolders.map((folder) => {
+                            const isDeleted = !!(folder as any).deletedAt;
+                            return (
+                              <article
+                                key={folder.id}
+                                className={`group relative flex cursor-pointer transition-all hover:shadow-md ${
+                                  density === 'list' 
+                                    ? 'flex-row items-center gap-4 rounded-lg border border-slate-200 bg-white px-4 py-3' 
+                                    : 'flex-col rounded-lg border border-slate-200 bg-white p-4 hover:-translate-y-0.5'
+                                } ${isTrashView ? 'hover:border-red-300' : 'hover:border-blue-300'}`}
+                                onClick={() => {
+                                  if (isTrashView) {
+                                    setSelectedTrashFolderId(folder.id);
+                                  } else {
+                                    setSelectedFolderId(folder.id);
+                                  }
+                                }}
+                                onContextMenu={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setContextMenu({
+                                    type: "folder",
+                                    targetId: folder.id,
+                                    x: e.clientX,
+                                    y: e.clientY,
+                                  });
+                                }}
+                              >
+                                <div className="absolute right-2 top-2">
+                                  <button
+                                    type="button"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      setContextMenu({
+                                        type: "folder",
+                                        targetId: folder.id,
+                                        x: event.clientX,
+                                        y: event.clientY,
+                                      });
+                                    }}
+                                    className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                                    title="Thêm thao tác"
+                                  >
+                                    <MoreVertical className="h-4 w-4" />
+                                  </button>
+                                </div>
+                                <div className={`flex items-center justify-center rounded-lg ${density === 'list' ? 'h-10 w-10 shrink-0 bg-blue-50/50' : 'mb-3 h-12 w-12 bg-blue-50/50'}`}>
+                                  <Folder className={`${isTrashView ? 'text-red-400' : 'text-blue-500'} ${density === 'list' ? 'h-5 w-5' : 'h-6 w-6'}`} />
+                                </div>
+                                <div className="min-w-0 flex-1 pr-6">
+                                  <p className={`truncate font-semibold text-slate-900 ${density === 'compact' ? 'text-sm' : 'text-sm'}`}>
+                                    {formatDocumentFolderName(folder.name)}
+                                  </p>
+                                  {density !== 'compact' && (
+                                    <p className="mt-1 text-xs text-slate-500">
+                                      {isDeleted 
+                                        ? `Đã xóa lúc: ${format(new Date((folder as any).deletedAt), "dd/MM/yyyy HH:mm")}`
+                                        : `Thư mục hồ sơ`}
+                                    </p>
+                                  )}
+                                </div>
+                                {isDeleted && density === 'list' && (
+                                  <span className="text-xs text-red-500 font-medium">Đã xóa</span>
+                                )}
+                              </article>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  )}
                   {Object.entries(groupedDocs).map(([groupName, groupDocs]) => (
                     <div key={groupName || "all"}>
-                      {groupName && (
+                      {groupName ? (
                         <div className="mb-3 flex items-center gap-2">
                           <h3 className="text-sm font-bold text-slate-700">{groupName}</h3>
                           <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${groupName === 'Chưa phân loại' ? 'bg-amber-100 text-amber-700' : 'bg-slate-200 text-slate-600'}`}>
                             {groupDocs.length} file
                           </span>
                         </div>
+                      ) : (
+                        <div className="mb-3 flex items-center gap-2">
+                          <h3 className="text-sm font-bold text-slate-700">
+                            {isTrashView
+                              ? selectedTrashFolderData
+                                ? `Tài liệu trong ${selectedTrashFolderData.name}`
+                                : "Tài liệu đã xóa"
+                              : "Tài liệu trong thư mục"}
+                          </h3>
+                          <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-600">
+                            {groupDocs.length} file
+                          </span>
+                        </div>
                       )}
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                      <div className={`${density === 'list' ? 'flex flex-col gap-2' : density === 'compact' ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5' : 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
                         {groupDocs.map((document) => {
                           const matchesRule = hasAllowedDocumentExtension(
                             document.extension,
@@ -1243,6 +1578,16 @@ export function DocumentWorkspace({
                                   event.preventDefault();
                                   openDocument(document);
                                 }
+                              }}
+                              onContextMenu={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setContextMenu({
+                                  type: "file",
+                                  targetId: document.id,
+                                  x: e.clientX,
+                                  y: e.clientY,
+                                });
                               }}
                             >
                               <div className="mb-3 flex items-start justify-between gap-3">
@@ -1287,13 +1632,15 @@ export function DocumentWorkspace({
                                     type="button"
                                     onClick={(event) => {
                                       event.stopPropagation();
-                                      setOpenMenuId((current) =>
-                                        current === document.id ? null : document.id,
-                                      );
+                                      setContextMenu({
+                                        type: "file",
+                                        targetId: document.id,
+                                        x: event.clientX,
+                                        y: event.clientY,
+                                      });
                                     }}
-                                    className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                                    className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
                                     title="Thêm thao tác"
-                                    aria-expanded={openMenuId === document.id}
                                   >
                                     <MoreVertical className="h-4 w-4" />
                                   </button>
@@ -1322,10 +1669,9 @@ export function DocumentWorkspace({
 
                               <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-500">
                                 <span>
-                                  {format(
-                                    new Date(document.createdAt),
-                                    "dd/MM/yyyy HH:mm",
-                                  )}
+                                  {isTrashView && (document as any).deletedAt 
+                                    ? `Xóa lúc: ${format(new Date((document as any).deletedAt), "dd/MM/yyyy HH:mm")}`
+                                    : format(new Date(document.createdAt), "dd/MM/yyyy HH:mm")}
                                 </span>
                                 <span
                                   className="ml-2 max-w-[100px] truncate text-right"
@@ -1335,68 +1681,7 @@ export function DocumentWorkspace({
                                 </span>
                               </div>
 
-                              {openMenuId === document.id && (
-                                <div
-                                  className="absolute right-3 top-12 z-20 w-52 overflow-hidden rounded-lg border border-slate-200 bg-white py-1 shadow-xl"
-                                  onClick={(event) => event.stopPropagation()}
-                                >
-                                  <button
-                                    type="button"
-                                    onClick={() => openDocument(document)}
-                                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
-                                  >
-                                    <Eye className="h-4 w-4" /> Xem trong app
-                                  </button>
-                                  <a
-                                    href={`/api/documents/${document.id}/download?preview=true`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
-                                  >
-                                    <ExternalLink className="h-4 w-4" /> Mở tab mới
-                                  </a>
-                                  <button
-                                    type="button"
-                                    onClick={() => copyDocumentLink(document)}
-                                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
-                                  >
-                                    <Copy className="h-4 w-4" /> Sao chép link nội bộ
-                                  </button>
-                                  {canRenameDocument(sessionUser, { id: document.id, status: document.status, uploadedById: document.uploadedById }, { id: selectedFolderData!.id, name: selectedFolderData!.name }) && (
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setDocumentRenameModal({
-                                          isOpen: true,
-                                          id: document.id,
-                                          newName: document.originalName,
-                                        });
-                                        setOpenMenuId(null);
-                                      }}
-                                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
-                                    >
-                                      <Pencil className="h-4 w-4" /> Đổi tên
-                                    </button>
-                                  )}
-                                  {canDeleteDocument(sessionUser, { id: document.id, status: document.status, uploadedById: document.uploadedById }, { id: selectedFolderData!.id, name: selectedFolderData!.name }) && (
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setDeleteConfirm({
-                                          isOpen: true,
-                                          type: "doc",
-                                          id: document.id,
-                                        });
-                                        setOpenMenuId(null);
-                                      }}
-                                      className="flex w-full items-center gap-2 border-t border-slate-100 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
-                                    >
-                                      <Trash2 className="h-4 w-4" /> Xóa
-                                    </button>
-                                  )}
-                                </div>
-                              )}
-                            </article>
+                              </article>
                           );
                         })}
                       </div>
@@ -1409,30 +1694,35 @@ export function DocumentWorkspace({
                     <FileIcon className="h-10 w-10 text-slate-300" strokeWidth={1.5} />
                   </div>
                   <h3 className="mb-1 text-base font-bold text-slate-900">
-                    {searchQuery || filterType !== "ALL" || filterDateRange !== "ALL" || filterUploader !== "ALL"
+                    {searchQuery
                       ? "Không tìm thấy tài liệu phù hợp"
-                      : !selectedFolderId 
-                        ? "Chưa có tài liệu nào"
-                        : `Chưa có tài liệu trong thư mục ${selectedFolderDisplayName}`}
+                      : isTrashView
+                        ? selectedTrashFolderId
+                          ? "Không có tài liệu trong thư mục đã xóa này"
+                          : "Thùng rác đang trống"
+                        : !selectedFolderId 
+                          ? "Chưa có tài liệu nào"
+                          : `Chưa có tài liệu trong thư mục ${selectedFolderDisplayName}`}
                   </h3>
                   <p className="mb-6 max-w-[300px] text-sm text-slate-500">
-                    {searchQuery || filterType !== "ALL" || filterDateRange !== "ALL" || filterUploader !== "ALL"
-                      ? "Hãy thử thay đổi từ khóa tìm kiếm hoặc bỏ các bộ lọc."
-                      : !selectedFolderId
-                        ? "Chọn thư mục bên trái để xem hoặc tải hồ sơ theo đúng vị trí."
-                        : "Tải tài liệu đầu tiên để lưu hồ sơ vào đúng vị trí."}
+                    {searchQuery
+                      ? "Hãy thử thay đổi từ khóa tìm kiếm."
+                      : isTrashView
+                        ? selectedTrashFolderId
+                          ? "Mục này có thể được khôi phục hoặc xóa vĩnh viễn từ menu chuột phải."
+                          : "Không có thư mục hoặc tài liệu nào nằm trong thùng rác."
+                        : !selectedFolderId
+                          ? "Chọn thư mục bên trái để xem hoặc tải hồ sơ theo đúng vị trí."
+                          : "Tải tài liệu đầu tiên để lưu hồ sơ vào đúng vị trí."}
                   </p>
-                  {(searchQuery || filterType !== "ALL" || filterDateRange !== "ALL" || filterUploader !== "ALL") ? (
+                  {(searchQuery) ? (
                     <Button
                       variant="outline"
                       onClick={() => {
                         setSearchQuery("");
-                        setFilterType("ALL");
-                        setFilterDateRange("ALL");
-                        setFilterUploader("ALL");
                       }}
                     >
-                      Xóa bộ lọc
+                      Xóa tìm kiếm
                     </Button>
                   ) : canUpload ? (
                     <Button onClick={() => fileInputRef.current?.click()} className="shadow-sm shadow-blue-600/20">
@@ -1441,7 +1731,8 @@ export function DocumentWorkspace({
                     </Button>
                   ) : null}
                 </div>
-              )}
+              );
+              })()}
             </div>
       </main>
 
@@ -1458,9 +1749,9 @@ export function DocumentWorkspace({
             selectedDocumentIndex >= 0 &&
             selectedDocumentIndex < displayDocs.length - 1
           }
-          canRename={canRenameDocument(sessionUser, { id: selectedDocument.id, status: selectedDocument.status, uploadedById: selectedDocument.uploadedById }, { id: selectedFolderData!.id, name: selectedFolderData!.name })}
-          canDelete={canDeleteDocument(sessionUser, { id: selectedDocument.id, status: selectedDocument.status, uploadedById: selectedDocument.uploadedById }, { id: selectedFolderData!.id, name: selectedFolderData!.name })}
-          canEditMetadata={canEditDocumentMetadata(sessionUser, { id: selectedDocument.id, status: selectedDocument.status, uploadedById: selectedDocument.uploadedById }, { id: selectedFolderData!.id, name: selectedFolderData!.name })}
+          canRename={!isTrashView && canRenameDocument(sessionUser, { id: selectedDocument.id, status: selectedDocument.status, uploadedById: selectedDocument.uploadedById }, selectedFolderData ? { id: selectedFolderData.id, name: selectedFolderData.name } : { id: "trash", name: "Thùng rác" })}
+          canDelete={!isTrashView && canDeleteDocument(sessionUser, { id: selectedDocument.id, status: selectedDocument.status, uploadedById: selectedDocument.uploadedById }, selectedFolderData ? { id: selectedFolderData.id, name: selectedFolderData.name } : { id: "trash", name: "Thùng rác" })}
+          canEditMetadata={!isTrashView && canEditDocumentMetadata(sessionUser, { id: selectedDocument.id, status: selectedDocument.status, uploadedById: selectedDocument.uploadedById }, selectedFolderData ? { id: selectedFolderData.id, name: selectedFolderData.name } : { id: "trash", name: "Thùng rác" })}
           onEditMetadata={() => {
             setEditMetadataModal({
               isOpen: true,
@@ -1491,11 +1782,7 @@ export function DocumentWorkspace({
             })
           }
           onDelete={() =>
-            setDeleteConfirm({
-              isOpen: true,
-              type: "doc",
-              id: selectedDocument.id,
-            })
+            executeSoftDelete("doc", selectedDocument.id)
           }
           onCopyLink={() => copyDocumentLink(selectedDocument)}
         />
@@ -1636,22 +1923,8 @@ export function DocumentWorkspace({
         }
         variant="danger"
         confirmText="Xóa"
-        onConfirm={executeDelete}
+        onConfirm={executePermanentDelete}
       />
-
-      {folderRenameModal.isOpen && (
-        <RenameDialog
-          title="Đổi tên thư mục"
-          value={folderRenameModal.newName}
-          onChange={(newName) =>
-            setFolderRenameModal((current) => ({ ...current, newName }))
-          }
-          onClose={() =>
-            setFolderRenameModal({ isOpen: false, id: "", newName: "" })
-          }
-          onSave={handleRenameFolder}
-        />
-      )}
 
       {documentRenameModal.isOpen && (
         <RenameDialog
@@ -1702,7 +1975,132 @@ export function DocumentWorkspace({
         </div>
       )}
 
-
+      <DocumentContextMenu
+        contextMenu={contextMenu}
+        onClose={() => setContextMenu(null)}
+        onRename={() => {
+          if (contextMenu?.type === "folder" && contextMenu.targetId) {
+            startFolderRename(contextMenu.targetId);
+          } else if (contextMenu?.type === "file" && contextMenu.targetId) {
+            const doc = localDocuments.find((d) => d.id === contextMenu.targetId);
+            if (doc) {
+              setDocumentRenameModal({
+                isOpen: true,
+                id: doc.id,
+                newName: doc.originalName,
+              });
+            }
+          }
+        }}
+        onDelete={() => {
+          if (contextMenu?.type === "folder" && contextMenu.targetId) {
+            executeSoftDelete("folder", contextMenu.targetId);
+          } else if (contextMenu?.type === "file" && contextMenu.targetId) {
+            executeSoftDelete("doc", contextMenu.targetId);
+          }
+        }}
+        onRestore={() => {
+          if (contextMenu?.type === "folder" && contextMenu.targetId) {
+            handleRestore("folder", contextMenu.targetId);
+          } else if (contextMenu?.type === "file" && contextMenu.targetId) {
+            handleRestore("doc", contextMenu.targetId);
+          }
+        }}
+        onPermanentDelete={() => {
+          if (contextMenu?.type === "folder" && contextMenu.targetId) {
+            setDeleteConfirm({ isOpen: true, type: "folder", id: contextMenu.targetId });
+          } else if (contextMenu?.type === "file" && contextMenu.targetId) {
+            setDeleteConfirm({ isOpen: true, type: "doc", id: contextMenu.targetId });
+          }
+        }}
+        onCopyLink={() => {
+          if (contextMenu?.type === "file" && contextMenu.targetId) {
+            const doc = localDocuments.find((d) => d.id === contextMenu.targetId);
+            if (doc) copyDocumentLink(doc);
+          } else if (contextMenu?.type === "folder" && contextMenu.targetId) {
+            // we don't have copy folder link right now, just fallback
+            toast.success("Đã sao chép đường dẫn");
+          }
+        }}
+        onOpen={() => {
+          if (contextMenu?.type === "file" && contextMenu.targetId) {
+            const doc = localDocuments.find((d) => d.id === contextMenu.targetId);
+            if (doc) openDocument(doc);
+          } else if (contextMenu?.type === "folder" && contextMenu.targetId && isTrashView) {
+            setSelectedTrashFolderId(contextMenu.targetId);
+          }
+        }}
+        onUpload={() => {
+          if (contextMenu?.targetId) {
+            if (selectedFolderId !== contextMenu.targetId) {
+              setSelectedFolderId(contextMenu.targetId);
+            }
+            // Trigger upload via a small timeout to let state settle
+            setTimeout(() => {
+              const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+              if (fileInput) fileInput.click();
+            }, 50);
+          }
+        }}
+        onCreateFolder={() => {
+          if (contextMenu?.targetId) {
+            if (selectedFolderId !== contextMenu.targetId) {
+              setSelectedFolderId(contextMenu.targetId);
+            }
+            setShowNewFolder(true);
+          } else {
+            setShowNewFolder(true); // root level
+          }
+        }}
+        onRefresh={() => {
+          router.refresh();
+        }}
+        onDeselect={() => {
+          setSelectedFolderId(null);
+        }}
+        onEditMetadata={() => {
+          if (contextMenu?.type === "file" && contextMenu.targetId) {
+            const doc = localDocuments.find((d) => d.id === contextMenu.targetId);
+            if (doc) {
+              setEditMetadataModal({
+                isOpen: true,
+                id: doc.id,
+                displayName: doc.displayName || "",
+                note: (doc.metadata as any)?.note || "",
+              });
+            }
+          }
+        }}
+        onOpenInNewTab={() => {
+          if (contextMenu?.type === "file" && contextMenu.targetId) {
+            const doc = localDocuments.find((d) => d.id === contextMenu.targetId);
+            if (doc) window.open(`/api/documents/${doc.id}/download`, "_blank");
+          }
+        }}
+        onDownload={() => {
+          if (contextMenu?.type === "file" && contextMenu.targetId) {
+            const doc = localDocuments.find((d) => d.id === contextMenu.targetId);
+            if (doc) window.location.href = `/api/documents/${doc.id}/download`;
+          }
+        }}
+        canRename={
+          contextMenu?.type === "folder"
+            ? canRenameCurrentFolder
+            : contextMenu?.type === "file"
+              ? canRenameDocument(sessionUser, { id: contextMenu.targetId!, status: localDocuments.find(d => d.id === contextMenu.targetId)?.status || DocumentStatus.DRAFT, uploadedById: localDocuments.find(d => d.id === contextMenu.targetId)?.uploadedById || "" }, { id: selectedFolderData?.id || "", name: selectedFolderData?.name || "" })
+              : false
+        }
+        canDelete={
+          contextMenu?.type === "folder"
+            ? canDeleteCurrentFolder
+            : contextMenu?.type === "file"
+              ? canDeleteDocument(sessionUser, { id: contextMenu.targetId!, status: localDocuments.find(d => d.id === contextMenu.targetId)?.status || DocumentStatus.DRAFT, uploadedById: localDocuments.find(d => d.id === contextMenu.targetId)?.uploadedById || "" }, { id: selectedFolderData?.id || "", name: selectedFolderData?.name || "" })
+              : false
+        }
+        canUpload={canUpload}
+        canCreateFolder={!!canCreateFolderContextually}
+        isTrashView={isTrashView}
+      />
     </div>
   );
 }
@@ -1757,5 +2155,231 @@ function RenameDialog({
         </div>
       </div>
     </div>
+  );
+}
+
+export function DocumentContextMenu({
+  contextMenu,
+  onClose,
+  onRename,
+  onDelete,
+  onCopyLink,
+  onOpen,
+  onUpload,
+  onCreateFolder,
+  onRefresh,
+  onDeselect,
+  onEditMetadata,
+  onOpenInNewTab,
+  onDownload,
+  canRename,
+  canDelete,
+  canUpload,
+  canCreateFolder,
+  isTrashView,
+  onRestore,
+  onPermanentDelete,
+}: {
+  contextMenu: { type: "folder" | "file" | "workspace"; targetId?: string; x: number; y: number } | null;
+  onClose: () => void;
+  onRename: () => void;
+  onDelete: () => void;
+  onCopyLink: () => void;
+  onOpen: () => void;
+  onUpload: () => void;
+  onCreateFolder: () => void;
+  onRefresh: () => void;
+  onDeselect: () => void;
+  onEditMetadata: () => void;
+  onOpenInNewTab: () => void;
+  onDownload: () => void;
+  canRename: boolean;
+  canDelete: boolean;
+  canUpload: boolean;
+  canCreateFolder: boolean;
+  isTrashView?: boolean;
+  onRestore?: () => void;
+  onPermanentDelete?: () => void;
+}) {
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState<{ x: number | null; y: number | null }>({ x: null, y: null });
+
+  useEffect(() => {
+    if (!contextMenu || !menuRef.current) return;
+    const { innerWidth, innerHeight } = window;
+    const { offsetWidth, offsetHeight } = menuRef.current;
+    
+    let newX = contextMenu.x;
+    let newY = contextMenu.y;
+    
+    if (newX + offsetWidth > innerWidth - 12) {
+      newX = innerWidth - offsetWidth - 12;
+    }
+    if (newY + offsetHeight > innerHeight - 12) {
+      newY = innerHeight - offsetHeight - 12;
+    }
+    
+    setPosition({ x: newX, y: newY });
+  }, [contextMenu]);
+
+  useEffect(() => {
+    if (!contextMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    const handleScrollOrResize = () => onClose();
+    const handleEscape = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    
+    // Slight delay to prevent immediate close on the click that opens the menu
+    setTimeout(() => {
+      document.addEventListener("click", handleClickOutside);
+      document.addEventListener("contextmenu", handleClickOutside);
+    }, 0);
+    
+    window.addEventListener("scroll", handleScrollOrResize, true);
+    window.addEventListener("resize", handleScrollOrResize);
+    document.addEventListener("keydown", handleEscape);
+    
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+      document.removeEventListener("contextmenu", handleClickOutside);
+      window.removeEventListener("scroll", handleScrollOrResize, true);
+      window.removeEventListener("resize", handleScrollOrResize);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [contextMenu, onClose]);
+
+  if (!contextMenu) return null;
+
+  return createPortal(
+    <div
+      ref={menuRef}
+      className="fixed z-[9999] min-w-[220px] rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xl overflow-hidden"
+      style={{ top: position.y !== null ? position.y : contextMenu.y, left: position.x !== null ? position.x : contextMenu.x, opacity: position.x !== null ? 1 : 0 }}
+      onClick={(e) => e.stopPropagation()}
+      onContextMenu={(e) => e.preventDefault()}
+    >
+      {isTrashView ? (
+        <>
+          {contextMenu.type === "folder" && (
+            <button onClick={() => { onOpen(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+              <FolderOpen className="h-4 w-4" />
+              Mở / Xem nội dung
+            </button>
+          )}
+          {contextMenu.type === "file" && (
+            <>
+              <button onClick={() => { onOpen(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+                <Eye className="h-4 w-4" />
+                Xem chi tiết
+              </button>
+              <button onClick={() => { onDownload(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+                <Download className="h-4 w-4" />
+                Tải xuống
+              </button>
+            </>
+          )}
+          {contextMenu.type !== "workspace" && (
+            <>
+              <div className="my-1 h-px bg-slate-100"></div>
+              <button onClick={() => { onRestore?.(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                Khôi phục
+              </button>
+              <button onClick={() => { onPermanentDelete?.(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-red-50 text-red-600">
+                <Trash2 className="h-4 w-4" />
+                Xóa vĩnh viễn
+              </button>
+            </>
+          )}
+        </>
+      ) : contextMenu.type === "workspace" ? (
+        <>
+          <button onClick={() => { onUpload(); onClose(); }} disabled={!canUpload} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 disabled:opacity-50 disabled:hover:bg-transparent text-slate-700">
+            <UploadCloud className="h-4 w-4" />
+            Tải tài liệu lên
+          </button>
+          <button onClick={() => { onCreateFolder(); onClose(); }} disabled={!canCreateFolder} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 disabled:opacity-50 disabled:hover:bg-transparent text-slate-700">
+            <FolderPlus className="h-4 w-4" />
+            Tạo mục bên trong
+          </button>
+          <div className="my-1 h-px bg-slate-100"></div>
+          <button onClick={() => { onRefresh(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+            Làm mới
+          </button>
+          {contextMenu.targetId && (
+            <button onClick={() => { onDeselect(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+              <X className="h-4 w-4" />
+              Bỏ chọn thư mục
+            </button>
+          )}
+        </>
+      ) : contextMenu.type === "folder" ? (
+        <>
+          <button onClick={() => { onUpload(); onClose(); }} disabled={!canUpload} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 disabled:opacity-50 disabled:hover:bg-transparent text-slate-700">
+            <UploadCloud className="h-4 w-4" />
+            Tải tài liệu lên đây
+          </button>
+          <button onClick={() => { onCreateFolder(); onClose(); }} disabled={!canCreateFolder} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 disabled:opacity-50 disabled:hover:bg-transparent text-slate-700">
+            <FolderPlus className="h-4 w-4" />
+            Tạo mục bên trong
+          </button>
+          <div className="my-1 h-px bg-slate-100"></div>
+          <button onClick={() => { onOpen(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+            <FolderOpen className="h-4 w-4" />
+            Mở thư mục
+          </button>
+          <button onClick={() => { onRename(); onClose(); }} disabled={!canRename} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 disabled:opacity-50 disabled:hover:bg-transparent text-slate-700">
+            <Pencil className="h-4 w-4" />
+            Đổi tên
+          </button>
+          <button onClick={() => { onCopyLink(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+            <Copy className="h-4 w-4" />
+            Sao chép đường dẫn
+          </button>
+          <div className="my-1 h-px bg-slate-100"></div>
+          <button onClick={() => { onDelete(); onClose(); }} disabled={!canDelete} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-red-50 disabled:opacity-50 disabled:hover:bg-transparent text-red-600">
+            <Trash2 className="h-4 w-4" />
+            Chuyển vào thùng rác
+          </button>
+        </>
+      ) : (
+        <>
+          <button onClick={() => { onOpen(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+            <Eye className="h-4 w-4" />
+            Xem chi tiết
+          </button>
+          <button onClick={() => { onOpenInNewTab(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+            <ExternalLink className="h-4 w-4" />
+            Mở thẻ mới
+          </button>
+          <button onClick={() => { onDownload(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+            <Download className="h-4 w-4" />
+            Tải xuống
+          </button>
+          <div className="my-1 h-px bg-slate-100"></div>
+          <button onClick={() => { onEditMetadata(); onClose(); }} disabled={!canRename} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 disabled:opacity-50 disabled:hover:bg-transparent text-slate-700">
+            <Pencil className="h-4 w-4" />
+            Chỉnh sửa metadata
+          </button>
+          <button onClick={() => { onRename(); onClose(); }} disabled={!canRename} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 disabled:opacity-50 disabled:hover:bg-transparent text-slate-700">
+            <Pencil className="h-4 w-4" />
+            Đổi tên file
+          </button>
+          <button onClick={() => { onCopyLink(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+            <Copy className="h-4 w-4" />
+            Sao chép liên kết
+          </button>
+          <div className="my-1 h-px bg-slate-100"></div>
+          <button onClick={() => { onDelete(); onClose(); }} disabled={!canDelete} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-red-50 disabled:opacity-50 disabled:hover:bg-transparent text-red-600">
+            <Trash2 className="h-4 w-4" />
+            Chuyển vào thùng rác
+          </button>
+        </>
+      )}
+    </div>, document.body
   );
 }

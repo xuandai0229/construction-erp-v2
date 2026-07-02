@@ -1,122 +1,33 @@
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-import prisma from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
-import Link from "next/link";
-import { FolderOpen, Building2, Search } from "lucide-react";
-import { EmptyState } from "@/components/ui/empty-state";
-import { getSession } from "@/lib/auth";
-import { redirect } from "next/navigation";
-import { getAccessibleProjectIds } from "@/lib/rbac";
-import { getGlobalProjectContext } from "@/lib/project-context";
+const fs = require('fs');
 
-export default async function DocumentsOverviewPage({
-  searchParams
-}: {
-  searchParams: Promise<{ q?: string; projectId?: string }>
-}) {
-  const session = await getSession();
-  if (!session) {
-    redirect("/login");
-  }
+const path = 'src/app/(dashboard)/documents/page.tsx';
+let content = fs.readFileSync(path, 'utf-8');
 
-  const params = await searchParams;
-  const urlProjectId = typeof params.projectId === "string" ? params.projectId : undefined;
-  const globalContext = await getGlobalProjectContext(session, urlProjectId);
-  // We DO NOT redirect to globalContext.selectedProjectId here anymore.
-  // "Route luôn thắng cookie/global state": if the user visits /documents, they should see "Toàn hệ thống".
+const regex = /        \{projects\.length > 0 \? \([\s\S]*?        \) : \(/;
 
-  const q = params.q || "";
-
-  const whereCondition: Prisma.ProjectWhereInput = {
-    deletedAt: null,
-  };
-
-  if (q) {
-    whereCondition.OR = [
-      { code: { contains: q, mode: "insensitive" } },
-      { name: { contains: q, mode: "insensitive" } },
-    ];
-  }
-
-  // Nếu không phải ADMIN/DIRECTOR thì chỉ lấy project mà user được assign
-  const accessibleIds = await getAccessibleProjectIds(session);
-  if (accessibleIds !== null) {
-    whereCondition.id = { in: accessibleIds };
-  }
-
-  const projects = await prisma.project.findMany({
-    where: whereCondition,
-    orderBy: { createdAt: "desc" },
-    include: {
-      _count: {
-        select: { documentFolders: { where: { deletedAt: null } } }
-      },
-      documents: {
-        where: { deletedAt: null },
-        select: { id: true }
-      }
-    }
-  });
-
-  return (
-    <div className="app-page space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="page-heading">Quản lý tài liệu</h1>
-          <p className="page-description">Truy cập hồ sơ theo từng công trình và thư mục nghiệp vụ.</p>
-        </div>
-      </div>
-
-      <div className="rounded-[20px] border border-slate-200/60 bg-white shadow-sm overflow-hidden">
-        <div className="border-b border-slate-100 bg-white p-4 sm:p-5">
-          <form className="flex max-w-2xl flex-col gap-3 sm:flex-row" method="GET" action="/documents">
-            <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-slate-400" />
-              <input 
-                type="text" 
-                name="q"
-                defaultValue={q}
-                placeholder="Tìm công trình theo tên hoặc mã..." 
-                className="w-full h-11 pl-10 pr-4 py-2 text-[15px] text-slate-900 bg-slate-50/50 font-medium placeholder:text-slate-400 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <button type="submit" className="inline-flex items-center justify-center rounded-xl text-sm font-semibold transition-all bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-600/20 h-11 px-6">
-                Lọc dữ liệu
-              </button>
-              {q && (
-                <Link href="/documents" className="inline-flex items-center justify-center rounded-xl text-sm font-medium transition-colors bg-slate-100 hover:bg-slate-200 text-slate-700 h-11 px-4">
-                  Xóa
-                </Link>
-              )}
-            </div>
-          </form>
-        </div>
-
-        {projects.length > 0 ? (
+const newGrid = `        {projects.length > 0 ? (
           <div className="p-5 sm:p-6 bg-slate-50/50">
             {(() => {
               const count = projects.length;
               const density = count >= 25 ? "list" : count >= 10 ? "compact" : "comfortable";
               
               return (
-                <div className={`${
+                <div className={\`\${
                   density === 'list' 
                     ? 'flex flex-col gap-2' 
                     : density === 'compact'
                       ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'
                       : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5'
-                }`}>
+                }\`}>
                   {projects.map(project => (
-                    <Link href={`/documents/${project.id}`} key={project.id} className="block group outline-none">
-                      <div className={`${
+                    <Link href={\`/documents/\${project.id}\`} key={project.id} className="block group outline-none">
+                      <div className={\`\${
                         density === 'list'
                           ? 'flex items-center justify-between rounded-lg border border-slate-200/80 bg-white px-4 py-3 hover:border-blue-300 hover:shadow-sm transition-all'
                           : density === 'compact'
                             ? 'rounded-xl border border-slate-200/80 bg-white p-4 hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer h-full flex flex-col'
                             : 'rounded-[20px] border border-slate-200/80 bg-white p-5 hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer h-full flex flex-col'
-                      }`}>
+                      }\`}>
                         
                         {/* LIST VIEW */}
                         {density === 'list' ? (
@@ -145,8 +56,8 @@ export default async function DocumentsOverviewPage({
                           /* GRID VIEWS (Compact / Comfortable) */
                           <>
                             <div className="flex items-start gap-3.5 mb-4">
-                              <div className={`${density === 'compact' ? 'h-10 w-10 rounded-lg' : 'h-12 w-12 rounded-xl'} bg-blue-50/80 flex items-center justify-center group-hover:bg-blue-100/80 group-hover:scale-105 transition-all duration-300 shrink-0 ring-4 ring-white shadow-sm`}>
-                                <FolderOpen className={`${density === 'compact' ? 'h-5 w-5' : 'h-6 w-6'} text-blue-600 drop-shadow-sm`} />
+                              <div className={\`\${density === 'compact' ? 'h-10 w-10 rounded-lg' : 'h-12 w-12 rounded-xl'} bg-blue-50/80 flex items-center justify-center group-hover:bg-blue-100/80 group-hover:scale-105 transition-all duration-300 shrink-0 ring-4 ring-white shadow-sm\`}>
+                                <FolderOpen className={\`\${density === 'compact' ? 'h-5 w-5' : 'h-6 w-6'} text-blue-600 drop-shadow-sm\`} />
                               </div>
                               <div className="flex-1 pt-1 min-w-0">
                                 <h3 className="font-bold text-slate-900 group-hover:text-blue-600 truncate text-[14px] sm:text-[15px] leading-tight mb-1 transition-colors" title={project.name}>{project.name}</h3>
@@ -189,16 +100,8 @@ export default async function DocumentsOverviewPage({
               );
             })()}
           </div>
-        ) : (
-          <div className="p-8">
-            <EmptyState 
-              title="Không tìm thấy công trình" 
-              description={q ? "Không có công trình nào khớp với từ khóa tìm kiếm." : "Bạn chưa được phân quyền vào dự án nào hoặc hệ thống chưa có dự án."} 
-              icon={<Building2 className="h-12 w-12 text-slate-300" />}
-            />
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+        ) : (`;
+
+content = content.replace(regex, newGrid);
+
+fs.writeFileSync(path, content);
