@@ -41,8 +41,13 @@ export function GlobalProjectContextSwitcher({
     routeProjectId = documentMatch[1];
   }
 
-  // Route project ID wins if it exists
-  const displayProjectId = routeProjectId || selectedProjectId;
+  let isRootGlobalRoute = false;
+  if (pathname === '/documents' || pathname === '/projects') {
+    isRootGlobalRoute = true;
+  }
+
+  // Route project ID wins if it exists, but if we are on a known global list view, override to 'all'.
+  const displayProjectId = isRootGlobalRoute ? null : (routeProjectId || selectedProjectId);
 
   const selectedProject = projects.find(p => p.id === displayProjectId);
 
@@ -107,19 +112,25 @@ export function GlobalProjectContextSwitcher({
         const newPathname = pathname.replace(`/${routeProjectId}`, `/${id}`);
         router.push(newPathname);
       }
-      return;
-    }
-
-    // Default case: not on a project-specific route, just append query param
-    const params = new URLSearchParams(searchParams.toString());
-    if (id && id !== 'all') {
-      params.set('projectId', id);
     } else {
-      params.delete('projectId');
-    }
+      if (pathname === '/documents' && id && id !== 'all') {
+        router.push(`/documents/${id}`);
+      } else if (pathname === '/projects' && id && id !== 'all') {
+        router.push(`/projects/${id}`);
+      } else {
+        // Default case: not on a project-specific route, just append query param
+        const params = new URLSearchParams(searchParams.toString());
+        if (id && id !== 'all') {
+          params.set('projectId', id);
+        } else {
+          params.delete('projectId');
+        }
 
-    const query = params.toString();
-    router.push(query ? `${pathname}?${query}` : pathname);
+        const query = params.toString();
+        router.push(query ? `${pathname}?${query}` : pathname);
+      }
+    }
+    
     router.refresh();
   }
 

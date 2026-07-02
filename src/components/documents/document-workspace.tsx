@@ -10,6 +10,7 @@ import {
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   AlertTriangle,
+  ChevronRight,
   Copy,
   Download,
   ExternalLink,
@@ -50,6 +51,10 @@ import {
 } from "@/lib/document-file-utils";
 import { getDocumentRule } from "@/lib/document-rules";
 import {
+  buildFolderAncestorChain,
+  formatDocumentFolderName,
+} from "@/lib/document-folders";
+import {
   canRenameFolder,
   canUploadToFolder,
   canRenameDocument,
@@ -78,6 +83,7 @@ interface FolderItem {
 
 interface DocumentWorkspaceProps {
   projectId: string;
+  projectName: string;
   folders: FolderItem[];
   documents: DocumentListItem[];
   sessionUser: SessionUser;
@@ -95,10 +101,6 @@ function formatBytes(bytes: number, decimals = 2) {
     sizes.length - 1,
   );
   return `${parseFloat((bytes / Math.pow(k, index)).toFixed(decimals))} ${sizes[index]}`;
-}
-
-function formatFolderName(name: string) {
-  return name.replace(/^(\d{2})_/, "$1. ");
 }
 
 function getFileTypeLabel(mime: string, extension: string) {
@@ -152,6 +154,7 @@ function FileIconForDocument({
 
 export function DocumentWorkspace({
   projectId,
+  projectName,
   folders,
   documents,
   sessionUser,
@@ -174,6 +177,9 @@ export function DocumentWorkspace({
 
   const [selectedFolderId, setSelectedFolderIdRaw] = useState<string | null>(
     initialFolder,
+  );
+  const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(
+    () => new Set(buildFolderAncestorChain(folders, initialFolder)),
   );
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(
     documentFromUrl &&
@@ -226,15 +232,51 @@ export function DocumentWorkspace({
     setLocalDocuments(documents);
   }, [documents]);
 
+  const folderById = useMemo(
+    () => new Map(folders.map((folder) => [folder.id, folder])),
+    [folders],
+  );
+
+  const foldersByParentId = useMemo(() => {
+    const map = new Map<string | null, FolderItem[]>();
+    for (const folder of folders) {
+      const siblings = map.get(folder.parentId) || [];
+      siblings.push(folder);
+      map.set(folder.parentId, siblings);
+    }
+    return map;
+  }, [folders]);
+
+  useEffect(() => {
+    const nextFolderId =
+      folderFromUrl && folderById.has(folderFromUrl) ? folderFromUrl : null;
+
+    setSelectedFolderIdRaw((current) =>
+      current === nextFolderId ? current : nextFolderId,
+    );
+
+    setExpandedFolderIds((current) => {
+      const next = new Set(current);
+      for (const ancestorId of buildFolderAncestorChain(folders, nextFolderId)) {
+        next.add(ancestorId);
+      }
+      if (nextFolderId && (foldersByParentId.get(nextFolderId)?.length || 0) > 0) {
+        next.add(nextFolderId);
+      }
+      return next;
+    });
+  }, [folderById, folderFromUrl, folders, foldersByParentId]);
+
   const replaceUrlState = useCallback(
     (folderId: string | null, documentId?: string | null) => {
       const params = new URLSearchParams(searchParams.toString());
+      params.delete("folderId");
       if (folderId) params.set("folder", folderId);
       else params.delete("folder");
       if (documentId) params.set("document", documentId);
       else params.delete("document");
       const query = params.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname, {
+      router.push(query ? `${pathname}?${query}` : pathname, {
         scroll: false,
       });
     },
@@ -257,6 +299,29 @@ export function DocumentWorkspace({
     [replaceUrlState],
   );
 
+  const selectFolder = useCallback(
+    (folder: FolderItem) => {
+      setSelectedFolderId(folder.id);
+      if ((foldersByParentId.get(folder.id)?.length || 0) > 0) {
+        setExpandedFolderIds((current) => {
+          const next = new Set(current);
+          next.add(folder.id);
+          return next;
+        });
+      }
+    },
+    [foldersByParentId, setSelectedFolderId],
+  );
+
+  const toggleFolderExpanded = useCallback((folderId: string) => {
+    setExpandedFolderIds((current) => {
+      const next = new Set(current);
+      if (next.has(folderId)) next.delete(folderId);
+      else next.add(folderId);
+      return next;
+    });
+  }, []);
+
   const openDocument = useCallback(
     (document: DocumentListItem) => {
       if (document.folderId !== selectedFolderId) {
@@ -274,12 +339,26 @@ export function DocumentWorkspace({
     replaceUrlState(selectedFolderId, null);
   }, [replaceUrlState, selectedFolderId]);
 
-  const rootFolders = folders.filter((folder) => !folder.parentId);
+  const rootFolders = foldersByParentId.get(null) || [];
   const selectedFolderData = folders.find(
     (folder) => folder.id === selectedFolderId,
   );
+  const selectedFolderDisplayName = selectedFolderData
+    ? formatDocumentFolderName(selectedFolderData.name)
+    : "";
+  const selectedParentFolder = selectedFolderData?.parentId
+    ? folderById.get(selectedFolderData.parentId)
+    : null;
+  const selectedFolderPath = selectedFolderId
+    ? [
+        ...buildFolderAncestorChain(folders, selectedFolderId)
+          .map((folderId) => folderById.get(folderId))
+          .filter((folder): folder is FolderItem => Boolean(folder)),
+        ...(selectedFolderData ? [selectedFolderData] : []),
+      ]
+    : [];
   const selectedFolderRule = selectedFolderData
-    ? getDocumentRule(selectedFolderData.name)
+    ? getDocumentRule(formatDocumentFolderName(selectedFolderData.name))
     : null;
 
   const displayDocs = useMemo(() => {
@@ -404,8 +483,10 @@ export function DocumentWorkspace({
     : -1;
 
   // Local Capabilities
-  const canCreateNewFolder = canRenameFolder(sessionUser, { id: "new", name: "" }); // Cấp lãnh đạo
+  const isGlobalAdmin = canRenameFolder(sessionUser, { id: "new", name: "" }); // Cấp lãnh đạo
   const canUpload = selectedFolderData ? canUploadToFolder(sessionUser, { id: selectedFolderData.id, name: selectedFolderData.name }) : false;
+  
+  const canCreateFolderContextually = isGlobalAdmin || (selectedFolderId && canUpload);
 
   const canRenameCurrentFolder = selectedFolderData ? canRenameFolder(sessionUser, { id: selectedFolderData.id, name: selectedFolderData.name }) : false;
   const canDeleteCurrentFolder = selectedFolderData ? canDeleteFolder(sessionUser, { id: selectedFolderData.id, name: selectedFolderData.name }) : false;
@@ -490,7 +571,7 @@ export function DocumentWorkspace({
       setPendingUpload(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
       toast.success(
-        `Đã tải tài liệu lên thư mục ${formatFolderName(selectedFolderData?.name || "")}`,
+        `Đã tải tài liệu lên thư mục ${formatDocumentFolderName(selectedFolderData?.name || "")}`,
       );
       openDocument(uploadedDocument);
       router.refresh();
@@ -696,34 +777,54 @@ export function DocumentWorkspace({
     level?: number;
   }) => {
     const isSelected = selectedFolderId === folder.id;
-    const children = folders.filter((item) => item.parentId === folder.id);
+    const children = foldersByParentId.get(folder.id) || [];
+    const hasChildren = children.length > 0;
+    const isExpanded = expandedFolderIds.has(folder.id);
+    const displayName = formatDocumentFolderName(folder.name);
 
     return (
       <div className="select-none">
         <div
-          className={`flex cursor-pointer items-center justify-between rounded-md px-3 py-2 transition-colors hover:bg-slate-100 ${isSelected ? "bg-blue-50 text-blue-700" : "text-slate-700"
+          className={`group flex min-h-10 cursor-pointer items-center justify-between rounded-lg px-2.5 py-2 transition-colors hover:bg-slate-100 ${isSelected ? "bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-100" : "text-slate-700"
             }`}
-          style={{ paddingLeft: `${level * 16 + 12}px` }}
-          onClick={() => setSelectedFolderId(folder.id)}
+          style={{ paddingLeft: `${level * 18 + 8}px` }}
+          onClick={() => selectFolder(folder)}
         >
-          <div className="flex min-w-0 items-center gap-2">
+          <div className="flex min-w-0 items-center gap-1.5">
+            {hasChildren ? (
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  toggleFolderExpanded(folder.id);
+                }}
+                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-slate-400 hover:bg-white hover:text-slate-700"
+                aria-label={isExpanded ? "Đóng nhánh thư mục" : "Mở nhánh thư mục"}
+              >
+                <ChevronRight
+                  className={`h-3.5 w-3.5 transition-transform ${isExpanded ? "rotate-90" : ""}`}
+                />
+              </button>
+            ) : (
+              <span className="h-5 w-5 shrink-0" />
+            )}
             {isSelected ? (
-              <FolderOpen className="h-4 w-4 shrink-0 text-blue-500" />
+              <FolderOpen className="h-4 w-4 shrink-0 text-blue-600" />
             ) : (
               <Folder className="h-4 w-4 shrink-0 text-slate-400" />
             )}
-            <span className="truncate text-sm font-medium" title={folder.name}>
-              {formatFolderName(folder.name)}
+            <span className="truncate text-sm font-medium" title={displayName}>
+              {displayName}
             </span>
             {folder._count.documents > 0 && (
-              <span className="rounded-full bg-white px-1.5 py-0.5 text-[10px] text-slate-500">
+              <span className={`rounded-full px-1.5 py-0.5 text-[10px] ${isSelected ? "bg-blue-100 text-blue-700" : "bg-white text-slate-500"}`}>
                 {folder._count.documents}
               </span>
             )}
           </div>
           {isSelected &&
             (canRenameCurrentFolder || canDeleteCurrentFolder) && (
-              <div className="flex gap-1 rounded-md border border-slate-200 bg-white px-1 shadow-sm">
+              <div className="flex shrink-0 gap-1 rounded-md border border-slate-200 bg-white px-1 shadow-sm opacity-100 md:opacity-0 md:transition-opacity md:group-hover:opacity-100">
                 {canRenameCurrentFolder && (
                   <button
                     type="button"
@@ -759,27 +860,35 @@ export function DocumentWorkspace({
                   </button>
                 )}
               </div>
-            )}
+          )}
         </div>
-        {isSelected &&
-          children.map((child) => (
-            <FolderNode key={child.id} folder={child} level={level + 1} />
-          ))}
+        {isExpanded && children.length > 0 && (
+          <div className="ml-3 border-l border-slate-200/80 pl-1">
+            {children.map((child) => (
+              <FolderNode key={child.id} folder={child} level={level + 1} />
+            ))}
+          </div>
+        )}
       </div>
     );
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white md:flex-row">
-      <aside className="flex max-h-[210px] w-full shrink-0 flex-col overflow-y-auto border-r border-slate-200 bg-slate-50 md:h-auto md:max-h-none md:w-72">
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-slate-50 p-4">
-          <h2 className="font-semibold text-slate-800">Thư mục</h2>
-          {canCreateNewFolder && (
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[22px] border border-slate-200/70 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)] md:flex-row">
+      <aside className="flex max-h-[240px] w-full shrink-0 flex-col overflow-y-auto border-r border-slate-200/80 bg-slate-50/70 md:h-auto md:max-h-none md:w-[330px]">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200/80 bg-slate-50/95 p-4 backdrop-blur">
+          <div className="flex flex-col">
+            <h2 className="font-semibold text-slate-900">Thư mục</h2>
+            <span className="mt-0.5 text-xs font-medium text-slate-500">
+              Chọn vị trí lưu hồ sơ
+            </span>
+          </div>
+          {canCreateFolderContextually && (
             <button
               type="button"
               onClick={() => setShowNewFolder((value) => !value)}
-              className="rounded-md p-1.5 text-slate-600 hover:bg-slate-200"
-              title="Tạo thư mục"
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
+              title={selectedFolderId ? "Tạo thư mục con" : "Tạo thư mục gốc"}
             >
               <Plus className="h-4 w-4" />
             </button>
@@ -788,6 +897,9 @@ export function DocumentWorkspace({
 
         {showNewFolder && (
           <div className="border-b border-slate-200 bg-white p-3">
+            <div className="mb-2 text-[11px] font-semibold text-slate-500 uppercase">
+              {selectedFolderId ? `Tạo thư mục con trong: ${selectedFolderDisplayName}` : "Tạo thư mục gốc"}
+            </div>
             <input
               type="text"
               className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -829,50 +941,104 @@ export function DocumentWorkspace({
         </div>
       </aside>
 
-      <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        {selectedFolderId && selectedFolderRule ? (
-          <>
-            <div className="border-b border-slate-200 bg-white p-4">
-              <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                <div className="min-w-0">
-                  <div className="mb-1 flex flex-wrap items-center gap-2">
-                    <h2 className="text-lg font-bold text-slate-900">
-                      {selectedFolderRule.title}
-                    </h2>
-                    <span className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
-                      {selectedFolderRule.friendlyAllowedTypes}
-                    </span>
-                  </div>
-                  <p className="text-sm text-slate-600">
-                    {selectedFolderRule.description}
-                  </p>
-                  {selectedFolderRule.warning && (
-                    <p className="mt-1 text-xs font-medium text-amber-600">
-                      {selectedFolderRule.warning}
-                    </p>
-                  )}
-                  <p className="mt-1 text-xs text-slate-500">
-                    Hệ thống: Đuôi tệp hợp lệ: {systemSettings?.allowedExtensions}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Gợi ý đặt tên:{" "}
-                    <span className="rounded border border-slate-200 bg-slate-50 px-1 py-0.5 font-mono text-slate-700">
-                      {selectedFolderRule.namingHint}
-                    </span>
-                  </p>
-                </div>
+        <main className="flex min-w-0 flex-1 flex-col overflow-hidden bg-white">
+          <div className="border-b border-slate-200/80 bg-white p-4 sm:p-5">
+            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+              <div className="min-w-0">
+                <nav className="mb-2 flex min-w-0 flex-wrap items-center gap-1.5 text-xs font-medium text-slate-500">
+                  <span className="max-w-[180px] truncate" title={projectName}>
+                    {projectName}
+                  </span>
+                  {selectedFolderPath.map((folder) => {
+                    const isCurrent = folder.id === selectedFolderId;
+                    const folderName = formatDocumentFolderName(folder.name);
+                    return (
+                      <span key={folder.id} className="flex min-w-0 items-center gap-1.5">
+                        <span className="text-slate-300">/</span>
+                        <button
+                          type="button"
+                          onClick={() => !isCurrent && setSelectedFolderId(folder.id)}
+                          className={`max-w-[180px] truncate text-left transition-colors ${
+                            isCurrent
+                              ? "font-semibold text-slate-900"
+                              : "hover:text-blue-600"
+                          }`}
+                          title={folderName}
+                        >
+                          {folderName}
+                        </button>
+                      </span>
+                    );
+                  })}
+                </nav>
 
-                {canUpload && (
-                  <div className="w-full shrink-0 sm:w-auto">
+                <div className="flex min-w-0 items-start gap-3">
+                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-blue-100 bg-blue-50 text-blue-600">
+                    {selectedFolderId ? (
+                      <FolderOpen className="h-5 w-5" />
+                    ) : (
+                      <Folder className="h-5 w-5" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="truncate text-2xl font-bold tracking-tight text-slate-950">
+                      {selectedFolderId && selectedFolderData
+                        ? selectedFolderDisplayName
+                        : "Tất cả tài liệu"}
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {selectedFolderId && selectedFolderData
+                        ? selectedParentFolder
+                          ? `Thư mục con trong ${formatDocumentFolderName(selectedParentFolder.name)}`
+                          : selectedFolderRule?.description || "Thư mục hồ sơ chính của dự án."
+                        : "Chọn thư mục bên trái để xem hoặc tải hồ sơ theo đúng vị trí."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex w-full shrink-0 items-center justify-end gap-2 sm:w-auto">
+                {selectedFolderRule && (
+                  <div className="group relative hidden sm:block">
+                    <button
+                      type="button"
+                      className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 shadow-sm hover:bg-slate-50"
+                    >
+                      Quy định tải lên
+                    </button>
+                    <div className="pointer-events-none absolute right-0 top-full z-50 mt-2 w-80 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-xl opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100">
+                      <h4 className="mb-1 text-sm font-bold text-slate-900">
+                        {selectedFolderRule.title}
+                      </h4>
+                      <p className="mb-3 text-xs leading-5 text-slate-600">
+                        {selectedFolderRule.description}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        Định dạng:{" "}
+                        <span className="font-semibold text-slate-700">
+                          {selectedFolderRule.friendlyAllowedTypes}
+                        </span>
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        Gợi ý đặt tên:{" "}
+                        <code className="rounded bg-blue-50 px-1 py-0.5 font-mono text-blue-700">
+                          {selectedFolderRule.namingHint}
+                        </code>
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {canUpload ? (
+                  <>
                     <input
                       type="file"
                       className="hidden"
                       ref={fileInputRef}
                       onChange={handleFileSelected}
-                      accept={selectedFolderRule.accept}
+                      accept={selectedFolderRule?.accept || systemSettings?.allowedExtensions}
                       capture={
-                        selectedFolderRule.key ===
-                          "07_Hình ảnh hiện trường"
+                        selectedFolderRule?.key === "07_Hình ảnh hiện trường"
                           ? "environment"
                           : undefined
                       }
@@ -880,17 +1046,16 @@ export function DocumentWorkspace({
                     <Button
                       onClick={() => fileInputRef.current?.click()}
                       disabled={isUploading}
-                      className="w-full sm:w-auto"
+                      className="h-10 w-full rounded-lg shadow-sm shadow-blue-600/20 sm:w-auto"
                     >
                       <UploadCloud className="mr-2 h-4 w-4" />
-                      {isUploading
-                        ? "Đang tải..."
-                        : selectedFolderRule.uploadLabel}
+                      {isUploading ? "Đang tải..." : "Tải tài liệu lên thư mục này"}
                     </Button>
-                  </div>
-                )}
+                  </>
+                ) : null}
               </div>
             </div>
+          </div>
 
             {(() => {
               const activeFilters = [];
@@ -1061,7 +1226,7 @@ export function DocumentWorkspace({
                         {groupDocs.map((document) => {
                           const matchesRule = hasAllowedDocumentExtension(
                             document.extension,
-                            selectedFolderRule.allowedExtensions,
+                            selectedFolderRule?.allowedExtensions || [],
                           );
                           const previewKind = getDocumentPreviewKind(
                             document.mimeType,
@@ -1239,55 +1404,52 @@ export function DocumentWorkspace({
                   ))}
                 </div>
               ) : (
-                <div className="flex h-full flex-col items-center justify-center space-y-3 text-center text-slate-500">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full border border-slate-200 bg-white">
-                    <FileType className="h-8 w-8 text-slate-300" />
+                <div className="flex flex-1 flex-col items-center justify-center p-8 text-center bg-slate-50/30">
+                  <div className="mb-4 rounded-full bg-slate-100 p-4 ring-8 ring-slate-50/50">
+                    <FileIcon className="h-10 w-10 text-slate-300" strokeWidth={1.5} />
                   </div>
-                  <div className="flex flex-col items-center">
-                    <p className="font-medium text-slate-700">
-                      {searchQuery || filterType !== "ALL"
-                        ? "Không có tài liệu phù hợp bộ lọc"
-                        : selectedFolderRule.emptyStateText}
-                    </p>
-                    <p className="mb-4 mt-1 text-sm">
-                      {searchQuery || filterType !== "ALL"
-                        ? "Hãy thử xóa bộ lọc hoặc tìm bằng từ khóa khác."
-                        : "Hãy tải tài liệu hợp lệ theo đúng định dạng được gợi ý."}
-                    </p>
-                    {canUpload &&
-                      !searchQuery &&
-                      filterType === "ALL" && (
-                        <Button
-                          onClick={() => fileInputRef.current?.click()}
-                          disabled={isUploading}
-                        >
-                          <UploadCloud className="mr-2 h-4 w-4" />
-                          {selectedFolderRule.uploadLabel}
-                        </Button>
-                      )}
-                  </div>
+                  <h3 className="mb-1 text-base font-bold text-slate-900">
+                    {searchQuery || filterType !== "ALL" || filterDateRange !== "ALL" || filterUploader !== "ALL"
+                      ? "Không tìm thấy tài liệu phù hợp"
+                      : !selectedFolderId 
+                        ? "Chưa có tài liệu nào"
+                        : `Chưa có tài liệu trong thư mục ${selectedFolderDisplayName}`}
+                  </h3>
+                  <p className="mb-6 max-w-[300px] text-sm text-slate-500">
+                    {searchQuery || filterType !== "ALL" || filterDateRange !== "ALL" || filterUploader !== "ALL"
+                      ? "Hãy thử thay đổi từ khóa tìm kiếm hoặc bỏ các bộ lọc."
+                      : !selectedFolderId
+                        ? "Chọn thư mục bên trái để xem hoặc tải hồ sơ theo đúng vị trí."
+                        : "Tải tài liệu đầu tiên để lưu hồ sơ vào đúng vị trí."}
+                  </p>
+                  {(searchQuery || filterType !== "ALL" || filterDateRange !== "ALL" || filterUploader !== "ALL") ? (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setSearchQuery("");
+                        setFilterType("ALL");
+                        setFilterDateRange("ALL");
+                        setFilterUploader("ALL");
+                      }}
+                    >
+                      Xóa bộ lọc
+                    </Button>
+                  ) : canUpload ? (
+                    <Button onClick={() => fileInputRef.current?.click()} className="shadow-sm shadow-blue-600/20">
+                      <UploadCloud className="mr-2 h-4 w-4" />
+                      Tải tài liệu lên thư mục này
+                    </Button>
+                  ) : null}
                 </div>
               )}
             </div>
-          </>
-        ) : (
-          <div className="flex flex-1 flex-col items-center justify-center bg-slate-50 p-8 text-center text-slate-500">
-            <FolderOpen className="mb-4 h-16 w-16 text-slate-300" />
-            <h3 className="mb-1 text-lg font-medium text-slate-900">
-              Chọn thư mục
-            </h3>
-            <p className="text-sm">
-              Vui lòng chọn một thư mục bên trái để xem và tải lên tài liệu.
-            </p>
-          </div>
-        )}
       </main>
 
       {selectedDocument && (
         <DocumentViewer
           key={selectedDocument.id}
           document={selectedDocument}
-          folderName={formatFolderName(
+          folderName={formatDocumentFolderName(
             folders.find((folder) => folder.id === selectedDocument.folderId)
               ?.name || "Không rõ thư mục",
           )}
@@ -1426,8 +1588,21 @@ export function DocumentWorkspace({
                 />
               </div>
 
-              <div className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-500">
-                Lưu vào thư mục: <span className="font-medium text-slate-700">{formatFolderName(selectedFolderData.name)}</span>
+              <div className="mt-4 space-y-1 border-t border-slate-100 pt-3 text-xs text-slate-500">
+                <p>
+                  Lưu vào:{" "}
+                  <span className="font-semibold text-slate-800">
+                    {formatDocumentFolderName(selectedFolderData.name)}
+                  </span>
+                </p>
+                {selectedParentFolder && (
+                  <p>
+                    Trong:{" "}
+                    <span className="font-medium text-slate-700">
+                      {formatDocumentFolderName(selectedParentFolder.name)}
+                    </span>
+                  </p>
+                )}
               </div>
             </div>
 

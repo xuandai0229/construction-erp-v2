@@ -21,9 +21,8 @@ export default async function DocumentsOverviewPage({
   const params = await searchParams;
   const urlProjectId = typeof params.projectId === "string" ? params.projectId : undefined;
   const globalContext = await getGlobalProjectContext(session, urlProjectId);
-  if (globalContext.selectedProjectId) {
-    redirect(`/documents/${globalContext.selectedProjectId}`);
-  }
+  // We DO NOT redirect to globalContext.selectedProjectId here anymore.
+  // "Route luôn thắng cookie/global state": if the user visits /documents, they should see "Toàn hệ thống".
 
   const q = params.q || "";
 
@@ -67,59 +66,70 @@ export default async function DocumentsOverviewPage({
         </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-        <div className="border-b border-slate-200 bg-white p-3 sm:p-4">
-          <form className="flex max-w-2xl flex-col gap-2 sm:flex-row" method="GET" action="/documents">
+      <div className="rounded-[20px] border border-slate-200/60 bg-white shadow-sm overflow-hidden">
+        <div className="border-b border-slate-100 bg-white p-4 sm:p-5">
+          <form className="flex max-w-2xl flex-col gap-3 sm:flex-row" method="GET" action="/documents">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-slate-400" />
               <input 
                 type="text" 
                 name="q"
                 defaultValue={q}
-                placeholder="Tìm công trình..." 
-                className="w-full pl-9 pr-4 py-2 text-sm text-slate-900 bg-white font-medium placeholder:text-slate-400 placeholder:font-normal border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Tìm công trình theo tên hoặc mã..." 
+                className="w-full h-11 pl-10 pr-4 py-2 text-[15px] text-slate-900 bg-slate-50/50 font-medium placeholder:text-slate-400 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
               />
             </div>
-            <button type="submit" className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-slate-300 bg-white hover:bg-slate-100 text-slate-900 h-10 px-4 py-2">
-              Lọc
-            </button>
-            {q && (
-              <Link href="/documents" className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-slate-100 hover:text-slate-900 text-slate-700 h-10 px-4 py-2">
-                Xóa
-              </Link>
-            )}
+            <div className="flex items-center gap-2">
+              <button type="submit" className="inline-flex items-center justify-center rounded-xl text-sm font-semibold transition-all bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-600/20 h-11 px-6">
+                Lọc dữ liệu
+              </button>
+              {q && (
+                <Link href="/documents" className="inline-flex items-center justify-center rounded-xl text-sm font-medium transition-colors bg-slate-100 hover:bg-slate-200 text-slate-700 h-11 px-4">
+                  Xóa
+                </Link>
+              )}
+            </div>
           </form>
         </div>
 
         {projects.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-slate-50">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 p-5 sm:p-6 bg-slate-50/50">
             {projects.map(project => (
-              <Link href={`/documents/${project.id}`} key={project.id} className="block group">
-                <div className="rounded-lg border border-slate-200 bg-white p-5 hover:border-blue-400 hover:shadow-md transition-all">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                      <FolderOpen className="h-5 w-5 text-blue-600" />
+              <Link href={`/documents/${project.id}`} key={project.id} className="block group outline-none">
+                <div className="rounded-[20px] border border-slate-200/80 bg-white p-5 hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 ease-out cursor-pointer h-full flex flex-col">
+                  <div className="flex items-start gap-3.5 mb-4">
+                    <div className="h-12 w-12 rounded-xl bg-blue-50/80 flex items-center justify-center group-hover:bg-blue-100/80 group-hover:scale-105 transition-all duration-300 shrink-0 ring-4 ring-white shadow-sm">
+                      <FolderOpen className="h-6 w-6 text-blue-600 drop-shadow-sm" />
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-slate-900 group-hover:text-blue-600 line-clamp-1">{project.name}</h3>
-                      <p className="text-xs text-slate-500 font-medium">{project.code}</p>
+                    <div className="flex-1 pt-1">
+                      <h3 className="font-bold text-slate-900 group-hover:text-blue-600 line-clamp-1 text-[15px] leading-tight mb-1 transition-colors">{project.name}</h3>
+                      <p className="text-[13px] text-slate-500 font-medium flex items-center gap-1.5">
+                        <Building2 className="h-3.5 w-3.5 text-slate-400" />
+                        {project.code}
+                      </p>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-2 text-xs text-slate-500 mt-2">
-                    <div className="flex items-center gap-4">
+                  <div className="flex flex-col gap-3 mt-auto pt-4 border-t border-slate-100/80">
+                    <div className="flex items-center gap-5">
                       <div className="flex items-center gap-1.5">
-                        <FolderOpen className="h-3.5 w-3.5 text-slate-400" />
-                        <span>{project._count.documentFolders} thư mục</span>
+                        <div className="h-6 w-6 rounded-md bg-amber-50 flex items-center justify-center">
+                          <FolderOpen className="h-3.5 w-3.5 text-amber-600" />
+                        </div>
+                        <span className="text-[13px] font-semibold text-slate-700">{project._count.documentFolders}</span>
+                        <span className="text-[13px] text-slate-500">thư mục</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <svg className="h-3.5 w-3.5 text-slate-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
-                        <span>{project.documents ? project.documents.length : 0} tài liệu</span>
+                        <div className="h-6 w-6 rounded-md bg-emerald-50 flex items-center justify-center">
+                          <svg className="h-3.5 w-3.5 text-emerald-600" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        </div>
+                        <span className="text-[13px] font-semibold text-slate-700">{project.documents ? project.documents.length : 0}</span>
+                        <span className="text-[13px] text-slate-500">tài liệu</span>
                       </div>
                     </div>
                     {project.updatedAt && (
-                      <div className="flex items-center gap-1.5 text-slate-400">
-                        <svg className="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        <span>Cập nhật: {new Date(project.updatedAt).toLocaleDateString('vi-VN')}</span>
+                      <div className="flex items-center gap-1.5 text-[12px] font-medium text-slate-400 mt-0.5">
+                        <svg className="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <span>Hoạt động gần nhất: {new Date(project.updatedAt).toLocaleDateString('vi-VN')}</span>
                       </div>
                     )}
                   </div>

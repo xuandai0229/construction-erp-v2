@@ -103,6 +103,7 @@ export default async function ProjectDocumentsPage({
       <Suspense fallback={null}>
         <DocumentWorkspace
           projectId={projectId} 
+          projectName={project.name}
           folders={folders} 
           documents={documents}
           sessionUser={{ id: session.id, role: session.role as any }}

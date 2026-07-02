@@ -165,7 +165,7 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
               {project.documentFolders.length > 0 ? (
                 <div className="space-y-1 flex flex-col h-full">
                   {project.documentFolders.slice(0, 5).map(folder => (
-                    <Link key={folder.id} href={`/documents/${project.id}?folderId=${folder.id}`} className="flex items-center gap-3 px-3 py-2 rounded-[12px] hover:bg-slate-50 transition-colors group">
+                    <Link key={folder.id} href={`/documents/${project.id}?folder=${folder.id}`} className="flex items-center gap-3 px-3 py-2 rounded-[12px] hover:bg-slate-50 transition-colors group">
                       <div className="w-8 h-8 rounded-lg bg-amber-50/50 flex items-center justify-center shrink-0 group-hover:bg-amber-100 transition-colors">
                         <FolderOpen className="w-4 h-4 text-amber-500 group-hover:text-amber-600 transition-colors" />
                       </div>

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { Folder, FolderOpen, FileIcon, Search, Plus, FileText, FileImage, FileCode, UploadCloud, FileType, Trash2, Eye, Download, Pencil } from "lucide-react";
+import { ChevronRight, Folder, FolderOpen, FileIcon, Search, Plus, FileText, FileImage, FileCode, UploadCloud, FileType, Trash2, Eye, Download, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import { createFolder, renameFolder, deleteFolder, deleteDocument } from "@/app/(dashboard)/documents/actions";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,15 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
   const initialFolder = folderFromUrl && folders.some((f: any) => f.id === folderFromUrl) ? folderFromUrl : null;
 
   const [selectedFolderId, setSelectedFolderIdRaw] = useState<string | null>(initialFolder);
+  const [expandedFolderIds, setExpandedFolderIds] = useState<Set<string>>(() => {
+    const expanded = new Set<string>();
+    let current = folders.find((folder: any) => folder.id === initialFolder);
+    while (current?.parentId) {
+      expanded.add(current.parentId);
+      current = folders.find((folder: any) => folder.id === current.parentId);
+    }
+    return expanded;
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState("ALL");
   const [isUploading, setIsUploading] = useState(false);
@@ -46,6 +55,23 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
   const uploadRef = useRef(false);
   const mutationRef = useRef(false);
 
+  useEffect(() => {
+    const nextFolderId = folderFromUrl && folders.some((folder: any) => folder.id === folderFromUrl) ? folderFromUrl : null;
+    setSelectedFolderIdRaw(nextFolderId);
+    setExpandedFolderIds((current) => {
+      const next = new Set(current);
+      let currentFolder = folders.find((folder: any) => folder.id === nextFolderId);
+      while (currentFolder?.parentId) {
+        next.add(currentFolder.parentId);
+        currentFolder = folders.find((folder: any) => folder.id === currentFolder.parentId);
+      }
+      if (nextFolderId && folders.some((folder: any) => folder.parentId === nextFolderId)) {
+        next.add(nextFolderId);
+      }
+      return next;
+    });
+  }, [folderFromUrl, folders]);
+
   // Sync selectedFolderId to URL query param
   const setSelectedFolderId = useCallback((id: string | null) => {
     setSelectedFolderIdRaw(id);
@@ -55,7 +81,9 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
     } else {
       params.delete("folder");
     }
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    params.delete("folderId");
+    const query = params.toString();
+    router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
   }, [router, pathname, searchParams]);
 
   const rootFolders = folders.filter((f: any) => !f.parentId);
@@ -211,15 +239,43 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
     const isSelected = selectedFolderId === folder.id;
     const hasChildren = folder._count.children > 0;
     const children = folders.filter((f: any) => f.parentId === folder.id);
+    const isExpanded = expandedFolderIds.has(folder.id);
 
     return (
       <div className="select-none">
         <div
           className={`flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-slate-100 rounded-md transition-colors ${isSelected ? "bg-blue-50 text-blue-700" : "text-slate-700"}`}
           style={{ paddingLeft: `${level * 16 + 12}px` }}
-          onClick={() => setSelectedFolderId(folder.id)}
+          onClick={() => {
+            setSelectedFolderId(folder.id);
+            if (hasChildren) {
+              setExpandedFolderIds((current) => {
+                const next = new Set(current);
+                next.add(folder.id);
+                return next;
+              });
+            }
+          }}
         >
           <div className="flex items-center gap-2 overflow-hidden">
+            {hasChildren && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setExpandedFolderIds((current) => {
+                    const next = new Set(current);
+                    if (next.has(folder.id)) next.delete(folder.id);
+                    else next.add(folder.id);
+                    return next;
+                  });
+                }}
+                className="rounded p-0.5 text-slate-400 hover:bg-white hover:text-slate-700"
+                aria-label={isExpanded ? "Đóng nhánh thư mục" : "Mở nhánh thư mục"}
+              >
+                <ChevronRight className={`h-3 w-3 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
+              </button>
+            )}
             {isSelected ? <FolderOpen className="h-4 w-4 shrink-0 text-blue-500" /> : <Folder className="h-4 w-4 shrink-0 text-slate-400" />}
             <span className="text-sm font-medium truncate" title={folder.name}>{formatFolderName(folder.name)}</span>
           </div>
@@ -242,7 +298,7 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
             </div>
           )}
         </div>
-        {isSelected && children.map((child: any) => (
+        {isExpanded && children.map((child: any) => (
           <FolderNode key={child.id} folder={child} level={level + 1} />
         ))}
       </div>
@@ -512,4 +568,3 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
       </div>
       );
 }
-
