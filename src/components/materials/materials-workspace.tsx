@@ -10,6 +10,7 @@ import { MaterialsTransactions } from "./materials-transactions";
 import { MaterialsCatalog } from "./materials-catalog";
 import { MaterialFormDialog } from "./material-form-dialog";
 import { TransactionFormDialog } from "./transaction-form-dialog";
+import { MaterialRequestList } from "@/components/material-request/material-request-list";
 
 import { createMaterialItem, updateMaterialItem, deleteMaterialItem, createMaterialTransaction } from "@/app/(dashboard)/materials/actions";
 import type { MaterialItemDto, MaterialMovementDto, ProjectStockDto } from "@/app/(dashboard)/materials/actions";
@@ -31,6 +32,8 @@ interface MaterialsWorkspaceProps {
     canExport: boolean;
     canViewTransactions: boolean;
   };
+  materialRequests?: any[];
+  wbsItems?: any[];
 }
 
 export function MaterialsWorkspace({
@@ -40,6 +43,8 @@ export function MaterialsWorkspace({
   initialTransactions,
   initialProjectId,
   permissions,
+  materialRequests = [],
+  wbsItems = [],
 }: MaterialsWorkspaceProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -61,6 +66,7 @@ export function MaterialsWorkspace({
     { id: "overview", label: "Tổng quan", icon: ClipboardList, visible: permissions.canView },
     { id: "catalog", label: "Danh mục vật tư", icon: Package, visible: permissions.canView },
     { id: "stock", label: "Tồn kho", icon: Factory, visible: permissions.canView },
+    { id: "requests", label: "Yêu cầu vật tư", icon: ClipboardList, visible: permissions.canView },
     { id: "transactions", label: "Nhập / Xuất", icon: ArrowDownRight, visible: permissions.canViewTransactions },
   ].filter(t => t.visible);
 
@@ -279,6 +285,15 @@ export function MaterialsWorkspace({
               hasMaterials={materialItems.length > 0}
               permissions={permissions}
             />
+          )}
+          {currentTab === "requests" && (
+            <div className="pt-2">
+              <MaterialRequestList 
+                projectId={projectId}
+                initialRequests={materialRequests}
+                wbsItems={wbsItems}
+              />
+            </div>
           )}
         </section>
       )}

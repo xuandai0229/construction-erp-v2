@@ -30,11 +30,26 @@ export function GlobalProjectContextSwitcher({
   const [search, setSearch] = useState('');
   const searchParamsKey = searchParams.toString();
 
-  const selectedProject = projects.find(p => p.id === selectedProjectId);
+  // Deduce project ID from route if applicable
+  let routeProjectId: string | null = null;
+  const projectMatch = pathname.match(/^\/projects\/([^\/]+)/);
+  const documentMatch = pathname.match(/^\/documents\/([^\/]+)/);
+
+  if (projectMatch && projectMatch[1] !== 'new') {
+    routeProjectId = projectMatch[1];
+  } else if (documentMatch && documentMatch[1] !== 'new') {
+    routeProjectId = documentMatch[1];
+  }
+
+  // Route project ID wins if it exists
+  const displayProjectId = routeProjectId || selectedProjectId;
+
+  const selectedProject = projects.find(p => p.id === displayProjectId);
+
   const filteredProjects = useMemo(
     () => projects
-      .filter(p => 
-        p.name.toLowerCase().includes(search.toLowerCase()) || 
+      .filter(p =>
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
         p.code.toLowerCase().includes(search.toLowerCase())
       )
       .sort((left, right) => {
@@ -75,19 +90,34 @@ export function GlobalProjectContextSwitcher({
   async function handleSelect(id: string | null) {
     // 1. Update cookie via server action
     await setProjectContextCookie(id);
-    
-    // 2. Sync URL
+
+    setIsOpen(false);
+    setSearch("");
+
+    // 2. Sync URL or navigate
+    if (routeProjectId) {
+      // We are on a project-specific route
+      if (!id || id === 'all') {
+        // Switching to 'all projects' from a specific project page
+        // Usually we go to dashboard or projects list
+        router.push(pathname.startsWith('/documents') ? '/documents' : '/projects');
+      } else {
+        // Switching to another project while on a project page
+        // Replace the old project ID in the path with the new one
+        const newPathname = pathname.replace(`/${routeProjectId}`, `/${id}`);
+        router.push(newPathname);
+      }
+      return;
+    }
+
+    // Default case: not on a project-specific route, just append query param
     const params = new URLSearchParams(searchParams.toString());
     if (id && id !== 'all') {
       params.set('projectId', id);
     } else {
       params.delete('projectId');
     }
-    
-    setIsOpen(false);
-    setSearch("");
-    
-    // We navigate to the current pathname with the new query param
+
     const query = params.toString();
     router.push(query ? `${pathname}?${query}` : pathname);
     router.refresh();
@@ -100,19 +130,19 @@ export function GlobalProjectContextSwitcher({
           onClick={() => setIsOpen(!isOpen)}
           className={cn(
             "flex items-center justify-between gap-2 rounded-xl border border-slate-200 px-3 py-1.5 text-sm transition-colors hover:bg-slate-50",
-            selectedProjectId 
-              ? "bg-blue-50/50 text-blue-900 border-blue-200" 
+            displayProjectId
+              ? "bg-blue-50/50 text-blue-900 border-blue-200"
               : "bg-white text-slate-700"
           )}
         >
           <div className="flex items-center gap-2 truncate max-w-[120px] sm:max-w-[200px]">
-            {selectedProjectId ? (
+            {displayProjectId ? (
               <Building2 className="h-4 w-4 shrink-0 text-blue-600" />
             ) : (
               <Globe className="h-4 w-4 shrink-0 text-slate-500" />
             )}
             <span className="truncate font-medium">
-              {selectedProject ? selectedProject.name : "Toàn hệ thống"}
+              {selectedProject ? selectedProject.name : displayProjectId ? "Đang xem công trình" : "Toàn hệ thống"}
             </span>
           </div>
           <ChevronsUpDown className="h-4 w-4 shrink-0 text-slate-400" />
@@ -135,22 +165,22 @@ export function GlobalProjectContextSwitcher({
                   />
                 </div>
               </div>
-              
+
               <div className="max-h-64 overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-slate-200">
                 <button
                   onClick={() => handleSelect('all')}
                   className={cn(
                     "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition-colors hover:bg-slate-100",
-                    !selectedProjectId && "bg-slate-100 font-bold"
+                    !displayProjectId && "bg-slate-100 font-bold"
                   )}
                 >
                   <div className="flex items-center gap-2 text-slate-700">
                     <Globe className="h-4 w-4 shrink-0" />
                     <span>Toàn hệ thống</span>
                   </div>
-                  {!selectedProjectId && <Check className="h-4 w-4 text-slate-600 shrink-0" />}
+                  {!displayProjectId && <Check className="h-4 w-4 text-slate-600 shrink-0" />}
                 </button>
-                
+
                 {filteredProjects.length === 0 ? (
                   <div className="py-8 text-center text-sm text-slate-500">Không tìm thấy công trình</div>
                 ) : (
@@ -161,11 +191,11 @@ export function GlobalProjectContextSwitcher({
                         <div key={statusKey}>
                           <div className="px-3 pb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{meta.groupLabel}</div>
                           {items.map(project => (
-                            <ProjectItemButton 
-                              key={project.id} 
-                              project={project} 
-                              isSelected={selectedProjectId === project.id} 
-                              onClick={() => handleSelect(project.id)} 
+                            <ProjectItemButton
+                              key={project.id}
+                              project={project}
+                              isSelected={displayProjectId === project.id}
+                              onClick={() => handleSelect(project.id)}
                             />
                           ))}
                         </div>
@@ -184,9 +214,9 @@ export function GlobalProjectContextSwitcher({
           <span className={cn(
             "h-1.5 w-1.5 rounded-full",
             overviewData.health === "ON_TRACK" ? "bg-emerald-500" :
-            overviewData.health === "AT_RISK" ? "bg-amber-500" :
-            overviewData.health === "DELAYED" ? "bg-rose-500" :
-            "bg-blue-500"
+              overviewData.health === "AT_RISK" ? "bg-amber-500" :
+                overviewData.health === "DELAYED" ? "bg-rose-500" :
+                  "bg-blue-500"
           )} />
           <span className="text-[11px] font-medium text-slate-600 truncate max-w-[100px]">
             {overviewData.warning}
@@ -203,22 +233,22 @@ export function GlobalProjectContextSwitcher({
   );
 }
 
-function ProjectItemButton({ 
-  project, 
-  isSelected, 
-  onClick, 
-}: { 
-  project: GlobalProjectItem; 
-  isSelected: boolean; 
+function ProjectItemButton({
+  project,
+  isSelected,
+  onClick,
+}: {
+  project: GlobalProjectItem;
+  isSelected: boolean;
   onClick: () => void;
 }) {
   const meta = getProjectStatusMeta(project.status);
   const StatusIcon =
     meta.key === "ACTIVE" ? Hammer :
-    meta.key === "PLANNING" ? ClipboardList :
-    meta.key === "ON_HOLD" ? PauseCircle :
-    meta.key === "COMPLETED" ? CheckCircle2 :
-    HelpCircle;
+      meta.key === "PLANNING" ? ClipboardList :
+        meta.key === "ON_HOLD" ? PauseCircle :
+          meta.key === "COMPLETED" ? CheckCircle2 :
+            HelpCircle;
 
   return (
     <button

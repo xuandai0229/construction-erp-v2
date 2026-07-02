@@ -148,13 +148,13 @@ export function SummaryDesktopView({
               <th className={`${thBase} text-left`}>Hạng mục / Công việc</th>
               <th className={`${thBase} text-center`}>Mũi thi công</th>
               <th className={`${thBase} text-center`}>ĐVT</th>
-              <th className={`${thBase} text-right`}>Tổng thiết kế</th>
+              <th className={`${thBase} text-right`}>Thiết kế</th>
               <th className={`${thBase} text-right`} title={`Tổng khối lượng đã duyệt trước ngày ${formattedFromDate}`}>Trước kỳ</th>
               <th className={`${thBase} text-right text-blue-700 bg-blue-50/60`}>Trong kỳ</th>
               <th className={`${thBase} text-right text-blue-700 bg-blue-50/60`}>Lũy kế</th>
               <th className={`${thBase} text-right`}>Tỷ lệ</th>
               {!showDayColumns && (
-                <th className={`${thBase} text-left`}>Ngày phát sinh</th>
+                <th className={`${thBase} text-left`}>Phát sinh</th>
               )}
               {showDayColumns && dynamicDates.map(d => (
                 <th key={formatWorkDate(d)} className={`${thBase} text-right`}>{formatWorkDateShort(d)}</th>

@@ -304,11 +304,11 @@ export function MaterialRequestForm({
           </button>
           <button 
             type="button"
-            onClick={() => handleSubmit("REQUESTED")}
+            onClick={() => handleSubmit("SUBMITTED")}
             disabled={loading}
             className="flex-1 sm:flex-none px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg text-sm hover:bg-blue-700 active:bg-blue-800 flex items-center justify-center gap-2 transition-all shadow-sm disabled:opacity-50"
           >
-            <Send className="w-4 h-4" /> Đề xuất
+            <Send className="w-4 h-4" /> Gửi phê duyệt
           </button>
         </div>
       </div>

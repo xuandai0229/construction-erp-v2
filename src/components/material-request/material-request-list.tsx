@@ -11,7 +11,10 @@ import { MaterialRequestDetail } from "./material-request-detail";
 const statusConfig = {
   DRAFT: { label: "Nháp", variant: "neutral" as const, icon: FileText },
   REQUESTED: { label: "Đã đề xuất", variant: "info" as const, icon: Clock },
-  PROCESSING: { label: "Đang xử lý", variant: "warning" as const, icon: AlertCircle },
+  SUBMITTED: { label: "Chờ phê duyệt", variant: "warning" as const, icon: Clock },
+  APPROVED: { label: "Đã duyệt", variant: "success" as const, icon: CheckCircle2 },
+  REJECTED: { label: "Từ chối", variant: "danger" as const, icon: XCircle },
+  PROCESSING: { label: "Đang xử lý", variant: "info" as const, icon: AlertCircle },
   ISSUED: { label: "Đã cấp", variant: "info" as const, icon: Package },
   RECEIVED: { label: "Đã nhận", variant: "success" as const, icon: CheckCircle2 },
   CANCELLED: { label: "Hủy", variant: "danger" as const, icon: XCircle },
@@ -57,7 +60,7 @@ export function MaterialRequestList({
 
   // KPI Calculation
   const totalRequests = requests.length;
-  const processingRequests = requests.filter(r => ["REQUESTED", "PROCESSING", "ISSUED"].includes(r.status)).length;
+  const processingRequests = requests.filter(r => ["REQUESTED", "SUBMITTED", "APPROVED", "PROCESSING", "ISSUED"].includes(r.status)).length;
   const receivedRequests = requests.filter(r => r.status === "RECEIVED").length;
   const missingItemsRequests = requests.filter(r => 
     r.items.some((i: any) => Number(i.requestedQuantity) > Number(i.receivedQuantity)) && r.status !== "CANCELLED"
@@ -165,7 +168,7 @@ export function MaterialRequestList({
                 </tr>
               ) : filteredRequests.map(req => {
                 const StatusIcon = statusConfig[req.status as keyof typeof statusConfig]?.icon || FileText;
-                const isEditable = ["DRAFT", "REQUESTED", "PROCESSING"].includes(req.status);
+                const isEditable = ["DRAFT"].includes(req.status);
                 
                 return (
                   <tr key={req.id} className="hover:bg-slate-50 transition-colors">

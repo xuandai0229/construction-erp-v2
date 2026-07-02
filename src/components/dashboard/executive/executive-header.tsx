@@ -9,32 +9,32 @@ export function ExecutiveHeader({ data }: { data: DashboardData }) {
   const pendingApprovals = data.pendingApprovals.length;
 
   return (
-    <section className="relative overflow-hidden rounded-[24px] border border-slate-200/70 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.07)] min-h-[170px] lg:min-h-[190px] flex flex-col justify-center">
+    <section className="relative overflow-hidden rounded-[24px] border border-slate-200/70 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.07)] min-h-[160px] md:min-h-[210px] xl:min-h-[240px] flex flex-col justify-center">
       {/* Background Image Layer */}
-      <div 
-        className="absolute inset-0 z-0 bg-no-repeat bg-cover bg-center" 
-        style={{ backgroundImage: "url('/images/dashboard/construction-hero-3d-premium.png')" }}
+      <div
+        className="absolute inset-0 z-0 bg-no-repeat bg-cover bg-[center_right]"
+        style={{ backgroundImage: "url('/images/dashboard/dashboard-hero-2400x420-v4.png')" }}
       />
-      
+
       {/* Gradient Readability Layer */}
-      <div 
-        className="absolute inset-0 z-10 pointer-events-none" 
-        style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.95) 28%, rgba(255,255,255,0.78) 48%, rgba(255,255,255,0.38) 68%, rgba(255,255,255,0.10) 100%)' }} 
+      <div
+        className="absolute inset-0 z-10 pointer-events-none"
+        style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.92) 30%, rgba(255,255,255,0.58) 52%, rgba(255,255,255,0.18) 72%, rgba(255,255,255,0.02) 100%)' }}
       />
-      
+
       {/* Premium Depth Layers */}
-      <div 
-        className="absolute inset-0 z-[11] pointer-events-none" 
-        style={{ background: 'radial-gradient(circle at 75% 45%, rgba(59,130,246,0.16), transparent 42%)' }} 
+      <div
+        className="absolute inset-0 z-[11] pointer-events-none"
+        style={{ background: 'radial-gradient(circle at 75% 45%, rgba(59,130,246,0.16), transparent 42%)' }}
       />
-      <div 
-        className="absolute inset-0 z-[12] pointer-events-none" 
-        style={{ 
+      <div
+        className="absolute inset-0 z-[12] pointer-events-none"
+        style={{
           backgroundImage: 'linear-gradient(rgba(148,163,184,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,0.08) 1px, transparent 1px)',
           backgroundSize: '32px 32px'
-        }} 
+        }}
       />
-      
+
       <div className="relative z-20 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between px-6 py-6 lg:px-9 lg:py-8 max-w-full sm:max-w-[58%]">
         <div className="flex flex-col gap-4">
           <div className="space-y-1.5">
@@ -91,7 +91,7 @@ export function ExecutiveHeader({ data }: { data: DashboardData }) {
           </div>
         </div>
       </div>
-      
+
       {/* Absolute LIVE badge relative to the entire section */}
       <div className="absolute right-7 top-7 flex shrink-0 items-center gap-2 rounded-full border border-emerald-100 bg-white/80 px-3 py-1.5 shadow-[0_8px_24px_rgba(16,185,129,0.12)] backdrop-blur-md z-30">
         <span className="relative flex h-2 w-2">

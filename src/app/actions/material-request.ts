@@ -14,36 +14,57 @@ function validateQty(val: any) {
 
 export async function createMaterialRequest(data: any) {
   const { projectId, items, ...rest } = data;
-  
+
   // Guard: user must have access to this project
   const session = await requireProjectAccess(projectId);
 
   const request = await createWithUniqueMaterialRequestNo((requestNo) =>
     prisma.materialRequest.create({
-        data: {
-          ...rest,
-          projectId,
-          requestNo,
-          requestedById: session.id,
-          items: {
-            create: items.map((item: any) => ({
-              wbsItemId: item.wbsItemId,
-              fieldProgressItemId: item.fieldProgressItemId,
-              workItemNameSnapshot: item.workItemNameSnapshot,
-              materialCode: item.materialCode,
-              materialName: item.materialName,
-              unit: item.unit,
-              requestedQuantity: validateQty(item.requestedQuantity),
-              issuedQuantity: validateQty(item.issuedQuantity),
-              receivedQuantity: validateQty(item.receivedQuantity),
-              remainingQuantity: Math.max(0, validateQty(item.requestedQuantity) - validateQty(item.receivedQuantity)),
-              note: item.note,
-            }))
-          }
+      data: {
+        ...rest,
+        projectId,
+        requestNo,
+        requestedById: session.id,
+        items: {
+          create: items.map((item: any) => ({
+            wbsItemId: item.wbsItemId,
+            fieldProgressItemId: item.fieldProgressItemId,
+            workItemNameSnapshot: item.workItemNameSnapshot,
+            materialCode: item.materialCode,
+            materialName: item.materialName,
+            unit: item.unit,
+            requestedQuantity: validateQty(item.requestedQuantity),
+            issuedQuantity: validateQty(item.issuedQuantity),
+            receivedQuantity: validateQty(item.receivedQuantity),
+            remainingQuantity: Math.max(0, validateQty(item.requestedQuantity) - validateQty(item.receivedQuantity)),
+            note: item.note,
+          }))
         }
-      })
+      }
+    })
   );
 
+  // If status is SUBMITTED, create an ApprovalRequest
+  if (rest.status === "SUBMITTED") {
+    const totalItems = items.length;
+    await prisma.approvalRequest.create({
+      data: {
+        code: `APP-${request.requestNo}`,
+        projectId,
+        title: `Yêu cầu vật tư: ${request.requestNo}`,
+        description: rest.note || `Yêu cầu ${totalItems} loại vật tư`,
+        type: "MATERIAL",
+        status: "PENDING",
+        priority: rest.priority === "URGENT" || rest.priority === "HIGH" ? "HIGH" : "NORMAL",
+        dueDate: rest.neededDate ? new Date(rest.neededDate) : null,
+        requesterId: session.id,
+        sourceType: "MATERIAL_REQUEST",
+        sourceId: request.id,
+      }
+    });
+  }
+
+  revalidatePath('/materials');
   revalidatePath(`/projects/${projectId}/material-requests`);
   return { success: true, data: request };
 }
@@ -54,10 +75,10 @@ export async function updateMaterialRequest(id: string, data: any) {
   // Verify exists and get projectId for access check
   const existing = await prisma.materialRequest.findUnique({ where: { id } });
   if (!existing) throw new Error("Not found");
-  
+
   // Guard: user must have access to this project
-  await requireProjectAccess(existing.projectId);
-  
+  const session = await requireProjectAccess(existing.projectId);
+
   if (existing.status === "RECEIVED" || existing.status === "CANCELLED") {
     throw new Error("Cannot edit request in this status");
   }
@@ -88,6 +109,44 @@ export async function updateMaterialRequest(id: string, data: any) {
     })
   ]);
 
+  if (rest.status === "SUBMITTED") {
+    // Check if an approval request already exists
+    const existingApproval = await prisma.approvalRequest.findFirst({
+      where: { sourceType: "MATERIAL_REQUEST", sourceId: id }
+    });
+
+    if (!existingApproval) {
+      const totalItems = items.length;
+      await prisma.approvalRequest.create({
+        data: {
+          code: `APP-${existing.requestNo}`,
+          projectId: existing.projectId,
+          title: `Yêu cầu vật tư: ${existing.requestNo}`,
+          description: rest.note || `Yêu cầu ${totalItems} loại vật tư`,
+          type: "MATERIAL",
+          status: "PENDING",
+          priority: rest.priority === "URGENT" || rest.priority === "HIGH" ? "HIGH" : "NORMAL",
+          dueDate: rest.neededDate ? new Date(rest.neededDate) : null,
+          requesterId: session.id,
+          sourceType: "MATERIAL_REQUEST",
+          sourceId: id,
+        }
+      });
+    } else if (existingApproval.status === "REJECTED" || existingApproval.status === "CANCELLED") {
+      // If previous approval was rejected or cancelled, recreate or update it
+      await prisma.approvalRequest.update({
+        where: { id: existingApproval.id },
+        data: {
+          status: "PENDING",
+          description: rest.note || existingApproval.description,
+          priority: rest.priority === "URGENT" || rest.priority === "HIGH" ? "HIGH" : "NORMAL",
+          dueDate: rest.neededDate ? new Date(rest.neededDate) : null,
+        }
+      });
+    }
+  }
+
+  revalidatePath('/materials');
   revalidatePath(`/projects/${existing.projectId}/material-requests`);
   return { success: true };
 }
@@ -97,7 +156,7 @@ export async function updateMaterialRequestStatus(id: string, status: any, cance
   if (!validStatuses.includes(status)) throw new Error("Trạng thái không hợp lệ");
   const existing = await prisma.materialRequest.findUnique({ where: { id } });
   if (!existing) throw new Error("Not found");
-  
+
   // Guard: user must have access to this project
   await requireProjectAccess(existing.projectId);
 
@@ -113,7 +172,7 @@ export async function updateMaterialRequestStatus(id: string, status: any, cance
 export async function updateMaterialRequestItems(id: string, itemsData: any[]) {
   const existing = await prisma.materialRequest.findUnique({ where: { id } });
   if (!existing) throw new Error("Not found");
-  
+
   // Guard: user must have access to this project
   await requireProjectAccess(existing.projectId);
 

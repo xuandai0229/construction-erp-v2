@@ -220,18 +220,18 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
 
       {/* Table */}
       <div className="overflow-x-auto hidden md:block">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm min-w-[1200px]">
           <thead>
             <tr className="bg-slate-50 border-b-2 border-slate-200 sticky top-0 z-30 shadow-sm">
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.stt} sticky left-0 z-20 text-center`}>STT</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.content} sticky left-[56px] z-20 text-left`}>Nội dung công việc / Hạng mục</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.content} sticky left-[56px] z-20 text-left`}>Hạng mục / Công việc</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.crew} text-center`}>Mũi thi công</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.unit} text-center`}>Đơn vị</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.designQty} text-right`}>Khối lượng thiết kế</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.designQty} text-right`}>KL thiết kế</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.cumulative} text-right text-blue-700 bg-blue-50/60`}>
-                Lũy kế duyệt
+                KL đã duyệt
               </th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.percent} text-right text-blue-700 bg-blue-50/60`}>Tỷ lệ hoàn thành</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.percent} text-right text-blue-700 bg-blue-50/60`}>Hoàn thành</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.notes} text-left`}>Ghi chú</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.action} text-center`}>Thao tác</th>
             </tr>

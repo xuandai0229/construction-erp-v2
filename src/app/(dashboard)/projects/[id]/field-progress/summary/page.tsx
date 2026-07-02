@@ -134,50 +134,48 @@ export default async function FieldProgressSummaryPage({
         <ProjectModuleTabs projectId={id} />
       </div>
 
-      <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
-        <form className="flex flex-col md:flex-row md:flex-wrap items-stretch md:items-end gap-2.5" method="GET">
-          <div className="grid grid-cols-2 gap-2.5 w-full md:w-auto md:flex-1 md:flex md:gap-3">
-            <div className="col-span-1 md:flex-1 min-w-[140px]">
+      <div className="bg-white border border-slate-200 rounded-[14px] p-2.5 shadow-sm">
+        <form className="flex flex-col md:flex-row md:flex-wrap items-end gap-3" method="GET">
+          <div className="flex flex-1 flex-wrap sm:flex-nowrap gap-3">
+            <div className="flex-1 min-w-[120px]">
               <label htmlFor="filter-from" className="block text-[11px] font-bold text-slate-700 mb-1">Từ ngày</label>
               <input 
                 id="filter-from"
                 type="date" 
                 name="from" 
                 defaultValue={fromDate} 
-                className="w-full h-9 md:h-10 px-2.5 border border-slate-300 bg-white text-slate-900 rounded-lg text-[13px] font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none" 
+                className="w-full h-9 px-2 border border-slate-300 bg-white text-slate-900 rounded-[8px] text-[13px] font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none" 
               />
             </div>
-            <div className="col-span-1 md:flex-1 min-w-[140px]">
+            <div className="flex-1 min-w-[120px]">
               <label htmlFor="filter-to" className="block text-[11px] font-bold text-slate-700 mb-1">Đến ngày</label>
               <input 
                 id="filter-to"
                 type="date" 
                 name="to" 
                 defaultValue={toDate} 
-                className="w-full h-9 md:h-10 px-2.5 border border-slate-300 bg-white text-slate-900 rounded-lg text-[13px] font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none" 
+                className="w-full h-9 px-2 border border-slate-300 bg-white text-slate-900 rounded-[8px] text-[13px] font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none" 
               />
             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2.5 w-full md:w-auto md:flex-1 md:flex md:gap-3">
-            <div className="col-span-1 md:flex-1 min-w-[150px]">
+            <div className="flex-1 min-w-[120px]">
               <label htmlFor="filter-mode" className="block text-[11px] font-bold text-slate-700 mb-1">Hiển thị</label>
               <select 
                 id="filter-mode"
                 name="mode" 
                 defaultValue={mode} 
-                className="w-full h-9 md:h-10 px-2 border border-slate-300 bg-white text-slate-900 rounded-lg text-[13px] font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
+                className="w-full h-9 px-2 border border-slate-300 bg-white text-slate-900 rounded-[8px] text-[13px] font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
               >
                 <option value="HAS_DATA_ONLY">Chỉ có số liệu</option>
                 <option value="ALL_DAYS">Tất cả</option>
               </select>
             </div>
-            <div className="col-span-1 md:flex-1 min-w-[150px]">
+            <div className="flex-1 min-w-[120px]">
               <label htmlFor="filter-status" className="block text-[11px] font-bold text-slate-700 mb-1">Phạm vi</label>
               <select 
                 id="filter-status"
                 name="status" 
                 defaultValue={statusFilter} 
-                className="w-full h-9 md:h-10 px-2 border border-slate-300 bg-white text-slate-900 rounded-lg text-[13px] font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
+                className="w-full h-9 px-2 border border-slate-300 bg-white text-slate-900 rounded-[8px] text-[13px] font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
               >
                 <option value="APPROVED_ONLY">Chỉ số duyệt</option>
                 <option value="ALL">Tất cả</option>
@@ -187,9 +185,9 @@ export default async function FieldProgressSummaryPage({
           <button 
             type="submit" 
             aria-label="Lọc dữ liệu tổng hợp"
-            className="h-9 md:h-10 mt-0.5 md:mt-0 w-full md:w-auto px-5 bg-blue-600 text-white rounded-lg text-[13px] md:text-sm font-bold hover:bg-blue-700 flex items-center justify-center gap-2 shadow-sm transition-all whitespace-nowrap"
+            className="h-9 w-full md:w-auto px-5 bg-blue-600 text-white rounded-[8px] text-[13px] font-bold hover:bg-blue-700 flex items-center justify-center gap-1.5 shadow-sm transition-all whitespace-nowrap shrink-0"
           >
-            <Filter className="w-4 h-4" /> Lọc
+            <Filter className="w-3.5 h-3.5" /> Lọc
           </button>
         </form>
       </div>

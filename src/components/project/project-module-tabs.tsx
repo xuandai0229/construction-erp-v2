@@ -30,19 +30,12 @@ export function ProjectModuleTabs({ projectId }: { projectId: string }) {
       labelDesktop: "Tổng hợp khối lượng",
       labelMobile: "Tổng hợp",
     },
-    {
-      href: `/projects/${projectId}/material-requests`,
-      exact: false,
-      icon: Package,
-      labelDesktop: "Đề xuất vật tư",
-      labelMobile: "Vật tư",
-    },
   ];
 
   return (
     <div className="w-full">
-      {/* Mobile view (< 640px): 2x2 grid */}
-      <div className="grid grid-cols-2 gap-2 sm:hidden w-full">
+      {/* Mobile view (< 640px): 3 columns grid */}
+      <div className="grid grid-cols-3 gap-2 sm:hidden w-full">
         {tabs.map((tab) => {
           const isActive = tab.exact 
             ? pathname === tab.href 

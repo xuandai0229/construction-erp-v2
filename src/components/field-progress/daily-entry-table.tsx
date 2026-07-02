@@ -925,18 +925,18 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
       </div>
 
       <div className="hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:block overflow-x-auto overflow-y-hidden max-w-full">
-        <table className="w-full text-left text-sm border-collapse">
+        <table className="w-full text-left text-sm border-collapse min-w-[1100px]">
           <thead className="border-b-2 border-slate-200 bg-slate-50">
             <tr>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.stt} bg-slate-100 border-r-slate-200`}>STT</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.content} bg-slate-100 border-r-slate-200`}>Công việc</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.crew}`}>Mũi</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.unit}`}>Đơn vị</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.designQty}`}>Tổng khối lượng</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.cumulative}`}>Đã thực hiện</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.dayQty} bg-blue-100 text-blue-800`}>Khối lượng ngày này</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.designQty}`}>Tổng KL</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.cumulative}`}>Đã TH</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.dayQty} bg-blue-100 text-blue-800`}>Nhập hôm nay</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.remaining}`}>Sau nhập</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.percent}`}>Tỷ lệ</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.percent}`}>%</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.notes}`}>Ghi chú nhanh</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.action} bg-slate-100 border-l border-slate-200`}>Chi tiết</th>
             </tr>

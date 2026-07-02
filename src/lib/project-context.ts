@@ -59,10 +59,10 @@ export async function getGlobalProjectContext(
   }
 
   // 3. Fetch light list of all accessible projects
-  const allAccessibleProjectWhere = accessibleProjectIds === null 
-    ? { deletedAt: null } 
+  const allAccessibleProjectWhere = accessibleProjectIds === null
+    ? { deletedAt: null }
     : { deletedAt: null, id: { in: accessibleProjectIds } };
-    
+
   const accessibleProjects = await prisma.project.findMany({
     where: allAccessibleProjectWhere,
     select: { id: true, code: true, name: true, status: true },
@@ -81,11 +81,11 @@ export async function getGlobalProjectContext(
         fieldProgressTemplates: { where: { deletedAt: null }, select: { id: true }, take: 1 },
         _count: {
           select: {
-            fieldProgressEntries: { 
-              where: { 
-                deletedAt: null, 
-                entryDate: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } 
-              } 
+            fieldProgressEntries: {
+              where: {
+                deletedAt: null,
+                entryDate: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
+              }
             },
           },
         },
@@ -96,10 +96,10 @@ export async function getGlobalProjectContext(
       // Simplified health check for the global topbar
       const noWbs = project.fieldProgressTemplates.length === 0;
       const noRecentEntry = project._count.fieldProgressEntries === 0;
-      const end = project.endDate ? new Date(project.endDate).setUTCHours(0,0,0,0) : null;
-      const today = new Date().setUTCHours(0,0,0,0);
+      const end = project.endDate ? new Date(project.endDate).setUTCHours(0, 0, 0, 0) : null;
+      const today = new Date().setUTCHours(0, 0, 0, 0);
       const daysRemaining = end ? Math.ceil((end - today) / 86400000) : null;
-      
+
       let health: "ON_TRACK" | "AT_RISK" | "DELAYED" | "COMPLETED" | "NO_DATA" = "ON_TRACK";
       let warning = getProjectStatusMeta(project.status).label;
 
@@ -132,11 +132,11 @@ export async function getGlobalProjectContext(
 
   // 5. Compute global notifications (Phase A - computed from data)
   const notifications: GlobalProjectContext['notifications'] = [];
-  
+
   // Pending Approvals
   const pendingApprovals = await prisma.approvalRequest.findMany({
-    where: { 
-      deletedAt: null, 
+    where: {
+      deletedAt: null,
       status: "PENDING",
       ...(selectedProjectId ? { projectId: selectedProjectId } : (accessibleProjectIds === null ? {} : { projectId: { in: accessibleProjectIds } }))
     },
@@ -189,14 +189,14 @@ export async function getGlobalProjectContext(
 
   const issueReports = rawIssueReports.filter(r => {
     if (r.status === "SUBMITTED" || r.status === "REVISION_REQUESTED") return true;
-    
+
     if (!r.issues) return false;
     const cleanIssues = r.issues.trim().toLowerCase();
-    
+
     const ignoredValues = ["", "không có", "khong co", "không có vấn đề", "không có vấn đề gì", "none", "n/a", "na"];
     if (ignoredValues.includes(cleanIssues)) return false;
     if (cleanIssues.startsWith("không có") || cleanIssues.startsWith("khong co")) return false;
-    
+
     return true;
   }).slice(0, 3); // Apply limit after filtering
 
@@ -230,10 +230,10 @@ export async function getGlobalProjectContext(
   // Deduplicate and sort by date
   const uniqueNotificationsMap = new Map<string, typeof notifications[0]>();
   for (const notification of notifications) {
-    const dedupeKey = notification.targetType && notification.targetId 
-      ? `${notification.targetType}_${notification.targetId}` 
+    const dedupeKey = notification.targetType && notification.targetId
+      ? `${notification.targetType}_${notification.targetId}`
       : notification.id;
-      
+
     if (!uniqueNotificationsMap.has(dedupeKey)) {
       uniqueNotificationsMap.set(dedupeKey, notification);
     } else {
@@ -243,24 +243,24 @@ export async function getGlobalProjectContext(
         uniqueNotificationsMap.set(dedupeKey, notification);
       } else if (notification.severity === existing.severity) {
         if (notification.createdAt.getTime() > existing.createdAt.getTime()) {
-           uniqueNotificationsMap.set(dedupeKey, notification);
+          uniqueNotificationsMap.set(dedupeKey, notification);
         }
       }
     }
   }
-  
+
   const uniqueNotifications = Array.from(uniqueNotificationsMap.values());
   uniqueNotifications.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   const visibleNotifications = uniqueNotifications.slice(0, 5); // Limit to 5 max in search popup
   const readRows = visibleNotifications.length > 0
     ? await prisma.notification.findMany({
-        where: {
-          userId: session.id,
-          id: { in: visibleNotifications.map((notification) => `${session.id}:${notification.id}`) },
-          isRead: true,
-        },
-        select: { id: true },
-      })
+      where: {
+        userId: session.id,
+        id: { in: visibleNotifications.map((notification) => `${session.id}:${notification.id}`) },
+        isRead: true,
+      },
+      select: { id: true },
+    })
     : [];
   const readIds = new Set(readRows.map((notification) => notification.id.replace(`${session.id}:`, "")));
 

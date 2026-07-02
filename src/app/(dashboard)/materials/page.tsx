@@ -34,12 +34,35 @@ export default async function MaterialsPage({
 
   let permissions: MaterialPermissionSet | undefined;
 
+  let materialRequests: any[] = [];
+  let wbsItems: any[] = [];
+
   if (projectIdToLoad) {
     try {
       permissions = await requireProjectPermissions(session, projectIdToLoad);
       materialItems = await getMaterialItems(projectIdToLoad);
       initialStocks = await getProjectStocks(projectIdToLoad);
       initialTransactions = await getRecentTransactions(projectIdToLoad);
+      
+      const db = (await import("@/lib/prisma")).default;
+      materialRequests = await db.materialRequest.findMany({
+        where: { projectId: projectIdToLoad, deletedAt: null },
+        include: {
+          items: true,
+          requestedBy: { select: { name: true } }
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      const template = await db.fieldProgressTemplate.findFirst({
+        where: { projectId: projectIdToLoad, deletedAt: null },
+      });
+      if (template) {
+        wbsItems = await db.fieldProgressItem.findMany({
+          where: { templateId: template.id, deletedAt: null },
+          include: { parent: true }
+        });
+      }
     } catch {
       // If access is denied, ignore loading data for this project
     }
@@ -67,6 +90,8 @@ export default async function MaterialsPage({
       initialTransactions={initialTransactions}
       initialProjectId={projectIdToLoad}
       permissions={permissions}
+      materialRequests={JSON.parse(JSON.stringify(materialRequests))}
+      wbsItems={JSON.parse(JSON.stringify(wbsItems))}
     />
   );
 }
