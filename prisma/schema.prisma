@@ -1010,7 +1010,6 @@ model SystemSetting {
   // Documents
   enforceNamingConvention Boolean @default(true)
   autoVersioning          Boolean @default(true)
-  maxUploadSizeMb         Int     @default(80)
   allowedExtensions       String  @default("pdf, docx, xlsx, dwg, jpg, png, heic")
   documentRetentionYears  Int     @default(10)
 

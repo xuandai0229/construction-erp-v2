@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { writeAuditLog } from "@/lib/audit";
+import { storageProvider } from "@/lib/storage";
 import { subDays } from "date-fns";
-import fs from "fs";
-import path from "path";
 
 export async function GET(request: Request) {
   // Simple auth check via header or query params for cron tasks
@@ -35,17 +34,12 @@ export async function GET(request: Request) {
         where: { id: { in: expiredDocIds } },
       });
       
-      // Cleanup files from storage could be done here if local, 
-      // but if we are using an object storage, we'd delete them there.
       for (const doc of expiredDocuments) {
         if (doc.storagePath) {
-          const absolutePath = path.join(process.cwd(), doc.storagePath);
           try {
-             if (fs.existsSync(absolutePath)) {
-                fs.unlinkSync(absolutePath);
-             }
+            await storageProvider.deleteFile(doc.storagePath);
           } catch (e) {
-             console.error("Failed to delete file from disk: ", absolutePath);
+            console.error("Failed to delete file from storage:", doc.storagePath, e);
           }
         }
       }

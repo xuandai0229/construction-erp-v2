@@ -3,18 +3,34 @@ export const revalidate = 0;
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { DocumentWorkspace } from "@/components/documents/document-workspace";
-import { canManageProjects, requireProjectAccessOrRedirect } from "@/lib/rbac";
+import { requireProjectAccessOrRedirect } from "@/lib/rbac";
 import Link from "next/link";
 import { ArrowLeft, FolderOpen } from "lucide-react";
 import { getEnforcedSystemSettings } from "@/lib/settings/system-settings";
 import { Suspense } from "react";
+import type { Prisma } from "@prisma/client";
+
+const FOLDER_PAGE_SIZE = 100;
+const FILE_PAGE_SIZE = 200;
+type RawDocumentWithUploader = Prisma.DocumentGetPayload<{
+  include: { uploadedBy: { select: { name: true } } };
+}>;
 
 export default async function ProjectDocumentsPage({
-  params
+  params,
+  searchParams,
 }: {
-  params: Promise<{ projectId: string }>
+  params: Promise<{ projectId: string }>;
+  searchParams: Promise<{ folder?: string }>;
 }) {
   const { projectId } = await params;
+  const urlParams = await searchParams;
+  const isTrashView = urlParams.trash === "true";
+  const rawFolderId = isTrashView ? urlParams.trashFolder : urlParams.folder;
+  const selectedFolderId =
+    typeof rawFolderId === "string" && rawFolderId.trim()
+      ? rawFolderId
+      : null;
   const session = await requireProjectAccessOrRedirect(projectId);
 
   const project = await prisma.project.findUnique({
@@ -23,41 +39,109 @@ export default async function ProjectDocumentsPage({
 
   if (!project) notFound();
 
-  const rawFolders = await prisma.documentFolder.findMany({
-    where: { projectId, deletedAt: null },
-    orderBy: { name: "asc" },
-    include: {
-      _count: {
-        select: { documents: { where: { deletedAt: null } }, children: { where: { deletedAt: null } } }
+  const ancestorFolderIds: string[] = [];
+  let cursorFolderId = selectedFolderId;
+  while (cursorFolderId) {
+    const folder = await prisma.documentFolder.findFirst({
+      where: { id: cursorFolderId, projectId, deletedAt: isTrashView ? { not: null } : null },
+      select: { id: true, parentId: true },
+    });
+    if (!folder) break;
+    ancestorFolderIds.push(folder.id);
+    cursorFolderId = folder.parentId;
+  }
+  const effectiveSelectedFolderId =
+    selectedFolderId && ancestorFolderIds.includes(selectedFolderId)
+      ? selectedFolderId
+      : null;
+
+  // Load first page of folders + total count for "has more"
+  const folderWhere: Prisma.DocumentFolderWhereInput = {
+    projectId,
+    deletedAt: null,
+    OR: [
+      { parentId: null },
+      ...(ancestorFolderIds.length > 0
+        ? [{ id: { in: ancestorFolderIds } }]
+        : []),
+      ...(effectiveSelectedFolderId
+        ? [{ parentId: effectiveSelectedFolderId }]
+        : []),
+    ],
+  };
+  const [rawFolders, totalFolderCount] = await Promise.all([
+    prisma.documentFolder.findMany({
+      where: folderWhere,
+      orderBy: { name: "asc" },
+      take: FOLDER_PAGE_SIZE,
+      include: {
+        _count: {
+          select: { documents: { where: { deletedAt: null } }, children: { where: { deletedAt: null } } }
+        }
       }
-    }
-  });
+    }),
+    prisma.documentFolder.count({ where: folderWhere }),
+  ]);
 
-  const rawDeletedFolders = await prisma.documentFolder.findMany({
-    where: { projectId, deletedAt: { not: null } },
-    orderBy: { deletedAt: "desc" },
-    include: {
-      _count: {
-        select: { documents: true, children: true }
+  // Deleted folders: first page + count
+  const deletedFolderWhere: Prisma.DocumentFolderWhereInput = {
+    projectId,
+    deletedAt: { not: null },
+    OR: [
+      { parentId: null },
+      ...(ancestorFolderIds.length > 0
+        ? [{ id: { in: ancestorFolderIds } }]
+        : []),
+      ...(effectiveSelectedFolderId
+        ? [{ parentId: effectiveSelectedFolderId }]
+        : []),
+    ],
+  };
+  const [rawDeletedFolders, totalDeletedFolderCount] = await Promise.all([
+    prisma.documentFolder.findMany({
+      where: deletedFolderWhere,
+      orderBy: { deletedAt: "desc" },
+      take: FOLDER_PAGE_SIZE,
+      include: {
+        _count: {
+          select: { documents: true, children: true }
+        }
       }
-    }
-  });
+    }),
+    prisma.documentFolder.count({ where: deletedFolderWhere }),
+  ]);
 
-  const rawDocuments = await prisma.document.findMany({
-    where: { projectId, deletedAt: null },
-    orderBy: { createdAt: "desc" },
-    include: {
-      uploadedBy: { select: { name: true } }
-    }
-  });
+  // Load first page of documents + total count
+  const docWhere: Prisma.DocumentWhereInput | null = effectiveSelectedFolderId
+    ? { projectId, folderId: effectiveSelectedFolderId, deletedAt: null }
+    : null;
+  const [rawDocuments, totalDocCount] = docWhere
+    ? await Promise.all([
+        prisma.document.findMany({
+          where: docWhere,
+          orderBy: { createdAt: "desc" },
+          take: FILE_PAGE_SIZE,
+          include: { uploadedBy: { select: { name: true } } },
+        }) as Promise<RawDocumentWithUploader[]>,
+        prisma.document.count({ where: docWhere }),
+      ])
+    : [[] as RawDocumentWithUploader[], 0];
 
-  const rawDeletedDocuments = await prisma.document.findMany({
-    where: { projectId, deletedAt: { not: null } },
-    orderBy: { deletedAt: "desc" },
-    include: {
-      uploadedBy: { select: { name: true } }
-    }
-  });
+  // Deleted documents: first page + count
+  const deletedDocWhere: Prisma.DocumentWhereInput | null = effectiveSelectedFolderId
+    ? { projectId, folderId: effectiveSelectedFolderId, deletedAt: { not: null } }
+    : null;
+  const [rawDeletedDocuments, totalDeletedDocCount] = deletedDocWhere
+    ? await Promise.all([
+        prisma.document.findMany({
+          where: deletedDocWhere,
+          orderBy: { deletedAt: "desc" },
+          take: FILE_PAGE_SIZE,
+          include: { uploadedBy: { select: { name: true } } },
+        }) as Promise<RawDocumentWithUploader[]>,
+        prisma.document.count({ where: deletedDocWhere }),
+      ])
+    : [[] as RawDocumentWithUploader[], 0];
 
   const folders = rawFolders.map((f) => ({
     id: f.id,
@@ -160,6 +244,14 @@ export default async function ProjectDocumentsPage({
           deletedDocuments={deletedDocuments}
           sessionUser={{ id: session.id, role: session.role as any }}
           systemSettings={systemSettings}
+          pagination={{
+            folderPageSize: FOLDER_PAGE_SIZE,
+            filePageSize: FILE_PAGE_SIZE,
+            totalFolders: totalFolderCount,
+            totalFiles: totalDocCount,
+            totalDeletedFolders: totalDeletedFolderCount,
+            totalDeletedFiles: totalDeletedDocCount,
+          }}
         />
       </Suspense>
     </div>

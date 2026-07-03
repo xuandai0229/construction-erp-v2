@@ -62,12 +62,19 @@ export class LocalStorageProvider implements DocumentStorageProvider {
     
     if (stream) {
       const writeStream = createWriteStream(absolutePath);
+      const { PassThrough } = require('stream') as typeof import('stream');
+      const counter = new PassThrough();
       let sizeCounter = 0;
-      stream.on('data', (chunk: Buffer) => {
+      counter.on('data', (chunk: Buffer) => {
         sizeCounter += chunk.length;
         hash.update(chunk);
       });
-      await pipeline(stream, writeStream);
+      try {
+        await pipeline(stream, counter, writeStream);
+      } catch (error) {
+        await fs.unlink(absolutePath).catch(() => undefined);
+        throw error;
+      }
       fileSize = sizeCounter;
     } else if (buffer) {
       await fs.writeFile(absolutePath, buffer);

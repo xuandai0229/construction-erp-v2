@@ -86,6 +86,15 @@ interface FolderItem {
   };
 }
 
+interface PaginationInfo {
+  folderPageSize: number;
+  filePageSize: number;
+  totalFolders: number;
+  totalFiles: number;
+  totalDeletedFolders: number;
+  totalDeletedFiles: number;
+}
+
 interface DocumentWorkspaceProps {
   projectId: string;
   projectName: string;
@@ -95,6 +104,7 @@ interface DocumentWorkspaceProps {
   deletedDocuments?: DocumentListItem[];
   sessionUser: SessionUser;
   systemSettings: any;
+  pagination?: PaginationInfo;
 }
 
 type SortOption = "NEWEST" | "OLDEST" | "NAME" | "SIZE";
@@ -168,6 +178,7 @@ export function DocumentWorkspace({
   deletedDocuments = [],
   sessionUser,
   systemSettings,
+  pagination,
 }: DocumentWorkspaceProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -175,6 +186,7 @@ export function DocumentWorkspace({
   const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadRef = useRef(false);
+  const uploadAbortRef = useRef<XMLHttpRequest | null>(null);
   const mutationRef = useRef(false);
 
   const folderFromUrl = searchParams.get("folder");
@@ -206,6 +218,172 @@ export function DocumentWorkspace({
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("NEWEST");
   const [isUploading, setIsUploading] = useState(false);
+
+  // --- Pagination state ---
+  const [loadedFolderCount, setLoadedFolderCount] = useState(folders.length);
+  const [loadedFileCount, setLoadedFileCount] = useState(documents.length);
+  const [isLoadingMoreFolders, setIsLoadingMoreFolders] = useState(false);
+  const [isLoadingMoreFiles, setIsLoadingMoreFiles] = useState(false);
+  // Track extra items loaded via "Load More" (appended to server SSR data)
+  const [extraFolders, setExtraFolders] = useState<FolderItem[]>([]);
+  const [extraDocuments, setExtraDocuments] = useState<DocumentListItem[]>([]);
+  // Trash lazy-load state
+  const [trashFolders, setTrashFolders] = useState<FolderItem[]>(deletedFolders);
+  const [trashDocuments, setTrashDocuments] = useState<DocumentListItem[]>(deletedDocuments);
+  const [trashLoadedFolderCount, setTrashLoadedFolderCount] = useState(deletedFolders.length);
+  const [trashLoadedFileCount, setTrashLoadedFileCount] = useState(deletedDocuments.length);
+  const [trashTotalFolders, setTrashTotalFolders] = useState(pagination?.totalDeletedFolders ?? deletedFolders.length);
+  const [trashTotalFiles, setTrashTotalFiles] = useState(pagination?.totalDeletedFiles ?? deletedDocuments.length);
+  const [isLoadingTrash, setIsLoadingTrash] = useState(false);
+
+  // Merge SSR folders with extras
+  const allFolders = useMemo(() => {
+    const ids = new Set(folders.map(f => f.id));
+    return [...folders, ...extraFolders.filter(f => !ids.has(f.id))];
+  }, [folders, extraFolders]);
+  const allDocuments = useMemo(() => {
+    const ids = new Set(documents.map(d => d.id));
+    return [...documents, ...extraDocuments.filter(d => !ids.has(d.id))];
+  }, [documents, extraDocuments]);
+
+  const hasMoreFolders = pagination ? loadedFolderCount < pagination.totalFolders : false;
+  const hasMoreFiles = pagination ? loadedFileCount < pagination.totalFiles : false;
+  const hasMoreTrashFolders = trashLoadedFolderCount < trashTotalFolders;
+  const hasMoreTrashFiles = trashLoadedFileCount < trashTotalFiles;
+
+  const loadMoreFolders = useCallback(async () => {
+    if (isLoadingMoreFolders || !pagination) return;
+    setIsLoadingMoreFolders(true);
+    try {
+      const params = new URLSearchParams({
+        projectId,
+        type: "folders",
+        skip: String(loadedFolderCount),
+        take: String(pagination.folderPageSize),
+      });
+      if (selectedFolderId) params.set("parentId", selectedFolderId);
+      const res = await fetch(`/api/documents/load-more?${params}`);
+      if (res.ok) {
+        const data = await res.json();
+        setExtraFolders(prev => [...prev, ...data.items]);
+        setLoadedFolderCount(prev => prev + data.items.length);
+      }
+    } finally {
+      setIsLoadingMoreFolders(false);
+    }
+  }, [isLoadingMoreFolders, pagination, projectId, loadedFolderCount, selectedFolderId]);
+
+  const loadMoreFiles = useCallback(async () => {
+    if (isLoadingMoreFiles || !pagination) return;
+    setIsLoadingMoreFiles(true);
+    try {
+      const params = new URLSearchParams({
+        projectId,
+        type: "files",
+        skip: String(loadedFileCount),
+        take: String(pagination.filePageSize),
+        sortBy,
+      });
+      if (selectedFolderId) params.set("folderId", selectedFolderId);
+      if (searchQuery) params.set("search", searchQuery);
+      const res = await fetch(`/api/documents/load-more?${params}`);
+      if (res.ok) {
+        const data = await res.json();
+        setExtraDocuments(prev => [...prev, ...data.items]);
+        setLoadedFileCount(prev => prev + data.items.length);
+      }
+    } finally {
+      setIsLoadingMoreFiles(false);
+    }
+  }, [isLoadingMoreFiles, pagination, projectId, loadedFileCount, sortBy, selectedFolderId, searchQuery]);
+
+  // Lazy load trash children when navigating into a deleted folder
+  const loadTrashChildren = useCallback(async (parentFolderId: string | null) => {
+    setIsLoadingTrash(true);
+    try {
+      // Load trash folders for this parent
+      const folderParams = new URLSearchParams({
+        projectId,
+        type: "trashFolders",
+        skip: "0",
+        take: "500",
+      });
+      if (parentFolderId) folderParams.set("parentId", parentFolderId);
+      const folderRes = await fetch(`/api/documents/load-more?${folderParams}`);
+      let loadedTF: FolderItem[] = [];
+      let totalTF = 0;
+      if (folderRes.ok) {
+        const data = await folderRes.json();
+        loadedTF = data.items;
+        totalTF = data.total;
+      }
+
+      // Load trash files for this folder
+      let loadedTD: DocumentListItem[] = [];
+      let totalTD = 0;
+      if (parentFolderId) {
+        const fileParams = new URLSearchParams({
+          projectId,
+          type: "trashFiles",
+          folderId: parentFolderId,
+          skip: "0",
+          take: "200",
+        });
+        const fileRes = await fetch(`/api/documents/load-more?${fileParams}`);
+        if (fileRes.ok) {
+          const data = await fileRes.json();
+          loadedTD = data.items;
+          totalTD = data.total;
+        }
+      }
+
+      // Merge new data with existing (append new unique items)
+      setTrashFolders(prev => {
+        const existingIds = new Set(prev.map(f => f.id));
+        return [...prev, ...loadedTF.filter(f => !existingIds.has(f.id))];
+      });
+      setTrashDocuments(prev => {
+        const existingIds = new Set(prev.map(d => d.id));
+        return [...prev, ...loadedTD.filter(d => !existingIds.has(d.id))];
+      });
+      setTrashLoadedFolderCount(prev => prev + loadedTF.length);
+      setTrashLoadedFileCount(prev => prev + loadedTD.length);
+      setTrashTotalFolders(prev => prev + totalTF);
+      setTrashTotalFiles(prev => prev + totalTD);
+    } finally {
+      setIsLoadingTrash(false);
+    }
+  }, [projectId]);
+
+  // Reset pagination counts when folder changes (SSR reloads the page)
+  useEffect(() => {
+    setLoadedFolderCount(folders.length);
+    setExtraFolders([]);
+  }, [folders]);
+  useEffect(() => {
+    setLoadedFileCount(documents.length);
+    setExtraDocuments([]);
+  }, [documents]);
+  useEffect(() => {
+    setTrashFolders((prev) => {
+      const serverIds = new Set(deletedFolders.map((f) => f.id));
+      const keepPrev = prev.filter((f) => !serverIds.has(f.id));
+      return [...deletedFolders, ...keepPrev];
+    });
+    setTrashLoadedFolderCount((prev) => Math.max(prev, deletedFolders.length));
+    setTrashTotalFolders(pagination?.totalDeletedFolders ?? deletedFolders.length);
+  }, [deletedFolders, pagination?.totalDeletedFolders]);
+  useEffect(() => {
+    setTrashDocuments((prev) => {
+      const serverIds = new Set(deletedDocuments.map((d) => d.id));
+      const keepPrev = prev.filter((d) => !serverIds.has(d.id));
+      return [...deletedDocuments, ...keepPrev];
+    });
+    setTrashLoadedFileCount((prev) => Math.max(prev, deletedDocuments.length));
+    setTrashTotalFiles(pagination?.totalDeletedFiles ?? deletedDocuments.length);
+  }, [deletedDocuments, pagination?.totalDeletedFiles]);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [newFolderName, setNewFolderName] = useState("");
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -244,27 +422,29 @@ export function DocumentWorkspace({
     y: number;
   } | null>(null);
 
-  const [isTrashView, setIsTrashView] = useState(false);
-  const [selectedTrashFolderId, setSelectedTrashFolderId] = useState<string | null>(null);
+  const [isTrashView, setIsTrashView] = useState(() => searchParams.get("trash") === "true");
+  const [selectedTrashFolderId, setSelectedTrashFolderId] = useState<string | null>(
+    () => searchParams.get("trashFolder") || null
+  );
 
   useEffect(() => {
-    setLocalDocuments(isTrashView ? deletedDocuments : documents);
-  }, [documents, deletedDocuments, isTrashView]);
+    setLocalDocuments(isTrashView ? trashDocuments : allDocuments);
+  }, [allDocuments, trashDocuments, isTrashView]);
 
   const folderById = useMemo(
-    () => new Map(folders.map((folder) => [folder.id, folder])),
-    [folders],
+    () => new Map(allFolders.map((folder) => [folder.id, folder])),
+    [allFolders],
   );
 
   const foldersByParentId = useMemo(() => {
     const map = new Map<string | null, FolderItem[]>();
-    for (const folder of folders) {
+    for (const folder of allFolders) {
       const siblings = map.get(folder.parentId) || [];
       siblings.push(folder);
       map.set(folder.parentId, siblings);
     }
     return map;
-  }, [folders]);
+  }, [allFolders]);
 
   useEffect(() => {
     const nextFolderId =
@@ -276,7 +456,7 @@ export function DocumentWorkspace({
 
     setExpandedFolderIds((current) => {
       const next = new Set(current);
-      for (const ancestorId of buildFolderAncestorChain(folders, nextFolderId)) {
+      for (const ancestorId of buildFolderAncestorChain(allFolders, nextFolderId)) {
         next.add(ancestorId);
       }
       if (nextFolderId && (foldersByParentId.get(nextFolderId)?.length || 0) > 0) {
@@ -284,22 +464,42 @@ export function DocumentWorkspace({
       }
       return next;
     });
-  }, [folderById, folderFromUrl, folders, foldersByParentId]);
+  }, [folderById, folderFromUrl, allFolders, foldersByParentId]);
 
   const replaceUrlState = useCallback(
-    (folderId: string | null, documentId?: string | null) => {
+    (folderId: string | null, documentId?: string | null, trashView: boolean = false, trashFolderId: string | null = null) => {
       const params = new URLSearchParams(searchParams.toString());
       params.delete("folderId");
       if (folderId) params.set("folder", folderId);
       else params.delete("folder");
       if (documentId) params.set("document", documentId);
       else params.delete("document");
+      if (trashView) params.set("trash", "true");
+      else params.delete("trash");
+      if (trashFolderId) params.set("trashFolder", trashFolderId);
+      else params.delete("trashFolder");
+      
       const query = params.toString();
       router.push(query ? `${pathname}?${query}` : pathname, {
         scroll: false,
       });
     },
     [pathname, router, searchParams],
+  );
+
+  const setTrashState = useCallback(
+    (view: boolean, folderId: string | null) => {
+      setIsTrashView(view);
+      setSelectedTrashFolderId(folderId);
+      if (view) {
+        setSelectedFolderIdRaw(null);
+        setSelectedDocumentId(null);
+      }
+      setOpenMenuId(null);
+      setSearchQuery("");
+      replaceUrlState(null, null, view, folderId);
+    },
+    [replaceUrlState],
   );
 
   const setSelectedFolderId = useCallback(
@@ -313,7 +513,9 @@ export function DocumentWorkspace({
       setFilterUploader("ALL");
       setGroupBy("NONE");
       setShowFilters(false);
-      replaceUrlState(id, null);
+      setIsTrashView(false);
+      setSelectedTrashFolderId(null);
+      replaceUrlState(id, null, false, null);
     },
     [replaceUrlState],
   );
@@ -357,11 +559,15 @@ export function DocumentWorkspace({
 
   const closeDocument = useCallback(() => {
     setSelectedDocumentId(null);
-    replaceUrlState(selectedFolderId, null);
-  }, [replaceUrlState, selectedFolderId]);
+    if (isTrashView) {
+      replaceUrlState(null, null, true, selectedTrashFolderId);
+    } else {
+      replaceUrlState(selectedFolderId, null, false, null);
+    }
+  }, [replaceUrlState, selectedFolderId, isTrashView, selectedTrashFolderId]);
 
   const rootFolders = foldersByParentId.get(null) || [];
-  const selectedFolderData = folders.find(
+  const selectedFolderData = allFolders.find(
     (folder) => folder.id === selectedFolderId,
   );
   const selectedFolderDisplayName = selectedFolderData
@@ -372,7 +578,7 @@ export function DocumentWorkspace({
     : null;
   const selectedFolderPath = selectedFolderId
     ? [
-        ...buildFolderAncestorChain(folders, selectedFolderId)
+        ...buildFolderAncestorChain(allFolders, selectedFolderId)
           .map((folderId) => folderById.get(folderId))
           .filter((folder): folder is FolderItem => Boolean(folder)),
         ...(selectedFolderData ? [selectedFolderData] : []),
@@ -383,10 +589,10 @@ export function DocumentWorkspace({
     : null;
 
   const deletedFolderById = useMemo(
-    () => new Map(deletedFolders.map((folder) => [folder.id, folder])),
-    [deletedFolders]
+    () => new Map(trashFolders.map((folder) => [folder.id, folder])),
+    [trashFolders]
   );
-  const selectedTrashFolderData = isTrashView && selectedTrashFolderId ? deletedFolders.find(f => f.id === selectedTrashFolderId) : null;
+  const selectedTrashFolderData = isTrashView && selectedTrashFolderId ? trashFolders.find(f => f.id === selectedTrashFolderId) : null;
   const selectedTrashFolderPath = useMemo(() => {
     if (!isTrashView || !selectedTrashFolderId) return [];
     const chain: FolderItem[] = [];
@@ -401,7 +607,7 @@ export function DocumentWorkspace({
   }, [deletedFolderById, isTrashView, selectedTrashFolderId]);
 
   const displayFolders = useMemo(() => {
-    let filtered = isTrashView ? deletedFolders : folders;
+    let filtered = isTrashView ? trashFolders : allFolders;
     
     if (isTrashView) {
       if (selectedTrashFolderId) {
@@ -422,7 +628,7 @@ export function DocumentWorkspace({
       filtered = filtered.filter((folder) => folder.name.toLowerCase().includes(query));
     }
     return filtered;
-  }, [deletedFolders, folders, isTrashView, searchQuery, selectedTrashFolderId, selectedFolderId, deletedFolderById]);
+  }, [trashFolders, allFolders, isTrashView, searchQuery, selectedTrashFolderId, selectedFolderId, deletedFolderById]);
 
   const displayDocs = useMemo(() => {
     let filtered = localDocuments;
@@ -564,6 +770,63 @@ export function DocumentWorkspace({
 
   const canRenameCurrentFolder = selectedFolderData ? canRenameFolder(sessionUser, { id: selectedFolderData.id, name: selectedFolderData.name }) : false;
   const canDeleteCurrentFolder = selectedFolderData ? canDeleteFolder(sessionUser, { id: selectedFolderData.id, name: selectedFolderData.name }) : false;
+  const contextTargetFolder =
+    contextMenu?.targetId && (contextMenu.type === "folder" || contextMenu.type === "workspace")
+      ? (isTrashView
+          ? deletedFolderById.get(contextMenu.targetId)
+          : folderById.get(contextMenu.targetId))
+      : null;
+  const contextTargetDocument =
+    contextMenu?.type === "file" && contextMenu.targetId
+      ? localDocuments.find((document) => document.id === contextMenu.targetId) || null
+      : null;
+  const contextDocumentFolder = contextTargetDocument
+    ? folderById.get(contextTargetDocument.folderId)
+    : null;
+  const canUploadContext =
+    !isTrashView && contextTargetFolder
+      ? canUploadToFolder(sessionUser, {
+          id: contextTargetFolder.id,
+          name: contextTargetFolder.name,
+        })
+      : false;
+  const canCreateFolderContext =
+    !isTrashView &&
+    (contextTargetFolder ? isGlobalAdmin || canUploadContext : isGlobalAdmin);
+  const canRenameContext =
+    !isTrashView && contextTargetFolder
+      ? canRenameFolder(sessionUser, {
+          id: contextTargetFolder.id,
+          name: contextTargetFolder.name,
+        })
+      : contextTargetDocument && contextDocumentFolder
+        ? canRenameDocument(
+            sessionUser,
+            {
+              id: contextTargetDocument.id,
+              status: contextTargetDocument.status,
+              uploadedById: contextTargetDocument.uploadedById,
+            },
+            { id: contextDocumentFolder.id, name: contextDocumentFolder.name },
+          )
+        : false;
+  const canDeleteContext =
+    !isTrashView && contextTargetFolder
+      ? canDeleteFolder(sessionUser, {
+          id: contextTargetFolder.id,
+          name: contextTargetFolder.name,
+        })
+      : contextTargetDocument && contextDocumentFolder
+        ? canDeleteDocument(
+            sessionUser,
+            {
+              id: contextTargetDocument.id,
+              status: contextTargetDocument.status,
+              uploadedById: contextTargetDocument.uploadedById,
+            },
+            { id: contextDocumentFolder.id, name: contextDocumentFolder.name },
+          )
+        : false;
 
   const copyDocumentLink = useCallback(
     async (document: DocumentListItem) => {
@@ -582,10 +845,28 @@ export function DocumentWorkspace({
     [pathname, searchParams, toast],
   );
 
+  const copyFolderLink = useCallback(
+    async (folderId: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("folder", folderId);
+      params.delete("document");
+      const url = `${window.location.origin}${pathname}?${params.toString()}`;
+      try {
+        await navigator.clipboard.writeText(url);
+        toast.success("Đã sao chép đường dẫn thư mục");
+      } catch {
+        toast.error("Không thể sao chép link trên thiết bị này");
+      }
+    },
+    [pathname, searchParams, toast],
+  );
+
   const handleFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !selectedFolderId || !selectedFolderData) return;
 
+    setUploadError(null);
+    setUploadProgress(0);
     setPendingUpload({
       file,
       displayName: file.name,
@@ -596,9 +877,63 @@ export function DocumentWorkspace({
 
   const closeUploadDialog = () => {
     if (isUploading) return;
+    setUploadError(null);
+    setUploadProgress(0);
     setPendingUpload(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
+
+  const cancelUpload = () => {
+    uploadAbortRef.current?.abort();
+  };
+
+  const uploadFileWithProgress = useCallback(
+    (input: {
+      file: File;
+      displayName: string;
+      note: string;
+      folderId: string;
+    }) =>
+      new Promise<{ document: DocumentListItem }>((resolve, reject) => {
+        const params = new URLSearchParams({
+          projectId,
+          folderId: input.folderId,
+          fileName: input.file.name,
+          displayName: input.displayName,
+        });
+        if (input.note.trim()) params.set("note", input.note.trim());
+
+        const xhr = new XMLHttpRequest();
+        uploadAbortRef.current = xhr;
+        xhr.open("POST", `/api/documents/upload?${params.toString()}`);
+        xhr.responseType = "json";
+        xhr.setRequestHeader(
+          "Content-Type",
+          input.file.type || "application/octet-stream",
+        );
+
+        xhr.upload.onprogress = (event) => {
+          if (!event.lengthComputable) return;
+          setUploadProgress(Math.max(1, Math.round((event.loaded / event.total) * 100)));
+        };
+
+        xhr.onload = () => {
+          const data =
+            xhr.response ||
+            (xhr.responseText ? JSON.parse(xhr.responseText) : null);
+          if (xhr.status >= 200 && xhr.status < 300 && data?.document) {
+            setUploadProgress(100);
+            resolve(data);
+            return;
+          }
+          reject(new Error(data?.error || `Upload thất bại (${xhr.status})`));
+        };
+        xhr.onerror = () => reject(new Error("Lỗi mạng khi upload"));
+        xhr.onabort = () => reject(new Error("UPLOAD_ABORTED"));
+        xhr.send(input.file);
+      }),
+    [projectId],
+  );
 
   const confirmUpload = async () => {
     if (
@@ -623,19 +958,16 @@ export function DocumentWorkspace({
 
     uploadRef.current = true;
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append("file", pendingUpload.file);
-    formData.append("displayName", displayName);
-    formData.append("projectId", projectId);
-    formData.append("folderId", selectedFolderId);
+    setUploadError(null);
+    setUploadProgress(0);
 
     try {
-      const response = await fetch("/api/documents/upload", {
-        method: "POST",
-        body: formData,
+      const data = await uploadFileWithProgress({
+        file: pendingUpload.file,
+        displayName,
+        note: pendingUpload.note,
+        folderId: selectedFolderId,
       });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
 
       const uploadedDocument = data.document as DocumentListItem;
       setLocalDocuments((current) => [
@@ -650,12 +982,19 @@ export function DocumentWorkspace({
       openDocument(uploadedDocument);
       router.refresh();
     } catch (error) {
+      if (error instanceof Error && error.message === "UPLOAD_ABORTED") {
+        setUploadError("Đã hủy upload. Bạn có thể bấm Tải lại để thử lại.");
+        toast.error("Đã hủy upload. Bạn có thể bấm Tải lại để thử lại.");
+        return;
+      }
+      setUploadError(error instanceof Error ? error.message : "Lỗi không xác định");
       toast.error(
         "Lỗi upload: " +
         (error instanceof Error ? error.message : "Lỗi không xác định"),
       );
     } finally {
       uploadRef.current = false;
+      uploadAbortRef.current = null;
       setIsUploading(false);
     }
   };
@@ -806,7 +1145,7 @@ export function DocumentWorkspace({
     mutationRef.current = true;
     
     // Optimistic UI
-    let previousDocs = localDocuments;
+    const previousDocs = localDocuments;
     if (type === "doc") {
       setLocalDocuments(current => current.filter(d => d.id !== id));
       if (selectedDocumentId === id) closeDocument();
@@ -850,7 +1189,7 @@ export function DocumentWorkspace({
     const { type, id } = deleteConfirm;
     setDeleteConfirm((current) => ({ ...current, isOpen: false }));
 
-    let previousDocs = localDocuments;
+    const previousDocs = localDocuments;
     if (type === "doc") {
       setLocalDocuments(current => current.filter(d => d.id !== id));
       if (selectedDocumentId === id) closeDocument();
@@ -865,6 +1204,7 @@ export function DocumentWorkspace({
           router.refresh();
         } else {
           toast.success("Xóa vĩnh viễn thư mục thành công");
+          setTrashFolders((prev) => prev.filter((f) => f.id !== id));
           if (selectedFolderId === id) setSelectedFolderId(null);
           router.refresh();
         }
@@ -875,6 +1215,7 @@ export function DocumentWorkspace({
           setLocalDocuments(previousDocs);
         } else {
           toast.success("Xóa vĩnh viễn tài liệu thành công");
+          setTrashDocuments((prev) => prev.filter((d) => d.id !== id));
           router.refresh();
         }
       }
@@ -890,7 +1231,7 @@ export function DocumentWorkspace({
     if (mutationRef.current) return;
     mutationRef.current = true;
     
-    let previousDocs = localDocuments;
+    const previousDocs = localDocuments;
     if (type === "doc") {
       setLocalDocuments(current => current.filter(d => d.id !== id));
     }
@@ -904,6 +1245,7 @@ export function DocumentWorkspace({
           router.refresh();
         } else {
           toast.success("Đã khôi phục thư mục");
+          setTrashFolders((prev) => prev.filter((f) => f.id !== id));
           // If we restored the folder we are currently viewing, or any folder, just clear the trash view state if needed.
           if (selectedTrashFolderId === id) setSelectedTrashFolderId(null);
           router.refresh();
@@ -915,6 +1257,7 @@ export function DocumentWorkspace({
           setLocalDocuments(previousDocs);
         } else {
           toast.success("Đã khôi phục tài liệu");
+          setTrashDocuments((prev) => prev.filter((d) => d.id !== id));
           router.refresh();
         }
       }
@@ -1158,9 +1501,7 @@ const handleEditMetadata = async () => {
             className={`group flex min-h-10 cursor-pointer items-center gap-2 rounded-lg px-2.5 py-2 transition-colors hover:bg-red-50 ${isTrashView ? "bg-red-50 text-red-700 shadow-sm ring-1 ring-red-100" : "text-slate-700"
               }`}
             onClick={() => {
-              setIsTrashView(true);
-              setSelectedTrashFolderId(null);
-              setSelectedFolderId(null);
+              setTrashState(true, null);
             }}
           >
             <Trash2 className={`h-4 w-4 shrink-0 ${isTrashView ? "text-red-600" : "text-slate-400"}`} />
@@ -1196,7 +1537,7 @@ const handleEditMetadata = async () => {
                         type="button"
                         aria-label="Quay lại"
                         title="Quay lại"
-                        onClick={() => setSelectedTrashFolderId(selectedTrashFolderData?.parentId || null)}
+                        onClick={() => setTrashState(true, selectedTrashFolderData?.parentId || null)}
                         className="mr-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-600 shadow-sm transition-all duration-200 hover:-translate-x-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 hover:shadow-md focus:outline-none"
                       >
                         <ArrowLeft className="h-3 w-3" />
@@ -1234,7 +1575,7 @@ const handleEditMetadata = async () => {
                         <span className="text-slate-300">/</span>
                         <button
                           type="button"
-                          onClick={() => setSelectedTrashFolderId(null)}
+                          onClick={() => setTrashState(true, null)}
                           className={`max-w-[180px] truncate text-left transition-colors ${
                             !selectedTrashFolderId ? "font-semibold text-slate-900" : "hover:text-blue-600 hover:underline"
                           }`}
@@ -1249,7 +1590,7 @@ const handleEditMetadata = async () => {
                             <span className="text-slate-300">/</span>
                             <button
                               type="button"
-                              onClick={() => !isCurrent && setSelectedTrashFolderId(folder.id)}
+                              onClick={() => !isCurrent && setTrashState(true, folder.id)}
                               className={`max-w-[180px] truncate text-left transition-colors ${
                                 isCurrent
                                   ? "font-semibold text-slate-900"
@@ -1439,7 +1780,28 @@ const handleEditMetadata = async () => {
               );
             })()}
 
-            <div className="flex-1 overflow-y-auto bg-slate-50 p-4">
+            <div
+              className="flex-1 overflow-y-auto bg-slate-50 p-4"
+              onContextMenu={(event) => {
+                const target = event.target as HTMLElement;
+                if (
+                  target.closest(
+                    "article,button,a,input,textarea,select,[role='dialog']",
+                  )
+                ) {
+                  return;
+                }
+                event.preventDefault();
+                setContextMenu({
+                  type: "workspace",
+                  targetId: isTrashView
+                    ? selectedTrashFolderId || undefined
+                    : selectedFolderId || undefined,
+                  x: event.clientX,
+                  y: event.clientY,
+                });
+              }}
+            >
               {(() => {
                 const totalVisibleItems = displayFolders.length + displayDocs.length;
                 const density = totalVisibleItems >= 18 ? "list" : totalVisibleItems >= 8 ? "compact" : "comfortable";
@@ -1476,7 +1838,8 @@ const handleEditMetadata = async () => {
                                 } ${isTrashView ? 'hover:border-red-300' : 'hover:border-blue-300'}`}
                                 onClick={() => {
                                   if (isTrashView) {
-                                    setSelectedTrashFolderId(folder.id);
+                                    setTrashState(true, folder.id);
+                                    loadTrashChildren(folder.id);
                                   } else {
                                     setSelectedFolderId(folder.id);
                                   }
@@ -1496,6 +1859,7 @@ const handleEditMetadata = async () => {
                                   <button
                                     type="button"
                                     onClick={(event) => {
+                                      event.preventDefault();
                                       event.stopPropagation();
                                       setContextMenu({
                                         type: "folder",
@@ -1532,6 +1896,19 @@ const handleEditMetadata = async () => {
                             );
                           })}
                       </div>
+                      {/* Load More Folders */}
+                      {(isTrashView ? hasMoreTrashFolders : hasMoreFolders) && (
+                        <div className="mt-3 flex justify-center">
+                          <button
+                            type="button"
+                            onClick={isTrashView ? undefined : loadMoreFolders}
+                            disabled={isLoadingMoreFolders}
+                            className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:border-blue-200 disabled:opacity-50"
+                          >
+                            {isLoadingMoreFolders ? "Đang tải..." : `Tải thêm thư mục (${isTrashView ? trashTotalFolders - displayFolders.length : (pagination?.totalFolders ?? 0) - displayFolders.length} còn lại)`}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                   {Object.entries(groupedDocs).map(([groupName, groupDocs]) => (
@@ -1631,6 +2008,7 @@ const handleEditMetadata = async () => {
                                   <button
                                     type="button"
                                     onClick={(event) => {
+                                      event.preventDefault();
                                       event.stopPropagation();
                                       setContextMenu({
                                         type: "file",
@@ -1687,6 +2065,24 @@ const handleEditMetadata = async () => {
                       </div>
                     </div>
                   ))}
+                  {/* Load More Files */}
+                  {(isTrashView ? hasMoreTrashFiles : hasMoreFiles) && (
+                    <div className="mt-4 flex justify-center">
+                      <button
+                        type="button"
+                        onClick={loadMoreFiles}
+                        disabled={isLoadingMoreFiles}
+                        className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:border-blue-200 disabled:opacity-50"
+                      >
+                        {isLoadingMoreFiles ? "Đang tải..." : `Tải thêm tài liệu (${isTrashView ? trashTotalFiles - displayDocs.length : (pagination?.totalFiles ?? 0) - displayDocs.length} còn lại)`}
+                      </button>
+                    </div>
+                  )}
+                  {isLoadingTrash && (
+                    <div className="mt-4 flex justify-center">
+                      <span className="text-sm text-slate-500 animate-pulse">Đang tải nội dung thùng rác...</span>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="flex flex-1 flex-col items-center justify-center p-8 text-center bg-slate-50/30">
@@ -1840,6 +2236,24 @@ const handleEditMetadata = async () => {
                 </div>
               </div>
 
+              {(isUploading || uploadProgress > 0 || uploadError) && (
+                <div className="rounded-lg border border-slate-200 bg-white p-3">
+                  <div className="mb-2 flex items-center justify-between gap-3 text-xs font-semibold text-slate-600">
+                    <span>{uploadError ? "Upload cần xử lý" : "Đang truyền dữ liệu"}</span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className={`h-full rounded-full transition-all ${uploadError ? "bg-amber-500" : "bg-blue-600"}`}
+                      style={{ width: `${Math.max(uploadProgress, uploadError ? 100 : 0)}%` }}
+                    />
+                  </div>
+                  {uploadError && (
+                    <p className="mt-2 text-xs font-medium text-amber-700">{uploadError}</p>
+                  )}
+                </div>
+              )}
+
               <div>
                 <label
                   htmlFor="document-display-name"
@@ -1896,14 +2310,13 @@ const handleEditMetadata = async () => {
             <div className="flex flex-col-reverse gap-2 border-t border-slate-200 bg-slate-50 px-5 py-4 sm:flex-row sm:justify-end">
               <Button
                 variant="outline"
-                onClick={closeUploadDialog}
-                disabled={isUploading}
+                onClick={isUploading ? cancelUpload : closeUploadDialog}
               >
-                Hủy
+                {isUploading ? "Hủy tải" : "Hủy"}
               </Button>
               <Button onClick={confirmUpload} disabled={isUploading}>
                 <UploadCloud className="mr-2 h-4 w-4" />
-                {isUploading ? "Đang tải lên..." : "Tải lên"}
+                {isUploading ? "Đang tải lên..." : uploadError ? "Tải lại" : "Tải lên"}
               </Button>
             </div>
           </div>
@@ -2000,20 +2413,31 @@ const handleEditMetadata = async () => {
           }
         }}
         onRestore={() => {
-          if (contextMenu?.type === "folder" && contextMenu.targetId) {
+          if (contextMenu?.type === "workspace" && selectedTrashFolderId) {
+            handleRestore("folder", selectedTrashFolderId);
+          } else if (contextMenu?.type === "folder" && contextMenu.targetId) {
             handleRestore("folder", contextMenu.targetId);
           } else if (contextMenu?.type === "file" && contextMenu.targetId) {
             handleRestore("doc", contextMenu.targetId);
           }
         }}
         onPermanentDelete={() => {
-          if (contextMenu?.type === "folder" && contextMenu.targetId) {
+          if (contextMenu?.type === "workspace" && selectedTrashFolderId) {
+            setDeleteConfirm({ isOpen: true, type: "folder", id: selectedTrashFolderId });
+          } else if (contextMenu?.type === "folder" && contextMenu.targetId) {
             setDeleteConfirm({ isOpen: true, type: "folder", id: contextMenu.targetId });
           } else if (contextMenu?.type === "file" && contextMenu.targetId) {
             setDeleteConfirm({ isOpen: true, type: "doc", id: contextMenu.targetId });
           }
         }}
         onCopyLink={() => {
+          if (
+            (contextMenu?.type === "folder" || contextMenu?.type === "workspace") &&
+            contextMenu.targetId
+          ) {
+            copyFolderLink(contextMenu.targetId);
+            return;
+          }
           if (contextMenu?.type === "file" && contextMenu.targetId) {
             const doc = localDocuments.find((d) => d.id === contextMenu.targetId);
             if (doc) copyDocumentLink(doc);
@@ -2027,7 +2451,7 @@ const handleEditMetadata = async () => {
             const doc = localDocuments.find((d) => d.id === contextMenu.targetId);
             if (doc) openDocument(doc);
           } else if (contextMenu?.type === "folder" && contextMenu.targetId && isTrashView) {
-            setSelectedTrashFolderId(contextMenu.targetId);
+            setTrashState(true, contextMenu.targetId || null);
           }
         }}
         onUpload={() => {
@@ -2058,6 +2482,11 @@ const handleEditMetadata = async () => {
         onDeselect={() => {
           setSelectedFolderId(null);
         }}
+        onBack={() => {
+          if (isTrashView && selectedTrashFolderData) {
+            setTrashState(true, selectedTrashFolderData.parentId || null);
+          }
+        }}
         onEditMetadata={() => {
           if (contextMenu?.type === "file" && contextMenu.targetId) {
             const doc = localDocuments.find((d) => d.id === contextMenu.targetId);
@@ -2083,22 +2512,10 @@ const handleEditMetadata = async () => {
             if (doc) window.location.href = `/api/documents/${doc.id}/download`;
           }
         }}
-        canRename={
-          contextMenu?.type === "folder"
-            ? canRenameCurrentFolder
-            : contextMenu?.type === "file"
-              ? canRenameDocument(sessionUser, { id: contextMenu.targetId!, status: localDocuments.find(d => d.id === contextMenu.targetId)?.status || DocumentStatus.DRAFT, uploadedById: localDocuments.find(d => d.id === contextMenu.targetId)?.uploadedById || "" }, { id: selectedFolderData?.id || "", name: selectedFolderData?.name || "" })
-              : false
-        }
-        canDelete={
-          contextMenu?.type === "folder"
-            ? canDeleteCurrentFolder
-            : contextMenu?.type === "file"
-              ? canDeleteDocument(sessionUser, { id: contextMenu.targetId!, status: localDocuments.find(d => d.id === contextMenu.targetId)?.status || DocumentStatus.DRAFT, uploadedById: localDocuments.find(d => d.id === contextMenu.targetId)?.uploadedById || "" }, { id: selectedFolderData?.id || "", name: selectedFolderData?.name || "" })
-              : false
-        }
-        canUpload={canUpload}
-        canCreateFolder={!!canCreateFolderContextually}
+        canRename={canRenameContext}
+        canDelete={canDeleteContext}
+        canUpload={canUploadContext}
+        canCreateFolder={canCreateFolderContext}
         isTrashView={isTrashView}
       />
     </div>
@@ -2169,6 +2586,7 @@ export function DocumentContextMenu({
   onCreateFolder,
   onRefresh,
   onDeselect,
+  onBack,
   onEditMetadata,
   onOpenInNewTab,
   onDownload,
@@ -2190,6 +2608,7 @@ export function DocumentContextMenu({
   onCreateFolder: () => void;
   onRefresh: () => void;
   onDeselect: () => void;
+  onBack: () => void;
   onEditMetadata: () => void;
   onOpenInNewTab: () => void;
   onDownload: () => void;
@@ -2218,6 +2637,8 @@ export function DocumentContextMenu({
     if (newY + offsetHeight > innerHeight - 12) {
       newY = innerHeight - offsetHeight - 12;
     }
+    newX = Math.max(12, newX);
+    newY = Math.max(12, newY);
     
     setPosition({ x: newX, y: newY });
   }, [contextMenu]);
@@ -2263,6 +2684,31 @@ export function DocumentContextMenu({
     >
       {isTrashView ? (
         <>
+          {contextMenu.type === "workspace" && (
+            <>
+              {contextMenu.targetId && (
+                <>
+                  <button onClick={() => { onBack(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+                    <ArrowLeft className="h-4 w-4" />
+                    Quay lại
+                  </button>
+                  <button onClick={() => { onRestore?.(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+                    <FolderOpen className="h-4 w-4" />
+                    Khôi phục thư mục hiện tại
+                  </button>
+                  <button onClick={() => { onPermanentDelete?.(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-red-50 text-red-600">
+                    <Trash2 className="h-4 w-4" />
+                    Xóa vĩnh viễn thư mục hiện tại
+                  </button>
+                  <div className="my-1 h-px bg-slate-100"></div>
+                </>
+              )}
+              <button onClick={() => { onRefresh(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+                Làm mới
+              </button>
+            </>
+          )}
           {contextMenu.type === "folder" && (
             <button onClick={() => { onOpen(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
               <FolderOpen className="h-4 w-4" />
@@ -2297,6 +2743,12 @@ export function DocumentContextMenu({
         </>
       ) : contextMenu.type === "workspace" ? (
         <>
+          {contextMenu.targetId && (
+            <button onClick={() => { onCopyLink(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+              <Copy className="h-4 w-4" />
+              Sao chép đường dẫn thư mục
+            </button>
+          )}
           <button onClick={() => { onUpload(); onClose(); }} disabled={!canUpload} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 disabled:opacity-50 disabled:hover:bg-transparent text-slate-700">
             <UploadCloud className="h-4 w-4" />
             Tải tài liệu lên
