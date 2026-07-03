@@ -1,6 +1,8 @@
 // === Field Report Types ===
 // TODO: Replace with Prisma-generated types when database model is created
 
+import { computeReportStats, type ReportStats } from "@/lib/reports/report-stats";
+
 export type ReportStatus = 'APPROVED' | 'SUBMITTED' | 'REJECTED' | 'REVISION_REQUESTED' | 'DRAFT';
 
 export type WeatherCondition =
@@ -25,6 +27,19 @@ export interface ReportWorkLine {
   quantityCumulative?: number;
   note?: string;
 }
+
+export interface NextWeekPlan {
+  id?: string;
+  wbsItemId?: string;
+  workContent: string;
+  plannedQuantity?: number;
+  unit?: string;
+  resources?: string;
+  materials?: string;
+  assignee?: string;
+  note?: string;
+}
+
 
 export interface ReportPhoto {
   id: string;
@@ -83,6 +98,9 @@ export interface FieldReport {
   // Daily specific
   workLines: ReportWorkLine[];
   
+  // Weekly specific
+  weeklyNote?: import('@/lib/reports/weekly-report-utils').WeeklyGeneralNote;
+  
   // Backward compatibility mock data
   workContent?: string;
   progress?: string;
@@ -101,13 +119,7 @@ export interface FieldReport {
   approvalHistory: ApprovalHistoryEntry[];
 }
 
-export interface ReportStats {
-  total: number;
-  approved: number;
-  pending: number;
-  rejected: number;
-  approvalRate: number; // percentage
-}
+export type { ReportStats };
 
 // === Create Report Form Data ===
 export interface CreateReportFormData {
@@ -124,7 +136,9 @@ export interface CreateReportFormData {
   
   workLines: Omit<ReportWorkLine, 'id'>[];
   summary?: string;
-
+  
+  weeklyNote?: import('@/lib/reports/weekly-report-utils').WeeklyGeneralNote;
+  
   workContent?: string; // Legacy fallback
   progress?: string;    // Legacy fallback
   
@@ -153,16 +167,16 @@ export const WEATHER_OPTIONS: { value: WeatherCondition; label: string }[] = [
 
 /** Compute stats from actual reports array — never hardcode */
 export function computeStats(reports: FieldReport[]): ReportStats {
-  const total = reports.length;
-  const approved = reports.filter((r) => r.status === 'APPROVED').length;
-  const pending = reports.filter((r) => r.status === 'SUBMITTED').length;
-  const rejected = reports.filter((r) => r.status === 'REJECTED').length;
-  const approvalRate = total > 0 ? Math.round((approved / total) * 100) : 0;
-  return { total, approved, pending, rejected, approvalRate };
+  return computeReportStats(reports);
 }
 
 export function getStatusLabel(status: ReportStatus): string {
   switch (status) {
+    case 'APPROVED': return 'Đã duyệt';
+    case 'SUBMITTED': return 'Đã gửi - Chờ duyệt';
+    case 'REVISION_REQUESTED': return 'Yêu cầu chỉnh sửa';
+    case 'REJECTED': return 'Từ chối';
+    case 'DRAFT': return 'Nháp';
     case 'APPROVED': return 'Đã duyệt';
     case 'SUBMITTED': return 'Chờ duyệt / Đã gửi';
     case 'REVISION_REQUESTED': return 'Yêu cầu chỉnh sửa';

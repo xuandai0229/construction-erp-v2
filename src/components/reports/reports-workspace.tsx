@@ -14,10 +14,10 @@ import { CreateReportDialog } from "./create-report-dialog";
 import { ReportDetailDrawer } from "./report-detail-drawer";
 import { SiteReportGalleryDialog } from "./site-report-gallery-dialog";
 import {
-  computeStats,
   type FieldReport,
   type CreateReportFormData,
   type ReportPhoto,
+  type ReportStats,
 } from "./types";
 import { 
   createSiteReport, 
@@ -35,7 +35,7 @@ interface ReportsWorkspaceProps {
   initialReports: FieldReport[];
   totalReports: number;
   currentPage: number;
-  allReportsForStats: Record<string, unknown>[];
+  stats: ReportStats;
   initialProjects: { id: string; name: string }[];
   currentUser: { id: string; name: string; role?: string };
 }
@@ -44,7 +44,7 @@ export function ReportsWorkspace({
   initialReports,
   totalReports,
   currentPage,
-  allReportsForStats,
+  stats,
   initialProjects,
   currentUser,
 }: ReportsWorkspaceProps) {
@@ -167,28 +167,24 @@ export function ReportsWorkspace({
   
   const activeTab = ['daily', 'weekly'].includes(tab) ? tab : 'all';
 
-  // Dynamic stats based on ALL local reports (not just filtered)
-  const stats = useMemo(() => computeStats(allReportsForStats as unknown as FieldReport[]), [allReportsForStats]);
-
   const isLeader = ['ADMIN', 'DIRECTOR', 'DEPUTY_DIRECTOR', 'CHIEF_COMMANDER'].includes(currentUser.role || '');
   
   const dashboardStats = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
-    
     if (isLeader) {
       return {
-        pending: allReportsForStats.filter(r => r.status === 'SUBMITTED').length,
-        rejected: allReportsForStats.filter(r => r.status === 'REJECTED' || r.status === 'REVISION_REQUESTED').length,
-        issues: allReportsForStats.filter(r => r.hasIssues).length,
+        pending: stats.submitted,
+        rejected: stats.rejected,
+        revisionRequested: stats.revisionRequested,
+        issues: stats.issues,
       }
     } else {
       return {
-        myToday: allReportsForStats.filter(r => r.createdById === currentUser.id && (r.reportDate as string).startsWith(today)).length,
-        myDrafts: allReportsForStats.filter(r => r.createdById === currentUser.id && r.status === 'DRAFT').length,
-        myRejected: allReportsForStats.filter(r => r.createdById === currentUser.id && (r.status === 'REJECTED' || r.status === 'REVISION_REQUESTED')).length,
+        myToday: reports.filter(r => r.createdById === currentUser.id).length,
+        myDrafts: reports.filter(r => r.createdById === currentUser.id && r.status === 'DRAFT').length,
+        myRejected: reports.filter(r => r.createdById === currentUser.id && r.status === 'REJECTED').length,
       }
     }
-  }, [allReportsForStats, currentUser.id, isLeader]);
+  }, [currentUser.id, isLeader, reports, stats]);
 
   // Handlers
   const handleViewDetail = useCallback((report: FieldReport) => {
@@ -255,6 +251,7 @@ export function ReportsWorkspace({
             unit: wl.unit,
             note: wl.note,
           })),
+          weeklyNote: data.weeklyNote,
         };
         result = await updateSiteReport(editReportData.id, payload);
       } else {
@@ -273,6 +270,7 @@ export function ReportsWorkspace({
             issues: data.issues,
             recommendations: data.recommendations,
             weatherCondition: data.weatherCondition,
+            weeklyNote: data.weeklyNote,
             isDraft: createAsDraft
           });
         } else {
@@ -647,13 +645,13 @@ export function ReportsWorkspace({
       </div>
 
       {/* Toolbar */}
-      <div className={`${isMobileFilterOpen ? 'block' : 'hidden'} sm:block`}>
+      <div className={`${isMobileFilterOpen ? 'block' : 'hidden'} sm:block sticky top-0 z-30 -mx-1 px-1 py-2 bg-slate-50/95 backdrop-blur supports-[backdrop-filter]:bg-slate-50/80`}>
         <ReportsToolbar
           search={search}
           onSearchChange={handleSearchChange}
           projectFilter={projectFilter}
           onProjectFilterChange={handleProjectFilterChange}
-          statusFilter={tab === 'pending' ? 'SUBMITTED' : tab === 'rejected' ? 'REJECTED_AND_REVISION' : statusFilter}
+          statusFilter={tab === 'pending' ? 'SUBMITTED' : tab === 'rejected' ? 'REJECTED' : tab === 'revision' ? 'REVISION_REQUESTED' : statusFilter}
           onStatusFilterChange={handleStatusFilterChange}
           typeFilter={tab === 'daily' ? 'DAILY' : tab === 'weekly' ? 'WEEKLY' : typeFilter}
           onTypeFilterChange={handleTypeFilterChange}

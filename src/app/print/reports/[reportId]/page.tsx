@@ -6,6 +6,11 @@ import path from "path";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { PrintReportToolbar } from "@/components/reports/print-report-toolbar";
+import { canAccessProject } from "@/lib/rbac";
+import { canPrintReport } from "@/lib/reports/report-workflow-policy";
+import { formatReportCreatorName } from "@/lib/reports/report-stats";
+import { getVietnamDateString } from "@/lib/reports/report-timezone";
+import { getStatusLabel } from "@/components/reports/types";
 
 const formatFileSize = (bytes: number | null | undefined | string | bigint) => {
   if (bytes === undefined || bytes === null || bytes === "") return "Không rõ dung lượng";
@@ -39,7 +44,7 @@ export default async function PrintReportPage({ params }: { params: Promise<{ re
     }
   });
 
-  if (!report) notFound();
+  if (!report || report.deletedAt) notFound();
 
   if (report.project?.deletedAt) {
     return (
@@ -60,20 +65,30 @@ export default async function PrintReportPage({ params }: { params: Promise<{ re
     );
   }
 
-  // Fetch audit logs separately
+  const policyUser = { id: session.id, role: session.role };
+  const hasProjectAccess = await canAccessProject(policyUser, report.projectId);
+  if (!canPrintReport(report, policyUser, hasProjectAccess)) {
+    return (
+      <div className="p-8 text-center text-red-600 font-bold">
+        Bạn không có quyền xem báo cáo này (Mã: {report.reportNo}).
+      </div>
+    );
+  }
+
+  // Fetch audit logs only after report-level authorization.
   const auditLogs = await prisma.auditLog.findMany({
     where: { entityType: "SiteReport", entityId: reportId },
     include: { user: true },
     orderBy: { createdAt: 'desc' },
   });
 
-  // Authorization MVP
-  const isSystemAdmin = ['ADMIN', 'DIRECTOR'].includes(session.role);
+  // Authorization already enforced by report policy above.
+  const isSystemAdmin = true;
   if (!isSystemAdmin && report.createdById !== session.id) {
     return (
       <div className="p-8 text-center text-red-600 font-bold">
         Bạn không có quyền xem báo cáo này (Mã: {report.reportNo}).
-        {/* TODO: Implement ProjectUser RBAC */}
+        {/* Project access is enforced by report policy before audit log loading. */}
       </div>
     );
   }
@@ -89,6 +104,9 @@ export default async function PrintReportPage({ params }: { params: Promise<{ re
 
   // Format Status
   const getStatusText = (status: string) => {
+    if (["APPROVED", "SUBMITTED", "REJECTED", "REVISION_REQUESTED", "DRAFT"].includes(status)) {
+      return getStatusLabel(status as Parameters<typeof getStatusLabel>[0]);
+    }
     switch(status) {
       case 'APPROVED': return 'Đã duyệt';
       case 'SUBMITTED': return 'Chờ duyệt / Đã gửi';
@@ -149,7 +167,7 @@ export default async function PrintReportPage({ params }: { params: Promise<{ re
               ? `Từ ${format(report.weekStartDate!, 'dd/MM/yyyy')} đến ${format(report.weekEndDate!, 'dd/MM/yyyy')}`
               : format(report.reportDate, 'EEEE, dd/MM/yyyy', { locale: vi })}
           </p>
-          <p><span className="font-semibold w-24 inline-block">Người lập:</span> {report.reporterName || report.createdBy?.name || 'N/A'}</p>
+          <p><span className="font-semibold w-24 inline-block">Người lập:</span> {formatReportCreatorName(report)}</p>
         </div>
         <div>
           <p><span className="font-semibold w-24 inline-block">Trạng thái:</span> <span className="font-bold">{getStatusText(report.status)}</span></p>
@@ -369,7 +387,7 @@ export default async function PrintReportPage({ params }: { params: Promise<{ re
         <div>
           <p className="mb-16">Người lập báo cáo</p>
           <p className="font-normal text-slate-500">(Ký, ghi rõ họ tên)</p>
-          <p className="mt-2 text-slate-800">{report.reporterName || report.createdBy?.name || ''}</p>
+          <p className="mt-2 text-slate-800">{formatReportCreatorName(report)}</p>
         </div>
         <div>
           <p className="mb-16">Chỉ huy trưởng</p>

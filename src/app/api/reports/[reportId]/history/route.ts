@@ -38,7 +38,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ repo
       action: h.action.replace("SITE_REPORT_", ""), // SUBMITTED, APPROVED, REJECTED
       actor: h.actorName,
       role: h.actorRole,
-      timestamp: new Date(h.createdAt).toLocaleString('vi-VN'),
+      timestamp: h.createdAt ? new Date(h.createdAt).toLocaleString('vi-VN') : "",
       detail: h.detail
     }));
 

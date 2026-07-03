@@ -4,6 +4,7 @@ import { getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { ROLE_DISPLAY_NAMES } from '@/lib/rbac';
 import { getGlobalProjectContext } from '@/lib/project-context';
+import { serializePrisma } from '@/lib/serialize';
 
 export async function AppShell({ children }: { children: React.ReactNode }) {
   const session = await getSession();
@@ -13,7 +14,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   const roleDisplayName = ROLE_DISPLAY_NAMES[session.role] || session.role;
-  const globalContext = await getGlobalProjectContext(session);
+  const globalContext = serializePrisma(await getGlobalProjectContext(session));
 
   return (
     <div className="flex min-h-dvh w-full bg-slate-50 text-slate-900">

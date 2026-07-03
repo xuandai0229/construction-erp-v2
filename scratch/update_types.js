@@ -1,0 +1,1 @@
+const fs = require("fs"); let code = fs.readFileSync("src/components/reports/types.ts", "utf8"); code = code.replace(/nextWeekStartDate\?: string;\n  nextWeekEndDate\?: string;\n  nextWeekPlans\?: NextWeekPlan\[\];/g, "weeklyNote?: import(\\"@/lib/reports/weekly-report-utils\\").WeeklyGeneralNote;"); fs.writeFileSync("src/components/reports/types.ts", code);

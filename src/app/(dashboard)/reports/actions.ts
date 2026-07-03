@@ -9,9 +9,28 @@ import {
   submitSiteReportTransition,
 } from "@/lib/reports/report-transition-service";
 import { createSiteReportWithAudit } from "@/lib/reports/report-create-service";
-import { canEditReportContent, canSoftDeleteReport } from "@/lib/reports/report-workflow-policy";
-import { UserRole } from "@prisma/client";
-import { getAccessibleProjectIds } from "@/lib/rbac";
+import {
+  canApproveReport,
+  canCreateReport,
+  canDeleteReport,
+  canRejectReport,
+  canSubmitReport,
+  canUpdateReport,
+  canViewReportHistory,
+} from "@/lib/reports/report-workflow-policy";
+import { Prisma, UserRole } from "@prisma/client";
+import { canAccessProject, getAccessibleProjectIds } from "@/lib/rbac";
+import { computeReportStats } from "@/lib/reports/report-stats";
+import { WeeklyGeneralNote, serializeWeeklyGeneralNote } from "@/lib/reports/weekly-report-utils";
+import {
+  getVietnamCustomDateRange,
+  getVietnamMonthRange,
+  getVietnamTodayRange,
+  getVietnamWeekRange,
+  vietnamDateTimeToUtc,
+  vietnamEndOfDayUtc,
+  vietnamStartOfDayUtc,
+} from "@/lib/reports/report-timezone";
 
 export async function getActiveProjects() {
   const session = await getSession();
@@ -94,6 +113,11 @@ export async function createSiteReport(data: Record<string, unknown>, isDraft: b
     throw new Error("Không có quyền truy cập dự án này");
   }
 
+  const hasProjectAccess = accessibleProjectIds === null || accessibleProjectIds.includes(pId);
+  if (!canCreateReport(user, hasProjectAccess)) {
+    throw new Error("KhÃ´ng cÃ³ quyá»n táº¡o bÃ¡o cÃ¡o hiá»‡n trÆ°á»ng.");
+  }
+
   const status = isDraft ? "DRAFT" : "SUBMITTED";
   const report = await createSiteReportWithAudit(
     prisma,
@@ -101,9 +125,9 @@ export async function createSiteReport(data: Record<string, unknown>, isDraft: b
     {
       projectId: String(data.projectId),
       type: (data.type as "DAILY" | "WEEKLY") || "DAILY",
-      reportDate: new Date(String(data.date)),
-      weekStartDate: data.weekStartDate ? new Date(String(data.weekStartDate)) : undefined,
-      weekEndDate: data.weekEndDate ? new Date(String(data.weekEndDate)) : undefined,
+      reportDate: vietnamDateTimeToUtc(String(data.date), String(data.time || "07:00")),
+      weekStartDate: data.weekStartDate ? vietnamStartOfDayUtc(String(data.weekStartDate)) : undefined,
+      weekEndDate: data.weekEndDate ? vietnamEndOfDayUtc(String(data.weekEndDate)) : undefined,
       weatherCondition: (data.weatherCondition as "SUNNY" | "CLOUDY" | "OVERCAST" | "LIGHT_RAIN" | "HEAVY_RAIN" | "WINDY" | "STORM" | "OTHER") || undefined,
       weatherTemperature: data.weatherTemperature ? Number(data.weatherTemperature) : undefined,
       summary: data.summary ? String(data.summary) : undefined,
@@ -201,7 +225,145 @@ export type ReportPageFilters = {
   reportId?: string;
 };
 
-export async function getSiteReportsPage(filters: ReportPageFilters) {
+const VALID_REPORT_STATUSES = [
+  "DRAFT",
+  "SUBMITTED",
+  "APPROVED",
+  "REJECTED",
+  "REVISION_REQUESTED",
+  "LOCKED",
+  "CANCELLED",
+] as const;
+
+const ISSUE_REPORT_WHERE: Prisma.SiteReportWhereInput = {
+  OR: [
+    {
+      AND: [
+        { issues: { not: null, notIn: ["", " "] } },
+        { NOT: { issues: { startsWith: "Không có" } } },
+        { NOT: { issues: { startsWith: "không có" } } },
+        { NOT: { issues: { startsWith: "KhÃ´ng cÃ³" } } },
+        { NOT: { issues: { startsWith: "khÃ´ng cÃ³" } } },
+      ],
+    },
+    {
+      lines: {
+        some: {
+          issueNote: { not: null, notIn: ["", " "] },
+        },
+      },
+    },
+  ],
+};
+
+function addAnd(where: Prisma.SiteReportWhereInput, clause: Prisma.SiteReportWhereInput) {
+  const existing = where.AND;
+  where.AND = Array.isArray(existing) ? [...existing, clause] : existing ? [existing, clause] : [clause];
+}
+
+function isValidReportStatus(status: unknown): status is (typeof VALID_REPORT_STATUSES)[number] {
+  return typeof status === "string" && VALID_REPORT_STATUSES.includes(status as (typeof VALID_REPORT_STATUSES)[number]);
+}
+
+function applyDateRange(where: Prisma.SiteReportWhereInput, dateRange?: string) {
+  if (!dateRange) return;
+
+  if (dateRange === "today") {
+    const range = getVietnamTodayRange();
+    where.reportDate = { gte: range.start, lte: range.end };
+    return;
+  }
+
+  if (dateRange === "thisWeek") {
+    const range = getVietnamWeekRange();
+    where.reportDate = { gte: range.start, lte: range.end };
+    return;
+  }
+
+  if (dateRange === "thisMonth") {
+    const range = getVietnamMonthRange();
+    where.reportDate = { gte: range.start, lte: range.end };
+    return;
+  }
+
+  if (dateRange.includes("_")) {
+    const [startStr, endStr] = dateRange.split("_");
+    if (startStr && endStr) {
+      const range = getVietnamCustomDateRange(startStr, endStr);
+      where.reportDate = { gte: range.start, lte: range.end };
+    }
+  }
+}
+
+function buildSiteReportsWhere(
+  filters: ReportPageFilters | Record<string, unknown>,
+  accessibleProjectIds: string[] | null,
+): Prisma.SiteReportWhereInput {
+  const where: Prisma.SiteReportWhereInput = {
+    deletedAt: null,
+    project: { deletedAt: null },
+  };
+
+  if (accessibleProjectIds !== null) {
+    where.projectId = { in: accessibleProjectIds };
+  }
+
+  if (filters.tab === "daily") where.type = "DAILY";
+  if (filters.tab === "weekly") where.type = "WEEKLY";
+  if (filters.tab === "pending") where.status = "SUBMITTED";
+  if (filters.tab === "rejected") where.status = "REJECTED";
+  if (filters.tab === "revision") where.status = "REVISION_REQUESTED";
+  if (filters.tab === "needsAction") where.status = { in: ["SUBMITTED", "REVISION_REQUESTED"] };
+  if (filters.tab === "issues") addAnd(where, ISSUE_REPORT_WHERE);
+
+  if (typeof filters.reportId === "string" && filters.reportId) {
+    where.id = filters.reportId;
+  }
+
+  if (typeof filters.projectId === "string" && filters.projectId !== "all" && filters.projectId !== "ALL") {
+    if (accessibleProjectIds !== null && !accessibleProjectIds.includes(filters.projectId)) {
+      where.id = "__NO_ACCESS__";
+      return where;
+    }
+    where.projectId = filters.projectId;
+  }
+
+  const tabLocksType = typeof filters.tab === "string" && /^(daily|weekly)$/.test(filters.tab);
+  if (typeof filters.type === "string" && filters.type !== "all" && filters.type !== "ALL" && !tabLocksType) {
+    if (filters.type === "DAILY" || filters.type === "WEEKLY") where.type = filters.type;
+  }
+
+  const tabLocksStatus =
+    typeof filters.tab === "string" && /^(pending|rejected|revision|needsAction)$/.test(filters.tab);
+  if (typeof filters.status === "string" && filters.status !== "all" && filters.status !== "ALL" && !tabLocksStatus) {
+    if (filters.status === "NEEDS_ACTION") {
+      where.status = { in: ["SUBMITTED", "REVISION_REQUESTED"] };
+    } else if (filters.status === "ISSUE") {
+      addAnd(where, ISSUE_REPORT_WHERE);
+    } else if (isValidReportStatus(filters.status)) {
+      where.status = filters.status;
+    }
+  }
+
+  if (typeof filters.q === "string" && filters.q.trim()) {
+    const q = filters.q.trim();
+    where.OR = [
+      { reportNo: { contains: q } },
+      { title: { contains: q } },
+      { reporterName: { contains: q } },
+      { createdBy: { name: { contains: q } } },
+      { createdBy: { email: { contains: q } } },
+      { project: { name: { contains: q } } },
+      { project: { code: { contains: q } } },
+      { lines: { some: { workContent: { contains: q } } } },
+    ];
+  }
+
+  applyDateRange(where, typeof filters.dateRange === "string" ? filters.dateRange : undefined);
+  return where;
+}
+
+async function getSiteReportsPageLegacy(filters: ReportPageFilters) {
   const session = await getSession();
   if (!session) throw new Error("Unauthorized");
   
@@ -222,7 +384,7 @@ export async function getSiteReportsPage(filters: ReportPageFilters) {
   if (filters.tab === "daily") where.type = "DAILY";
   if (filters.tab === "weekly") where.type = "WEEKLY";
   if (filters.tab === "pending") where.status = "SUBMITTED";
-  if (filters.tab === "rejected") where.status = { in: ["REJECTED", "REVISION_REQUESTED"] };
+  if (filters.tab === "rejected") where.status = "REJECTED";
   if (filters.tab === "issues") {
     where.AND = [
       ...(where.AND || []),
@@ -260,8 +422,8 @@ export async function getSiteReportsPage(filters: ReportPageFilters) {
   }
   if (filters.type && filters.type !== "all" && !filters.tab?.match(/^(daily|weekly)$/)) where.type = filters.type;
   if (filters.status && filters.status !== "all" && !filters.tab?.match(/^(pending|rejected)$/)) {
-    if (filters.status === "REJECTED_AND_REVISION") {
-      where.status = { in: ["REJECTED", "REVISION_REQUESTED"] };
+    if (filters.status === "NEEDS_ACTION") {
+      where.status = { in: ["SUBMITTED", "REVISION_REQUESTED"] };
     } else if (filters.status === "ISSUE") {
       where.AND = [
         ...(where.AND || []),
@@ -364,9 +526,67 @@ export async function getSiteReportsPage(filters: ReportPageFilters) {
   };
 }
 
+export async function getSiteReportsPage(filters: ReportPageFilters) {
+  const session = await getSession();
+  if (!session) throw new Error("Unauthorized");
+
+  const user = { id: session.id, role: session.role as UserRole };
+  const accessibleProjectIds = await getAccessibleProjectIds(user);
+  const where = buildSiteReportsWhere(filters, accessibleProjectIds);
+
+  const total = await prisma.siteReport.count({ where });
+  const page = Math.max(1, filters.page || 1);
+  const pageSize = Math.max(1, Math.min(50, filters.pageSize || 20));
+  const skip = (page - 1) * pageSize;
+
+  const [items, statsSource] = await Promise.all([
+    prisma.siteReport.findMany({
+      where,
+      include: {
+        project: { select: { name: true, status: true } },
+        createdBy: { select: { id: true, name: true, email: true, role: true } },
+        lines: { orderBy: { sortOrder: "asc" } },
+        attachments: true,
+      },
+      orderBy: { reportDate: "desc" },
+      skip,
+      take: pageSize,
+    }),
+    prisma.siteReport.findMany({
+      where,
+      select: {
+        status: true,
+        issues: true,
+        lines: { select: { issueNote: true } },
+      },
+    }),
+  ]);
+
+  return {
+    items,
+    total,
+    stats: computeReportStats(statsSource),
+    page,
+    pageSize,
+    totalPages: Math.ceil(total / pageSize),
+  };
+}
+
 export async function submitSiteReport(reportId: string) {
   const session = await getSession();
   if (!session) throw new Error("Unauthorized");
+
+  const user = { id: session.id, role: session.role as UserRole };
+  const report = await prisma.siteReport.findFirst({
+    where: { id: reportId, deletedAt: null, project: { deletedAt: null } },
+    select: { id: true, projectId: true, status: true, createdById: true, deletedAt: true },
+  });
+  if (!report) throw new Error("KhÃ´ng tÃ¬m tháº¥y bÃ¡o cÃ¡o");
+
+  const hasProjectAccess = await canAccessProject(user, report.projectId);
+  if (!canSubmitReport(report, user, hasProjectAccess)) {
+    throw new Error("KhÃ´ng cÃ³ quyá»n gá»­i bÃ¡o cÃ¡o nÃ y.");
+  }
 
   const updated = await submitSiteReportTransition(prisma, reportId, session);
 
@@ -378,6 +598,18 @@ export async function approveSiteReport(reportId: string, note?: string) {
   const session = await getSession();
   if (!session) throw new Error("Unauthorized");
 
+  const user = { id: session.id, role: session.role as UserRole };
+  const report = await prisma.siteReport.findFirst({
+    where: { id: reportId, deletedAt: null, project: { deletedAt: null } },
+    select: { id: true, projectId: true, status: true, createdById: true, deletedAt: true },
+  });
+  if (!report) throw new Error("KhÃ´ng tÃ¬m tháº¥y bÃ¡o cÃ¡o");
+
+  const hasProjectAccess = await canAccessProject(user, report.projectId);
+  if (!canApproveReport(report, user, hasProjectAccess)) {
+    throw new Error("KhÃ´ng cÃ³ quyá»n duyá»‡t bÃ¡o cÃ¡o nÃ y.");
+  }
+
   const updated = await approveSiteReportTransition(prisma, reportId, session, note);
 
   revalidatePath("/reports");
@@ -387,6 +619,18 @@ export async function approveSiteReport(reportId: string, note?: string) {
 export async function rejectSiteReport(reportId: string, reason: string) {
   const session = await getSession();
   if (!session) throw new Error("Unauthorized");
+
+  const user = { id: session.id, role: session.role as UserRole };
+  const report = await prisma.siteReport.findFirst({
+    where: { id: reportId, deletedAt: null, project: { deletedAt: null } },
+    select: { id: true, projectId: true, status: true, createdById: true, deletedAt: true },
+  });
+  if (!report) throw new Error("KhÃ´ng tÃ¬m tháº¥y bÃ¡o cÃ¡o");
+
+  const hasProjectAccess = await canAccessProject(user, report.projectId);
+  if (!canRejectReport(report, user, hasProjectAccess)) {
+    throw new Error("KhÃ´ng cÃ³ quyá»n tá»« chá»‘i bÃ¡o cÃ¡o nÃ y.");
+  }
 
   const updated = await rejectSiteReportTransition(
     prisma,
@@ -400,6 +644,21 @@ export async function rejectSiteReport(reportId: string, reason: string) {
 }
 
 export async function getSiteReportAuditLogs(reportId: string) {
+  const session = await getSession();
+  if (!session) throw new Error("Unauthorized");
+
+  const user = { id: session.id, role: session.role as UserRole };
+  const report = await prisma.siteReport.findFirst({
+    where: { id: reportId, deletedAt: null, project: { deletedAt: null } },
+    select: { id: true, projectId: true, status: true, createdById: true, deletedAt: true },
+  });
+  if (!report) throw new Error("KhÃ´ng tÃ¬m tháº¥y bÃ¡o cÃ¡o");
+
+  const hasProjectAccess = await canAccessProject(user, report.projectId);
+  if (!canViewReportHistory(report, user, hasProjectAccess)) {
+    throw new Error("KhÃ´ng cÃ³ quyá»n xem lá»‹ch sá»­ bÃ¡o cÃ¡o nÃ y.");
+  }
+
   const logs = await prisma.auditLog.findMany({
     where: { entityType: "SiteReport", entityId: reportId },
     include: { user: { select: { name: true, avatar: true, role: true } } },
@@ -423,7 +682,7 @@ export async function getSiteReportAuditLogs(reportId: string) {
       action: log.action,
       actorName: log.user?.name || "Người dùng",
       actorRole: log.user?.role || "USER",
-      createdAt: log.createdAt,
+      createdAt: log.createdAt ? log.createdAt.toISOString() : null,
       detail
     };
   });
@@ -431,118 +690,138 @@ export async function getSiteReportAuditLogs(reportId: string) {
 
 // === PHASE 5: WEEKLY AGGREGATION ===
 
-export async function getWeeklyReportPreview(projectId: string, weekStartDate: Date, weekEndDate: Date) {
+export async function getWeeklyReportSummary(projectId: string, start: Date, end: Date, options?: { includeSubmitted?: boolean, includeDraft?: boolean }) {
   const session = await getSession();
   if (!session) throw new Error("Unauthorized");
 
-  const accessibleProjectIds = await getAccessibleProjectIds({ id: session.id, role: session.role as UserRole });
-  if (accessibleProjectIds !== null && !accessibleProjectIds.includes(projectId)) {
-    throw new Error("Không có quyền truy cập dự án này");
-  }
+  const user = { id: session.id, role: session.role as import('@prisma/client').UserRole };
+  const hasProjectAccess = await canAccessProject(user, projectId);
+  if (!hasProjectAccess) throw new Error("Unauthorized");
 
-  // 1. Check if a weekly report already exists for this period
-  const existingWeekly = await prisma.siteReport.findFirst({
-    where: {
-      projectId,
-      type: "WEEKLY",
-      weekStartDate: { gte: weekStartDate, lte: weekStartDate },
-      weekEndDate: { gte: weekEndDate, lte: weekEndDate },
-      deletedAt: null
-    }
-  });
+  const fromDate = start.toISOString().split("T")[0];
+  const toDate = end.toISOString().split("T")[0];
 
-  if (existingWeekly) {
-    throw new Error(`Đã tồn tại báo cáo tuần từ ${weekStartDate.toLocaleDateString("vi-VN")} đến ${weekEndDate.toLocaleDateString("vi-VN")}`);
-  }
+  const statuses = ["APPROVED"];
+  if (options?.includeSubmitted) statuses.push("SUBMITTED", "REVISION_REQUESTED");
+  if (options?.includeDraft) statuses.push("DRAFT");
 
-  // 2. Fetch all reports in this week
   const reports = await prisma.siteReport.findMany({
     where: {
       projectId,
       type: "DAILY",
-      reportDate: {
-        gte: weekStartDate,
-        lte: weekEndDate
-      },
-      deletedAt: null
+      deletedAt: null,
+      status: { in: statuses as any[] },
+      reportDate: { gte: start, lte: end }
     },
     include: {
       lines: true,
-      attachments: true
-    }
+      attachments: { select: { id: true, kind: true } }
+    },
+    orderBy: { reportDate: "asc" }
   });
+
+  const dayStatuses: any[] = [];
+  const curr = new Date(start);
+  while (curr <= end) {
+    const dStr = curr.toISOString().split("T")[0];
+    const dayReps = reports.filter(r => (r.reportDate as Date).toISOString().split("T")[0] === dStr);
+    dayStatuses.push({
+      date: dStr,
+      hasReport: dayReps.length > 0,
+      approvedCount: dayReps.filter(r => r.status === "APPROVED").length,
+      submittedCount: dayReps.filter(r => r.status === "SUBMITTED" || r.status === "REVISION_REQUESTED").length,
+      draftCount: dayReps.filter(r => r.status === "DRAFT").length,
+      rejectedCount: dayReps.filter(r => r.status === "REJECTED").length,
+      hasIssues: dayReps.some(r => r.issues && r.issues.trim() !== "Không có")
+    });
+    curr.setDate(curr.getDate() + 1);
+  }
 
   const approvedReports = reports.filter(r => r.status === "APPROVED");
-  const pendingReports = reports.filter(r => r.status === "SUBMITTED");
-  const rejectedReports = reports.filter(r => r.status === "REJECTED");
   
-  // Calculate missing days (assuming Mon-Sat or Mon-Sun, let's just count days with reports vs total days)
-  const diffTime = Math.abs(weekEndDate.getTime() - weekStartDate.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-  const daysWithReports = new Set(reports.map(r => r.reportDate.toISOString().split('T')[0])).size;
-  const missingDays = diffDays - daysWithReports;
+  let emptyReason = null;
+  if (approvedReports.length === 0 && reports.length === 0) {
+    emptyReason = "NO_REPORTS_IN_RANGE";
+  } else if (approvedReports.length === 0 && reports.length > 0) {
+    emptyReason = "NO_APPROVED_REPORTS";
+  }
 
-  let totalPhotos = 0;
-  let totalFiles = 0;
+  const stats = {
+    approvedReports: approvedReports.length,
+    submittedReports: reports.filter(r => r.status === "SUBMITTED" || r.status === "REVISION_REQUESTED").length,
+    rejectedReports: reports.filter(r => r.status === "REJECTED").length,
+    emptyDays: dayStatuses.filter(d => !d.hasReport).length,
+    workLineCount: 0,
+    attachmentCount: reports.reduce((acc, r) => acc + r.attachments.length, 0)
+  };
 
-  approvedReports.forEach(r => {
-    r.attachments.forEach(a => {
-      if (a.kind === "PHOTO") totalPhotos++;
-      else totalFiles++;
-    });
-  });
+  const groupMap = new Map<string, { categoryId: string, categoryName: string, itemsMap: Map<string, any> }>();
 
-  // Aggregate items
-  const itemMap = new Map<string, {
-    fieldProgressItemId?: string | null;
-    workName: string;
-    area?: string | null;
-    unit?: string | null;
-    totalQuantity: number;
-    reportCount: number;
-    sourceReportIds: Set<string>;
-  }>();
-  
-  for (const report of approvedReports) {
-    for (const line of report.lines) {
-      const key = line.fieldProgressItemId || `${line.workName || line.workContent}_${line.unit || ''}_${line.area || ''}`;
-      if (!itemMap.has(key)) {
-        itemMap.set(key, {
-          fieldProgressItemId: line.fieldProgressItemId,
-          workName: line.workName || line.workContent,
-          area: line.area,
-          unit: line.unit,
-          totalQuantity: 0,
-          reportCount: 0,
-          sourceReportIds: new Set<string>()
-        });
+  for (const rep of approvedReports) {
+    const repDate = (rep.reportDate as Date).toISOString().split("T")[0];
+    for (const line of rep.lines) {
+      stats.workLineCount++;
+      // Determine category (using wbsItemId or area or default)
+      const categoryId = line.area || "default";
+      const categoryName = line.area || "Chưa phân hạng mục";
+
+      if (!groupMap.has(categoryId)) {
+        groupMap.set(categoryId, { categoryId, categoryName, itemsMap: new Map() });
       }
       
-      const entry = itemMap.get(key);
-      if (entry) {
-        entry.totalQuantity += Number(line.quantityToday || 0);
-        entry.sourceReportIds.add(report.id);
+      const group = groupMap.get(categoryId)!;
+      const workKey = line.fieldProgressItemId || `${line.workName || line.workContent}_${line.unit || ''}`;
+      
+      if (!group.itemsMap.has(workKey)) {
+        group.itemsMap.set(workKey, {
+          workItemId: line.fieldProgressItemId,
+          workContent: line.workName || line.workContent,
+          unit: line.unit,
+          quantity: 0,
+          dates: new Set<string>(),
+          sourceReports: [],
+          sourceStatus: rep.status,
+          hasIssue: false,
+          issueNote: "",
+          attachmentCount: 0
+        });
       }
+
+      const item = group.itemsMap.get(workKey)!;
+      item.quantity += Number(line.quantityToday || 0);
+      item.dates.add(repDate);
+      if (!item.sourceReports.find((sr: any) => sr.id === rep.id)) {
+        item.sourceReports.push({ id: rep.id, reportNo: rep.reportNo, date: repDate });
+      }
+      if (line.issueNote) {
+        item.hasIssue = true;
+        item.issueNote = (item.issueNote ? item.issueNote + " | " : "") + line.issueNote;
+      }
+      // approximation for line attachments
+      item.attachmentCount += rep.attachments.length; // simplify for now
     }
   }
 
-  const aggregatedItems = Array.from(itemMap.values()).map(item => ({
-    ...item,
-    reportCount: item.sourceReportIds.size,
-    sourceReportIds: Array.from(item.sourceReportIds)
+  const groups = Array.from(groupMap.values()).map(g => ({
+    categoryId: g.categoryId,
+    categoryName: g.categoryName,
+    items: Array.from(g.itemsMap.values()).map(item => ({
+      ...item,
+      dates: Array.from(item.dates),
+      quantity: item.quantity
+    }))
   }));
 
+  if (approvedReports.length > 0 && stats.workLineCount === 0) {
+    emptyReason = "HAS_REPORTS_BUT_NO_WORK_LINES";
+  }
+
   return {
-    project: await prisma.project.findUnique({ where: { id: projectId } }),
-    weekStartDate,
-    weekEndDate,
-    approvedCount: approvedReports.length,
-    pendingCount: pendingReports.length,
-    rejectedCount: rejectedReports.length,
-    missingDays,
-    totalPhotos,
-    totalFiles,
-    aggregatedItems
+    range: { fromDate, toDate },
+    dayStatuses,
+    stats,
+    groups,
+    emptyReason
   };
 }
 
@@ -554,18 +833,28 @@ export async function createWeeklyReportFromApprovedDailyReports(input: {
   issues?: string;
   recommendations?: string;
   weatherCondition?: string;
+  nextWeekStartDate?: string;
+  nextWeekEndDate?: string;
+  nextWeekPlans?: Record<string, unknown>[];
+  weeklyNote?: any;
   isDraft: boolean;
 }) {
   const session = await getSession();
   if (!session) throw new Error("Unauthorized");
 
-  const start = new Date(input.weekStartDate);
-  const end = new Date(input.weekEndDate);
+  const user = { id: session.id, role: session.role as UserRole };
+  const hasProjectAccess = await canAccessProject(user, input.projectId);
+  if (!canCreateReport(user, hasProjectAccess)) {
+    throw new Error("KhÃ´ng cÃ³ quyá»n táº¡o bÃ¡o cÃ¡o tuáº§n.");
+  }
+
+  const start = vietnamStartOfDayUtc(input.weekStartDate);
+  const end = vietnamEndOfDayUtc(input.weekEndDate);
 
   // Re-run preview to get exact lines
-  const preview = await getWeeklyReportPreview(input.projectId, start, end);
+  const preview = await getWeeklyReportSummary(input.projectId, start, end);
   
-  if (preview.approvedCount === 0) {
+  if (preview.stats.approvedReports === 0) {
     throw new Error("Không có báo cáo ngày nào được duyệt trong tuần này để tổng hợp.");
   }
 
@@ -591,7 +880,7 @@ export async function createWeeklyReportFromApprovedDailyReports(input: {
       data: {
         projectId: input.projectId,
         type: "WEEKLY",
-        reportDate: new Date(),
+        reportDate: vietnamDateTimeToUtc(input.weekEndDate, "17:00"),
         weekStartDate: start,
         weekEndDate: end,
         status,
@@ -602,18 +891,18 @@ export async function createWeeklyReportFromApprovedDailyReports(input: {
         issues: input.issues,
         recommendations: input.recommendations,
         weatherCondition: (input.weatherCondition as "SUNNY" | "CLOUDY" | "OVERCAST" | "LIGHT_RAIN" | "HEAVY_RAIN" | "WINDY" | "STORM" | "OTHER") || "SUNNY",
+        generalNote: input.weeklyNote ? serializeWeeklyGeneralNote(input.weeklyNote) : null,
         lines: {
-          create: preview.aggregatedItems.map((item, index) => ({
-            projectId: input.projectId,
-            workContent: item.workName,
-            workName: item.workName,
-            area: item.area,
-            unit: item.unit,
-            quantityToday: item.totalQuantity,
-            fieldProgressItemId: item.fieldProgressItemId,
-            sortOrder: index,
-            note: `Được tổng hợp từ ${item.reportCount} báo cáo ngày đã duyệt`
-          }))
+          create: preview.groups.flatMap(group => 
+            group.items.map(item => ({
+              projectId: input.projectId,
+              workContent: item.workContent,
+              workName: item.workContent,
+              unit: item.unit,
+              quantityToday: item.quantity,
+              note: `Hạng mục: ${group.categoryName}`
+            }))
+          ).map((line, index) => ({ ...line, sortOrder: index }))
         }
       }
     });
@@ -674,9 +963,10 @@ export async function updateSiteReport(reportId: string, data: Record<string, un
   }
 
   // Chuyển session user thành format cần thiết cho policy
-  const policyUser = { id: session.id, role: user?.role as UserRole };
+  const policyUser = { id: session.id, role: (user?.role || session.role) as UserRole };
+  const hasProjectAccess = await canAccessProject(policyUser, report.projectId);
 
-  if (!canEditReportContent(report, policyUser)) {
+  if (!canUpdateReport(report, policyUser, hasProjectAccess)) {
     if (report.status !== "DRAFT" && report.status !== "REJECTED") {
       throw new Error("Chỉ được sửa báo cáo nháp hoặc báo cáo bị từ chối.");
     }
@@ -695,7 +985,7 @@ export async function updateSiteReport(reportId: string, data: Record<string, un
     const result = await tx.siteReport.update({
       where: { id: reportId },
       data: {
-        reportDate: data.date ? new Date(String(data.date)) : undefined,
+        reportDate: data.date ? vietnamDateTimeToUtc(String(data.date), String(data.time || "07:00")) : undefined,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         weatherCondition: data.weatherCondition as any || undefined,
         weatherTemperature: data.weatherTemperature ? Number(data.weatherTemperature) : undefined,
@@ -707,6 +997,7 @@ export async function updateSiteReport(reportId: string, data: Record<string, un
         recommendations: data.recommendations ? String(data.recommendations) : null,
         gpsLat: data.gpsLat ? Number(data.gpsLat) : null,
         gpsLng: data.gpsLng ? Number(data.gpsLng) : null,
+        generalNote: report.type === 'WEEKLY' ? (data.weeklyNote ? serializeWeeklyGeneralNote(data.weeklyNote as any) : null) : report.generalNote,
         // Optional status update if sent (e.g., submit immediately) - wait, only allow DRAFT or SUBMITTED if explicitly told, but we just leave it or handle it if needed
         // For now, do not change status unless explicit
         lines: {
@@ -776,9 +1067,10 @@ export async function softDeleteSiteReport(reportId: string) {
     throw new Error("Không tìm thấy báo cáo hoặc báo cáo đã bị xóa.");
   }
 
-  const policyUser = { id: session.id, role: user?.role as UserRole };
+  const policyUser = { id: session.id, role: (user?.role || session.role) as UserRole };
+  const hasProjectAccess = await canAccessProject(policyUser, report.projectId);
 
-  if (!canSoftDeleteReport(report, policyUser)) {
+  if (!canDeleteReport(report, policyUser, hasProjectAccess)) {
     if (report.status === "APPROVED" || report.status === "LOCKED" || report.status === "CANCELLED") {
       throw new Error("Không thể xóa báo cáo đã duyệt hoặc đã khóa.");
     }

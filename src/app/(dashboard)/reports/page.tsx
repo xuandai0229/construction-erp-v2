@@ -1,12 +1,14 @@
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { ReportsWorkspace } from "@/components/reports/reports-workspace";
-import { getSiteReports, getActiveProjects, getSiteReportsPage } from "./actions";
+import { getActiveProjects, getSiteReportsPage } from "./actions";
 import { FieldReport, ReportType, WeatherCondition, ReportStatus } from "@/components/reports/types";
-import { format } from "date-fns";
-import { SiteReportAttachment } from "@prisma/client";
 import fs from "fs";
 import path from "path";
+import { formatReportCreatorName } from "@/lib/reports/report-stats";
+import { getVietnamDateString, getVietnamTimeString } from "@/lib/reports/report-timezone";
+import { parseWeeklyGeneralNote } from "@/lib/reports/weekly-report-utils";
+import { serializeDate } from "@/lib/reports/report-serializers";
 
 const formatFileSize = (bytes: number | null | undefined | string | bigint) => {
   if (bytes === undefined || bytes === null || bytes === "") return "Không rõ dung lượng";
@@ -26,6 +28,7 @@ export const metadata = {
 };
 
 import { getGlobalProjectContext } from "@/lib/project-context";
+import { serializePrisma } from "@/lib/serialize";
 
 export default async function ReportsPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
   const session = await getSession();
@@ -33,7 +36,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: { [k
 
   const resolvedParams = await searchParams;
   const urlProjectId = typeof resolvedParams.projectId === "string" ? resolvedParams.projectId : undefined;
-  const globalContext = await getGlobalProjectContext(session, urlProjectId);
+  const globalContext = serializePrisma(await getGlobalProjectContext(session, urlProjectId));
 
   const filters = {
     tab: typeof resolvedParams.tab === "string" ? resolvedParams.tab : undefined,
@@ -48,7 +51,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: { [k
   };
 
   const pageData = await getSiteReportsPage(filters);
-  const projects = await getActiveProjects();
+  const projects = (await getActiveProjects()).map(p => ({ id: p.id, code: p.code, name: p.name }));
   
   // Map backend model to frontend FieldReport
   const reports: FieldReport[] = pageData.items.map((r: Record<string, unknown>) => ({
@@ -59,13 +62,14 @@ export default async function ReportsPage({ searchParams }: { searchParams: { [k
     projectId: r.projectId as string,
     projectName: (r.project as { name: string; status?: string })?.name || 'Không xác định',
     projectStatus: (r.project as { name: string; status?: string })?.status,
-    date: format(r.reportDate as Date, 'yyyy-MM-dd'),
-    time: format(r.reportDate as Date, 'HH:mm'),
-    weekStartDate: r.weekStartDate ? format(r.weekStartDate as Date, 'yyyy-MM-dd') : undefined,
-    weekEndDate: r.weekEndDate ? format(r.weekEndDate as Date, 'yyyy-MM-dd') : undefined,
+    date: getVietnamDateString(r.reportDate as Date),
+    time: getVietnamTimeString(r.reportDate as Date),
+    weekStartDate: r.weekStartDate ? getVietnamDateString(r.weekStartDate as Date) : undefined,
+    weekEndDate: r.weekEndDate ? getVietnamDateString(r.weekEndDate as Date) : undefined,
     summary: (r.summary as string) || undefined,
-    creatorName: (r.reporterName as string) || 'N/A',
-    creatorRole: 'Người tạo', // Can be enhanced later
+    weeklyNote: parseWeeklyGeneralNote(r.generalNote as string),
+    creatorName: formatReportCreatorName(r as Parameters<typeof formatReportCreatorName>[0]),
+    creatorRole: ((r.createdBy as { role?: string } | undefined)?.role as string) || 'Người tạo',
     createdById: r.createdById as string,
     weatherCondition: (r.weatherCondition as WeatherCondition) || 'SUNNY',
     weatherTemperature: r.weatherTemperature ? Number(r.weatherTemperature) : undefined,
@@ -137,8 +141,8 @@ export default async function ReportsPage({ searchParams }: { searchParams: { [k
   // "KPI tính chung tất cả report". 
   // Let's keep it simple for now and just pass paginated reports. The stats will reflect the current page if we do that,
   // which is wrong. We need global stats.
-  const allReportsForStats = await getSiteReports({ projectId: globalContext.selectedProjectId || undefined });
-  const allReportsMapped = allReportsForStats.map((r: Record<string, unknown>) => {
+  /*
+  const removedLegacyStats = [].map((r: Record<string, unknown>) => {
     const rawIssues = (r.issues as string || '').trim();
     const isIssueValid = rawIssues.length > 0 && !rawIssues.toLowerCase().startsWith('không có') && !rawIssues.toLowerCase().startsWith('không');
     
@@ -156,13 +160,14 @@ export default async function ReportsPage({ searchParams }: { searchParams: { [k
       reportDate: (r.reportDate as Date).toISOString()
     };
   });
+  */
   
   return <ReportsWorkspace 
-    initialReports={JSON.parse(JSON.stringify(reports))} 
+    initialReports={serializePrisma(reports)} 
     totalReports={pageData.total}
     currentPage={pageData.page}
-    allReportsForStats={allReportsMapped}
+    stats={pageData.stats}
     initialProjects={projects} 
-    currentUser={{ id: session.id, name: session.name || "N/A", role: session.role }} 
+    currentUser={{ id: session.id, name: session.name || session.email || "Người dùng hiện tại", role: session.role }} 
   />;
 }

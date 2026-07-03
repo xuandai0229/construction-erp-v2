@@ -27,6 +27,7 @@ const STATUS_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'APPROVED', label: getStatusLabel('APPROVED') },
   { value: 'SUBMITTED', label: getStatusLabel('SUBMITTED') },
   { value: 'REJECTED', label: getStatusLabel('REJECTED') },
+  { value: 'REVISION_REQUESTED', label: getStatusLabel('REVISION_REQUESTED') },
   { value: 'DRAFT', label: getStatusLabel('DRAFT') },
 ];
 
@@ -55,7 +56,7 @@ export function ReportsToolbar({
   const [isOpen, setIsOpen] = useState(false);
   
   const isTypeDisabled = tab === 'daily' || tab === 'weekly';
-  const isStatusDisabled = tab === 'pending' || tab === 'rejected';
+  const isStatusDisabled = tab === 'pending' || tab === 'rejected' || tab === 'revision';
 
   const filterCount = [
     projectFilter,

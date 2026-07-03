@@ -1,13 +1,12 @@
 "use client";
 
-import { Eye, Printer, ChevronLeft, ChevronRight, Cloud, Sun, CloudRain, CloudDrizzle, Wind, CloudLightning, AlertCircle, Edit2, Trash2 } from "lucide-react";
-import type { FieldReport, WeatherCondition } from "./types";
+import { Eye, Printer, ChevronLeft, ChevronRight, Edit2, Trash2 } from "lucide-react";
+import type { FieldReport } from "./types";
 import { getStatusLabel, getStatusVariant } from "./types";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { PhotoPreviewStack } from "./photo-preview-stack";
-import { useToast } from "@/components/ui/toast-context";
 import { useMemo, Fragment } from "react";
-import { getISOWeek, startOfISOWeek, endOfISOWeek, format, parseISO } from "date-fns";
+import { getVietnamIsoWeekInfo } from "@/lib/reports/report-timezone";
 
 interface ReportsTableProps {
   reports: FieldReport[];
@@ -36,7 +35,6 @@ export function ReportsTable({
   showProjectColumn = true,
   currentUser,
 }: ReportsTableProps) {
-  const toast = useToast();
   const totalPages = Math.ceil(totalReports / pageSize) || 1;
   const start = totalReports === 0 ? 0 : (page - 1) * pageSize + 1;
   const end = Math.min(page * pageSize, totalReports);
@@ -66,24 +64,26 @@ export function ReportsTable({
 
   // Group reports by week
   const groupedReports = useMemo(() => {
-    const groups: Record<string, { weekNumber: number, start: Date, end: Date, reports: FieldReport[] }> = {};
+    const groups: Record<string, { weekNumber: number, startDate: string, endDate: string, reports: FieldReport[] }> = {};
     
     reports.forEach(r => {
       // For weekly reports, we might already have weekStartDate. Use that if available, else use date
-      const d = (r.type === 'WEEKLY' && r.weekStartDate) ? parseISO(r.weekStartDate) : parseISO(r.date);
-      const weekNum = getISOWeek(d);
-      const start = startOfISOWeek(d);
-      const end = endOfISOWeek(d);
-      const key = `${start.toISOString()}_${end.toISOString()}`;
+      const week = getVietnamIsoWeekInfo((r.type === 'WEEKLY' && r.weekStartDate) ? r.weekStartDate : r.date);
+      const key = `${week.weekStartDate}_${week.weekEndDate}`;
       
       if (!groups[key]) {
-        groups[key] = { weekNumber: weekNum, start, end, reports: [] };
+        groups[key] = {
+          weekNumber: week.weekNumber,
+          startDate: week.weekStartDate,
+          endDate: week.weekEndDate,
+          reports: [],
+        };
       }
       groups[key].reports.push(r);
     });
     
     // Sort groups descending by start date
-    return Object.values(groups).sort((a, b) => b.start.getTime() - a.start.getTime());
+    return Object.values(groups).sort((a, b) => b.startDate.localeCompare(a.startDate));
   }, [reports]);
 
   return (
@@ -91,8 +91,8 @@ export function ReportsTable({
       {/* Table - Using table-auto and allowing it to fit container without hard min-widths */}
       <div className="overflow-x-auto min-h-[300px]">
         <table className="w-full text-sm table-auto">
-          <thead>
-            <tr className="border-b border-slate-100 bg-slate-50/80">
+          <thead className="sticky top-0 z-20">
+            <tr className="border-b border-slate-100 bg-slate-50/95 shadow-sm backdrop-blur">
               <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wider whitespace-nowrap w-[15%]">
                 Mã BC
               </th>
@@ -130,20 +130,21 @@ export function ReportsTable({
                 const approvedCount = group.reports.filter(r => r.status === 'APPROVED').length;
                 const pendingCount = group.reports.filter(r => r.status === 'SUBMITTED').length;
                 const rejectedCount = group.reports.filter(r => r.status === 'REJECTED').length;
+                const revisionCount = group.reports.filter(r => r.status === 'REVISION_REQUESTED').length;
                 const draftCount = group.reports.filter(r => r.status === 'DRAFT').length;
 
                 return (
-                  <Fragment key={`week-${group.start.toISOString()}`}>
+                  <Fragment key={`week-${group.startDate}_${group.endDate}`}>
                     {/* Group Header */}
                     <tr className="bg-slate-100/80 border-t border-slate-200">
                       <td colSpan={showProjectColumn ? 7 : 6} className="py-2.5 px-4">
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
                           <span className="font-semibold text-slate-800">
-                            Tuần {group.weekNumber} · {format(group.start, 'dd/MM')} - {format(group.end, 'dd/MM/yyyy')}
+                            Tuần {group.weekNumber} · {group.startDate} - {group.endDate}
                           </span>
                           <span className="text-slate-400 hidden sm:inline">·</span>
                           <span className="text-slate-600">{group.reports.length} báo cáo</span>
-                          {(approvedCount > 0 || pendingCount > 0 || rejectedCount > 0 || draftCount > 0) && (
+                          {(approvedCount > 0 || pendingCount > 0 || rejectedCount > 0 || revisionCount > 0 || draftCount > 0) && (
                             <>
                               <span className="text-slate-400 hidden sm:inline">·</span>
                               <div className="flex items-center gap-2 text-xs">
@@ -236,7 +237,7 @@ export function ReportsTable({
                                 </StatusBadge>
                               )}
                               {report.photos.length === 0 && report.attachments.length === 0 && (
-                                <span className="text-slate-300">-</span>
+                                <span className="text-[11px] text-slate-400">Chưa có ảnh</span>
                               )}
                             </div>
                           </td>

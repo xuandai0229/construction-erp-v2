@@ -44,7 +44,7 @@ export async function submitSiteReportTransition(
       where: {
         id: reportId,
         deletedAt: null,
-        status: { in: ["DRAFT", "REJECTED"] },
+        status: { in: ["DRAFT", "REJECTED", "REVISION_REQUESTED"] },
       },
       data: {
         status: "SUBMITTED",
