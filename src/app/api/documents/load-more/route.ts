@@ -51,10 +51,19 @@ export async function GET(req: NextRequest) {
         ...(search ? { name: { contains: search, mode: "insensitive" } } : {}),
       };
 
+      let folderOrderBy: any = { createdAt: "desc" };
+      if (sortBy === "OLDEST") folderOrderBy = { createdAt: "asc" };
+      else if (sortBy === "NAME") folderOrderBy = { name: "asc" };
+
+      if (isDeleted) {
+        if (sortBy === "OLDEST") folderOrderBy = { deletedAt: "asc" };
+        else if (sortBy !== "NAME") folderOrderBy = { deletedAt: "desc" };
+      }
+
       const [items, total] = await Promise.all([
         prisma.documentFolder.findMany({
           where,
-          orderBy: isDeleted ? { deletedAt: "desc" } : { name: "asc" },
+          orderBy: folderOrderBy,
           skip,
           take,
           include: {
@@ -100,16 +109,20 @@ export async function GET(req: NextRequest) {
           : {}),
       };
 
-      let orderBy: any = { createdAt: "desc" };
-      if (sortBy === "OLDEST") orderBy = { createdAt: "asc" };
-      else if (sortBy === "NAME") orderBy = { displayName: "asc" };
-      else if (sortBy === "SIZE") orderBy = { size: "desc" };
-      else if (isDeleted) orderBy = { deletedAt: "desc" };
+      let fileOrderBy: any = { createdAt: "desc" };
+      if (sortBy === "OLDEST") fileOrderBy = { createdAt: "asc" };
+      else if (sortBy === "NAME") fileOrderBy = { displayName: "asc" };
+      else if (sortBy === "SIZE") fileOrderBy = { size: "desc" };
+
+      if (isDeleted) {
+        if (sortBy === "OLDEST") fileOrderBy = { deletedAt: "asc" };
+        else if (sortBy !== "NAME" && sortBy !== "SIZE") fileOrderBy = { deletedAt: "desc" };
+      }
 
       const [items, total] = await Promise.all([
         prisma.document.findMany({
           where,
-          orderBy,
+          orderBy: fileOrderBy,
           skip,
           take,
           include: { uploadedBy: { select: { name: true } } },
@@ -143,19 +156,26 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ items: mapped, total, hasMore: skip + take < total });
     }
 
-    // Trash folders/files: load children of a deleted folder
     if (type === "trashFolders") {
       const where: any = {
         projectId,
         deletedAt: { not: null },
-        parentId: parentId || null,
+        ...(parentId 
+          ? { parentId }
+          : { OR: [{ parentId: null }, { parent: { deletedAt: null } }] }
+        ),
         ...(search ? { name: { contains: search, mode: "insensitive" } } : {}),
       };
+
+      let orderBy: any;
+      if (sortBy === "NAME") orderBy = { name: "asc" };
+      else if (sortBy === "OLDEST") orderBy = { deletedAt: "asc" };
+      else orderBy = { deletedAt: "desc" };
 
       const [items, total] = await Promise.all([
         prisma.documentFolder.findMany({
           where,
-          orderBy: { deletedAt: "desc" },
+          orderBy,
           skip,
           take,
           include: {
@@ -178,14 +198,13 @@ export async function GET(req: NextRequest) {
     }
 
     if (type === "trashFiles") {
-      if (!folderId) {
-        return NextResponse.json({ items: [], total: 0, hasMore: false });
-      }
-
       const where: any = {
         projectId,
-        folderId,
         deletedAt: { not: null },
+        ...(folderId
+          ? { folderId }
+          : { folder: { deletedAt: null } }
+        ),
         ...(search
           ? {
               OR: [
@@ -196,10 +215,16 @@ export async function GET(req: NextRequest) {
           : {}),
       };
 
+      let orderBy: any;
+      if (sortBy === "NAME") orderBy = { displayName: "asc" };
+      else if (sortBy === "SIZE") orderBy = { size: "desc" };
+      else if (sortBy === "OLDEST") orderBy = { deletedAt: "asc" };
+      else orderBy = { deletedAt: "desc" };
+
       const [items, total] = await Promise.all([
         prisma.document.findMany({
           where,
-          orderBy: { deletedAt: "desc" },
+          orderBy,
           skip,
           take,
           include: { uploadedBy: { select: { name: true } } },

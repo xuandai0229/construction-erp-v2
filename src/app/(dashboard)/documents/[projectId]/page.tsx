@@ -21,7 +21,7 @@ export default async function ProjectDocumentsPage({
   searchParams,
 }: {
   params: Promise<{ projectId: string }>;
-  searchParams: Promise<{ folder?: string }>;
+  searchParams: Promise<{ folder?: string; trash?: string; trashFolder?: string; search?: string; sort?: string }>;
 }) {
   const { projectId } = await params;
   const urlParams = await searchParams;
@@ -31,6 +31,23 @@ export default async function ProjectDocumentsPage({
     typeof rawFolderId === "string" && rawFolderId.trim()
       ? rawFolderId
       : null;
+      
+  const searchParam = typeof urlParams.search === "string" ? urlParams.search : undefined;
+  const sortParam = typeof urlParams.sort === "string" ? urlParams.sort : "NEWEST";
+  
+  const searchFilter = searchParam
+    ? { contains: searchParam, mode: "insensitive" }
+    : undefined;
+
+
+  const folderOrderBy = sortParam === "NAME" ? { name: "asc" }
+    : sortParam === "OLDEST" ? (isTrashView ? { deletedAt: "asc" } : { createdAt: "asc" })
+    : (isTrashView ? { deletedAt: "desc" } : { createdAt: "desc" });
+
+  const docOrderBy = sortParam === "NAME" ? { displayName: "asc" }
+    : sortParam === "SIZE" ? { size: "desc" }
+    : sortParam === "OLDEST" ? (isTrashView ? { deletedAt: "asc" } : { createdAt: "asc" })
+    : (isTrashView ? { deletedAt: "desc" } : { createdAt: "desc" });
   const session = await requireProjectAccessOrRedirect(projectId);
 
   const project = await prisma.project.findUnique({
@@ -43,7 +60,7 @@ export default async function ProjectDocumentsPage({
   let cursorFolderId = selectedFolderId;
   while (cursorFolderId) {
     const folder = await prisma.documentFolder.findFirst({
-      where: { id: cursorFolderId, projectId, deletedAt: isTrashView ? { not: null } : null },
+      where: { id: cursorFolderId, projectId },
       select: { id: true, parentId: true },
     });
     if (!folder) break;
@@ -55,24 +72,25 @@ export default async function ProjectDocumentsPage({
       ? selectedFolderId
       : null;
 
-  // Load first page of folders + total count for "has more"
+  // Load Ancestors separately (no pagination, required for breadcrumbs/sidebar)
+  const ancestorFolders = ancestorFolderIds.length > 0 
+    ? await prisma.documentFolder.findMany({
+        where: { id: { in: ancestorFolderIds }, projectId },
+        select: { id: true, parentId: true, name: true, deletedAt: true },
+      })
+    : [];
+
+  // Load visible folders for current level (with pagination)
   const folderWhere: Prisma.DocumentFolderWhereInput = {
     projectId,
     deletedAt: null,
-    OR: [
-      { parentId: null },
-      ...(ancestorFolderIds.length > 0
-        ? [{ id: { in: ancestorFolderIds } }]
-        : []),
-      ...(effectiveSelectedFolderId
-        ? [{ parentId: effectiveSelectedFolderId }]
-        : []),
-    ],
+    parentId: effectiveSelectedFolderId || null,
+    ...(searchFilter ? { name: searchFilter as Prisma.StringFilter<"DocumentFolder"> } : {}),
   };
   const [rawFolders, totalFolderCount] = await Promise.all([
     prisma.documentFolder.findMany({
       where: folderWhere,
-      orderBy: { name: "asc" },
+      orderBy: folderOrderBy as any,
       take: FOLDER_PAGE_SIZE,
       include: {
         _count: {
@@ -83,24 +101,20 @@ export default async function ProjectDocumentsPage({
     prisma.documentFolder.count({ where: folderWhere }),
   ]);
 
-  // Deleted folders: first page + count
+  // Deleted folders: current level only or root trash (individually deleted)
   const deletedFolderWhere: Prisma.DocumentFolderWhereInput = {
     projectId,
     deletedAt: { not: null },
-    OR: [
-      { parentId: null },
-      ...(ancestorFolderIds.length > 0
-        ? [{ id: { in: ancestorFolderIds } }]
-        : []),
-      ...(effectiveSelectedFolderId
-        ? [{ parentId: effectiveSelectedFolderId }]
-        : []),
-    ],
+    ...(effectiveSelectedFolderId
+      ? { parentId: effectiveSelectedFolderId }
+      : { OR: [{ parentId: null }, { parent: { deletedAt: null } }] }
+    ),
+    ...(searchFilter ? { name: searchFilter as Prisma.StringFilter<"DocumentFolder"> } : {}),
   };
   const [rawDeletedFolders, totalDeletedFolderCount] = await Promise.all([
     prisma.documentFolder.findMany({
       where: deletedFolderWhere,
-      orderBy: { deletedAt: "desc" },
+      orderBy: folderOrderBy as any,
       take: FOLDER_PAGE_SIZE,
       include: {
         _count: {
@@ -113,13 +127,23 @@ export default async function ProjectDocumentsPage({
 
   // Load first page of documents + total count
   const docWhere: Prisma.DocumentWhereInput | null = effectiveSelectedFolderId
-    ? { projectId, folderId: effectiveSelectedFolderId, deletedAt: null }
+    ? { 
+        projectId, 
+        folderId: effectiveSelectedFolderId, 
+        deletedAt: null,
+        ...(searchFilter ? {
+          OR: [
+            { displayName: searchFilter as Prisma.StringFilter<"Document"> },
+            { originalName: searchFilter as Prisma.StringFilter<"Document"> }
+          ]
+        } : {})
+      }
     : null;
   const [rawDocuments, totalDocCount] = docWhere
     ? await Promise.all([
         prisma.document.findMany({
           where: docWhere,
-          orderBy: { createdAt: "desc" },
+          orderBy: docOrderBy as any,
           take: FILE_PAGE_SIZE,
           include: { uploadedBy: { select: { name: true } } },
         }) as Promise<RawDocumentWithUploader[]>,
@@ -128,27 +152,45 @@ export default async function ProjectDocumentsPage({
     : [[] as RawDocumentWithUploader[], 0];
 
   // Deleted documents: first page + count
-  const deletedDocWhere: Prisma.DocumentWhereInput | null = effectiveSelectedFolderId
-    ? { projectId, folderId: effectiveSelectedFolderId, deletedAt: { not: null } }
-    : null;
-  const [rawDeletedDocuments, totalDeletedDocCount] = deletedDocWhere
-    ? await Promise.all([
-        prisma.document.findMany({
-          where: deletedDocWhere,
-          orderBy: { deletedAt: "desc" },
-          take: FILE_PAGE_SIZE,
-          include: { uploadedBy: { select: { name: true } } },
-        }) as Promise<RawDocumentWithUploader[]>,
-        prisma.document.count({ where: deletedDocWhere }),
-      ])
-    : [[] as RawDocumentWithUploader[], 0];
+  const deletedDocWhere: Prisma.DocumentWhereInput = { 
+    projectId, 
+    deletedAt: { not: null },
+    ...(effectiveSelectedFolderId
+      ? { folderId: effectiveSelectedFolderId }
+      : { folder: { deletedAt: null } }
+    ),
+    ...(searchFilter ? {
+      OR: [
+        { displayName: searchFilter as Prisma.StringFilter<"Document"> },
+        { originalName: searchFilter as Prisma.StringFilter<"Document"> }
+      ]
+    } : {})
+  };
+  const [rawDeletedDocuments, totalDeletedDocCount] = await Promise.all([
+    prisma.document.findMany({
+      where: deletedDocWhere,
+      orderBy: docOrderBy as any,
+      take: FILE_PAGE_SIZE,
+      include: { uploadedBy: { select: { name: true } } },
+    }) as Promise<RawDocumentWithUploader[]>,
+    prisma.document.count({ where: deletedDocWhere }),
+  ]);
 
-  const folders = rawFolders.map((f) => ({
+  const activeAncestors = ancestorFolders.filter(f => !f.deletedAt);
+  const deletedAncestors = ancestorFolders.filter(f => f.deletedAt);
+
+  const combinedFolders = [
+    ...activeAncestors.map(f => ({ ...f, _count: { documents: 0, children: 0 } })),
+    ...rawFolders
+  ];
+
+  const folders = combinedFolders.map((f: any) => ({
     id: f.id,
     projectId: f.projectId,
     parentId: f.parentId,
     name: f.name,
     _count: f._count,
+    deletedAt: f.deletedAt ? f.deletedAt.toISOString() : undefined,
   }));
 
   const documents = rawDocuments.map((d) => ({
@@ -173,7 +215,12 @@ export default async function ProjectDocumentsPage({
     rejectedReason: d.rejectedReason,
   }));
 
-  const deletedFolders = rawDeletedFolders.map((f) => ({
+  const combinedDeletedFolders = [
+    ...deletedAncestors.map(f => ({ ...f, _count: { documents: 0, children: 0 } })),
+    ...rawDeletedFolders
+  ];
+
+  const deletedFolders = combinedDeletedFolders.map((f: any) => ({
     id: f.id,
     projectId: f.projectId,
     parentId: f.parentId,

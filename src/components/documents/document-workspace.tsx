@@ -195,6 +195,11 @@ export function DocumentWorkspace({
       ? folderFromUrl
       : null;
   const documentFromUrl = searchParams.get("document");
+  
+  const [isTrashView, setIsTrashView] = useState(() => searchParams.get("trash") === "true");
+  const [selectedTrashFolderId, setSelectedTrashFolderId] = useState<string | null>(
+    () => searchParams.get("trashFolder") || null
+  );
 
   const [selectedFolderId, setSelectedFolderIdRaw] = useState<string | null>(
     initialFolder,
@@ -210,13 +215,9 @@ export function DocumentWorkspace({
   );
   const [localDocuments, setLocalDocuments] =
     useState<DocumentListItem[]>(documents);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterType, setFilterType] = useState("ALL");
-  const [filterDateRange, setFilterDateRange] = useState("ALL");
-  const [filterUploader, setFilterUploader] = useState("ALL");
-  const [groupBy, setGroupBy] = useState("NONE");
-  const [showFilters, setShowFilters] = useState(false);
-  const [sortBy, setSortBy] = useState<SortOption>("NEWEST");
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "");
+
+  const [sortBy, setSortBy] = useState<SortOption>((searchParams.get("sort") as SortOption) || "NEWEST");
   const [isUploading, setIsUploading] = useState(false);
 
   // --- Pagination state ---
@@ -227,14 +228,26 @@ export function DocumentWorkspace({
   // Track extra items loaded via "Load More" (appended to server SSR data)
   const [extraFolders, setExtraFolders] = useState<FolderItem[]>([]);
   const [extraDocuments, setExtraDocuments] = useState<DocumentListItem[]>([]);
-  // Trash lazy-load state
-  const [trashFolders, setTrashFolders] = useState<FolderItem[]>(deletedFolders);
-  const [trashDocuments, setTrashDocuments] = useState<DocumentListItem[]>(deletedDocuments);
-  const [trashLoadedFolderCount, setTrashLoadedFolderCount] = useState(deletedFolders.length);
-  const [trashLoadedFileCount, setTrashLoadedFileCount] = useState(deletedDocuments.length);
-  const [trashTotalFolders, setTrashTotalFolders] = useState(pagination?.totalDeletedFolders ?? deletedFolders.length);
-  const [trashTotalFiles, setTrashTotalFiles] = useState(pagination?.totalDeletedFiles ?? deletedDocuments.length);
-  const [isLoadingTrash, setIsLoadingTrash] = useState(false);
+  // Trash lazy-load state (aligned with active workspace)
+  const [loadedTrashFolderCount, setLoadedTrashFolderCount] = useState(deletedFolders.length);
+  const [loadedTrashFileCount, setLoadedTrashFileCount] = useState(deletedDocuments.length);
+  const [extraTrashFolders, setExtraTrashFolders] = useState<FolderItem[]>([]);
+  const [extraTrashDocuments, setExtraTrashDocuments] = useState<DocumentListItem[]>([]);
+  const [isLoadingMoreTrashFolders, setIsLoadingMoreTrashFolders] = useState(false);
+  const [isLoadingMoreTrashFiles, setIsLoadingMoreTrashFiles] = useState(false);
+  
+  const trashFolders = useMemo(() => {
+    const ids = new Set(deletedFolders.map(f => f.id));
+    return [...deletedFolders, ...extraTrashFolders.filter(f => !ids.has(f.id))];
+  }, [deletedFolders, extraTrashFolders]);
+  
+  const trashDocuments = useMemo(() => {
+    const ids = new Set(deletedDocuments.map(d => d.id));
+    return [...deletedDocuments, ...extraTrashDocuments.filter(d => !ids.has(d.id))];
+  }, [deletedDocuments, extraTrashDocuments]);
+
+  const hasMoreTrashFolders = pagination ? loadedTrashFolderCount < pagination.totalDeletedFolders : false;
+  const hasMoreTrashFiles = pagination ? loadedTrashFileCount < pagination.totalDeletedFiles : false;
 
   // Merge SSR folders with extras
   const allFolders = useMemo(() => {
@@ -248,8 +261,6 @@ export function DocumentWorkspace({
 
   const hasMoreFolders = pagination ? loadedFolderCount < pagination.totalFolders : false;
   const hasMoreFiles = pagination ? loadedFileCount < pagination.totalFiles : false;
-  const hasMoreTrashFolders = trashLoadedFolderCount < trashTotalFolders;
-  const hasMoreTrashFiles = trashLoadedFileCount < trashTotalFiles;
 
   const loadMoreFolders = useCallback(async () => {
     if (isLoadingMoreFolders || !pagination) return;
@@ -262,6 +273,8 @@ export function DocumentWorkspace({
         take: String(pagination.folderPageSize),
       });
       if (selectedFolderId) params.set("parentId", selectedFolderId);
+      if (searchQuery) params.set("search", searchQuery);
+      if (sortBy !== "NEWEST") params.set("sort", sortBy);
       const res = await fetch(`/api/documents/load-more?${params}`);
       if (res.ok) {
         const data = await res.json();
@@ -271,7 +284,7 @@ export function DocumentWorkspace({
     } finally {
       setIsLoadingMoreFolders(false);
     }
-  }, [isLoadingMoreFolders, pagination, projectId, loadedFolderCount, selectedFolderId]);
+  }, [isLoadingMoreFolders, pagination, projectId, loadedFolderCount, selectedFolderId, searchQuery, sortBy]);
 
   const loadMoreFiles = useCallback(async () => {
     if (isLoadingMoreFiles || !pagination) return;
@@ -297,63 +310,56 @@ export function DocumentWorkspace({
     }
   }, [isLoadingMoreFiles, pagination, projectId, loadedFileCount, sortBy, selectedFolderId, searchQuery]);
 
-  // Lazy load trash children when navigating into a deleted folder
-  const loadTrashChildren = useCallback(async (parentFolderId: string | null) => {
-    setIsLoadingTrash(true);
+  const loadMoreTrashFolders = useCallback(async () => {
+    if (isLoadingMoreTrashFolders || !pagination) return;
+    setIsLoadingMoreTrashFolders(true);
     try {
-      // Load trash folders for this parent
-      const folderParams = new URLSearchParams({
+      const params = new URLSearchParams({
         projectId,
         type: "trashFolders",
-        skip: "0",
-        take: "500",
+        skip: String(loadedTrashFolderCount),
+        take: String(pagination.folderPageSize),
       });
-      if (parentFolderId) folderParams.set("parentId", parentFolderId);
-      const folderRes = await fetch(`/api/documents/load-more?${folderParams}`);
-      let loadedTF: FolderItem[] = [];
-      let totalTF = 0;
-      if (folderRes.ok) {
-        const data = await folderRes.json();
-        loadedTF = data.items;
-        totalTF = data.total;
+      if (selectedTrashFolderId) params.set("parentId", selectedTrashFolderId);
+      if (searchQuery) params.set("search", searchQuery);
+      if (sortBy !== "NEWEST") params.set("sort", sortBy);
+      const res = await fetch(`/api/documents/load-more?${params}`);
+      if (res.ok) {
+        const data = await res.json();
+        setExtraTrashFolders(prev => [...prev, ...data.items]);
+        setLoadedTrashFolderCount(prev => prev + data.items.length);
       }
-
-      // Load trash files for this folder
-      let loadedTD: DocumentListItem[] = [];
-      let totalTD = 0;
-      if (parentFolderId) {
-        const fileParams = new URLSearchParams({
-          projectId,
-          type: "trashFiles",
-          folderId: parentFolderId,
-          skip: "0",
-          take: "200",
-        });
-        const fileRes = await fetch(`/api/documents/load-more?${fileParams}`);
-        if (fileRes.ok) {
-          const data = await fileRes.json();
-          loadedTD = data.items;
-          totalTD = data.total;
-        }
-      }
-
-      // Merge new data with existing (append new unique items)
-      setTrashFolders(prev => {
-        const existingIds = new Set(prev.map(f => f.id));
-        return [...prev, ...loadedTF.filter(f => !existingIds.has(f.id))];
-      });
-      setTrashDocuments(prev => {
-        const existingIds = new Set(prev.map(d => d.id));
-        return [...prev, ...loadedTD.filter(d => !existingIds.has(d.id))];
-      });
-      setTrashLoadedFolderCount(prev => prev + loadedTF.length);
-      setTrashLoadedFileCount(prev => prev + loadedTD.length);
-      setTrashTotalFolders(prev => prev + totalTF);
-      setTrashTotalFiles(prev => prev + totalTD);
     } finally {
-      setIsLoadingTrash(false);
+      setIsLoadingMoreTrashFolders(false);
     }
-  }, [projectId]);
+  }, [isLoadingMoreTrashFolders, pagination, projectId, loadedTrashFolderCount, selectedTrashFolderId, searchQuery, sortBy]);
+
+  const loadMoreTrashFiles = useCallback(async () => {
+    if (isLoadingMoreTrashFiles || !pagination) return;
+    setIsLoadingMoreTrashFiles(true);
+    try {
+      const params = new URLSearchParams({
+        projectId,
+        type: "trashFiles",
+        skip: String(loadedTrashFileCount),
+        take: String(pagination.filePageSize),
+      });
+      if (selectedTrashFolderId) params.set("folderId", selectedTrashFolderId);
+      if (searchQuery) params.set("search", searchQuery);
+      if (sortBy !== "NEWEST") params.set("sort", sortBy);
+      const res = await fetch(`/api/documents/load-more?${params}`);
+      if (res.ok) {
+        const data = await res.json();
+        setExtraTrashDocuments(prev => {
+          const ids = new Set(prev.map(d => d.id));
+          return [...prev, ...data.items.filter((d: any) => !ids.has(d.id))];
+        });
+        setLoadedTrashFileCount(prev => prev + data.items.length);
+      }
+    } finally {
+      setIsLoadingMoreTrashFiles(false);
+    }
+  }, [isLoadingMoreTrashFiles, pagination, projectId, loadedTrashFileCount, sortBy, selectedTrashFolderId, searchQuery]);
 
   // Reset pagination counts when folder changes (SSR reloads the page)
   useEffect(() => {
@@ -365,23 +371,33 @@ export function DocumentWorkspace({
     setExtraDocuments([]);
   }, [documents]);
   useEffect(() => {
-    setTrashFolders((prev) => {
-      const serverIds = new Set(deletedFolders.map((f) => f.id));
-      const keepPrev = prev.filter((f) => !serverIds.has(f.id));
-      return [...deletedFolders, ...keepPrev];
-    });
-    setTrashLoadedFolderCount((prev) => Math.max(prev, deletedFolders.length));
-    setTrashTotalFolders(pagination?.totalDeletedFolders ?? deletedFolders.length);
-  }, [deletedFolders, pagination?.totalDeletedFolders]);
+    setLoadedTrashFolderCount(deletedFolders.length);
+    setExtraTrashFolders([]);
+  }, [deletedFolders]);
   useEffect(() => {
-    setTrashDocuments((prev) => {
-      const serverIds = new Set(deletedDocuments.map((d) => d.id));
-      const keepPrev = prev.filter((d) => !serverIds.has(d.id));
-      return [...deletedDocuments, ...keepPrev];
-    });
-    setTrashLoadedFileCount((prev) => Math.max(prev, deletedDocuments.length));
-    setTrashTotalFiles(pagination?.totalDeletedFiles ?? deletedDocuments.length);
-  }, [deletedDocuments, pagination?.totalDeletedFiles]);
+    setLoadedTrashFileCount(deletedDocuments.length);
+    setExtraTrashDocuments([]);
+  }, [deletedDocuments]);
+
+  // Push search and sort to URL for server-side processing
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      const currentSearch = searchParams.get("search") || "";
+      const currentSort = searchParams.get("sort") || "NEWEST";
+      if (searchQuery !== currentSearch || sortBy !== currentSort) {
+        const params = new URLSearchParams(searchParams.toString());
+        if (searchQuery) params.set("search", searchQuery);
+        else params.delete("search");
+        
+        if (sortBy !== "NEWEST") params.set("sort", sortBy);
+        else params.delete("sort");
+        
+        router.push(`${pathname}?${params.toString()}`);
+      }
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [searchQuery, sortBy, pathname, searchParams, router]);
+
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [newFolderName, setNewFolderName] = useState("");
@@ -422,10 +438,6 @@ export function DocumentWorkspace({
     y: number;
   } | null>(null);
 
-  const [isTrashView, setIsTrashView] = useState(() => searchParams.get("trash") === "true");
-  const [selectedTrashFolderId, setSelectedTrashFolderId] = useState<string | null>(
-    () => searchParams.get("trashFolder") || null
-  );
 
   useEffect(() => {
     setLocalDocuments(isTrashView ? trashDocuments : allDocuments);
@@ -508,11 +520,7 @@ export function DocumentWorkspace({
       setSelectedDocumentId(null);
       setOpenMenuId(null);
       setSearchQuery("");
-      setFilterType("ALL");
-      setFilterDateRange("ALL");
-      setFilterUploader("ALL");
-      setGroupBy("NONE");
-      setShowFilters(false);
+
       setIsTrashView(false);
       setSelectedTrashFolderId(null);
       replaceUrlState(id, null, false, null);
@@ -592,19 +600,21 @@ export function DocumentWorkspace({
     () => new Map(trashFolders.map((folder) => [folder.id, folder])),
     [trashFolders]
   );
-  const selectedTrashFolderData = isTrashView && selectedTrashFolderId ? trashFolders.find(f => f.id === selectedTrashFolderId) : null;
+  const selectedTrashFolderData = isTrashView && selectedTrashFolderId 
+    ? (trashFolders.find(f => f.id === selectedTrashFolderId) || allFolders.find(f => f.id === selectedTrashFolderId)) 
+    : null;
   const selectedTrashFolderPath = useMemo(() => {
     if (!isTrashView || !selectedTrashFolderId) return [];
     const chain: FolderItem[] = [];
     let currentId: string | null = selectedTrashFolderId;
     while (currentId) {
-      const folder = deletedFolderById.get(currentId);
+      const folder: FolderItem | undefined = deletedFolderById.get(currentId) || allFolders.find((f: FolderItem) => f.id === currentId);
       if (!folder) break;
       chain.unshift(folder);
       currentId = folder.parentId;
     }
     return chain;
-  }, [deletedFolderById, isTrashView, selectedTrashFolderId]);
+  }, [deletedFolderById, allFolders, isTrashView, selectedTrashFolderId]);
 
   const displayFolders = useMemo(() => {
     let filtered = isTrashView ? trashFolders : allFolders;
@@ -623,12 +633,8 @@ export function DocumentWorkspace({
       }
     }
 
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter((folder) => folder.name.toLowerCase().includes(query));
-    }
     return filtered;
-  }, [trashFolders, allFolders, isTrashView, searchQuery, selectedTrashFolderId, selectedFolderId, deletedFolderById]);
+  }, [trashFolders, allFolders, isTrashView, selectedTrashFolderId, selectedFolderId, deletedFolderById]);
 
   const displayDocs = useMemo(() => {
     let filtered = localDocuments;
@@ -643,87 +649,14 @@ export function DocumentWorkspace({
       filtered = filtered.filter((document) => document.folderId === selectedFolderId);
     }
 
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter((document) =>
-        document.originalName.toLowerCase().includes(query) ||
-        document.displayName?.toLowerCase().includes(query)
-      );
-    }
-
-    if (filterType !== "ALL") {
-      filtered = filtered.filter((document) => {
-        const extension = document.extension.toLowerCase();
-        if (filterType === "IMAGE") return document.mimeType.startsWith("image/");
-        if (filterType === "PDF") return extension === ".pdf";
-        if (filterType === "WORD") return extension.includes("doc");
-        if (filterType === "EXCEL") return extension.includes("xls");
-        if (filterType === "CAD") return [".dwg", ".dxf"].includes(extension);
-        if (filterType === "XML") return extension === ".xml";
-        return true;
-      });
-    }
-
-    if (filterUploader !== "ALL") {
-      filtered = filtered.filter(doc => doc.uploadedById === filterUploader);
-    }
-
-    if (filterDateRange !== "ALL") {
-      filtered = filtered.filter(doc => {
-        const date = new Date(doc.createdAt);
-        if (filterDateRange === "TODAY") return differenceInDays(new Date(), date) === 0;
-        if (filterDateRange === "LAST_7_DAYS") return differenceInDays(new Date(), date) <= 7;
-        if (filterDateRange === "THIS_MONTH") return isThisMonth(date);
-        if (filterDateRange === "LAST_MONTH") {
-          const lastMonth = subMonths(new Date(), 1);
-          return date.getMonth() === lastMonth.getMonth() && date.getFullYear() === lastMonth.getFullYear();
-        }
-        return true;
-      });
-    }
-
-    return [...filtered].sort((left, right) => {
-      if (sortBy === "OLDEST") {
-        return (
-          new Date(left.createdAt).getTime() -
-          new Date(right.createdAt).getTime()
-        );
-      }
-      if (sortBy === "NAME") {
-        return (left.displayName || left.originalName).localeCompare(right.displayName || right.originalName, "vi");
-      }
-      if (sortBy === "SIZE") return right.size - left.size;
-      return (
-        new Date(right.createdAt).getTime() -
-        new Date(left.createdAt).getTime()
-      );
-    });
+    return filtered;
   }, [
-    filterType,
-    filterDateRange,
-    filterUploader,
     localDocuments,
-    searchQuery,
     selectedFolderId,
-    sortBy,
     isTrashView,
     selectedTrashFolderId,
     deletedFolderById,
   ]);
-
-  const groupedDocs = useMemo(() => {
-    if (groupBy === "NONE") return { "": displayDocs };
-    const groups: Record<string, DocumentListItem[]> = {};
-    for (const doc of displayDocs) {
-      let key = "Khác";
-      if (groupBy === "MONTH") key = format(new Date(doc.createdAt), "MM/yyyy");
-      else if (groupBy === "UPLOADER") key = doc.uploadedBy?.name || "Không rõ";
-
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(doc);
-    }
-    return groups;
-  }, [displayDocs, groupBy]);
 
   const availableUploaders = useMemo(() => {
     const folderDocs = localDocuments.filter(d => d.folderId === selectedFolderId);
@@ -1204,7 +1137,7 @@ export function DocumentWorkspace({
           router.refresh();
         } else {
           toast.success("Xóa vĩnh viễn thư mục thành công");
-          setTrashFolders((prev) => prev.filter((f) => f.id !== id));
+          setExtraTrashFolders((prev) => prev.filter((f) => f.id !== id));
           if (selectedFolderId === id) setSelectedFolderId(null);
           router.refresh();
         }
@@ -1215,7 +1148,7 @@ export function DocumentWorkspace({
           setLocalDocuments(previousDocs);
         } else {
           toast.success("Xóa vĩnh viễn tài liệu thành công");
-          setTrashDocuments((prev) => prev.filter((d) => d.id !== id));
+          setExtraTrashDocuments((prev) => prev.filter((d) => d.id !== id));
           router.refresh();
         }
       }
@@ -1245,7 +1178,7 @@ export function DocumentWorkspace({
           router.refresh();
         } else {
           toast.success("Đã khôi phục thư mục");
-          setTrashFolders((prev) => prev.filter((f) => f.id !== id));
+          setExtraTrashFolders((prev) => prev.filter((f) => f.id !== id));
           // If we restored the folder we are currently viewing, or any folder, just clear the trash view state if needed.
           if (selectedTrashFolderId === id) setSelectedTrashFolderId(null);
           router.refresh();
@@ -1257,7 +1190,7 @@ export function DocumentWorkspace({
           setLocalDocuments(previousDocs);
         } else {
           toast.success("Đã khôi phục tài liệu");
-          setTrashDocuments((prev) => prev.filter((d) => d.id !== id));
+          setExtraTrashDocuments((prev) => prev.filter((d) => d.id !== id));
           router.refresh();
         }
       }
@@ -1839,7 +1772,6 @@ const handleEditMetadata = async () => {
                                 onClick={() => {
                                   if (isTrashView) {
                                     setTrashState(true, folder.id);
-                                    loadTrashChildren(folder.id);
                                   } else {
                                     setSelectedFolderId(folder.id);
                                   }
@@ -1901,41 +1833,30 @@ const handleEditMetadata = async () => {
                         <div className="mt-3 flex justify-center">
                           <button
                             type="button"
-                            onClick={isTrashView ? undefined : loadMoreFolders}
-                            disabled={isLoadingMoreFolders}
+                            onClick={isTrashView ? loadMoreTrashFolders : loadMoreFolders}
+                            disabled={isTrashView ? isLoadingMoreTrashFolders : isLoadingMoreFolders}
                             className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:border-blue-200 disabled:opacity-50"
                           >
-                            {isLoadingMoreFolders ? "Đang tải..." : `Tải thêm thư mục (${isTrashView ? trashTotalFolders - displayFolders.length : (pagination?.totalFolders ?? 0) - displayFolders.length} còn lại)`}
+                            {isLoadingMoreFolders ? "Đang tải..." : `Tải thêm thư mục (${isTrashView ? (pagination?.totalDeletedFolders ?? 0) - displayFolders.length : (pagination?.totalFolders ?? 0) - displayFolders.length} còn lại)`}
                           </button>
                         </div>
                       )}
                     </div>
                   )}
-                  {Object.entries(groupedDocs).map(([groupName, groupDocs]) => (
-                    <div key={groupName || "all"}>
-                      {groupName ? (
-                        <div className="mb-3 flex items-center gap-2">
-                          <h3 className="text-sm font-bold text-slate-700">{groupName}</h3>
-                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${groupName === 'Chưa phân loại' ? 'bg-amber-100 text-amber-700' : 'bg-slate-200 text-slate-600'}`}>
-                            {groupDocs.length} file
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="mb-3 flex items-center gap-2">
-                          <h3 className="text-sm font-bold text-slate-700">
-                            {isTrashView
-                              ? selectedTrashFolderData
-                                ? `Tài liệu trong ${selectedTrashFolderData.name}`
-                                : "Tài liệu đã xóa"
-                              : "Tài liệu trong thư mục"}
-                          </h3>
-                          <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-600">
-                            {groupDocs.length} file
-                          </span>
-                        </div>
-                      )}
-                      <div className={`${density === 'list' ? 'flex flex-col gap-2' : density === 'compact' ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5' : 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
-                        {groupDocs.map((document) => {
+                  <div className="mb-3 flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-slate-700">
+                      {isTrashView
+                        ? selectedTrashFolderData
+                          ? `Tài liệu trong ${selectedTrashFolderData.name}`
+                          : "Tài liệu đã xóa"
+                        : "Tài liệu trong thư mục"}
+                    </h3>
+                    <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-600">
+                      {displayDocs.length} file
+                    </span>
+                  </div>
+                  <div className={`${density === 'list' ? 'flex flex-col gap-2' : density === 'compact' ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5' : 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
+                    {displayDocs.map((document) => {
                           const matchesRule = hasAllowedDocumentExtension(
                             document.extension,
                             selectedFolderRule?.allowedExtensions || [],
@@ -2063,24 +1984,18 @@ const handleEditMetadata = async () => {
                           );
                         })}
                       </div>
-                    </div>
-                  ))}
+
                   {/* Load More Files */}
                   {(isTrashView ? hasMoreTrashFiles : hasMoreFiles) && (
                     <div className="mt-4 flex justify-center">
                       <button
                         type="button"
-                        onClick={loadMoreFiles}
-                        disabled={isLoadingMoreFiles}
+                        onClick={isTrashView ? loadMoreTrashFiles : loadMoreFiles}
+                        disabled={isTrashView ? isLoadingMoreTrashFiles : isLoadingMoreFiles}
                         className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:border-blue-200 disabled:opacity-50"
                       >
-                        {isLoadingMoreFiles ? "Đang tải..." : `Tải thêm tài liệu (${isTrashView ? trashTotalFiles - displayDocs.length : (pagination?.totalFiles ?? 0) - displayDocs.length} còn lại)`}
+                        {isLoadingMoreFiles ? "Đang tải..." : `Tải thêm tài liệu (${isTrashView ? (pagination?.totalDeletedFiles ?? 0) - displayDocs.length : (pagination?.totalFiles ?? 0) - displayDocs.length} còn lại)`}
                       </button>
-                    </div>
-                  )}
-                  {isLoadingTrash && (
-                    <div className="mt-4 flex justify-center">
-                      <span className="text-sm text-slate-500 animate-pulse">Đang tải nội dung thùng rác...</span>
                     </div>
                   )}
                 </div>
@@ -2450,8 +2365,12 @@ const handleEditMetadata = async () => {
           if (contextMenu?.type === "file" && contextMenu.targetId) {
             const doc = localDocuments.find((d) => d.id === contextMenu.targetId);
             if (doc) openDocument(doc);
-          } else if (contextMenu?.type === "folder" && contextMenu.targetId && isTrashView) {
-            setTrashState(true, contextMenu.targetId || null);
+          } else if (contextMenu?.type === "folder" && contextMenu.targetId) {
+            if (isTrashView) {
+              setTrashState(true, contextMenu.targetId);
+            } else {
+              setSelectedFolderId(contextMenu.targetId);
+            }
           }
         }}
         onUpload={() => {
