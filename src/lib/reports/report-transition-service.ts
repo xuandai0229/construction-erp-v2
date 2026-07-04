@@ -1,4 +1,5 @@
 import { Prisma, type UserRole } from "@prisma/client";
+import { syncSiteReportProgressEntriesInTransaction } from "./report-progress-sync";
 
 export type ReportTransitionClient = {
   $transaction<T>(
@@ -68,6 +69,12 @@ export async function submitSiteReportTransition(
       },
     });
 
+    await syncSiteReportProgressEntriesInTransaction(tx, {
+      reportId,
+      mode: "SUBMIT",
+      actor,
+    });
+
     return tx.siteReport.findUniqueOrThrow({ where: { id: reportId } });
   });
 }
@@ -110,6 +117,12 @@ export async function approveSiteReportTransition(
         beforeData: JSON.stringify({ status: report.status }),
         afterData: JSON.stringify({ status: "APPROVED", note }),
       },
+    });
+
+    await syncSiteReportProgressEntriesInTransaction(tx, {
+      reportId,
+      mode: "APPROVE",
+      actor,
     });
 
     return tx.siteReport.findUniqueOrThrow({ where: { id: reportId } });
@@ -159,6 +172,12 @@ export async function rejectSiteReportTransition(
           reason: reason.trim(),
         }),
       },
+    });
+
+    await syncSiteReportProgressEntriesInTransaction(tx, {
+      reportId,
+      mode: "REJECT",
+      actor,
     });
 
     return tx.siteReport.findUniqueOrThrow({ where: { id: reportId } });

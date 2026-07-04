@@ -22,10 +22,18 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const lastToastRef = React.useRef<{ message: string; time: number } | null>(null);
 
   const addToast = useCallback((message: string, type: ToastType) => {
+    const now = Date.now();
+    // Deduplicate same message within 2 seconds
+    if (lastToastRef.current && lastToastRef.current.message === message && now - lastToastRef.current.time < 2000) {
+      return;
+    }
+    lastToastRef.current = { message, time: now };
+
     const id = Math.random().toString(36).substring(2, 9);
-    setToasts((prev) => [...prev, { id, message, type }]);
+    setToasts((prev) => [...prev.slice(-2), { id, message, type }]); // Keep max 3
 
     // Auto remove after 3 seconds
     setTimeout(() => {
@@ -62,13 +70,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={value}>
       {children}
       <div
-        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[100] flex flex-col gap-2 pointer-events-none"
+        className="fixed top-4 right-4 sm:top-6 sm:right-6 z-[100] flex flex-col gap-2 pointer-events-none"
         aria-live="polite"
       >
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`pointer-events-auto flex items-start gap-3 p-4 pr-10 rounded-xl shadow-lg border max-w-sm w-full sm:w-auto animate-in slide-in-from-bottom-5 fade-in duration-300 ${styles[toast.type]}`}
+            className={`pointer-events-auto flex items-start gap-3 p-4 pr-10 rounded-xl shadow-lg border max-w-sm w-full sm:w-auto animate-in slide-in-from-top-5 fade-in duration-300 ${styles[toast.type]}`}
             role="alert"
           >
             <div className="flex-shrink-0 mt-0.5">{icons[toast.type]}</div>

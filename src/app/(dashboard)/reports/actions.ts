@@ -24,6 +24,7 @@ import { computeReportStats } from "@/lib/reports/report-stats";
 import { WeeklyGeneralNote, serializeWeeklyGeneralNote } from "@/lib/reports/weekly-report-utils";
 import {
   getVietnamCustomDateRange,
+  getVietnamDateString,
   getVietnamMonthRange,
   getVietnamTodayRange,
   getVietnamWeekRange,
@@ -31,6 +32,11 @@ import {
   vietnamEndOfDayUtc,
   vietnamStartOfDayUtc,
 } from "@/lib/reports/report-timezone";
+import { getWorkDateRange } from "@/lib/date/work-date";
+import { evaluateVolumeGuard } from "@/lib/field-progress/volume-guard";
+import { getReportProgressSourceMarker } from "@/lib/reports/report-progress-sync";
+
+const Decimal = Prisma.Decimal;
 
 export async function getActiveProjects() {
   const session = await getSession();
@@ -51,7 +57,185 @@ export async function getActiveProjects() {
   return projects;
 }
 
-export async function getProjectWorkItems(projectId: string) {
+type ReportLineBuildClient = Pick<
+  Prisma.TransactionClient,
+  "fieldProgressItem" | "fieldProgressEntry"
+>;
+
+type BuiltDailyLine = {
+  projectId: string;
+  fieldProgressItemId: string;
+  workContent: string;
+  workName: string;
+  area?: string | null;
+  constructionCrew?: string | null;
+  quantityToday: Prisma.Decimal;
+  unit?: string | null;
+  designQuantity: Prisma.Decimal;
+  quantityBefore: Prisma.Decimal;
+  quantityCumulative: Prisma.Decimal;
+  progressPercent: Prisma.Decimal;
+  note?: string | null;
+  issueNote?: string | null;
+  proposalNote?: string | null;
+  sortOrder: number;
+};
+
+function pickFieldProgressItemId(line: Record<string, unknown>) {
+  const raw = line.fieldProgressItemId || line.wbsItemId;
+  return raw ? String(raw) : "";
+}
+
+function parseQuantityToday(value: unknown) {
+  if (value === undefined || value === null || value === "") return 0;
+  const num = Number(value);
+  if (!Number.isFinite(num) || num < 0) {
+    throw new Error("Khối lượng hôm nay không hợp lệ");
+  }
+  return num;
+}
+
+async function buildDailyReportLines(input: {
+  client: ReportLineBuildClient;
+  projectId: string;
+  reportDate: Date;
+  workLines: Record<string, unknown>[];
+  existingReportId?: string;
+}) {
+  if (input.workLines.length === 0) {
+    return [];
+  }
+
+  const normalized = input.workLines.map((line, index) => {
+    const fieldProgressItemId = pickFieldProgressItemId(line);
+    if (!fieldProgressItemId) {
+      throw new Error("Khối lượng thi công phải chọn từ bảng khối lượng gốc");
+    }
+    return {
+      raw: line,
+      index,
+      fieldProgressItemId,
+      quantityToday: parseQuantityToday(line.quantityToday),
+    };
+  });
+
+  const duplicateItem = normalized.find((line, index) =>
+    normalized.findIndex((candidate) => candidate.fieldProgressItemId === line.fieldProgressItemId) !== index
+  );
+  if (duplicateItem) {
+    throw new Error("Công việc này đã có trong báo cáo.");
+  }
+
+  const itemIds = normalized.map((line) => line.fieldProgressItemId);
+  const items = await input.client.fieldProgressItem.findMany({
+    where: {
+      id: { in: itemIds },
+      projectId: input.projectId,
+      deletedAt: null,
+      itemType: "WORK",
+    },
+    select: {
+      id: true,
+      templateId: true,
+      code: true,
+      categoryName: true,
+      constructionCrew: true,
+      workContent: true,
+      designQuantity: true,
+      unit: true,
+    },
+  });
+  const itemById = new Map(items.map((item) => [item.id, item]));
+  const missingId = itemIds.find((itemId) => !itemById.has(itemId));
+  if (missingId) {
+    throw new Error(`Công việc khối lượng gốc không hợp lệ hoặc đã bị xóa: ${missingId}`);
+  }
+
+  const reportWorkDate = getVietnamDateString(input.reportDate);
+  const { start, end } = getWorkDateRange(reportWorkDate);
+
+  const [historicalSums, sameDayEntries] = await Promise.all([
+    input.client.fieldProgressEntry.groupBy({
+      by: ["itemId"],
+      where: {
+        projectId: input.projectId,
+        itemId: { in: itemIds },
+        status: "APPROVED",
+        deletedAt: null,
+        entryDate: { lt: start },
+      },
+      _sum: { quantity: true },
+    }),
+    input.client.fieldProgressEntry.findMany({
+      where: {
+        projectId: input.projectId,
+        itemId: { in: itemIds },
+        entryDate: { gte: start, lt: end },
+        deletedAt: null,
+        status: { not: "CANCELLED" },
+      },
+      select: { itemId: true, quantity: true, note: true, status: true },
+    }),
+  ]);
+
+  const approvedBeforeByItemId = new Map(historicalSums.map((sum) => [sum.itemId, Number(sum._sum.quantity || 0)]));
+  const sameDayByItemId = new Map<string, typeof sameDayEntries>();
+  for (const entry of sameDayEntries) {
+    if (!sameDayByItemId.has(entry.itemId)) sameDayByItemId.set(entry.itemId, []);
+    sameDayByItemId.get(entry.itemId)!.push(entry);
+  }
+
+  const built: BuiltDailyLine[] = [];
+  for (const line of normalized) {
+    const item = itemById.get(line.fieldProgressItemId)!;
+    const sameDayForItem = sameDayByItemId.get(line.fieldProgressItemId) || [];
+    const foreignSameDay = sameDayForItem.filter(
+      (entry) => !input.existingReportId || !entry.note?.includes(getReportProgressSourceMarker(input.existingReportId)),
+    );
+    if (foreignSameDay.length > 0) {
+      throw new Error("Công việc này đã có khối lượng từ báo cáo khác trong ngày.");
+    }
+
+    const approvedBefore = approvedBeforeByItemId.get(line.fieldProgressItemId) || 0;
+    const designQuantity = Number(item.designQuantity || 0);
+    const guard = evaluateVolumeGuard({
+      designQuantity,
+      cumulativeBefore: approvedBefore,
+      todayQuantity: line.quantityToday,
+      status: "SUBMITTED",
+      note: line.raw.note ? String(line.raw.note) : undefined,
+      issueNote: line.raw.issueNote ? String(line.raw.issueNote) : undefined,
+      proposalNote: line.raw.proposalNote ? String(line.raw.proposalNote) : undefined,
+    });
+    if (!guard.canSubmit) {
+      throw new Error("Khối lượng nhập vượt phần còn lại.");
+    }
+
+    const progressPercent = designQuantity > 0 ? Math.min(999.99, (guard.projectedCumulative / designQuantity) * 100) : 0;
+    built.push({
+      projectId: input.projectId,
+      fieldProgressItemId: item.id,
+      workContent: item.workContent || item.code || String(line.raw.workContent || "No content"),
+      workName: item.workContent || item.code || String(line.raw.workContent || "No content"),
+      area: item.categoryName,
+      constructionCrew: item.constructionCrew,
+      quantityToday: new Decimal(line.quantityToday),
+      unit: item.unit || (line.raw.unit ? String(line.raw.unit) : null),
+      designQuantity: new Decimal(designQuantity),
+      quantityBefore: new Decimal(approvedBefore),
+      quantityCumulative: new Decimal(guard.projectedCumulative),
+      progressPercent: new Decimal(progressPercent),
+      note: line.raw.note ? String(line.raw.note) : null,
+      issueNote: line.raw.issueNote ? String(line.raw.issueNote) : null,
+      proposalNote: line.raw.proposalNote ? String(line.raw.proposalNote) : null,
+      sortOrder: line.index,
+    });
+  }
+
+  return built;
+}
+
+export async function getProjectWorkItems(projectId: string, reportDate?: string) {
   const session = await getSession();
   if (!session) throw new Error("Unauthorized");
 
@@ -60,6 +244,73 @@ export async function getProjectWorkItems(projectId: string) {
   if (accessibleProjectIds !== null && !accessibleProjectIds.includes(projectId)) {
     throw new Error("Không có quyền truy cập dự án này");
   }
+
+  const richFieldItems = await prisma.fieldProgressItem.findMany({
+    where: { projectId, deletedAt: null, itemType: "WORK" },
+    select: {
+      id: true,
+      code: true,
+      categoryName: true,
+      workContent: true,
+      designQuantity: true,
+      unit: true,
+      status: true,
+      sortOrder: true,
+    },
+    orderBy: { sortOrder: "asc" },
+  });
+
+  if (richFieldItems.length === 0) return [];
+
+  const itemIds = richFieldItems.map((item) => item.id);
+  const dateRange = reportDate ? getWorkDateRange(reportDate) : null;
+  const [approvedSums, sameDayEntries] = await Promise.all([
+    prisma.fieldProgressEntry.groupBy({
+      by: ["itemId"],
+      where: {
+        projectId,
+        itemId: { in: itemIds },
+        status: "APPROVED",
+        deletedAt: null,
+        ...(dateRange ? { entryDate: { lt: dateRange.start } } : {}),
+      },
+      _sum: { quantity: true },
+    }),
+    dateRange
+      ? prisma.fieldProgressEntry.groupBy({
+          by: ["itemId"],
+          where: {
+            projectId,
+            itemId: { in: itemIds },
+            entryDate: { gte: dateRange.start, lt: dateRange.end },
+            deletedAt: null,
+            status: { in: ["DRAFT", "SUBMITTED", "APPROVED", "REVISION_REQUESTED"] },
+          },
+          _sum: { quantity: true },
+        })
+      : Promise.resolve([]),
+  ]);
+  const approvedByItemId = new Map(approvedSums.map((sum) => [sum.itemId, Number(sum._sum.quantity || 0)]));
+  const sameDayByItemId = new Map(sameDayEntries.map((sum) => [sum.itemId, Number(sum._sum.quantity || 0)]));
+
+  return richFieldItems.map((item) => ({
+    id: item.id,
+    fieldProgressItemId: item.id,
+    code: item.code,
+    categoryName: item.categoryName,
+    name: item.workContent || "Chua dat ten",
+    workContent: item.workContent || "Chua dat ten",
+    designQuantity: Number(item.designQuantity || 0),
+    approvedCumulative: approvedByItemId.get(item.id) || 0,
+    todayQuantity: sameDayByItemId.get(item.id) || 0,
+    remainingQuantity: Math.max(
+      0,
+      Number(item.designQuantity || 0) - (approvedByItemId.get(item.id) || 0) - (sameDayByItemId.get(item.id) || 0),
+    ),
+    unit: item.unit || "Lan",
+    status: item.status,
+    source: "FIELD_PROGRESS",
+  }));
 
   // Try to fetch FieldProgressItem first
   const fieldItems = await prisma.fieldProgressItem.findMany({
@@ -119,13 +370,23 @@ export async function createSiteReport(data: Record<string, unknown>, isDraft: b
   }
 
   const status = isDraft ? "DRAFT" : "SUBMITTED";
+  const reportDate = vietnamDateTimeToUtc(String(data.date), String(data.time || "07:00"));
+  const dailyLines =
+    type === "DAILY"
+      ? await buildDailyReportLines({
+          client: prisma,
+          projectId: pId,
+          reportDate,
+          workLines,
+        })
+      : [];
   const report = await createSiteReportWithAudit(
     prisma,
     session,
     {
       projectId: String(data.projectId),
       type: (data.type as "DAILY" | "WEEKLY") || "DAILY",
-      reportDate: vietnamDateTimeToUtc(String(data.date), String(data.time || "07:00")),
+      reportDate,
       weekStartDate: data.weekStartDate ? vietnamStartOfDayUtc(String(data.weekStartDate)) : undefined,
       weekEndDate: data.weekEndDate ? vietnamEndOfDayUtc(String(data.weekEndDate)) : undefined,
       weatherCondition: (data.weatherCondition as "SUNNY" | "CLOUDY" | "OVERCAST" | "LIGHT_RAIN" | "HEAVY_RAIN" | "WINDY" | "STORM" | "OTHER") || undefined,
@@ -152,7 +413,8 @@ export async function createSiteReport(data: Record<string, unknown>, isDraft: b
           note: line.note ? String(line.note) : undefined,
           sortOrder: index,
         }))
-      }
+      },
+      ...(type === "DAILY" ? { lines: { create: dailyLines } } : {})
     }
   );
 
@@ -976,6 +1238,18 @@ export async function updateSiteReport(reportId: string, data: Record<string, un
   const workLines = (data.workLines as Record<string, unknown>[]) || [];
 
   const updatedReport = await prisma.$transaction(async (tx) => {
+    const nextReportDate = data.date ? vietnamDateTimeToUtc(String(data.date), String(data.time || "07:00")) : report.reportDate;
+    const dailyLines =
+      report.type === "DAILY"
+        ? await buildDailyReportLines({
+            client: tx,
+            projectId: report.projectId,
+            reportDate: nextReportDate,
+            workLines,
+            existingReportId: reportId,
+          })
+        : [];
+
     // Delete existing lines
     await tx.siteReportLine.deleteMany({
       where: { siteReportId: reportId }
@@ -985,7 +1259,7 @@ export async function updateSiteReport(reportId: string, data: Record<string, un
     const result = await tx.siteReport.update({
       where: { id: reportId },
       data: {
-        reportDate: data.date ? vietnamDateTimeToUtc(String(data.date), String(data.time || "07:00")) : undefined,
+        reportDate: nextReportDate,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         weatherCondition: data.weatherCondition as any || undefined,
         weatherTemperature: data.weatherTemperature ? Number(data.weatherTemperature) : undefined,
@@ -1015,7 +1289,8 @@ export async function updateSiteReport(reportId: string, data: Record<string, un
             note: line.note ? String(line.note) : null,
             sortOrder: index,
           }))
-        }
+        },
+        ...(report.type === "DAILY" ? { lines: { create: dailyLines } } : {})
       }
     });
 

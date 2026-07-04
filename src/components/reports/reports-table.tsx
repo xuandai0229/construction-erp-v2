@@ -7,11 +7,13 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { PhotoPreviewStack } from "./photo-preview-stack";
 import { useMemo, Fragment } from "react";
 import { getVietnamIsoWeekInfo } from "@/lib/reports/report-timezone";
+import { formatDateVN, formatTimeVN, formatReportCode } from "@/lib/utils";
 
 interface ReportsTableProps {
   reports: FieldReport[];
   onViewDetail: (report: FieldReport) => void;
   onViewGallery?: (report: FieldReport) => void;
+  onPrintPreview?: (report: FieldReport) => void;
   onEdit?: (report: FieldReport) => void;
   onDelete?: (report: FieldReport) => void;
   totalReports: number;
@@ -26,6 +28,7 @@ export function ReportsTable({
   reports,
   onViewDetail,
   onViewGallery,
+  onPrintPreview,
   onEdit,
   onDelete,
   totalReports,
@@ -57,9 +60,13 @@ export function ReportsTable({
     return pages;
   }
 
-  const handlePrint = (e: React.MouseEvent, reportId: string) => {
+  const handlePrint = (e: React.MouseEvent, report: FieldReport) => {
     e.stopPropagation();
-    window.open(`/print/reports/${reportId}`, '_blank');
+    if (onPrintPreview) {
+      onPrintPreview(report);
+    } else {
+      window.open(`/print/reports/${report.id}`, '_blank');
+    }
   };
 
   // Group reports by week
@@ -140,7 +147,7 @@ export function ReportsTable({
                       <td colSpan={showProjectColumn ? 7 : 6} className="py-2.5 px-4">
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
                           <span className="font-semibold text-slate-800">
-                            Tuần {group.weekNumber} · {group.startDate} - {group.endDate}
+                            Tuần {group.weekNumber} · {formatDateVN(group.startDate)} - {formatDateVN(group.endDate)}
                           </span>
                           <span className="text-slate-400 hidden sm:inline">·</span>
                           <span className="text-slate-600">{group.reports.length} báo cáo</span>
@@ -172,7 +179,7 @@ export function ReportsTable({
                           <td className="py-2.5 px-4 whitespace-nowrap">
                             <div className="flex flex-col">
                               <span className={`font-mono text-[13px] font-semibold ${isWeekly ? 'text-purple-700' : 'text-blue-700'}`}>
-                                {report.code.replace('BC-D-', 'D-').replace('BC-W-', 'W-')}
+                                {formatReportCode(report.code, report.date, report.type)}
                               </span>
                               <div className="flex items-center gap-2 mt-0.5">
                                 <span className="text-[11px] text-slate-400">
@@ -198,17 +205,23 @@ export function ReportsTable({
                           <td className="py-2.5 px-3">
                             <div className="flex flex-col">
                               <span className="text-slate-900 font-medium text-[13px] line-clamp-1">{report.creatorName}</span>
-                              <span className="text-slate-400 text-[11px] truncate">{report.creatorRole}</span>
+                              <span className="text-slate-400 text-[11px] truncate">
+                                {report.creatorRole === 'CHIEF_COMMANDER' ? 'Chỉ huy trưởng' : 
+                                 report.creatorRole === 'PROJECT_MANAGER' ? 'Quản lý dự án' :
+                                 report.creatorRole === 'ENGINEER' ? 'Kỹ sư' :
+                                 report.creatorRole === 'ACCOUNTANT' ? 'Kế toán' :
+                                 report.creatorRole === 'ADMIN' ? 'Giám đốc' : report.creatorRole}
+                              </span>
                             </div>
                           </td>
                           <td className="py-2.5 px-3 whitespace-nowrap">
                             <div className="flex flex-col">
                               <span className="text-slate-700 text-[13px] font-medium">
                                 {isWeekly 
-                                  ? `${report.weekStartDate} - ${report.weekEndDate}`
-                                  : report.date}
+                                  ? `${formatDateVN(report.weekStartDate)} - ${formatDateVN(report.weekEndDate)}`
+                                  : formatDateVN(report.date)}
                               </span>
-                              {report.type === 'DAILY' && <span className="text-slate-400 text-[11px]">{report.time}</span>}
+                              {report.type === 'DAILY' && <span className="text-slate-400 text-[11px]">{formatTimeVN(`1970-01-01T${report.time || "00:00"}`)}</span>}
                             </div>
                           </td>
                           <td className="py-2.5 px-3 whitespace-nowrap">
@@ -281,7 +294,7 @@ export function ReportsTable({
                                 <Eye className="w-[18px] h-[18px]" strokeWidth={2} />
                               </button>
                               <button
-                                onClick={(e) => handlePrint(e, report.id)}
+                                onClick={(e) => handlePrint(e, report)}
                                 className="icon-button h-9 w-9"
                                 title="In / Xuất PDF"
                                 aria-label="In / Xuất PDF"

@@ -55,6 +55,7 @@ export function DailyEntryTable({
   projectLabel,
   initialItems,
   parentGroups = [],
+  userRole,
 }: {
   projectId: string;
   templateId: string;
@@ -62,6 +63,7 @@ export function DailyEntryTable({
   projectLabel: string;
   initialItems: any[];
   parentGroups?: any[];
+  userRole?: string;
 }) {
   const router = useRouter();
   const [items, setItems] = useState<DailyItem[]>([]);
@@ -451,6 +453,8 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
   const renderQuantityInput = (item: DailyItem, index: number, compact = false) => {
     const math = getItemMath(item);
     const idSuffix = compact ? "-mobile" : "-desktop";
+    const isReportSourced = item.note && item.note.includes("[SOURCE:SITE_REPORT:");
+    const isReadOnly = Boolean(isReportSourced) && userRole !== 'ADMIN' && userRole !== 'DIRECTOR';
 
     return (
       <div>
@@ -472,7 +476,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
           }}
           onBlur={() => setFocusedItemId(null)}
           onKeyDown={(e) => handleQuantityKeyDown(e, index)}
-          disabled={loading}
+          disabled={loading || isReadOnly}
           className={`w-full rounded border-2 px-2 text-right font-bold outline-none transition focus:ring-2 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 ${
             compact ? "h-10 text-base" : "h-11 text-xl"
           } ${
@@ -484,7 +488,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
                   ? "border-amber-400 bg-amber-50/50 text-amber-700 focus:border-amber-500 focus:ring-amber-100"
                   : "border-blue-300 bg-white text-slate-900 focus:border-blue-500 focus:ring-blue-100"
           }`}
-          placeholder="0"
+          placeholder={isReadOnly ? "Từ báo cáo" : "0"}
         />
         {(math.isNegative || math.hasInvalidNumber || math.guard.level !== "OK") && math.guard.level !== "NEED_DESIGN_QUANTITY" && (
           <div className={`mt-1 flex items-center justify-end gap-1 text-[10px] font-semibold ${math.guard.level === "NEAR_LIMIT" ? "text-amber-600" : "text-red-600"}`}>
@@ -510,7 +514,12 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
       >
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-1 flex-1 min-w-0">
-            <h3 className="line-clamp-2 text-sm font-bold leading-snug text-slate-900">{item.name}</h3>
+            <h3 className="line-clamp-2 text-sm font-bold leading-snug text-slate-900">
+              {item.name}
+              {item.note && item.note.includes("[SOURCE:SITE_REPORT:") && (
+                <span className="ml-2 inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 align-middle" title="Dữ liệu đồng bộ từ Báo cáo hiện trường. Chỉ tài khoản quản lý mới có thể điều chỉnh thủ công.">Từ báo cáo hiện trường</span>
+              )}
+            </h3>
             <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-600">
               <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">{item.constructionCrew || "—"}</span>
               <span className="text-slate-400">•</span>
@@ -956,7 +965,12 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
                   </td>
                   <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.dailyCols.content} bg-white ${math.isOver ? '!bg-red-50/60' : isDirty ? '!bg-amber-50/40' : ''}`}>
                     {item.parentName && <div className="mb-0.5 text-[10px] font-medium uppercase tracking-wider text-slate-400 truncate w-full">{item.parentName}</div>}
-                    <div className="font-semibold text-slate-800 line-clamp-2 w-full leading-tight" title={item.name}>{item.name}</div>
+                    <div className="font-semibold text-slate-800 line-clamp-2 w-full leading-tight" title={item.name}>
+                      {item.name}
+                      {item.note && item.note.includes("[SOURCE:SITE_REPORT:") && (
+                        <span className="ml-2 inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 align-middle" title="Dữ liệu đồng bộ từ Báo cáo hiện trường. Chỉ tài khoản quản lý mới có thể điều chỉnh thủ công.">Từ báo cáo hiện trường</span>
+                      )}
+                    </div>
                     {math.isOver && (
                       <div className="mt-1 text-xs font-bold text-red-600 flex items-center gap-1.5 whitespace-nowrap">
                         <AlertCircle className="h-3.5 w-3.5" /> Vượt khối lượng thiết kế. <span className="font-medium">Cần ghi chú giải trình.</span>

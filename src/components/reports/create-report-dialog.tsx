@@ -1,809 +1,639 @@
-"use client";
-
-import React, { useEffect, useRef, useState, useCallback, Fragment } from "react";
-import {
-  X,
-  Building2,
-  Calendar,
-  Clock,
-  User,
-  CloudSun,
-  FileText,
-  TrendingUp,
-  Package,
-  Wrench,
-  Camera,
-  Paperclip,
-  MapPin,
-  Loader2,
-  Save,
-  Send,
-  UploadCloud,
-  Image as ImageIcon,
-  File as FileIcon,
-  Trash2,
-  Plus,
-  AlignLeft,
-} from "lucide-react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { X, Save, Send, AlertCircle, FileText, CheckCircle2, ListTodo, FileImage, Files, MapPin, Building2, ChevronDown, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast-context";
-import { 
-  WEATHER_OPTIONS, 
-  type CreateReportFormData, 
-  type WeatherCondition, 
-  type ReportType,
-  type ReportWorkLine
-} from "./types";
-import { getProjectWorkItems, getWeeklyReportSummary } from "@/app/(dashboard)/reports/actions";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { GeneralInfoCard } from "./create-dialog/general-info-card";
+import { WorkPicker, type PickerWorkItem } from "./create-dialog/work-picker";
+import { SelectedWorkCard } from "./create-dialog/selected-work-card";
+import { ResourcesAndQuality } from "./create-dialog/resources-and-quality";
+import { AttachmentsCard } from "./create-dialog/attachments-card";
+import { type CreateReportFormData, type FieldReport, type ReportWorkLine } from "./types";
+import { getProjectWorkItems } from "@/app/(dashboard)/reports/actions";
 
 interface CreateReportDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: CreateReportFormData, isDraft: boolean) => void;
-  isSubmitting?: boolean;
-  activeProjects: {id: string; name: string}[];
-  currentUser: { id: string; name: string };
+  onSubmit: (data: CreateReportFormData, isDraft: boolean) => Promise<void>;
+  initialReport?: FieldReport | null;
   mode?: "create" | "edit";
-  initialReport?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  activeProjects: { id: string; name: string }[];
+  currentUser: { id: string; name: string; role?: string };
+  isSubmitting: boolean;
+  currentProjectId?: string;
 }
 
-interface FormErrors {
-  projectId?: string;
-  date?: string;
-  time?: string;
-  workLines?: string; // general error if no worklines
-}
-
-const EMPTY_FORM: CreateReportFormData = {
-  type: "DAILY",
-  projectId: "",
-  date: "",
-  time: "",
-  creatorName: "", // Will be set by currentUser
-  weatherCondition: "SUNNY",
-  weatherTemperature: undefined,
-  
-  workLines: [],
-  
-  materials: "",
-  labor: "",
-  quality: "",
-  issues: "",
-  recommendations: "",
-  gpsLocation: "",
-  photos: [],
-  attachments: [],
-};
-
-export function CreateReportDialog({ isOpen, onClose, onSubmit, isSubmitting, activeProjects, currentUser, mode = "create", initialReport }: CreateReportDialogProps) {
-  if (!isOpen) return null;
-  return <CreateReportDialogInner onClose={onClose} onSubmit={onSubmit} isSubmitting={isSubmitting} activeProjects={activeProjects} currentUser={currentUser} mode={mode} initialReport={initialReport} />;
-}
-
-function CreateReportDialogInner({ onClose, onSubmit, isSubmitting, activeProjects, currentUser, mode, initialReport }: Omit<CreateReportDialogProps, 'isOpen'>) {
+export function CreateReportDialog({
+  isOpen,
+  onClose,
+  onSubmit,
+  initialReport,
+  mode = "create",
+  activeProjects,
+  currentUser,
+  isSubmitting,
+  currentProjectId,
+}: CreateReportDialogProps) {
   const toast = useToast();
-  const now = new Date();
   
-  const [form, setForm] = useState<CreateReportFormData>(() => {
-    if (mode === "edit" && initialReport) {
-      return {
-        type: initialReport.type || "DAILY",
-        projectId: initialReport.projectId || "",
-        date: initialReport.date || now.toISOString().split("T")[0],
-        time: initialReport.time || `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
-        creatorName: initialReport.creatorName || currentUser.name,
-        weatherCondition: initialReport.weatherCondition || "SUNNY",
-        weatherTemperature: initialReport.weatherTemperature,
-        workLines: initialReport.workLines && initialReport.workLines.length > 0 
-          ? initialReport.workLines 
-          : [{ workContent: "", unit: "Lần", quantityToday: 0 }],
-        materials: initialReport.materials || "",
-        labor: initialReport.labor || "",
-        quality: initialReport.quality || "",
-        issues: initialReport.issues || "",
-        recommendations: initialReport.recommendations || "",
-        gpsLocation: initialReport.gpsLocation || "",
-        photos: [], // Edit mode does not pre-fill file objects
-        attachments: [], // Edit mode does not pre-fill file objects
-      };
-    }
+  // Default Form
+  const getDefaultForm = useCallback((): CreateReportFormData => {
+    const now = new Date();
     return {
-      ...EMPTY_FORM,
-      creatorName: currentUser.name,
+      type: "DAILY",
+      projectId: currentProjectId || (activeProjects.length === 1 ? activeProjects[0].id : ""), // Automatically select if 1 project
       date: now.toISOString().split("T")[0],
-      time: `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`,
-      workLines: [{ workContent: "", unit: "Lần", quantityToday: 0 }],
+      time: now.toTimeString().split(" ")[0].slice(0, 5),
+      creatorName: currentUser.name,
+      weatherCondition: "SUNNY",
+      workLines: [],
+      materials: "",
+      labor: "",
+      quality: "",
+      issues: "",
+      recommendations: "",
+      gpsLocation: "",
+      photos: [],
+      attachments: [],
     };
-  });
-  
-  const [workItems, setWorkItems] = useState<{id: string, name: string, unit: string}[]>([]);
-  const [loadingWorkItems, setLoadingWorkItems] = useState(false);
-  const [errors, setErrors] = useState<FormErrors>({});
-  const dialogRef = useRef<HTMLDivElement>(null);
+  }, [currentUser.name, currentProjectId]);
 
-  // File refs
-  const photoInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // States
+  const [form, setForm] = useState<CreateReportFormData>(getDefaultForm());
+  const [initialFormState, setInitialFormState] = useState<string>("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showConfirmClose, setShowConfirmClose] = useState(false);
+  const [workItemsData, setWorkItemsData] = useState<any[]>([]);
+  const [isLoadingItems, setIsLoadingItems] = useState(false);
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
 
-  const [isDraggingPhoto, setIsDraggingPhoto] = useState(false);
-  const [isDraggingFile, setIsDraggingFile] = useState(false);
-  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
-
-  // Weekly Preview state
-  type WeeklyReportPreviewClient = {
-  range: { fromDate: string; toDate: string; };
-  dayStatuses: any[];
-  stats: { approvedReports: number; submittedReports: number; draftReports: number; rejectedReports: number; emptyDays: number; workLineCount: number; attachmentCount: number; };
-  groups: { categoryId?: string; categoryName: string; items: { workItemId?: string; workContent: string; unit?: string; quantity: number; dates: string[]; sourceReports: any[]; sourceStatus: string; resultStatus?: string; issueNote?: string; attachmentCount: number; }[]; }[];
-  emptyReason: string | null;
-  errorMessage?: string;
-};
-  const [weeklyPreview, setWeeklyPreview] = useState<WeeklyReportPreviewClient | null>(null);
-  const [loadingPreview, setLoadingPreview] = useState(false);
-
-  // Fetch work items when project changes
+  // Load Initial Data
   useEffect(() => {
-    if (form.projectId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setLoadingWorkItems(true);
-      getProjectWorkItems(form.projectId).then((items) => {
-        setWorkItems(items);
-      }).catch(console.error).finally(() => {
-        setLoadingWorkItems(false);
-      });
-    } else {
-      setWorkItems([]);
-    }
-  }, [form.projectId]);
-
-  useEffect(() => {
-    return () => {
-      photoPreviews.forEach((url) => URL.revokeObjectURL(url));
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape" && !isSubmitting) onClose();
-    }
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose, isSubmitting]);
-
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = ""; };
-  }, []);
-
-  const updateField = useCallback((field: keyof CreateReportFormData, value: unknown) => {
-    setForm((prev) => ({ ...prev, [field]: value } as CreateReportFormData));
-    if (errors[field as keyof FormErrors]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
-    }
-  }, [errors]);
-
-  const updateWorkLine = (index: number, field: keyof ReportWorkLine, value: string | number) => {
-    setForm(prev => {
-      const newLines = [...prev.workLines];
-      newLines[index] = { ...newLines[index], [field]: value };
-      
-      // Auto-fill unit if a wbsItem is selected
-      if (field === "wbsItemId" && value) {
-        const item = workItems.find(i => i.id === value);
-        if (item) {
-          newLines[index].workContent = item.name;
-          newLines[index].unit = item.unit;
-        }
+    if (isOpen) {
+      if (initialReport) {
+        const loadedForm = {
+          type: initialReport.type,
+          projectId: initialReport.projectId,
+          date: initialReport.date,
+          time: initialReport.time,
+          creatorName: initialReport.creatorName,
+          weatherCondition: initialReport.weatherCondition,
+          weatherTemperature: initialReport.weatherTemperature,
+          workLines: initialReport.workLines.map(line => ({ ...line })),
+          materials: initialReport.materials,
+          labor: initialReport.labor,
+          quality: initialReport.quality,
+          issues: initialReport.issues,
+          recommendations: initialReport.recommendations,
+          gpsLocation: initialReport.gpsLocation || "",
+          photos: [], // In a real app, load existing photos
+          attachments: [],
+        };
+        setForm(loadedForm);
+        setInitialFormState(JSON.stringify(loadedForm));
+      } else {
+        const d = getDefaultForm();
+        setForm(d);
+        setInitialFormState(JSON.stringify(d));
       }
-      
-      return { ...prev, workLines: newLines };
+      setErrors({});
+    }
+  }, [isOpen, initialReport, getDefaultForm]);
+
+  // Load Baseline Items based on Project
+  useEffect(() => {
+    if (!form.projectId) {
+      setWorkItemsData([]);
+      return;
+    }
+    async function loadItems() {
+      setIsLoadingItems(true);
+      try {
+        const items = await getProjectWorkItems(form.projectId, form.date);
+        setWorkItemsData(items || []);
+      } catch (e) {
+        console.error("Failed to load baseline items:", e);
+      } finally {
+        setIsLoadingItems(false);
+      }
+    }
+    loadItems();
+  }, [form.projectId, form.date]);
+
+  // Derived Summary
+  const selectedCount = form.workLines.length;
+  const totalQtyToday = form.workLines.reduce((sum, line) => sum + (Number(line.quantityToday) || 0), 0);
+  const isDirty = JSON.stringify(form) !== initialFormState;
+
+  // Updaters
+  const updateField = (field: string, value: any) => {
+    setForm(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors(prev => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  };
+
+  const updateWorkLine = (index: number, field: keyof Omit<ReportWorkLine, 'id'>, value: any) => {
+    setForm(prev => {
+      const nextLines = [...prev.workLines];
+      nextLines[index] = { ...nextLines[index], [field]: value };
+      return { ...prev, workLines: nextLines };
     });
   };
 
-  const addWorkLine = () => {
-    setForm(prev => ({
-      ...prev,
-      workLines: [...prev.workLines, { workContent: "", unit: "Lần", quantityToday: 0 }]
-    }));
-  };
-
   const removeWorkLine = (index: number) => {
-    setForm(prev => ({
-      ...prev,
-      workLines: prev.workLines.filter((_, i) => i !== index)
-    }));
+    setForm(prev => {
+      const nextLines = [...prev.workLines];
+      nextLines.splice(index, 1);
+      return { ...prev, workLines: nextLines };
+    });
   };
 
-  function validate(): boolean {
-    const newErrors: FormErrors = {};
+  const handleSelectWorkItems = (items: PickerWorkItem[]) => {
+    const newLines = items.map(item => {
+      const existing = form.workLines.find(l => l.fieldProgressItemId === item.fieldProgressItemId);
+      if (existing) return null;
+      
+      return {
+        fieldProgressItemId: item.fieldProgressItemId,
+        categoryName: item.categoryName,
+        code: item.code,
+        workContent: item.name,
+        unit: item.unit,
+        designQuantity: item.designQuantity,
+        quantityBefore: item.approvedCumulative,
+        approvedCumulative: item.approvedCumulative,
+        remainingQuantity: item.remainingQuantity,
+        quantityToday: 0,
+        note: "",
+        proposalNote: "",
+      } as ReportWorkLine;
+    }).filter(Boolean) as ReportWorkLine[];
+
+    if (newLines.length > 0) {
+      setForm(prev => ({
+        ...prev,
+        workLines: [...prev.workLines, ...newLines]
+      }));
+      toast.success(`Đã thêm ${newLines.length} công việc vào báo cáo.`);
+      if (errors.workLines) {
+        setErrors(prev => { const n = {...prev}; delete n.workLines; return n; });
+      }
+    }
+  };
+
+  // Actions
+  const handleClose = () => {
+    if (isDirty && !isSubmitting) {
+      setShowConfirmClose(true);
+    } else {
+      onClose();
+    }
+  };
+
+  const validate = (isDraft: boolean): boolean => {
+    const newErrors: Record<string, string> = {};
     if (!form.projectId) newErrors.projectId = "Vui lòng chọn công trình";
-    if (form.type === 'DAILY' && !form.date) newErrors.date = "Vui lòng chọn ngày";
+    if (!form.date) newErrors.date = "Vui lòng chọn ngày";
     
-    const validWorkLines = form.workLines.filter(l => l.workContent.trim());
-    if (form.type === 'DAILY' && validWorkLines.length === 0) {
-      newErrors.workLines = "Vui lòng nhập ít nhất 1 dòng công việc";
+    if (!isDraft && form.type === "DAILY" && form.workLines.length === 0) {
+      newErrors.workLines = "Báo cáo ngày cần ít nhất 1 công việc. Bấm Thêm khối lượng để chọn công việc từ bảng khối lượng gốc.";
+    }
+    
+    const hasOverQty = form.workLines.some(l => (l.quantityToday || 0) > (l.remainingQuantity || 0));
+    if (!isDraft && hasOverQty) {
+      newErrors.workLines = "Khối lượng không được vượt phần còn lại.";
     }
 
     setErrors(newErrors);
     
     if (Object.keys(newErrors).length > 0) {
-      toast.error("Vui lòng điền đầy đủ các trường bắt buộc");
-      const dialogBody = dialogRef.current?.querySelector('.overflow-y-auto');
-      if (dialogBody) dialogBody.scrollTop = 0;
+      if (newErrors.workLines) {
+        document.getElementById('work-lines-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
       return false;
     }
-    
-    // Cleanup empty worklines before submit
-    if (form.type === 'DAILY') {
-      setForm((prev) => ({ ...prev, workLines: validWorkLines }));
-    }
-    
     return true;
-  }
+  };
 
-  function handleSubmit(isDraft: boolean) {
-    if (!isDraft && !validate()) return;
-    
-    // For weekly, check if preview exists
-    if (form.type === 'WEEKLY' && !weeklyPreview) {
-      toast.error("Vui lòng Xem tổng hợp tuần trước khi tạo báo cáo.");
-      return;
-    }
-    if (form.type === 'WEEKLY' && weeklyPreview?.stats?.approvedReports === 0) {
-      toast.error("Không có báo cáo ngày nào được duyệt trong tuần này!");
-      return;
-    }
-
-    onSubmit(form, isDraft);
-  }
-
-  const handlePreviewWeekly = async () => {
-    if (!form.projectId) { toast.error("Vui lòng chọn công trình"); return; }
-    if (!form.weekStartDate || !form.weekEndDate) { toast.error("Vui lòng chọn Từ ngày và Đến ngày"); return; }
-    
-    setLoadingPreview(true);
-    setWeeklyPreview(null);
+  const submitAction = async (action: "DRAFT" | "SUBMIT") => {
+    const isDraft = action === "DRAFT";
+    if (!validate(isDraft)) return;
     try {
-      const preview = await getWeeklyReportSummary(form.projectId, new Date(form.weekStartDate), new Date(form.weekEndDate));
-      setWeeklyPreview({
-        range: preview.range || { fromDate: "", toDate: "" },
-        dayStatuses: Array.isArray(preview.dayStatuses) ? preview.dayStatuses : [],
-        stats: (preview.stats as any) || { approvedReports: 0, submittedReports: 0, draftReports: 0, rejectedReports: 0, emptyDays: 0, workLineCount: 0, attachmentCount: 0 },
-        groups: Array.isArray(preview.groups) ? preview.groups : [],
-        emptyReason: preview.emptyReason || null
-      });
-      toast.success("Đã lấy dữ liệu tổng hợp tuần");
-    } catch (e: unknown) {
-      const err = e as Error;
-      toast.error(err.message || "Lỗi khi lấy dữ liệu tổng hợp");
-    } finally {
-      setLoadingPreview(false);
+      await onSubmit(form, isDraft);
+      setInitialFormState(JSON.stringify(form)); // Reset dirty
+    } catch (e: any) {
+      toast.error(e.message || "Đã xảy ra lỗi không mong muốn khi tạo báo cáo");
     }
   };
 
-  // File Handlers
-  const handlePhotoFiles = (files: FileList | File[]) => {
-    const newFiles = Array.from(files).filter(f => {
-      if (!f.type.startsWith("image/") && !f.name.match(/\.(jpe?g|png|gif|webp|bmp|heic)$/i)) {
-        toast.error(`File ${f.name} không đúng định dạng. Chỉ chấp nhận ảnh.`);
-        return false;
-      }
-      return true;
-    });
-    const validFiles = newFiles.filter(f => {
-      if (f.size === 0) { toast.error(`File rỗng không hợp lệ`); return false; }
-      return true;
-    });
-    if (form.photos.length + validFiles.length > 10) {
-      toast.error("Chỉ được tải tối đa 10 ảnh");
-      validFiles.splice(10 - form.photos.length);
-    }
-    if (validFiles.length > 0) {
-      updateField("photos", [...form.photos, ...validFiles]);
-      const newUrls = validFiles.map(f => URL.createObjectURL(f));
-      setPhotoPreviews(prev => [...prev, ...newUrls]);
-    }
-  };
+  if (!isOpen) return null;
 
-  const handleDocFiles = (files: FileList | File[]) => {
-    const FILE_EXTS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.txt'];
-    const validFiles = Array.from(files).filter(f => {
-      const ext = f.name.toLowerCase().substring(f.name.lastIndexOf('.'));
-      if (!FILE_EXTS.includes(ext)) {
-        toast.error(`File không đúng định dạng (${ext}). Chỉ chấp nhận PDF, Word, Excel, TXT.`);
-        return false;
-      }
-      if (f.size === 0) { toast.error(`File rỗng không hợp lệ`); return false; }
-      return true;
-    });
-    if (form.attachments.length + validFiles.length > 5) {
-      toast.error("Chỉ được tải tối đa 5 file tài liệu");
-      validFiles.splice(5 - form.attachments.length);
-    }
-    if (validFiles.length > 0) {
-      updateField("attachments", [...form.attachments, ...validFiles]);
-    }
-  };
+  // Picker format items
+  const pickerItems: PickerWorkItem[] = workItemsData.map(w => ({
+    id: w.id,
+    fieldProgressItemId: w.id,
+    code: w.code,
+    categoryName: w.categoryName,
+    name: w.name,
+    workContent: w.name,
+    designQuantity: Number(w.designQuantity || 0),
+    approvedCumulative: Number(w.cumulativeBefore || 0),
+    todayQuantity: 0,
+    remainingQuantity: Math.max(0, Number(w.designQuantity || 0) - Number(w.cumulativeBefore || 0)),
+    unit: w.unit || 'Lần',
+    status: "OPEN"
+  }));
 
-  const inputClass = "w-full h-[42px] px-3 text-[14px] text-slate-900 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder:text-slate-500 disabled:bg-slate-50";
-  const textareaClass = "w-full px-3 py-2.5 text-[14px] text-slate-900 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder:text-slate-500 resize-y leading-relaxed";
+  const canSaveDraft = !!form.projectId && !!form.date;
+  const canSubmit = !!form.projectId && !!form.date && (form.type === "WEEKLY" || form.workLines.length > 0);
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex justify-center items-end sm:items-center bg-slate-900/40 backdrop-blur-[2px] animate-in fade-in duration-200 sm:p-4"
-      onClick={!isSubmitting ? onClose : undefined}
-    >
-      <div
-        ref={dialogRef}
-        className="flex max-h-[calc(100dvh-0.5rem)] w-full flex-col rounded-t-2xl bg-slate-50 shadow-2xl animate-in slide-in-from-bottom-4 zoom-in-98 duration-300 sm:max-h-[90dvh] sm:max-w-[800px] sm:rounded-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 bg-white rounded-t-2xl shrink-0 z-20 shadow-sm">
-          <div>
-            <h2 className="text-lg sm:text-xl font-bold text-slate-900">{mode === "edit" ? "Sửa báo cáo" : "Tạo báo cáo mới"}</h2>
-            <p className="text-sm text-slate-500 mt-0.5">Điền thông tin báo cáo thi công tại công trường</p>
-          </div>
-          <button
-            onClick={onClose}
-            disabled={isSubmitting}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors disabled:opacity-50"
-          >
-            <X className="w-5 h-5 sm:w-6 sm:h-6" />
-          </button>
-        </div>
-
-        {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-5 space-y-5 sm:space-y-6 pb-8">
+    <>
+      <div className="fixed inset-0 z-[80] flex items-start justify-center bg-slate-900/60 backdrop-blur-sm sm:p-4 animate-in fade-in duration-200 overflow-hidden">
+        <div className="bg-slate-50 w-full h-full sm:h-auto sm:max-h-full sm:rounded-2xl shadow-2xl flex flex-col relative w-[calc(100vw-16px)] md:w-[min(1180px,calc(100vw-48px))] max-w-6xl overflow-hidden animate-in zoom-in-95 duration-300">
           
-          <div className="flex bg-slate-100 p-1 rounded-lg">
-            <button
-              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${form.type === 'DAILY' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
-              onClick={() => updateField('type', 'DAILY')}
-            >
-              Báo cáo ngày
-            </button>
-            <button
-              className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${form.type === 'WEEKLY' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
-              onClick={() => updateField('type', 'WEEKLY')}
-            >
-              Báo cáo tuần
-            </button>
-          </div>
-
-          {/* Section 1: Basic info */}
-          <div className="space-y-3 bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-sm">
-            <h4 className="flex items-center gap-2 text-[15px] font-bold text-slate-800 pb-3 border-b border-slate-100">
-              <FileText className="w-[18px] h-[18px] text-blue-600" />
-              Thông tin chung
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-              <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-slate-700">Công trình <span className="text-red-500">*</span></label>
-                <div className="relative">
-                  <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-slate-400 pointer-events-none" />
-                  <select
-                    value={form.projectId}
-                    onChange={(e) => updateField("projectId", e.target.value)}
-                    className={`${inputClass} pl-[38px] cursor-pointer appearance-none ${errors.projectId ? "border-red-400 bg-red-50" : ""}`}
-                  >
-                    <option value="" disabled className="text-slate-500">Chọn công trình...</option>
-                    {activeProjects.map((p) => (
-                      <option key={p.id} value={p.id} className="text-slate-900">{p.name}</option>
-                    ))}
-                  </select>
-                </div>
+          {/* Sticky Header */}
+          <div className="bg-white px-4 sm:px-6 py-4 border-b border-slate-200 flex items-center justify-between z-20 shrink-0 shadow-sm relative">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+                <FileText className="w-5 h-5" />
               </div>
-
-              <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-slate-700">Người tạo</label>
-                <div className="h-[42px] px-3 bg-slate-100/80 border border-slate-200 rounded-lg flex items-center gap-2 cursor-not-allowed">
-                  <User className="w-[18px] h-[18px] text-slate-400" />
-                  <span className="text-[14px] text-slate-700 font-medium">{form.creatorName}</span>
-                </div>
-              </div>
-
-              {form.type === 'DAILY' ? (
-                <>
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-semibold text-slate-700">Ngày báo cáo <span className="text-red-500">*</span></label>
-                    <div className="relative">
-                      <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-slate-400 pointer-events-none" />
-                      <input
-                        type="date"
-                        value={form.date}
-                        onChange={(e) => updateField("date", e.target.value)}
-                        className={`${inputClass} pl-[38px] ${errors.date ? "border-red-400 bg-red-50" : ""}`}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-semibold text-slate-700">Giờ báo cáo</label>
-                    <div className="relative">
-                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                      <input
-                        type="time"
-                        value={form.time}
-                        onChange={(e) => updateField("time", e.target.value)}
-                        className={`${inputClass} pl-[34px]`}
-                      />
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-semibold text-slate-700">Từ ngày</label>
-                    <input type="date" value={form.weekStartDate || ''} onChange={e => updateField('weekStartDate', e.target.value)} className={inputClass} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-semibold text-slate-700">Đến ngày</label>
-                    <input type="date" value={form.weekEndDate || ''} onChange={e => updateField('weekEndDate', e.target.value)} className={inputClass} />
-                  </div>
-                </>
-              )}
-
-              {/* Weather Row */}
-              <div className="col-span-1 sm:col-span-2 grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-slate-700">Thời tiết</label>
-                  <div className="relative">
-                    <CloudSun className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                    <select
-                      value={form.weatherCondition}
-                      onChange={(e) => updateField("weatherCondition", e.target.value)}
-                      className={`${inputClass} pl-[34px] appearance-none cursor-pointer`}
-                    >
-                      {WEATHER_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                    </select>
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-slate-700">Nhiệt độ (°C)</label>
-                  <input
-                    type="number"
-                    placeholder="VD: 32"
-                    value={form.weatherTemperature || ''}
-                    onChange={(e) => updateField("weatherTemperature", e.target.value ? Number(e.target.value) : undefined)}
-                    className={inputClass}
-                  />
+              <div>
+                <h2 className="text-lg sm:text-xl font-bold text-slate-900 leading-tight">
+                  {initialReport ? "Chỉnh sửa báo cáo" : "Tạo báo cáo mới"}
+                </h2>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-[12px] text-slate-500">Điền thông tin báo cáo thi công tại công trường</span>
                 </div>
               </div>
             </div>
+            <div className="flex items-center gap-4">
+              <span className={`hidden sm:inline-flex text-[11px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider ${initialReport?.status === 'DRAFT' ? 'bg-slate-100 text-slate-600' : 'bg-blue-100 text-blue-700'}`}>
+                {initialReport ? initialReport.status : "Tạo Mới"}
+              </span>
+              <button onClick={handleClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
-          {/* Section 2: Work content */}
-          {form.type === 'DAILY' ? (
-            <div className="space-y-3 bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-sm">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <h4 className="flex items-center gap-2 text-[15px] font-bold text-slate-800">
-                  <TrendingUp className="w-[18px] h-[18px] text-blue-600" />
-                  Nội dung thi công
-                </h4>
-              </div>
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6">
+            <div className="max-w-none md:max-w-[1100px] mx-auto space-y-6">
               
-              <div className="space-y-4 pt-2">
-                {form.workLines.map((line, idx) => (
-                  <div key={idx} className="p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-3 relative">
-                    {/* Delete button */}
-                    <button 
-                      type="button" 
-                      onClick={() => removeWorkLine(idx)}
-                      className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                      title="Xóa dòng"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-
-                    <div className="pr-8 space-y-1.5">
-                      <label className="text-xs font-semibold text-slate-700">Hạng mục / Công việc</label>
-                      <div className="flex gap-2 flex-col sm:flex-row">
-                        {workItems.length > 0 && (
-                          <select
-                            value={line.wbsItemId || ""}
-                            onChange={(e) => updateWorkLine(idx, "wbsItemId", e.target.value)}
-                            className={`${inputClass} sm:w-1/3 appearance-none cursor-pointer`}
-                          >
-                            <option value="">-- Chọn hạng mục dự án --</option>
-                            {workItems.map(wi => <option key={wi.id} value={wi.id}>{wi.name}</option>)}
-                          </select>
-                        )}
-                        <input
-                          type="text"
-                          value={line.workContent}
-                          onChange={(e) => updateWorkLine(idx, "workContent", e.target.value)}
-                          placeholder="Mô tả công việc thực hiện..."
-                          className={`${inputClass} flex-1`}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-700">Khối lượng</label>
-                        <input
-                          type="number"
-                          value={line.quantityToday || ''}
-                          onChange={e => updateWorkLine(idx, "quantityToday", Number(e.target.value))}
-                          placeholder="0.0"
-                          className={inputClass}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-slate-700">Đơn vị</label>
-                        <input
-                          type="text"
-                          value={line.unit || ''}
-                          onChange={e => updateWorkLine(idx, "unit", e.target.value)}
-                          placeholder="VD: m3, tấn"
-                          className={inputClass}
-                        />
-                      </div>
-                      <div className="space-y-1.5 col-span-2">
-                        <label className="text-xs font-semibold text-slate-700">Ghi chú</label>
-                        <input
-                          type="text"
-                          value={line.note || ''}
-                          onChange={e => updateWorkLine(idx, "note", e.target.value)}
-                          placeholder="Khu vực, tầng, mũi thi công..."
-                          className={inputClass}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                
-                {errors.workLines && <p className="text-xs text-red-500 font-medium">{errors.workLines}</p>}
-
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={addWorkLine}
-                  className="w-full border-dashed border-2 border-slate-300 text-slate-600 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50"
+              {/* Tabs */}
+              <div className="bg-white p-1 rounded-xl border border-slate-200 shadow-sm inline-flex mb-2">
+                <button
+                  onClick={() => updateField('type', 'DAILY')}
+                  className={`px-6 py-2.5 rounded-lg text-[14px] font-bold transition-all ${form.type === 'DAILY' ? 'bg-blue-50 text-blue-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
                 >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Thêm dòng công việc
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4 bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-sm">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <h4 className="flex items-center gap-2 text-[15px] font-bold text-slate-800">
-                  <AlignLeft className="w-[18px] h-[18px] text-blue-600" />
-                  Tổng hợp báo cáo tuần
-                </h4>
-                <Button type="button" onClick={handlePreviewWeekly} disabled={loadingPreview} variant="outline" className="h-8">
-                  {loadingPreview ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
-                  Xem tổng hợp tuần
-                </Button>
+                  Báo cáo ngày
+                </button>
+                <button
+                  onClick={() => updateField('type', 'WEEKLY')}
+                  className={`px-6 py-2.5 rounded-lg text-[14px] font-bold transition-all ${form.type === 'WEEKLY' ? 'bg-blue-50 text-blue-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}
+                >
+                  Báo cáo tuần
+                </button>
               </div>
 
-              {weeklyPreview && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-200">
-                      <p className="text-xs text-slate-500 uppercase font-semibold">BC Đã duyệt</p>
-                      <p className="text-xl font-bold text-emerald-600 mt-1">{weeklyPreview.stats.approvedReports}</p>
+              {/* Summary Cards */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+                <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+                  <div className="bg-blue-50 p-2.5 rounded-lg text-blue-600"><ListTodo className="w-5 h-5" /></div>
+                  <div><p className="text-[11px] font-bold text-slate-400 uppercase">Công việc</p><p className="font-bold text-slate-800 text-[18px] leading-tight">{selectedCount}</p></div>
+                </div>
+                <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+                  <div className="bg-emerald-50 p-2.5 rounded-lg text-emerald-600"><CheckCircle2 className="w-5 h-5" /></div>
+                  <div><p className="text-[11px] font-bold text-slate-400 uppercase">Tổng KL nhập</p><p className="font-bold text-slate-800 text-[18px] leading-tight">{totalQtyToday.toLocaleString()}</p></div>
+                </div>
+                <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+                  <div className="bg-purple-50 p-2.5 rounded-lg text-purple-600"><FileImage className="w-5 h-5" /></div>
+                  <div><p className="text-[11px] font-bold text-slate-400 uppercase">Ảnh đính kèm</p><p className="font-bold text-slate-800 text-[18px] leading-tight">{form.photos.length}</p></div>
+                </div>
+                <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+                  <div className="bg-amber-50 p-2.5 rounded-lg text-amber-600"><Files className="w-5 h-5" /></div>
+                  <div><p className="text-[11px] font-bold text-slate-400 uppercase">Tài liệu</p><p className="font-bold text-slate-800 text-[18px] leading-tight">{form.attachments.length}</p></div>
+                </div>
+              </div>
+
+              {/* General Info */}
+              <GeneralInfoCard form={form} updateField={updateField} activeProjects={activeProjects} errors={errors} />
+
+              {/* Work Lines Section (Only for DAILY) */}
+              {form.type === 'DAILY' && (
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden" id="work-lines-section">
+                  <div className="bg-slate-50/80 px-5 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sticky top-0 z-10">
+                    <div className="flex items-center gap-2.5">
+                      <div className="bg-blue-100 p-1.5 rounded-lg text-blue-600">
+                        <ListTodo className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-slate-800 text-[15px]">Khối lượng thực hiện hôm nay</h3>
+                        <p className="text-[12px] text-slate-500 mt-0.5">Chọn công việc từ bảng khối lượng gốc của công trình</p>
+                      </div>
                     </div>
-                    <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-200">
-                      <p className="text-xs text-slate-500 uppercase font-semibold">Đã gửi</p>
-                      <p className="text-xl font-bold text-amber-600 mt-1">{weeklyPreview.stats.submittedReports}</p>
-                    </div>
-                    <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-200">
-                      <p className="text-xs text-slate-500 uppercase font-semibold">Bị từ chối</p>
-                      <p className="text-xl font-bold text-red-600 mt-1">{weeklyPreview.stats.rejectedReports}</p>
-                    </div>
-                    <div className="bg-slate-50 rounded-lg p-3 text-center border border-slate-200">
-                      <p className="text-xs text-slate-500 uppercase font-semibold">Ngày trống</p>
-                      <p className="text-xl font-bold text-slate-700 mt-1">{weeklyPreview.stats.emptyDays}</p>
-                    </div>
+                    
+                    <Button
+                      type="button"
+                      disabled={!form.projectId}
+                      onClick={() => setIsPickerOpen(true)}
+                      className={`${!form.projectId ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'} font-bold h-10 px-5 rounded-xl transition-all whitespace-nowrap flex items-center`}
+                      title={!form.projectId ? "Chọn công trình trước" : "Thêm công việc"}
+                    >
+                      <Plus className="w-4 h-4 mr-1.5" /> Thêm khối lượng
+                    </Button>
                   </div>
 
-                  {weeklyPreview.emptyReason === "ERROR" && (
-                    <p className="text-center text-red-500 text-sm py-4 border border-red-200 bg-red-50 rounded-lg">Lỗi: {weeklyPreview.errorMessage}</p>
-                  )}
-                  {weeklyPreview.emptyReason === "NO_DAILY_REPORTS" && (
-                    <p className="text-center text-slate-500 text-sm py-4 border border-dashed border-slate-200 rounded-lg">Chưa có báo cáo ngày trong khoảng thời gian này.</p>
-                  )}
-                  {weeklyPreview.emptyReason === "HAS_REPORTS_BUT_NO_WORK_LINES" && (
-                    <p className="text-center text-amber-600 text-sm py-4 border border-amber-200 bg-amber-50 rounded-lg">Có báo cáo ngày nhưng chưa có dòng khối lượng/công việc để tổng hợp.</p>
-                  )}
-
-                  {weeklyPreview.groups && weeklyPreview.groups.length > 0 && (
-                    <div className="border border-slate-200 rounded-lg overflow-hidden">
-                      <table className="w-full text-sm">
-                        <thead className="bg-slate-50 border-b border-slate-200">
-                          <tr>
-                            <th className="text-left px-3 py-2 text-slate-600 font-semibold">Hạng mục / Công việc</th>
-                            <th className="text-center px-3 py-2 text-slate-600 font-semibold w-24">ĐVT</th>
-                            <th className="text-right px-3 py-2 text-slate-600 font-semibold w-32">Khối lượng</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {weeklyPreview.groups.map((group, gIdx) => (
-                            <Fragment key={gIdx}>
-                              <tr className="bg-slate-100/50">
-                                <td colSpan={3} className="px-3 py-2 font-semibold text-slate-700">{group.categoryName}</td>
+                  <div className="p-4 sm:p-5 bg-slate-50/30">
+                    {!form.projectId ? (
+                      <div className="py-10 flex flex-col items-center justify-center text-center bg-white rounded-xl border border-dashed border-slate-200">
+                        <div className="w-14 h-14 bg-slate-50 rounded-full flex items-center justify-center mb-3">
+                          <Building2 className="w-6 h-6 text-slate-400" />
+                        </div>
+                        <h4 className="font-bold text-slate-700 text-[15px]">Chưa chọn công trình</h4>
+                        <p className="text-[13px] text-slate-500 mt-1 max-w-[300px]">
+                          Vui lòng chọn công trình ở phần Thông tin chung trước khi thêm khối lượng công việc.
+                        </p>
+                      </div>
+                    ) : isLoadingItems ? (
+                      <div className="py-10 flex flex-col items-center justify-center">
+                        <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-3" />
+                        <p className="text-[13px] text-slate-500 font-medium">Đang tải danh sách công việc gốc...</p>
+                      </div>
+                    ) : form.workLines.length === 0 ? (
+                      <div className="py-10 flex flex-col items-center justify-center text-center bg-white rounded-xl border border-dashed border-blue-200">
+                        <div className="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center mb-3">
+                          <ListTodo className="w-6 h-6 text-blue-400" />
+                        </div>
+                        <h4 className="font-bold text-slate-700 text-[15px]">Chưa có khối lượng trong báo cáo</h4>
+                        <p className="text-[13px] text-slate-500 mt-1 mb-4 max-w-[350px]">
+                          Bấm Thêm khối lượng để chọn công việc từ bảng khối lượng gốc.
+                        </p>
+                        <Button
+                          type="button"
+                          onClick={() => setIsPickerOpen(true)}
+                          className="bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold h-9 px-5 rounded-lg"
+                        >
+                          <span className="flex items-center"><Plus className="w-4 h-4 mr-1.5" /> Thêm khối lượng</span>
+                        </Button>
+                      </div>
+                    ) : (
+                      
+                      <div className="space-y-4">
+                        {errors.workLines && (
+                          <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-[13px] font-medium flex items-start gap-2">
+                            <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                            <span>{errors.workLines}</span>
+                          </div>
+                        )}
+                        
+                        {/* Desktop Table */}
+                        <div className="hidden md:block overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-sm">
+                          <table className="w-full text-left border-collapse min-w-[900px]">
+                            <thead className="bg-slate-50 border-b border-slate-200 text-[12px] uppercase text-slate-500 font-bold sticky top-0 z-10">
+                              <tr>
+                                <th className="w-12 px-3 py-3 text-center">STT</th>
+                                <th className="px-4 py-3">Công việc</th>
+                                <th className="w-20 px-2 py-3 text-center">ĐVT</th>
+                                <th className="w-24 px-3 py-3 text-right">TK/Duyệt</th>
+                                <th className="w-24 px-3 py-3 text-right">Còn lại</th>
+                                <th className="w-32 px-4 py-3 text-right text-blue-700">KL hôm nay</th>
+                                <th className="w-48 px-3 py-3">Ghi chú</th>
+                                <th className="w-48 px-3 py-3">Đề xuất</th>
+                                <th className="w-12 px-3 py-3 text-center">Xóa</th>
                               </tr>
-                              {group.items && group.items.map((item, iIdx) => (
-                                <tr key={iIdx}>
-                                  <td className="px-3 py-2 pl-6">{item.workContent}</td>
-                                  <td className="px-3 py-2 text-center">{item.unit || '-'}</td>
-                                  <td className="px-3 py-2 text-right font-medium text-slate-900">{item.quantity}</td>
-                                </tr>
-                              ))}
-                            </Fragment>
+                            </thead>
+                            <tbody className="text-[13px] align-top">
+                              {form.workLines.map((line, idx) => {
+                                const design = Number(line.designQuantity || 0);
+                                const before = Number(line.approvedCumulative || 0);
+                                const today = Number(line.quantityToday || 0);
+                                const remaining = Number(line.remainingQuantity || 0);
+                                const isOver = today > remaining;
+                                const isDone = remaining <= 0 && today === 0;
+                                const inputClass = "w-full h-9 px-2.5 text-[13px] text-slate-900 bg-white border border-slate-200 rounded focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400";
+                                
+                                return (
+                                  <tr key={idx} className={`border-b border-slate-100 hover:bg-slate-50 transition-colors ${isOver ? 'bg-red-50/30' : ''}`}>
+                                    <td className="px-3 py-4 text-center font-medium text-slate-400">{idx + 1}</td>
+                                    <td className="px-4 py-4">
+                                      {line.categoryName && <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 line-clamp-1">{line.categoryName}</div>}
+                                      <div className="font-bold text-slate-800 line-clamp-2">
+                                        {line.code ? <span className="text-blue-600 mr-1.5 font-mono text-[12px]">[{line.code}]</span> : null}
+                                        {line.workContent}
+                                      </div>
+                                      {isDone && !isOver && <div className="text-[11px] text-emerald-600 font-bold mt-1">Đã hoàn thành</div>}
+                                    </td>
+                                    <td className="px-2 py-4 text-center font-medium text-slate-600">{line.unit}</td>
+                                    <td className="px-3 py-4 text-right">
+                                      <div className="font-medium text-slate-600">{design}</div>
+                                      <div className="text-[11px] text-emerald-600 font-medium">{before}</div>
+                                    </td>
+                                    <td className="px-3 py-4 text-right font-black text-slate-900">{remaining}</td>
+                                    <td className="px-4 py-3">
+                                      <div className="relative">
+                                        <input
+                                          type="number"
+                                          value={line.quantityToday || ''}
+                                          onChange={e => updateWorkLine(idx, "quantityToday", Number(e.target.value))}
+                                          placeholder="0.0"
+                                          className={`${inputClass} pr-1 font-bold text-right ${isOver ? 'border-red-400 bg-red-50 text-red-700' : ''}`}
+                                        />
+                                      </div>
+                                      {isOver && <div className="text-[10px] text-red-600 font-bold mt-1 leading-tight text-right">Vượt {remaining}!</div>}
+                                    </td>
+                                    <td className="px-3 py-3">
+                                      <input
+                                        type="text"
+                                        value={line.note || ''}
+                                        onChange={e => updateWorkLine(idx, "note", e.target.value)}
+                                        placeholder="Vị trí..."
+                                        className={inputClass}
+                                      />
+                                    </td>
+                                    <td className="px-3 py-3">
+                                      <input
+                                        type="text"
+                                        value={line.proposalNote || ''}
+                                        onChange={e => updateWorkLine(idx, "proposalNote", e.target.value)}
+                                        placeholder="Xử lý..."
+                                        className={inputClass}
+                                      />
+                                    </td>
+                                    <td className="px-3 py-4 text-center">
+                                      <button 
+                                        type="button" 
+                                        onClick={() => removeWorkLine(idx)}
+                                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors mx-auto block"
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </button>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* Mobile Cards */}
+                        <div className="md:hidden space-y-4">
+                          {form.workLines.map((line, idx) => (
+                            <SelectedWorkCard
+                              key={idx}
+                              line={line}
+                              index={idx}
+                              updateWorkLine={updateWorkLine}
+                              removeWorkLine={removeWorkLine}
+                            />
                           ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+                        </div>
+
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
-              <div className="space-y-1.5 pt-1">
-                <label className="text-sm font-semibold text-slate-700">Đánh giá chung</label>
-                <textarea
-                  value={form.summary}
-                  onChange={e => updateField('summary', e.target.value)}
-                  className={`${textareaClass} min-h-[100px]`}
-                  placeholder="Tiến độ tổng quan trong tuần, các mốc quan trọng đạt được..."
-                />
-              </div>
+              {form.type === 'WEEKLY' && (
+                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 sm:p-8 text-center">
+                  <h3 className="font-bold text-blue-800 mb-2">Chế độ báo cáo tuần</h3>
+                  <p className="text-blue-600 text-sm">Khối lượng sẽ được tự động tổng hợp từ các báo cáo ngày đã được duyệt trong tuần. Bạn có thể bổ sung nhận xét chung trong phần Chất lượng & Vướng mắc.</p>
+                </div>
+              )}
+
+              {/* Photos & Attachments */}
+              <AttachmentsCard
+                photos={form.photos}
+                attachments={form.attachments}
+                onAddPhotos={e => {
+                  if (e.target.files) setForm(prev => ({ ...prev, photos: [...prev.photos, ...Array.from(e.target.files!)] }));
+                }}
+                onRemovePhoto={idx => {
+                  setForm(prev => {
+                    const arr = [...prev.photos]; arr.splice(idx, 1);
+                    return { ...prev, photos: arr };
+                  });
+                }}
+                onAddFiles={e => {
+                  if (e.target.files) setForm(prev => ({ ...prev, attachments: [...prev.attachments, ...Array.from(e.target.files!)] }));
+                }}
+                onRemoveFile={idx => {
+                  setForm(prev => {
+                    const arr = [...prev.attachments]; arr.splice(idx, 1);
+                    return { ...prev, attachments: arr };
+                  });
+                }}
+              />
+
+              {/* Resources & Quality */}
+              <ResourcesAndQuality form={form} updateField={updateField} />
+
             </div>
-          )}
+          </div>
 
-          {/* Section 3: Media & Files */}
-          <div className="space-y-3 bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-sm">
-            <h4 className="flex items-center gap-2 text-[15px] font-bold text-slate-800 pb-3 border-b border-slate-100">
-              <Camera className="w-[18px] h-[18px] text-blue-600" />
-              Hình ảnh & Tài liệu đính kèm
-            </h4>
-            
-            {mode === "edit" && (
-              <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg mb-4">
-                <p className="text-sm text-blue-700">
-                  <span className="font-semibold">Lưu ý:</span> Ảnh/file hiện có được quản lý trong chi tiết báo cáo. Bạn chỉ có thể tải thêm ảnh/file mới tại đây.
-                </p>
-              </div>
-            )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-3">
-              <div className="space-y-3">
-                <label className="text-sm font-semibold text-slate-700">Hình ảnh hiện trường ({form.photos.length}/10)</label>
-                <div className="flex gap-2">
-                  <Button type="button" variant="outline" className="flex-1 text-blue-700 border-blue-200 hover:bg-blue-50" onClick={() => cameraInputRef.current?.click()}>
-                    <Camera className="w-4 h-4 mr-2" /> Chụp ảnh
-                  </Button>
-                  <Button type="button" variant="outline" className="flex-1 text-slate-700" onClick={() => photoInputRef.current?.click()}>
-                    <ImageIcon className="w-4 h-4 mr-2" /> Chọn ảnh
-                  </Button>
-                </div>
-                <input type="file" accept="image/*" capture="environment" className="hidden" ref={cameraInputRef} onChange={(e) => { if (e.target.files) handlePhotoFiles(e.target.files); e.target.value = ''; }} />
-                <input type="file" accept="image/*" multiple className="hidden" ref={photoInputRef} onChange={(e) => { if (e.target.files) handlePhotoFiles(e.target.files); e.target.value = ''; }} />
-
-                <div
-                  className={`border-2 border-dashed rounded-xl p-5 text-center transition-colors ${isDraggingPhoto ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-blue-400 hover:bg-slate-50'}`}
-                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setIsDraggingPhoto(true); }}
-                  onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setIsDraggingPhoto(false); }}
-                  onDrop={(e) => { e.preventDefault(); e.stopPropagation(); setIsDraggingPhoto(false); handlePhotoFiles(e.dataTransfer.files); }}
-                >
-                  <UploadCloud className="w-6 h-6 text-slate-400 mx-auto mb-2" />
-                  <p className="text-sm text-slate-600">Kéo thả ảnh vào đây</p>
-                </div>
-
-                {form.photos.length > 0 && (
-                  <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
-                    {form.photos.map((photo, index) => (
-                      <div key={index} className="relative aspect-square rounded-lg border border-slate-200 overflow-hidden group">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={photoPreviews[index]} alt="" className="w-full h-full object-cover" />
-                        <button type="button" className="absolute right-1 top-1 rounded-md bg-black/65 p-1 text-white transition-colors hover:bg-rose-600" title="Xóa ảnh" aria-label={`Xóa ảnh ${index + 1}`} onClick={() => { URL.revokeObjectURL(photoPreviews[index]); const newPhotos = form.photos.filter((_, i) => i !== index); const newPreviews = photoPreviews.filter((_, i) => i !== index); updateField("photos", newPhotos); setPhotoPreviews(newPreviews); }}>
-                          <X className="w-3 h-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+          {/* Sticky Footer Action Bar */}
+          <div className="bg-white border-t border-slate-200 p-4 sm:px-6 shrink-0 z-20 shadow-[0_-4px_15px_rgba(0,0,0,0.05)]">
+            <div className="max-w-none md:max-w-[1100px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 w-full">
+              <div className="text-[12px] font-medium hidden sm:block">
+                {!form.projectId ? (
+                  <span className="text-red-500">Vui lòng chọn công trình trước</span>
+                ) : (
+                  <span className="text-slate-500">Có thể lưu nháp trước, bổ sung khối lượng sau. Gửi báo cáo cần ít nhất 1 công việc.</span>
                 )}
               </div>
-
-              <div className="space-y-3">
-                <label className="text-sm font-semibold text-slate-700">Tài liệu đính kèm ({form.attachments.length}/5)</label>
-                <input type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.txt" className="hidden" ref={fileInputRef} onChange={(e) => { if (e.target.files) handleDocFiles(e.target.files); e.target.value = ''; }} />
-                <div
-                  className={`border-2 border-dashed rounded-xl p-5 text-center transition-colors cursor-pointer h-[126px] flex flex-col justify-center ${isDraggingFile ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-blue-400 hover:bg-slate-50'}`}
-                  onClick={() => fileInputRef.current?.click()}
-                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setIsDraggingFile(true); }}
-                  onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setIsDraggingFile(false); }}
-                  onDrop={(e) => { e.preventDefault(); e.stopPropagation(); setIsDraggingFile(false); handleDocFiles(e.dataTransfer.files); }}
+              <div className="flex gap-3 w-full sm:w-auto">
+                <Button
+                  variant="outline"
+                  onClick={handleClose}
+                  disabled={isSubmitting}
+                  className="flex-1 sm:flex-none h-11 rounded-xl text-slate-600 font-bold hover:bg-slate-50 border-slate-200"
                 >
-                  <Paperclip className="w-6 h-6 text-slate-400 mx-auto mb-2" />
-                  <p className="text-sm text-slate-600">Bấm hoặc kéo thả file</p>
-                </div>
-                {form.attachments.length > 0 && (
-                  <div className="space-y-2">
-                    {form.attachments.map((file, index) => (
-                      <div key={index} className="flex items-center p-2.5 bg-slate-50 border border-slate-200 rounded-lg gap-3">
-                        <FileIcon className="w-5 h-5 text-slate-400 flex-shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-slate-700 truncate">{file.name}</p>
-                          <p className="text-xs text-slate-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                        </div>
-                        <button type="button" className="p-1.5 text-slate-400 hover:text-red-500" onClick={() => updateField("attachments", form.attachments.filter((_, i) => i !== index))}><Trash2 className="w-4 h-4" /></button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            <div className="space-y-1.5 pt-2">
-              <label className="text-sm font-semibold text-slate-700">Vị trí GPS</label>
-              <div className="relative">
-                <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-slate-400 pointer-events-none" />
-                <input type="text" value={form.gpsLocation} onChange={(e) => updateField("gpsLocation", e.target.value)} placeholder="VD: 21.02, 105.81" className={`${inputClass} pl-[38px]`} />
-              </div>
-            </div>
-          </div>
-
-          {/* Section 4: Resources */}
-          <div className="space-y-3 bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-sm">
-            <h4 className="flex items-center gap-2 text-[15px] font-bold text-slate-800 pb-3 border-b border-slate-100">
-              <Package className="w-[18px] h-[18px] text-blue-600" />
-              Nguồn lực sử dụng
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-              <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-slate-700">Vật tư sử dụng</label>
-                <textarea value={form.materials} onChange={(e) => updateField("materials", e.target.value)} className={`${textareaClass} min-h-[80px]`} />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-slate-700">Nhân công / Máy móc</label>
-                <textarea value={form.labor} onChange={(e) => updateField("labor", e.target.value)} className={`${textareaClass} min-h-[80px]`} />
+                  Hủy
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => submitAction("DRAFT")}
+                  disabled={isSubmitting || !canSaveDraft}
+                  className="flex-1 sm:flex-none h-11 rounded-xl bg-slate-50 text-slate-700 hover:bg-slate-100 font-bold border-slate-200"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Lưu nháp
+                </Button>
+                <Button
+                  onClick={() => submitAction("SUBMIT")}
+                  disabled={isSubmitting || !canSubmit}
+                  className="flex-1 sm:flex-none h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md shadow-blue-500/20"
+                >
+                  {isSubmitting ? (
+                    <span className="flex items-center">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                      Đang xử lý...
+                    </span>
+                  ) : (
+                    <span className="flex items-center">
+                      <Send className="w-4 h-4 mr-2" />
+                      Gửi báo cáo
+                    </span>
+                  )}
+                </Button>
               </div>
             </div>
           </div>
-
-          {/* Section 5: Quality & Issues */}
-          <div className="space-y-3 bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-sm">
-            <h4 className="flex items-center gap-2 text-[15px] font-bold text-slate-800 pb-3 border-b border-slate-100">
-              <Wrench className="w-[18px] h-[18px] text-blue-600" />
-              Kỹ thuật & Phát sinh
-            </h4>
-            <div className="space-y-1.5 pt-1">
-              <label className="text-sm font-semibold text-slate-700">Kỹ thuật / Chất lượng</label>
-              <textarea value={form.quality} onChange={(e) => updateField("quality", e.target.value)} className={`${textareaClass} min-h-[80px]`} />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-              <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-slate-700">Vấn đề phát sinh</label>
-                <textarea value={form.issues} onChange={(e) => updateField("issues", e.target.value)} className={`${textareaClass} min-h-[80px]`} />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-sm font-semibold text-slate-700">Kiến nghị / Đề xuất</label>
-                <textarea value={form.recommendations} onChange={(e) => updateField("recommendations", e.target.value)} className={`${textareaClass} min-h-[80px]`} />
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-200 bg-white rounded-b-2xl shrink-0 z-20 shadow-[0_-4px_10px_-4px_rgba(0,0,0,0.05)]">
-          <Button variant="outline" onClick={() => handleSubmit(true)} disabled={isSubmitting} className="gap-2 flex-1 sm:flex-none h-11 px-6">
-            {isSubmitting ? <Loader2 className="w-[18px] h-[18px] animate-spin" /> : <Save className="w-[18px] h-[18px]" />} 
-            {isSubmitting ? "Đang xử lý..." : "Lưu thay đổi"}
-          </Button>
-          {mode === "create" && (
-            <Button onClick={() => handleSubmit(false)} disabled={isSubmitting} className="gap-2 flex-1 sm:flex-none h-11 px-6 bg-blue-600 hover:bg-blue-700 text-white">
-              {isSubmitting ? <Loader2 className="w-[18px] h-[18px] animate-spin" /> : <Send className="w-[18px] h-[18px]" />} 
-              {isSubmitting ? "Đang xử lý..." : "Gửi báo cáo"}
-            </Button>
-          )}
         </div>
       </div>
-    </div>
+
+      <WorkPicker
+        isOpen={isPickerOpen}
+        onClose={() => setIsPickerOpen(false)}
+        workItems={pickerItems}
+        onSelect={handleSelectWorkItems}
+        isLoading={isLoadingItems}
+      />
+
+      
+      {showConfirmClose && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6">
+              <h3 className="text-lg font-bold text-slate-900 mb-2">Bạn muốn xử lý báo cáo đang nhập thế nào?</h3>
+              <p className="text-[14px] text-slate-500 mb-6">Có dữ liệu bạn đã nhập nhưng chưa được lưu lại.</p>
+              
+              <div className="flex flex-col gap-3">
+                {canSaveDraft && (
+                  <Button 
+                    onClick={() => { setShowConfirmClose(false); submitAction("DRAFT"); }} 
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 rounded-xl"
+                  >
+                    <Save className="w-4 h-4 mr-2" /> Lưu bản nháp
+                  </Button>
+                )}
+                <Button 
+                  onClick={() => { setShowConfirmClose(false); onClose(); }} 
+                  variant="outline" 
+                  className="w-full border-red-200 bg-red-50 hover:bg-red-100 text-red-600 font-bold h-11 rounded-xl"
+                >
+                  <X className="w-4 h-4 mr-2" /> Bỏ thay đổi & Thoát
+                </Button>
+                <Button 
+                  onClick={() => setShowConfirmClose(false)} 
+                  variant="ghost" 
+                  className="w-full text-slate-600 hover:bg-slate-100 font-bold h-11 rounded-xl"
+                >
+                  Tiếp tục chỉnh sửa
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
+

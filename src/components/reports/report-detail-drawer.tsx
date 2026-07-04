@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import type { FieldReport, ApprovalHistoryEntry, WeatherCondition } from "./types";
 import { getStatusLabel, getStatusVariant, WEATHER_OPTIONS } from "./types";
+import { formatDateVN, formatTimeVN, formatReportCode } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast-context";
@@ -50,6 +51,7 @@ interface ReportDetailDrawerProps {
   onSubmit?: (reportId: string) => void;
   onEdit?: (report: FieldReport) => void;
   onDelete?: (report: FieldReport) => void;
+  onPrintPreview?: (report: FieldReport) => void;
   onViewGallery?: (report: FieldReport, index?: number) => void;
   currentUser?: { id: string; name: string; role?: string };
 }
@@ -267,6 +269,7 @@ export function ReportDetailDrawer({
   onSubmit,
   onEdit,
   onDelete,
+  onPrintPreview,
   onViewGallery,
   currentUser
 }: ReportDetailDrawerProps) {
@@ -398,7 +401,7 @@ export function ReportDetailDrawer({
               </StatusBadge>
             </div>
             <p className="text-xs text-slate-500 mt-0.5 truncate">
-              {report.projectName} · {report.creatorName} · {report.type === 'WEEKLY' ? `${report.weekStartDate} - ${report.weekEndDate}` : `${report.date} ${report.time}`}
+              {report.projectName} · {report.creatorName} · {report.type === 'WEEKLY' ? `${formatDateVN(report.weekStartDate)} - ${formatDateVN(report.weekEndDate)}` : `${formatDateVN(report.date)} ${formatTimeVN('1970-01-01T' + (report.time || '00:00'))}`}
               {report.type === 'DAILY' && report.weatherCondition && (
                 <span className="inline-flex items-center gap-1 ml-2">
                   <WeatherIcon weather={report.weatherCondition} />
@@ -418,7 +421,7 @@ export function ReportDetailDrawer({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4 pb-6 space-y-6">
+        <div className="flex-1 overflow-y-auto custom-scrollbar px-5 sm:px-6 py-4 pb-6 space-y-6">
           {/* We removed the redundant 4 info cards since header already contains them.
               But we keep GPS location if available. */}
           {report.gpsLocation && (
@@ -823,7 +826,7 @@ export function ReportDetailDrawer({
                   <Button
                     variant="outline"
                     className="h-11 gap-1.5"
-                    onClick={() => window.open(`/print/reports/${report.id}`, '_blank')}
+                    onClick={() => { onClose(); onPrintPreview ? onPrintPreview(report) : window.open(`/print/reports/${report.id}`, '_blank'); }}
                   >
                     <Printer className="w-4 h-4" />
                     In/PDF
@@ -839,7 +842,7 @@ export function ReportDetailDrawer({
                 <Button
                   variant="outline"
                   className="gap-1.5"
-                  onClick={() => window.open(`/print/reports/${report.id}`, '_blank')}
+                  onClick={() => { onClose(); onPrintPreview ? onPrintPreview(report) : window.open(`/print/reports/${report.id}`, '_blank'); }}
                 >
                   <Printer className="w-4 h-4" />
                   In / Xuất PDF

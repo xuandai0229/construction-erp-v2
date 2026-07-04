@@ -59,7 +59,7 @@ export function GlobalSearchCommand({ globalContext }: GlobalSearchCommandProps)
       }
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        setIsOpen((open) => !open);
+        window.dispatchEvent(new Event("close-overlays")); setIsOpen((open) => !open);
       }
     };
     
@@ -122,7 +122,7 @@ export function GlobalSearchCommand({ globalContext }: GlobalSearchCommandProps)
   return (
     <>
       <button 
-        onClick={() => setIsOpen(true)}
+        onClick={() => { window.dispatchEvent(new Event("close-overlays")); setIsOpen(true); }}
         className="hidden sm:flex items-center justify-center h-9 w-9 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors" 
         aria-label="Tìm kiếm"
         title="Tìm kiếm (Cmd+K)"
@@ -131,14 +131,14 @@ export function GlobalSearchCommand({ globalContext }: GlobalSearchCommandProps)
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex flex-col sm:block">
+        <>
           <div 
-            className="fixed inset-0 bg-slate-900/15 transition-opacity" 
+            className="fixed inset-x-0 bottom-0 top-16 z-[65] bg-slate-900/30 backdrop-blur-sm transition-all" 
             aria-hidden="true"
           />
           <div 
             ref={panelRef}
-            className="relative w-full max-w-[800px] overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200 mt-2 mx-2 sm:mx-auto sm:mt-[72px] animate-in fade-in zoom-in-95 duration-200"
+            className="fixed z-[75] w-[calc(100%-1rem)] max-w-[800px] left-1/2 -translate-x-1/2 top-[72px] overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200 animate-in fade-in zoom-in-95 duration-200"
           >
             <div className="flex items-center border-b border-slate-100 px-4 h-14 relative">
               <Search className="h-5 w-5 text-slate-400 shrink-0" />
@@ -185,7 +185,7 @@ export function GlobalSearchCommand({ globalContext }: GlobalSearchCommandProps)
               </button>
             </div>
 
-            <div className="max-h-[60vh] overflow-y-auto p-2">
+            <div className="max-h-[60vh] overflow-y-auto p-2 custom-scrollbar">
               {!query.trim() && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 p-2">
                   <div className="mb-2">
@@ -325,7 +325,7 @@ export function GlobalSearchCommand({ globalContext }: GlobalSearchCommandProps)
               </div>
             </div>
           </div>
-        </div>
+        </>
       )}
     </>
   );

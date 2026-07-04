@@ -102,10 +102,13 @@ export default async function ReportsPage({ searchParams }: { searchParams: { [k
     workLines: ((r.lines as Record<string, unknown>[]) || []).map((l: Record<string, unknown>) => ({
       id: l.id as string,
       wbsItemId: (l.wbsItemId as string) || undefined,
+      fieldProgressItemId: (l.fieldProgressItemId as string) || undefined,
       workContent: (l.workName as string) || (l.workContent as string),
       unit: (l.unit as string) || undefined,
-      quantityToday: l.quantityToday ? Number(l.quantityToday) : undefined,
+      quantityToday: l.quantityToday !== undefined && l.quantityToday !== null ? Number(l.quantityToday) : undefined,
       note: (l.note as string) || undefined,
+      proposalNote: (l.proposalNote as string) || undefined,
+      issueNote: (l.issueNote as string) || undefined,
     })),
     materials: (r.materials as string) || '',
     labor: (r.labor as string) || '',
@@ -169,5 +172,6 @@ export default async function ReportsPage({ searchParams }: { searchParams: { [k
     stats={pageData.stats}
     initialProjects={projects} 
     currentUser={{ id: session.id, name: session.name || session.email || "Người dùng hiện tại", role: session.role }} 
+    globalContext={globalContext}
   />;
 }

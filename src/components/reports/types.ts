@@ -20,12 +20,23 @@ export type ReportType = "DAILY" | "WEEKLY";
 export interface ReportWorkLine {
   id: string;
   wbsItemId?: string;
+  fieldProgressItemId?: string;
+  categoryName?: string | null;
+  code?: string | null;
   workContent: string;
   constructionCrew?: string;
   unit?: string;
+  designQuantity?: number;
   quantityToday?: number;
+  quantityBefore?: number;
   quantityCumulative?: number;
+  approvedCumulative?: number;
+  todayQuantity?: number;
+  remainingQuantity?: number;
+  progressPercent?: number;
   note?: string;
+  issueNote?: string;
+  proposalNote?: string;
 }
 
 export interface NextWeekPlan {

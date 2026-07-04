@@ -1,5 +1,6 @@
 import { Prisma, type UserRole } from "@prisma/client";
 import type { ReportTransitionClient } from "./report-transition-service";
+import { syncSiteReportProgressEntriesInTransaction } from "./report-progress-sync";
 
 export type ReportCreateActor = {
   id: string;
@@ -57,6 +58,12 @@ export async function createSiteReportWithAudit(
           entityId: report.id,
           afterData: JSON.stringify({ status: "SUBMITTED" }),
         },
+      });
+
+      await syncSiteReportProgressEntriesInTransaction(tx, {
+        reportId: report.id,
+        mode: "SUBMIT",
+        actor,
       });
     }
 

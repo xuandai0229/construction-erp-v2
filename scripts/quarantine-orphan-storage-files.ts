@@ -62,7 +62,7 @@ async function main() {
       console.log(`[SKIPPED] ${file.path} (Protected path. Needs allowKeepProjectFileQuarantine)`);
       continue;
     }
-
+ 
     const sourcePath = file.path;
     const relPath = path.relative(process.cwd(), sourcePath);
     const destPath = path.join(quarantineBase, relPath);

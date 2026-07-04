@@ -16,7 +16,7 @@ type NotificationItem = {
   message: string | null;
   projectName: string | null;
   projectId?: string | null;
-  createdAt: Date;
+  createdAt: Date | string;
   href: string | null;
   actionUrl?: string | null;
   targetType?: NotificationTargetType;
@@ -42,6 +42,12 @@ export function GlobalNotificationBell({ notifications }: { notifications: Notif
   useEffect(() => {
     closePopover();
   }, [pathname, searchParamsKey, closePopover]);
+
+  useEffect(() => {
+    const handleCloseOverlays = () => setIsOpen(false);
+    window.addEventListener("close-overlays", handleCloseOverlays);
+    return () => window.removeEventListener("close-overlays", handleCloseOverlays);
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -129,7 +135,7 @@ export function GlobalNotificationBell({ notifications }: { notifications: Notif
       <button 
         ref={buttonRef}
         type="button"
-        onClick={() => setIsOpen((open) => !open)}
+        onClick={() => { const willOpen = !isOpen; window.dispatchEvent(new Event("close-overlays")); setIsOpen(willOpen); }}
         className="relative flex items-center justify-center h-9 w-9 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
         aria-haspopup="dialog"
         aria-expanded={isOpen}
@@ -146,13 +152,22 @@ export function GlobalNotificationBell({ notifications }: { notifications: Notif
       {isOpen && (
           <div
             ref={panelRef}
-            className="absolute right-0 top-full z-50 mt-2 w-[calc(100vw-2rem)] max-w-96 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-xl sm:w-96"
+            className="absolute right-0 top-full z-[80] mt-2 w-[calc(100vw-2rem)] max-w-[420px] overflow-hidden rounded-2xl border border-slate-200/60 bg-white/95 backdrop-blur-xl shadow-2xl shadow-slate-900/10 sm:w-[420px] animate-in slide-in-from-top-2 fade-in duration-200"
             role="dialog"
             aria-label="Thông báo"
           >
-            <div className="border-b border-slate-100 px-4 pt-3 flex flex-col gap-2">
+            <div className="border-b border-slate-200/60 px-5 pt-4 flex flex-col gap-3 bg-slate-50/50">
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-slate-900 text-base">Thông báo</h3>
+                <h3 className="font-bold text-slate-900 text-[17px]">Thông báo</h3>
+                {unreadCount > 0 && (
+                  <button 
+                    type="button"
+                    className="text-[12px] font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                    onClick={() => { /* TODO: mark all as read */ }}
+                  >
+                    Đánh dấu đã đọc tất cả
+                  </button>
+                )}
               </div>
               <div className="flex items-center gap-4 -mb-px">
                 <button
@@ -190,7 +205,7 @@ export function GlobalNotificationBell({ notifications }: { notifications: Notif
               </div>
             </div>
             
-            <div className="max-h-[28rem] overflow-y-auto">
+            <div className="max-h-[min(65vh,500px)] overflow-y-auto custom-scrollbar">
               {visibleNotifications.length === 0 ? (
                 <div className="px-4 py-8 text-center text-sm text-slate-500">
                   {activeTab === 'unread' ? 'Bạn không có thông báo nào chưa đọc.' : 'Bạn không có thông báo nào.'}
@@ -228,7 +243,7 @@ export function GlobalNotificationBell({ notifications }: { notifications: Notif
                           {notif.projectName && <span className="line-clamp-1 max-w-[120px]">{notif.projectName}</span>}
                           {notif.projectName && <span>•</span>}
                           <span>
-                            {notif.type === 'REPORT' ? 'Cập nhật' : 'Tạo lúc'} {notif.createdAt.toLocaleDateString('vi-VN')} {notif.createdAt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                            {notif.type === 'REPORT' ? 'Cập nhật' : 'Tạo lúc'} {new Date(notif.createdAt).toLocaleDateString('vi-VN')} {new Date(notif.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         </div>
                       </div>

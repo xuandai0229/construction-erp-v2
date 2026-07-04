@@ -101,6 +101,7 @@ export function ReportsToolbar({
         )}
       </div>
 
+      
       {isOpen && (
         <div className="mt-3 pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           <select
@@ -163,6 +164,38 @@ export function ReportsToolbar({
           </select>
         </div>
       )}
+
+      {hasActiveFilters && (
+        <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-slate-100">
+          <span className="text-xs text-slate-500 mr-1">Đang lọc:</span>
+          {typeFilter && !isTypeDisabled && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-[12px] font-medium">
+              Loại: {TYPE_OPTIONS.find(o => o.value === typeFilter)?.label}
+              <button onClick={() => onTypeFilterChange('')} className="hover:text-blue-900 ml-0.5"><X className="w-3 h-3" /></button>
+            </span>
+          )}
+          {statusFilter && !isStatusDisabled && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-100 text-amber-700 text-[12px] font-medium">
+              Trạng thái: {STATUS_OPTIONS.find(o => o.value === statusFilter)?.label}
+              <button onClick={() => onStatusFilterChange('')} className="hover:text-amber-900 ml-0.5"><X className="w-3 h-3" /></button>
+            </span>
+          )}
+          {projectFilter && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-50 border border-purple-100 text-purple-700 text-[12px] font-medium">
+              Công trình: {projects.find(p => p.id === projectFilter)?.name || 'Đã chọn'}
+              <button onClick={() => onProjectFilterChange('')} className="hover:text-purple-900 ml-0.5"><X className="w-3 h-3" /></button>
+            </span>
+          )}
+          {dateRange && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 text-[12px] font-medium">
+              Thời gian: {dateRange === 'today' ? 'Hôm nay' : dateRange === 'thisWeek' ? 'Tuần này' : 'Tháng này'}
+              <button onClick={() => onDateRangeChange('')} className="hover:text-emerald-900 ml-0.5"><X className="w-3 h-3" /></button>
+            </span>
+          )}
+          <button onClick={onResetFilters} className="text-[12px] text-slate-500 hover:text-slate-800 font-medium ml-1 underline underline-offset-2">Xóa tất cả</button>
+        </div>
+      )}
+
     </div>
   );
 }

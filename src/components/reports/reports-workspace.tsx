@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { Plus, AlertCircle, Clock, XCircle, FileEdit, CheckSquare, Filter, X } from "lucide-react";
+import { Plus, AlertCircle, Clock, XCircle, FileEdit, CheckSquare, Filter, X, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast-context";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -13,6 +13,7 @@ import { ReportsMobileCards } from "./reports-mobile-cards";
 import { CreateReportDialog } from "./create-report-dialog";
 import { ReportDetailDrawer } from "./report-detail-drawer";
 import { SiteReportGalleryDialog } from "./site-report-gallery-dialog";
+import { ReportPrintPreviewDialog } from "./report-print-preview-dialog";
 import {
   type FieldReport,
   type CreateReportFormData,
@@ -38,6 +39,7 @@ interface ReportsWorkspaceProps {
   stats: ReportStats;
   initialProjects: { id: string; name: string }[];
   currentUser: { id: string; name: string; role?: string };
+  globalContext?: { selectedProjectId: string | null };
 }
 
 export function ReportsWorkspace({
@@ -47,6 +49,7 @@ export function ReportsWorkspace({
   stats,
   initialProjects,
   currentUser,
+  globalContext,
 }: ReportsWorkspaceProps) {
   const toast = useToast();
   const router = useRouter();
@@ -78,6 +81,7 @@ export function ReportsWorkspace({
   const [galleryPhotos, setGalleryPhotos] = useState<ReportPhoto[]>([]);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [printPreviewReport, setPrintPreviewReport] = useState<FieldReport | null>(null);
 
   const reports = initialReports;
   const activeProjects = initialProjects;
@@ -161,30 +165,21 @@ export function ReportsWorkspace({
     setTypeFilter("");
   };
 
+  
+  const handleQuickFilter = (status: string) => {
+    setTab("all");
+    setStatusFilter(status);
+    updateUrl({ tab: undefined, status: status || undefined, type: undefined, page: "1" });
+  };
+
   const handlePageChange = (p: number) => {
     updateUrl({ page: p.toString() });
   };
   
   const activeTab = ['daily', 'weekly'].includes(tab) ? tab : 'all';
 
-  const isLeader = ['ADMIN', 'DIRECTOR', 'DEPUTY_DIRECTOR', 'CHIEF_COMMANDER'].includes(currentUser.role || '');
+    
   
-  const dashboardStats = useMemo(() => {
-    if (isLeader) {
-      return {
-        pending: stats.submitted,
-        rejected: stats.rejected,
-        revisionRequested: stats.revisionRequested,
-        issues: stats.issues,
-      }
-    } else {
-      return {
-        myToday: reports.filter(r => r.createdById === currentUser.id).length,
-        myDrafts: reports.filter(r => r.createdById === currentUser.id && r.status === 'DRAFT').length,
-        myRejected: reports.filter(r => r.createdById === currentUser.id && r.status === 'REJECTED').length,
-      }
-    }
-  }, [currentUser.id, isLeader, reports, stats]);
 
   // Handlers
   const handleViewDetail = useCallback((report: FieldReport) => {
@@ -192,6 +187,10 @@ export function ReportsWorkspace({
     setIsDetailOpen(true);
     updateUrl({ reportId: report.id });
   }, [updateUrl]);
+
+  const handlePrintPreview = useCallback((report: FieldReport) => {
+    setPrintPreviewReport(report);
+  }, []);
 
   const handleCloseDetail = useCallback(() => {
     setIsDetailOpen(false);
@@ -246,10 +245,18 @@ export function ReportsWorkspace({
           gpsLat: data.gpsLocation ? parseFloat(data.gpsLocation.split(',')[0]) : undefined,
           gpsLng: data.gpsLocation && data.gpsLocation.split(',').length > 1 ? parseFloat(data.gpsLocation.split(',')[1]) : undefined,
           workLines: data.workLines.map(wl => ({
+            fieldProgressItemId: wl.fieldProgressItemId || wl.wbsItemId,
+            wbsItemId: wl.wbsItemId,
             workContent: wl.workContent,
             quantityToday: wl.quantityToday,
             unit: wl.unit,
+            designQuantity: wl.designQuantity,
+            quantityBefore: wl.quantityBefore ?? wl.approvedCumulative,
+            quantityCumulative: wl.quantityCumulative,
+            progressPercent: wl.progressPercent,
             note: wl.note,
+            issueNote: wl.issueNote,
+            proposalNote: wl.proposalNote,
           })),
           weeklyNote: data.weeklyNote,
         };
@@ -288,10 +295,18 @@ export function ReportsWorkspace({
             issues: data.issues,
             recommendations: data.recommendations,
             workLines: data.workLines.map(wl => ({
+              fieldProgressItemId: wl.fieldProgressItemId || wl.wbsItemId,
+              wbsItemId: wl.wbsItemId,
               workContent: wl.workContent,
               quantityToday: wl.quantityToday,
               unit: wl.unit,
+              designQuantity: wl.designQuantity,
+              quantityBefore: wl.quantityBefore ?? wl.approvedCumulative,
+              quantityCumulative: wl.quantityCumulative,
+              progressPercent: wl.progressPercent,
               note: wl.note,
+              issueNote: wl.issueNote,
+              proposalNote: wl.proposalNote,
             })),
           };
           result = await createSiteReport(payload, createAsDraft);
@@ -371,7 +386,7 @@ export function ReportsWorkspace({
       }
     } catch (error) {
       console.error(error);
-      toast.error("Đã xảy ra lỗi khi tạo báo cáo");
+      toast.error((error as Error).message || "Đã xảy ra lỗi không mong muốn khi tạo báo cáo");
     } finally {
       setIsSubmitting(false);
     }
@@ -456,7 +471,12 @@ export function ReportsWorkspace({
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Báo cáo hiện trường</h1>
             <p className="hidden sm:block text-sm text-slate-500 mt-0.5">
-              Quản lý, theo dõi và tổng hợp báo cáo công việc
+              Quản lý báo cáo ngày, báo cáo tuần và phát sinh tại công trường
+              {globalContext?.selectedProjectId && (
+                <span className="ml-2 inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-200">
+                  {activeProjects.find(p => p.id === globalContext.selectedProjectId)?.name || 'Dự án đang chọn'}
+                </span>
+              )}
               {searchParams.get("reportId") && (
                 <span className="ml-2 inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
                   Đang lọc 1 báo cáo
@@ -491,129 +511,89 @@ export function ReportsWorkspace({
       </div>
 
       {/* Dashboard / Action Center */}
-      <div className="grid grid-cols-3 gap-3 sm:gap-4">
-        {isLeader ? (
-          <>
-            <div 
-              onClick={() => handleTabChange('pending')}
-              className={`rounded-xl p-3 border flex items-center justify-between cursor-pointer transition-colors ${
-                dashboardStats.pending === 0 
-                  ? 'bg-slate-50 border-slate-200 opacity-60 hover:opacity-100' 
-                  : 'bg-amber-50 border-amber-200 hover:bg-amber-100'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <div className={`p-1.5 rounded-lg ${dashboardStats.pending === 0 ? 'bg-slate-200 text-slate-500' : 'bg-amber-100 text-amber-600'}`}>
-                  <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
-                </div>
-                <div>
-                  <h3 className={`font-semibold text-sm ${dashboardStats.pending === 0 ? 'text-slate-600' : 'text-amber-900'}`}>Chờ duyệt</h3>
-                  <p className="hidden sm:block text-[10px] text-amber-700/80 mt-0.5">Cần xử lý</p>
-                </div>
-              </div>
-              <span className={`text-lg sm:text-xl font-bold ${dashboardStats.pending === 0 ? 'text-slate-500' : 'text-amber-700'}`}>{dashboardStats.pending}</span>
+      
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-2">
+        <div 
+          onClick={() => handleQuickFilter('')}
+          className={`rounded-xl p-3 border flex items-center justify-between cursor-pointer transition-colors shadow-sm ${
+            !statusFilter && tab === 'all'
+              ? 'bg-blue-50/50 border-blue-400 ring-1 ring-blue-400' 
+              : 'bg-white border-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-lg bg-blue-50 text-blue-600">
+              <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            
-            <div 
-              onClick={() => handleTabChange('rejected')}
-              className={`rounded-xl p-3 border flex items-center justify-between cursor-pointer transition-colors ${
-                dashboardStats.rejected === 0 
-                  ? 'bg-slate-50 border-slate-200 opacity-60 hover:opacity-100' 
-                  : 'bg-red-50 border-red-200 hover:bg-red-100'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <div className={`p-1.5 rounded-lg ${dashboardStats.rejected === 0 ? 'bg-slate-200 text-slate-500' : 'bg-red-100 text-red-600'}`}>
-                  <XCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-                </div>
-                <div>
-                  <h3 className={`font-semibold text-sm ${dashboardStats.rejected === 0 ? 'text-slate-600' : 'text-red-900'}`}>Từ chối</h3>
-                  <p className="hidden sm:block text-[10px] text-red-700/80 mt-0.5">Chưa gửi lại</p>
-                </div>
-              </div>
-              <span className={`text-lg sm:text-xl font-bold ${dashboardStats.rejected === 0 ? 'text-slate-500' : 'text-red-700'}`}>{dashboardStats.rejected}</span>
+            <div>
+              <h3 className="font-semibold text-[13px] sm:text-sm text-slate-700">Tổng báo cáo</h3>
             </div>
-            
-            <div 
-              onClick={() => handleTabChange('issues')}
-              className={`rounded-xl p-3 border flex items-center justify-between cursor-pointer transition-colors ${
-                dashboardStats.issues === 0 
-                  ? 'bg-slate-50 border-slate-200 opacity-60 hover:opacity-100' 
-                  : 'bg-orange-50 border-orange-200 hover:bg-orange-100'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <div className={`p-1.5 rounded-lg ${dashboardStats.issues === 0 ? 'bg-slate-200 text-slate-500' : 'bg-orange-100 text-orange-600'}`}>
-                  <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-                </div>
-                <div>
-                  <h3 className={`font-semibold text-sm ${dashboardStats.issues === 0 ? 'text-slate-600' : 'text-orange-900'}`}>Phát sinh</h3>
-                  <p className="hidden sm:block text-[10px] text-orange-700/80 mt-0.5">Cần xem</p>
-                </div>
-              </div>
-              <span className={`text-lg sm:text-xl font-bold ${dashboardStats.issues === 0 ? 'text-slate-500' : 'text-orange-700'}`}>{dashboardStats.issues}</span>
+          </div>
+          <span className="text-lg sm:text-xl font-bold text-slate-800">{stats.total}</span>
+        </div>
+
+        <div 
+          onClick={() => handleQuickFilter('SUBMITTED')}
+          className={`rounded-xl p-3 border flex items-center justify-between cursor-pointer transition-colors shadow-sm ${
+            statusFilter === 'SUBMITTED'
+              ? 'bg-amber-50 border-amber-400 ring-1 ring-amber-400' 
+              : stats.pending === 0 
+                ? 'bg-slate-50 border-slate-200 opacity-80 hover:opacity-100' 
+                : 'bg-amber-50 border-amber-200 hover:bg-amber-100'
+          }`}
+        >
+          <div className="flex items-center gap-2.5">
+            <div className={`p-1.5 rounded-lg ${stats.pending === 0 ? 'bg-slate-200 text-slate-500' : 'bg-amber-100 text-amber-600'}`}>
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-          </>
-        ) : (
-          <>
-            <div 
-              onClick={() => { handleTabChange('all'); handleDateRangeChange('today'); }}
-              className={`rounded-xl p-3 border flex items-center justify-between cursor-pointer transition-colors ${
-                dashboardStats.myToday === 0 
-                  ? 'bg-slate-50 border-slate-200 opacity-60 hover:opacity-100' 
-                  : 'bg-blue-50 border-blue-200 hover:bg-blue-100'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <div className={`p-1.5 rounded-lg ${dashboardStats.myToday === 0 ? 'bg-slate-200 text-slate-500' : 'bg-blue-100 text-blue-600'}`}>
-                  <CheckSquare className="w-4 h-4 sm:w-5 sm:h-5" />
-                </div>
-                <div>
-                  <h3 className={`font-semibold text-sm ${dashboardStats.myToday === 0 ? 'text-slate-600' : 'text-blue-900'}`}>Hôm nay</h3>
-                </div>
-              </div>
-              <span className={`text-lg sm:text-xl font-bold ${dashboardStats.myToday === 0 ? 'text-slate-500' : 'text-blue-700'}`}>{dashboardStats.myToday}</span>
+            <div>
+              <h3 className={`font-semibold text-[13px] sm:text-sm ${stats.pending === 0 ? 'text-slate-600' : 'text-amber-900'}`}>Chờ duyệt</h3>
             </div>
-            
-            <div 
-              onClick={() => { handleTabChange('all'); handleStatusFilterChange('DRAFT'); }}
-              className={`rounded-xl p-3 border flex items-center justify-between cursor-pointer transition-colors ${
-                dashboardStats.myDrafts === 0 
-                  ? 'bg-slate-50 border-slate-200 opacity-60 hover:opacity-100' 
-                  : 'bg-slate-100 border-slate-300 hover:bg-slate-200'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <div className={`p-1.5 rounded-lg ${dashboardStats.myDrafts === 0 ? 'bg-slate-200 text-slate-500' : 'bg-slate-200 text-slate-700'}`}>
-                  <FileEdit className="w-4 h-4 sm:w-5 sm:h-5" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-sm text-slate-800">Nháp</h3>
-                </div>
-              </div>
-              <span className={`text-lg sm:text-xl font-bold ${dashboardStats.myDrafts === 0 ? 'text-slate-500' : 'text-slate-700'}`}>{dashboardStats.myDrafts}</span>
+          </div>
+          <span className={`text-lg sm:text-xl font-bold ${stats.pending === 0 ? 'text-slate-500' : 'text-amber-700'}`}>{stats.pending}</span>
+        </div>
+        
+        <div 
+          onClick={() => handleQuickFilter('APPROVED')}
+          className={`rounded-xl p-3 border flex items-center justify-between cursor-pointer transition-colors shadow-sm ${
+            statusFilter === 'APPROVED'
+              ? 'bg-emerald-50 border-emerald-400 ring-1 ring-emerald-400' 
+              : stats.approved === 0 
+                ? 'bg-slate-50 border-slate-200 opacity-80 hover:opacity-100' 
+                : 'bg-emerald-50 border-emerald-200 hover:bg-emerald-100'
+          }`}
+        >
+          <div className="flex items-center gap-2.5">
+            <div className={`p-1.5 rounded-lg ${stats.approved === 0 ? 'bg-slate-200 text-slate-500' : 'bg-emerald-100 text-emerald-600'}`}>
+              <CheckSquare className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            
-            <div 
-              onClick={() => { handleTabChange('rejected'); }}
-              className={`rounded-xl p-3 border flex items-center justify-between cursor-pointer transition-colors ${
-                dashboardStats.myRejected === 0 
-                  ? 'bg-slate-50 border-slate-200 opacity-60 hover:opacity-100' 
-                  : 'bg-red-50 border-red-200 hover:bg-red-100'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <div className={`p-1.5 rounded-lg ${dashboardStats.myRejected === 0 ? 'bg-slate-200 text-slate-500' : 'bg-red-100 text-red-600'}`}>
-                  <XCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-                </div>
-                <div>
-                  <h3 className={`font-semibold text-sm ${dashboardStats.myRejected === 0 ? 'text-slate-600' : 'text-red-900'}`}>Từ chối</h3>
-                </div>
-              </div>
-              <span className={`text-lg sm:text-xl font-bold ${dashboardStats.myRejected === 0 ? 'text-slate-500' : 'text-red-700'}`}>{dashboardStats.myRejected}</span>
+            <div>
+              <h3 className={`font-semibold text-[13px] sm:text-sm ${stats.approved === 0 ? 'text-slate-600' : 'text-emerald-900'}`}>Đã duyệt</h3>
             </div>
-          </>
-        )}
+          </div>
+          <span className={`text-lg sm:text-xl font-bold ${stats.approved === 0 ? 'text-slate-500' : 'text-emerald-700'}`}>{stats.approved}</span>
+        </div>
+        
+        <div 
+          onClick={() => handleQuickFilter('REJECTED')}
+          className={`rounded-xl p-3 border flex items-center justify-between cursor-pointer transition-colors shadow-sm ${
+            statusFilter === 'REJECTED'
+              ? 'bg-red-50 border-red-400 ring-1 ring-red-400' 
+              : stats.rejected === 0 
+                ? 'bg-slate-50 border-slate-200 opacity-80 hover:opacity-100' 
+                : 'bg-red-50 border-red-200 hover:bg-red-100'
+          }`}
+        >
+          <div className="flex items-center gap-2.5">
+            <div className={`p-1.5 rounded-lg ${stats.rejected === 0 ? 'bg-slate-200 text-slate-500' : 'bg-red-100 text-red-600'}`}>
+              <XCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+            </div>
+            <div>
+              <h3 className={`font-semibold text-[13px] sm:text-sm ${stats.rejected === 0 ? 'text-slate-600' : 'text-red-900'}`}>Từ chối</h3>
+            </div>
+          </div>
+          <span className={`text-lg sm:text-xl font-bold ${stats.rejected === 0 ? 'text-slate-500' : 'text-red-700'}`}>{stats.rejected}</span>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -669,6 +649,7 @@ export function ReportsWorkspace({
           reports={reports}
           onViewDetail={handleViewDetail}
           onViewGallery={(r) => { setGalleryPhotos(r.photos); setIsGalleryOpen(true); }}
+          onPrintPreview={handlePrintPreview}
           onEdit={handleEdit}
           onDelete={handleDelete}
           totalReports={totalReports}
@@ -722,6 +703,7 @@ export function ReportsWorkspace({
         onSubmit={handleSubmit}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onPrintPreview={handlePrintPreview}
         onViewGallery={(r, index) => { setGalleryPhotos(r.photos); setGalleryIndex(index || 0); setIsGalleryOpen(true); }}
         currentUser={currentUser}
       />
@@ -748,6 +730,12 @@ export function ReportsWorkspace({
         confirmText="Xóa báo cáo"
         onConfirm={confirmDeleteReport}
         isLoading={isSubmitting}
+      />
+
+      <ReportPrintPreviewDialog
+        isOpen={Boolean(printPreviewReport)}
+        onClose={() => setPrintPreviewReport(null)}
+        report={printPreviewReport}
       />
     </div>
   );

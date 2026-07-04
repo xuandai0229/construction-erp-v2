@@ -5,6 +5,7 @@ import type { FieldReport } from "./types";
 import { getStatusLabel, getStatusVariant } from "./types";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { PhotoPreviewStack } from "./photo-preview-stack";
+import { formatDateVN, formatReportCode } from "@/lib/utils";
 
 interface ReportsMobileCardsProps {
   reports: FieldReport[];
@@ -34,7 +35,7 @@ export function ReportsMobileCards({ reports, onViewDetail, onViewGallery, onEdi
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <p className={`font-mono text-[13px] font-semibold truncate ${report.type === 'WEEKLY' ? 'text-purple-700' : 'text-blue-700'}`}>
-                  {report.code.replace('BC-D-', 'D-').replace('BC-W-', 'W-')}
+                  {formatReportCode(report.code, report.date, report.type)}
                 </p>
                 <StatusBadge variant="neutral" size="sm">
                   {report.type === 'WEEKLY' ? 'Tuần' : 'Ngày'}
@@ -51,7 +52,7 @@ export function ReportsMobileCards({ reports, onViewDetail, onViewGallery, onEdi
             <span className="font-medium text-slate-700 truncate max-w-[120px]">{report.creatorName}</span>
             <span className="inline-flex items-center gap-1">
               <Calendar className="w-3 h-3 text-slate-400" />
-              {report.type === 'WEEKLY' ? `${report.weekStartDate} - ${report.weekEndDate}` : report.date}
+              {report.type === 'WEEKLY' ? `${formatDateVN(report.weekStartDate)} - ${formatDateVN(report.weekEndDate)}` : formatDateVN(report.date)}
             </span>
           </div>
 
