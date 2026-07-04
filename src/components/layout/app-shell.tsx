@@ -10,7 +10,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   const session = await getSession();
 
   if (!session) {
-    redirect('/login');
+    redirect("/login?reason=session_expired");
   }
 
   const roleDisplayName = ROLE_DISPLAY_NAMES[session.role] || session.role;

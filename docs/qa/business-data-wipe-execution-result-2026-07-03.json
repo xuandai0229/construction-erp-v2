@@ -1,0 +1,152 @@
+{
+  "runDate": "2026-07-03T10:26:28.112Z",
+  "isDryRun": false,
+  "models": {
+    "siteReportAttachment": {
+      "before": 5,
+      "after": 0,
+      "deletedCount": 5
+    },
+    "siteReportPhoto": {
+      "before": 0,
+      "after": 0,
+      "deletedCount": 0
+    },
+    "siteReportLine": {
+      "before": 22,
+      "after": 0,
+      "deletedCount": 22
+    },
+    "siteReport": {
+      "before": 56,
+      "after": 0,
+      "deletedCount": 56
+    },
+    "fieldProgressEntry": {
+      "before": 4,
+      "after": 0,
+      "deletedCount": 4
+    },
+    "fieldProgressItem": {
+      "before": 4,
+      "after": 0,
+      "deletedCount": 4
+    },
+    "fieldProgressTemplate": {
+      "before": 6,
+      "after": 0,
+      "deletedCount": 6
+    },
+    "fieldMaterialRequestItem": {
+      "before": 0,
+      "after": 0,
+      "deletedCount": 0
+    },
+    "fieldMaterialRequest": {
+      "before": 0,
+      "after": 0,
+      "deletedCount": 0
+    },
+    "materialRequestItem": {
+      "before": 4,
+      "after": 0,
+      "deletedCount": 4
+    },
+    "materialRequest": {
+      "before": 2,
+      "after": 0,
+      "deletedCount": 2
+    },
+    "materialMovement": {
+      "before": 22,
+      "after": 0,
+      "deletedCount": 22
+    },
+    "projectMaterialStock": {
+      "before": 11,
+      "after": 0,
+      "deletedCount": 11
+    },
+    "paymentRecord": {
+      "before": 2,
+      "after": 0,
+      "deletedCount": 2
+    },
+    "paymentPlan": {
+      "before": 4,
+      "after": 0,
+      "deletedCount": 4
+    },
+    "paymentRequest": {
+      "before": 8,
+      "after": 0,
+      "deletedCount": 8
+    },
+    "approvalRequest": {
+      "before": 8,
+      "after": 0,
+      "deletedCount": 8
+    },
+    "contract": {
+      "before": 6,
+      "after": 0,
+      "deletedCount": 6
+    },
+    "document": {
+      "before": 11,
+      "after": 0,
+      "deletedCount": 11
+    },
+    "documentFolder": {
+      "before": 69,
+      "after": 0,
+      "deletedCount": 69
+    },
+    "wBSItem": {
+      "before": 22,
+      "after": 0,
+      "deletedCount": 22
+    },
+    "notification": {
+      "before": 10,
+      "after": 0,
+      "deletedCount": 10
+    },
+    "chatMessage": {
+      "before": 30,
+      "after": 0,
+      "deletedCount": 30
+    },
+    "projectMember": {
+      "before": 10,
+      "after": 0,
+      "deletedCount": 10
+    },
+    "project": {
+      "before": 10,
+      "after": 0,
+      "deletedCount": 10
+    },
+    "auditLog": {
+      "before": 232,
+      "after": 0,
+      "deletedCount": 232
+    },
+    "supplier": {
+      "before": 8,
+      "after": 0,
+      "deletedCount": 8
+    },
+    "materialItem": {
+      "before": 11,
+      "after": 0,
+      "deletedCount": 11
+    },
+    "user": {
+      "before": 35,
+      "after": 0,
+      "deletedCount": 35
+    }
+  },
+  "verificationStatus": "PASS"
+}

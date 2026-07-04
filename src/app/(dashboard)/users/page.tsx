@@ -6,7 +6,7 @@ import { UserManagementClient } from "@/components/users/user-management-client"
 
 export default async function UsersPage() {
   const session = await getSession();
-  if (!session) redirect("/login");
+  if (!session) redirect("/login?reason=session_expired");
   if (!canManageUsers(session)) redirect("/projects");
 
   const users = await prisma.user.findMany({

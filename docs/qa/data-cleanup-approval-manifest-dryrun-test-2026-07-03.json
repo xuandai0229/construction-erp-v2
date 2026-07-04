@@ -1,0 +1,54 @@
+{
+  "testOnly": true,
+  "liveRunAllowed": false,
+  "runDate": "2026-07-03T10:00:00.000Z",
+  "sourceAuditManifest": "docs/qa/data-cleanup-manifest-redo-2026-07-03.json",
+  "dbDeleteApprovals": {
+    "projects": [],
+    "documents": [],
+    "reports": []
+  },
+  "fileQuarantineApprovals": {
+    "files": [
+      {
+        "path": "D:\\construction-erp-v2\\storage\\projects\\cmqp1gex90000pwwk17oqmjct\\documents\\doc_1782122050797_zkwxyc.pdf",
+        "size": 328,
+        "projectCodeOrFolder": "unknown",
+        "reason": "Not in DB",
+        "risk": "LOW",
+        "action": "MANUAL_APPROVE_QUARANTINE",
+        "approvedForQuarantine": true,
+        "confirmedByUser": true,
+        "approvedAt": "2026-07-03T10:00:00.000Z"
+      },
+      {
+        "path": "D:\\construction-erp-v2\\storage\\projects\\HN-TH-2026-001\\documents\\cmqvoj6wt000v9kwkjzmc08ad\\1782523608554_BLTH-HNTH-2026-Bao-lanh-thuc-hien-hop-dong.pdf",
+        "size": 77,
+        "projectCodeOrFolder": "HN-TH-2026-001",
+        "reason": "Simulated test file inside protected project",
+        "risk": "HIGH",
+        "action": "MANUAL_APPROVE_QUARANTINE",
+        "approvedForQuarantine": true,
+        "confirmedByUser": true,
+        "approvedAt": "2026-07-03T10:00:00.000Z"
+      }
+    ]
+  },
+  "keepProtections": {
+    "projectIds": [
+      "cmqvqgltk0009n0wk9dsqslvy",
+      "cmqz12dlt00011swk1ztw9afx"
+    ],
+    "projectCodes": [
+      "HN-TH-2026-001",
+      "HN-TQH-2026-002"
+    ],
+    "protectedPaths": [
+      "HN-TH-2026-001",
+      "cmqvqgltk0009n0wk9dsqslvy",
+      "HN-TQH-2026-002",
+      "cmqz12dlt00011swk1ztw9afx"
+    ]
+  },
+  "requiresUserEdit": false
+}

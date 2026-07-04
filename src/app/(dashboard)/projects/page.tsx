@@ -17,7 +17,7 @@ export default async function ProjectsPage({
   searchParams: Promise<{ q?: string; status?: string; page?: string }>
 }) {
   const session = await getSession();
-  if (!session) redirect("/login");
+  if (!session) redirect("/login?reason=session_expired");
 
   const params = await searchParams;
   const q = params.q || "";

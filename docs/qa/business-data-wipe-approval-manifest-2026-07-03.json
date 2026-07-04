@@ -1,0 +1,26 @@
+{
+  "testOnly": false,
+  "liveRunAllowed": true,
+  "requiresUserEdit": false,
+  "backupPathConfirmed": "D:\\construction-erp-v2\\backups\\business-data-wipe\\json-export-2026-07-03T10-25-31-887Z",
+  "protectedUsers": ["cmq4ljlku0000cwwkewrboncw"],
+  "wipeOptions": {
+    "projects": true,
+    "reports": true,
+    "documents": true,
+    "fieldProgress": true,
+    "materialsProjectData": true,
+    "payments": true,
+    "contracts": true,
+    "approvals": true,
+    "notifications": true,
+    "chatMessages": true,
+    "suppliers": true,
+    "materialCatalog": true,
+    "auditLogs": true,
+    "demoUsers": true
+  },
+  "approveAllBusinessFilesForQuarantine": false,
+  "approvedAt": "2026-07-03T10:25:00Z",
+  "approvedByUser": "cmq4ljlku0000cwwkewrboncw"
+}

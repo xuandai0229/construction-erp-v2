@@ -1,0 +1,73 @@
+[
+  {
+    "mode": "no-cookie",
+    "url": "http://localhost:3000/",
+    "steps": [
+      {
+        "status": 307,
+        "location": "/login?next=%2F"
+      },
+      {
+        "status": 200,
+        "location": null
+      }
+    ],
+    "loopDetected": false
+  },
+  {
+    "mode": "no-cookie",
+    "url": "http://localhost:3000/login",
+    "steps": [
+      {
+        "status": 200,
+        "location": null
+      }
+    ],
+    "loopDetected": false
+  },
+  {
+    "mode": "no-cookie",
+    "url": "http://localhost:3000/dashboard",
+    "steps": [
+      {
+        "status": 307,
+        "location": "/login?next=%2Fdashboard"
+      },
+      {
+        "status": 200,
+        "location": null
+      }
+    ],
+    "loopDetected": false
+  },
+  {
+    "mode": "no-cookie",
+    "url": "http://localhost:3000/projects",
+    "steps": [
+      {
+        "status": 307,
+        "location": "/login?next=%2Fprojects"
+      },
+      {
+        "status": 200,
+        "location": null
+      }
+    ],
+    "loopDetected": false
+  },
+  {
+    "mode": "no-cookie",
+    "url": "http://localhost:3000/reports",
+    "steps": [
+      {
+        "status": 307,
+        "location": "/login?next=%2Freports"
+      },
+      {
+        "status": 200,
+        "location": null
+      }
+    ],
+    "loopDetected": false
+  }
+]

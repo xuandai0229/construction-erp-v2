@@ -17,7 +17,7 @@ export default async function DocumentsOverviewPage({
 }) {
   const session = await getSession();
   if (!session) {
-    redirect("/login");
+    redirect("/login?reason=session_expired");
   }
 
   const params = await searchParams;

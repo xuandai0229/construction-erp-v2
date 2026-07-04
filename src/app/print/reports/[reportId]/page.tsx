@@ -30,7 +30,7 @@ export const metadata = {
 
 export default async function PrintReportPage({ params }: { params: Promise<{ reportId: string }> }) {
   const session = await getSession();
-  if (!session) redirect("/login");
+  if (!session) redirect("/login?reason=session_expired");
 
   const { reportId } = await params;
 

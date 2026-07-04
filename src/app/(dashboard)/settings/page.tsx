@@ -11,7 +11,7 @@ export const metadata = {
 
 export default async function SettingsPage() {
   const session = await getSession();
-  if (!session) redirect("/login");
+  if (!session) redirect("/login?reason=session_expired");
   if (!canManageUsers(session)) redirect("/projects");
 
   const initialSettings = await getSystemSettings();

@@ -60,15 +60,27 @@ export default async function proxy(request: NextRequest) {
   
   if (!hasSession && !isAuthPage && (!isApiRoute || isAuthApiRoute)) {
     if (!isApiRoute) {
-      return NextResponse.redirect(new URL('/login', request.url));
+      const url = new URL('/login', request.url);
+      url.searchParams.set('next', request.nextUrl.pathname);
+      return NextResponse.redirect(url);
     }
   }
 
   if (hasSession && isAuthPage) {
+    if (request.nextUrl.searchParams.get('reason') === 'session_expired') {
+      const response = NextResponse.next();
+      response.cookies.delete('auth_session');
+      return response;
+    }
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   const response = NextResponse.next();
+  // Clear cookie if reason=session_expired on any route? No, only on login is fine, but let's be safe.
+  if (request.nextUrl.searchParams.get('reason') === 'session_expired') {
+    response.cookies.delete('auth_session');
+  }
+
   response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
   response.headers.set("Pragma", "no-cache");
   response.headers.set("Expires", "0");

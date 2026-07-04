@@ -21,6 +21,12 @@ export default function LoginPage() {
     if (emailInputRef.current && !email) {
       emailInputRef.current.focus();
     }
+    
+    // Check for reason=session_expired
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('reason') === 'session_expired') {
+      setError('Phiên đăng nhập đã hết hạn hoặc không hợp lệ, vui lòng đăng nhập lại.');
+    }
   }, [email]);
 
   const handleSubmit = async (e: React.FormEvent) => {

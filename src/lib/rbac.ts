@@ -157,7 +157,7 @@ export async function canManageProject(
 export async function requireAuth() {
   const session = await getSession();
   if (!session) {
-    redirect("/login");
+    redirect("/login?reason=session_expired");
   }
   return session;
 }

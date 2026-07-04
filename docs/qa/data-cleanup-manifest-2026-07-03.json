@@ -1,0 +1,344 @@
+{
+  "runDate": "2026-07-03T09:38:27.188Z",
+  "models": {
+    "User": {
+      "total": 36,
+      "softDeleted": 26,
+      "active": 10
+    },
+    "Project": {
+      "total": 10,
+      "softDeleted": 5,
+      "active": 5
+    },
+    "ProjectMember": {
+      "total": 10,
+      "softDeleted": 0,
+      "active": 10
+    },
+    "WBSItem": {
+      "total": 22,
+      "softDeleted": 0,
+      "active": 22
+    },
+    "Supplier": {
+      "total": 8,
+      "softDeleted": 0,
+      "active": 8
+    },
+    "Contract": {
+      "total": 6,
+      "softDeleted": 0,
+      "active": 6
+    },
+    "DocumentFolder": {
+      "total": 69,
+      "softDeleted": 1,
+      "active": 68
+    },
+    "Document": {
+      "total": 11,
+      "softDeleted": 0,
+      "active": 11
+    },
+    "SiteReport": {
+      "total": 56,
+      "softDeleted": 1,
+      "active": 55
+    },
+    "SiteReportPhoto": {
+      "total": 0,
+      "softDeleted": 0,
+      "active": 0
+    },
+    "SiteReportAttachment": {
+      "total": 5,
+      "softDeleted": 0,
+      "active": 5
+    },
+    "SiteReportLine": {
+      "total": 22,
+      "softDeleted": 0,
+      "active": 22
+    },
+    "MaterialRequest": {
+      "total": 2,
+      "softDeleted": 0,
+      "active": 2
+    },
+    "MaterialRequestItem": {
+      "total": 4,
+      "softDeleted": 0,
+      "active": 4
+    },
+    "MaterialItem": {
+      "total": 11,
+      "softDeleted": 0,
+      "active": 11
+    },
+    "MaterialMovement": {
+      "total": 22,
+      "softDeleted": 0,
+      "active": 22
+    },
+    "ProjectMaterialStock": {
+      "total": 11,
+      "softDeleted": 0,
+      "active": 11
+    },
+    "PaymentPlan": {
+      "total": 4,
+      "softDeleted": 0,
+      "active": 4
+    },
+    "PaymentRecord": {
+      "total": 2,
+      "softDeleted": 0,
+      "active": 2
+    },
+    "PaymentRequest": {
+      "total": 8,
+      "softDeleted": 0,
+      "active": 8
+    },
+    "ApprovalRequest": {
+      "total": 8,
+      "softDeleted": 0,
+      "active": 8
+    },
+    "Notification": {
+      "total": 10,
+      "softDeleted": 0,
+      "active": 10
+    },
+    "ChatMessage": {
+      "total": 30,
+      "softDeleted": 0,
+      "active": 30
+    },
+    "AuditLog": {
+      "total": 232,
+      "softDeleted": 0,
+      "active": 232
+    },
+    "FieldProgressTemplate": {
+      "total": 6,
+      "softDeleted": 0,
+      "active": 6
+    },
+    "FieldProgressItem": {
+      "total": 4,
+      "softDeleted": 0,
+      "active": 4
+    },
+    "FieldProgressEntry": {
+      "total": 4,
+      "softDeleted": 0,
+      "active": 4
+    },
+    "FieldMaterialRequest": {
+      "total": 0,
+      "softDeleted": 0,
+      "active": 0
+    },
+    "FieldMaterialRequestItem": {
+      "total": 0,
+      "softDeleted": 0,
+      "active": 0
+    },
+    "SystemSetting": {
+      "total": 1,
+      "softDeleted": 0,
+      "active": 1
+    }
+  },
+  "projects": [
+    {
+      "id": "cmqz176ui000bhkwk4luh3xab",
+      "code": "457",
+      "name": "ok2",
+      "status": "PLANNING",
+      "isDeleted": true,
+      "counts": {
+        "members": 0,
+        "siteReports": 0,
+        "documents": 0,
+        "contracts": 0,
+        "paymentRequests": 0,
+        "materialRequests": 0,
+        "approvalRequests": 0
+      },
+      "isDemoSuspect": false,
+      "recommendation": "DELETE_CANDIDATE"
+    },
+    {
+      "id": "cmqz16yin0001hkwktebki5ty",
+      "code": "34567",
+      "name": "ok1",
+      "status": "PLANNING",
+      "isDeleted": true,
+      "counts": {
+        "members": 0,
+        "siteReports": 0,
+        "documents": 0,
+        "contracts": 0,
+        "paymentRequests": 0,
+        "materialRequests": 0,
+        "approvalRequests": 0
+      },
+      "isDemoSuspect": false,
+      "recommendation": "DELETE_CANDIDATE"
+    },
+    {
+      "id": "cmqvqgltk0009n0wk9dsqslvy",
+      "code": "HN-TH-2026-001",
+      "name": "Dự án Tây Hồ",
+      "status": "ACTIVE",
+      "isDeleted": false,
+      "counts": {
+        "members": 10,
+        "siteReports": 24,
+        "documents": 11,
+        "contracts": 6,
+        "paymentRequests": 8,
+        "materialRequests": 2,
+        "approvalRequests": 8
+      },
+      "isDemoSuspect": false,
+      "recommendation": "KEEP"
+    },
+    {
+      "id": "cmqz12dlu00021swkuodyzraq",
+      "code": "HN-HVP-2026-003",
+      "name": "Dự án Hoàng Văn Phúc",
+      "status": "ACTIVE",
+      "isDeleted": true,
+      "counts": {
+        "members": 0,
+        "siteReports": 16,
+        "documents": 0,
+        "contracts": 0,
+        "paymentRequests": 0,
+        "materialRequests": 0,
+        "approvalRequests": 0
+      },
+      "isDemoSuspect": false,
+      "recommendation": "DELETE_CANDIDATE"
+    },
+    {
+      "id": "cmqz12dlv00031swkliy133py",
+      "code": "HN-BS-2026-004",
+      "name": "Dự án Bim Sơn",
+      "status": "ACTIVE",
+      "isDeleted": true,
+      "counts": {
+        "members": 0,
+        "siteReports": 0,
+        "documents": 0,
+        "contracts": 0,
+        "paymentRequests": 0,
+        "materialRequests": 0,
+        "approvalRequests": 0
+      },
+      "isDemoSuspect": false,
+      "recommendation": "DELETE_CANDIDATE"
+    },
+    {
+      "id": "cmr005gog0000a4wka3dnsjwa",
+      "code": "test",
+      "name": "test ct",
+      "status": "PLANNING",
+      "isDeleted": false,
+      "counts": {
+        "members": 0,
+        "siteReports": 0,
+        "documents": 0,
+        "contracts": 0,
+        "paymentRequests": 0,
+        "materialRequests": 0,
+        "approvalRequests": 0
+      },
+      "isDemoSuspect": true,
+      "recommendation": "CONFIRM"
+    },
+    {
+      "id": "cmqz12dlt00011swk1ztw9afx",
+      "code": "HN-TQH-2026-002",
+      "name": "Dự án Trần Quang Hiếu",
+      "status": "ACTIVE",
+      "isDeleted": false,
+      "counts": {
+        "members": 0,
+        "siteReports": 16,
+        "documents": 0,
+        "contracts": 0,
+        "paymentRequests": 0,
+        "materialRequests": 0,
+        "approvalRequests": 0
+      },
+      "isDemoSuspect": false,
+      "recommendation": "KEEP"
+    },
+    {
+      "id": "cmr355q26000338wkm95i3ruk",
+      "code": "Test1255",
+      "name": "Yjhg",
+      "status": "ACTIVE",
+      "isDeleted": true,
+      "counts": {
+        "members": 0,
+        "siteReports": 0,
+        "documents": 0,
+        "contracts": 0,
+        "paymentRequests": 0,
+        "materialRequests": 0,
+        "approvalRequests": 0
+      },
+      "isDemoSuspect": true,
+      "recommendation": "DELETE_CANDIDATE"
+    },
+    {
+      "id": "cmqz2jl1c0004ewwkuthiu9dz",
+      "code": "HN-LB-2026-005",
+      "name": "Dự án Long Biên",
+      "status": "ON_HOLD",
+      "isDeleted": false,
+      "counts": {
+        "members": 0,
+        "siteReports": 0,
+        "documents": 0,
+        "contracts": 0,
+        "paymentRequests": 0,
+        "materialRequests": 0,
+        "approvalRequests": 0
+      },
+      "isDemoSuspect": false,
+      "recommendation": "DELETE_CANDIDATE"
+    },
+    {
+      "id": "cmqz2jl1e0005ewwka0vk35v4",
+      "code": "HN-CG-2026-006",
+      "name": "Dự án Cầu Giấy",
+      "status": "COMPLETED",
+      "isDeleted": false,
+      "counts": {
+        "members": 0,
+        "siteReports": 0,
+        "documents": 0,
+        "contracts": 0,
+        "paymentRequests": 0,
+        "materialRequests": 0,
+        "approvalRequests": 0
+      },
+      "isDemoSuspect": false,
+      "recommendation": "DELETE_CANDIDATE"
+    }
+  ],
+  "orphans": {
+    "orphanedReportLines": 0
+  },
+  "demoSuspects": {
+    "users": 10
+  },
+  "fileStorageStats": {}
+}

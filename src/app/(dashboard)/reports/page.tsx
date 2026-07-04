@@ -32,7 +32,7 @@ import { serializePrisma } from "@/lib/serialize";
 
 export default async function ReportsPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
   const session = await getSession();
-  if (!session) redirect("/login");
+  if (!session) redirect("/login?reason=session_expired");
 
   const resolvedParams = await searchParams;
   const urlProjectId = typeof resolvedParams.projectId === "string" ? resolvedParams.projectId : undefined;
