@@ -234,6 +234,7 @@ export function ReportsWorkspace({
         // Edit flow
         const payload: Record<string, unknown> = {
           date: data.date,
+          time: data.time,
           weatherCondition: data.weatherCondition,
           weatherTemperature: data.weatherTemperature,
           summary: data.summary,
@@ -274,6 +275,9 @@ export function ReportsWorkspace({
             weekStartDate: data.weekStartDate,
             weekEndDate: data.weekEndDate,
             summary: data.summary,
+            materials: data.materials,
+            labor: data.labor,
+            quality: data.quality,
             issues: data.issues,
             recommendations: data.recommendations,
             weatherCondition: data.weatherCondition,
@@ -294,6 +298,8 @@ export function ReportsWorkspace({
             quality: data.quality,
             issues: data.issues,
             recommendations: data.recommendations,
+            gpsLat: data.gpsLocation ? parseFloat(data.gpsLocation.split(',')[0]) : undefined,
+            gpsLng: data.gpsLocation && data.gpsLocation.split(',').length > 1 ? parseFloat(data.gpsLocation.split(',')[1]) : undefined,
             workLines: data.workLines.map(wl => ({
               fieldProgressItemId: wl.fieldProgressItemId || wl.wbsItemId,
               wbsItemId: wl.wbsItemId,

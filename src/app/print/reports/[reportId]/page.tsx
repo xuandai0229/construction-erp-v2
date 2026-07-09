@@ -142,6 +142,10 @@ export default async function PrintReportPage({ params }: { params: Promise<{ re
     quality: report.quality || '',
     issues: report.issues || '',
     recommendations: report.recommendations || '',
+    gpsLocation:
+      report.gpsLat !== null && report.gpsLng !== null
+        ? `${Number(report.gpsLat)}, ${Number(report.gpsLng)}`
+        : undefined,
     approvalHistory: [],
   };
 

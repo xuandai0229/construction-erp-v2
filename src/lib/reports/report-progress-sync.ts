@@ -4,7 +4,7 @@ import { getWorkDateRange } from "@/lib/date/work-date";
 import { evaluateVolumeGuard } from "@/lib/field-progress/volume-guard";
 import { getVietnamDateString } from "@/lib/reports/report-timezone";
 
-export type ReportProgressSyncMode = "SUBMIT" | "APPROVE" | "REJECT" | "CANCEL";
+export type ReportProgressSyncMode = "SAVE" | "SUBMIT" | "APPROVE" | "REJECT" | "CANCEL";
 
 export type ReportProgressSyncActor = {
   id: string;
@@ -234,26 +234,29 @@ export async function syncSiteReportProgressEntriesInTransaction(
   const reportWorkDate = getVietnamDateString(report.reportDate);
   const { start, end } = getWorkDateRange(reportWorkDate);
 
+  const { getBulkWorkQuantityBalance } = await import("@/lib/field-progress/volume-balance");
+  const balances = await getBulkWorkQuantityBalance(tx, report.projectId, itemIds, {
+    excludeSourceMarker: getReportProgressSourceMarker(report.id),
+  });
+
   const existingEntries = await tx.fieldProgressEntry.findMany({
     where: {
       projectId: report.projectId,
       itemId: { in: itemIds },
-      entryDate: { gte: start, lt: end },
+      note: { contains: getReportProgressSourceMarker(report.id) },
       deletedAt: null,
       status: { not: "CANCELLED" },
     },
   });
 
-  const existingByItemId = new Map<string, typeof existingEntries>();
+  const existingByItemId = new Map<string, typeof existingEntries[0]>();
   for (const entry of existingEntries) {
-    if (!existingByItemId.has(entry.itemId)) existingByItemId.set(entry.itemId, []);
-    existingByItemId.get(entry.itemId)!.push(entry);
+    existingByItemId.set(entry.itemId, entry);
   }
 
   const staleOwnEntries = await tx.fieldProgressEntry.findMany({
     where: {
       projectId: report.projectId,
-      entryDate: { gte: start, lt: end },
       deletedAt: null,
       status: { not: "CANCELLED" },
       note: { contains: getReportProgressSourceMarker(report.id) },
@@ -261,26 +264,13 @@ export async function syncSiteReportProgressEntriesInTransaction(
     },
   });
 
-  const historicalSums = await tx.fieldProgressEntry.groupBy({
-    by: ["itemId"],
-    where: {
-      projectId: report.projectId,
-      itemId: { in: itemIds },
-      status: "APPROVED",
-      deletedAt: null,
-      OR: [{ entryDate: { lt: start } }, { entryDate: { gte: end } }],
-    },
-    _sum: { quantity: true },
-  });
-  const approvedBeforeByItemId = new Map(historicalSums.map((sum) => [sum.itemId, Number(sum._sum.quantity || 0)]));
-
   let created = 0;
   let updated = 0;
   let skipped = 0;
   let blocked = 0;
   const errors: string[] = [];
-  const targetStatus: Extract<FieldProgressEntryStatus, "SUBMITTED" | "APPROVED"> =
-    input.mode === "APPROVE" ? "APPROVED" : "SUBMITTED";
+  const targetStatus: FieldProgressEntryStatus =
+    input.mode === "APPROVE" ? "APPROVED" : input.mode === "SAVE" ? "DRAFT" : "SUBMITTED";
 
   for (const staleEntry of staleOwnEntries) {
     await tx.fieldProgressEntry.update({
@@ -298,26 +288,16 @@ export async function syncSiteReportProgressEntriesInTransaction(
     const itemId = line.fieldProgressItemId!;
     const item = itemById.get(itemId)!;
     const quantityToday = Number(line.quantityToday || 0);
-    const designQuantity = Number(item.designQuantity || 0);
-    const approvedBefore = approvedBeforeByItemId.get(itemId) || 0;
-    const sameDayEntries = existingByItemId.get(itemId) || [];
+    
+    const balance = balances.get(itemId)!;
+    const designQuantity = balance.plannedQuantity;
+    const cumulativeBefore = balance.totalActiveEnteredQuantity;
 
-    if (sameDayEntries.length > 1) {
-      blocked++;
-      errors.push(`Công việc này đã có trong báo cáo.`);
-      continue;
-    }
-
-    const existing = sameDayEntries[0];
-    if (existing && !hasReportSource(existing.note, report.id)) {
-      blocked++;
-      errors.push(`Công việc này đã có khối lượng từ báo cáo khác trong ngày.`);
-      continue;
-    }
+    const existing = existingByItemId.get(itemId);
 
     const guard = evaluateVolumeGuard({
       designQuantity,
-      cumulativeBefore: approvedBefore,
+      cumulativeBefore,
       todayQuantity: quantityToday,
       status: targetStatus,
       note: line.note,
@@ -327,7 +307,7 @@ export async function syncSiteReportProgressEntriesInTransaction(
 
     if (!guard.canSubmit) {
       blocked++;
-      errors.push(`Khối lượng nhập vượt phần còn lại.`);
+      errors.push(`Khối lượng nhập vượt phần còn lại cho công việc ${item.code}. Thiết kế: ${designQuantity}, đã nhập: ${cumulativeBefore}, còn lại: ${balance.remainingQuantity}.`);
       continue;
     }
 
@@ -341,7 +321,7 @@ export async function syncSiteReportProgressEntriesInTransaction(
         area: item.categoryName || line.area,
         unit: item.unit || line.unit,
         designQuantity: new Decimal(designQuantity),
-        quantityBefore: new Decimal(approvedBefore),
+        quantityBefore: new Decimal(cumulativeBefore),
         quantityCumulative: new Decimal(guard.projectedCumulative),
         progressPercent: new Decimal(progressPercent),
       },

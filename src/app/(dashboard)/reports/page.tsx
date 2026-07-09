@@ -115,6 +115,10 @@ export default async function ReportsPage({ searchParams }: { searchParams: { [k
     quality: (r.quality as string) || '',
     issues: (r.issues as string) || '',
     recommendations: (r.recommendations as string) || '',
+    gpsLocation:
+      r.gpsLat !== undefined && r.gpsLat !== null && r.gpsLng !== undefined && r.gpsLng !== null
+        ? `${Number(r.gpsLat)}, ${Number(r.gpsLng)}`
+        : undefined,
     
     // Derived business logic
     hasIssues: (() => {

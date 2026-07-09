@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { X, Save, Send, AlertCircle, FileText, CheckCircle2, ListTodo, FileImage, Files, MapPin, Building2, ChevronDown, Plus } from "lucide-react";
+import { X, Save, Send, AlertCircle, FileText, CheckCircle2, ListTodo, FileImage, Files, MapPin, Building2, ChevronDown, Plus, CalendarRange, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast-context";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -8,6 +8,7 @@ import { WorkPicker, type PickerWorkItem } from "./create-dialog/work-picker";
 import { SelectedWorkCard } from "./create-dialog/selected-work-card";
 import { ResourcesAndQuality } from "./create-dialog/resources-and-quality";
 import { AttachmentsCard } from "./create-dialog/attachments-card";
+import { WeeklyReportForm } from "./create-dialog/weekly-report-form";
 import { type CreateReportFormData, type FieldReport, type ReportWorkLine } from "./types";
 import { getProjectWorkItems } from "@/app/(dashboard)/reports/actions";
 
@@ -154,6 +155,9 @@ export function CreateReportDialog({
   };
 
   const handleSelectWorkItems = (items: PickerWorkItem[]) => {
+    const duplicateItems = items.filter(item =>
+      form.workLines.some(line => line.fieldProgressItemId === item.fieldProgressItemId)
+    );
     const newLines = items.map(item => {
       const existing = form.workLines.find(l => l.fieldProgressItemId === item.fieldProgressItemId);
       if (existing) return null;
@@ -184,6 +188,9 @@ export function CreateReportDialog({
         setErrors(prev => { const n = {...prev}; delete n.workLines; return n; });
       }
     }
+    if (duplicateItems.length > 0) {
+      toast.error("Công việc này đã có trong báo cáo.");
+    }
   };
 
   // Actions
@@ -198,15 +205,30 @@ export function CreateReportDialog({
   const validate = (isDraft: boolean): boolean => {
     const newErrors: Record<string, string> = {};
     if (!form.projectId) newErrors.projectId = "Vui lòng chọn công trình";
-    if (!form.date) newErrors.date = "Vui lòng chọn ngày";
     
-    if (!isDraft && form.type === "DAILY" && form.workLines.length === 0) {
-      newErrors.workLines = "Báo cáo ngày cần ít nhất 1 công việc. Bấm Thêm khối lượng để chọn công việc từ bảng khối lượng gốc.";
+    if (form.type === "DAILY") {
+      if (!form.date) newErrors.date = "Vui lòng chọn ngày";
+      if (!isDraft && form.workLines.length === 0) {
+        newErrors.workLines = "Báo cáo ngày cần ít nhất 1 công việc. Bấm Thêm khối lượng để chọn công việc từ bảng khối lượng gốc.";
+      }
+      const hasOverQty = form.workLines.some(l => (l.quantityToday || 0) > (l.remainingQuantity || 0));
+      if (!isDraft && hasOverQty) {
+        newErrors.workLines = "Khối lượng không được vượt phần còn lại.";
+      }
     }
     
-    const hasOverQty = form.workLines.some(l => (l.quantityToday || 0) > (l.remainingQuantity || 0));
-    if (!isDraft && hasOverQty) {
-      newErrors.workLines = "Khối lượng không được vượt phần còn lại.";
+    if (form.type === "WEEKLY") {
+      if (!form.weekStartDate) newErrors.weekStartDate = "Vui lòng chọn ngày bắt đầu tuần";
+      if (!form.weekEndDate) newErrors.weekEndDate = "Vui lòng chọn ngày kết thúc tuần";
+      if (form.weekStartDate && form.weekEndDate && form.weekStartDate > form.weekEndDate) {
+        newErrors.weekStartDate = "Ngày bắt đầu không được sau ngày kết thúc";
+      }
+      if (!isDraft) {
+        const hasContent = !!(form.summary || form.quality || form.issues || form.recommendations || form.labor || form.materials);
+        if (!hasContent) {
+          newErrors.summary = "Báo cáo tuần cần ít nhất một nội dung tổng hợp (tình hình thi công, chất lượng, vướng mắc, kiến nghị, hoặc kế hoạch tuần sau).";
+        }
+      }
     }
 
     setErrors(newErrors);
@@ -242,15 +264,15 @@ export function CreateReportDialog({
     name: w.name,
     workContent: w.name,
     designQuantity: Number(w.designQuantity || 0),
-    approvedCumulative: Number(w.cumulativeBefore || 0),
-    todayQuantity: 0,
-    remainingQuantity: Math.max(0, Number(w.designQuantity || 0) - Number(w.cumulativeBefore || 0)),
+    approvedCumulative: Number(w.approvedCumulative || 0),
+    todayQuantity: Number(w.todayQuantity || 0),
+    remainingQuantity: Number(w.remainingQuantity || 0),
     unit: w.unit || 'Lần',
     status: "OPEN"
   }));
 
-  const canSaveDraft = !!form.projectId && !!form.date;
-  const canSubmit = !!form.projectId && !!form.date && (form.type === "WEEKLY" || form.workLines.length > 0);
+  const canSaveDraft = !!form.projectId && (form.type === 'WEEKLY' ? !!form.weekStartDate : !!form.date);
+  const canSubmit = !!form.projectId && (form.type === 'WEEKLY' ? (!!form.weekStartDate && !!form.weekEndDate) : (!!form.date && form.workLines.length > 0));
 
   return (
     <>
@@ -303,24 +325,45 @@ export function CreateReportDialog({
               </div>
 
               {/* Summary Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-                <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
-                  <div className="bg-blue-50 p-2.5 rounded-lg text-blue-600"><ListTodo className="w-5 h-5" /></div>
-                  <div><p className="text-[11px] font-bold text-slate-400 uppercase">Công việc</p><p className="font-bold text-slate-800 text-[18px] leading-tight">{selectedCount}</p></div>
+              {form.type === 'DAILY' ? (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+                  <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+                    <div className="bg-blue-50 p-2.5 rounded-lg text-blue-600"><ListTodo className="w-5 h-5" /></div>
+                    <div><p className="text-[11px] font-bold text-slate-400 uppercase">Công việc</p><p className="font-bold text-slate-800 text-[18px] leading-tight">{selectedCount}</p></div>
+                  </div>
+                  <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+                    <div className="bg-emerald-50 p-2.5 rounded-lg text-emerald-600"><CheckCircle2 className="w-5 h-5" /></div>
+                    <div><p className="text-[11px] font-bold text-slate-400 uppercase">Tổng KL nhập</p><p className="font-bold text-slate-800 text-[18px] leading-tight">{totalQtyToday.toLocaleString()}</p></div>
+                  </div>
+                  <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+                    <div className="bg-purple-50 p-2.5 rounded-lg text-purple-600"><FileImage className="w-5 h-5" /></div>
+                    <div><p className="text-[11px] font-bold text-slate-400 uppercase">Ảnh đính kèm</p><p className="font-bold text-slate-800 text-[18px] leading-tight">{form.photos.length}</p></div>
+                  </div>
+                  <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+                    <div className="bg-amber-50 p-2.5 rounded-lg text-amber-600"><Files className="w-5 h-5" /></div>
+                    <div><p className="text-[11px] font-bold text-slate-400 uppercase">Tài liệu</p><p className="font-bold text-slate-800 text-[18px] leading-tight">{form.attachments.length}</p></div>
+                  </div>
                 </div>
-                <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
-                  <div className="bg-emerald-50 p-2.5 rounded-lg text-emerald-600"><CheckCircle2 className="w-5 h-5" /></div>
-                  <div><p className="text-[11px] font-bold text-slate-400 uppercase">Tổng KL nhập</p><p className="font-bold text-slate-800 text-[18px] leading-tight">{totalQtyToday.toLocaleString()}</p></div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+                  <div className="bg-white p-3.5 rounded-xl border border-indigo-200 shadow-sm flex items-center gap-3">
+                    <div className="bg-indigo-50 p-2.5 rounded-lg text-indigo-600"><CalendarRange className="w-5 h-5" /></div>
+                    <div><p className="text-[11px] font-bold text-slate-400 uppercase">Loại</p><p className="font-bold text-indigo-700 text-[14px] leading-tight">Báo cáo tuần</p></div>
+                  </div>
+                  <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+                    <div className="bg-emerald-50 p-2.5 rounded-lg text-emerald-600"><BarChart3 className="w-5 h-5" /></div>
+                    <div><p className="text-[11px] font-bold text-slate-400 uppercase">Tổng hợp từ</p><p className="font-bold text-slate-800 text-[14px] leading-tight">BC ngày đã duyệt</p></div>
+                  </div>
+                  <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+                    <div className="bg-purple-50 p-2.5 rounded-lg text-purple-600"><FileImage className="w-5 h-5" /></div>
+                    <div><p className="text-[11px] font-bold text-slate-400 uppercase">Ảnh đính kèm</p><p className="font-bold text-slate-800 text-[18px] leading-tight">{form.photos.length}</p></div>
+                  </div>
+                  <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+                    <div className="bg-amber-50 p-2.5 rounded-lg text-amber-600"><Files className="w-5 h-5" /></div>
+                    <div><p className="text-[11px] font-bold text-slate-400 uppercase">Tài liệu</p><p className="font-bold text-slate-800 text-[18px] leading-tight">{form.attachments.length}</p></div>
+                  </div>
                 </div>
-                <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
-                  <div className="bg-purple-50 p-2.5 rounded-lg text-purple-600"><FileImage className="w-5 h-5" /></div>
-                  <div><p className="text-[11px] font-bold text-slate-400 uppercase">Ảnh đính kèm</p><p className="font-bold text-slate-800 text-[18px] leading-tight">{form.photos.length}</p></div>
-                </div>
-                <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
-                  <div className="bg-amber-50 p-2.5 rounded-lg text-amber-600"><Files className="w-5 h-5" /></div>
-                  <div><p className="text-[11px] font-bold text-slate-400 uppercase">Tài liệu</p><p className="font-bold text-slate-800 text-[18px] leading-tight">{form.attachments.length}</p></div>
-                </div>
-              </div>
+              )}
 
               {/* General Info */}
               <GeneralInfoCard form={form} updateField={updateField} activeProjects={activeProjects} errors={errors} />
@@ -502,10 +545,7 @@ export function CreateReportDialog({
               )}
 
               {form.type === 'WEEKLY' && (
-                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 sm:p-8 text-center">
-                  <h3 className="font-bold text-blue-800 mb-2">Chế độ báo cáo tuần</h3>
-                  <p className="text-blue-600 text-sm">Khối lượng sẽ được tự động tổng hợp từ các báo cáo ngày đã được duyệt trong tuần. Bạn có thể bổ sung nhận xét chung trong phần Chất lượng & Vướng mắc.</p>
-                </div>
+                <WeeklyReportForm form={form} updateField={updateField} errors={errors} />
               )}
 
               {/* Photos & Attachments */}
@@ -532,8 +572,10 @@ export function CreateReportDialog({
                 }}
               />
 
-              {/* Resources & Quality */}
-              <ResourcesAndQuality form={form} updateField={updateField} />
+              {/* Resources & Quality - only for DAILY, WEEKLY has its own sections */}
+              {form.type === 'DAILY' && (
+                <ResourcesAndQuality form={form} updateField={updateField} />
+              )}
 
             </div>
           </div>
@@ -544,6 +586,8 @@ export function CreateReportDialog({
               <div className="text-[12px] font-medium hidden sm:block">
                 {!form.projectId ? (
                   <span className="text-red-500">Vui lòng chọn công trình trước</span>
+                ) : form.type === 'WEEKLY' ? (
+                  <span className="text-slate-500">Báo cáo tuần tổng hợp theo khoảng thời gian đã chọn. Có thể lưu nháp nếu dữ liệu ngày chưa đầy đủ.</span>
                 ) : (
                   <span className="text-slate-500">Có thể lưu nháp trước, bổ sung khối lượng sau. Gửi báo cáo cần ít nhất 1 công việc.</span>
                 )}

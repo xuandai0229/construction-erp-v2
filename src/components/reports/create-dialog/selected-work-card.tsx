@@ -14,12 +14,16 @@ export function SelectedWorkCard({
   removeWorkLine: (index: number) => void;
 }) {
   const design = Number(line.designQuantity || 0);
-  const before = Number(line.approvedCumulative || 0);
-  const today = Number(line.quantityToday || 0);
-  const remaining = Number(line.remainingQuantity || 0);
+  const before = Number(line.approvedCumulative || 0); // This is now totalActiveEnteredQuantity
+  const sameDay = Number(line.todayQuantity || 0);
+  const todayInput = Number(line.quantityToday || 0);
+  const remainingBeforeInput = Number(line.remainingQuantity || 0);
+  const remainingAfterInput = remainingBeforeInput - todayInput;
   
-  const isOver = today > remaining;
-  const isDone = remaining <= 0 && today === 0;
+  const isOver = todayInput > remainingBeforeInput;
+  const isDone = remainingBeforeInput <= 0 && todayInput === 0;
+
+  const currentPercent = design > 0 ? Math.min(100, ((before + todayInput) / design) * 100).toFixed(2) : '0.00';
 
   const inputClass = "w-full h-11 px-3 text-[14px] text-slate-900 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400";
 
@@ -41,8 +45,10 @@ export function SelectedWorkCard({
         </h4>
         <div className="mt-2 flex flex-wrap gap-2 text-[12px]">
           <span className="bg-white border border-slate-200 text-slate-600 px-2 py-0.5 rounded-md font-medium shadow-sm">Thiết kế: <strong className="text-slate-900">{design} {line.unit}</strong></span>
-          <span className="bg-white border border-slate-200 text-slate-600 px-2 py-0.5 rounded-md font-medium shadow-sm">Lũy kế đã duyệt: <strong className="text-slate-900">{before}</strong></span>
-          <span className="bg-blue-50 border border-blue-100 text-blue-700 px-2 py-0.5 rounded-md font-bold shadow-sm">Còn lại: {remaining}</span>
+          <span className="bg-white border border-slate-200 text-slate-600 px-2 py-0.5 rounded-md font-medium shadow-sm">Đã nhập lũy kế: <strong className="text-slate-900">{before}</strong></span>
+          {sameDay > 0 && <span className="bg-orange-50 border border-orange-100 text-orange-700 px-2 py-0.5 rounded-md font-medium shadow-sm">Đã nhập trong ngày: <strong className="font-bold">{sameDay}</strong></span>}
+          <span className="bg-blue-50 border border-blue-100 text-blue-700 px-2 py-0.5 rounded-md font-bold shadow-sm">Còn lại: {remainingBeforeInput}</span>
+          <span className="bg-emerald-50 border border-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md font-bold shadow-sm">Tiến độ sau nhập: {currentPercent}%</span>
         </div>
       </div>
 
@@ -61,7 +67,8 @@ export function SelectedWorkCard({
           </div>
           {isOver && (
             <div className="text-[11px] text-red-600 font-bold flex items-center gap-1 mt-1">
-              <AlertCircle className="w-3.5 h-3.5" /> Khối lượng vượt mức thiết kế còn lại!
+              <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" /> 
+              <span>Khối lượng nhập vượt phần còn lại. Thiết kế: {design} {line.unit}, đã nhập: {before} {line.unit}, còn lại: {remainingBeforeInput} {line.unit}.</span>
             </div>
           )}
           {isDone && !isOver && (

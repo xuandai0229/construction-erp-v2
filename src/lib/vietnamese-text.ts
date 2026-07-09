@@ -38,9 +38,12 @@ export function cleanPrintableVietnameseText(value: unknown): string {
   
   // Remove technical marker
   cleaned = cleaned.replace(/\[SOURCE:SITE_REPORT:[a-zA-Z0-9_-]+\]/g, "");
+  cleaned = cleaned.replace(/\[SOURCE_LINE:[a-zA-Z0-9_-]+\]/g, "");
   cleaned = cleaned.replace(/\bCOMPLETE_REALISTIC_PROJECT[A-Z0-9_]*\b/g, "");
   cleaned = cleaned.replace(/\bQA_REPORT_PROGRESS_SYNC[A-Z0-9_]*\b/g, "");
+  cleaned = cleaned.replace(/\bQA_DAILY_REPORT_FULL_CLEAN_SUBMIT_PRINT_VERIFY_2026_07_04\b/g, "");
   cleaned = cleaned.replace(/\b[A-Z]+_[A-Z_]+_2026\b/g, "");
+  cleaned = cleaned.replace(/\s+([,.;:])/g, "$1");
   
   return cleaned.trim() || "-";
 }

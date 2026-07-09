@@ -59,13 +59,13 @@ export async function createSiteReportWithAudit(
           afterData: JSON.stringify({ status: "SUBMITTED" }),
         },
       });
-
-      await syncSiteReportProgressEntriesInTransaction(tx, {
-        reportId: report.id,
-        mode: "SUBMIT",
-        actor,
-      });
     }
+
+    await syncSiteReportProgressEntriesInTransaction(tx, {
+      reportId: report.id,
+      mode: isSubmitted ? "SUBMIT" : "SAVE",
+      actor,
+    });
 
     return report;
   });

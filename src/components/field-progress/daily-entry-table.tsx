@@ -942,7 +942,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.crew}`}>Mũi</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.unit}`}>Đơn vị</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.designQty}`}>Tổng KL</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.cumulative}`}>Đã TH</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.cumulative}`}>Lũy kế trước ngày</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.dayQty} bg-blue-100 text-blue-800`}>Nhập hôm nay</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.remaining}`}>Sau nhập</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.percent}`}>%</th>

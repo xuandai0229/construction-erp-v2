@@ -57,10 +57,7 @@ export async function getActiveProjects() {
   return projects;
 }
 
-type ReportLineBuildClient = Pick<
-  Prisma.TransactionClient,
-  "fieldProgressItem" | "fieldProgressEntry"
->;
+type ReportLineBuildClient = Prisma.TransactionClient;
 
 type BuiltDailyLine = {
   projectId: string;
@@ -152,63 +149,33 @@ async function buildDailyReportLines(input: {
   }
 
   const reportWorkDate = getVietnamDateString(input.reportDate);
-  const { start, end } = getWorkDateRange(reportWorkDate);
-
-  const [historicalSums, sameDayEntries] = await Promise.all([
-    input.client.fieldProgressEntry.groupBy({
-      by: ["itemId"],
-      where: {
-        projectId: input.projectId,
-        itemId: { in: itemIds },
-        status: "APPROVED",
-        deletedAt: null,
-        entryDate: { lt: start },
-      },
-      _sum: { quantity: true },
-    }),
-    input.client.fieldProgressEntry.findMany({
-      where: {
-        projectId: input.projectId,
-        itemId: { in: itemIds },
-        entryDate: { gte: start, lt: end },
-        deletedAt: null,
-        status: { not: "CANCELLED" },
-      },
-      select: { itemId: true, quantity: true, note: true, status: true },
-    }),
-  ]);
-
-  const approvedBeforeByItemId = new Map(historicalSums.map((sum) => [sum.itemId, Number(sum._sum.quantity || 0)]));
-  const sameDayByItemId = new Map<string, typeof sameDayEntries>();
-  for (const entry of sameDayEntries) {
-    if (!sameDayByItemId.has(entry.itemId)) sameDayByItemId.set(entry.itemId, []);
-    sameDayByItemId.get(entry.itemId)!.push(entry);
-  }
+  
+  const { getBulkWorkQuantityBalance } = await import("@/lib/field-progress/volume-balance");
+  const balances = await getBulkWorkQuantityBalance(input.client, input.projectId, itemIds, {
+    targetDate: reportWorkDate,
+    excludeSourceMarker: input.existingReportId ? getReportProgressSourceMarker(input.existingReportId) : undefined,
+  });
 
   const built: BuiltDailyLine[] = [];
   for (const line of normalized) {
     const item = itemById.get(line.fieldProgressItemId)!;
-    const sameDayForItem = sameDayByItemId.get(line.fieldProgressItemId) || [];
-    const foreignSameDay = sameDayForItem.filter(
-      (entry) => !input.existingReportId || !entry.note?.includes(getReportProgressSourceMarker(input.existingReportId)),
-    );
-    if (foreignSameDay.length > 0) {
-      throw new Error("Công việc này đã có khối lượng từ báo cáo khác trong ngày.");
-    }
+    const balance = balances.get(line.fieldProgressItemId)!;
 
-    const approvedBefore = approvedBeforeByItemId.get(line.fieldProgressItemId) || 0;
-    const designQuantity = Number(item.designQuantity || 0);
+    const designQuantity = balance.plannedQuantity;
+    const cumulativeBefore = balance.totalActiveEnteredQuantity;
+    
     const guard = evaluateVolumeGuard({
       designQuantity,
-      cumulativeBefore: approvedBefore,
+      cumulativeBefore,
       todayQuantity: line.quantityToday,
       status: "SUBMITTED",
       note: line.raw.note ? String(line.raw.note) : undefined,
       issueNote: line.raw.issueNote ? String(line.raw.issueNote) : undefined,
       proposalNote: line.raw.proposalNote ? String(line.raw.proposalNote) : undefined,
     });
+    
     if (!guard.canSubmit) {
-      throw new Error("Khối lượng nhập vượt phần còn lại.");
+      throw new Error(`Khối lượng nhập vượt phần còn lại. Thiết kế: ${designQuantity}, đã nhập: ${cumulativeBefore}, còn lại: ${balance.remainingQuantity}.`);
     }
 
     const progressPercent = designQuantity > 0 ? Math.min(999.99, (guard.projectedCumulative / designQuantity) * 100) : 0;
@@ -222,7 +189,7 @@ async function buildDailyReportLines(input: {
       quantityToday: new Decimal(line.quantityToday),
       unit: item.unit || (line.raw.unit ? String(line.raw.unit) : null),
       designQuantity: new Decimal(designQuantity),
-      quantityBefore: new Decimal(approvedBefore),
+      quantityBefore: new Decimal(cumulativeBefore),
       quantityCumulative: new Decimal(guard.projectedCumulative),
       progressPercent: new Decimal(progressPercent),
       note: line.raw.note ? String(line.raw.note) : null,
@@ -263,54 +230,31 @@ export async function getProjectWorkItems(projectId: string, reportDate?: string
   if (richFieldItems.length === 0) return [];
 
   const itemIds = richFieldItems.map((item) => item.id);
-  const dateRange = reportDate ? getWorkDateRange(reportDate) : null;
-  const [approvedSums, sameDayEntries] = await Promise.all([
-    prisma.fieldProgressEntry.groupBy({
-      by: ["itemId"],
-      where: {
-        projectId,
-        itemId: { in: itemIds },
-        status: "APPROVED",
-        deletedAt: null,
-        ...(dateRange ? { entryDate: { lt: dateRange.start } } : {}),
-      },
-      _sum: { quantity: true },
-    }),
-    dateRange
-      ? prisma.fieldProgressEntry.groupBy({
-          by: ["itemId"],
-          where: {
-            projectId,
-            itemId: { in: itemIds },
-            entryDate: { gte: dateRange.start, lt: dateRange.end },
-            deletedAt: null,
-            status: { in: ["DRAFT", "SUBMITTED", "APPROVED", "REVISION_REQUESTED"] },
-          },
-          _sum: { quantity: true },
-        })
-      : Promise.resolve([]),
-  ]);
-  const approvedByItemId = new Map(approvedSums.map((sum) => [sum.itemId, Number(sum._sum.quantity || 0)]));
-  const sameDayByItemId = new Map(sameDayEntries.map((sum) => [sum.itemId, Number(sum._sum.quantity || 0)]));
+  
+  // Use the new volume balance service
+  const { getBulkWorkQuantityBalance } = await import("@/lib/field-progress/volume-balance");
+  const balances = await getBulkWorkQuantityBalance(prisma, projectId, itemIds, {
+    targetDate: reportDate,
+  });
 
-  return richFieldItems.map((item) => ({
-    id: item.id,
-    fieldProgressItemId: item.id,
-    code: item.code,
-    categoryName: item.categoryName,
-    name: item.workContent || "Chua dat ten",
-    workContent: item.workContent || "Chua dat ten",
-    designQuantity: Number(item.designQuantity || 0),
-    approvedCumulative: approvedByItemId.get(item.id) || 0,
-    todayQuantity: sameDayByItemId.get(item.id) || 0,
-    remainingQuantity: Math.max(
-      0,
-      Number(item.designQuantity || 0) - (approvedByItemId.get(item.id) || 0) - (sameDayByItemId.get(item.id) || 0),
-    ),
-    unit: item.unit || "Lan",
-    status: item.status,
-    source: "FIELD_PROGRESS",
-  }));
+  return richFieldItems.map((item) => {
+    const balance = balances.get(item.id)!;
+    return {
+      id: item.id,
+      fieldProgressItemId: item.id,
+      code: item.code,
+      categoryName: item.categoryName,
+      name: item.workContent || "Chua dat ten",
+      workContent: item.workContent || "Chua dat ten",
+      designQuantity: balance.plannedQuantity,
+      approvedCumulative: balance.totalActiveEnteredQuantity, // Renaming field logically to total active
+      todayQuantity: balance.sameDateEnteredQuantity,
+      remainingQuantity: balance.remainingQuantity,
+      unit: item.unit || "Lan",
+      status: item.status,
+      source: "FIELD_PROGRESS",
+    };
+  });
 
   // Try to fetch FieldProgressItem first
   const fieldItems = await prisma.fieldProgressItem.findMany({
@@ -391,6 +335,8 @@ export async function createSiteReport(data: Record<string, unknown>, isDraft: b
       weekEndDate: data.weekEndDate ? vietnamEndOfDayUtc(String(data.weekEndDate)) : undefined,
       weatherCondition: (data.weatherCondition as "SUNNY" | "CLOUDY" | "OVERCAST" | "LIGHT_RAIN" | "HEAVY_RAIN" | "WINDY" | "STORM" | "OTHER") || undefined,
       weatherTemperature: data.weatherTemperature ? Number(data.weatherTemperature) : undefined,
+      gpsLat: data.gpsLat ? Number(data.gpsLat) : undefined,
+      gpsLng: data.gpsLng ? Number(data.gpsLng) : undefined,
       summary: data.summary ? String(data.summary) : undefined,
       materials: data.materials ? String(data.materials) : undefined,
       labor: data.labor ? String(data.labor) : undefined,
@@ -1092,6 +1038,9 @@ export async function createWeeklyReportFromApprovedDailyReports(input: {
   weekStartDate: string;
   weekEndDate: string;
   summary?: string;
+  materials?: string;
+  labor?: string;
+  quality?: string;
   issues?: string;
   recommendations?: string;
   weatherCondition?: string;
@@ -1116,7 +1065,7 @@ export async function createWeeklyReportFromApprovedDailyReports(input: {
   // Re-run preview to get exact lines
   const preview = await getWeeklyReportSummary(input.projectId, start, end);
   
-  if (preview.stats.approvedReports === 0) {
+  if (!input.isDraft && preview.stats.approvedReports === 0) {
     throw new Error("Không có báo cáo ngày nào được duyệt trong tuần này để tổng hợp.");
   }
 
@@ -1150,6 +1099,9 @@ export async function createWeeklyReportFromApprovedDailyReports(input: {
         reporterName: session.name,
         submittedAt: status === "SUBMITTED" ? new Date() : null,
         summary: input.summary,
+        materials: input.materials,
+        labor: input.labor,
+        quality: input.quality,
         issues: input.issues,
         recommendations: input.recommendations,
         weatherCondition: (input.weatherCondition as "SUNNY" | "CLOUDY" | "OVERCAST" | "LIGHT_RAIN" | "HEAVY_RAIN" | "WINDY" | "STORM" | "OTHER") || "SUNNY",
@@ -1316,6 +1268,15 @@ export async function updateSiteReport(reportId: string, data: Record<string, un
         }),
       }
     });
+
+    if (report.type === "DAILY") {
+      const { syncSiteReportProgressEntriesInTransaction } = await import("@/lib/reports/report-progress-sync");
+      await syncSiteReportProgressEntriesInTransaction(tx, {
+        reportId: result.id,
+        mode: result.status === "SUBMITTED" ? "SUBMIT" : "SAVE",
+        actor: { id: policyUser.id, role: policyUser.role, name: session.name }
+      });
+    }
 
     return result;
   });

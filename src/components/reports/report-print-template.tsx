@@ -74,6 +74,12 @@ export function ReportPrintTemplate({ report }: ReportPrintTemplateProps) {
     issueNote: cleanPrintableVietnameseText(line.issueNote),
     proposalNote: cleanPrintableVietnameseText(line.proposalNote)
   }));
+  const printableSummary = cleanPrintableVietnameseText(report.summary);
+  const printableLabor = cleanPrintableVietnameseText(report.labor);
+  const printableMaterials = cleanPrintableVietnameseText(report.materials);
+  const printableQuality = cleanPrintableVietnameseText(report.quality);
+  const printableIssues = cleanPrintableVietnameseText(report.issues);
+  const printableRecommendations = cleanPrintableVietnameseText(report.recommendations);
 
   const hasPhotos = report.photos && report.photos.length > 0;
   const hasFiles = report.attachments && report.attachments.length > 0;
@@ -196,22 +202,29 @@ export function ReportPrintTemplate({ report }: ReportPrintTemplateProps) {
                 </td>
               </tr>
             )}
+            {!isWeekly && report.gpsLocation && (
+              <tr>
+                <td className="border-none py-1 font-bold align-top">6.</td>
+                <td className="border-none py-1 font-bold align-top">Vị trí GPS</td>
+                <td className="border-none py-1 align-top">: {normalizeVietnameseText(report.gpsLocation)}</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
 
       {isWeekly && report.summary && (
         <div className="mb-4 text-[14px]">
-          <p className="font-bold mb-1">{getNextSection()}. Đánh giá chung</p>
+          <p className="font-bold mb-1">{getNextSection()}. Tình hình thi công trong tuần</p>
           <div className="pl-4 whitespace-pre-line text-left">
-            {normalizeVietnameseText(report.summary)}
+            {printableSummary}
           </div>
         </div>
       )}
 
       {/* Nội dung công việc thực hiện */}
       <div className="mb-4">
-        <p className="font-bold mb-2">{getNextSection()}. Nội dung công việc thực hiện</p>
+        <p className="font-bold mb-2">{getNextSection()}. {isWeekly ? "Tổng hợp khối lượng thực hiện trong tuần" : "Nội dung công việc thực hiện"}</p>
         
         {lines.length > 0 ? (
           <table className="w-full border border-black mb-2 text-[13px] ml-4" style={{ width: 'calc(100% - 16px)' }}>
@@ -220,7 +233,7 @@ export function ReportPrintTemplate({ report }: ReportPrintTemplateProps) {
                 <th className="border border-black py-2 px-2 w-[40px]">STT</th>
                 <th className="border border-black py-2 px-2 text-left">Hạng mục / Công việc</th>
                 <th className="border border-black py-2 px-2 w-[60px]">Đơn vị</th>
-                <th className="border border-black py-2 px-2 w-[80px]">Khối lượng</th>
+                <th className="border border-black py-2 px-2 w-[80px]">{isWeekly ? "KL tuần" : "Khối lượng"}</th>
                 <th className="border border-black py-2 px-2 w-[200px] text-left">Ghi chú</th>
               </tr>
             </thead>
@@ -250,27 +263,27 @@ export function ReportPrintTemplate({ report }: ReportPrintTemplateProps) {
             </tbody>
           </table>
         ) : (
-          <p className="italic pl-4">Không có khối lượng công việc được ghi nhận.</p>
+          <p className="italic pl-4">{isWeekly ? "Chưa có dữ liệu khối lượng từ báo cáo ngày trong tuần." : "Không có khối lượng công việc được ghi nhận."}</p>
         )}
       </div>
 
       {/* Nguồn lực sử dụng */}
       {(!isWeekly || hasMaterials || hasLabor) && (
         <div className="mb-4 page-break-inside-avoid">
-          <p className="font-bold mb-1">{getNextSection()}. Nguồn lực sử dụng</p>
+          <p className="font-bold mb-1">{getNextSection()}. Nguồn lực sử dụng{isWeekly ? " trong tuần" : ""}</p>
           <ul className="list-disc pl-8">
-            <li><span className="font-bold">Nhân công / Máy móc:</span> {report.labor ? normalizeVietnameseText(report.labor) : "Không ghi nhận"}</li>
-            <li><span className="font-bold">Vật tư sử dụng:</span> {report.materials ? normalizeVietnameseText(report.materials) : "Không ghi nhận"}</li>
+            <li><span className="font-bold">Nhân công / Máy móc:</span> {report.labor ? printableLabor : "Không ghi nhận"}</li>
+            <li><span className="font-bold">Vật tư sử dụng:</span> {report.materials ? printableMaterials : "Không ghi nhận"}</li>
           </ul>
         </div>
       )}
 
       {/* Chất lượng, An toàn, Vấn đề */}
       <div className="mb-4 page-break-inside-avoid">
-        <p className="font-bold mb-1">{getNextSection()}. Chất lượng / An toàn / Vấn đề phát sinh</p>
+        <p className="font-bold mb-1">{getNextSection()}. Chất lượng / An toàn / Vấn đề phát sinh{isWeekly ? " trong tuần" : ""}</p>
         <ul className="list-disc pl-8">
-          <li><span className="font-bold">Chất lượng / An toàn:</span> {report.quality ? normalizeVietnameseText(report.quality) : "Đảm bảo yêu cầu"}</li>
-          <li><span className="font-bold">Vấn đề phát sinh:</span> {report.issues ? normalizeVietnameseText(report.issues) : "Không có sự cố nghiêm trọng."}</li>
+          <li><span className="font-bold">Chất lượng / An toàn:</span> {report.quality ? printableQuality : "Đảm bảo yêu cầu"}</li>
+          <li><span className="font-bold">Vấn đề phát sinh:</span> {report.issues ? printableIssues : "Không có sự cố nghiêm trọng."}</li>
         </ul>
       </div>
 
@@ -278,7 +291,7 @@ export function ReportPrintTemplate({ report }: ReportPrintTemplateProps) {
       <div className="mb-4 page-break-inside-avoid">
         <p className="font-bold mb-1">{getNextSection()}. Kiến nghị / Đề xuất</p>
         <div className="pl-4 whitespace-pre-line text-left">
-          {report.recommendations ? normalizeVietnameseText(report.recommendations) : "Không có"}
+          {report.recommendations ? printableRecommendations : "Không có"}
         </div>
       </div>
 
