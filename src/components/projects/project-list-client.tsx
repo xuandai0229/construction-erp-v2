@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Eye, Pencil, ChevronRight } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getProjectStatusMeta } from "@/lib/project-status";
+import { ContentCard, EnterpriseTable } from "@/components/ui/enterprise";
 
 export type ProjectRow = {
   id: string;
@@ -44,7 +45,7 @@ export function ProjectsListClient({
   return (
     <>
       {/* Desktop View (lg and up) */}
-      <div className="hidden lg:block overflow-x-auto">
+      <EnterpriseTable className="hidden lg:block border-x-0 sm:border-x border-t-0 sm:border-t rounded-none sm:rounded-2xl">
         <table className="w-full table-fixed text-left text-[14px] text-slate-600">
           <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 uppercase text-[11px] font-semibold tracking-wider">
             <tr>
@@ -53,8 +54,8 @@ export function ProjectsListClient({
               <th className="hidden 2xl:table-cell w-[190px] px-5 py-3.5 whitespace-nowrap">Chủ đầu tư</th>
               <th className="hidden xl:table-cell w-[230px] px-5 py-3.5 whitespace-nowrap">Địa điểm</th>
               <th className="w-[150px] px-5 py-3.5 whitespace-nowrap">Trạng thái</th>
-              <th className="w-[170px] px-5 py-3.5 whitespace-nowrap">Thời gian</th>
-              <th className="w-[120px] px-5 py-3.5 text-right whitespace-nowrap">Thao tác</th>
+              <th className="w-[210px] px-5 py-3.5 whitespace-nowrap">Thời gian</th>
+              <th className="w-[140px] px-5 py-3.5 text-right whitespace-nowrap">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 bg-white">
@@ -116,18 +117,18 @@ export function ProjectsListClient({
             ))}
           </tbody>
         </table>
-      </div>
+      </EnterpriseTable>
 
       {/* Mobile/Tablet View (< lg) */}
       <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50/50">
         {projects.map((project) => (
-          <div 
+          <ContentCard 
             key={project.id} 
             role="button"
             tabIndex={0}
             onClick={() => handleRowClick(project.id)}
             onKeyDown={(e) => handleKeyDown(e, project.id)}
-            className="group cursor-pointer p-4 bg-white border border-slate-200/80 rounded-2xl shadow-sm flex flex-col hover:shadow-md transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30"
+            className="group cursor-pointer p-4 flex flex-col hover:shadow-md transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30"
           >
             <div className="mb-3">
               <div className="flex items-start justify-between gap-2 mb-2">
@@ -166,7 +167,7 @@ export function ProjectsListClient({
                 </Link>
               )}
             </div>
-          </div>
+          </ContentCard>
         ))}
       </div>
     </>

@@ -22,6 +22,11 @@ const formatFileSize = (bytes: number | null | undefined | string | bigint) => {
   return `${mb.toFixed(2)} MB`;
 };
 
+const toNumber = (value: unknown) => {
+  const numberValue = Number(value ?? 0);
+  return Number.isFinite(numberValue) ? numberValue : 0;
+};
+
 export const metadata = {
   title: "Báo cáo hiện trường | ERP Công trình",
   description: "Quản lý, theo dõi và tổng hợp báo cáo công việc hằng ngày tại công trường",
@@ -103,9 +108,18 @@ export default async function ReportsPage({ searchParams }: { searchParams: { [k
       id: l.id as string,
       wbsItemId: (l.wbsItemId as string) || undefined,
       fieldProgressItemId: (l.fieldProgressItemId as string) || undefined,
+      categoryName: (l.area as string) || undefined,
       workContent: (l.workName as string) || (l.workContent as string),
       unit: (l.unit as string) || undefined,
-      quantityToday: l.quantityToday !== undefined && l.quantityToday !== null ? Number(l.quantityToday) : undefined,
+      designQuantity: toNumber(l.designQuantity),
+      quantityBefore: toNumber(l.quantityBefore),
+      quantityToday: l.quantityToday !== undefined && l.quantityToday !== null ? toNumber(l.quantityToday) : undefined,
+      quantityCumulative: toNumber(l.quantityCumulative),
+      remainingQuantity: Math.max(0, toNumber(l.designQuantity) - toNumber(l.quantityCumulative)),
+      progressPercent: toNumber(l.progressPercent),
+      quantityBeforeWeek: toNumber(l.quantityBefore),
+      quantityInWeek: toNumber(l.quantityToday),
+      quantityToDate: toNumber(l.quantityCumulative),
       note: (l.note as string) || undefined,
       proposalNote: (l.proposalNote as string) || undefined,
       issueNote: (l.issueNote as string) || undefined,

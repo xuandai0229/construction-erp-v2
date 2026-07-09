@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { Plus, Search, CheckCircle2, AlertCircle, BarChart3, AlertTriangle, CreditCard, Pencil, Trash2, Eye, FileText, Send, CheckSquare, XCircle, Undo2, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { EnterpriseTable, FilterBar, KpiCard, PageHeader } from "@/components/ui/enterprise";
 import { useToast } from "@/components/ui/toast-context";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { PaymentRequestDto, AccountingContractOptionDto } from "../actions";
@@ -224,17 +225,9 @@ export function AccountingWorkspace({ paymentRequests, projects, suppliers, cont
     { label: "Công trình có hồ sơ", value: stats.uniqueProjects.toString(), icon: BarChart3, tone: "emerald" as const },
   ];
 
-  const toneMap = {
-    blue: "bg-blue-50 text-blue-700 border-blue-100",
-    emerald: "bg-emerald-50 text-emerald-700 border-emerald-100",
-    amber: "bg-amber-50 text-amber-700 border-amber-100",
-    rose: "bg-rose-50 text-rose-700 border-rose-100",
-    indigo: "bg-indigo-50 text-indigo-700 border-indigo-100",
-  };
-
   return (
     <div className="app-page mx-auto max-w-[1400px] space-y-5">
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-950/[0.03] sm:p-5">
+      <PageHeader>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Kế toán & thanh toán</h1>
@@ -249,31 +242,28 @@ export function AccountingWorkspace({ paymentRequests, projects, suppliers, cont
             </Button>
           )}
         </div>
-      </section>
+      </PageHeader>
 
       {paymentRequests.length > 0 && (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {summaryCards.map((card) => {
             const Icon = card.icon;
             return (
-              <div key={card.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-950/[0.03]">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="text-sm font-semibold text-slate-600">{card.label}</div>
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-xl border ${toneMap[card.tone]}`}>
-                    <Icon className="h-5 w-5" />
-                  </div>
-                </div>
-                <div className="mt-3 flex items-baseline gap-2">
-                  <span className="text-xl font-bold tracking-tight text-slate-950">{card.value}</span>
-                </div>
-              </div>
+              <KpiCard
+                key={card.label}
+                label={card.label}
+                value={card.value}
+                tone={card.tone}
+                icon={<Icon className="h-5 w-5" />}
+                className="[&>div:nth-child(2)]:text-xl"
+              />
             );
           })}
         </div>
       )}
 
       {paymentRequests.length > 0 && (
-        <div className="grid gap-3 lg:grid-cols-[1fr_auto_auto_auto] items-center">
+        <FilterBar className="grid gap-3 lg:grid-cols-[1fr_auto_auto_auto] items-center">
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
@@ -308,13 +298,12 @@ export function AccountingWorkspace({ paymentRequests, projects, suppliers, cont
               ))}
             </select>
           </div>
-        </div>
+        </FilterBar>
       )}
 
       {paymentRequests.length > 0 && (
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-950/[0.03]">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+        <EnterpriseTable>
+            <table className="w-full min-w-[1000px] text-left text-sm">
               <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-4 py-3">Hồ sơ</th>
@@ -342,7 +331,7 @@ export function AccountingWorkspace({ paymentRequests, projects, suppliers, cont
                       <td className="px-4 py-3">
                         <span className="text-slate-700">{TYPE_MAP[req.type]}</span>
                         {req.contract && (
-                          <div className="text-xs text-slate-500 mt-0.5 truncate max-w-[150px]" title={`Hợp đồng: ${req.contract.contractNo}`}>
+                          <div className="text-xs text-slate-500 mt-0.5 whitespace-normal" title={`Hợp đồng: ${req.contract.contractNo}`}>
                             HĐ: {req.contract.contractNo}
                           </div>
                         )}
@@ -364,7 +353,7 @@ export function AccountingWorkspace({ paymentRequests, projects, suppliers, cont
                         </div>
                       </td>
 
-                      <td className="py-3 pr-4 pl-3 text-right sticky right-0 bg-white group-hover:bg-slate-50/70 border-b border-slate-100 transition-colors">
+                      <td className="py-3 pr-4 pl-3 text-right md:sticky md:right-0 bg-white group-hover:bg-slate-50/70 border-b border-slate-100 transition-colors">
                         <div className="flex items-center justify-end gap-0.5">
                           <Button
                             type="button"
@@ -414,8 +403,7 @@ export function AccountingWorkspace({ paymentRequests, projects, suppliers, cont
                 )}
               </tbody>
             </table>
-          </div>
-        </div>
+        </EnterpriseTable>
       )}
 
       {paymentRequests.length === 0 && (

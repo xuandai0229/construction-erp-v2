@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import type { MaterialMovementDto, ProjectStockDto } from "@/app/(dashboard)/materials/actions";
 import { MovementTypeBadge, StockStatusBadge } from "./materials-badges";
 import { formatDateTime, formatQuantity, getMovementSign } from "./materials-formatters";
+import { ContentCard } from "@/components/ui/enterprise";
 
 interface MaterialsOverviewProps {
   stocks: ProjectStockDto[];
@@ -83,7 +84,7 @@ export function MaterialsOverview({
                     : "bg-blue-50 text-blue-700 border-blue-100";
 
           return (
-            <div key={card.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-950/[0.03]">
+            <ContentCard key={card.label} className="p-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="text-sm font-semibold text-slate-600">{card.label}</div>
                 <div className={`flex h-10 w-10 items-center justify-center rounded-xl border ${toneClass}`}>
@@ -94,13 +95,13 @@ export function MaterialsOverview({
                 <span className="text-2xl font-bold tracking-tight text-slate-950">{card.value}</span>
                 <span className="text-xs font-semibold text-slate-500">{card.unit}</span>
               </div>
-            </div>
+            </ContentCard>
           );
         })}
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
-        <section className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-950/[0.03]">
+        <ContentCard className="flex flex-col">
           <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
             <div>
               <h2 className="text-base font-bold text-slate-950">Cảnh báo tồn kho</h2>
@@ -131,9 +132,9 @@ export function MaterialsOverview({
               </div>
             )}
           </div>
-        </section>
+        </ContentCard>
 
-        <section className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-950/[0.03]">
+        <ContentCard className="flex flex-col">
           <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3">
             <div>
               <h2 className="text-base font-bold text-slate-950">Giao dịch gần đây</h2>
@@ -164,11 +165,11 @@ export function MaterialsOverview({
               </div>
             )}
           </div>
-        </section>
+        </ContentCard>
       </div>
 
       {stocks.length === 0 && (
-        <section className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
+        <section className="rounded-[14px] lg:rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center">
           <Warehouse className="mx-auto h-9 w-9 text-slate-300" />
           <h2 className="mt-2 text-sm font-bold text-slate-900">Chưa có vật tư</h2>
           <div className="mt-4 flex justify-center">

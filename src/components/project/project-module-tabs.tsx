@@ -20,7 +20,7 @@ export function ProjectModuleTabs({ projectId }: { projectId: string }) {
       href: `/projects/${projectId}/field-progress/daily`,
       exact: false,
       icon: Calendar,
-      labelDesktop: "Nhập khối lượng theo ngày",
+      labelDesktop: "Theo dõi khối lượng theo ngày",
       labelMobile: "Theo ngày",
     },
     {

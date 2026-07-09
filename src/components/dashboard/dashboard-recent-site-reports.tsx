@@ -4,6 +4,7 @@ import type { DashboardSiteReportItem } from "@/lib/dashboard/dashboard-queries"
 import { formatDateVNShort } from "@/lib/dashboard/dashboard-formatters";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { DashboardEmptyState } from "./dashboard-empty-state";
+import { ContentCard } from "@/components/ui/enterprise";
 
 function reportVariant(status: string, hasIssue: boolean) {
   if (hasIssue) return "danger" as const;
@@ -14,7 +15,7 @@ function reportVariant(status: string, hasIssue: boolean) {
 
 export function DashboardRecentSiteReports({ reports }: { reports: DashboardSiteReportItem[] }) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-950/[0.03]">
+    <ContentCard className="flex flex-col">
       <div className="flex flex-col gap-2 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
         <div>
           <h2 className="text-base font-bold text-slate-950">Báo cáo hiện trường gần đây</h2>
@@ -50,6 +51,6 @@ export function DashboardRecentSiteReports({ reports }: { reports: DashboardSite
           </div>
         )}
       </div>
-    </section>
+    </ContentCard>
   );
 }

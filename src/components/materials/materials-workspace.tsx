@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ArrowDownRight, ClipboardList, Factory, Package } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/enterprise";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MaterialsOverview } from "./materials-overview";
 import { MaterialsStockTable } from "./materials-stock-table";
@@ -175,7 +176,7 @@ export function MaterialsWorkspace({
 
   return (
     <div className="app-page mx-auto max-w-[1400px] space-y-5">
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-950/[0.03] sm:p-5">
+      <PageHeader>
         <div className="grid gap-4 xl:grid-cols-[1fr_auto] xl:items-end">
           <div className="space-y-3">
             <div>
@@ -209,7 +210,7 @@ export function MaterialsWorkspace({
 
 
         </div>
-      </section>
+      </PageHeader>
 
       <nav className="overflow-x-auto border-b border-slate-200" aria-label="Tabs quản lý vật tư">
         <div className="flex min-w-max gap-1">

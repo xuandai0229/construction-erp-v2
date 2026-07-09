@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import type { SystemSettingsInput } from "@/lib/settings/settings-validation";
 import { updateSystemSettings } from "@/app/(dashboard)/settings/actions";
 import { DEFAULT_SYSTEM_SETTINGS } from "@/lib/settings/settings-validation";
+import { ContentCard } from "@/components/ui/enterprise";
 
 type SettingsSectionId = "organization" | "system" | "security" | "workflow" | "documents" | "notifications" | "data";
 
@@ -173,7 +174,7 @@ export function SettingsWorkspace({ initialSettings }: { initialSettings: System
 
   return (
     <div className="app-page mx-auto max-w-[1440px] space-y-5">
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-950/[0.03]">
+      <ContentCard className="overflow-hidden p-0 sm:p-0">
         <div className="grid gap-5 p-5 lg:grid-cols-[1fr_auto] lg:items-start lg:p-6">
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
@@ -241,7 +242,7 @@ export function SettingsWorkspace({ initialSettings }: { initialSettings: System
             tone="success"
           />
         </div>
-      </section>
+      </ContentCard>
 
       <div className="grid gap-5 lg:grid-cols-[280px_minmax(0,1fr)]">
         <aside className="space-y-3 lg:sticky lg:top-20 lg:self-start">
@@ -270,7 +271,15 @@ export function SettingsWorkspace({ initialSettings }: { initialSettings: System
                 <button
                   key={section.id}
                   type="button"
-                  onClick={() => setActiveSection(section.id)}
+                  onClick={() => {
+                    setActiveSection(section.id);
+                    if (window.innerWidth < 1024) {
+                      setTimeout(() => {
+                        const el = document.getElementById("settings-form-container");
+                        if (el) el.scrollIntoView({ behavior: "smooth" });
+                      }, 10);
+                    }
+                  }}
                   className={cn(
                     "flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left transition",
                     isActive
@@ -309,7 +318,7 @@ export function SettingsWorkspace({ initialSettings }: { initialSettings: System
           </div>
         </aside>
 
-        <main className="min-w-0 space-y-5">
+        <main id="settings-form-container" className="min-w-0 space-y-5 scroll-mt-24">
           <SectionShell meta={sectionMeta.find((section) => section.id === activeSection) ?? sectionMeta[0]}>
             {activeSection === "organization" && (
               <div className="grid gap-4 md:grid-cols-2">

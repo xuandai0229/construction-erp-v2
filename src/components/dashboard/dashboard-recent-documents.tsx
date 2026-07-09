@@ -3,10 +3,11 @@ import { ArrowRight, FileText } from "lucide-react";
 import type { DashboardDocumentItem } from "@/lib/dashboard/dashboard-queries";
 import { formatDateVNShort } from "@/lib/dashboard/dashboard-formatters";
 import { DashboardEmptyState } from "./dashboard-empty-state";
+import { ContentCard } from "@/components/ui/enterprise";
 
 export function DashboardRecentDocuments({ documents }: { documents: DashboardDocumentItem[] }) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-950/[0.03]">
+    <ContentCard className="flex flex-col">
       <div className="flex items-center justify-between border-b border-slate-100 p-4 sm:p-5">
         <h2 className="text-base font-bold text-slate-950">Tài liệu mới</h2>
         <Link href="/documents" className="inline-flex items-center gap-1 text-sm font-semibold text-blue-700 hover:text-blue-800">
@@ -33,6 +34,6 @@ export function DashboardRecentDocuments({ documents }: { documents: DashboardDo
           </div>
         )}
       </div>
-    </section>
+    </ContentCard>
   );
 }

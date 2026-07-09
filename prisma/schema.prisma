@@ -453,7 +453,7 @@ model Document {
 
 model SiteReport {
   id                 String            @id @default(cuid())
-  reportNo           String            @default(dbgenerated("gen_random_uuid()::text"))
+  reportNo           String            @unique @default(dbgenerated("gen_random_uuid()::text"))
   type               SiteReportType    @default(DAILY)
   projectId          String
   title              String?
@@ -503,7 +503,6 @@ model SiteReport {
   @@index([projectId])
   @@index([createdById])
   @@index([reportDate])
-  @@index([reportNo])
 }
 
 model SiteReportPhoto {
@@ -922,6 +921,13 @@ model FieldProgressEntry {
   updatedAt      DateTime                 @updatedAt
   deletedAt      DateTime?
 
+  sourceType       String?
+  sourceId         String?
+  sourceLineId     String?
+  sourceReportId   String?
+  sourceMeta       Json?
+  adjustmentReason String?
+
   project          Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
   template         FieldProgressTemplate  @relation(fields: [templateId], references: [id], onDelete: Cascade)
   item             FieldProgressItem      @relation(fields: [itemId], references: [id], onDelete: Cascade)
@@ -933,6 +939,8 @@ model FieldProgressEntry {
   @@index([templateId])
   @@index([itemId])
   @@index([entryDate])
+  @@index([sourceType, sourceId])
+  @@index([sourceReportId])
 }
 
 model FieldMaterialRequest {
@@ -1011,6 +1019,7 @@ model SystemSetting {
   enforceNamingConvention Boolean @default(true)
   autoVersioning          Boolean @default(true)
   allowedExtensions       String  @default("pdf, docx, xlsx, dwg, jpg, png, heic")
+  maxUploadSizeMb         Int     @default(50)
   documentRetentionYears  Int     @default(10)
 
   // Notifications

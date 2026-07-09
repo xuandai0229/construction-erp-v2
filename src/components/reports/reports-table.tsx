@@ -8,6 +8,7 @@ import { PhotoPreviewStack } from "./photo-preview-stack";
 import { useMemo, Fragment } from "react";
 import { getVietnamIsoWeekInfo } from "@/lib/reports/report-timezone";
 import { formatDateVN, formatTimeVN, formatReportCode } from "@/lib/utils";
+import { ContentCard } from "@/components/ui/enterprise";
 
 interface ReportsTableProps {
   reports: FieldReport[];
@@ -94,7 +95,7 @@ export function ReportsTable({
   }, [reports]);
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+    <ContentCard className="overflow-hidden flex flex-col p-0 sm:p-0">
       {/* Table - Using table-auto and allowing it to fit container without hard min-widths */}
       <div className="overflow-x-auto min-h-[300px]">
         <table className="w-full text-sm table-auto">
@@ -358,6 +359,6 @@ export function ReportsTable({
           </button>
         </div>
       </div>
-    </div>
+    </ContentCard>
   );
 }

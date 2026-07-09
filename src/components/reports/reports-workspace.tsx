@@ -631,7 +631,7 @@ export function ReportsWorkspace({
       </div>
 
       {/* Toolbar */}
-      <div className={`${isMobileFilterOpen ? 'block' : 'hidden'} sm:block sticky top-0 z-30 -mx-1 px-1 py-2 bg-slate-50/95 backdrop-blur supports-[backdrop-filter]:bg-slate-50/80`}>
+      <div className={`${isMobileFilterOpen ? 'block' : 'hidden'} sm:block sticky top-16 z-30 -mx-1 px-1 py-2 bg-slate-50/95 backdrop-blur supports-[backdrop-filter]:bg-slate-50/80`}>
         <ReportsToolbar
           search={search}
           onSearchChange={handleSearchChange}
@@ -697,6 +697,7 @@ export function ReportsWorkspace({
         currentUser={currentUser}
         mode={dialogMode}
         initialReport={editReportData}
+        currentProjectId={projectFilter || globalContext?.selectedProjectId || undefined}
       />
 
       {/* Report Detail Drawer */}

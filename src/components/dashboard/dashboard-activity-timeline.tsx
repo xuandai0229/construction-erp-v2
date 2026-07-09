@@ -4,6 +4,7 @@ import type { DashboardActivityItem } from "@/lib/dashboard/dashboard-queries";
 import { formatDateTimeVN } from "@/lib/dashboard/dashboard-formatters";
 import { DashboardEmptyState } from "./dashboard-empty-state";
 import { cn } from "@/lib/utils";
+import { ContentCard } from "@/components/ui/enterprise";
 
 const toneClasses: Record<DashboardActivityItem["tone"], string> = {
   blue: "bg-blue-50 text-blue-700",
@@ -23,7 +24,7 @@ function TimelineIcon({ tone }: { tone: DashboardActivityItem["tone"] }) {
 
 export function DashboardActivityTimeline({ activities }: { activities: DashboardActivityItem[] }) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-950/[0.03]">
+    <ContentCard className="flex flex-col">
       <div className="flex items-center justify-between border-b border-slate-100 p-4 sm:p-5">
         <h2 className="text-base font-bold text-slate-950">Hoạt động gần đây</h2>
         <Clock className="h-4 w-4 text-slate-500" />
@@ -49,6 +50,6 @@ export function DashboardActivityTimeline({ activities }: { activities: Dashboar
           </div>
         )}
       </div>
-    </section>
+    </ContentCard>
   );
 }

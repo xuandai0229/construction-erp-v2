@@ -9,6 +9,8 @@ import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getAccessibleProjectIds } from "@/lib/rbac";
 import { getGlobalProjectContext } from "@/lib/project-context";
+import { PageHeading, ContentCard, FilterBar } from "@/components/ui/enterprise";
+import { Button } from "@/components/ui/button";
 
 export default async function DocumentsOverviewPage({
   searchParams
@@ -61,14 +63,12 @@ export default async function DocumentsOverviewPage({
 
   return (
     <div className="app-page space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="page-heading">Quản lý tài liệu</h1>
-          <p className="page-description">Truy cập hồ sơ theo từng công trình và thư mục nghiệp vụ.</p>
-        </div>
-      </div>
+      <PageHeading
+        title="Quản lý tài liệu"
+        description="Truy cập hồ sơ theo từng công trình và thư mục nghiệp vụ."
+      />
 
-      <div className="rounded-[20px] border border-slate-200/60 bg-white shadow-sm overflow-hidden">
+      <ContentCard className="overflow-hidden">
         <div className="border-b border-slate-100 bg-white p-4 sm:p-5">
           <form className="flex max-w-2xl flex-col gap-3 sm:flex-row" method="GET" action="/documents">
             <div className="relative flex-1">
@@ -78,16 +78,18 @@ export default async function DocumentsOverviewPage({
                 name="q"
                 defaultValue={q}
                 placeholder="Tìm công trình theo tên hoặc mã..." 
-                className="w-full h-11 pl-10 pr-4 py-2 text-[15px] text-slate-900 bg-slate-50/50 font-medium placeholder:text-slate-400 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
+                className="form-control h-11 pl-10 pr-4 rounded-xl"
               />
             </div>
             <div className="flex items-center gap-2">
-              <button type="submit" className="inline-flex items-center justify-center rounded-xl text-sm font-semibold transition-all bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-600/20 h-11 px-6">
+              <Button type="submit" variant="primary" className="h-11 px-6">
                 Lọc dữ liệu
-              </button>
+              </Button>
               {q && (
-                <Link href="/documents" className="inline-flex items-center justify-center rounded-xl text-sm font-medium transition-colors bg-slate-100 hover:bg-slate-200 text-slate-700 h-11 px-4">
-                  Xóa
+                <Link href="/documents">
+                  <Button variant="secondary" className="h-11">
+                    Xóa
+                  </Button>
                 </Link>
               )}
             </div>
@@ -198,7 +200,7 @@ export default async function DocumentsOverviewPage({
             />
           </div>
         )}
-      </div>
+      </ContentCard>
     </div>
   );
 }

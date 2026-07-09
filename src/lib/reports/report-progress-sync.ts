@@ -126,7 +126,8 @@ async function syncCancelledOrRejectedEntries(
     where: {
       projectId: report.projectId,
       deletedAt: null,
-      note: { contains: getReportProgressSourceMarker(report.id) },
+      sourceType: "SITE_REPORT",
+      sourceReportId: report.id,
     },
   });
 
@@ -138,6 +139,7 @@ async function syncCancelledOrRejectedEntries(
         rejectedReason: targetStatus === "REVISION_REQUESTED" ? report.rejectedReason : null,
         approvedAt: null,
         approvedById: null,
+        deletedAt: targetStatus === "CANCELLED" ? new Date() : null,
       },
     });
   }
@@ -186,12 +188,9 @@ export async function syncSiteReportProgressEntriesInTransaction(
     };
   }
 
-  if (input.mode === "CANCEL") {
+  if (input.mode === "CANCEL" || input.mode === "REJECT") {
+    // Reject and Cancel both remove quantities from balance
     return syncCancelledOrRejectedEntries(tx, input, "CANCELLED", report);
-  }
-
-  if (input.mode === "REJECT") {
-    return syncCancelledOrRejectedEntries(tx, input, "REVISION_REQUESTED", report);
   }
 
   const progressLines = report.lines.filter((line) => Number(line.quantityToday || 0) > 0);
@@ -236,14 +235,16 @@ export async function syncSiteReportProgressEntriesInTransaction(
 
   const { getBulkWorkQuantityBalance } = await import("@/lib/field-progress/volume-balance");
   const balances = await getBulkWorkQuantityBalance(tx, report.projectId, itemIds, {
-    excludeSourceMarker: getReportProgressSourceMarker(report.id),
+    excludeSourceReportId: report.id,
+    targetDate: reportWorkDate,
   });
 
   const existingEntries = await tx.fieldProgressEntry.findMany({
     where: {
       projectId: report.projectId,
       itemId: { in: itemIds },
-      note: { contains: getReportProgressSourceMarker(report.id) },
+      sourceType: "SITE_REPORT",
+      sourceReportId: report.id,
       deletedAt: null,
       status: { not: "CANCELLED" },
     },
@@ -259,14 +260,15 @@ export async function syncSiteReportProgressEntriesInTransaction(
       projectId: report.projectId,
       deletedAt: null,
       status: { not: "CANCELLED" },
-      note: { contains: getReportProgressSourceMarker(report.id) },
+      sourceType: "SITE_REPORT",
+      sourceReportId: report.id,
       itemId: { notIn: itemIds },
     },
   });
 
   let created = 0;
   let updated = 0;
-  let skipped = 0;
+  const skipped = 0;
   let blocked = 0;
   const errors: string[] = [];
   const targetStatus: FieldProgressEntryStatus =
@@ -279,6 +281,7 @@ export async function syncSiteReportProgressEntriesInTransaction(
         status: "CANCELLED",
         approvedAt: null,
         approvedById: null,
+        deletedAt: new Date(),
       },
     });
     updated++;
@@ -291,13 +294,13 @@ export async function syncSiteReportProgressEntriesInTransaction(
     
     const balance = balances.get(itemId)!;
     const designQuantity = balance.plannedQuantity;
-    const cumulativeBefore = balance.totalActiveEnteredQuantity;
+    const overallCumulativeBefore = balance.totalActiveEnteredQuantity;
 
     const existing = existingByItemId.get(itemId);
 
     const guard = evaluateVolumeGuard({
       designQuantity,
-      cumulativeBefore,
+      cumulativeBefore: overallCumulativeBefore,
       todayQuantity: quantityToday,
       status: targetStatus,
       note: line.note,
@@ -307,11 +310,12 @@ export async function syncSiteReportProgressEntriesInTransaction(
 
     if (!guard.canSubmit) {
       blocked++;
-      errors.push(`Khối lượng nhập vượt phần còn lại cho công việc ${item.code}. Thiết kế: ${designQuantity}, đã nhập: ${cumulativeBefore}, còn lại: ${balance.remainingQuantity}.`);
+      errors.push(`Khối lượng nhập vượt phần còn lại cho công việc ${item.code}. Thiết kế: ${designQuantity}, đã nhập: ${overallCumulativeBefore}, còn lại: ${balance.remainingQuantity}.`);
       continue;
     }
 
-    const progressPercent = designQuantity > 0 ? Math.min(999.99, (guard.projectedCumulative / designQuantity) * 100) : 0;
+    const projectedCumulativeAtDate = balance.cumulativeBeforeDate + balance.sameDateEnteredQuantity + quantityToday;
+    const progressPercentAtDate = designQuantity > 0 ? Math.min(999.99, (projectedCumulativeAtDate / designQuantity) * 100) : 0;
 
     await tx.siteReportLine.update({
       where: { id: line.id },
@@ -321,9 +325,9 @@ export async function syncSiteReportProgressEntriesInTransaction(
         area: item.categoryName || line.area,
         unit: item.unit || line.unit,
         designQuantity: new Decimal(designQuantity),
-        quantityBefore: new Decimal(cumulativeBefore),
-        quantityCumulative: new Decimal(guard.projectedCumulative),
-        progressPercent: new Decimal(progressPercent),
+        quantityBefore: new Decimal(balance.cumulativeBeforeDate),
+        quantityCumulative: new Decimal(projectedCumulativeAtDate),
+        progressPercent: new Decimal(progressPercentAtDate),
       },
     });
 
@@ -333,6 +337,10 @@ export async function syncSiteReportProgressEntriesInTransaction(
       itemId,
       entryDate: start,
       quantity: new Decimal(quantityToday),
+      sourceType: "SITE_REPORT",
+      sourceId: report.id,
+      sourceReportId: report.id,
+      sourceLineId: line.id,
       issueNote: line.issueNote,
       proposalNote: line.proposalNote,
       note: buildEntryNote({
@@ -340,7 +348,7 @@ export async function syncSiteReportProgressEntriesInTransaction(
         reportId: report.id,
         lineId: line.id,
         qaTag: input.qaTag,
-      }),
+      }), // note marker is kept for debug/legacy tracing only, not used in core logic
       status: targetStatus,
       submittedAt: new Date(),
       approvedAt: targetStatus === "APPROVED" ? new Date() : null,

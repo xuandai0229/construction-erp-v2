@@ -41,7 +41,7 @@ function formatVietnamDateFull(dateString: string) {
       const year = d.getFullYear();
       return `Ngày ${day} tháng ${month} năm ${year}`;
     }
-  } catch (e) {}
+  } catch {}
   return dateString;
 }
 
@@ -60,8 +60,32 @@ function formatVietnamDateShort(dateString: string) {
       const year = d.getFullYear();
       return `${day}/${month}/${year}`;
     }
-  } catch (e) {}
+  } catch {}
   return dateString;
+}
+
+import { formatNumberSafe } from "@/lib/reports/report-format-utils";
+import {
+  formatProgressPercentDisplay,
+  formatProgressQuantityDisplay,
+  normalizeReportProgressLine,
+} from "@/lib/reports/report-progress-display";
+
+function formatQuantity(value: unknown) {
+  if (value === null || value === undefined) return "-";
+  return formatNumberSafe(value, { maximumFractionDigits: 2 });
+}
+
+function getPrintableProgressLine(line: FieldReport["workLines"][number], reportType: FieldReport["type"]) {
+  return normalizeReportProgressLine({
+    reportType,
+    designQuantity: line.designQuantity,
+    quantityBefore: line.quantityBefore,
+    quantityToday: line.quantityToday,
+    quantityCumulative: line.quantityCumulative,
+    remainingQuantity: line.remainingQuantity,
+    progressPercent: line.progressPercent,
+  });
 }
 
 export function ReportPrintTemplate({ report }: ReportPrintTemplateProps) {
@@ -87,8 +111,8 @@ export function ReportPrintTemplate({ report }: ReportPrintTemplateProps) {
   const hasLabor = !!report.labor;
 
   // Determine next week plan
-  const nextWeekPlanGroups = isWeekly && report.weeklyNote?.nextWeekPlanGroups 
-    ? report.weeklyNote.nextWeekPlanGroups 
+  const nextWeekPlan = isWeekly && report.weeklyNote?.nextWeekPlan 
+    ? report.weeklyNote.nextWeekPlan 
     : [];
   
   // Adjust Section counter dynamically
@@ -227,45 +251,125 @@ export function ReportPrintTemplate({ report }: ReportPrintTemplateProps) {
         <p className="font-bold mb-2">{getNextSection()}. {isWeekly ? "Tổng hợp khối lượng thực hiện trong tuần" : "Nội dung công việc thực hiện"}</p>
         
         {lines.length > 0 ? (
-          <table className="w-full border border-black mb-2 text-[13px] ml-4" style={{ width: 'calc(100% - 16px)' }}>
-            <thead>
-              <tr className="bg-gray-100 font-bold text-center">
-                <th className="border border-black py-2 px-2 w-[40px]">STT</th>
-                <th className="border border-black py-2 px-2 text-left">Hạng mục / Công việc</th>
-                <th className="border border-black py-2 px-2 w-[60px]">Đơn vị</th>
-                <th className="border border-black py-2 px-2 w-[80px]">{isWeekly ? "KL tuần" : "Khối lượng"}</th>
-                <th className="border border-black py-2 px-2 w-[200px] text-left">Ghi chú</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lines.map((line, idx) => (
-                <tr key={idx} className="page-break-inside-avoid">
-                  <td className="border border-black py-1 px-2 text-center">{idx + 1}</td>
-                  <td className="border border-black py-1 px-2">
-                    {normalizeVietnameseText(line.workContent)}
-                    {line.categoryName && <span className="block text-[11px] italic text-gray-600 mt-1">Khu vực: {normalizeVietnameseText(line.categoryName)}</span>}
-                  </td>
-                  <td className="border border-black py-1 px-2 text-center">{normalizeVietnameseText(line.unit) || "-"}</td>
-                  <td className="border border-black py-1 px-2 text-right">
-                    {line.quantityToday !== undefined && line.quantityToday !== null ? Number(line.quantityToday).toLocaleString('vi-VN') : "-"}
-                  </td>
-                  <td className="border border-black py-1 px-2 text-[12px]">
-                    {line.note && line.note !== "-" ? normalizeVietnameseText(line.note) : ""}
-                    {line.proposalNote && line.proposalNote !== "-" ? (
-                      <>
-                        {line.note && line.note !== "-" ? <br /> : ""}
-                        <span className="italic">Đề xuất: {normalizeVietnameseText(line.proposalNote)}</span>
-                      </>
-                    ) : ""}
-                  </td>
+          isWeekly ? (
+            <table className="w-full border border-black mb-2 text-[12px] ml-4" style={{ width: 'calc(100% - 16px)' }}>
+              <thead>
+                <tr className="bg-gray-100 font-bold text-center">
+                  <th className="border border-black py-2 px-1 w-[30px]">STT</th>
+                  <th className="border border-black py-2 px-1 text-left">Hạng mục / Công việc</th>
+                  <th className="border border-black py-2 px-1 w-[40px]">ĐVT</th>
+                  <th className="border border-black py-2 px-1 w-[60px]">Thiết kế</th>
+                  <th className="border border-black py-2 px-1 w-[60px]">Trước tuần</th>
+                  <th className="border border-black py-2 px-1 w-[60px]">Tuần này</th>
+                  <th className="border border-black py-2 px-1 w-[60px]">Lũy kế</th>
+                  <th className="border border-black py-2 px-1 w-[60px]">Còn lại</th>
+                  <th className="border border-black py-2 px-1 w-[50px]">%</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {lines.map((line, idx) => (
+                  <tr key={idx} className="page-break-inside-avoid text-center">
+                    <td className="border border-black py-1 px-1">{idx + 1}</td>
+                    <td className="border border-black py-1 px-1 text-left">
+                      {normalizeVietnameseText(line.workContent)}
+                      {line.categoryName && <span className="block text-[10px] italic text-gray-600 mt-1">Khu vực: {normalizeVietnameseText(line.categoryName)}</span>}
+                    </td>
+                    <td className="border border-black py-1 px-1">{normalizeVietnameseText(line.unit) || "-"}</td>
+                    <td className="border border-black py-1 px-1 text-right">{formatProgressQuantityDisplay(getPrintableProgressLine(line, report.type).designQuantity)}</td>
+                    <td className="border border-black py-1 px-1 text-right">{formatProgressQuantityDisplay(getPrintableProgressLine(line, report.type).quantityBefore)}</td>
+                    <td className="border border-black py-1 px-1 text-right font-bold text-blue-700">{formatProgressQuantityDisplay(getPrintableProgressLine(line, report.type).quantityToday)}</td>
+                    <td className="border border-black py-1 px-1 text-right text-emerald-700 font-bold">{formatProgressQuantityDisplay(getPrintableProgressLine(line, report.type).quantityCumulative)}</td>
+                    <td className="border border-black py-1 px-1 text-right">{formatProgressQuantityDisplay(getPrintableProgressLine(line, report.type).remainingQuantity)}</td>
+                    <td className="border border-black py-1 px-1">{formatProgressPercentDisplay(getPrintableProgressLine(line, report.type).progressPercent)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <table className="w-full border border-black mb-2 text-[13px] ml-4" style={{ width: 'calc(100% - 16px)' }}>
+              <thead>
+                <tr className="bg-gray-100 font-bold text-center">
+                  <th className="border border-black py-2 px-2 w-[40px]">STT</th>
+                  <th className="border border-black py-2 px-2 text-left">Hạng mục / Công việc</th>
+                  <th className="border border-black py-2 px-2 w-[60px]">Đơn vị</th>
+                  <th className="border border-black py-2 px-2 w-[80px]">Khối lượng</th>
+                  <th className="border border-black py-2 px-2 w-[200px] text-left">Ghi chú</th>
+                </tr>
+              </thead>
+              <tbody>
+                {lines.map((line, idx) => (
+                  <tr key={idx} className="page-break-inside-avoid">
+                    <td className="border border-black py-1 px-2 text-center">{idx + 1}</td>
+                    <td className="border border-black py-1 px-2">
+                      {normalizeVietnameseText(line.workContent)}
+                      {line.categoryName && <span className="block text-[11px] italic text-gray-600 mt-1">Khu vực: {normalizeVietnameseText(line.categoryName)}</span>}
+                    </td>
+                    <td className="border border-black py-1 px-2 text-center">{normalizeVietnameseText(line.unit) || "-"}</td>
+                    <td className="border border-black py-1 px-2 text-right">
+                      {line.quantityToday !== undefined && line.quantityToday !== null ? formatQuantity(line.quantityToday) : "-"}
+                    </td>
+                    <td className="border border-black py-1 px-2 text-[12px]">
+                      <div className="text-[11px] leading-snug">
+                        TK: {formatProgressQuantityDisplay(getPrintableProgressLine(line, report.type).designQuantity)}; Trước: {formatProgressQuantityDisplay(getPrintableProgressLine(line, report.type).quantityBefore)};
+                        Lũy kế: {formatProgressQuantityDisplay(getPrintableProgressLine(line, report.type).quantityCumulative)}; Còn lại: {formatProgressQuantityDisplay(getPrintableProgressLine(line, report.type).remainingQuantity)};
+                        HT: {formatProgressPercentDisplay(getPrintableProgressLine(line, report.type).progressPercent)}
+                      </div>
+                      {line.note && line.note !== "-" ? normalizeVietnameseText(line.note) : ""}
+                      {line.proposalNote && line.proposalNote !== "-" ? (
+                        <>
+                          {line.note && line.note !== "-" ? <br /> : ""}
+                          <span className="italic">Đề xuất: {normalizeVietnameseText(line.proposalNote)}</span>
+                        </>
+                      ) : ""}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )
         ) : (
           <p className="italic pl-4">{isWeekly ? "Chưa có dữ liệu khối lượng từ báo cáo ngày trong tuần." : "Không có khối lượng công việc được ghi nhận."}</p>
         )}
       </div>
+
+      {/* Kế hoạch tuần sau (WEEKLY) */}
+      {isWeekly && nextWeekPlan.length > 0 && (
+        <div className="mb-4 page-break-inside-avoid">
+          <p className="font-bold mb-2">{getNextSection()}. Kế hoạch thực hiện tuần sau</p>
+          <table className="w-full border border-black mb-2 text-[11px] ml-4" style={{ width: 'calc(100% - 16px)' }}>
+            <thead>
+              <tr className="bg-gray-100 font-bold text-center">
+                <th className="border border-black py-2 px-1 text-left">Nội dung công việc</th>
+                <th className="border border-black py-2 px-1 w-[40px]">ĐVT</th>
+                <th className="border border-black py-2 px-1 w-[60px]">Còn lại</th>
+                <th className="border border-black py-2 px-1 w-[60px]">KL Tuần tới</th>
+                <th className="border border-black py-2 px-1 w-[70px]">Từ ngày</th>
+                <th className="border border-black py-2 px-1 w-[70px]">Đến ngày</th>
+                <th className="border border-black py-2 px-1 w-[80px]">Phụ trách</th>
+                <th className="border border-black py-2 px-1 w-[60px]">Vật tư</th>
+                <th className="border border-black py-2 px-1 w-[60px]">Thiết bị</th>
+                <th className="border border-black py-2 px-1 w-[80px]">Ghi chú</th>
+              </tr>
+            </thead>
+            <tbody>
+              {nextWeekPlan.map((item, iIdx) => (
+                <tr key={iIdx} className="page-break-inside-avoid">
+                  <td className="border border-black py-1 px-1">{normalizeVietnameseText(item.workContent)}</td>
+                  <td className="border border-black py-1 px-1 text-center">{normalizeVietnameseText(item.unit) || "-"}</td>
+                  <td className="border border-black py-1 px-1 text-right">{item.remainingQuantity !== undefined && item.remainingQuantity !== null ? formatQuantity(item.remainingQuantity) : "-"}</td>
+                  <td className="border border-black py-1 px-1 text-right font-bold text-blue-700">{item.plannedQuantityNextWeek !== undefined && item.plannedQuantityNextWeek !== null ? formatQuantity(item.plannedQuantityNextWeek) : "-"}</td>
+                  <td className="border border-black py-1 px-1 text-center">{item.plannedStartDate ? item.plannedStartDate.split("-").reverse().join("/") : "-"}</td>
+                  <td className="border border-black py-1 px-1 text-center">{item.plannedEndDate ? item.plannedEndDate.split("-").reverse().join("/") : "-"}</td>
+                  <td className="border border-black py-1 px-1 text-center">{normalizeVietnameseText(item.constructionCrew) || "-"}</td>
+                  <td className="border border-black py-1 px-1 text-center">{normalizeVietnameseText(item.materialNeeds) || "-"}</td>
+                  <td className="border border-black py-1 px-1 text-center">{normalizeVietnameseText(item.equipmentNeeds) || "-"}</td>
+                  <td className="border border-black py-1 px-1 text-[10px] italic">{normalizeVietnameseText(item.riskNote) || "-"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Nguồn lực sử dụng */}
       {(!isWeekly || hasMaterials || hasLabor) && (
@@ -294,42 +398,6 @@ export function ReportPrintTemplate({ report }: ReportPrintTemplateProps) {
           {report.recommendations ? printableRecommendations : "Không có"}
         </div>
       </div>
-
-      {/* Kế hoạch tuần sau (WEEKLY) */}
-      {isWeekly && nextWeekPlanGroups.length > 0 && (
-        <div className="mb-4 page-break-inside-avoid">
-          <p className="font-bold mb-2">{getNextSection()}. Kế hoạch thực hiện tuần sau</p>
-          <table className="w-full border border-black mb-2 text-[13px] ml-4" style={{ width: 'calc(100% - 16px)' }}>
-            <thead>
-              <tr className="bg-gray-100 font-bold text-center">
-                <th className="border border-black py-2 px-2 text-left">Nội dung công việc</th>
-                <th className="border border-black py-2 px-2 w-[80px]">KL Dự kiến</th>
-                <th className="border border-black py-2 px-2 w-[60px]">ĐVT</th>
-                <th className="border border-black py-2 px-2 w-[120px]">Phụ trách</th>
-              </tr>
-            </thead>
-            <tbody>
-              {nextWeekPlanGroups.map((group, gIdx) => (
-                <React.Fragment key={gIdx}>
-                  <tr className="bg-gray-50 font-bold page-break-inside-avoid">
-                    <td colSpan={4} className="border border-black py-1 px-2">
-                      {normalizeVietnameseText(group.categoryName)}
-                    </td>
-                  </tr>
-                  {group.items.map((item, iIdx) => (
-                    <tr key={iIdx} className="page-break-inside-avoid">
-                      <td className="border border-black py-1 px-2 pl-4">{normalizeVietnameseText(item.workContent)}</td>
-                      <td className="border border-black py-1 px-2 text-right">{item.plannedQuantity || "-"}</td>
-                      <td className="border border-black py-1 px-2 text-center">{normalizeVietnameseText(item.unit) || "-"}</td>
-                      <td className="border border-black py-1 px-2 text-center">{normalizeVietnameseText(item.ownerName) || "-"}</td>
-                    </tr>
-                  ))}
-                </React.Fragment>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
 
       {/* Tài liệu hình ảnh */}
       <div className="mb-6 page-break-inside-avoid">

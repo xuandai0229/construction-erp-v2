@@ -74,7 +74,7 @@ export function ExecutiveActionList({
   count?: number
 }) {
   return (
-    <section id="action-items" className="flex flex-col h-full rounded-[20px] border border-slate-200/70 bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+    <section id="action-items" className="flex flex-col h-full rounded-[20px] border border-slate-200/70 bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden scroll-mt-24">
       <div className="flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4 shrink-0">
         <div className="flex items-center gap-3">
           <h3 className="font-bold text-slate-900">{title}</h3>

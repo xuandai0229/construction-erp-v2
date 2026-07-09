@@ -96,7 +96,7 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
 
   return (
     <>
-      <header className="sticky top-0 z-60 flex h-16 shrink-0 items-center justify-between border-b border-slate-200/90 bg-white/95 px-4 backdrop-blur-md md:px-6">
+      <header className="sticky top-0 z-60 flex h-16 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/90 px-4 shadow-sm shadow-slate-950/[0.025] backdrop-blur-xl md:px-6">
         <div className="flex items-center lg:hidden">
           <button
             onClick={() => setMobileMenuOpen(true)}

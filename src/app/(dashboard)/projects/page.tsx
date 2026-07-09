@@ -1,6 +1,6 @@
 import { EmptyState } from "@/components/ui/empty-state";
 import prisma from "@/lib/prisma";
-import { Building2, Plus, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Building2, Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { formatDateVN } from "@/lib/utils";
 import { ProjectsListClient } from "@/components/projects/project-list-client";
@@ -8,6 +8,8 @@ import { ProjectsKPISummary } from "@/components/projects/projects-kpi-summary";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { canViewAllProjects, canManageProjects, getAccessibleProjectIds } from "@/lib/rbac";
+import { PageHeading, FilterBar, ContentCard, Pagination } from "@/components/ui/enterprise";
+import { Button } from "@/components/ui/button";
 
 const ITEMS_PER_PAGE = 15;
 
@@ -101,21 +103,20 @@ export default async function ProjectsPage({
 
   return (
     <div className="app-page space-y-6">
-      {/* Premium Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{pageTitle}</h1>
-          <p className="text-[15px] text-slate-500 mt-1">
-            Theo dõi danh sách, trạng thái và lịch thi công các công trình
-          </p>
-        </div>
-        {canManage && (
-          <Link href="/projects/new" className="inline-flex items-center gap-2 rounded-[14px] bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm shadow-blue-600/20 transition-all duration-200 ease-out hover:bg-blue-700 hover:shadow-md active:scale-[0.99]">
-            <Plus className="h-4 w-4" />
-            Tạo công trình
-          </Link>
-        )}
-      </div>
+      <PageHeading
+        title={pageTitle}
+        description="Theo dõi danh sách, trạng thái và lịch thi công các công trình"
+        action={
+          canManage ? (
+            <Link href="/projects/new">
+              <Button variant="primary" size="lg" className="gap-2">
+                <Plus className="h-4 w-4" />
+                Tạo công trình
+              </Button>
+            </Link>
+          ) : undefined
+        }
+      />
 
       {/* KPI Summary Cards */}
       <ProjectsKPISummary 
@@ -125,8 +126,8 @@ export default async function ProjectsPage({
         completedCount={completedCount}
       />
 
-      {/* Premium Toolbar */}
-      <div className="rounded-[18px] border border-slate-200/70 bg-white p-4 shadow-[0_2px_10px_rgba(15,23,42,0.02)]">
+      {/* Filter Toolbar */}
+      <FilterBar>
         <form className="flex flex-col sm:flex-row gap-3" method="GET" action="/projects">
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -137,7 +138,7 @@ export default async function ProjectsPage({
               autoComplete="off"
               defaultValue={q}
               placeholder="Tìm kiếm mã, tên công trình, chủ đầu tư..." 
-              className="h-11 w-full rounded-xl border border-slate-200/70 bg-slate-50/50 pl-10 pr-4 text-[14px] text-slate-900 transition-all duration-200 placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10"
+              className="form-control h-11 pl-10 pr-4 rounded-xl"
             />
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
@@ -145,7 +146,7 @@ export default async function ProjectsPage({
               name="status"
               id="project-status-filter"
               defaultValue={statusFilter}
-              className="h-11 w-full sm:w-[180px] rounded-xl border border-slate-200/70 bg-slate-50/50 px-4 text-[14px] text-slate-900 transition-all duration-200 focus:border-blue-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10"
+              className="form-control h-11 w-full sm:w-[180px] rounded-xl px-4"
             >
               <option value="">Tất cả trạng thái</option>
               <option value="PLANNING">Chuẩn bị</option>
@@ -154,53 +155,33 @@ export default async function ProjectsPage({
               <option value="COMPLETED">Hoàn thành</option>
               <option value="CANCELLED">Hủy</option>
             </select>
-            <button type="submit" className="inline-flex h-11 items-center justify-center rounded-xl bg-blue-600 px-6 text-sm font-semibold text-white shadow-sm shadow-blue-600/20 transition-all duration-200 ease-out hover:bg-blue-700 hover:shadow-md active:scale-[0.99] focus:outline-none focus:ring-4 focus:ring-blue-500/10">
+            <Button type="submit" variant="primary" className="h-11 px-6">
               Lọc
-            </button>
+            </Button>
             {(q || statusFilter) && (
-              <Link href="/projects" className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-medium text-slate-600 shadow-sm transition-all duration-200 ease-out hover:bg-slate-50 hover:text-slate-900 focus:outline-none">
-                Xóa lọc
+              <Link href="/projects">
+                <Button variant="outline" className="h-11">
+                  Xóa lọc
+                </Button>
               </Link>
             )}
           </div>
         </form>
-      </div>
+      </FilterBar>
 
       {/* Table Card */}
-      <div className="rounded-[20px] border border-slate-200/80 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
-
-
+      <ContentCard className="overflow-hidden">
         {projects.length > 0 ? (
           <>
             <ProjectsListClient projects={projectRows} canManage={canManage} />
 
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="flex flex-col gap-3 border-t border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm text-slate-500 font-medium">
-                  Hiển thị <span className="font-semibold text-slate-900">{skip + 1}</span> đến <span className="font-semibold text-slate-900">{Math.min(skip + ITEMS_PER_PAGE, totalItems)}</span> trong số <span className="font-semibold text-slate-900">{totalItems}</span> công trình
-                </p>
-                <div className="flex items-center gap-2">
-                  <Link 
-                    href={`${baseUrl}&page=${Math.max(1, currentPage - 1)}`}
-                    className={`inline-flex items-center justify-center rounded-md h-9 w-9 border border-slate-300 transition-colors ${currentPage === 1 ? 'pointer-events-none opacity-50 bg-slate-50 text-slate-400' : 'bg-white hover:bg-slate-50 text-slate-700'}`}
-                    aria-label="Trang trước"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Link>
-                  <span className="text-sm font-semibold text-slate-900 px-2">
-                    Trang {currentPage} / {totalPages}
-                  </span>
-                  <Link 
-                    href={`${baseUrl}&page=${Math.min(totalPages, currentPage + 1)}`}
-                    className={`inline-flex items-center justify-center rounded-md h-9 w-9 border border-slate-300 transition-colors ${currentPage === totalPages ? 'pointer-events-none opacity-50 bg-slate-50 text-slate-400' : 'bg-white hover:bg-slate-50 text-slate-700'}`}
-                    aria-label="Trang sau"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Link>
-                </div>
-              </div>
-            )}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              pageSize={ITEMS_PER_PAGE}
+              baseUrl={baseUrl}
+            />
           </>
         ) : (
           <div className="p-12">
@@ -211,7 +192,7 @@ export default async function ProjectsPage({
             />
           </div>
         )}
-      </div>
+      </ContentCard>
     </div>
   );
 }

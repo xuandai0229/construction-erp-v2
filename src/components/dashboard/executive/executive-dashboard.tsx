@@ -7,6 +7,7 @@ import { ExecutiveFinancePanel } from './executive-finance-panel';
 import { ExecutiveSiteReportHighlights } from './executive-site-report-highlights';
 import { ExecutiveStatusChart } from './executive-status-chart';
 import { ProjectTimeProgressDrawer } from './project-time-progress-drawer';
+import { ContentCard } from '@/components/ui/enterprise';
 
 export function ExecutiveDashboard({ data }: { data: DashboardData }) {
   const pendingApprovals = data.pendingApprovals || [];
@@ -45,9 +46,9 @@ export function ExecutiveDashboard({ data }: { data: DashboardData }) {
           {data.permissions.canViewFinanceDashboard && data.financeSummary ? (
             <ExecutiveFinancePanel summary={data.financeSummary} />
           ) : (
-            <div className="flex h-full w-full min-h-[300px] items-center justify-center rounded-2xl border border-slate-100 bg-white p-6 shadow-sm text-sm text-slate-500">
+            <ContentCard className="flex h-full w-full min-h-[300px] items-center justify-center p-6 text-sm text-slate-500">
               Không có quyền xem Tài chính
-            </div>
+            </ContentCard>
           )}
         </div>
       </div>

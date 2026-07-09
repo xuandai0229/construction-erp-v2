@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { canManageUsers, ROLE_DISPLAY_NAMES, getAllowedRolesForActor } from "@/lib/rbac";
 import prisma from "@/lib/prisma";
 import { UserManagementClient } from "@/components/users/user-management-client";
+import { KpiCard, PageHeading } from "@/components/ui/enterprise";
+import { Users, Shield, HardHat, Activity } from "lucide-react";
 
 export default async function UsersPage() {
   const session = await getSession();
@@ -59,32 +61,38 @@ export default async function UsersPage() {
   }));
 
   return (
-    <div className="app-page space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="page-heading">Quản lý tài khoản</h1>
-          <p className="page-description">Tạo và quản lý tài khoản người dùng trong hệ thống</p>
-        </div>
-      </div>
+    <div className="app-page space-y-6 pt-2 sm:pt-0">
+      <PageHeading
+        title="Quản lý tài khoản"
+        description="Tạo và quản lý tài khoản người dùng trong hệ thống"
+      />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-          <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Tổng tài khoản</p>
-          <p className="text-2xl font-bold text-slate-900 mt-1">{totalUsers}</p>
-        </div>
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-          <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">GĐ / Phó GĐ</p>
-          <p className="text-2xl font-bold text-blue-600 mt-1">{directors}</p>
-        </div>
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-          <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Chỉ huy trưởng</p>
-          <p className="text-2xl font-bold text-emerald-600 mt-1">{commanders}</p>
-        </div>
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-          <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Đang hoạt động</p>
-          <p className="text-2xl font-bold text-amber-600 mt-1">{activeUsers}</p>
-        </div>
+        <KpiCard
+          label="Tổng tài khoản"
+          value={totalUsers}
+          tone="slate"
+          icon={<Users className="h-5 w-5" />}
+        />
+        <KpiCard
+          label="GĐ / Phó GĐ"
+          value={directors}
+          tone="blue"
+          icon={<Shield className="h-5 w-5" />}
+        />
+        <KpiCard
+          label="Chỉ huy trưởng"
+          value={commanders}
+          tone="emerald"
+          icon={<HardHat className="h-5 w-5" />}
+        />
+        <KpiCard
+          label="Đang hoạt động"
+          value={activeUsers}
+          tone="amber"
+          icon={<Activity className="h-5 w-5" />}
+        />
       </div>
 
       <UserManagementClient 

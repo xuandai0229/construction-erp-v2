@@ -158,9 +158,9 @@ function SummaryCard({
   return (
     <div className={`rounded-2xl border ${toneClass} p-4 shadow-sm`}>
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-medium text-slate-600">{label}</p>
-          <p className="mt-1 text-2xl font-bold tracking-tight text-slate-950">{value}</p>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-slate-600 truncate" title={label}>{label}</p>
+          <p className="mt-1 text-2xl font-bold tracking-tight text-slate-950 truncate" title={String(value)}>{value}</p>
         </div>
         <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-950/5`}>
           <Icon className="h-5 w-5" />
@@ -431,7 +431,7 @@ function ApprovalDetailDrawer({
               <h3 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
                 Thông tin tổng quan
               </h3>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <DetailItem label="Công trình" value={`${approval.project.code} - ${approval.project.name}`} />
                 <DetailItem label="Người tạo" value={approval.requester.name} />
                 <DetailItem label="Giá trị" value={formatCurrency(approval.amount)} />
@@ -828,10 +828,10 @@ export function ApprovalCenterClient({
             <table className="min-w-[800px] w-full text-left text-sm whitespace-nowrap">
               <thead className="bg-slate-50 border-b border-slate-100 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                 <tr>
-                  <th className="px-5 py-3.5">Yêu cầu</th>
-                  <th className="px-5 py-3.5">Nguồn / Công trình</th>
-                  <th className="px-5 py-3.5 text-right">Giá trị / Hạn</th>
-                  <th className="px-5 py-3.5">Trạng thái</th>
+                  <th className="px-5 py-3.5 min-w-[120px]">Yêu cầu</th>
+                  <th className="px-5 py-3.5 min-w-[150px]">Nguồn / Công trình</th>
+                  <th className="px-5 py-3.5 text-right min-w-[160px]">Giá trị / Hạn</th>
+                  <th className="px-5 py-3.5 min-w-[120px]">Trạng thái</th>
                   <th className="px-5 py-3.5 text-right sticky right-0 bg-slate-50 z-10 border-l border-slate-100 shadow-[-5px_0_15px_-5px_rgba(0,0,0,0.05)]">Thao tác</th>
                 </tr>
               </thead>

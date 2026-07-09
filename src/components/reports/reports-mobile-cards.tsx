@@ -6,6 +6,7 @@ import { getStatusLabel, getStatusVariant } from "./types";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { PhotoPreviewStack } from "./photo-preview-stack";
 import { formatDateVN, formatReportCode } from "@/lib/utils";
+import { ContentCard } from "@/components/ui/enterprise";
 
 interface ReportsMobileCardsProps {
   reports: FieldReport[];
@@ -22,9 +23,9 @@ export function ReportsMobileCards({ reports, onViewDetail, onViewGallery, onEdi
   return (
     <div className="flex flex-col gap-3">
       {reports.map((report) => (
-        <div
+        <ContentCard
           key={report.id}
-          className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3 active:bg-slate-50 transition-colors"
+          className="p-4 space-y-3 active:bg-slate-50 transition-colors"
           onClick={() => onViewDetail(report)}
           role="button"
           tabIndex={0}
@@ -116,7 +117,7 @@ export function ReportsMobileCards({ reports, onViewDetail, onViewGallery, onEdi
               </button>
             </div>
           </div>
-        </div>
+        </ContentCard>
       ))}
     </div>
   );

@@ -4,6 +4,7 @@ import type { DashboardFinanceSummary } from "@/lib/dashboard/dashboard-queries"
 import { formatCurrencyVND, formatDateVNShort } from "@/lib/dashboard/dashboard-formatters";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { DashboardEmptyState } from "./dashboard-empty-state";
+import { ContentCard } from "@/components/ui/enterprise";
 
 function paymentVariant(status: string) {
   if (status === "PAID") return "success" as const;
@@ -16,7 +17,7 @@ export function DashboardFinanceSummaryPanel({ summary }: { summary: DashboardFi
   if (!summary) return null;
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-950/[0.03]">
+    <ContentCard className="flex flex-col">
       <div className="flex flex-col gap-2 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
         <div>
           <h2 className="text-base font-bold text-slate-950">Tài chính, hợp đồng, thanh toán</h2>
@@ -59,6 +60,6 @@ export function DashboardFinanceSummaryPanel({ summary }: { summary: DashboardFi
           )}
         </div>
       </div>
-    </section>
+    </ContentCard>
   );
 }

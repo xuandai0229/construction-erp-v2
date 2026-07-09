@@ -1,6 +1,7 @@
 import React from "react";
 import { Users, Truck, Wrench, ShieldAlert, FileWarning, Lightbulb } from "lucide-react";
 import { type CreateReportFormData } from "../types";
+import { ContentCard } from "@/components/ui/enterprise";
 
 export function ResourcesAndQuality({ form, updateField }: {
   form: CreateReportFormData;
@@ -10,7 +11,7 @@ export function ResourcesAndQuality({ form, updateField }: {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <ContentCard className="overflow-hidden p-0 sm:p-0">
 
         <div className="bg-slate-50/80 px-5 py-3.5 border-b border-slate-200 flex items-center gap-2.5">
           <div className="bg-amber-100 p-1.5 rounded-lg text-amber-600">
@@ -42,9 +43,9 @@ export function ResourcesAndQuality({ form, updateField }: {
             />
           </div>
         </div>
-      </div>
+      </ContentCard>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <ContentCard className="overflow-hidden p-0 sm:p-0">
         <div className="bg-slate-50/80 px-5 py-3.5 border-b border-slate-200 flex items-center gap-2.5 scroll-mt-24">
           <div className="bg-red-100 p-1.5 rounded-lg text-red-600">
             <ShieldAlert className="w-4 h-4" />
@@ -104,7 +105,7 @@ export function ResourcesAndQuality({ form, updateField }: {
             </div>
           </div>
         </div>
-      </div>
+      </ContentCard>
     </div>
   );
 }

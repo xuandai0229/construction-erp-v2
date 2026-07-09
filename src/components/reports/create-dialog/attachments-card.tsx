@@ -1,5 +1,6 @@
 import React, { useRef, useState } from "react";
 import { Camera, Paperclip, X, ImagePlus, UploadCloud } from "lucide-react";
+import { ContentCard } from "@/components/ui/enterprise";
 
 export function AttachmentsCard({
   photos,
@@ -50,7 +51,7 @@ export function AttachmentsCard({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-6">
+    <ContentCard className="overflow-hidden p-0 sm:p-0 mb-6">
       <div className="bg-slate-50/80 px-5 py-3.5 border-b border-slate-200 flex items-center gap-2.5">
         <div className="bg-purple-100 p-1.5 rounded-lg text-purple-600">
           <Camera className="w-4 h-4" />
@@ -161,6 +162,6 @@ export function AttachmentsCard({
           )}
         </div>
       </div>
-    </div>
+    </ContentCard>
   );
 }

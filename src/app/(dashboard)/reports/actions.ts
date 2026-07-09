@@ -21,7 +21,8 @@ import {
 import { Prisma, UserRole } from "@prisma/client";
 import { canAccessProject, getAccessibleProjectIds } from "@/lib/rbac";
 import { computeReportStats } from "@/lib/reports/report-stats";
-import { WeeklyGeneralNote, serializeWeeklyGeneralNote } from "@/lib/reports/weekly-report-utils";
+import { WeeklyGeneralNote, serializeWeeklyGeneralNote, assertWeeklyResultDateAllowed } from "@/lib/reports/weekly-report-utils";
+import { updateWeeklyReportCore } from "@/lib/reports/report-update-service";
 import {
   getVietnamCustomDateRange,
   getVietnamDateString,
@@ -153,7 +154,7 @@ async function buildDailyReportLines(input: {
   const { getBulkWorkQuantityBalance } = await import("@/lib/field-progress/volume-balance");
   const balances = await getBulkWorkQuantityBalance(input.client, input.projectId, itemIds, {
     targetDate: reportWorkDate,
-    excludeSourceMarker: input.existingReportId ? getReportProgressSourceMarker(input.existingReportId) : undefined,
+    excludeSourceReportId: input.existingReportId,
   });
 
   const built: BuiltDailyLine[] = [];
@@ -314,6 +315,14 @@ export async function createSiteReport(data: Record<string, unknown>, isDraft: b
   }
 
   const status = isDraft ? "DRAFT" : "SUBMITTED";
+
+  if (type === "WEEKLY") {
+    assertWeeklyResultDateAllowed({
+      weekStartDateStr: data.weekStartDate ? String(data.weekStartDate) : undefined,
+      hasActualLines: workLines.length > 0,
+    });
+  }
+
   const reportDate = vietnamDateTimeToUtc(String(data.date), String(data.time || "07:00"));
   const dailyLines =
     type === "DAILY"
@@ -906,8 +915,8 @@ export async function getWeeklyReportSummary(projectId: string, start: Date, end
   const hasProjectAccess = await canAccessProject(user, projectId);
   if (!hasProjectAccess) throw new Error("Unauthorized");
 
-  const fromDate = start.toISOString().split("T")[0];
-  const toDate = end.toISOString().split("T")[0];
+  const fromDate = getVietnamDateString(start);
+  const toDate = getVietnamDateString(end);
 
   const statuses = ["APPROVED"];
   if (options?.includeSubmitted) statuses.push("SUBMITTED", "REVISION_REQUESTED");
@@ -931,8 +940,8 @@ export async function getWeeklyReportSummary(projectId: string, start: Date, end
   const dayStatuses: any[] = [];
   const curr = new Date(start);
   while (curr <= end) {
-    const dStr = curr.toISOString().split("T")[0];
-    const dayReps = reports.filter(r => (r.reportDate as Date).toISOString().split("T")[0] === dStr);
+    const dStr = getVietnamDateString(curr);
+    const dayReps = reports.filter(r => getVietnamDateString(r.reportDate as Date) === dStr);
     dayStatuses.push({
       date: dStr,
       hasReport: dayReps.length > 0,
@@ -942,7 +951,8 @@ export async function getWeeklyReportSummary(projectId: string, start: Date, end
       rejectedCount: dayReps.filter(r => r.status === "REJECTED").length,
       hasIssues: dayReps.some(r => r.issues && r.issues.trim() !== "Không có")
     });
-    curr.setDate(curr.getDate() + 1);
+    // Advance curr by 1 day in UTC safely
+    curr.setUTCDate(curr.getUTCDate() + 1);
   }
 
   const approvedReports = reports.filter(r => r.status === "APPROVED");
@@ -966,7 +976,7 @@ export async function getWeeklyReportSummary(projectId: string, start: Date, end
   const groupMap = new Map<string, { categoryId: string, categoryName: string, itemsMap: Map<string, any> }>();
 
   for (const rep of approvedReports) {
-    const repDate = (rep.reportDate as Date).toISOString().split("T")[0];
+    const repDate = getVietnamDateString(rep.reportDate as Date);
     for (const line of rep.lines) {
       stats.workLineCount++;
       // Determine category (using wbsItemId or area or default)
@@ -1061,6 +1071,11 @@ export async function createWeeklyReportFromApprovedDailyReports(input: {
 
   const start = vietnamStartOfDayUtc(input.weekStartDate);
   const end = vietnamEndOfDayUtc(input.weekEndDate);
+
+  assertWeeklyResultDateAllowed({
+    weekStartDateStr: input.weekStartDate,
+    hasActualLines: !input.isDraft,
+  });
 
   // Re-run preview to get exact lines
   const preview = await getWeeklyReportSummary(input.projectId, start, end);
@@ -1190,17 +1205,57 @@ export async function updateSiteReport(reportId: string, data: Record<string, un
   const workLines = (data.workLines as Record<string, unknown>[]) || [];
 
   const updatedReport = await prisma.$transaction(async (tx) => {
+    if (report.type === "WEEKLY") {
+      const result = await updateWeeklyReportCore(tx, reportId, {
+        weekStartDateStr: data.weekStartDate ? String(data.weekStartDate) : undefined,
+        generalNoteObj: data.weeklyNote as Record<string, unknown> | undefined,
+        workLines,
+        weatherCondition: data.weatherCondition as string | undefined,
+        weatherTemperature: data.weatherTemperature as string | undefined,
+        summary: data.summary as string | undefined,
+        materials: data.materials as string | undefined,
+        labor: data.labor as string | undefined,
+        quality: data.quality as string | undefined,
+        issues: data.issues as string | undefined,
+        recommendations: data.recommendations as string | undefined,
+        gpsLat: data.gpsLat as string | undefined,
+        gpsLng: data.gpsLng as string | undefined,
+      }, policyUser);
+
+      // Audit Log
+      await tx.auditLog.create({
+        data: {
+          userId: session.id,
+          projectId: report.projectId,
+          entityType: "SiteReport",
+          entityId: report.id,
+          action: "SITE_REPORT_UPDATED",
+          beforeData: JSON.stringify({
+            status: report.status,
+            reportDate: report.reportDate,
+            summary: report.summary,
+            linesCount: report.lines.length
+          }),
+          afterData: JSON.stringify({
+            status: result.status,
+            reportDate: result.reportDate,
+            summary: result.summary,
+            linesCount: workLines.length
+          }),
+        }
+      });
+
+      return result;
+    }
+
     const nextReportDate = data.date ? vietnamDateTimeToUtc(String(data.date), String(data.time || "07:00")) : report.reportDate;
-    const dailyLines =
-      report.type === "DAILY"
-        ? await buildDailyReportLines({
-            client: tx,
-            projectId: report.projectId,
-            reportDate: nextReportDate,
-            workLines,
-            existingReportId: reportId,
-          })
-        : [];
+    const dailyLines = await buildDailyReportLines({
+      client: tx,
+      projectId: report.projectId,
+      reportDate: nextReportDate,
+      workLines,
+      existingReportId: reportId,
+    });
 
     // Delete existing lines
     await tx.siteReportLine.deleteMany({
@@ -1223,26 +1278,7 @@ export async function updateSiteReport(reportId: string, data: Record<string, un
         recommendations: data.recommendations ? String(data.recommendations) : null,
         gpsLat: data.gpsLat ? Number(data.gpsLat) : null,
         gpsLng: data.gpsLng ? Number(data.gpsLng) : null,
-        generalNote: report.type === 'WEEKLY' ? (data.weeklyNote ? serializeWeeklyGeneralNote(data.weeklyNote as any) : null) : report.generalNote,
-        // Optional status update if sent (e.g., submit immediately) - wait, only allow DRAFT or SUBMITTED if explicitly told, but we just leave it or handle it if needed
-        // For now, do not change status unless explicit
-        lines: {
-          create: workLines.map((line, index) => ({
-            projectId: report.projectId,
-            workContent: String(line.workContent || "No content"),
-            workName: String(line.workName || line.workContent),
-            quantityToday: (() => {
-              if (line.quantityToday === undefined || line.quantityToday === null || line.quantityToday === "") return 0;
-              const num = Number(line.quantityToday);
-              if (!Number.isFinite(num) || num < 0) throw new Error("Khối lượng hôm nay không hợp lệ");
-              return num;
-            })(),
-            unit: line.unit ? String(line.unit) : null,
-            note: line.note ? String(line.note) : null,
-            sortOrder: index,
-          }))
-        },
-        ...(report.type === "DAILY" ? { lines: { create: dailyLines } } : {})
+        lines: { create: dailyLines }
       }
     });
 
@@ -1269,14 +1305,12 @@ export async function updateSiteReport(reportId: string, data: Record<string, un
       }
     });
 
-    if (report.type === "DAILY") {
-      const { syncSiteReportProgressEntriesInTransaction } = await import("@/lib/reports/report-progress-sync");
-      await syncSiteReportProgressEntriesInTransaction(tx, {
-        reportId: result.id,
-        mode: result.status === "SUBMITTED" ? "SUBMIT" : "SAVE",
-        actor: { id: policyUser.id, role: policyUser.role, name: session.name }
-      });
-    }
+    const { syncSiteReportProgressEntriesInTransaction } = await import("@/lib/reports/report-progress-sync");
+    await syncSiteReportProgressEntriesInTransaction(tx, {
+      reportId: result.id,
+      mode: result.status === "SUBMITTED" ? "SUBMIT" : "SAVE",
+      actor: { id: policyUser.id, role: policyUser.role, name: session.name }
+    });
 
     return result;
   });

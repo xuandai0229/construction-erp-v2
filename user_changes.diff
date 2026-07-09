@@ -1,0 +1,965 @@
+﻿diff --git a/prisma/schema.prisma b/prisma/schema.prisma
+index d3b7739..370008b 100644
+--- a/prisma/schema.prisma
++++ b/prisma/schema.prisma
+@@ -453,7 +453,7 @@ model Document {
+ 
+ model SiteReport {
+   id                 String            @id @default(cuid())
+-  reportNo           String            @default(dbgenerated("gen_random_uuid()::text"))
++  reportNo           String            @unique @default(dbgenerated("gen_random_uuid()::text"))
+   type               SiteReportType    @default(DAILY)
+   projectId          String
+   title              String?
+@@ -503,7 +503,6 @@ model SiteReport {
+   @@index([projectId])
+   @@index([createdById])
+   @@index([reportDate])
+-  @@index([reportNo])
+ }
+ 
+ model SiteReportPhoto {
+@@ -922,6 +921,13 @@ model FieldProgressEntry {
+   updatedAt      DateTime                 @updatedAt
+   deletedAt      DateTime?
+ 
++  sourceType       String?
++  sourceId         String?
++  sourceLineId     String?
++  sourceReportId   String?
++  sourceMeta       Json?
++  adjustmentReason String?
++
+   project          Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+   template         FieldProgressTemplate  @relation(fields: [templateId], references: [id], onDelete: Cascade)
+   item             FieldProgressItem      @relation(fields: [itemId], references: [id], onDelete: Cascade)
+@@ -933,6 +939,8 @@ model FieldProgressEntry {
+   @@index([templateId])
+   @@index([itemId])
+   @@index([entryDate])
++  @@index([sourceType, sourceId])
++  @@index([sourceReportId])
+ }
+ 
+ model FieldMaterialRequest {
+@@ -1011,6 +1019,7 @@ model SystemSetting {
+   enforceNamingConvention Boolean @default(true)
+   autoVersioning          Boolean @default(true)
+   allowedExtensions       String  @default("pdf, docx, xlsx, dwg, jpg, png, heic")
++  maxUploadSizeMb         Int     @default(50)
+   documentRetentionYears  Int     @default(10)
+ 
+   // Notifications
+diff --git a/src/app/(dashboard)/projects/[id]/field-progress/daily/actions.ts b/src/app/(dashboard)/projects/[id]/field-progress/daily/actions.ts
+index 39871dd..5239e97 100644
+--- a/src/app/(dashboard)/projects/[id]/field-progress/daily/actions.ts
++++ b/src/app/(dashboard)/projects/[id]/field-progress/daily/actions.ts
+@@ -56,10 +56,7 @@ export async function batchSaveDailyEntries(projectId: string, templateId: strin
+         itemId: { in: itemIds },
+         deletedAt: null,
+         status: "APPROVED",
+-        OR: [
+-          { entryDate: { lt: start } },
+-          { entryDate: { gte: end } }
+-        ]
++        entryDate: { lt: start }
+       },
+       _sum: { quantity: true }
+     });
+@@ -87,7 +84,10 @@ export async function batchSaveDailyEntries(projectId: string, templateId: strin
+       }
+ 
+       const existingEntry = existingEntries[0];
+-      // Removed assertFieldProgressEntryWritable to allow Admin corrections
++      
++      if (existingEntry && existingEntry.sourceType === "SITE_REPORT") {
++        throw new Error("D├▓ng n├áy ─æß║┐n tß╗½ B├ío c├ío hiß╗çn tr╞░ß╗¥ng. Kh├┤ng thß╗â sß╗¡a trß╗▒c tiß║┐p tß║íi m├án Nhß║¡p khß╗æi l╞░ß╗úng ng├áy. H├úy sß╗¡a b├ío c├ío gß╗æc hoß║╖c tß║ío ─æiß╗üu chß╗ënh c├│ l├╜ do.");
++      }
+ 
+       // Handle quantity = 0
+       if (quantityNum === 0) {
+@@ -169,6 +169,7 @@ export async function batchSaveDailyEntries(projectId: string, templateId: strin
+               itemId: e.itemId,
+               entryDate: start,
+               quantity,
++              sourceType: "MANUAL",
+               issueNote: e.issueNote,
+               proposalNote: e.proposalNote,
+               note: e.note,
+diff --git a/src/app/(dashboard)/reports/actions.ts b/src/app/(dashboard)/reports/actions.ts
+index f4bb91f..e70ebc9 100644
+--- a/src/app/(dashboard)/reports/actions.ts
++++ b/src/app/(dashboard)/reports/actions.ts
+@@ -153,7 +153,7 @@ async function buildDailyReportLines(input: {
+   const { getBulkWorkQuantityBalance } = await import("@/lib/field-progress/volume-balance");
+   const balances = await getBulkWorkQuantityBalance(input.client, input.projectId, itemIds, {
+     targetDate: reportWorkDate,
+-    excludeSourceMarker: input.existingReportId ? getReportProgressSourceMarker(input.existingReportId) : undefined,
++    excludeSourceReportId: input.existingReportId,
+   });
+ 
+   const built: BuiltDailyLine[] = [];
+@@ -162,11 +162,11 @@ async function buildDailyReportLines(input: {
+     const balance = balances.get(line.fieldProgressItemId)!;
+ 
+     const designQuantity = balance.plannedQuantity;
+-    const cumulativeBefore = balance.totalActiveEnteredQuantity;
++    const overallCumulativeBefore = balance.totalActiveEnteredQuantity;
+     
+     const guard = evaluateVolumeGuard({
+       designQuantity,
+-      cumulativeBefore,
++      cumulativeBefore: overallCumulativeBefore,
+       todayQuantity: line.quantityToday,
+       status: "SUBMITTED",
+       note: line.raw.note ? String(line.raw.note) : undefined,
+@@ -175,10 +175,11 @@ async function buildDailyReportLines(input: {
+     });
+     
+     if (!guard.canSubmit) {
+-      throw new Error(`Khß╗æi l╞░ß╗úng nhß║¡p v╞░ß╗út phß║ºn c├▓n lß║íi. Thiß║┐t kß║┐: ${designQuantity}, ─æ├ú nhß║¡p: ${cumulativeBefore}, c├▓n lß║íi: ${balance.remainingQuantity}.`);
++      throw new Error(`Khß╗æi l╞░ß╗úng nhß║¡p v╞░ß╗út phß║ºn c├▓n lß║íi. Thiß║┐t kß║┐: ${designQuantity}, ─æ├ú nhß║¡p: ${overallCumulativeBefore}, c├▓n lß║íi: ${balance.remainingQuantity}.`);
+     }
+ 
+-    const progressPercent = designQuantity > 0 ? Math.min(999.99, (guard.projectedCumulative / designQuantity) * 100) : 0;
++    const projectedCumulativeAtDate = balance.cumulativeBeforeDate + balance.sameDateEnteredQuantity + line.quantityToday;
++    const progressPercentAtDate = designQuantity > 0 ? Math.min(999.99, (projectedCumulativeAtDate / designQuantity) * 100) : 0;
+     built.push({
+       projectId: input.projectId,
+       fieldProgressItemId: item.id,
+@@ -189,9 +190,9 @@ async function buildDailyReportLines(input: {
+       quantityToday: new Decimal(line.quantityToday),
+       unit: item.unit || (line.raw.unit ? String(line.raw.unit) : null),
+       designQuantity: new Decimal(designQuantity),
+-      quantityBefore: new Decimal(cumulativeBefore),
+-      quantityCumulative: new Decimal(guard.projectedCumulative),
+-      progressPercent: new Decimal(progressPercent),
++      quantityBefore: new Decimal(balance.cumulativeBeforeDate),
++      quantityCumulative: new Decimal(projectedCumulativeAtDate),
++      progressPercent: new Decimal(progressPercentAtDate),
+       note: line.raw.note ? String(line.raw.note) : null,
+       issueNote: line.raw.issueNote ? String(line.raw.issueNote) : null,
+       proposalNote: line.raw.proposalNote ? String(line.raw.proposalNote) : null,
+@@ -247,11 +248,20 @@ export async function getProjectWorkItems(projectId: string, reportDate?: string
+       name: item.workContent || "Chua dat ten",
+       workContent: item.workContent || "Chua dat ten",
+       designQuantity: balance.plannedQuantity,
+-      approvedCumulative: balance.totalActiveEnteredQuantity, // Renaming field logically to total active
++      cumulativeBeforeDate: balance.cumulativeBeforeDate,
++      approvedCumulative: balance.cumulativeAfterDate,
++      cumulativeAfterDate: balance.cumulativeAfterDate,
+       todayQuantity: balance.sameDateEnteredQuantity,
+-      remainingQuantity: balance.remainingQuantity,
++      totalActiveEnteredQuantity: balance.totalActiveEnteredQuantity,
++      approvedQuantity: balance.approvedQuantity,
++      pendingQuantity: balance.pendingQuantity,
++      draftQuantity: balance.draftQuantity,
++      submittedQuantity: balance.submittedQuantity,
++      remainingQuantity: balance.remainingAtDate,
++      progressPercent: balance.progressPercentAtDate,
+       unit: item.unit || "Lan",
+-      status: item.status,
++      status: balance.status,
++      itemStatus: item.status,
+       source: "FIELD_PROGRESS",
+     };
+   });
+@@ -906,6 +916,15 @@ export async function getWeeklyReportSummary(projectId: string, start: Date, end
+   const hasProjectAccess = await canAccessProject(user, projectId);
+   if (!hasProjectAccess) throw new Error("Unauthorized");
+ 
++  const { getWeeklyProgressSummaryForProject } = await import("@/lib/reports/weekly-progress-summary");
++  return getWeeklyProgressSummaryForProject(prisma, {
++    projectId,
++    start,
++    end,
++    includeSubmitted: options?.includeSubmitted,
++    includeDraft: options?.includeDraft,
++  });
++
+   const fromDate = start.toISOString().split("T")[0];
+   const toDate = end.toISOString().split("T")[0];
+ 
+@@ -1110,10 +1129,16 @@ export async function createWeeklyReportFromApprovedDailyReports(input: {
+           create: preview.groups.flatMap(group => 
+             group.items.map(item => ({
+               projectId: input.projectId,
++              fieldProgressItemId: item.fieldProgressItemId || item.workItemId || null,
++              area: group.categoryName,
+               workContent: item.workContent,
+               workName: item.workContent,
+               unit: item.unit,
+-              quantityToday: item.quantity,
++              designQuantity: new Decimal(item.designQuantity || 0),
++              quantityBefore: new Decimal(item.quantityBeforeWeek || 0),
++              quantityCumulative: new Decimal(item.quantityToDate || 0),
++              progressPercent: new Decimal(item.progressPercent || 0),
++              quantityToday: new Decimal(item.quantityInWeek || item.quantity || 0),
+               note: `Hß║íng mß╗Ñc: ${group.categoryName}`
+             }))
+           ).map((line, index) => ({ ...line, sortOrder: index }))
+@@ -1314,6 +1339,15 @@ export async function softDeleteSiteReport(reportId: string) {
+   }
+ 
+   await prisma.$transaction(async (tx) => {
++    if (report.type === "DAILY") {
++      const { syncSiteReportProgressEntriesInTransaction } = await import("@/lib/reports/report-progress-sync");
++      await syncSiteReportProgressEntriesInTransaction(tx, {
++        reportId: report.id,
++        mode: "CANCEL",
++        actor: { id: policyUser.id, role: policyUser.role, name: session.name }
++      });
++    }
++
+     await tx.siteReport.update({
+       where: { id: reportId },
+       data: { deletedAt: new Date() }
+diff --git a/src/app/(dashboard)/reports/page.tsx b/src/app/(dashboard)/reports/page.tsx
+index 868035b..accdac2 100644
+--- a/src/app/(dashboard)/reports/page.tsx
++++ b/src/app/(dashboard)/reports/page.tsx
+@@ -22,6 +22,11 @@ const formatFileSize = (bytes: number | null | undefined | string | bigint) => {
+   return `${mb.toFixed(2)} MB`;
+ };
+ 
++const toNumber = (value: unknown) => {
++  const numberValue = Number(value ?? 0);
++  return Number.isFinite(numberValue) ? numberValue : 0;
++};
++
+ export const metadata = {
+   title: "B├ío c├ío hiß╗çn tr╞░ß╗¥ng | ERP C├┤ng tr├¼nh",
+   description: "Quß║ún l├╜, theo d├╡i v├á tß╗òng hß╗úp b├ío c├ío c├┤ng viß╗çc hß║▒ng ng├áy tß║íi c├┤ng tr╞░ß╗¥ng",
+@@ -103,9 +108,18 @@ export default async function ReportsPage({ searchParams }: { searchParams: { [k
+       id: l.id as string,
+       wbsItemId: (l.wbsItemId as string) || undefined,
+       fieldProgressItemId: (l.fieldProgressItemId as string) || undefined,
++      categoryName: (l.area as string) || undefined,
+       workContent: (l.workName as string) || (l.workContent as string),
+       unit: (l.unit as string) || undefined,
+-      quantityToday: l.quantityToday !== undefined && l.quantityToday !== null ? Number(l.quantityToday) : undefined,
++      designQuantity: toNumber(l.designQuantity),
++      quantityBefore: toNumber(l.quantityBefore),
++      quantityToday: l.quantityToday !== undefined && l.quantityToday !== null ? toNumber(l.quantityToday) : undefined,
++      quantityCumulative: toNumber(l.quantityCumulative),
++      remainingQuantity: Math.max(0, toNumber(l.designQuantity) - toNumber(l.quantityCumulative)),
++      progressPercent: toNumber(l.progressPercent),
++      quantityBeforeWeek: toNumber(l.quantityBefore),
++      quantityInWeek: toNumber(l.quantityToday),
++      quantityToDate: toNumber(l.quantityCumulative),
+       note: (l.note as string) || undefined,
+       proposalNote: (l.proposalNote as string) || undefined,
+       issueNote: (l.issueNote as string) || undefined,
+diff --git a/src/components/reports/create-dialog/selected-work-card.tsx b/src/components/reports/create-dialog/selected-work-card.tsx
+index 043f813..c84aa55 100644
+--- a/src/components/reports/create-dialog/selected-work-card.tsx
++++ b/src/components/reports/create-dialog/selected-work-card.tsx
+@@ -14,7 +14,7 @@ export function SelectedWorkCard({
+   removeWorkLine: (index: number) => void;
+ }) {
+   const design = Number(line.designQuantity || 0);
+-  const before = Number(line.approvedCumulative || 0); // This is now totalActiveEnteredQuantity
++  const before = Number(line.quantityBefore ?? line.cumulativeBeforeDate ?? 0);
+   const sameDay = Number(line.todayQuantity || 0);
+   const todayInput = Number(line.quantityToday || 0);
+   const remainingBeforeInput = Number(line.remainingQuantity || 0);
+@@ -23,7 +23,7 @@ export function SelectedWorkCard({
+   const isOver = todayInput > remainingBeforeInput;
+   const isDone = remainingBeforeInput <= 0 && todayInput === 0;
+ 
+-  const currentPercent = design > 0 ? Math.min(100, ((before + todayInput) / design) * 100).toFixed(2) : '0.00';
++  const currentPercent = design > 0 ? Math.min(100, ((before + sameDay + todayInput) / design) * 100).toFixed(2) : '0.00';
+ 
+   const inputClass = "w-full h-11 px-3 text-[14px] text-slate-900 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400";
+ 
+diff --git a/src/components/reports/create-dialog/weekly-report-form.tsx b/src/components/reports/create-dialog/weekly-report-form.tsx
+index 525338a..cc7d5b1 100644
+--- a/src/components/reports/create-dialog/weekly-report-form.tsx
++++ b/src/components/reports/create-dialog/weekly-report-form.tsx
+@@ -33,8 +33,23 @@ function formatDateVN(dateStr: string): string {
+ 
+ type WeeklyPreview = {
+   dayStatuses: { date: string; hasReport: boolean; approvedCount: number; submittedCount: number; draftCount: number; rejectedCount: number }[];
+-  stats: { approvedReports: number; submittedReports: number; rejectedReports: number; emptyDays: number; workLineCount: number; attachmentCount: number };
+-  groups: { categoryId: string; categoryName: string; items: { workContent: string; unit?: string; quantity: number; dates: string[] }[] }[];
++  stats: { approvedReports: number; submittedReports: number; rejectedReports: number; emptyDays: number; workLineCount: number; workItemCount?: number; attachmentCount: number; totalQuantityInWeek?: number };
++  groups: {
++    categoryId: string;
++    categoryName: string;
++    items: {
++      workContent: string;
++      unit?: string;
++      designQuantity: number;
++      quantityBeforeWeek: number;
++      quantityInWeek: number;
++      quantity: number;
++      quantityToDate: number;
++      remainingQuantity: number;
++      progressPercent: number;
++      dates: string[];
++    }[];
++  }[];
+   emptyReason: string | null;
+ };
+ 
+@@ -53,6 +68,12 @@ export function WeeklyReportForm({ form, updateField, errors }: WeeklyReportForm
+     updateField("weekEndDate", sunday);
+   }, [updateField]);
+ 
++  const setRelativeWeek = useCallback((offsetWeeks: number) => {
++    const base = new Date();
++    base.setDate(base.getDate() + offsetWeeks * 7);
++    handleWeekDatePick(base.toISOString().split("T")[0]);
++  }, [handleWeekDatePick]);
++
+   // Load preview when project + date range are set
+   useEffect(() => {
+     if (!form.projectId || !form.weekStartDate || !form.weekEndDate) {
+@@ -79,8 +100,6 @@ export function WeeklyReportForm({ form, updateField, errors }: WeeklyReportForm
+   }, [form.projectId, form.weekStartDate, form.weekEndDate]);
+ 
+   const totalWorkItems = preview?.groups?.reduce((acc, g) => acc + g.items.length, 0) || 0;
+-  const totalQuantity = preview?.groups?.reduce((acc, g) => acc + g.items.reduce((s, i) => s + i.quantity, 0), 0) || 0;
+-
+   return (
+     <div className="space-y-6">
+       {/* Section A: Tuß║ºn b├ío c├ío */}
+@@ -92,6 +111,18 @@ export function WeeklyReportForm({ form, updateField, errors }: WeeklyReportForm
+           <h3 className="font-bold text-indigo-800 text-[15px]">Tuß║ºn b├ío c├ío</h3>
+         </div>
+         <div className="p-5 space-y-4">
++          <div className="flex flex-wrap gap-2">
++            <button type="button" onClick={() => setRelativeWeek(-1)} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-bold text-slate-600 hover:bg-slate-50">
++              Tuan truoc
++            </button>
++            <button type="button" onClick={() => setRelativeWeek(0)} className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-[12px] font-bold text-indigo-700 hover:bg-indigo-100">
++              Tuan nay
++            </button>
++            <button type="button" onClick={() => setRelativeWeek(1)} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-bold text-slate-600 hover:bg-slate-50">
++              Tuan sau
++            </button>
++            <span className="text-[12px] text-slate-500 self-center">Co the chinh truc tiep tu ngay/den ngay neu can custom range.</span>
++          </div>
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+             <div className="space-y-1.5">
+               <label className="text-[13px] font-semibold text-slate-700">Chß╗ìn ng├áy trong tuß║ºn <span className="text-red-500">*</span></label>
+@@ -105,11 +136,11 @@ export function WeeklyReportForm({ form, updateField, errors }: WeeklyReportForm
+             </div>
+             <div className="space-y-1.5">
+               <label className="text-[13px] font-semibold text-slate-700">Tß╗½ ng├áy</label>
+-              <input type="date" value={form.weekStartDate || ""} readOnly className={`${inputClass} bg-slate-50 text-slate-600`} />
++              <input type="date" value={form.weekStartDate || ""} onChange={e => updateField("weekStartDate", e.target.value)} className={inputClass} />
+             </div>
+             <div className="space-y-1.5">
+               <label className="text-[13px] font-semibold text-slate-700">─Éß║┐n ng├áy</label>
+-              <input type="date" value={form.weekEndDate || ""} readOnly className={`${inputClass} bg-slate-50 text-slate-600`} />
++              <input type="date" value={form.weekEndDate || ""} onChange={e => updateField("weekEndDate", e.target.value)} className={inputClass} />
+             </div>
+           </div>
+           {form.weekStartDate && form.weekEndDate && (
+@@ -142,7 +173,7 @@ export function WeeklyReportForm({ form, updateField, errors }: WeeklyReportForm
+           ) : preview ? (
+             <div className="space-y-4">
+               {/* Stats grid */}
+-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
++              <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+                 <StatBadge label="Tß╗òng BC ng├áy" value={preview.dayStatuses.filter(d => d.hasReport).length} color="blue" />
+                 <StatBadge label="─É├ú duyß╗çt" value={preview.stats.approvedReports} color="emerald" />
+                 <StatBadge label="Chß╗¥ duyß╗çt" value={preview.stats.submittedReports} color="amber" />
+diff --git a/src/components/reports/create-dialog/work-picker.tsx b/src/components/reports/create-dialog/work-picker.tsx
+index e47e641..8a8ce1c 100644
+--- a/src/components/reports/create-dialog/work-picker.tsx
++++ b/src/components/reports/create-dialog/work-picker.tsx
+@@ -11,10 +11,18 @@ export type PickerWorkItem = {
+   workContent: string;
+   designQuantity: number;
+   approvedCumulative: number;
++  cumulativeBeforeDate: number;
++  cumulativeAfterDate: number;
++  totalActiveEnteredQuantity: number;
++  approvedQuantity: number;
++  pendingQuantity: number;
++  draftQuantity: number;
++  submittedQuantity: number;
+   todayQuantity: number;
+   remainingQuantity: number;
+   unit: string;
+   status: string;
++  itemStatus?: string;
+ };
+ 
+ export function WorkPicker({
+@@ -246,7 +254,14 @@ export function WorkPicker({
+                               </td>
+                               <td className="px-2 py-3 text-center font-medium text-slate-600">{item.unit}</td>
+                               <td className="px-4 py-3 text-right font-medium text-slate-600">{item.designQuantity}</td>
+-                              <td className="px-4 py-3 text-right font-medium text-emerald-600">{item.approvedCumulative}</td>
++                              <td className="px-4 py-3 text-right font-medium text-emerald-600">
++                                <div>{item.cumulativeAfterDate}</div>
++                                {(item.pendingQuantity > 0 || item.draftQuantity > 0) && (
++                                  <div className="text-[10px] font-semibold text-amber-600">
++                                    Cho/Draft: {item.pendingQuantity + item.draftQuantity}
++                                  </div>
++                                )}
++                              </td>
+                               <td className="px-4 py-3 text-right font-bold text-blue-600">{item.todayQuantity || 0}</td>
+                               <td className="px-4 py-3 text-right font-black text-slate-900">{item.remainingQuantity}</td>
+                               <td className="px-4 py-3 text-center">
+diff --git a/src/components/reports/create-report-dialog.tsx b/src/components/reports/create-report-dialog.tsx
+index 32d1e58..4e8f140 100644
+--- a/src/components/reports/create-report-dialog.tsx
++++ b/src/components/reports/create-report-dialog.tsx
+@@ -169,8 +169,16 @@ export function CreateReportDialog({
+         workContent: item.name,
+         unit: item.unit,
+         designQuantity: item.designQuantity,
+-        quantityBefore: item.approvedCumulative,
+-        approvedCumulative: item.approvedCumulative,
++        quantityBefore: item.cumulativeBeforeDate,
++        approvedCumulative: item.cumulativeAfterDate,
++        cumulativeBeforeDate: item.cumulativeBeforeDate,
++        cumulativeAfterDate: item.cumulativeAfterDate,
++        totalActiveEnteredQuantity: item.totalActiveEnteredQuantity,
++        approvedQuantity: item.approvedQuantity,
++        pendingQuantity: item.pendingQuantity,
++        draftQuantity: item.draftQuantity,
++        submittedQuantity: item.submittedQuantity,
++        todayQuantity: item.todayQuantity,
+         remainingQuantity: item.remainingQuantity,
+         quantityToday: 0,
+         note: "",
+@@ -264,11 +272,19 @@ export function CreateReportDialog({
+     name: w.name,
+     workContent: w.name,
+     designQuantity: Number(w.designQuantity || 0),
+-    approvedCumulative: Number(w.approvedCumulative || 0),
++    approvedCumulative: Number(w.cumulativeAfterDate ?? w.approvedCumulative ?? 0),
++    cumulativeBeforeDate: Number(w.cumulativeBeforeDate ?? 0),
++    cumulativeAfterDate: Number(w.cumulativeAfterDate ?? w.approvedCumulative ?? 0),
++    totalActiveEnteredQuantity: Number(w.totalActiveEnteredQuantity ?? w.cumulativeAfterDate ?? w.approvedCumulative ?? 0),
++    approvedQuantity: Number(w.approvedQuantity ?? 0),
++    pendingQuantity: Number(w.pendingQuantity ?? 0),
++    draftQuantity: Number(w.draftQuantity ?? 0),
++    submittedQuantity: Number(w.submittedQuantity ?? 0),
+     todayQuantity: Number(w.todayQuantity || 0),
+     remainingQuantity: Number(w.remainingQuantity || 0),
+     unit: w.unit || 'Lß║ºn',
+-    status: "OPEN"
++    status: w.status || "OPEN",
++    itemStatus: w.itemStatus,
+   }));
+ 
+   const canSaveDraft = !!form.projectId && (form.type === 'WEEKLY' ? !!form.weekStartDate : !!form.date);
+@@ -455,7 +471,8 @@ export function CreateReportDialog({
+                             <tbody className="text-[13px] align-top">
+                               {form.workLines.map((line, idx) => {
+                                 const design = Number(line.designQuantity || 0);
+-                                const before = Number(line.approvedCumulative || 0);
++                                const before = Number(line.quantityBefore ?? line.cumulativeBeforeDate ?? 0);
++                                const sameDay = Number(line.todayQuantity || 0);
+                                 const today = Number(line.quantityToday || 0);
+                                 const remaining = Number(line.remainingQuantity || 0);
+                                 const isOver = today > remaining;
+@@ -476,7 +493,7 @@ export function CreateReportDialog({
+                                     <td className="px-2 py-4 text-center font-medium text-slate-600">{line.unit}</td>
+                                     <td className="px-3 py-4 text-right">
+                                       <div className="font-medium text-slate-600">{design}</div>
+-                                      <div className="text-[11px] text-emerald-600 font-medium">{before}</div>
++                                      <div className="text-[11px] text-emerald-600 font-medium">{before + sameDay}</div>
+                                     </td>
+                                     <td className="px-3 py-4 text-right font-black text-slate-900">{remaining}</td>
+                                     <td className="px-4 py-3">
+diff --git a/src/components/reports/report-detail-drawer.tsx b/src/components/reports/report-detail-drawer.tsx
+index 70319bb..508e7c2 100644
+--- a/src/components/reports/report-detail-drawer.tsx
++++ b/src/components/reports/report-detail-drawer.tsx
+@@ -87,8 +87,14 @@ type DisplayWorkLine = {
+   workContent: string;
+   code?: string;
+   unit?: string;
++  designQuantity: number;
++  quantityBefore: number;
+   quantityToday: number;
++  quantityCumulative: number;
++  remainingQuantity: number;
++  progressPercent: number;
+   count: number;
++  dates: string[];
+   notes: string[];
+ };
+ 
+@@ -116,8 +122,14 @@ function buildDisplayWorkLines(report: FieldReport): DisplayWorkLine[] {
+       workContent: line.workContent || "C├┤ng viß╗çc ch╞░a r├╡",
+       code: getReadableWorkCode(line),
+       unit: line.unit,
++      designQuantity: Number(line.designQuantity || 0),
++      quantityBefore: Number(line.quantityBefore || line.cumulativeBeforeDate || 0),
+       quantityToday: Number(line.quantityToday || 0),
++      quantityCumulative: Number(line.quantityCumulative || line.cumulativeAfterDate || 0),
++      remainingQuantity: Number(line.remainingQuantity || 0),
++      progressPercent: Number(line.progressPercent || 0),
+       count: 1,
++      dates: line.dates || [],
+       notes: line.note && !isInternalReportLineNote(line.note) ? [line.note] : [],
+     }));
+   }
+@@ -135,15 +147,28 @@ function buildDisplayWorkLines(report: FieldReport): DisplayWorkLine[] {
+         workContent: line.workContent || "C├┤ng viß╗çc ch╞░a r├╡",
+         code,
+         unit: line.unit,
++        designQuantity: Number(line.designQuantity || 0),
++        quantityBefore: Number(line.quantityBefore || 0),
+         quantityToday: Number(line.quantityToday || 0),
++        quantityCumulative: Number(line.quantityCumulative || 0),
++        remainingQuantity: Number(line.remainingQuantity || 0),
++        progressPercent: Number(line.progressPercent || 0),
+         count: 1,
++        dates: line.dates || [],
+         notes: cleanNote ? [cleanNote] : [],
+       });
+       return;
+     }
+ 
+     existing.quantityToday += Number(line.quantityToday || 0);
++    existing.quantityBefore = Math.min(existing.quantityBefore, Number(line.quantityBefore || existing.quantityBefore || 0));
++    existing.quantityCumulative = Math.max(existing.quantityCumulative, Number(line.quantityCumulative || 0));
++    existing.remainingQuantity = Math.max(0, existing.designQuantity - existing.quantityCumulative);
++    existing.progressPercent = existing.designQuantity > 0 ? Math.min(999.99, (existing.quantityCumulative / existing.designQuantity) * 100) : 0;
+     existing.count += 1;
++    for (const date of line.dates || []) {
++      if (!existing.dates.includes(date)) existing.dates.push(date);
++    }
+     if (cleanNote && !existing.notes.includes(cleanNote)) {
+       existing.notes.push(cleanNote);
+     }
+@@ -489,6 +514,13 @@ export function ReportDetailDrawer({
+                           </p>
+                         </div>
+                       </div>
++                      <div className="mt-3 grid grid-cols-2 gap-2 rounded-lg bg-slate-50 p-2 text-[11px] text-slate-600">
++                        <span>TK: <strong>{formatReportQuantity(line.designQuantity)}</strong></span>
++                        <span>Truoc: <strong>{formatReportQuantity(line.quantityBefore)}</strong></span>
++                        <span>Luy ke: <strong>{formatReportQuantity(line.quantityCumulative)}</strong></span>
++                        <span>Con lai: <strong>{formatReportQuantity(line.remainingQuantity)}</strong></span>
++                        <span className="col-span-2">% HT: <strong>{formatReportQuantity(line.progressPercent)}%</strong></span>
++                      </div>
+                       {line.notes.length > 0 && (
+                         <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-600">
+                           {line.notes.slice(0, 2).map((note) => (
+@@ -505,7 +537,12 @@ export function ReportDetailDrawer({
+                     <thead className="bg-slate-50">
+                       <tr>
+                         <th className="border-b px-3 py-2 text-left font-semibold text-slate-600">Hß║íng mß╗Ñc / C├┤ng viß╗çc</th>
+-                        <th className="w-[96px] border-b px-3 py-2 text-right font-semibold text-slate-600">K.l╞░ß╗úng</th>
++                        <th className="w-[82px] border-b px-2 py-2 text-right font-semibold text-slate-600">TK</th>
++                        <th className="w-[82px] border-b px-2 py-2 text-right font-semibold text-slate-600">Truoc</th>
++                        <th className="w-[88px] border-b px-2 py-2 text-right font-semibold text-slate-600">{report.type === "WEEKLY" ? "Trong tuan" : "Hom nay"}</th>
++                        <th className="w-[88px] border-b px-2 py-2 text-right font-semibold text-slate-600">Luy ke</th>
++                        <th className="w-[82px] border-b px-2 py-2 text-right font-semibold text-slate-600">Con lai</th>
++                        <th className="w-[64px] border-b px-2 py-2 text-right font-semibold text-slate-600">%</th>
+                         <th className="w-[68px] border-b px-3 py-2 text-center font-semibold text-slate-600">─É.vß╗ï</th>
+                         {report.type === "WEEKLY" && (
+                           <th className="w-[92px] border-b px-3 py-2 text-center font-semibold text-slate-600">Ph├ít sinh</th>
+@@ -528,7 +565,12 @@ export function ReportDetailDrawer({
+                               <p key={note} className="mt-0.5 text-xs text-slate-500">{note}</p>
+                             ))}
+                           </td>
+-                          <td className="px-3 py-2 text-right font-semibold text-blue-600">{formatReportQuantity(line.quantityToday)}</td>
++                          <td className="px-2 py-2 text-right font-medium text-slate-600">{formatReportQuantity(line.designQuantity)}</td>
++                          <td className="px-2 py-2 text-right font-medium text-slate-600">{formatReportQuantity(line.quantityBefore)}</td>
++                          <td className="px-2 py-2 text-right font-semibold text-blue-600">{formatReportQuantity(line.quantityToday)}</td>
++                          <td className="px-2 py-2 text-right font-semibold text-emerald-700">{formatReportQuantity(line.quantityCumulative)}</td>
++                          <td className="px-2 py-2 text-right font-medium text-slate-700">{formatReportQuantity(line.remainingQuantity)}</td>
++                          <td className="px-2 py-2 text-right text-xs font-semibold text-slate-600">{formatReportQuantity(line.progressPercent)}%</td>
+                           <td className="px-3 py-2 text-center text-slate-500">{line.unit || "-"}</td>
+                           {report.type === "WEEKLY" && (
+                             <td className="px-3 py-2 text-center text-xs font-semibold text-slate-500">
+diff --git a/src/components/reports/report-print-template.tsx b/src/components/reports/report-print-template.tsx
+index 3fcd71e..9c85293 100644
+--- a/src/components/reports/report-print-template.tsx
++++ b/src/components/reports/report-print-template.tsx
+@@ -64,6 +64,12 @@ function formatVietnamDateShort(dateString: string) {
+   return dateString;
+ }
+ 
++function formatQuantity(value: unknown) {
++  const numberValue = Number(value ?? 0);
++  if (!Number.isFinite(numberValue)) return "-";
++  return numberValue.toLocaleString("vi-VN", { maximumFractionDigits: 2 });
++}
++
+ export function ReportPrintTemplate({ report }: ReportPrintTemplateProps) {
+   const isWeekly = report.type === "WEEKLY";
+   
+@@ -247,9 +253,14 @@ export function ReportPrintTemplate({ report }: ReportPrintTemplateProps) {
+                   </td>
+                   <td className="border border-black py-1 px-2 text-center">{normalizeVietnameseText(line.unit) || "-"}</td>
+                   <td className="border border-black py-1 px-2 text-right">
+-                    {line.quantityToday !== undefined && line.quantityToday !== null ? Number(line.quantityToday).toLocaleString('vi-VN') : "-"}
++                    {line.quantityToday !== undefined && line.quantityToday !== null ? formatQuantity(line.quantityToday) : "-"}
+                   </td>
+                   <td className="border border-black py-1 px-2 text-[12px]">
++                    <div className="text-[11px] leading-snug">
++                      TK: {formatQuantity(line.designQuantity)}; Truoc ky: {formatQuantity(line.quantityBefore)};
++                      Luy ke: {formatQuantity(line.quantityCumulative)}; Con lai: {formatQuantity(line.remainingQuantity)};
++                      HT: {formatQuantity(line.progressPercent)}%
++                    </div>
+                     {line.note && line.note !== "-" ? normalizeVietnameseText(line.note) : ""}
+                     {line.proposalNote && line.proposalNote !== "-" ? (
+                       <>
+diff --git a/src/components/reports/reports-workspace.tsx b/src/components/reports/reports-workspace.tsx
+index 5741650..490d931 100644
+--- a/src/components/reports/reports-workspace.tsx
++++ b/src/components/reports/reports-workspace.tsx
+@@ -697,6 +697,7 @@ export function ReportsWorkspace({
+         currentUser={currentUser}
+         mode={dialogMode}
+         initialReport={editReportData}
++        currentProjectId={projectFilter || globalContext?.selectedProjectId || undefined}
+       />
+ 
+       {/* Report Detail Drawer */}
+diff --git a/src/components/reports/types.ts b/src/components/reports/types.ts
+index 6999c8b..ff87710 100644
+--- a/src/components/reports/types.ts
++++ b/src/components/reports/types.ts
+@@ -3,7 +3,7 @@
+ 
+ import { computeReportStats, type ReportStats } from "@/lib/reports/report-stats";
+ 
+-export type ReportStatus = 'APPROVED' | 'SUBMITTED' | 'REJECTED' | 'REVISION_REQUESTED' | 'DRAFT';
++export type ReportStatus = 'APPROVED' | 'SUBMITTED' | 'REJECTED' | 'REVISION_REQUESTED' | 'DRAFT' | 'LOCKED' | 'CANCELLED';
+ 
+ export type WeatherCondition =
+   | "SUNNY"
+@@ -32,6 +32,19 @@ export interface ReportWorkLine {
+   quantityCumulative?: number;
+   approvedCumulative?: number;
+   todayQuantity?: number;
++  cumulativeBeforeDate?: number;
++  cumulativeAfterDate?: number;
++  totalActiveEnteredQuantity?: number;
++  approvedQuantity?: number;
++  pendingQuantity?: number;
++  draftQuantity?: number;
++  submittedQuantity?: number;
++  itemStatus?: string;
++  quantityBeforeWeek?: number;
++  quantityInWeek?: number;
++  quantityToDate?: number;
++  dates?: string[];
++  sourceReports?: { id: string; reportNo: string; date: string }[];
+   remainingQuantity?: number;
+   progressPercent?: number;
+   note?: string;
+@@ -193,6 +206,8 @@ export function getStatusLabel(status: ReportStatus): string {
+     case 'REVISION_REQUESTED': return 'Y├¬u cß║ºu chß╗ënh sß╗¡a';
+     case 'REJECTED': return 'Tß╗½ chß╗æi';
+     case 'DRAFT': return 'Nh├íp';
++    case 'LOCKED': return 'Da khoa';
++    case 'CANCELLED': return 'Da huy';
+     default: return status;
+   }
+ }
+@@ -203,7 +218,9 @@ export function getStatusVariant(status: ReportStatus): 'success' | 'warning' |
+     case 'SUBMITTED': return 'warning';
+     case 'REVISION_REQUESTED': return 'warning';
+     case 'REJECTED': return 'danger';
++    case 'CANCELLED': return 'danger';
+     case 'DRAFT': return 'neutral';
++    case 'LOCKED': return 'neutral';
+     default: return 'neutral';
+   }
+ }
+diff --git a/src/lib/field-progress/volume-balance.ts b/src/lib/field-progress/volume-balance.ts
+index 93dab17..48453ed 100644
+--- a/src/lib/field-progress/volume-balance.ts
++++ b/src/lib/field-progress/volume-balance.ts
+@@ -7,7 +7,7 @@ export type VolumeBalanceOptions = {
+    * Quantities from this report/entry will be EXCLUDED from the entered sum
+    * to avoid double-counting.
+    */
+-  excludeSourceMarker?: string;
++  excludeSourceReportId?: string;
+   
+   /**
+    * The target work date (YYYY-MM-DD). If provided, calculates `sameDateEnteredQuantity`
+@@ -16,18 +16,28 @@ export type VolumeBalanceOptions = {
+ };
+ 
+ export type VolumeBalanceResult = {
++  designQuantity: number;
+   plannedQuantity: number;
+-  totalActiveEnteredQuantity: number;
+-  sameDateEnteredQuantity: number;
+-  remainingQuantity: number;
+-  progressPercent: number;
++  totalActiveEnteredQuantity: number; // All dates total
++  todayQuantity: number; // Alias for sameDateEnteredQuantity for UI contract
++  sameDateEnteredQuantity: number; // Today only
++  cumulativeBeforeDate: number; // Total before target date
++  cumulativeAfterDate: number; // beforeDate + today
++  approvedQuantity: number;
++  submittedQuantity: number;
++  draftQuantity: number;
++  pendingQuantity: number;
++  remainingQuantity: number; // Overall remaining (planned - totalActiveAllDates)
++  remainingAtDate: number; // Remaining at target date
++  progressPercent: number; // Overall percent
++  progressPercentAtDate: number; // Percent at target date
++  status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" | "OVER";
+ };
+ 
+ const ACTIVE_STATUSES: FieldProgressEntryStatus[] = [
+   "DRAFT",
+   "SUBMITTED",
+-  "APPROVED",
+-  "REVISION_REQUESTED"
++  "APPROVED"
+ ];
+ 
+ export async function getBulkWorkQuantityBalance(
+@@ -70,7 +80,8 @@ export async function getBulkWorkQuantityBalance(
+       itemId: true,
+       quantity: true,
+       entryDate: true,
+-      note: true,
++      status: true,
++      sourceReportId: true,
+     }
+   });
+ 
+@@ -84,14 +95,14 @@ export async function getBulkWorkQuantityBalance(
+     targetEnd = range.end;
+   }
+ 
+-  const totalsMap = new Map<string, { total: number; sameDate: number }>();
++  const totalsMap = new Map<string, { total: number; sameDate: number; beforeDate: number; approved: number; submitted: number; draft: number }>();
+   for (const itemId of itemIds) {
+-    totalsMap.set(itemId, { total: 0, sameDate: 0 });
++    totalsMap.set(itemId, { total: 0, sameDate: 0, beforeDate: 0, approved: 0, submitted: 0, draft: 0 });
+   }
+ 
+   for (const entry of activeEntries) {
+-    // Exclude the entry if it matches the excludeSourceMarker (e.g. current report being edited)
+-    if (options?.excludeSourceMarker && entry.note?.includes(options.excludeSourceMarker)) {
++    // Exclude the entry if it matches the excludeSourceReportId (e.g. current report being edited)
++    if (options?.excludeSourceReportId && entry.sourceReportId === options.excludeSourceReportId) {
+       continue;
+     }
+ 
+@@ -100,6 +111,13 @@ export async function getBulkWorkQuantityBalance(
+     
+     if (itemTotals) {
+       itemTotals.total += qty;
++      if (entry.status === "APPROVED") itemTotals.approved += qty;
++      if (entry.status === "SUBMITTED") itemTotals.submitted += qty;
++      if (entry.status === "DRAFT") itemTotals.draft += qty;
++
++      if (targetStart && entry.entryDate < targetStart) {
++        itemTotals.beforeDate += qty;
++      }
+ 
+       if (
+         targetStart &&
+@@ -112,19 +130,46 @@ export async function getBulkWorkQuantityBalance(
+     }
+   }
+ 
+-  // 4. Calculate final balances
+   for (const itemId of itemIds) {
+     const planned = designQuantityMap.get(itemId) || 0;
+     const totals = totalsMap.get(itemId)!;
+-    const remaining = Math.max(0, planned - totals.total);
+-    const progressPercent = planned > 0 ? Math.min(999.99, (totals.total / planned) * 100) : 0;
++    
++    // Overall calculations
++    const remainingOverall = Math.max(0, planned - totals.total);
++    const progressPercentOverall = planned > 0 ? Math.min(999.99, (totals.total / planned) * 100) : 0;
++
++    // Date-bounded calculations
++    const beforeDate = targetStart ? totals.beforeDate : totals.total;
++    const sameDate = targetStart ? totals.sameDate : 0;
++    const afterDate = beforeDate + sameDate;
++    const remainingAtDate = Math.max(0, planned - afterDate);
++    const progressPercentAtDate = planned > 0 ? Math.min(999.99, (afterDate / planned) * 100) : 0;
++    const status =
++      totals.total > planned && planned > 0
++        ? "OVER"
++        : planned > 0 && totals.total >= planned
++          ? "COMPLETED"
++          : totals.total > 0
++            ? "IN_PROGRESS"
++            : "NOT_STARTED";
+ 
+     result.set(itemId, {
++      designQuantity: planned,
+       plannedQuantity: planned,
+       totalActiveEnteredQuantity: totals.total,
+-      sameDateEnteredQuantity: totals.sameDate,
+-      remainingQuantity: remaining,
+-      progressPercent: progressPercent,
++      cumulativeBeforeDate: beforeDate,
++      todayQuantity: sameDate,
++      sameDateEnteredQuantity: sameDate,
++      cumulativeAfterDate: afterDate,
++      approvedQuantity: totals.approved,
++      submittedQuantity: totals.submitted,
++      draftQuantity: totals.draft,
++      pendingQuantity: totals.submitted + totals.draft,
++      remainingQuantity: remainingOverall,
++      remainingAtDate: remainingAtDate,
++      progressPercent: progressPercentOverall,
++      progressPercentAtDate: progressPercentAtDate,
++      status,
+     });
+   }
+ 
+diff --git a/src/lib/reports/report-progress-sync.ts b/src/lib/reports/report-progress-sync.ts
+index 6c2ff11..1af0e52 100644
+--- a/src/lib/reports/report-progress-sync.ts
++++ b/src/lib/reports/report-progress-sync.ts
+@@ -126,7 +126,8 @@ async function syncCancelledOrRejectedEntries(
+     where: {
+       projectId: report.projectId,
+       deletedAt: null,
+-      note: { contains: getReportProgressSourceMarker(report.id) },
++      sourceType: "SITE_REPORT",
++      sourceReportId: report.id,
+     },
+   });
+ 
+@@ -138,6 +139,7 @@ async function syncCancelledOrRejectedEntries(
+         rejectedReason: targetStatus === "REVISION_REQUESTED" ? report.rejectedReason : null,
+         approvedAt: null,
+         approvedById: null,
++        deletedAt: targetStatus === "CANCELLED" ? new Date() : null,
+       },
+     });
+   }
+@@ -186,14 +188,11 @@ export async function syncSiteReportProgressEntriesInTransaction(
+     };
+   }
+ 
+-  if (input.mode === "CANCEL") {
++  if (input.mode === "CANCEL" || input.mode === "REJECT") {
++    // Reject and Cancel both remove quantities from balance
+     return syncCancelledOrRejectedEntries(tx, input, "CANCELLED", report);
+   }
+ 
+-  if (input.mode === "REJECT") {
+-    return syncCancelledOrRejectedEntries(tx, input, "REVISION_REQUESTED", report);
+-  }
+-
+   const progressLines = report.lines.filter((line) => Number(line.quantityToday || 0) > 0);
+   if (progressLines.length === 0) {
+     throw new Error("B├ío c├ío ng├áy cß║ºn ├¡t nhß║Ñt mß╗Öt d├▓ng khß╗æi l╞░ß╗úng lß╗¢n h╞ín 0");
+@@ -236,14 +235,16 @@ export async function syncSiteReportProgressEntriesInTransaction(
+ 
+   const { getBulkWorkQuantityBalance } = await import("@/lib/field-progress/volume-balance");
+   const balances = await getBulkWorkQuantityBalance(tx, report.projectId, itemIds, {
+-    excludeSourceMarker: getReportProgressSourceMarker(report.id),
++    excludeSourceReportId: report.id,
++    targetDate: reportWorkDate,
+   });
+ 
+   const existingEntries = await tx.fieldProgressEntry.findMany({
+     where: {
+       projectId: report.projectId,
+       itemId: { in: itemIds },
+-      note: { contains: getReportProgressSourceMarker(report.id) },
++      sourceType: "SITE_REPORT",
++      sourceReportId: report.id,
+       deletedAt: null,
+       status: { not: "CANCELLED" },
+     },
+@@ -259,14 +260,15 @@ export async function syncSiteReportProgressEntriesInTransaction(
+       projectId: report.projectId,
+       deletedAt: null,
+       status: { not: "CANCELLED" },
+-      note: { contains: getReportProgressSourceMarker(report.id) },
++      sourceType: "SITE_REPORT",
++      sourceReportId: report.id,
+       itemId: { notIn: itemIds },
+     },
+   });
+ 
+   let created = 0;
+   let updated = 0;
+-  let skipped = 0;
++  const skipped = 0;
+   let blocked = 0;
+   const errors: string[] = [];
+   const targetStatus: FieldProgressEntryStatus =
+@@ -279,6 +281,7 @@ export async function syncSiteReportProgressEntriesInTransaction(
+         status: "CANCELLED",
+         approvedAt: null,
+         approvedById: null,
++        deletedAt: new Date(),
+       },
+     });
+     updated++;
+@@ -291,13 +294,13 @@ export async function syncSiteReportProgressEntriesInTransaction(
+     
+     const balance = balances.get(itemId)!;
+     const designQuantity = balance.plannedQuantity;
+-    const cumulativeBefore = balance.totalActiveEnteredQuantity;
++    const overallCumulativeBefore = balance.totalActiveEnteredQuantity;
+ 
+     const existing = existingByItemId.get(itemId);
+ 
+     const guard = evaluateVolumeGuard({
+       designQuantity,
+-      cumulativeBefore,
++      cumulativeBefore: overallCumulativeBefore,
+       todayQuantity: quantityToday,
+       status: targetStatus,
+       note: line.note,
+@@ -307,11 +310,12 @@ export async function syncSiteReportProgressEntriesInTransaction(
+ 
+     if (!guard.canSubmit) {
+       blocked++;
+-      errors.push(`Khß╗æi l╞░ß╗úng nhß║¡p v╞░ß╗út phß║ºn c├▓n lß║íi cho c├┤ng viß╗çc ${item.code}. Thiß║┐t kß║┐: ${designQuantity}, ─æ├ú nhß║¡p: ${cumulativeBefore}, c├▓n lß║íi: ${balance.remainingQuantity}.`);
++      errors.push(`Khß╗æi l╞░ß╗úng nhß║¡p v╞░ß╗út phß║ºn c├▓n lß║íi cho c├┤ng viß╗çc ${item.code}. Thiß║┐t kß║┐: ${designQuantity}, ─æ├ú nhß║¡p: ${overallCumulativeBefore}, c├▓n lß║íi: ${balance.remainingQuantity}.`);
+       continue;
+     }
+ 
+-    const progressPercent = designQuantity > 0 ? Math.min(999.99, (guard.projectedCumulative / designQuantity) * 100) : 0;
++    const projectedCumulativeAtDate = balance.cumulativeBeforeDate + balance.sameDateEnteredQuantity + quantityToday;
++    const progressPercentAtDate = designQuantity > 0 ? Math.min(999.99, (projectedCumulativeAtDate / designQuantity) * 100) : 0;
+ 
+     await tx.siteReportLine.update({
+       where: { id: line.id },
+@@ -321,9 +325,9 @@ export async function syncSiteReportProgressEntriesInTransaction(
+         area: item.categoryName || line.area,
+         unit: item.unit || line.unit,
+         designQuantity: new Decimal(designQuantity),
+-        quantityBefore: new Decimal(cumulativeBefore),
+-        quantityCumulative: new Decimal(guard.projectedCumulative),
+-        progressPercent: new Decimal(progressPercent),
++        quantityBefore: new Decimal(balance.cumulativeBeforeDate),
++        quantityCumulative: new Decimal(projectedCumulativeAtDate),
++        progressPercent: new Decimal(progressPercentAtDate),
+       },
+     });
+ 
+@@ -333,6 +337,10 @@ export async function syncSiteReportProgressEntriesInTransaction(
+       itemId,
+       entryDate: start,
+       quantity: new Decimal(quantityToday),
++      sourceType: "SITE_REPORT",
++      sourceId: report.id,
++      sourceReportId: report.id,
++      sourceLineId: line.id,
+       issueNote: line.issueNote,
+       proposalNote: line.proposalNote,
+       note: buildEntryNote({
+@@ -340,7 +348,7 @@ export async function syncSiteReportProgressEntriesInTransaction(
+         reportId: report.id,
+         lineId: line.id,
+         qaTag: input.qaTag,
+-      }),
++      }), // note marker is kept for debug/legacy tracing only, not used in core logic
+       status: targetStatus,
+       submittedAt: new Date(),
+       approvedAt: targetStatus === "APPROVED" ? new Date() : null,

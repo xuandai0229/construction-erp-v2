@@ -56,10 +56,7 @@ export async function batchSaveDailyEntries(projectId: string, templateId: strin
         itemId: { in: itemIds },
         deletedAt: null,
         status: "APPROVED",
-        OR: [
-          { entryDate: { lt: start } },
-          { entryDate: { gte: end } }
-        ]
+        entryDate: { lt: start }
       },
       _sum: { quantity: true }
     });
@@ -87,7 +84,10 @@ export async function batchSaveDailyEntries(projectId: string, templateId: strin
       }
 
       const existingEntry = existingEntries[0];
-      // Removed assertFieldProgressEntryWritable to allow Admin corrections
+      
+      if (existingEntry && existingEntry.sourceType === "SITE_REPORT") {
+        throw new Error("Dòng này đến từ Báo cáo hiện trường. Không thể sửa trực tiếp tại màn Nhập khối lượng ngày. Hãy sửa báo cáo gốc hoặc tạo điều chỉnh có lý do.");
+      }
 
       // Handle quantity = 0
       if (quantityNum === 0) {
@@ -169,6 +169,7 @@ export async function batchSaveDailyEntries(projectId: string, templateId: strin
               itemId: e.itemId,
               entryDate: start,
               quantity,
+              sourceType: "MANUAL",
               issueNote: e.issueNote,
               proposalNote: e.proposalNote,
               note: e.note,

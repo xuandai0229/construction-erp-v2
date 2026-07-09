@@ -1,6 +1,7 @@
 import React from "react";
 import { X, AlertCircle } from "lucide-react";
 import { type ReportWorkLine } from "../types";
+import { formatPercentSafe } from "@/lib/reports/report-format-utils";
 
 export function SelectedWorkCard({
   line,
@@ -14,7 +15,7 @@ export function SelectedWorkCard({
   removeWorkLine: (index: number) => void;
 }) {
   const design = Number(line.designQuantity || 0);
-  const before = Number(line.approvedCumulative || 0); // This is now totalActiveEnteredQuantity
+  const before = Number(line.quantityBefore ?? line.cumulativeBeforeDate ?? 0);
   const sameDay = Number(line.todayQuantity || 0);
   const todayInput = Number(line.quantityToday || 0);
   const remainingBeforeInput = Number(line.remainingQuantity || 0);
@@ -23,7 +24,7 @@ export function SelectedWorkCard({
   const isOver = todayInput > remainingBeforeInput;
   const isDone = remainingBeforeInput <= 0 && todayInput === 0;
 
-  const currentPercent = design > 0 ? Math.min(100, ((before + todayInput) / design) * 100).toFixed(2) : '0.00';
+  const currentPercent = design > 0 ? formatPercentSafe(Math.min(100, ((before + sameDay + todayInput) / design) * 100), 2) : '0.00%';
 
   const inputClass = "w-full h-11 px-3 text-[14px] text-slate-900 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400";
 
@@ -48,7 +49,7 @@ export function SelectedWorkCard({
           <span className="bg-white border border-slate-200 text-slate-600 px-2 py-0.5 rounded-md font-medium shadow-sm">Đã nhập lũy kế: <strong className="text-slate-900">{before}</strong></span>
           {sameDay > 0 && <span className="bg-orange-50 border border-orange-100 text-orange-700 px-2 py-0.5 rounded-md font-medium shadow-sm">Đã nhập trong ngày: <strong className="font-bold">{sameDay}</strong></span>}
           <span className="bg-blue-50 border border-blue-100 text-blue-700 px-2 py-0.5 rounded-md font-bold shadow-sm">Còn lại: {remainingBeforeInput}</span>
-          <span className="bg-emerald-50 border border-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md font-bold shadow-sm">Tiến độ sau nhập: {currentPercent}%</span>
+          <span className="bg-emerald-50 border border-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md font-bold shadow-sm">Tiến độ sau nhập: {currentPercent}</span>
         </div>
       </div>
 

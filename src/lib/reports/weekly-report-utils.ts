@@ -1,5 +1,5 @@
 export type WeeklyGeneralNote = {
-  version: 1;
+  version: 2;
   weeklyAssessment?: {
     progressStatus?: "ON_TRACK" | "DELAYED" | "AHEAD" | "WATCHING";
     qualityStatus?: "PASSED" | "FAILED" | "NEED_RECHECK";
@@ -16,67 +16,74 @@ export type WeeklyGeneralNote = {
     fromDate?: string;
     toDate?: string;
   };
-  nextWeekPlanGroups?: {
-    categoryId?: string;
-    categoryName?: string;
-    items: {
-      workItemId?: string;
-      workContent: string;
-      plannedStartDate?: string;
-      plannedEndDate?: string;
-      plannedQuantity?: number;
-      unit?: string;
-      resources?: string;
-      materials?: string;
-      ownerName?: string;
-      qualitySafetyRequirement?: string;
-      acceptanceCriteria?: string;
-      riskNote?: string;
-      priority?: "HIGH" | "MEDIUM" | "LOW";
-    }[];
+  nextWeekPlan?: {
+    fieldProgressItemId: string;
+    workContent: string;
+    unit?: string;
+    remainingQuantity?: number;
+    plannedQuantityNextWeek?: number;
+    plannedStartDate?: string;
+    plannedEndDate?: string;
+    constructionCrew?: string;
+    materialNeeds?: string;
+    equipmentNeeds?: string;
+    riskNote?: string;
+    note?: string;
   }[];
   legacyNote?: string;
 };
 
 export function getDefaultWeeklyGeneralNote(): WeeklyGeneralNote {
-  return { version: 1 };
+  return { version: 2 };
 }
 
 export function parseWeeklyGeneralNote(noteStr: string | null | undefined): WeeklyGeneralNote {
   if (!noteStr) return getDefaultWeeklyGeneralNote();
   try {
     const parsed = JSON.parse(noteStr);
-    if (parsed && typeof parsed === "object" && parsed.version === 1) {
-      return parsed as WeeklyGeneralNote;
-    }
-    // Handle legacy unstructured nextWeekPlans logic or plain string
-    const fallback = getDefaultWeeklyGeneralNote();
     if (parsed && typeof parsed === "object") {
-      fallback.legacyNote = noteStr;
-      if (parsed.nextWeekPlans && Array.isArray(parsed.nextWeekPlans)) {
-        fallback.nextWeekPlanGroups = [
-          {
-            categoryId: "default",
-            categoryName: "Chưa phân hạng mục",
-            items: parsed.nextWeekPlans.map((p: any) => ({
-              workItemId: p.wbsItemId || undefined,
-              workContent: p.workContent || "Không rõ",
-              plannedQuantity: p.plannedQuantity ? Number(p.plannedQuantity) : undefined,
-              unit: p.unit || undefined,
-              resources: p.resources || undefined,
-            })),
+      if (parsed.version === 2) {
+        return parsed as WeeklyGeneralNote;
+      }
+      
+      // Upgrade from version 1 or unstructured
+      const fallback = getDefaultWeeklyGeneralNote();
+      if (parsed.version === 1) {
+        fallback.weeklyAssessment = parsed.weeklyAssessment;
+        fallback.performedWorkOverrides = parsed.performedWorkOverrides;
+        fallback.nextWeekPlanRange = parsed.nextWeekPlanRange;
+        fallback.legacyNote = parsed.legacyNote;
+        
+        if (parsed.nextWeekPlanGroups && Array.isArray(parsed.nextWeekPlanGroups)) {
+          const flatPlan: WeeklyGeneralNote['nextWeekPlan'] = [];
+          for (const g of parsed.nextWeekPlanGroups) {
+            if (g.items && Array.isArray(g.items)) {
+              for (const i of g.items) {
+                flatPlan.push({
+                  fieldProgressItemId: i.workItemId || "",
+                  workContent: i.workContent || "Không rõ",
+                  unit: i.unit,
+                  plannedQuantityNextWeek: Number(i.plannedQuantity || 0),
+                  plannedStartDate: i.plannedStartDate,
+                  plannedEndDate: i.plannedEndDate,
+                  constructionCrew: i.ownerName,
+                  materialNeeds: i.materials,
+                  equipmentNeeds: i.resources,
+                  riskNote: i.riskNote,
+                });
+              }
+            }
           }
-        ];
+          fallback.nextWeekPlan = flatPlan;
+        }
+      } else {
+        fallback.legacyNote = noteStr;
       }
-      if (parsed.nextWeekStartDate || parsed.nextWeekEndDate) {
-        fallback.nextWeekPlanRange = {
-          fromDate: parsed.nextWeekStartDate,
-          toDate: parsed.nextWeekEndDate
-        };
-      }
-    } else {
-      fallback.legacyNote = noteStr;
+      return fallback;
     }
+    
+    const fallback = getDefaultWeeklyGeneralNote();
+    fallback.legacyNote = noteStr;
     return fallback;
   } catch (e) {
     const fallback = getDefaultWeeklyGeneralNote();
@@ -87,4 +94,17 @@ export function parseWeeklyGeneralNote(noteStr: string | null | undefined): Week
 
 export function serializeWeeklyGeneralNote(note: WeeklyGeneralNote): string {
   return JSON.stringify(note);
+}
+
+export function assertWeeklyResultDateAllowed(params: {
+  weekStartDateStr?: string;
+  hasActualLines: boolean;
+}) {
+  if (!params.weekStartDateStr) return;
+  const tzOffset = 7 * 60 * 60 * 1000;
+  const todayVnStr = new Date(Date.now() + tzOffset).toISOString().split("T")[0];
+  const inputWeekStartStr = params.weekStartDateStr.split("T")[0];
+  if (inputWeekStartStr > todayVnStr && params.hasActualLines) {
+    throw new Error("Tuần này chưa xảy ra, chưa có báo cáo ngày để tổng hợp. Bạn chỉ có thể lập kế hoạch tuần tới.");
+  }
 }

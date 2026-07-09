@@ -6,6 +6,7 @@ import { StatusBadge, type StatusBadgeVariant } from "@/components/ui/status-bad
 import { DashboardEmptyState } from "./dashboard-empty-state";
 import { cn } from "@/lib/utils";
 import { getProjectStatusMeta } from "@/lib/project-status";
+import { ContentCard } from "@/components/ui/enterprise";
 
 const healthMeta: Record<DashboardProjectOverview["health"], { label: string; variant: StatusBadgeVariant; bar: string }> = {
   ON_TRACK: { label: "Đúng tiến độ", variant: "success", bar: "bg-emerald-600" },
@@ -17,7 +18,7 @@ const healthMeta: Record<DashboardProjectOverview["health"], { label: string; va
 
 export function DashboardProjectOverviewList({ projects }: { projects: DashboardProjectOverview[] }) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-950/[0.03]">
+    <ContentCard className="flex flex-col">
       <div className="flex flex-col gap-2 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
         <div>
           <h2 className="text-base font-bold text-slate-950">Tổng quan tiến độ công trình</h2>
@@ -69,6 +70,6 @@ export function DashboardProjectOverviewList({ projects }: { projects: Dashboard
           </div>
         )}
       </div>
-    </section>
+    </ContentCard>
   );
 }

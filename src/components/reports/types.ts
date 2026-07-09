@@ -3,7 +3,7 @@
 
 import { computeReportStats, type ReportStats } from "@/lib/reports/report-stats";
 
-export type ReportStatus = 'APPROVED' | 'SUBMITTED' | 'REJECTED' | 'REVISION_REQUESTED' | 'DRAFT';
+export type ReportStatus = 'APPROVED' | 'SUBMITTED' | 'REJECTED' | 'REVISION_REQUESTED' | 'DRAFT' | 'LOCKED' | 'CANCELLED';
 
 export type WeatherCondition =
   | "SUNNY"
@@ -32,6 +32,19 @@ export interface ReportWorkLine {
   quantityCumulative?: number;
   approvedCumulative?: number;
   todayQuantity?: number;
+  cumulativeBeforeDate?: number;
+  cumulativeAfterDate?: number;
+  totalActiveEnteredQuantity?: number;
+  approvedQuantity?: number;
+  pendingQuantity?: number;
+  draftQuantity?: number;
+  submittedQuantity?: number;
+  itemStatus?: string;
+  quantityBeforeWeek?: number;
+  quantityInWeek?: number;
+  quantityToDate?: number;
+  dates?: string[];
+  sourceReports?: { id: string; reportNo: string; date: string }[];
   remainingQuantity?: number;
   progressPercent?: number;
   note?: string;
@@ -193,6 +206,8 @@ export function getStatusLabel(status: ReportStatus): string {
     case 'REVISION_REQUESTED': return 'Yêu cầu chỉnh sửa';
     case 'REJECTED': return 'Từ chối';
     case 'DRAFT': return 'Nháp';
+    case 'LOCKED': return 'Da khoa';
+    case 'CANCELLED': return 'Da huy';
     default: return status;
   }
 }
@@ -203,7 +218,9 @@ export function getStatusVariant(status: ReportStatus): 'success' | 'warning' | 
     case 'SUBMITTED': return 'warning';
     case 'REVISION_REQUESTED': return 'warning';
     case 'REJECTED': return 'danger';
+    case 'CANCELLED': return 'danger';
     case 'DRAFT': return 'neutral';
+    case 'LOCKED': return 'neutral';
     default: return 'neutral';
   }
 }

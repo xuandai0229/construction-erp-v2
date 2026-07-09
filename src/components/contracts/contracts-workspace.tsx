@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Pencil, Search, Trash2, Eye, Plus, FileText, CheckCircle2, AlertCircle, BarChart3, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { EnterpriseTable, FilterBar, KpiCard, PageHeader, ContentCard } from "@/components/ui/enterprise";
 import type { ContractDto } from "@/app/(dashboard)/contracts/actions";
 import { ContractFormDialog } from "./contract-form-dialog";
 import { ContractDetailDrawer } from "./contract-detail-drawer";
@@ -173,18 +174,10 @@ export function ContractsWorkspace({ contracts, projects, suppliers, globalPermi
     { label: "Tổng giá trị", value: formatCurrency(totalValue), icon: BarChart3, tone: "indigo" as const },
   ];
 
-  const toneMap = {
-    blue: "bg-blue-50 text-blue-700 border-blue-100",
-    emerald: "bg-emerald-50 text-emerald-700 border-emerald-100",
-    amber: "bg-amber-50 text-amber-700 border-amber-100",
-    rose: "bg-rose-50 text-rose-700 border-rose-100",
-    indigo: "bg-indigo-50 text-indigo-700 border-indigo-100",
-  };
-
   return (
     <div className="app-page mx-auto max-w-[1400px] space-y-5">
       {/* Header */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-950/[0.03] sm:p-5">
+      <PageHeader>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Quản lý hợp đồng</h1>
@@ -199,7 +192,7 @@ export function ContractsWorkspace({ contracts, projects, suppliers, globalPermi
             </Button>
           )}
         </div>
-      </section>
+      </PageHeader>
 
       {/* Summary Cards */}
       {contracts.length > 0 && (
@@ -207,17 +200,14 @@ export function ContractsWorkspace({ contracts, projects, suppliers, globalPermi
           {summaryCards.map((card) => {
             const Icon = card.icon;
             return (
-              <div key={card.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-950/[0.03]">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="text-sm font-semibold text-slate-600">{card.label}</div>
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-xl border ${toneMap[card.tone]}`}>
-                    <Icon className="h-5 w-5" />
-                  </div>
-                </div>
-                <div className="mt-3 flex items-baseline gap-2">
-                  <span className={`text-2xl font-bold tracking-tight text-slate-950 ${card.tone === 'indigo' ? 'text-xl' : ''}`}>{card.value}</span>
-                </div>
-              </div>
+              <KpiCard
+                key={card.label}
+                label={card.label}
+                value={card.value}
+                tone={card.tone}
+                icon={<Icon className="h-5 w-5" />}
+                className={card.tone === "indigo" ? "[&>div:nth-child(2)]:text-xl" : undefined}
+              />
             );
           })}
         </div>
@@ -225,7 +215,7 @@ export function ContractsWorkspace({ contracts, projects, suppliers, globalPermi
 
       {/* Search & Filter */}
       {contracts.length > 0 && (
-        <div className="grid gap-3 lg:grid-cols-[1fr_auto_auto_auto] items-center">
+        <FilterBar className="grid gap-3 lg:grid-cols-[1fr_auto_auto_auto] items-center">
           <div className="relative w-full">
             <label htmlFor="contracts-search" className="sr-only">Tìm mã, tên hợp đồng, đối tác...</label>
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -273,13 +263,12 @@ export function ContractsWorkspace({ contracts, projects, suppliers, globalPermi
               ))}
             </select>
           </div>
-        </div>
+        </FilterBar>
       )}
 
       {/* Desktop Table */}
       {contracts.length > 0 && (
-        <div className="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-950/[0.03] lg:block">
-          <div className="overflow-x-auto">
+        <EnterpriseTable className="hidden lg:block">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 <tr>
@@ -319,14 +308,14 @@ export function ContractsWorkspace({ contracts, projects, suppliers, globalPermi
                         {contract.type === "CLIENT" ? (
                           <span className="text-slate-500 font-medium">Chủ đầu tư</span>
                         ) : contract.supplier ? (
-                          <div className="truncate max-w-[200px]" title={contract.supplier.name}>
+                          <div className="min-w-[150px] whitespace-normal" title={contract.supplier.name}>
                             {contract.supplier.name}
                           </div>
                         ) : (
                           <span className="text-amber-600 font-medium italic">Chưa chọn đối tác</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right font-mono font-bold text-blue-700">
+                      <td className="px-4 py-3 text-right font-mono font-bold text-blue-700 whitespace-nowrap">
                         {formatCurrency(contract.value)}
                       </td>
                       <td className="px-4 py-3 text-center">
@@ -337,7 +326,7 @@ export function ContractsWorkspace({ contracts, projects, suppliers, globalPermi
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <div className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-semibold ${statusInfo.color}`}>
+                        <div className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-semibold whitespace-nowrap ${statusInfo.color}`}>
                           <span className={`h-1.5 w-1.5 rounded-full ${statusInfo.dot}`} />
                           {statusInfo.label}
                         </div>
@@ -393,8 +382,7 @@ export function ContractsWorkspace({ contracts, projects, suppliers, globalPermi
                 )}
               </tbody>
             </table>
-          </div>
-        </div>
+        </EnterpriseTable>
       )}
 
       {/* Mobile Cards */}
@@ -404,7 +392,7 @@ export function ContractsWorkspace({ contracts, projects, suppliers, globalPermi
             const displayStatus = getContractDisplayStatus(contract.status, contract.endDate);
             const statusInfo = STATUS_MAP[displayStatus] || STATUS_MAP.DRAFT;
             return (
-              <article key={contract.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-950/[0.03]">
+              <ContentCard key={contract.id} className="p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <button 
@@ -466,7 +454,7 @@ export function ContractsWorkspace({ contracts, projects, suppliers, globalPermi
                     <span className="text-amber-600 font-medium italic">Chưa chọn đối tác</span>
                   )}
                 </div>
-              </article>
+              </ContentCard>
             );
           })}
           {filtered.length === 0 && (

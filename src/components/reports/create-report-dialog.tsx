@@ -6,11 +6,13 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { GeneralInfoCard } from "./create-dialog/general-info-card";
 import { WorkPicker, type PickerWorkItem } from "./create-dialog/work-picker";
 import { SelectedWorkCard } from "./create-dialog/selected-work-card";
+import { ContentCard } from "@/components/ui/enterprise";
 import { ResourcesAndQuality } from "./create-dialog/resources-and-quality";
 import { AttachmentsCard } from "./create-dialog/attachments-card";
 import { WeeklyReportForm } from "./create-dialog/weekly-report-form";
 import { type CreateReportFormData, type FieldReport, type ReportWorkLine } from "./types";
 import { getProjectWorkItems } from "@/app/(dashboard)/reports/actions";
+import { formatNumberSafe } from "@/lib/reports/report-format-utils";
 
 interface CreateReportDialogProps {
   isOpen: boolean;
@@ -66,6 +68,7 @@ export function CreateReportDialog({
   const [showConfirmClose, setShowConfirmClose] = useState(false);
   const [workItemsData, setWorkItemsData] = useState<any[]>([]);
   const [isLoadingItems, setIsLoadingItems] = useState(false);
+  const [activeWeeklyTab, setActiveWeeklyTab] = useState<"result" | "plan" | "notes">("result");
   const [isPickerOpen, setIsPickerOpen] = useState(false);
 
   // Load Initial Data
@@ -169,8 +172,16 @@ export function CreateReportDialog({
         workContent: item.name,
         unit: item.unit,
         designQuantity: item.designQuantity,
-        quantityBefore: item.approvedCumulative,
-        approvedCumulative: item.approvedCumulative,
+        quantityBefore: item.cumulativeBeforeDate,
+        approvedCumulative: item.cumulativeAfterDate,
+        cumulativeBeforeDate: item.cumulativeBeforeDate,
+        cumulativeAfterDate: item.cumulativeAfterDate,
+        totalActiveEnteredQuantity: item.totalActiveEnteredQuantity,
+        approvedQuantity: item.approvedQuantity,
+        pendingQuantity: item.pendingQuantity,
+        draftQuantity: item.draftQuantity,
+        submittedQuantity: item.submittedQuantity,
+        todayQuantity: item.todayQuantity,
         remainingQuantity: item.remainingQuantity,
         quantityToday: 0,
         note: "",
@@ -264,11 +275,19 @@ export function CreateReportDialog({
     name: w.name,
     workContent: w.name,
     designQuantity: Number(w.designQuantity || 0),
-    approvedCumulative: Number(w.approvedCumulative || 0),
+    approvedCumulative: Number(w.cumulativeAfterDate ?? w.approvedCumulative ?? 0),
+    cumulativeBeforeDate: Number(w.cumulativeBeforeDate ?? 0),
+    cumulativeAfterDate: Number(w.cumulativeAfterDate ?? w.approvedCumulative ?? 0),
+    totalActiveEnteredQuantity: Number(w.totalActiveEnteredQuantity ?? w.cumulativeAfterDate ?? w.approvedCumulative ?? 0),
+    approvedQuantity: Number(w.approvedQuantity ?? 0),
+    pendingQuantity: Number(w.pendingQuantity ?? 0),
+    draftQuantity: Number(w.draftQuantity ?? 0),
+    submittedQuantity: Number(w.submittedQuantity ?? 0),
     todayQuantity: Number(w.todayQuantity || 0),
     remainingQuantity: Number(w.remainingQuantity || 0),
     unit: w.unit || 'Lần',
-    status: "OPEN"
+    status: w.status || "OPEN",
+    itemStatus: w.itemStatus,
   }));
 
   const canSaveDraft = !!form.projectId && (form.type === 'WEEKLY' ? !!form.weekStartDate : !!form.date);
@@ -276,7 +295,7 @@ export function CreateReportDialog({
 
   return (
     <>
-      <div className="fixed inset-0 z-[80] flex items-start justify-center bg-slate-900/60 backdrop-blur-sm sm:p-4 animate-in fade-in duration-200 overflow-hidden">
+      <div role="dialog" aria-modal="true" className="fixed inset-0 z-[80] flex items-start justify-center bg-slate-900/60 backdrop-blur-sm sm:p-4 animate-in fade-in duration-200 overflow-hidden">
         <div className="bg-slate-50 w-full h-full sm:h-auto sm:max-h-full sm:rounded-2xl shadow-2xl flex flex-col relative w-[calc(100vw-16px)] md:w-[min(1180px,calc(100vw-48px))] max-w-6xl overflow-hidden animate-in zoom-in-95 duration-300">
           
           {/* Sticky Header */}
@@ -333,7 +352,7 @@ export function CreateReportDialog({
                   </div>
                   <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
                     <div className="bg-emerald-50 p-2.5 rounded-lg text-emerald-600"><CheckCircle2 className="w-5 h-5" /></div>
-                    <div><p className="text-[11px] font-bold text-slate-400 uppercase">Tổng KL nhập</p><p className="font-bold text-slate-800 text-[18px] leading-tight">{totalQtyToday.toLocaleString()}</p></div>
+                    <div><p className="text-[11px] font-bold text-slate-400 uppercase">Tổng KL nhập</p><p className="font-bold text-slate-800 text-[18px] leading-tight">{formatNumberSafe(totalQtyToday)}</p></div>
                   </div>
                   <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
                     <div className="bg-purple-50 p-2.5 rounded-lg text-purple-600"><FileImage className="w-5 h-5" /></div>
@@ -370,7 +389,7 @@ export function CreateReportDialog({
 
               {/* Work Lines Section (Only for DAILY) */}
               {form.type === 'DAILY' && (
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden" id="work-lines-section">
+                <ContentCard id="work-lines-section" className="overflow-hidden p-0 sm:p-0">
                   <div className="bg-slate-50/80 px-5 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sticky top-0 z-10">
                     <div className="flex items-center gap-2.5">
                       <div className="bg-blue-100 p-1.5 rounded-lg text-blue-600">
@@ -455,7 +474,8 @@ export function CreateReportDialog({
                             <tbody className="text-[13px] align-top">
                               {form.workLines.map((line, idx) => {
                                 const design = Number(line.designQuantity || 0);
-                                const before = Number(line.approvedCumulative || 0);
+                                const before = Number(line.quantityBefore ?? line.cumulativeBeforeDate ?? 0);
+                                const sameDay = Number(line.todayQuantity || 0);
                                 const today = Number(line.quantityToday || 0);
                                 const remaining = Number(line.remainingQuantity || 0);
                                 const isOver = today > remaining;
@@ -476,7 +496,7 @@ export function CreateReportDialog({
                                     <td className="px-2 py-4 text-center font-medium text-slate-600">{line.unit}</td>
                                     <td className="px-3 py-4 text-right">
                                       <div className="font-medium text-slate-600">{design}</div>
-                                      <div className="text-[11px] text-emerald-600 font-medium">{before}</div>
+                                      <div className="text-[11px] text-emerald-600 font-medium">{before + sameDay}</div>
                                     </td>
                                     <td className="px-3 py-4 text-right font-black text-slate-900">{remaining}</td>
                                     <td className="px-4 py-3">
@@ -541,15 +561,23 @@ export function CreateReportDialog({
                       </div>
                     )}
                   </div>
-                </div>
+                </ContentCard>
               )}
 
               {form.type === 'WEEKLY' && (
-                <WeeklyReportForm form={form} updateField={updateField} errors={errors} />
+                <WeeklyReportForm 
+                  form={form} 
+                  updateField={updateField} 
+                  errors={errors} 
+                  workItems={workItemsData}
+                  activeTab={activeWeeklyTab}
+                  setActiveTab={setActiveWeeklyTab}
+                />
               )}
 
               {/* Photos & Attachments */}
-              <AttachmentsCard
+              {(form.type === 'DAILY' || (form.type === 'WEEKLY' && activeWeeklyTab === 'notes')) && (
+                <AttachmentsCard
                 photos={form.photos}
                 attachments={form.attachments}
                 onAddPhotos={e => {
@@ -571,6 +599,7 @@ export function CreateReportDialog({
                   });
                 }}
               />
+              )}
 
               {/* Resources & Quality - only for DAILY, WEEKLY has its own sections */}
               {form.type === 'DAILY' && (
@@ -587,7 +616,7 @@ export function CreateReportDialog({
                 {!form.projectId ? (
                   <span className="text-red-500">Vui lòng chọn công trình trước</span>
                 ) : form.type === 'WEEKLY' ? (
-                  <span className="text-slate-500">Báo cáo tuần tổng hợp theo khoảng thời gian đã chọn. Có thể lưu nháp nếu dữ liệu ngày chưa đầy đủ.</span>
+                  <span className="text-slate-500">Báo cáo tuần tổng hợp kết quả thực hiện trong kỳ đã chọn. Kế hoạch tuần sau không cộng vào khối lượng thực tế.</span>
                 ) : (
                   <span className="text-slate-500">Có thể lưu nháp trước, bổ sung khối lượng sau. Gửi báo cáo cần ít nhất 1 công việc.</span>
                 )}

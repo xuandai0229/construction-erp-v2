@@ -5,6 +5,7 @@ import { ArrowDownRight, ArrowUpRight, Search } from "lucide-react";
 import type { ProjectStockDto } from "@/app/(dashboard)/materials/actions";
 import { StockStatusBadge } from "./materials-badges";
 import { formatDate, formatQuantity, getStockStatus } from "./materials-formatters";
+import { ContentCard, EnterpriseTable } from "@/components/ui/enterprise";
 
 interface MaterialsStockTableProps {
   stocks: ProjectStockDto[];
@@ -112,55 +113,53 @@ export function MaterialsStockTable({ stocks, onTransaction, permissions }: Mate
         </div>
       </div>
 
-      <div className="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-950/[0.03] md:block">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[920px] text-left text-sm">
-            <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              <tr>
-                <th className="px-4 py-3">Mã VT</th>
-                <th className="px-4 py-3">Tên vật tư</th>
-                <th className="px-4 py-3">Nhóm</th>
-                <th className="px-4 py-3 text-right">Tồn kho</th>
-                <th className="px-4 py-3 text-right">Tồn tối thiểu</th>
-                <th className="px-4 py-3 text-center">Trạng thái</th>
-                <th className="px-4 py-3">Cập nhật</th>
-                {hasActions && <th className="px-4 py-3 text-right">Thao tác</th>}
+      <EnterpriseTable className="hidden md:block">
+        <table className="w-full min-w-[920px] text-left text-sm">
+          <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <tr>
+              <th className="px-4 py-3">Mã VT</th>
+              <th className="px-4 py-3">Tên vật tư</th>
+              <th className="px-4 py-3">Nhóm</th>
+              <th className="px-4 py-3 text-right">Tồn kho</th>
+              <th className="px-4 py-3 text-right">Tồn tối thiểu</th>
+              <th className="px-4 py-3 text-center">Trạng thái</th>
+              <th className="px-4 py-3">Cập nhật</th>
+              {hasActions && <th className="px-4 py-3 text-right">Thao tác</th>}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {filtered.map((stock) => (
+              <tr key={stock.id} className="transition hover:bg-slate-50/70">
+                <td className="px-4 py-3 font-mono text-xs font-semibold text-slate-500">{stock.materialItem.code}</td>
+                <td className="px-4 py-3 font-semibold text-slate-950">{stock.materialItem.name}</td>
+                <td className="px-4 py-3 text-slate-600">{stock.materialItem.group || "Chưa phân loại"}</td>
+                <td className="px-4 py-3 text-right font-mono font-bold text-slate-950">
+                  {formatQuantity(stock.stock)} <span className="font-sans text-xs font-medium text-slate-500">{stock.materialItem.unit}</span>
+                </td>
+                <td className="px-4 py-3 text-right font-mono text-slate-700">
+                  {formatQuantity(stock.minStockLevel)} <span className="font-sans text-xs font-medium text-slate-500">{stock.materialItem.unit}</span>
+                </td>
+                <td className="px-4 py-3 text-center"><StockStatusBadge stock={stock.stock} minStockLevel={stock.minStockLevel} /></td>
+                <td className="px-4 py-3 text-xs font-medium text-slate-500">{formatDate(stock.lastUpdated)}</td>
+                {hasActions && <td className="px-4 py-3">{actionButtons(stock)}</td>}
               </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filtered.map((stock) => (
-                <tr key={stock.id} className="transition hover:bg-slate-50/70">
-                  <td className="px-4 py-3 font-mono text-xs font-semibold text-slate-500">{stock.materialItem.code}</td>
-                  <td className="px-4 py-3 font-semibold text-slate-950">{stock.materialItem.name}</td>
-                  <td className="px-4 py-3 text-slate-600">{stock.materialItem.group || "Chưa phân loại"}</td>
-                  <td className="px-4 py-3 text-right font-mono font-bold text-slate-950">
-                    {formatQuantity(stock.stock)} <span className="font-sans text-xs font-medium text-slate-500">{stock.materialItem.unit}</span>
-                  </td>
-                  <td className="px-4 py-3 text-right font-mono text-slate-700">
-                    {formatQuantity(stock.minStockLevel)} <span className="font-sans text-xs font-medium text-slate-500">{stock.materialItem.unit}</span>
-                  </td>
-                  <td className="px-4 py-3 text-center"><StockStatusBadge stock={stock.stock} minStockLevel={stock.minStockLevel} /></td>
-                  <td className="px-4 py-3 text-xs font-medium text-slate-500">{formatDate(stock.lastUpdated)}</td>
-                  {hasActions && <td className="px-4 py-3">{actionButtons(stock)}</td>}
-                </tr>
-              ))}
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-500">
-                    {stocks.length === 0 
-                      ? "Chưa có tồn kho."
-                      : "Không tìm thấy vật tư phù hợp với bộ lọc."}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            ))}
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-500">
+                  {stocks.length === 0 
+                    ? "Chưa có tồn kho."
+                    : "Không tìm thấy vật tư phù hợp với bộ lọc."}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </EnterpriseTable>
 
       <div className="space-y-3 md:hidden">
         {filtered.map((stock) => (
-          <article key={stock.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-950/[0.03]">
+          <ContentCard key={stock.id} className="p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="font-bold text-slate-950">{stock.materialItem.name}</div>
@@ -186,10 +185,10 @@ export function MaterialsStockTable({ stocks, onTransaction, permissions }: Mate
               <span className="text-xs font-medium text-slate-500">Cập nhật {formatDate(stock.lastUpdated)}</span>
               {hasActions && actionButtons(stock)}
             </div>
-          </article>
+          </ContentCard>
         ))}
         {filtered.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
+          <div className="rounded-[14px] lg:rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
             {stocks.length === 0 
               ? "Chưa có tồn kho."
               : "Không tìm thấy vật tư phù hợp với bộ lọc."}

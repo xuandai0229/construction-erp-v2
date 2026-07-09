@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 
 import { formatStatusLabel } from '@/lib/dashboard/dashboard-formatters';
+import { ContentCard } from '@/components/ui/enterprise';
 
 function getHealthBadge(health: DashboardProjectOverview['health']) {
   switch (health) {
@@ -38,7 +39,7 @@ export function ExecutiveProjectProgress({
   projects: DashboardProjectOverview[]
 }) {
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
+    <ContentCard id="project-progress" className="flex h-full flex-col overflow-hidden hover:shadow-md transition-shadow duration-200 scroll-mt-24">
       {/* Header is ONLY for Table Mode. In Summary Mode, we integrate it into the layout */}
       {projects.length > 1 && (
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 shrink-0">
@@ -217,6 +218,6 @@ export function ExecutiveProjectProgress({
           </div>
         ))}
       </div>
-    </div>
+    </ContentCard>
   );
 }

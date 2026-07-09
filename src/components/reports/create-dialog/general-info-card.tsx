@@ -1,6 +1,7 @@
 import React from "react";
 import { Info, MapPin } from "lucide-react";
 import { type CreateReportFormData, WEATHER_OPTIONS } from "../types";
+import { ContentCard } from "@/components/ui/enterprise";
 
 export function GeneralInfoCard({
   form,
@@ -34,7 +35,7 @@ export function GeneralInfoCard({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <ContentCard className="overflow-hidden p-0 sm:p-0">
       <div className="bg-slate-50/80 px-5 py-3.5 border-b border-slate-200 flex items-center gap-2.5">
         <div className="bg-blue-100 p-1.5 rounded-lg text-blue-600">
           <Info className="w-4 h-4" />
@@ -59,7 +60,7 @@ export function GeneralInfoCard({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-[13px] font-semibold text-slate-700">Ngày <span className="text-red-500">*</span></label>
+            <label className="text-[13px] font-semibold text-slate-700">Ngày lập báo cáo <span className="text-red-500">*</span></label>
             <input
               type="date"
               value={form.date}
@@ -137,6 +138,6 @@ export function GeneralInfoCard({
           </div>
         </div>
       </div>
-    </div>
+    </ContentCard>
   );
 }

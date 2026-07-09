@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { ArrowDownRight, ArrowUpRight, PackagePlus, Pencil, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ContentCard, EnterpriseTable } from "@/components/ui/enterprise";
 import type { MaterialItemDto, ProjectStockDto } from "@/app/(dashboard)/materials/actions";
 import { formatQuantity } from "./materials-formatters";
 
@@ -115,64 +116,62 @@ export function MaterialsCatalog({ materialItems, stocks, onAddMaterial, onTrans
         )}
       </div>
 
-      <div className="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-950/[0.03] md:block">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              <tr>
-                <th className="px-4 py-3">Mã VT</th>
-                <th className="px-4 py-3">Tên vật tư</th>
-                <th className="px-4 py-3">Đơn vị</th>
-                <th className="px-4 py-3">Nhóm</th>
-                <th className="px-4 py-3 text-right">Tồn kho</th>
-                {hasActions && <th className="px-4 py-3 text-right">Thao tác</th>}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filtered.map((material) => {
-                const stock = stockByMaterialId.get(material.id);
-                return (
-                  <tr key={material.id} className="transition hover:bg-slate-50/70">
-                    <td className="px-4 py-3 font-mono text-xs font-semibold text-slate-500">{material.code}</td>
-                    <td className="px-4 py-3 font-semibold text-slate-950">{material.name}</td>
-                    <td className="px-4 py-3 text-slate-600">{material.unit}</td>
-                    <td className="px-4 py-3 text-slate-600">{material.group || "Chưa phân loại"}</td>
-                    <td className="px-4 py-3 text-right font-mono font-semibold text-slate-950">
-                      {stock ? `${formatQuantity(stock.stock)} ${material.unit}` : <span className="text-xs font-medium font-sans text-slate-400">0</span>}
-                    </td>
-                    {hasActions && <td className="px-4 py-3">{renderActions(material, stock)}</td>}
-                  </tr>
-                );
-              })}
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-500">
-                    {materialItems.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center space-y-3">
-                        <p>Chưa có vật tư.</p>
-                        {permissions.canCreate && (
-                          <Button onClick={onAddMaterial} variant="outline" size="sm">
-                            <PackagePlus className="mr-2 h-4 w-4" />
-                            Thêm vật tư đầu tiên
-                          </Button>
-                        )}
-                      </div>
-                    ) : (
-                      "Không tìm thấy vật tư phù hợp."
-                    )}
+      <EnterpriseTable className="hidden md:block">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <tr>
+              <th className="px-4 py-3">Mã VT</th>
+              <th className="px-4 py-3">Tên vật tư</th>
+              <th className="px-4 py-3">Đơn vị</th>
+              <th className="px-4 py-3">Nhóm</th>
+              <th className="px-4 py-3 text-right">Tồn kho</th>
+              {hasActions && <th className="px-4 py-3 text-right">Thao tác</th>}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {filtered.map((material) => {
+              const stock = stockByMaterialId.get(material.id);
+              return (
+                <tr key={material.id} className="transition hover:bg-slate-50/70">
+                  <td className="px-4 py-3 font-mono text-xs font-semibold text-slate-500">{material.code}</td>
+                  <td className="px-4 py-3 font-semibold text-slate-950">{material.name}</td>
+                  <td className="px-4 py-3 text-slate-600">{material.unit}</td>
+                  <td className="px-4 py-3 text-slate-600">{material.group || "Chưa phân loại"}</td>
+                  <td className="px-4 py-3 text-right font-mono font-semibold text-slate-950">
+                    {stock ? `${formatQuantity(stock.stock)} ${material.unit}` : <span className="text-xs font-medium font-sans text-slate-400">0</span>}
                   </td>
+                  {hasActions && <td className="px-4 py-3">{renderActions(material, stock)}</td>}
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+              );
+            })}
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-500">
+                  {materialItems.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center space-y-3">
+                      <p>Chưa có vật tư.</p>
+                      {permissions.canCreate && (
+                        <Button onClick={onAddMaterial} variant="outline" size="sm">
+                          <PackagePlus className="mr-2 h-4 w-4" />
+                          Thêm vật tư đầu tiên
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    "Không tìm thấy vật tư phù hợp."
+                  )}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </EnterpriseTable>
 
       <div className="space-y-3 md:hidden">
         {filtered.map((material) => {
           const stock = stockByMaterialId.get(material.id);
           return (
-            <article key={material.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-950/[0.03]">
+            <ContentCard key={material.id} className="p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="font-bold text-slate-950">{material.name}</div>
@@ -194,11 +193,11 @@ export function MaterialsCatalog({ materialItems, stocks, onAddMaterial, onTrans
                 </div>
               </div>
               {hasActions && <div className="mt-4">{renderActions(material, stock)}</div>}
-            </article>
+            </ContentCard>
           );
         })}
         {filtered.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
+          <div className="rounded-[14px] lg:rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
             {materialItems.length === 0 ? (
               <div className="flex flex-col items-center justify-center space-y-3">
                 <p>Chưa có vật tư.</p>

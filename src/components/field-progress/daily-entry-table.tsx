@@ -772,7 +772,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-1 flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
               <div>
-                <h2 className="text-xl font-bold text-slate-900">Nhập khối lượng theo ngày</h2>
+                <h2 className="text-xl font-bold text-slate-900">Theo dõi khối lượng theo ngày</h2>
                 <p className="text-sm text-slate-500">Công trình: {projectLabel}</p>
               </div>
               <Button
@@ -842,6 +842,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
                   {dateStatus}
                 </StatusBadge>
               </div>
+              <p className="text-xs font-semibold text-amber-600 mt-1">Nguồn dữ liệu ưu tiên từ Báo cáo hiện trường. Bạn chỉ nên điều chỉnh kỹ thuật tại đây.</p>
             </div>
             <Button
               onClick={() => setShowQuickAdd(true)}

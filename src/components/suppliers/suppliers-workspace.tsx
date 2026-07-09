@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Pencil, Phone, Search, Trash2, UserPlus, Users, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { EnterpriseTable, FilterBar, KpiCard, PageHeader, ContentCard } from "@/components/ui/enterprise";
 import type { SupplierDto } from "@/app/(dashboard)/suppliers/actions";
 import type { SupplierPermissionSet } from "@/lib/suppliers/suppliers-permissions";
 import { SupplierFormDialog } from "./supplier-form-dialog";
@@ -102,12 +103,6 @@ export function SuppliersWorkspace({ suppliers, permissions }: SuppliersWorkspac
     { label: "Có SĐT", value: withPhone, unit: "", tone: "indigo" as const },
   ];
 
-  const toneMap = {
-    blue: "bg-blue-50 text-blue-700 border-blue-100",
-    emerald: "bg-emerald-50 text-emerald-700 border-emerald-100",
-    indigo: "bg-indigo-50 text-indigo-700 border-indigo-100",
-  };
-
   const toneIconMap = {
     blue: Users,
     emerald: UserPlus,
@@ -117,7 +112,7 @@ export function SuppliersWorkspace({ suppliers, permissions }: SuppliersWorkspac
   return (
     <div className="app-page mx-auto max-w-[1400px] space-y-5">
       {/* Header */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-950/[0.03] sm:p-5">
+      <PageHeader>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Nhà cung cấp & thầu phụ</h1>
@@ -132,7 +127,7 @@ export function SuppliersWorkspace({ suppliers, permissions }: SuppliersWorkspac
             </Button>
           )}
         </div>
-      </section>
+      </PageHeader>
 
       {/* Summary Cards */}
       {suppliers.length > 0 && (
@@ -140,17 +135,13 @@ export function SuppliersWorkspace({ suppliers, permissions }: SuppliersWorkspac
           {summaryCards.map((card) => {
             const Icon = toneIconMap[card.tone];
             return (
-              <div key={card.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-950/[0.03]">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="text-sm font-semibold text-slate-600">{card.label}</div>
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-xl border ${toneMap[card.tone]}`}>
-                    <Icon className="h-5 w-5" />
-                  </div>
-                </div>
-                <div className="mt-3 flex items-baseline gap-2">
-                  <span className="text-2xl font-bold tracking-tight text-slate-950">{card.value}</span>
-                </div>
-              </div>
+              <KpiCard
+                key={card.label}
+                label={card.label}
+                value={card.value}
+                tone={card.tone}
+                icon={<Icon className="h-5 w-5" />}
+              />
             );
           })}
         </div>
@@ -158,7 +149,7 @@ export function SuppliersWorkspace({ suppliers, permissions }: SuppliersWorkspac
 
       {/* Search & Filter */}
       {suppliers.length > 0 && (
-        <div className="grid gap-3 md:grid-cols-[minmax(0,420px)_auto] md:items-center md:justify-between">
+        <FilterBar className="grid gap-3 md:grid-cols-[minmax(0,420px)_auto] md:items-center md:justify-between">
           <div className="relative">
             <label htmlFor="suppliers-search" className="sr-only">Tìm tên, SĐT, MST...</label>
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -174,13 +165,12 @@ export function SuppliersWorkspace({ suppliers, permissions }: SuppliersWorkspac
           <div className="text-sm font-medium text-slate-500">
             {filtered.length} / {suppliers.length} đối tác
           </div>
-        </div>
+        </FilterBar>
       )}
 
       {/* Desktop Table */}
       {suppliers.length > 0 && (
-        <div className="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-950/[0.03] md:block">
-          <div className="overflow-x-auto">
+        <EnterpriseTable className="hidden md:block">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 <tr>
@@ -265,15 +255,14 @@ export function SuppliersWorkspace({ suppliers, permissions }: SuppliersWorkspac
                 )}
               </tbody>
             </table>
-          </div>
-        </div>
+        </EnterpriseTable>
       )}
 
       {/* Mobile Cards */}
       {suppliers.length > 0 && (
         <div className="space-y-3 md:hidden">
           {filtered.map((supplier) => (
-            <article key={supplier.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-950/[0.03]">
+            <ContentCard key={supplier.id} className="p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <button 
@@ -344,10 +333,10 @@ export function SuppliersWorkspace({ suppliers, permissions }: SuppliersWorkspac
               {supplier.address && (
                 <div className="mt-2 truncate text-xs text-slate-500">{supplier.address}</div>
               )}
-            </article>
+            </ContentCard>
           ))}
           {filtered.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
+            <div className="rounded-[14px] lg:rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
               Không tìm thấy đối tác phù hợp.
             </div>
           )}

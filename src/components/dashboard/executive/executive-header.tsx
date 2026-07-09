@@ -37,20 +37,27 @@ export function ExecutiveHeader({ data }: { data: DashboardData }) {
 
       <div className="relative z-20 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between px-6 py-6 lg:px-9 lg:py-8 max-w-full sm:max-w-[58%]">
         <div className="flex flex-col gap-4">
-          <div className="space-y-1.5">
-            <h1 className="text-[28px] font-extrabold tracking-tight bg-gradient-to-br from-slate-950 via-slate-800 to-slate-600 bg-clip-text text-transparent drop-shadow-sm">
+          <div className="space-y-1.5 pr-2">
+            <h1 className="text-2xl sm:text-[28px] font-extrabold tracking-tight bg-gradient-to-br from-slate-950 via-slate-800 to-slate-600 bg-clip-text text-transparent drop-shadow-sm leading-tight">
               Tổng quan điều hành hôm nay
             </h1>
-            <p className="text-[13.5px] font-medium text-slate-500 flex items-center">
+            <div className="text-[13.5px] font-medium text-slate-500 flex flex-wrap items-center gap-3 pt-1">
               <ExecutiveLiveClock />
-            </p>
+              <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-100 bg-white/80 px-2 py-0.5 shadow-sm backdrop-blur-md">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Live</span>
+              </div>
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3.5 mt-1">
+          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3.5 mt-2">
             <Link
               href="#action-items"
               className={cn(
-                "group relative flex items-center gap-2.5 rounded-full border px-4 py-2 text-[13px] font-bold transition-all duration-300 ease-out overflow-hidden",
+                "group relative flex items-center gap-2 sm:gap-2.5 rounded-full border px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-[13px] font-bold transition-all duration-300 ease-out overflow-hidden",
                 pendingActions > 0
                   ? "border-amber-200/60 bg-gradient-to-b from-amber-50/90 to-amber-100/50 text-amber-800 shadow-[0_4px_16px_rgba(251,191,36,0.15)] hover:shadow-[0_6px_20px_rgba(251,191,36,0.25)] hover:-translate-y-0.5"
                   : "border-slate-200/60 bg-white/60 backdrop-blur-md text-slate-600 shadow-[0_2px_10px_rgba(15,23,42,0.03)] hover:bg-white/90 hover:shadow-[0_4px_16px_rgba(15,23,42,0.06)] hover:-translate-y-0.5"
@@ -64,7 +71,7 @@ export function ExecutiveHeader({ data }: { data: DashboardData }) {
             <Link
               href="#project-progress"
               className={cn(
-                "group relative flex items-center gap-2.5 rounded-full border px-4 py-2 text-[13px] font-bold transition-all duration-300 ease-out overflow-hidden",
+                "group relative flex items-center gap-2 sm:gap-2.5 rounded-full border px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-[13px] font-bold transition-all duration-300 ease-out overflow-hidden",
                 atRiskProjects > 0
                   ? "border-rose-200/60 bg-gradient-to-b from-rose-50/90 to-rose-100/50 text-rose-800 shadow-[0_4px_16px_rgba(244,63,94,0.15)] hover:shadow-[0_6px_20px_rgba(244,63,94,0.25)] hover:-translate-y-0.5"
                   : "border-slate-200/60 bg-white/60 backdrop-blur-md text-slate-600 shadow-[0_2px_10px_rgba(15,23,42,0.03)] hover:bg-white/90 hover:shadow-[0_4px_16px_rgba(15,23,42,0.06)] hover:-translate-y-0.5"
@@ -78,7 +85,7 @@ export function ExecutiveHeader({ data }: { data: DashboardData }) {
             <Link
               href={data.selectedProjectId ? `/approvals?projectId=${data.selectedProjectId}&status=PENDING` : `/approvals?status=PENDING`}
               className={cn(
-                "group relative flex items-center gap-2.5 rounded-full border px-4 py-2 text-[13px] font-bold transition-all duration-300 ease-out overflow-hidden",
+                "group relative flex items-center gap-2 sm:gap-2.5 rounded-full border px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-[13px] font-bold transition-all duration-300 ease-out overflow-hidden",
                 pendingApprovals > 0
                   ? "border-blue-200/60 bg-gradient-to-b from-blue-50/90 to-blue-100/50 text-blue-800 shadow-[0_4px_16px_rgba(59,130,246,0.15)] hover:shadow-[0_6px_20px_rgba(59,130,246,0.25)] hover:-translate-y-0.5"
                   : "border-slate-200/60 bg-white/60 backdrop-blur-md text-slate-600 shadow-[0_2px_10px_rgba(15,23,42,0.03)] hover:bg-white/90 hover:shadow-[0_4px_16px_rgba(15,23,42,0.06)] hover:-translate-y-0.5"
@@ -92,14 +99,6 @@ export function ExecutiveHeader({ data }: { data: DashboardData }) {
         </div>
       </div>
 
-      {/* Absolute LIVE badge relative to the entire section */}
-      <div className="absolute right-7 top-7 flex shrink-0 items-center gap-2 rounded-full border border-emerald-100 bg-white/80 px-3 py-1.5 shadow-[0_8px_24px_rgba(16,185,129,0.12)] backdrop-blur-md z-30">
-        <span className="relative flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-        </span>
-        <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Live</span>
-      </div>
     </section>
   );
 }

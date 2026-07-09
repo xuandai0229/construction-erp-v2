@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { formatStatusLabel } from '@/lib/dashboard/dashboard-formatters';
 import { ExecutiveSmallIcon, type IconColorTone } from './executive-icon';
+import { ContentCard } from '@/components/ui/enterprise';
 
 function getStatusBadge(statusRaw: string, hasIssue: boolean) {
   const status = formatStatusLabel(statusRaw) || statusRaw;
@@ -43,7 +44,7 @@ export function ExecutiveSiteReportHighlights({
   const displayReports = reports.slice(0, 3);
 
   return (
-    <div className="flex flex-col h-full rounded-[20px] border border-slate-200/70 bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+    <ContentCard className="flex flex-col h-full hover:shadow-md transition-shadow overflow-hidden">
       <div className="flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4 shrink-0">
         <h3 className="font-bold text-slate-900">Báo cáo hiện trường nổi bật</h3>
         <Link href="/reports" className="flex items-center gap-1 text-[13px] font-medium text-blue-600 hover:text-blue-700">
@@ -57,7 +58,7 @@ export function ExecutiveSiteReportHighlights({
             Không có báo cáo nổi bật
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             {displayReports.map((report) => (
               <Link 
                 key={report.id} 
@@ -72,11 +73,11 @@ export function ExecutiveSiteReportHighlights({
                     <div className="mt-0.5">
                       <ExecutiveSmallIcon icon={Calendar} tone={getIconTone(report.status, report.hasIssue)} />
                     </div>
-                    <div className="flex flex-col">
+                    <div className="flex flex-col min-w-0 flex-1">
                       <span className="text-[13px] font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1" title={report.title}>
                         {report.title}
                       </span>
-                      <span className="text-[12px] font-medium text-slate-500 line-clamp-1">
+                      <span className="text-[12px] font-medium text-slate-500 line-clamp-1 truncate" title={report.projectName}>
                         {report.projectName}
                       </span>
                     </div>
@@ -94,6 +95,6 @@ export function ExecutiveSiteReportHighlights({
           </div>
         )}
       </div>
-    </div>
+    </ContentCard>
   );
 }

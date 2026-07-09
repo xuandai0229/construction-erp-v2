@@ -11,10 +11,18 @@ export type PickerWorkItem = {
   workContent: string;
   designQuantity: number;
   approvedCumulative: number;
+  cumulativeBeforeDate: number;
+  cumulativeAfterDate: number;
+  totalActiveEnteredQuantity: number;
+  approvedQuantity: number;
+  pendingQuantity: number;
+  draftQuantity: number;
+  submittedQuantity: number;
   todayQuantity: number;
   remainingQuantity: number;
   unit: string;
   status: string;
+  itemStatus?: string;
 };
 
 export function WorkPicker({
@@ -107,7 +115,7 @@ export function WorkPicker({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[85] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-2 sm:p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[85] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-2 sm:p-4 animate-in fade-in duration-200" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl flex flex-col h-[95vh] max-h-[900px] animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
         <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 rounded-t-2xl shrink-0">
           <div>
@@ -246,7 +254,14 @@ export function WorkPicker({
                               </td>
                               <td className="px-2 py-3 text-center font-medium text-slate-600">{item.unit}</td>
                               <td className="px-4 py-3 text-right font-medium text-slate-600">{item.designQuantity}</td>
-                              <td className="px-4 py-3 text-right font-medium text-emerald-600">{item.approvedCumulative}</td>
+                              <td className="px-4 py-3 text-right font-medium text-emerald-600">
+                                <div>{item.cumulativeAfterDate}</div>
+                                {(item.pendingQuantity > 0 || item.draftQuantity > 0) && (
+                                  <div className="text-[10px] font-semibold text-amber-600">
+                                    Cho/Draft: {item.pendingQuantity + item.draftQuantity}
+                                  </div>
+                                )}
+                              </td>
                               <td className="px-4 py-3 text-right font-bold text-blue-600">{item.todayQuantity || 0}</td>
                               <td className="px-4 py-3 text-right font-black text-slate-900">{item.remainingQuantity}</td>
                               <td className="px-4 py-3 text-center">

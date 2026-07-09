@@ -1,17 +1,18 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { format } from "date-fns";
+import { formatNumberSafe } from "@/lib/reports/report-format-utils";
+import {
+  formatProgressPercentDisplay,
+  formatProgressQuantityDisplay,
+  normalizeReportProgressLine,
+} from "@/lib/reports/report-progress-display";
 import {
   X,
-  Calendar,
-  User,
   MapPin,
   FileText,
   TrendingUp,
   Package,
-  Users,
-  Wrench,
   AlertTriangle,
   Lightbulb,
   Camera,
@@ -36,11 +37,14 @@ import {
 } from "lucide-react";
 import type { FieldReport, ApprovalHistoryEntry, WeatherCondition } from "./types";
 import { getStatusLabel, getStatusVariant, WEATHER_OPTIONS } from "./types";
-import { formatDateVN, formatTimeVN, formatReportCode } from "@/lib/utils";
+import { formatDateVN, formatTimeVN } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
+import { ActionFooter } from "@/components/ui/action-footer";
+import { AppDrawer } from "@/components/ui/app-drawer";
 import { useToast } from "@/components/ui/toast-context";
 import { getProjectStatusMeta } from "@/lib/project-status";
+import { ContentCard } from "@/components/ui/enterprise";
 
 interface ReportDetailDrawerProps {
   report: FieldReport | null;
@@ -87,8 +91,16 @@ type DisplayWorkLine = {
   workContent: string;
   code?: string;
   unit?: string;
+  designQuantity: number;
+  quantityBefore: number;
   quantityToday: number;
+  quantityCumulative: number;
+  remainingQuantity: number | null;
+  progressPercent: number | null;
+  hasDesignQuantity?: boolean;
+  inferredCumulative?: boolean;
   count: number;
+  dates: string[];
   notes: string[];
 };
 
@@ -116,8 +128,14 @@ function buildDisplayWorkLines(report: FieldReport): DisplayWorkLine[] {
       workContent: line.workContent || "Công việc chưa rõ",
       code: getReadableWorkCode(line),
       unit: line.unit,
+      designQuantity: Number(line.designQuantity || 0),
+      quantityBefore: Number(line.quantityBefore || line.cumulativeBeforeDate || 0),
       quantityToday: Number(line.quantityToday || 0),
+      quantityCumulative: Number(line.quantityCumulative || line.cumulativeAfterDate || 0),
+      remainingQuantity: Number(line.remainingQuantity || 0),
+      progressPercent: Number(line.progressPercent || 0),
       count: 1,
+      dates: line.dates || [],
       notes: line.note && !isInternalReportLineNote(line.note) ? [line.note] : [],
     }));
   }
@@ -135,15 +153,28 @@ function buildDisplayWorkLines(report: FieldReport): DisplayWorkLine[] {
         workContent: line.workContent || "Công việc chưa rõ",
         code,
         unit: line.unit,
+        designQuantity: Number(line.designQuantity || 0),
+        quantityBefore: Number(line.quantityBefore || 0),
         quantityToday: Number(line.quantityToday || 0),
+        quantityCumulative: Number(line.quantityCumulative || 0),
+        remainingQuantity: Number(line.remainingQuantity || 0),
+        progressPercent: Number(line.progressPercent || 0),
         count: 1,
+        dates: line.dates || [],
         notes: cleanNote ? [cleanNote] : [],
       });
       return;
     }
 
     existing.quantityToday += Number(line.quantityToday || 0);
+    existing.quantityBefore = Math.min(existing.quantityBefore, Number(line.quantityBefore || existing.quantityBefore || 0));
+    existing.quantityCumulative = Math.max(existing.quantityCumulative, Number(line.quantityCumulative || 0));
+    existing.remainingQuantity = Math.max(0, existing.designQuantity - existing.quantityCumulative);
+    existing.progressPercent = existing.designQuantity > 0 ? Math.min(999.99, (existing.quantityCumulative / existing.designQuantity) * 100) : 0;
     existing.count += 1;
+    for (const date of line.dates || []) {
+      if (!existing.dates.includes(date)) existing.dates.push(date);
+    }
     if (cleanNote && !existing.notes.includes(cleanNote)) {
       existing.notes.push(cleanNote);
     }
@@ -152,24 +183,32 @@ function buildDisplayWorkLines(report: FieldReport): DisplayWorkLine[] {
   return Array.from(grouped.values());
 }
 
-function formatReportQuantity(value: number) {
-  return new Intl.NumberFormat("vi-VN", {
-    maximumFractionDigits: 2,
-  }).format(value);
+function getDisplayProgressLine(line: DisplayWorkLine, reportType: FieldReport["type"]) {
+  return normalizeReportProgressLine({
+    reportType,
+    designQuantity: line.designQuantity,
+    quantityBefore: line.quantityBefore,
+    quantityToday: line.quantityToday,
+    quantityCumulative: line.quantityCumulative,
+    remainingQuantity: line.remainingQuantity,
+    progressPercent: line.progressPercent,
+  });
 }
 
 function DetailSection({ title, icon, children, empty }: DetailSectionProps) {
   if (empty) return null;
   return (
-    <div className="space-y-2">
-      <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-        {icon}
-        {title}
-      </h4>
-      <div className="text-sm text-slate-600 leading-relaxed whitespace-pre-line pl-0 sm:pl-6">
+    <ContentCard className="overflow-hidden p-0 sm:p-0 mb-4">
+      <div className="bg-slate-50/80 px-5 py-3.5 border-b border-slate-200 flex items-center gap-2.5">
+        <div className="p-1.5 rounded-lg border border-slate-200 bg-white shadow-sm flex items-center justify-center">
+          {icon}
+        </div>
+        <h3 className="font-bold text-slate-800 text-[15px]">{title}</h3>
+      </div>
+      <div className="p-5 text-sm text-slate-600 leading-relaxed whitespace-pre-line">
         {children}
       </div>
-    </div>
+    </ContentCard>
   );
 }
 
@@ -283,7 +322,6 @@ export function ReportDetailDrawer({
 
   useEffect(() => {
     if (isOpen && report) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRejectMode(false);
       setRejectReason("");
       
@@ -346,7 +384,16 @@ export function ReportDetailDrawer({
     setIsProcessing(false);
   }
 
-  const weatherLabel = WEATHER_OPTIONS.find(o => o.value === report.weatherCondition)?.label || "Khác";
+  function handlePrintAction() {
+    if (!report) return;
+    onClose();
+    if (onPrintPreview) {
+      onPrintPreview(report);
+      return;
+    }
+    window.open(`/print/reports/${report.id}`, '_blank');
+  }
+
   const projectStatusMeta = getProjectStatusMeta(report.projectStatus);
 
   const displayWorkLines = buildDisplayWorkLines(report);
@@ -375,21 +422,23 @@ export function ReportDetailDrawer({
     ["ADMIN", "DIRECTOR"].includes(currentUser.role || "");
 
   return (
-    <div
-      className={`fixed inset-0 z-50 flex justify-end bg-slate-900/20 transition-all duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-      onClick={!isProcessing ? onClose : undefined}
+    <AppDrawer
+      isOpen={isOpen}
+      onClose={!isProcessing ? onClose : undefined}
+      ariaLabel="Chi tiết báo cáo hiện trường"
+      panelClassName="sm:max-w-3xl lg:max-w-5xl xl:max-w-6xl"
+      closeOnOverlayClick={!isProcessing}
     >
       <div
-        role="dialog"
-        aria-modal="true"
         aria-label="Chi tiết báo cáo hiện trường"
-        className={`flex h-full w-full max-w-xl flex-col bg-white shadow-2xl transition-transform duration-300 ease-out sm:max-w-2xl ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        className="flex min-h-0 flex-1 flex-col bg-white"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 sm:px-6 py-3 border-b border-slate-200 shrink-0 bg-white">
-          <div className="min-w-0">
+        {/* ─── Sticky Header ─── */}
+        <div className="sticky top-0 z-20 flex items-start justify-between gap-4 border-b border-slate-200 bg-white/95 px-4 py-4 shadow-[0_1px_3px_rgba(15,23,42,0.06)] backdrop-blur-sm sm:px-6 sm:rounded-t-2xl">
+          <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-base font-bold text-slate-900 truncate" title={report.reportNo}>{report.code}</h2>
+              <h2 className="text-lg font-bold text-slate-950 truncate sm:text-xl" title={report.reportNo}>{report.code}</h2>
               <StatusBadge variant={getStatusVariant(report.status)} size="sm">
                 {getStatusLabel(report.status)}
               </StatusBadge>
@@ -400,28 +449,36 @@ export function ReportDetailDrawer({
                 {projectStatusMeta.label}
               </StatusBadge>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5 truncate">
-              {report.projectName} · {report.creatorName} · {report.type === 'WEEKLY' ? `${formatDateVN(report.weekStartDate)} - ${formatDateVN(report.weekEndDate)}` : `${formatDateVN(report.date)} ${formatTimeVN('1970-01-01T' + (report.time || '00:00'))}`}
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-slate-500">
+              <span className="inline-flex items-center gap-1">
+                <MapPin className="w-3 h-3 text-slate-400" />
+                {report.projectName}
+              </span>
+              <span className="text-slate-300">·</span>
+              <span>{report.creatorName}</span>
+              <span className="text-slate-300">·</span>
+              <span>{report.type === 'WEEKLY' ? `${formatDateVN(report.weekStartDate)} — ${formatDateVN(report.weekEndDate)}` : `${formatDateVN(report.date)} ${formatTimeVN('1970-01-01T' + (report.time || '00:00'))}`}</span>
               {report.type === 'DAILY' && report.weatherCondition && (
-                <span className="inline-flex items-center gap-1 ml-2">
+                <span className="inline-flex items-center gap-1 ml-1 rounded-md bg-slate-100 px-1.5 py-0.5">
                   <WeatherIcon weather={report.weatherCondition} />
-                  {WEATHER_OPTIONS.find(o => o.value === report.weatherCondition)?.label}
+                  <span className="text-[11px]">{WEATHER_OPTIONS.find(o => o.value === report.weatherCondition)?.label}</span>
                 </span>
               )}
-            </p>
+            </div>
           </div>
           <button
             onClick={onClose}
             disabled={isProcessing}
-            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50 md:h-10 md:w-10"
-            title="Đóng"
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50 md:h-10 md:w-10"
+            title="Đóng (Esc)"
             aria-label="Đóng chi tiết báo cáo"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar px-5 sm:px-6 py-4 pb-6 space-y-6">
+        {/* ─── Scrollable Body ─── */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/40 px-4 py-5 pb-6 sm:px-6 lg:px-8 space-y-6">
           {/* We removed the redundant 4 info cards since header already contains them.
               But we keep GPS location if available. */}
           {report.gpsLocation && (
@@ -445,17 +502,21 @@ export function ReportDetailDrawer({
 
           {/* Work Lines Table or Content */}
           {displayWorkLines.length > 0 ? (
-            <div className="space-y-2">
-              <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                <TrendingUp className="w-4 h-4 text-emerald-600" />
-                {report.type === 'WEEKLY' ? 'Tổng theo công việc' : 'Nội dung công việc'} ({displayWorkLines.length})
-              </h4>
-              <div className="pl-0 sm:pl-6">
-                <div className="space-y-3 md:hidden">
+            <ContentCard className="overflow-hidden p-0 sm:p-0 mb-4">
+              <div className="bg-slate-50/80 px-5 py-3.5 border-b border-slate-200 flex items-center gap-2.5">
+                <div className="p-1.5 rounded-lg border border-slate-200 bg-white shadow-sm flex items-center justify-center">
+                  <TrendingUp className="w-4 h-4 text-emerald-600" />
+                </div>
+                <h3 className="font-bold text-slate-800 text-[15px]">
+                  {report.type === 'WEEKLY' ? 'Tổng theo công việc' : 'Nội dung công việc'} ({displayWorkLines.length})
+                </h3>
+              </div>
+              <div className="p-0 sm:p-0">
+                <div className="space-y-3 md:hidden p-4">
                   {displayWorkLines.map((line, idx) => (
                     <article
                       key={line.id || idx}
-                      className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
+                      className="rounded-[14px] border border-slate-200 bg-white p-3 shadow-sm"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
@@ -463,6 +524,11 @@ export function ReportDetailDrawer({
                             {line.code && (
                               <span className="rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-slate-600">
                                 {line.code}
+                              </span>
+                            )}
+                            {!getDisplayProgressLine(line, report.type).hasDesignQuantity && (
+                              <span className="rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-700 ring-1 ring-amber-200">
+                                Chưa có TK
                               </span>
                             )}
                             {report.type === "WEEKLY" && line.count > 1 && (
@@ -482,12 +548,19 @@ export function ReportDetailDrawer({
                         </div>
                         <div className="shrink-0 text-right">
                           <p className="text-base font-bold text-blue-700">
-                            {formatReportQuantity(line.quantityToday)}
+                            {formatProgressQuantityDisplay(getDisplayProgressLine(line, report.type).quantityToday)}
                           </p>
                           <p className="text-xs font-semibold text-slate-500">
                             {line.unit || "-"}
                           </p>
                         </div>
+                      </div>
+                      <div className="mt-3 grid grid-cols-2 gap-2 rounded-lg bg-slate-50 p-2 text-[11px] text-slate-600">
+                        <span>TK: <strong>{formatProgressQuantityDisplay(getDisplayProgressLine(line, report.type).designQuantity)}</strong></span>
+                        <span>Trước: <strong>{formatProgressQuantityDisplay(getDisplayProgressLine(line, report.type).quantityBefore)}</strong></span>
+                        <span>Lũy kế: <strong>{formatProgressQuantityDisplay(getDisplayProgressLine(line, report.type).quantityCumulative)}</strong></span>
+                        <span>Còn lại: <strong>{formatProgressQuantityDisplay(getDisplayProgressLine(line, report.type).remainingQuantity)}</strong></span>
+                        <span className="col-span-2">% HT: <strong>{formatProgressPercentDisplay(getDisplayProgressLine(line, report.type).progressPercent)}</strong></span>
                       </div>
                       {line.notes.length > 0 && (
                         <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-600">
@@ -500,12 +573,17 @@ export function ReportDetailDrawer({
                   ))}
                 </div>
 
-                <div className="hidden overflow-hidden rounded-lg border border-slate-200 md:block">
-                  <table className="w-full text-sm">
-                    <thead className="bg-slate-50">
+                <div className="hidden overflow-x-auto border-t border-slate-200 md:block custom-scrollbar">
+                  <table className="min-w-[980px] w-full text-sm">
+                    <thead className="sticky top-0 z-10 bg-slate-100">
                       <tr>
-                        <th className="border-b px-3 py-2 text-left font-semibold text-slate-600">Hạng mục / Công việc</th>
-                        <th className="w-[96px] border-b px-3 py-2 text-right font-semibold text-slate-600">K.lượng</th>
+                        <th className="sticky left-0 z-[2] border-b bg-slate-100 px-3 py-2 text-left font-semibold text-slate-700 shadow-[1px_0_0_0_rgba(226,232,240,1)]">Hạng mục / Công việc</th>
+                        <th className="w-[82px] border-b px-2 py-2 text-right font-semibold text-slate-600">TK</th>
+                        <th className="w-[82px] border-b px-2 py-2 text-right font-semibold text-slate-600">Trước</th>
+                        <th className="w-[88px] border-b px-2 py-2 text-right font-semibold text-slate-600">{report.type === "WEEKLY" ? "Tuần này" : "Hôm nay"}</th>
+                        <th className="w-[88px] border-b px-2 py-2 text-right font-semibold text-slate-600">Lũy kế</th>
+                        <th className="w-[82px] border-b px-2 py-2 text-right font-semibold text-slate-600">Còn lại</th>
+                        <th className="w-[64px] border-b px-2 py-2 text-right font-semibold text-slate-600">%</th>
                         <th className="w-[68px] border-b px-3 py-2 text-center font-semibold text-slate-600">Đ.vị</th>
                         {report.type === "WEEKLY" && (
                           <th className="w-[92px] border-b px-3 py-2 text-center font-semibold text-slate-600">Phát sinh</th>
@@ -515,11 +593,16 @@ export function ReportDetailDrawer({
                     <tbody className="divide-y divide-slate-100">
                       {displayWorkLines.map((line, idx) => (
                         <tr key={line.id || idx}>
-                          <td className="px-3 py-2">
+                          <td className="sticky left-0 z-[1] bg-white px-3 py-2 shadow-[1px_0_0_0_rgba(226,232,240,1)]">
                             <div className="flex flex-wrap items-center gap-1.5">
                               {line.code && (
                                 <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-slate-500">
                                   {line.code}
+                                </span>
+                              )}
+                              {!getDisplayProgressLine(line, report.type).hasDesignQuantity && (
+                                <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-700 ring-1 ring-amber-200">
+                                  Chưa có TK
                                 </span>
                               )}
                               <span className="font-medium text-slate-800">{line.workContent}</span>
@@ -528,7 +611,12 @@ export function ReportDetailDrawer({
                               <p key={note} className="mt-0.5 text-xs text-slate-500">{note}</p>
                             ))}
                           </td>
-                          <td className="px-3 py-2 text-right font-semibold text-blue-600">{formatReportQuantity(line.quantityToday)}</td>
+                          <td className="px-2 py-2 text-right font-medium text-slate-600">{formatProgressQuantityDisplay(getDisplayProgressLine(line, report.type).designQuantity)}</td>
+                          <td className="px-2 py-2 text-right font-medium text-slate-600">{formatProgressQuantityDisplay(getDisplayProgressLine(line, report.type).quantityBefore)}</td>
+                          <td className="px-2 py-2 text-right font-semibold text-blue-600">{formatProgressQuantityDisplay(getDisplayProgressLine(line, report.type).quantityToday)}</td>
+                          <td className="px-2 py-2 text-right font-semibold text-emerald-700">{formatProgressQuantityDisplay(getDisplayProgressLine(line, report.type).quantityCumulative)}</td>
+                          <td className="px-2 py-2 text-right font-medium text-slate-700">{formatProgressQuantityDisplay(getDisplayProgressLine(line, report.type).remainingQuantity)}</td>
+                          <td className="px-2 py-2 text-right text-xs font-semibold text-slate-600">{formatProgressPercentDisplay(getDisplayProgressLine(line, report.type).progressPercent)}</td>
                           <td className="px-3 py-2 text-center text-slate-500">{line.unit || "-"}</td>
                           {report.type === "WEEKLY" && (
                             <td className="px-3 py-2 text-center text-xs font-semibold text-slate-500">
@@ -541,7 +629,7 @@ export function ReportDetailDrawer({
                   </table>
                 </div>
               </div>
-            </div>
+            </ContentCard>
           ) : (report.workContent && report.workContent !== "No content") ? (
             <DetailSection
               title={report.type === 'WEEKLY' ? "Tổng hợp công việc" : "Nội dung công việc"}
@@ -552,56 +640,52 @@ export function ReportDetailDrawer({
             </DetailSection>
           ) : null}
 
-                    {report.type === 'WEEKLY' && report.weeklyNote?.nextWeekPlanGroups && report.weeklyNote.nextWeekPlanGroups.length > 0 && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                  <TrendingUp className="w-[18px] h-[18px] text-blue-600" />
+          {report.type === 'WEEKLY' && report.weeklyNote?.nextWeekPlan && report.weeklyNote.nextWeekPlan.length > 0 && (
+            <ContentCard className="overflow-hidden p-0 sm:p-0 mb-4">
+              <div className="bg-slate-50/80 px-5 py-3.5 border-b border-slate-200 flex items-center gap-2.5">
+                <div className="p-1.5 rounded-lg border border-slate-200 bg-white shadow-sm flex items-center justify-center">
+                  <TrendingUp className="w-4 h-4 text-blue-600" />
+                </div>
+                <h3 className="font-bold text-slate-800 text-[15px]">
                   Kế hoạch thực hiện tuần sau
-                  {report.weeklyNote.nextWeekPlanRange?.fromDate && report.weeklyNote.nextWeekPlanRange?.toDate && (
-                    <span className="text-xs font-normal text-slate-500">
-                      ({report.weeklyNote.nextWeekPlanRange.fromDate} - {report.weeklyNote.nextWeekPlanRange.toDate})
-                    </span>
-                  )}
-                </h4>
-                
-                <div className="hidden md:block overflow-hidden rounded-xl border border-slate-200">
-                  <table className="w-full text-sm">
+                </h3>
+              </div>
+              
+              <div className="overflow-x-auto custom-scrollbar">
+                <table className="w-full text-sm min-w-[900px]">
                     <thead className="bg-slate-50 border-b border-slate-200">
                       <tr>
                         <th className="px-3 py-2 text-left font-semibold text-slate-600">Công việc</th>
-                        <th className="px-3 py-2 text-right font-semibold text-slate-600 w-24">K.Lượng</th>
-                        <th className="px-3 py-2 text-center font-semibold text-slate-600 w-20">ĐVT</th>
+                        <th className="px-3 py-2 text-center font-semibold text-slate-600 w-16">ĐVT</th>
+                        <th className="px-3 py-2 text-right font-semibold text-slate-600 w-24">Còn lại</th>
+                        <th className="px-3 py-2 text-right font-semibold text-slate-600 w-28 text-blue-700">Tuần tới</th>
+                        <th className="px-3 py-2 text-left font-semibold text-slate-600 w-24">Từ ngày</th>
+                        <th className="px-3 py-2 text-left font-semibold text-slate-600 w-24">Đến ngày</th>
                         <th className="px-3 py-2 text-left font-semibold text-slate-600">Phụ trách</th>
-                        <th className="px-3 py-2 text-center font-semibold text-slate-600">Mức độ</th>
+                        <th className="px-3 py-2 text-left font-semibold text-slate-600">Vật tư</th>
+                        <th className="px-3 py-2 text-left font-semibold text-slate-600">Thiết bị</th>
+                        <th className="px-3 py-2 text-left font-semibold text-slate-600">Ghi chú / Rủi ro</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 bg-white">
-                      {report.weeklyNote.nextWeekPlanGroups.map((group: any, gIdx: number) => (
-                        <React.Fragment key={gIdx}>
-                          <tr className="bg-slate-100/50">
-                            <td colSpan={5} className="px-3 py-2 font-semibold text-slate-700">{group.categoryName}</td>
-                          </tr>
-                          {group.items.map((item: any, iIdx: number) => (
-                            <tr key={iIdx}>
-                              <td className="px-3 py-2 pl-6 font-medium text-slate-800">{item.workContent}</td>
-                              <td className="px-3 py-2 text-right font-medium text-slate-900">{item.plannedQuantity || "-"}</td>
-                              <td className="px-3 py-2 text-center">{item.unit || "-"}</td>
-                              <td className="px-3 py-2 text-slate-600">{item.ownerName || "-"}</td>
-                              <td className="px-3 py-2 text-center">
-                                {item.priority === "HIGH" ? <span className="text-red-600 font-medium text-[10px] bg-red-50 px-1.5 py-0.5 rounded border border-red-200">Cao</span> : 
-                                 item.priority === "LOW" ? <span className="text-slate-600 font-medium text-[10px] bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200">Thấp</span> : 
-                                 <span className="text-blue-600 font-medium text-[10px] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">Vừa</span>}
-                              </td>
-                            </tr>
-                          ))}
-                        </React.Fragment>
+                      {report.weeklyNote.nextWeekPlan.map((item: any, iIdx: number) => (
+                        <tr key={iIdx} className="hover:bg-slate-50/50">
+                          <td className="px-3 py-2.5 font-medium text-slate-800">{item.workContent}</td>
+                          <td className="px-3 py-2.5 text-center text-slate-600">{item.unit || "-"}</td>
+                          <td className="px-3 py-2.5 text-right font-medium text-slate-600">{item.remainingQuantity ? formatNumberSafe(item.remainingQuantity) : "-"}</td>
+                          <td className="px-3 py-2.5 text-right font-bold text-blue-700">{item.plannedQuantityNextWeek ? formatNumberSafe(item.plannedQuantityNextWeek) : "-"}</td>
+                          <td className="px-3 py-2.5 text-slate-600">{item.plannedStartDate ? item.plannedStartDate.split("-").reverse().join("/") : "-"}</td>
+                          <td className="px-3 py-2.5 text-slate-600">{item.plannedEndDate ? item.plannedEndDate.split("-").reverse().join("/") : "-"}</td>
+                          <td className="px-3 py-2.5 text-slate-600">{item.constructionCrew || "-"}</td>
+                          <td className="px-3 py-2.5 text-slate-600">{item.materialNeeds || "-"}</td>
+                          <td className="px-3 py-2.5 text-slate-600">{item.equipmentNeeds || "-"}</td>
+                          <td className="px-3 py-2.5 text-slate-600 text-[12px]">{item.riskNote || "-"}</td>
+                        </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-              </div>
-            </div>
+            </ContentCard>
           )}
 
           
@@ -642,14 +726,19 @@ export function ReportDetailDrawer({
 
           {/* Photo gallery */}
           {report.photos && report.photos.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                <Camera className="w-4 h-4 text-sky-600" />
-                {report.type === 'WEEKLY' ? 'Ảnh tiêu biểu' : 'Hình ảnh hiện trường'} ({report.photos.length})
-              </h4>
+            <ContentCard className="overflow-hidden p-0 sm:p-0 mb-4">
+              <div className="bg-slate-50/80 px-5 py-3.5 border-b border-slate-200 flex items-center gap-2.5">
+                <div className="p-1.5 rounded-lg border border-slate-200 bg-white shadow-sm flex items-center justify-center">
+                  <Camera className="w-4 h-4 text-sky-600" />
+                </div>
+                <h3 className="font-bold text-slate-800 text-[15px]">
+                  {report.type === 'WEEKLY' ? 'Ảnh tiêu biểu' : 'Hình ảnh hiện trường'} ({report.photos.length})
+                </h3>
+              </div>
 
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 pl-0 sm:pl-6">
-                {report.photos.map((photo, index) => (
+              <div className="p-5">
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                  {report.photos.map((photo, index) => (
                   <div
                     key={photo.id}
                     className="aspect-square bg-slate-100 rounded-lg flex items-center justify-center border border-slate-200 overflow-hidden hover:border-blue-300 transition-colors cursor-pointer relative group"
@@ -676,41 +765,48 @@ export function ReportDetailDrawer({
                   </div>
                 ))}
               </div>
-            </div>
+              </div>
+            </ContentCard>
           )}
 
           {/* Attachments */}
           {report.attachments && report.attachments.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                <Paperclip className="w-4 h-4 text-slate-500" />
-                File đính kèm ({report.attachments.length})
-              </h4>
-
-              <div className="space-y-1.5 pl-0 sm:pl-6">
-                {report.attachments.map((att) => (
-                  <div
-                    key={att.id}
-                    className={`flex items-center gap-3 p-2.5 rounded-lg border transition-colors ${att.isMissing ? 'bg-slate-50/50 border-slate-200 cursor-not-allowed opacity-80' : 'bg-slate-50 border-slate-100 hover:border-blue-200 cursor-pointer group'}`}
-                    onClick={() => { if(!att.isMissing && att.url) window.open(att.url, '_blank') }}
-                  >
-                    <div className={`flex items-center justify-center w-8 h-8 rounded-md shrink-0 ${att.isMissing ? 'bg-slate-200 text-slate-400' : 'bg-blue-50 text-blue-500'}`}>
-                      <FileText className="w-4 h-4" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className={`text-sm font-medium truncate ${att.isMissing ? 'text-slate-500 line-through' : 'text-slate-700'}`}>{att.name}</p>
-                      <div className="flex items-center gap-2">
-                        <p className="text-xs text-slate-400">{att.size}</p>
-                        {att.isMissing && (
-                          <span className="text-[10px] font-medium text-amber-600 bg-amber-50 border border-amber-100 px-1.5 rounded-sm" title="File gốc không còn trong storage">File thiếu</span>
-                        )}
-                      </div>
-                    </div>
-                    {!att.isMissing && <Download className="w-4 h-4 text-slate-300 group-hover:text-blue-500 shrink-0 transition-colors" />}
-                  </div>
-                ))}
+            <ContentCard className="overflow-hidden p-0 sm:p-0 mb-4">
+              <div className="bg-slate-50/80 px-5 py-3.5 border-b border-slate-200 flex items-center gap-2.5">
+                <div className="p-1.5 rounded-lg border border-slate-200 bg-white shadow-sm flex items-center justify-center">
+                  <Paperclip className="w-4 h-4 text-slate-500" />
+                </div>
+                <h3 className="font-bold text-slate-800 text-[15px]">
+                  File đính kèm ({report.attachments.length})
+                </h3>
               </div>
-            </div>
+
+              <div className="p-5">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {report.attachments.map((att) => (
+                    <div
+                      key={att.id}
+                      className={`flex items-center gap-3 p-2.5 rounded-lg border transition-colors ${att.isMissing ? 'bg-slate-50/50 border-slate-200 cursor-not-allowed opacity-80' : 'bg-slate-50 border-slate-100 hover:border-blue-200 cursor-pointer group'}`}
+                      onClick={() => { if(!att.isMissing && att.url) window.open(att.url, '_blank') }}
+                    >
+                      <div className={`flex items-center justify-center w-8 h-8 rounded-md shrink-0 border border-slate-200 bg-white group-hover:border-blue-200 transition-colors ${att.isMissing ? 'text-slate-400' : 'text-blue-500'}`}>
+                        <FileText className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className={`text-sm font-medium truncate transition-colors ${att.isMissing ? 'text-slate-500 line-through' : 'text-slate-700 group-hover:text-blue-700'}`}>{att.name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs text-slate-400">{att.size}</p>
+                          {att.isMissing && (
+                            <span className="text-[10px] font-medium text-amber-600 bg-amber-50 border border-amber-100 px-1.5 rounded-sm" title="File gốc không còn trong storage">File thiếu</span>
+                          )}
+                        </div>
+                      </div>
+                      {!att.isMissing && <Download className="w-4 h-4 text-slate-300 group-hover:text-blue-500 shrink-0 transition-colors" />}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </ContentCard>
           )}
 
           {/* Approval History */}
@@ -739,48 +835,54 @@ export function ReportDetailDrawer({
           </div>
         </div>
 
-        <div className="shrink-0 border-t border-slate-200 bg-slate-50 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:px-6 md:py-4">
+        {/* ─── Sticky Footer ─── */}
+        <ActionFooter>
           {rejectMode ? (
             <div className="space-y-3">
               <textarea
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
                 placeholder="Nhập lý do từ chối (bắt buộc)..."
-                className="w-full min-h-[80px] p-2.5 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none resize-none"
+                className="w-full min-h-[80px] p-3 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none resize-none"
               />
               <div className="flex flex-col-reverse gap-2 md:flex-row md:items-center md:justify-end">
                 <Button variant="outline" onClick={() => setRejectMode(false)} disabled={isProcessing} className="h-11 w-full md:h-10 md:w-auto">
                   Hủy
                 </Button>
                 <Button
+                  variant="destructive"
                   onClick={handleReject}
                   disabled={isProcessing || !rejectReason.trim()}
-                  className="h-11 w-full bg-red-600 text-white hover:bg-red-700 md:h-10 md:w-auto"
+                  className="h-11 w-full md:h-10 md:w-auto gap-1.5"
                 >
-                  {isProcessing ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
+                  {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   Xác nhận từ chối
                 </Button>
               </div>
             </div>
           ) : (
             <>
+              {/* ─── Mobile: stacked action buttons ─── */}
               <div className="space-y-2 md:hidden">
+                {/* Primary actions first */}
                 {canModerateReport && (
                   <Button
+                    variant="success"
                     onClick={handleApprove}
                     disabled={isProcessing}
-                    className="h-11 w-full gap-2 bg-emerald-600 text-white hover:bg-emerald-700"
+                    className="h-12 w-full gap-2 text-[15px]"
                   >
                     {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                    Duyệt
+                    Duyệt báo cáo
                   </Button>
                 )}
 
                 {canSubmitReport && (
                   <Button
+                    variant="primary"
                     onClick={handleSubmit}
                     disabled={isProcessing}
-                    className="h-11 w-full gap-2 bg-blue-600 text-white hover:bg-blue-700"
+                    className="h-12 w-full gap-2 text-[15px]"
                   >
                     {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                     Gửi báo cáo
@@ -792,133 +894,140 @@ export function ReportDetailDrawer({
                     variant="outline"
                     onClick={() => setRejectMode(true)}
                     disabled={isProcessing}
-                    className="h-11 w-full border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50"
+                    className="h-12 w-full border-rose-200 text-rose-600 hover:border-rose-300 hover:bg-rose-50"
                   >
                     Từ chối
                   </Button>
                 )}
 
-                {isReportDeletable && (
-                  <Button
-                    variant="outline"
-                    onClick={() => onDelete?.(report)}
-                    disabled={isProcessing}
-                    className="h-11 w-full border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Xóa
-                  </Button>
-                )}
-
-                {isReportEditable && (
-                  <Button
-                    variant="outline"
-                    onClick={() => { onClose(); onEdit?.(report); }}
-                    disabled={isProcessing}
-                    className="h-11 w-full border-blue-200 text-blue-600 hover:border-blue-300 hover:bg-blue-50"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                    Sửa
-                  </Button>
-                )}
-
-                <div className="grid grid-cols-2 gap-2">
+                {/* Secondary actions row */}
+                <div className="grid grid-cols-2 gap-2 pt-1">
                   <Button
                     variant="outline"
                     className="h-11 gap-1.5"
-                    onClick={() => { onClose(); onPrintPreview ? onPrintPreview(report) : window.open(`/print/reports/${report.id}`, '_blank'); }}
+                    onClick={handlePrintAction}
                   >
                     <Printer className="w-4 h-4" />
                     In/PDF
                   </Button>
-                  <Button variant="outline" className="h-11" onClick={onClose} disabled={isProcessing}>
-                    Đóng
-                  </Button>
-                </div>
-              </div>
-
-              <div className="hidden items-center justify-between gap-3 md:flex">
-                <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  className="gap-1.5"
-                  onClick={() => { onClose(); onPrintPreview ? onPrintPreview(report) : window.open(`/print/reports/${report.id}`, '_blank'); }}
-                >
-                  <Printer className="w-4 h-4" />
-                  In / Xuất PDF
-                </Button>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" onClick={onClose} disabled={isProcessing}>
-                  Đóng
-                </Button>
-
-                {/* Edit and Delete for DRAFT/REJECTED/SUBMITTED */}
-                {currentUser && (
-                  <>
-                    {isReportDeletable && (
-                      <Button
-                        variant="outline"
-                        onClick={() => onDelete?.(report)}
-                        disabled={isProcessing}
-                        className="gap-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 border-transparent hover:border-red-200"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Xóa
-                      </Button>
-                    )}
-                    {isReportEditable && (
-                      <Button
-                        variant="outline"
-                        onClick={() => { onClose(); onEdit?.(report); }}
-                        disabled={isProcessing}
-                        className="gap-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200 hover:border-blue-300"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                        Sửa
-                      </Button>
-                    )}
-                  </>
-                )}
-
-                {canSubmitReport && (
-                  <Button
-                    onClick={handleSubmit}
-                    disabled={isProcessing}
-                    className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white ml-auto"
-                  >
-                    {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                    Gửi báo cáo
-                  </Button>
-                )}
-
-                {/* Approve/Reject buttons for ADMIN/DIRECTOR in SUBMITTED */}
-                {canModerateReport && (
-                  <>
+                  {isReportEditable ? (
                     <Button
                       variant="outline"
-                      onClick={() => setRejectMode(true)}
+                      onClick={() => { onClose(); onEdit?.(report); }}
                       disabled={isProcessing}
-                      className="gap-1.5 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 ml-auto"
+                      className="h-11 gap-1.5 border-blue-200 text-blue-600"
                     >
-                      Từ chối
+                      <Edit2 className="w-4 h-4" />
+                      Sửa
                     </Button>
-                    <Button
-                      onClick={handleApprove}
-                      disabled={isProcessing}
-                      className="gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white ml-2"
-                    >
-                      {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                      Duyệt
+                  ) : (
+                    <Button variant="outline" className="h-11" onClick={onClose} disabled={isProcessing}>
+                      Đóng
                     </Button>
-                  </>
+                  )}
+                </div>
+
+                {isReportDeletable && (
+                  <Button
+                    variant="ghost"
+                    onClick={() => onDelete?.(report)}
+                    disabled={isProcessing}
+                    className="h-10 w-full text-rose-500 hover:bg-rose-50 hover:text-rose-700 gap-1.5"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Xóa báo cáo
+                  </Button>
                 )}
               </div>
+
+              {/* ─── Desktop: left/right footer layout ─── */}
+              <div className="hidden items-center justify-between gap-3 md:flex">
+                {/* Left side: Print/Export */}
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    className="gap-1.5"
+                    onClick={handlePrintAction}
+                  >
+                    <Printer className="w-4 h-4" />
+                    In / Xuất PDF
+                  </Button>
+                </div>
+
+                {/* Right side: Close, Edit, Delete | Reject, Approve */}
+                <div className="flex items-center gap-2">
+                  <Button variant="secondary" onClick={onClose} disabled={isProcessing}>
+                    Đóng
+                  </Button>
+
+                  {isReportEditable && (
+                    <Button
+                      variant="outline"
+                      onClick={() => { onClose(); onEdit?.(report); }}
+                      disabled={isProcessing}
+                      className="gap-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200 hover:border-blue-300"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                      Sửa
+                    </Button>
+                  )}
+
+                  {isReportDeletable && (
+                    <Button
+                      variant="ghost"
+                      onClick={() => onDelete?.(report)}
+                      disabled={isProcessing}
+                      className="gap-1.5 text-rose-500 hover:bg-rose-50 hover:text-rose-700"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Xóa
+                    </Button>
+                  )}
+
+                  {/* Visual separator before approval actions */}
+                  {(canSubmitReport || canModerateReport) && (
+                    <div className="h-6 w-px bg-slate-200 mx-1" />
+                  )}
+
+                  {canSubmitReport && (
+                    <Button
+                      variant="primary"
+                      onClick={handleSubmit}
+                      disabled={isProcessing}
+                      className="gap-1.5"
+                    >
+                      {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                      Gửi báo cáo
+                    </Button>
+                  )}
+
+                  {canModerateReport && (
+                    <>
+                      <Button
+                        variant="outline"
+                        onClick={() => setRejectMode(true)}
+                        disabled={isProcessing}
+                        className="gap-1.5 border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300"
+                      >
+                        Từ chối
+                      </Button>
+                      <Button
+                        variant="success"
+                        onClick={handleApprove}
+                        disabled={isProcessing}
+                        className="gap-1.5"
+                      >
+                        {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                        Duyệt
+                      </Button>
+                    </>
+                  )}
+                </div>
               </div>
             </>
           )}
-        </div>
+        </ActionFooter>
       </div>
-    </div>
+    </AppDrawer>
   );
 }

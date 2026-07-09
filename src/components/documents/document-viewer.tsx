@@ -24,6 +24,7 @@ import { format } from "date-fns";
 import { getDocumentPreviewKind } from "@/lib/document-file-utils";
 import { DocumentStatus } from "@prisma/client";
 import { useBodyScrollLock } from "@/hooks/use-body-scroll-lock";
+import { ContentCard } from "@/components/ui/enterprise";
 
 export interface DocumentListItem {
   id: string;
@@ -342,7 +343,7 @@ export function DocumentViewer({
 
           {previewKind === "details" && (
             <div className="flex h-full items-center justify-center overflow-y-auto p-6">
-              <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
+              <ContentCard className="w-full max-w-lg p-6 text-center">
                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
                   <FallbackIcon className={`h-9 w-9 ${fallback.iconClassName}`} />
                 </div>
@@ -355,7 +356,7 @@ export function DocumentViewer({
                   <Download className="h-4 w-4" />
                   Tải file xuống
                 </a>
-              </div>
+              </ContentCard>
             </div>
           )}
 

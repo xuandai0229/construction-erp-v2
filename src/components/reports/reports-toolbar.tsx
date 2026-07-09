@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Search, X, Calendar, Filter } from "lucide-react";
 import { getStatusLabel } from "./types";
 import { Button } from "@/components/ui/button";
+import { ContentCard } from "@/components/ui/enterprise";
 
 interface ReportsToolbarProps {
   search: string;
@@ -66,7 +67,7 @@ export function ReportsToolbar({
   ].filter(Boolean).length;
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-3">
+    <ContentCard className="p-3">
       <div className="flex items-center gap-3">
         {/* Search input */}
         <div className="relative flex-1 min-w-0">
@@ -196,6 +197,6 @@ export function ReportsToolbar({
         </div>
       )}
 
-    </div>
+    </ContentCard>
   );
 }

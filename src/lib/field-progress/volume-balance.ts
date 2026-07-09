@@ -7,7 +7,7 @@ export type VolumeBalanceOptions = {
    * Quantities from this report/entry will be EXCLUDED from the entered sum
    * to avoid double-counting.
    */
-  excludeSourceMarker?: string;
+  excludeSourceReportId?: string;
   
   /**
    * The target work date (YYYY-MM-DD). If provided, calculates `sameDateEnteredQuantity`
@@ -16,18 +16,28 @@ export type VolumeBalanceOptions = {
 };
 
 export type VolumeBalanceResult = {
+  designQuantity: number;
   plannedQuantity: number;
-  totalActiveEnteredQuantity: number;
-  sameDateEnteredQuantity: number;
-  remainingQuantity: number;
-  progressPercent: number;
+  totalActiveEnteredQuantity: number; // All dates total
+  todayQuantity: number; // Alias for sameDateEnteredQuantity for UI contract
+  sameDateEnteredQuantity: number; // Today only
+  cumulativeBeforeDate: number; // Total before target date
+  cumulativeAfterDate: number; // beforeDate + today
+  approvedQuantity: number;
+  submittedQuantity: number;
+  draftQuantity: number;
+  pendingQuantity: number;
+  remainingQuantity: number; // Overall remaining (planned - totalActiveAllDates)
+  remainingAtDate: number; // Remaining at target date
+  progressPercent: number; // Overall percent
+  progressPercentAtDate: number; // Percent at target date
+  status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" | "OVER";
 };
 
 const ACTIVE_STATUSES: FieldProgressEntryStatus[] = [
   "DRAFT",
   "SUBMITTED",
-  "APPROVED",
-  "REVISION_REQUESTED"
+  "APPROVED"
 ];
 
 export async function getBulkWorkQuantityBalance(
@@ -70,7 +80,8 @@ export async function getBulkWorkQuantityBalance(
       itemId: true,
       quantity: true,
       entryDate: true,
-      note: true,
+      status: true,
+      sourceReportId: true,
     }
   });
 
@@ -84,14 +95,14 @@ export async function getBulkWorkQuantityBalance(
     targetEnd = range.end;
   }
 
-  const totalsMap = new Map<string, { total: number; sameDate: number }>();
+  const totalsMap = new Map<string, { total: number; sameDate: number; beforeDate: number; approved: number; submitted: number; draft: number }>();
   for (const itemId of itemIds) {
-    totalsMap.set(itemId, { total: 0, sameDate: 0 });
+    totalsMap.set(itemId, { total: 0, sameDate: 0, beforeDate: 0, approved: 0, submitted: 0, draft: 0 });
   }
 
   for (const entry of activeEntries) {
-    // Exclude the entry if it matches the excludeSourceMarker (e.g. current report being edited)
-    if (options?.excludeSourceMarker && entry.note?.includes(options.excludeSourceMarker)) {
+    // Exclude the entry if it matches the excludeSourceReportId (e.g. current report being edited)
+    if (options?.excludeSourceReportId && entry.sourceReportId === options.excludeSourceReportId) {
       continue;
     }
 
@@ -100,6 +111,13 @@ export async function getBulkWorkQuantityBalance(
     
     if (itemTotals) {
       itemTotals.total += qty;
+      if (entry.status === "APPROVED") itemTotals.approved += qty;
+      if (entry.status === "SUBMITTED") itemTotals.submitted += qty;
+      if (entry.status === "DRAFT") itemTotals.draft += qty;
+
+      if (targetStart && entry.entryDate < targetStart) {
+        itemTotals.beforeDate += qty;
+      }
 
       if (
         targetStart &&
@@ -112,19 +130,46 @@ export async function getBulkWorkQuantityBalance(
     }
   }
 
-  // 4. Calculate final balances
   for (const itemId of itemIds) {
     const planned = designQuantityMap.get(itemId) || 0;
     const totals = totalsMap.get(itemId)!;
-    const remaining = Math.max(0, planned - totals.total);
-    const progressPercent = planned > 0 ? Math.min(999.99, (totals.total / planned) * 100) : 0;
+    
+    // Overall calculations
+    const remainingOverall = Math.max(0, planned - totals.total);
+    const progressPercentOverall = planned > 0 ? Math.min(999.99, (totals.total / planned) * 100) : 0;
+
+    // Date-bounded calculations
+    const beforeDate = targetStart ? totals.beforeDate : totals.total;
+    const sameDate = targetStart ? totals.sameDate : 0;
+    const afterDate = beforeDate + sameDate;
+    const remainingAtDate = Math.max(0, planned - afterDate);
+    const progressPercentAtDate = planned > 0 ? Math.min(999.99, (afterDate / planned) * 100) : 0;
+    const status =
+      totals.total > planned && planned > 0
+        ? "OVER"
+        : planned > 0 && totals.total >= planned
+          ? "COMPLETED"
+          : totals.total > 0
+            ? "IN_PROGRESS"
+            : "NOT_STARTED";
 
     result.set(itemId, {
+      designQuantity: planned,
       plannedQuantity: planned,
       totalActiveEnteredQuantity: totals.total,
-      sameDateEnteredQuantity: totals.sameDate,
-      remainingQuantity: remaining,
-      progressPercent: progressPercent,
+      cumulativeBeforeDate: beforeDate,
+      todayQuantity: sameDate,
+      sameDateEnteredQuantity: sameDate,
+      cumulativeAfterDate: afterDate,
+      approvedQuantity: totals.approved,
+      submittedQuantity: totals.submitted,
+      draftQuantity: totals.draft,
+      pendingQuantity: totals.submitted + totals.draft,
+      remainingQuantity: remainingOverall,
+      remainingAtDate: remainingAtDate,
+      progressPercent: progressPercentOverall,
+      progressPercentAtDate: progressPercentAtDate,
+      status,
     });
   }
 
