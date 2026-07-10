@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
-import { Search, X, Filter, CheckCircle2, AlertCircle, Building2, ChevronRight, ChevronDown } from "lucide-react";
+import { Search, Filter, CheckCircle2, AlertCircle, Building2, ChevronRight, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CloseButton } from "@/components/ui/close-button";
 
 export type PickerWorkItem = {
   id: string;
@@ -115,7 +116,7 @@ export function WorkPicker({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[85] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-2 sm:p-4 animate-in fade-in duration-200" onClick={onClose}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-2 sm:p-4 animate-in fade-in duration-200" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl flex flex-col h-[95vh] max-h-[900px] animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
         <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 rounded-t-2xl shrink-0">
           <div>
@@ -124,9 +125,7 @@ export function WorkPicker({
               {projectCode ? `${projectCode} — ${projectName}` : 'Chọn từ khối lượng gốc của công trình'}
             </p>
           </div>
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
-            <X className="w-5 h-5" />
-          </button>
+          <CloseButton onClick={onClose} tone="neutral" />
         </div>
 
         <div className="p-4 border-b border-slate-100 shrink-0 space-y-4">

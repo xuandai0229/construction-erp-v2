@@ -15,9 +15,18 @@ export function StockStatusBadge({ stock, minStockLevel, compact = false }: Stoc
   const status = getStockStatus(stock, minStockLevel);
   const label = compact && status === "healthy" ? "Đủ" : getStockStatusLabel(status);
 
+  if (status === "negative") {
+    return (
+      <StatusBadge variant="danger" size="sm" className="gap-1.5">
+        <ShieldAlert className="h-3.5 w-3.5" />
+        {label}
+      </StatusBadge>
+    );
+  }
+
   if (status === "out") {
     return (
-      <StatusBadge variant="neutral" size="sm" className="gap-1.5">
+      <StatusBadge variant="neutral" size="sm" className="gap-1.5 bg-slate-100 text-slate-600 border-slate-200">
         <PackageX className="h-3.5 w-3.5" />
         {label}
       </StatusBadge>
@@ -41,10 +50,10 @@ export function StockStatusBadge({ stock, minStockLevel, compact = false }: Stoc
   );
 }
 
-export function MovementTypeBadge({ type }: { type: MaterialMovementType }) {
+export function MovementTypeBadge({ type, className }: { type: MaterialMovementType; className?: string }) {
   if (type === "IMPORT") {
     return (
-      <StatusBadge variant="success" size="sm" className="gap-1.5">
+      <StatusBadge variant="success" size="sm" className={`gap-1.5 ${className || ""}`}>
         <ArrowDownRight className="h-3.5 w-3.5" />
         {getMovementLabel(type)}
       </StatusBadge>
@@ -53,7 +62,7 @@ export function MovementTypeBadge({ type }: { type: MaterialMovementType }) {
 
   if (type === "EXPORT") {
     return (
-      <StatusBadge variant="warning" size="sm" className="gap-1.5">
+      <StatusBadge variant="warning" size="sm" className={`gap-1.5 ${className || ""}`}>
         <ArrowUpRight className="h-3.5 w-3.5" />
         {getMovementLabel(type)}
       </StatusBadge>
@@ -62,7 +71,7 @@ export function MovementTypeBadge({ type }: { type: MaterialMovementType }) {
 
   if (type === "RETURN") {
     return (
-      <StatusBadge variant="info" size="sm" className="gap-1.5">
+      <StatusBadge variant="info" size="sm" className={`gap-1.5 ${className || ""}`}>
         <RotateCcw className="h-3.5 w-3.5" />
         {getMovementLabel(type)}
       </StatusBadge>
@@ -70,7 +79,7 @@ export function MovementTypeBadge({ type }: { type: MaterialMovementType }) {
   }
 
   return (
-    <StatusBadge variant="neutral" size="sm" className="gap-1.5">
+    <StatusBadge variant="neutral" size="sm" className={`gap-1.5 ${className || ""}`}>
       <Truck className="h-3.5 w-3.5" />
       {getMovementLabel(type)}
     </StatusBadge>

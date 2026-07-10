@@ -39,9 +39,10 @@ import type { FieldReport, ApprovalHistoryEntry, WeatherCondition } from "./type
 import { getStatusLabel, getStatusVariant, WEATHER_OPTIONS } from "./types";
 import { formatDateVN, formatTimeVN } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { AppDrawer } from "@/components/ui/app-drawer";
+import { CloseButton } from "@/components/ui/close-button";
 import { Button } from "@/components/ui/button";
 import { ActionFooter } from "@/components/ui/action-footer";
-import { AppDrawer } from "@/components/ui/app-drawer";
 import { useToast } from "@/components/ui/toast-context";
 import { getProjectStatusMeta } from "@/lib/project-status";
 import { ContentCard } from "@/components/ui/enterprise";
@@ -466,15 +467,7 @@ export function ReportDetailDrawer({
               )}
             </div>
           </div>
-          <button
-            onClick={onClose}
-            disabled={isProcessing}
-            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50 md:h-10 md:w-10"
-            title="Đóng (Esc)"
-            aria-label="Đóng chi tiết báo cáo"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <CloseButton onClick={onClose} disabled={isProcessing} tone="neutral" />
         </div>
 
         {/* ─── Scrollable Body ─── */}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { X, Save, Send, AlertCircle, FileText, CheckCircle2, ListTodo, FileImage, Files, MapPin, Building2, ChevronDown, Plus, CalendarRange, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CloseButton } from "@/components/ui/close-button";
 import { useToast } from "@/components/ui/toast-context";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { GeneralInfoCard } from "./create-dialog/general-info-card";
@@ -295,7 +296,7 @@ export function CreateReportDialog({
 
   return (
     <>
-      <div role="dialog" aria-modal="true" className="fixed inset-0 z-[80] flex items-start justify-center bg-slate-900/60 backdrop-blur-sm sm:p-4 animate-in fade-in duration-200 overflow-hidden">
+      <div role="dialog" aria-modal="true" className="fixed inset-0 z-[90] flex items-start justify-center bg-slate-900/60 backdrop-blur-sm sm:p-4 animate-in fade-in duration-200 overflow-hidden">
         <div className="bg-slate-50 w-full h-full sm:h-auto sm:max-h-full sm:rounded-2xl shadow-2xl flex flex-col relative w-[calc(100vw-16px)] md:w-[min(1180px,calc(100vw-48px))] max-w-6xl overflow-hidden animate-in zoom-in-95 duration-300">
           
           {/* Sticky Header */}
@@ -317,9 +318,7 @@ export function CreateReportDialog({
               <span className={`hidden sm:inline-flex text-[11px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider ${initialReport?.status === 'DRAFT' ? 'bg-slate-100 text-slate-600' : 'bg-blue-100 text-blue-700'}`}>
                 {initialReport ? initialReport.status : "Tạo Mới"}
               </span>
-              <button onClick={handleClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
-                <X className="w-5 h-5" />
-              </button>
+              <CloseButton onClick={handleClose} tone="neutral" />
             </div>
           </div>
 
@@ -530,13 +529,12 @@ export function CreateReportDialog({
                                       />
                                     </td>
                                     <td className="px-3 py-4 text-center">
-                                      <button 
-                                        type="button" 
+                                      <CloseButton
                                         onClick={() => removeWorkLine(idx)}
-                                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors mx-auto block"
-                                      >
-                                        <X className="w-4 h-4" />
-                                      </button>
+                                        className="h-8 w-8 mx-auto"
+                                        title="Xóa công việc khỏi báo cáo"
+                                        tone="danger"
+                                      />
                                     </td>
                                   </tr>
                                 );

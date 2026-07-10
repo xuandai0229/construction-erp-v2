@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { CloseButton } from "@/components/ui/close-button";
 import { Button } from "@/components/ui/button";
 
 interface MaterialFormDialogProps {
@@ -93,20 +93,13 @@ export function MaterialFormDialog({ isOpen, onClose, onSubmit, isSubmitting, in
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/45 p-0 backdrop-blur-sm sm:items-center sm:p-4">
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-slate-950/45 p-0 backdrop-blur-sm sm:items-center sm:p-4">
       <div className="flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl shadow-slate-950/20 sm:rounded-2xl">
         <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
           <div>
             <h2 className="text-lg font-bold text-slate-950">{initialData ? "Sửa vật tư" : "Thêm vật tư"}</h2>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
-            aria-label="Đóng form thêm vật tư"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <CloseButton onClick={onClose} tone="neutral" />
         </div>
 
         <form onSubmit={handleSubmit} className="overflow-y-auto p-4">

@@ -1,15 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ArrowDownRight, ArrowUpRight, PackagePlus, Pencil, Search, Trash2 } from "lucide-react";
+import { useMemo, useState, useEffect } from "react";
+import { ArrowDownRight, ArrowUpRight, PackagePlus, Pencil, Search, Trash2, Filter, MoreHorizontal, Eye, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ContentCard, EnterpriseTable } from "@/components/ui/enterprise";
-import type { MaterialItemDto, ProjectStockDto } from "@/app/(dashboard)/materials/actions";
-import { formatQuantity } from "./materials-formatters";
+import { ContentCard, EnterpriseTable, QuantityCell, SafeText, ActionGroup } from "@/components/ui/enterprise";
+import type { MaterialItemDto, ProjectStockDto, MaterialMovementDto } from "@/app/(dashboard)/materials/actions";
+import { MaterialDetailDrawer } from "./material-detail-drawer";
+import { useSearchParams, useRouter } from "next/navigation";
+import { getStockStatus } from "./materials-formatters";
 
 interface MaterialsCatalogProps {
   materialItems: MaterialItemDto[];
   stocks: ProjectStockDto[];
+  transactions?: MaterialMovementDto[];
   onAddMaterial: () => void;
   onTransaction: (type: "IMPORT" | "EXPORT", materialId?: string) => void;
   onEditMaterial: (materialId: string) => void;
@@ -23,33 +26,120 @@ interface MaterialsCatalogProps {
   };
 }
 
-export function MaterialsCatalog({ materialItems, stocks, onAddMaterial, onTransaction, onEditMaterial, onDeleteMaterial, permissions }: MaterialsCatalogProps) {
-  const [search, setSearch] = useState("");
+export function MaterialsCatalog({ materialItems, stocks, transactions = [], onAddMaterial, onTransaction, onEditMaterial, onDeleteMaterial, permissions }: MaterialsCatalogProps) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const [search, setSearch] = useState(searchParams.get("q") || "");
+  const [selectedGroup, setSelectedGroup] = useState<string>(searchParams.get("group") || "ALL");
+  const [selectedStockStatus, setSelectedStockStatus] = useState<string>(searchParams.get("stockStatus") || "ALL");
+  
+  const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(searchParams.get("materialId"));
+
+  // Sync with URL
+  useEffect(() => {
+    if (searchParams.has("q")) setSearch(searchParams.get("q") || "");
+    if (searchParams.has("group")) setSelectedGroup(searchParams.get("group") || "ALL");
+    if (searchParams.has("stockStatus")) setSelectedStockStatus(searchParams.get("stockStatus") || "ALL");
+    if (searchParams.has("materialId")) setSelectedMaterialId(searchParams.get("materialId"));
+  }, [searchParams]);
+
+  const updateUrl = (updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams);
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === null || value === "" || value === "ALL") {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    });
+    router.replace(`?${params.toString()}`, { scroll: false });
+  };
+
+  const handleSearchChange = (val: string) => {
+    setSearch(val);
+    updateUrl({ q: val });
+  };
+
+  const handleGroupChange = (val: string) => {
+    setSelectedGroup(val);
+    updateUrl({ group: val });
+  };
+
+  const handleStockStatusChange = (val: string) => {
+    setSelectedStockStatus(val);
+    updateUrl({ stockStatus: val });
+  };
+
+  const handleRowClick = (materialId: string) => {
+    setSelectedMaterialId(materialId);
+    updateUrl({ materialId });
+  };
+
+  const closeDrawer = () => {
+    setSelectedMaterialId(null);
+    updateUrl({ materialId: null });
+  };
+
+  const clearFilters = () => {
+    setSearch("");
+    setSelectedGroup("ALL");
+    setSelectedStockStatus("ALL");
+    updateUrl({ q: null, group: null, stockStatus: null });
+  };
+
   const stockByMaterialId = useMemo(
     () => new Map(stocks.map((stock) => [stock.materialItemId, stock])),
     [stocks]
   );
+  
+  const groups = useMemo(() => {
+    const allGroups = new Set(materialItems.map(m => m.group).filter(Boolean));
+    return Array.from(allGroups) as string[];
+  }, [materialItems]);
+
   const normalizedSearch = search.trim().toLowerCase();
 
   const filtered = materialItems.filter((material) => {
+    const stock = stockByMaterialId.get(material.id);
+    
+    // Group filter
+    if (selectedGroup !== "ALL" && material.group !== selectedGroup && (selectedGroup !== "UNGROUPED" || material.group)) {
+      return false;
+    }
 
+    // Stock Status filter
+    if (selectedStockStatus !== "ALL") {
+      const currentStock = stock ? stock.stock : 0;
+      const minStock = stock ? stock.minStockLevel : 0;
+      const status = getStockStatus(currentStock, minStock);
+      
+      if (selectedStockStatus === "HEALTHY" && status !== "healthy") return false;
+      if (selectedStockStatus === "LOW" && status !== "low") return false;
+      if (selectedStockStatus === "OUT" && status !== "out") return false;
+      if (selectedStockStatus === "NEGATIVE" && currentStock >= 0) return false;
+    }
+
+    // Search filter
     if (!normalizedSearch) return true;
     return [material.code, material.name, material.group || ""].some((value) =>
       value.toLowerCase().includes(normalizedSearch)
     );
   });
 
+  const hasFilters = search !== "" || selectedGroup !== "ALL" || selectedStockStatus !== "ALL";
+
   const hasActions = permissions.canImport || permissions.canExport || permissions.canUpdate || permissions.canDelete;
 
   const renderActions = (material: MaterialItemDto, stock?: ProjectStockDto) => {
     if (!hasActions) return null;
     return (
-      <div className="flex flex-wrap justify-end gap-2">
+      <ActionGroup className="justify-end flex-nowrap opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
         {permissions.canImport && (
           <button
             type="button"
-            onClick={() => onTransaction("IMPORT", material.id)}
-            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={(e) => { e.stopPropagation(); onTransaction("IMPORT", material.id); }}
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
           >
             <ArrowDownRight className="h-3.5 w-3.5" />
             Nhập
@@ -58,22 +148,24 @@ export function MaterialsCatalog({ materialItems, stocks, onAddMaterial, onTrans
         {permissions.canExport && (
           <button
             type="button"
-            onClick={() => onTransaction("EXPORT", material.id)}
+            onClick={(e) => { e.stopPropagation(); onTransaction("EXPORT", material.id); }}
             disabled={!stock || stock.stock <= 0}
-            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400"
+            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400 whitespace-nowrap"
           >
             <ArrowUpRight className="h-3.5 w-3.5" />
             Xuất
           </button>
         )}
+        
         {(permissions.canImport || permissions.canExport) && (permissions.canUpdate || permissions.canDelete) && (
-          <div className="w-px bg-slate-200 mx-1"></div>
+          <div className="w-px h-4 bg-slate-200 mx-1 shrink-0"></div>
         )}
+        
         {permissions.canUpdate && (
           <button
             type="button"
-            onClick={() => onEditMaterial(material.id)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 hover:text-blue-600"
+            onClick={(e) => { e.stopPropagation(); onEditMaterial(material.id); }}
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 hover:text-blue-600"
             title="Sửa vật tư"
           >
             <Pencil className="h-3.5 w-3.5" />
@@ -82,65 +174,138 @@ export function MaterialsCatalog({ materialItems, stocks, onAddMaterial, onTrans
         {permissions.canDelete && (
           <button
             type="button"
-            onClick={() => onDeleteMaterial(material.id)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (window.confirm("Bạn có chắc muốn xóa vật tư này?")) {
+                onDeleteMaterial(material.id);
+              }
+            }}
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 ml-1"
             title="Xóa vật tư"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
         )}
-      </div>
+      </ActionGroup>
     );
   };
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 md:grid-cols-[minmax(0,420px)_auto] md:items-center md:justify-between">
-        <div className="relative">
-          <label htmlFor="materials-catalog-search" className="sr-only">Tìm danh mục vật tư theo mã, tên hoặc nhóm</label>
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input
-            id="materials-catalog-search"
-            type="text"
-            placeholder="Tìm mã, tên hoặc nhóm..."
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            className="h-10 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-          />
+      {/* HEADER METADATA */}
+      <div className="flex flex-wrap items-center gap-4 text-sm">
+        <div className="flex items-center gap-1.5 text-slate-600">
+          <span className="font-semibold text-slate-900">{filtered.length}</span> vật tư
         </div>
+        <div className="w-1 h-1 rounded-full bg-slate-300"></div>
+        <div className="flex items-center gap-1.5 text-slate-600">
+          <span className="font-semibold text-slate-900">{groups.length}</span> nhóm
+        </div>
+        {hasFilters && (
+          <>
+            <div className="w-1 h-1 rounded-full bg-slate-300"></div>
+            <div className="flex items-center gap-2">
+              <span className="text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded-full text-xs">Đang lọc kết quả</span>
+              <button onClick={clearFilters} className="text-xs font-semibold text-slate-500 hover:text-slate-900 flex items-center gap-1">
+                <X className="h-3.5 w-3.5" /> Xóa lọc
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="flex flex-col md:flex-row gap-3 md:items-center justify-between">
+        <div className="flex flex-col sm:flex-row flex-1 gap-3 max-w-3xl">
+          <div className="relative min-w-0 flex-1">
+            <label htmlFor="materials-catalog-search" className="sr-only">Tìm danh mục vật tư</label>
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              id="materials-catalog-search"
+              type="text"
+              placeholder="Tìm mã, tên hoặc nhóm..."
+              value={search}
+              onChange={(event) => handleSearchChange(event.target.value)}
+              className="h-10 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+          
+          <div className="relative min-w-0 sm:w-48 shrink-0">
+            <Filter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <select
+              value={selectedGroup}
+              onChange={(e) => handleGroupChange(e.target.value)}
+              className="h-10 w-full appearance-none rounded-lg border border-slate-300 bg-white pl-9 pr-8 text-sm font-medium text-slate-900 outline-none transition hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="ALL">Tất cả nhóm</option>
+              {groups.map(g => <option key={g} value={g}>{g}</option>)}
+              <option value="UNGROUPED">Chưa phân loại</option>
+            </select>
+          </div>
+
+          <div className="relative min-w-0 sm:w-48 shrink-0">
+            <Filter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <select
+              value={selectedStockStatus}
+              onChange={(e) => handleStockStatusChange(e.target.value)}
+              className="h-10 w-full appearance-none rounded-lg border border-slate-300 bg-white pl-9 pr-8 text-sm font-medium text-slate-900 outline-none transition hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="ALL">Mọi trạng thái</option>
+              <option value="HEALTHY">Đủ hàng</option>
+              <option value="LOW">Sắp hết</option>
+              <option value="OUT">Hết hàng</option>
+              <option value="NEGATIVE">Âm kho</option>
+            </select>
+          </div>
+        </div>
+
         {permissions.canCreate && materialItems.length > 0 && (
-          <Button onClick={onAddMaterial} className="w-full md:w-auto">
-            <PackagePlus className="h-4 w-4" />
+          <Button onClick={onAddMaterial} className="w-full md:w-auto shrink-0">
+            <PackagePlus className="h-4 w-4 mr-2" />
             Thêm vật tư
           </Button>
         )}
       </div>
 
-      <EnterpriseTable className="hidden md:block">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <EnterpriseTable className="hidden md:block" data-density="compact">
+        <table className="w-full text-left text-sm relative">
+          <thead className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur shadow-sm text-xs font-semibold uppercase tracking-wide text-slate-500">
             <tr>
-              <th className="px-4 py-3">Mã VT</th>
-              <th className="px-4 py-3">Tên vật tư</th>
-              <th className="px-4 py-3">Đơn vị</th>
-              <th className="px-4 py-3">Nhóm</th>
-              <th className="px-4 py-3 text-right">Tồn kho</th>
-              {hasActions && <th className="px-4 py-3 text-right">Thao tác</th>}
+              <th className="px-3 py-2.5 border-b border-slate-200">Mã VT</th>
+              <th className="px-3 py-2.5 border-b border-slate-200 w-1/3">Tên vật tư</th>
+              <th className="px-3 py-2.5 border-b border-slate-200">Đơn vị</th>
+              <th className="px-3 py-2.5 border-b border-slate-200">Nhóm</th>
+              <th className="px-3 py-2.5 border-b border-slate-200 text-right">Tồn kho</th>
+              {hasActions && <th className="px-3 py-2.5 border-b border-slate-200 text-right w-[200px]">Thao tác</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filtered.map((material) => {
               const stock = stockByMaterialId.get(material.id);
               return (
-                <tr key={material.id} className="transition hover:bg-slate-50/70">
-                  <td className="px-4 py-3 font-mono text-xs font-semibold text-slate-500">{material.code}</td>
-                  <td className="px-4 py-3 font-semibold text-slate-950">{material.name}</td>
-                  <td className="px-4 py-3 text-slate-600">{material.unit}</td>
-                  <td className="px-4 py-3 text-slate-600">{material.group || "Chưa phân loại"}</td>
-                  <td className="px-4 py-3 text-right font-mono font-semibold text-slate-950">
-                    {stock ? `${formatQuantity(stock.stock)} ${material.unit}` : <span className="text-xs font-medium font-sans text-slate-400">0</span>}
+                <tr 
+                  key={material.id} 
+                  className="transition hover:bg-slate-50 cursor-pointer group active:bg-slate-100 h-12"
+                  onClick={() => handleRowClick(material.id)}
+                >
+                  <td className="px-3 py-2 font-mono text-xs font-semibold text-slate-500 whitespace-nowrap">{material.code}</td>
+                  <td className="px-3 py-2 font-semibold text-slate-950 max-w-0">
+                    <SafeText className="group-hover:text-blue-700 transition-colors line-clamp-1">{material.name}</SafeText>
                   </td>
-                  {hasActions && <td className="px-4 py-3">{renderActions(material, stock)}</td>}
+                  <td className="px-3 py-2 text-slate-600 whitespace-nowrap">{material.unit}</td>
+                  <td className="px-3 py-2 text-slate-600 truncate max-w-[120px]">{material.group || "—"}</td>
+                  <td className="px-3 py-2">
+                    <QuantityCell value={stock ? stock.stock : 0} unit={material.unit} />
+                  </td>
+                  {hasActions && (
+                    <td className="px-3 py-2 relative text-right">
+                      <div className="absolute inset-y-0 right-3 flex items-center justify-end md:opacity-100 md:group-hover:opacity-0 transition-opacity">
+                        <MoreHorizontal className="h-4 w-4 text-slate-300" />
+                      </div>
+                      <div className="relative z-10 flex justify-end bg-white/80 group-hover:bg-slate-50/80">
+                        {renderActions(material, stock)}
+                      </div>
+                    </td>
+                  )}
                 </tr>
               );
             })}
@@ -171,28 +336,34 @@ export function MaterialsCatalog({ materialItems, stocks, onAddMaterial, onTrans
         {filtered.map((material) => {
           const stock = stockByMaterialId.get(material.id);
           return (
-            <ContentCard key={material.id} className="p-4">
+            <ContentCard 
+              key={material.id} 
+              className="p-4 active:scale-[0.99] transition-transform cursor-pointer"
+              onClick={() => handleRowClick(material.id)}
+            >
               <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="font-bold text-slate-950">{material.name}</div>
+                <div className="min-w-0">
+                  <SafeText className="font-bold text-slate-950">{material.name}</SafeText>
                   <div className="mt-1 font-mono text-xs font-semibold text-slate-500">{material.code}</div>
                 </div>
               </div>
               <div className="mt-4 grid grid-cols-3 gap-2 text-sm">
                 <div className="rounded-lg bg-slate-50 p-2">
                   <div className="text-xs font-semibold text-slate-500">Đơn vị</div>
-                  <div className="mt-1 font-bold text-slate-900">{material.unit}</div>
+                  <div className="mt-1 font-bold text-slate-900 truncate">{material.unit}</div>
                 </div>
                 <div className="rounded-lg bg-slate-50 p-2">
                   <div className="text-xs font-semibold text-slate-500">Nhóm</div>
-                  <div className="mt-1 truncate font-bold text-slate-900">{material.group || "-"}</div>
+                  <div className="mt-1 font-bold text-slate-900 truncate">{material.group || "-"}</div>
                 </div>
                 <div className="rounded-lg bg-slate-50 p-2 text-right">
-                  <div className="text-xs font-semibold text-slate-500">Tồn kho hiện tại</div>
-                  <div className="mt-1 font-mono font-bold text-slate-900">{stock ? formatQuantity(stock.stock) : <span className="text-xs font-medium font-sans text-slate-400">0</span>}</div>
+                  <div className="text-xs font-semibold text-slate-500">Tồn kho</div>
+                  <div className="mt-1 font-mono font-bold text-slate-900">
+                    <QuantityCell value={stock ? stock.stock : 0} />
+                  </div>
                 </div>
               </div>
-              {hasActions && <div className="mt-4">{renderActions(material, stock)}</div>}
+              {hasActions && <div className="mt-4 border-t border-slate-100 pt-3 flex justify-end">{renderActions(material, stock)}</div>}
             </ContentCard>
           );
         })}
@@ -214,6 +385,26 @@ export function MaterialsCatalog({ materialItems, stocks, onAddMaterial, onTrans
           </div>
         )}
       </div>
+      
+      {/* DRAWER */}
+      {selectedMaterialId && (
+        <MaterialDetailDrawer
+          material={materialItems.find(m => m.id === selectedMaterialId) || null}
+          stock={stockByMaterialId.get(selectedMaterialId)}
+          recentTransactions={transactions.filter(t => t.materialItemId === selectedMaterialId).slice(0, 5)}
+          onClose={closeDrawer}
+          onEdit={() => onEditMaterial(selectedMaterialId)}
+          onDelete={() => {
+            if (window.confirm("Bạn có chắc muốn xóa vật tư này?")) {
+              onDeleteMaterial(selectedMaterialId);
+              closeDrawer();
+            }
+          }}
+          onImport={() => onTransaction("IMPORT", selectedMaterialId)}
+          onExport={() => onTransaction("EXPORT", selectedMaterialId)}
+          permissions={permissions}
+        />
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CloseButton } from "@/components/ui/close-button";
 import { useState, useEffect } from "react";
 import { ReportPhoto } from "./types";
 
@@ -46,7 +47,7 @@ export function SiteReportGalleryDialog({ isOpen, onClose, photos, initialIndex 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/95">
       <div className="relative w-full h-full flex flex-col justify-between">
         
         {/* Header */}
@@ -54,9 +55,7 @@ export function SiteReportGalleryDialog({ isOpen, onClose, photos, initialIndex 
           <p className="text-white text-sm font-medium">
             Ảnh {currentIndex + 1} / {photos.length}
           </p>
-          <button onClick={onClose} className="p-2 bg-black/40 hover:bg-white/20 rounded-full text-white transition-colors">
-            <X className="w-5 h-5" />
-          </button>
+          <CloseButton onClick={onClose} className="bg-black/40 text-white border-transparent hover:bg-white/20 hover:text-white border-none" />
         </div>
 
         {/* Main Image */}

@@ -457,6 +457,7 @@ async function syncSourceOnApprovalTx(
           status: "APPROVED",
         } : {
           status: "REJECTED",
+          cancelReason: note ?? "Bị từ chối từ hệ thống phê duyệt",
         }
       });
       break;
@@ -656,4 +657,54 @@ export async function softDeleteApprovalRequest(id: string) {
 
   revalidatePath(APPROVALS_PATH);
   return { ok: true };
+}
+
+export async function getApprovalMaterialDetails(approvalId: string) {
+  const session = await getSession();
+  if (!session) return null;
+
+  const approval = await prisma.approvalRequest.findUnique({
+    where: { id: approvalId },
+    select: { sourceId: true, sourceType: true }
+  });
+
+  if (!approval || approval.sourceType !== "MATERIAL_REQUEST" || !approval.sourceId) return null;
+
+  const materialReq = await prisma.materialRequest.findUnique({
+    where: { id: approval.sourceId },
+    include: {
+      items: true,
+      requestedBy: {
+        select: { name: true }
+      }
+    }
+  });
+
+  if (!materialReq) return null;
+
+  // Serialize Date and Decimal objects
+  return {
+    id: materialReq.id,
+    projectId: materialReq.projectId,
+    requestNo: materialReq.requestNo,
+    status: materialReq.status,
+    priority: materialReq.priority,
+    requestDate: materialReq.requestDate ? materialReq.requestDate.toISOString() : null,
+    neededDate: materialReq.neededDate ? materialReq.neededDate.toISOString() : null,
+    note: materialReq.note,
+    cancelReason: materialReq.cancelReason,
+    requestedBy: materialReq.requestedBy,
+    items: materialReq.items.map((item) => ({
+      id: item.id,
+      materialCode: item.materialCode,
+      materialName: item.materialName,
+      unit: item.unit,
+      requestedQuantity: Number(item.requestedQuantity),
+      issuedQuantity: Number(item.issuedQuantity),
+      receivedQuantity: Number(item.receivedQuantity),
+      remainingQuantity: Number(item.remainingQuantity),
+      reason: item.reason,
+      note: item.note,
+    }))
+  };
 }

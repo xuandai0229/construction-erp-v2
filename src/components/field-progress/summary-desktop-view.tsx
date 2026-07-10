@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { formatWorkDate } from "@/lib/date/work-date";
 import { formatQuantity } from "@/lib/field-progress";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { CloseButton } from "@/components/ui/close-button";
 
 interface SummaryDesktopViewProps {
   displayItems: any[];
@@ -290,9 +291,7 @@ export function SummaryDesktopView({
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl mx-4 flex flex-col max-h-[85vh]">
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50 rounded-t-2xl">
               <h3 className="font-bold text-slate-900 text-[16px]">Chi tiết công việc</h3>
-              <Button variant="ghost" className="h-9 w-9 p-0 rounded-full bg-slate-200 hover:bg-slate-300" onClick={() => setActiveItem(null)} aria-label="Đóng chi tiết">
-                <X className="h-5 w-5 text-slate-700" />
-              </Button>
+              <CloseButton onClick={() => setActiveItem(null)} tone="neutral" />
             </div>
 
             <div className="overflow-y-auto px-5 py-4 space-y-5">

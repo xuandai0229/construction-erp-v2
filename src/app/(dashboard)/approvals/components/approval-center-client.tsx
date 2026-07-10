@@ -24,6 +24,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ReasonDialog } from "@/components/ui/reason-dialog";
 import { useToast } from "@/components/ui/toast-context";
 import { cn } from "@/lib/utils";
+import { safeFormatDateVN, toDateInputValue } from "@/lib/date-utils";
+import { DateFieldVN } from "@/components/ui/date-field-vn";
 import {
   approveApprovalRequest,
   cancelApprovalRequest,
@@ -31,6 +33,7 @@ import {
   rejectApprovalRequest,
   softDeleteApprovalRequest,
   updateApprovalRequest,
+  getApprovalMaterialDetails,
 } from "../actions";
 import type {
   ApprovalProjectOptionDto,
@@ -111,11 +114,7 @@ function formatCurrency(value: number | null) {
 }
 
 function formatDate(value: string | null) {
-  if (!value) return "—";
-  const datePart = value.slice(0, 10);
-  const [year, month, day] = datePart.split("-");
-  if (!year || !month || !day) return "—";
-  return `${day}/${month}/${year}`;
+  return safeFormatDateVN(value);
 }
 
 function StatusBadge({ status }: { status: ApprovalRequestStatus }) {
@@ -171,6 +170,20 @@ function SummaryCard({
   );
 }
 
+function formatCompactCurrency(value: number | string | null | undefined) {
+  if (value == null) return "—";
+  const num = typeof value === "string" ? parseFloat(value) : value;
+  if (isNaN(num)) return "—";
+
+  if (num >= 1_000_000_000) {
+    return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(num / 1_000_000_000) + " tỷ ₫";
+  }
+  if (num >= 1_000_000) {
+    return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(num / 1_000_000) + " triệu ₫";
+  }
+  return new Intl.NumberFormat('vi-VN').format(num) + " ₫";
+}
+
 function ApprovalFormDialog({
   isOpen,
   onClose,
@@ -200,7 +213,7 @@ function ApprovalFormDialog({
   const [type, setType] = useState<ApprovalRequestType>(initialData?.type ?? "PAYMENT");
   const [priority, setPriority] = useState<ApprovalPriority>(initialData?.priority ?? "NORMAL");
   const [amount, setAmount] = useState(initialData?.amount?.toString() ?? "");
-  const [dueDate, setDueDate] = useState(initialData?.dueDate ? new Date(initialData.dueDate).toISOString().split("T")[0] : "");
+  const [dueDate, setDueDate] = useState(toDateInputValue(initialData?.dueDate));
 
   if (!isOpen) return null;
 
@@ -312,11 +325,10 @@ function ApprovalFormDialog({
 
           <label>
             <span className="text-sm font-semibold text-slate-700">Hạn xử lý <span className="text-red-500">*</span></span>
-            <input
-              type="date"
+            <DateFieldVN
               value={dueDate}
-              onChange={(event) => setDueDate(event.target.value)}
-              className="mt-1.5 h-10 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              onChange={(val) => setDueDate(val)}
+              className="mt-1.5"
               required
             />
           </label>
@@ -348,6 +360,110 @@ function DetailItem({ label, value }: { label: string; value: string }) {
     <div className="rounded-xl border border-slate-100 bg-slate-50/50 px-4 py-3">
       <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{label}</div>
       <div className="mt-1 text-sm font-semibold text-slate-900">{value}</div>
+    </div>
+  );
+}
+
+function MaterialRequestPreview({ approvalId }: { approvalId: string }) {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    getApprovalMaterialDetails(approvalId).then((res) => {
+      if (active) {
+        setData(res);
+        setLoading(false);
+      }
+    });
+    return () => { active = false; };
+  }, [approvalId]);
+
+  if (loading) return <div className="text-sm text-slate-500 animate-pulse mt-4">Đang tải chi tiết phiếu vật tư...</div>;
+  if (!data) return <div className="text-sm text-rose-500 mt-4">Không tìm thấy phiếu yêu cầu vật tư liên kết. Phiếu có thể đã bị xóa hoặc bạn không có quyền xem.</div>;
+
+  return (
+    <div className="mt-4 border-t border-slate-100 pt-4">
+      <h4 className="text-sm font-semibold text-slate-900 mb-3 text-blue-700">Yêu cầu vật tư cần phê duyệt</h4>
+      <div className="grid grid-cols-2 gap-y-2 gap-x-4 mb-4">
+        <div className="text-sm">
+          <span className="text-slate-500">Mã phiếu: </span>
+          <span className="font-semibold text-slate-900">{data.requestNo || "—"}</span>
+        </div>
+        <div className="text-sm">
+          <span className="text-slate-500">Người gửi: </span>
+          <span className="font-semibold text-slate-900">{data.requestedBy?.name || "Không rõ"}</span>
+        </div>
+        <div className="text-sm">
+          <span className="text-slate-500">Ngày đề xuất: </span>
+          <span className="font-medium text-slate-900">{formatDate(data.requestDate)}</span>
+        </div>
+        <div className="text-sm">
+          <span className="text-slate-500">Ngày cần vật tư: </span>
+          <span className="font-medium text-slate-900">{formatDate(data.neededDate)}</span>
+        </div>
+        <div className="text-sm">
+          <span className="text-slate-500">Trạng thái phiếu VT: </span>
+          <StatusBadge status={data.status} />
+        </div>
+        <div className="text-sm">
+          <span className="text-slate-500">Ưu tiên: </span>
+          <span className="font-medium text-slate-900">{PRIORITY_LABELS[data.priority as ApprovalPriority] || data.priority}</span>
+        </div>
+        {data.note && (
+          <div className="text-sm col-span-2">
+            <span className="text-slate-500">Ghi chú: </span>
+            <span className="text-slate-700">{data.note}</span>
+          </div>
+        )}
+      </div>
+        
+      <div className="mt-3">
+        <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Danh sách vật tư yêu cầu ({data.items?.length || 0})</div>
+        <div className="rounded-lg border border-slate-200 overflow-x-auto">
+          <table className="w-full text-left text-sm whitespace-nowrap min-w-[500px]">
+            <thead className="bg-slate-50 text-slate-600">
+              <tr>
+                <th className="px-3 py-2 font-medium">Mã VT</th>
+                <th className="px-3 py-2 font-medium">Tên vật tư</th>
+                <th className="px-3 py-2 font-medium">ĐVT</th>
+                <th className="px-3 py-2 font-medium text-right">Đề xuất</th>
+                <th className="px-3 py-2 font-medium text-right">Đã cấp</th>
+                <th className="px-3 py-2 font-medium text-right">Đã nhận</th>
+                <th className="px-3 py-2 font-medium text-right text-rose-600">Còn thiếu</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 bg-white">
+              {data.items?.map((item: any) => {
+                const formatQty = (num: number) => new Intl.NumberFormat('vi-VN').format(num);
+                return (
+                  <tr key={item.id} className="hover:bg-slate-50">
+                    <td className="px-3 py-2 text-slate-500 font-mono text-xs">{item.materialCode || "—"}</td>
+                    <td className="px-3 py-2 text-slate-900 font-medium">{item.materialName || "Vật tư không rõ"}</td>
+                    <td className="px-3 py-2 text-slate-500">{item.unit || "—"}</td>
+                    <td className="px-3 py-2 text-right font-semibold text-slate-900">{formatQty(item.requestedQuantity)}</td>
+                    <td className="px-3 py-2 text-right text-emerald-600">{formatQty(item.issuedQuantity)}</td>
+                    <td className="px-3 py-2 text-right text-blue-600">{formatQty(item.receivedQuantity)}</td>
+                    <td className="px-3 py-2 text-right font-medium text-rose-600">{formatQty(item.remainingQuantity)}</td>
+                  </tr>
+                );
+              })}
+              {(!data.items || data.items.length === 0) && (
+                <tr>
+                  <td colSpan={7} className="px-3 py-4 text-center text-slate-500 italic">Không có vật tư nào</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="mt-4 flex">
+        <a href={`/materials?tab=requests&projectId=${data.projectId}&requestId=${data.id}`} className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline">
+          <FileCheck2 className="mr-1 h-4 w-4" />
+          Mở xem phiếu vật tư gốc
+        </a>
+      </div>
     </div>
   );
 }
@@ -419,8 +535,17 @@ function ApprovalDetailDrawer({
               <div className="flex gap-3">
                 <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
                 <div className="text-sm text-amber-800">
-                  <strong className="block mb-1">Thiếu chứng từ đính kèm</strong>
-                  Chưa có chứng từ đính kèm (hóa đơn, PDF, bảng khối lượng) trong giao diện này. Hãy kiểm tra kỹ phân hệ gốc trước khi duyệt để tránh sai sót. Quyết định tại đây sẽ đồng bộ lập tức về module gốc.
+                  {approval.type === "MATERIAL" || approval.sourceType === "MATERIAL_REQUEST" ? (
+                    <>
+                      <strong className="block mb-1">Lưu ý phê duyệt vật tư</strong>
+                      Kiểm tra nhu cầu vật tư, tồn kho và ngày cần trước khi duyệt. Duyệt phiếu không tự động trừ kho.
+                    </>
+                  ) : (
+                    <>
+                      <strong className="block mb-1">Thiếu chứng từ đính kèm</strong>
+                      Chưa có chứng từ đính kèm (hóa đơn, PDF, bảng khối lượng) trong giao diện này. Hãy kiểm tra kỹ phân hệ gốc trước khi duyệt để tránh sai sót. Quyết định tại đây sẽ đồng bộ lập tức về module gốc.
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -453,11 +578,13 @@ function ApprovalDetailDrawer({
                       <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
                         {SOURCE_TYPE_LABELS[approval.sourceType ?? ""] ?? approval.sourceType ?? "Nguồn"}
                       </div>
-                      <div className="font-mono text-sm font-semibold text-slate-900">
-                        {approval.sourceId || "Không có mã"}
-                      </div>
+                      {approval.sourceType !== "MATERIAL_REQUEST" && (
+                        <div className="font-mono text-sm font-semibold text-slate-900">
+                          {approval.sourceId || "Không có mã"}
+                        </div>
+                      )}
                     </div>
-                    {!["PaymentRequest", "Contract", "MaterialRequest"].includes(approval.sourceType ?? "") ? (
+                    {!["PaymentRequest", "Contract", "MaterialRequest", "MATERIAL_REQUEST"].includes(approval.sourceType ?? "") ? (
                        <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
                          Tham chiếu nội bộ
                        </span>
@@ -467,6 +594,9 @@ function ApprovalDetailDrawer({
                        </span>
                     )}
                   </div>
+                  {approval.sourceType === "MATERIAL_REQUEST" && (
+                    <MaterialRequestPreview approvalId={approval.id} />
+                  )}
                 </div>
               ) : (
                 <div className="rounded-xl border border-dashed border-slate-300 p-4 text-center text-sm text-slate-500">
@@ -527,7 +657,9 @@ function ApprovalDetailDrawer({
             {canDecide && (
               <>
                 <Button type="button" variant="outline" className="w-full sm:w-auto text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700" onClick={() => onReject(approval)}>Từ chối</Button>
-                <Button type="button" className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => onApprove(approval)}>Duyệt hồ sơ</Button>
+                <Button type="button" className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => onApprove(approval)}>
+                  {approval.type === "MATERIAL" || approval.sourceType === "MATERIAL_REQUEST" ? "Duyệt phiếu" : "Duyệt hồ sơ"}
+                </Button>
               </>
             )}
           </div>
@@ -575,6 +707,7 @@ export function ApprovalCenterClient({
     params.delete("approvalId");
     params.delete("requestId");
     params.delete("id");
+    params.delete("sourceId");
     params.delete("open");
     params.delete("notificationId");
     if (params.get("type")?.includes("-")) {
@@ -597,16 +730,18 @@ export function ApprovalCenterClient({
     const params = new URLSearchParams(searchParamsKey);
     const approvalId = params.get("approvalId") || params.get("requestId");
     const targetId = params.get("id");
-    const shouldOpen = params.get("open") === "1" || Boolean(approvalId);
+    const sourceId = params.get("sourceId");
+    const shouldOpen = params.get("open") === "1" || Boolean(approvalId) || Boolean(sourceId);
     if (!shouldOpen && !targetId) {
       setDeepLinkMissing(false);
       return;
     }
 
     const matchedApproval = approvals.find((approval) =>
-      approval.id === approvalId ||
-      approval.id === targetId ||
-      (Boolean(targetId) && approval.sourceId === targetId)
+      (approvalId && approval.id === approvalId) ||
+      (targetId && approval.id === targetId) ||
+      (targetId && approval.sourceId === targetId) ||
+      (sourceId && approval.sourceId === sourceId)
     );
 
     if (!matchedApproval) {
@@ -687,7 +822,10 @@ export function ApprovalCenterClient({
       overdueCount: filteredApprovals.filter((approval) => isApprovalOverdue(approval)).length,
       approvedCount: filteredApprovals.filter((approval) => approval.status === "APPROVED").length,
       rejectedCount: filteredApprovals.filter((approval) => approval.status === "REJECTED").length,
-      pendingAmount: pending.reduce((sum, approval) => sum + (approval.amount ?? 0), 0),
+      pendingAmount: pending.reduce((sum, approval) => {
+        if (approval.type === "MATERIAL" || approval.sourceType === "MATERIAL_REQUEST") return sum;
+        return sum + (approval.amount ?? 0);
+      }, 0),
     };
   }, [filteredApprovals]);
 
@@ -762,7 +900,7 @@ export function ApprovalCenterClient({
         <SummaryCard label="Quá hạn" value={displaySummary.overdueCount} helper="Chưa xử lý và đã quá hạn" icon={AlertTriangle} tone="amber" />
         <SummaryCard label="Đã duyệt" value={displaySummary.approvedCount} helper="Yêu cầu đã được chấp thuận" icon={CheckCircle2} tone="emerald" />
         <SummaryCard label="Từ chối" value={displaySummary.rejectedCount} helper="Yêu cầu đã bị từ chối" icon={XCircle} tone="rose" />
-        <SummaryCard label="Giá trị chờ xử lý" value={formatCurrency(displaySummary.pendingAmount)} helper="Tổng giá trị các yêu cầu đang chờ" icon={ShieldCheck} tone="slate" />
+        <SummaryCard label="Giá trị chờ xử lý" value={formatCompactCurrency(displaySummary.pendingAmount)} helper="Tổng giá trị các yêu cầu đang chờ" icon={ShieldCheck} tone="slate" />
       </div>
 
       {deepLinkMissing && (
@@ -870,7 +1008,7 @@ export function ApprovalCenterClient({
                           {approval.sourceType || approval.sourceId ? (
                             <div className="text-[11px] text-slate-500">
                                <span className="font-medium">{SOURCE_TYPE_LABELS[approval.sourceType ?? ""] ?? approval.sourceType ?? "Nguồn"}</span>
-                               {approval.sourceId && ` • ${approval.sourceId}`}
+                               {approval.sourceType === "MATERIAL_REQUEST" ? ` • ${approval.title.replace("Yêu cầu vật tư: ", "")}` : (approval.sourceId && ` • ${approval.sourceId}`)}
                             </div>
                           ) : (
                             <div className="text-[11px] text-slate-400 italic">Chỉ tham chiếu nội bộ</div>
@@ -878,7 +1016,9 @@ export function ApprovalCenterClient({
                         </div>
                       </td>
                       <td className="px-5 py-3 text-right">
-                         <div className="font-mono font-semibold text-slate-900 mb-1.5">{formatCurrency(approval.amount)}</div>
+                         <div className="font-mono font-semibold text-slate-900 mb-1.5">
+                           {approval.type === "MATERIAL" || approval.sourceType === "MATERIAL_REQUEST" ? "—" : formatCurrency(approval.amount)}
+                         </div>
                          <div className="flex items-center justify-end gap-2">
                             <PriorityBadge priority={approval.priority} />
                             <span className={`font-mono text-[11px] ${overdue ? "font-bold text-red-600" : "text-slate-500"}`}>
@@ -952,7 +1092,7 @@ export function ApprovalCenterClient({
                       Giá trị:
                     </div>
                     <div className="font-mono font-semibold text-slate-900 text-right">
-                      {formatCurrency(approval.amount)}
+                      {approval.type === "MATERIAL" || approval.sourceType === "MATERIAL_REQUEST" ? "—" : formatCurrency(approval.amount)}
                     </div>
                   </div>
                   <div className="flex items-center justify-between mt-1">

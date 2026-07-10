@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Search, Building2, Bell, X, FileText, ClipboardCheck, ArrowRight, Loader2 } from "lucide-react";
+import { Search, Building2, Bell, FileText, ClipboardCheck, ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import type { GlobalProjectContext } from "@/lib/project-context";
 import { setProjectContextCookie } from "@/app/actions/project-context";
 import { searchSystem } from "@/app/actions/global-search";
+import { CloseButton } from "@/components/ui/close-button";
 
 interface GlobalSearchCommandProps {
   globalContext?: GlobalProjectContext;
@@ -151,16 +152,15 @@ export function GlobalSearchCommand({ globalContext }: GlobalSearchCommandProps)
                   onChange={(e) => setQuery(e.target.value)}
                 />
                 {query && !isSearching && (
-                  <button
-                    onClick={() => {
-                      setQuery("");
-                      inputRef.current?.focus();
-                    }}
-                    className="absolute right-2 flex h-6 w-6 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
-                    aria-label="Xóa nội dung tìm kiếm"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
+                    <CloseButton
+                      onClick={() => {
+                        setQuery("");
+                        inputRef.current?.focus();
+                      }}
+                      className="absolute right-2"
+                      tone="neutral"
+                      aria-label="Xóa nội dung tìm kiếm"
+                    />
                 )}
                 {isSearching && (
                   <div className="absolute right-2 flex h-6 w-6 items-center justify-center">
@@ -168,21 +168,17 @@ export function GlobalSearchCommand({ globalContext }: GlobalSearchCommandProps)
                   </div>
                 )}
               </div>
-              <button 
+              <CloseButton 
                 onClick={closeSearch}
-                className="hidden sm:flex shrink-0 items-center justify-center h-8 w-8 ml-2 rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
-                aria-label="Đóng tìm kiếm"
+                className="hidden sm:flex ml-2"
                 title="Đóng (Esc)"
-              >
-                <X className="h-5 w-5" />
-              </button>
-              <button 
+                tone="neutral"
+              />
+              <CloseButton 
                 onClick={closeSearch}
-                className="sm:hidden shrink-0 items-center justify-center h-8 w-8 ml-1 rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
-                aria-label="Đóng tìm kiếm"
-              >
-                <X className="h-5 w-5" />
-              </button>
+                className="sm:hidden ml-1"
+                tone="neutral"
+              />
             </div>
 
             <div className="max-h-[60vh] overflow-y-auto p-2 custom-scrollbar">

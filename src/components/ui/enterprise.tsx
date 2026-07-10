@@ -101,7 +101,6 @@ export function SectionHeader({
   );
 }
 
-/* ---- KPI Card ---- */
 export function KpiCard({
   label,
   value,
@@ -109,6 +108,7 @@ export function KpiCard({
   icon,
   tone = "blue",
   className,
+  onClick,
 }: {
   label: React.ReactNode;
   value: React.ReactNode;
@@ -116,19 +116,43 @@ export function KpiCard({
   icon?: React.ReactNode;
   tone?: Tone;
   className?: string;
+  onClick?: () => void;
 }) {
+  const isInteractive = !!onClick;
+  
   return (
-    <ContentCard className={cn("p-4", className)}>
+    <ContentCard 
+      className={cn(
+        "p-4 relative group", 
+        isInteractive && "cursor-pointer transition-all hover:shadow-md hover:border-blue-300 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
+        className
+      )}
+      onClick={onClick}
+      role={isInteractive ? "button" : undefined}
+      tabIndex={isInteractive ? 0 : undefined}
+      onKeyDown={(e) => {
+        if (isInteractive && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+    >
       <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0 text-sm font-semibold text-slate-600">{label}</div>
+        <div className="min-w-0 text-sm font-semibold text-slate-600 whitespace-nowrap">{label}</div>
         {icon ? (
-          <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border", toneClasses[tone])}>
+          <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-colors group-hover:bg-blue-100 group-hover:border-blue-200 group-hover:text-blue-700", toneClasses[tone])}>
             {icon}
           </div>
         ) : null}
       </div>
       <div className="mt-3 text-2xl font-bold tracking-tight text-slate-950">{value}</div>
       {helper ? <div className="mt-1 text-xs leading-5 text-slate-500">{helper}</div> : null}
+      
+      {isInteractive && (
+        <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+          <svg className="w-4 h-4 text-slate-400 group-hover:text-blue-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+        </div>
+      )}
     </ContentCard>
   );
 }
@@ -159,10 +183,16 @@ export function MetricCell({
   );
 }
 
-export function QuantityCell({ value, unit }: { value: React.ReactNode; unit?: React.ReactNode }) {
+export function QuantityCell({ value, unit, className }: { value: React.ReactNode; unit?: React.ReactNode; className?: string }) {
+  const isNumber = typeof value === "number";
+  const formattedValue = isNumber ? new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2 }).format(value) : value;
+  const isNegative = isNumber && (value as number) < 0;
+  
   return (
-    <span className="block text-right">
-      <MetricCell value={value} />
+    <span className={cn("flex items-baseline justify-end gap-1.5 whitespace-nowrap", className)}>
+      <span className={cn("font-mono text-sm font-semibold tabular-nums", isNegative ? "text-amber-700" : "text-slate-900")}>
+        {formattedValue ?? "—"}
+      </span>
       {unit ? <span className="text-xs font-medium text-slate-500">{unit}</span> : null}
     </span>
   );
@@ -374,6 +404,38 @@ export function Pagination({
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
         </a>
       </div>
+    </div>
+  );
+}
+
+/* ---- Safe Text & Action Group ---- */
+export function SafeText({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <span
+      className={cn("block min-w-0 truncate", className)}
+      title={typeof children === "string" ? children : undefined}
+    >
+      {children}
+    </span>
+  );
+}
+
+export function ActionGroup({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn("flex flex-wrap items-center gap-2", className)}>
+      {children}
     </div>
   );
 }

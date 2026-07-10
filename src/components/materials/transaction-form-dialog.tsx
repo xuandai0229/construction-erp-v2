@@ -1,8 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { CloseButton } from "@/components/ui/close-button";
 import { Button } from "@/components/ui/button";
+import { EnterpriseCombobox, type EnterpriseComboboxOption } from "@/components/ui/enterprise-combobox";
+import { fromDateTimeLocalInputValue, toDateTimeLocalInputValue } from "@/lib/date-utils";
+import { DateTimeFieldVN } from "@/components/ui/date-field-vn";
+import { formatQuantity } from "./materials-formatters";
 import type { MaterialItemDto, ProjectStockDto } from "@/app/(dashboard)/materials/actions";
 
 interface TransactionFormDialogProps {
@@ -24,7 +28,7 @@ export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting,
   const [formData, setFormData] = useState({
     materialItemId: initialMaterialId || "",
     quantity: "",
-    movementDate: new Date().toISOString().slice(0, 16),
+    movementDate: toDateTimeLocalInputValue(new Date()),
     notes: "",
   });
   const [error, setError] = useState("");
@@ -35,7 +39,7 @@ export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting,
     setFormData({
       materialItemId: initialMaterialId || "",
       quantity: "",
-      movementDate: new Date().toISOString().slice(0, 16),
+      movementDate: toDateTimeLocalInputValue(new Date()),
       notes: "",
     });
   }, [initialMaterialId, isOpen, type]);
@@ -46,6 +50,17 @@ export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting,
 
   const selectedMaterial = materialItems.find(m => m.id === formData.materialItemId);
   const currentStock = stocks.find(s => s.materialItemId === formData.materialItemId)?.stock || 0;
+  const qtyValue = Number(formData.quantity || 0);
+  const normalizedQty = Number.isFinite(qtyValue) && qtyValue > 0 ? qtyValue : 0;
+  const stockAfter = selectedMaterial ? (type === "IMPORT" ? currentStock + normalizedQty : currentStock - normalizedQty) : null;
+  const isOverStock = type === "EXPORT" && selectedMaterial && Number.isFinite(qtyValue) && qtyValue > currentStock;
+  const materialOptions = materialItems.map<EnterpriseComboboxOption>((material) => ({
+    value: material.id,
+    code: material.code,
+    name: material.name,
+    label: `${material.code} — ${material.name}`,
+    description: `${material.unit}${material.group ? ` · ${material.group}` : ""}`,
+  }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,6 +70,8 @@ export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting,
     
     const qty = Number(formData.quantity);
     if (isNaN(qty) || qty <= 0) return setError("Số lượng phải lớn hơn 0");
+    const movementDate = fromDateTimeLocalInputValue(formData.movementDate);
+    if (!movementDate) return setError("Ngày giao dịch không hợp lệ.");
 
     if (type === "EXPORT" && qty > currentStock) {
       return setError(`Số lượng xuất vượt quá tồn kho hiện tại (${currentStock} ${selectedMaterial?.unit})`);
@@ -65,10 +82,10 @@ export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting,
         materialItemId: formData.materialItemId,
         type,
         quantity: qty,
-        movementDate: new Date(formData.movementDate),
+        movementDate,
         notes: formData.notes,
       });
-      setFormData({ materialItemId: "", quantity: "", movementDate: new Date().toISOString().slice(0, 16), notes: "" });
+      setFormData({ materialItemId: "", quantity: "", movementDate: toDateTimeLocalInputValue(new Date()), notes: "" });
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Đã xảy ra lỗi");
     }
@@ -77,18 +94,16 @@ export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting,
   const isImport = type === "IMPORT";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 backdrop-blur-sm sm:items-center sm:p-4">
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/40 p-0 backdrop-blur-sm sm:items-center sm:p-4">
       <div className="flex max-h-[92dvh] w-full max-w-md flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl sm:rounded-xl">
         <div className="flex justify-between items-center p-4 border-b border-slate-100">
           <h2 className="text-lg font-bold text-slate-800">
             {isImport ? "Nhập kho" : "Xuất kho"}
           </h2>
-          <button type="button" onClick={onClose} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-100" aria-label="Đóng form giao dịch">
-            <X className="w-5 h-5" />
-          </button>
+          <CloseButton onClick={onClose} tone="neutral" />
         </div>
         
-        <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto p-4">
+        <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto p-4 pb-[calc(96px+env(safe-area-inset-bottom))]">
           {error && (
             <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
               {error}
@@ -97,20 +112,32 @@ export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting,
 
           <div>
             <label htmlFor="transaction-material" className="block text-sm font-medium text-slate-700 mb-1">Vật tư <span className="text-red-500">*</span></label>
-            <select 
+            <EnterpriseCombobox
               id="transaction-material"
               value={formData.materialItemId} 
-              onChange={e => setFormData({ ...formData, materialItemId: e.target.value })}
-              className="w-full h-10 px-3 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            >
-              <option value="" disabled>Chọn vật tư</option>
-              {materialItems.map(m => (
-                <option key={m.id} value={m.id}>{m.name} ({m.code})</option>
-              ))}
-            </select>
-            {formData.materialItemId && type === "EXPORT" && (
-              <p className="text-xs text-slate-500 mt-1">Tồn kho hiện tại: <strong className="text-slate-700">{currentStock} {selectedMaterial?.unit}</strong></p>
+              onChange={value => setFormData({ ...formData, materialItemId: value })}
+              options={materialOptions}
+              placeholder="Chọn vật tư"
+              searchPlaceholder="Tìm mã hoặc tên vật tư..."
+              emptyMessage="Không tìm thấy vật tư phù hợp."
+            />
+            {formData.materialItemId && selectedMaterial && (
+              <div className="mt-2 grid grid-cols-3 gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs">
+                <div>
+                  <div className="text-slate-500">Tồn hiện tại</div>
+                  <div className="font-semibold text-slate-900">{formatQuantity(currentStock)} {selectedMaterial.unit}</div>
+                </div>
+                <div>
+                  <div className="text-slate-500">Đơn vị</div>
+                  <div className="font-semibold text-slate-900">{selectedMaterial.unit}</div>
+                </div>
+                <div>
+                  <div className="text-slate-500">Tồn sau</div>
+                  <div className={`font-semibold ${isOverStock ? "text-rose-700" : "text-slate-900"}`}>
+                    {stockAfter === null ? "—" : `${formatQuantity(stockAfter)} ${selectedMaterial.unit}`}
+                  </div>
+                </div>
+              </div>
             )}
           </div>
 
@@ -137,15 +164,18 @@ export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting,
             </div>
             <div>
               <label htmlFor="transaction-date" className="block text-sm font-medium text-slate-700 mb-1">Ngày giao dịch <span className="text-red-500">*</span></label>
-              <input 
+              <DateTimeFieldVN 
                 id="transaction-date"
-                type="datetime-local" 
                 value={formData.movementDate} 
-                onChange={e => setFormData({ ...formData, movementDate: e.target.value })}
-                className="w-full h-10 px-3 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={val => setFormData({ ...formData, movementDate: val })}
                 required
               />
             </div>
+            {isOverStock && (
+              <p className="mt-1 text-xs font-medium text-rose-600">
+                Không thể xuất vượt tồn kho hiện tại. Vui lòng giảm số lượng hoặc nhập bổ sung trước.
+              </p>
+            )}
           </div>
 
           <div>
@@ -163,8 +193,8 @@ export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting,
             <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
               Hủy
             </Button>
-            <Button type="submit" className={`${isImport ? "bg-emerald-600 hover:bg-emerald-700" : "bg-amber-600 hover:bg-amber-700"} text-white`} disabled={isSubmitting}>
-              {isSubmitting ? "Đang lưu..." : "Lưu"}
+            <Button type="submit" className={`${isImport ? "bg-emerald-600 hover:bg-emerald-700" : "bg-amber-600 hover:bg-amber-700"} text-white`} disabled={isSubmitting || !!isOverStock}>
+              {isSubmitting ? "Đang lưu..." : isImport ? "Lưu nhập kho" : "Lưu xuất kho"}
             </Button>
           </div>
         </form>

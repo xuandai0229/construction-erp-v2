@@ -1,4 +1,5 @@
 import type { MaterialMovementType } from "@prisma/client";
+import { safeFormatDateTimeVN, safeFormatDateVN } from "@/lib/date-utils";
 
 export function formatQuantity(value: number, maximumFractionDigits = 2) {
   return new Intl.NumberFormat("vi-VN", {
@@ -7,39 +8,34 @@ export function formatQuantity(value: number, maximumFractionDigits = 2) {
 }
 
 export function formatDate(value: string | Date) {
-  const date = typeof value === "string" ? new Date(value) : value;
-  if (Number.isNaN(date.getTime())) return "-";
-
-  return new Intl.DateTimeFormat("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(date);
+  return safeFormatDateVN(value);
 }
 
 export function formatDateTime(value: string | Date) {
-  const date = typeof value === "string" ? new Date(value) : value;
-  if (Number.isNaN(date.getTime())) return "-";
-
-  return new Intl.DateTimeFormat("vi-VN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
+  return safeFormatDateTimeVN(value);
 }
 
 export function getStockStatus(stock: number, minStockLevel: number) {
-  if (stock <= 0) return "out" as const;
+  if (stock < 0) return "negative" as const;
+  if (stock === 0) return "out" as const;
   if (minStockLevel > 0 && stock <= minStockLevel) return "low" as const;
   return "healthy" as const;
 }
 
 export function getStockStatusLabel(status: ReturnType<typeof getStockStatus>) {
+  if (status === "negative") return "Âm kho";
   if (status === "out") return "Hết hàng";
   if (status === "low") return "Sắp hết";
   return "Đủ hàng";
+}
+
+export function getStockDelta(stock: number, minStockLevel: number) {
+  return stock - minStockLevel;
+}
+
+export function getStockRatio(stock: number, minStockLevel: number) {
+  if (minStockLevel <= 0) return stock > 0 ? 100 : 0;
+  return Math.max(0, Math.round((stock / minStockLevel) * 100));
 }
 
 export function getMovementLabel(type: MaterialMovementType) {

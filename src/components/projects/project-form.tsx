@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { createProject, updateProject } from "@/app/(dashboard)/projects/actions";
 import Link from "next/link";
 import { Info } from "lucide-react";
+import { toDateInputValue } from "@/lib/date-utils";
 
 interface ProjectFormProps {
   initialData?: {
@@ -26,12 +27,6 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
     : createProject;
     
   const [state, formAction, isPending] = useActionState(action, null);
-
-  const formatDate = (dateString?: string | Date | null) => {
-    if (!dateString) return "";
-    const d = new Date(dateString);
-    return d.toISOString().split("T")[0];
-  };
 
   const inputClass = "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 read-only:bg-slate-50 read-only:text-slate-500 read-only:cursor-not-allowed transition-colors";
 
@@ -135,7 +130,7 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
                 name="startDate"
                 type="date"
                 autoComplete="off"
-                defaultValue={formatDate(initialData?.startDate)}
+                defaultValue={toDateInputValue(initialData?.startDate)}
                 className={inputClass}
               />
             </div>
@@ -147,7 +142,7 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
                 name="endDate"
                 type="date"
                 autoComplete="off"
-                defaultValue={formatDate(initialData?.endDate)}
+                defaultValue={toDateInputValue(initialData?.endDate)}
                 className={inputClass}
               />
             </div>

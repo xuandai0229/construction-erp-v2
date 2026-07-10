@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, X } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { Button } from "./button";
+import { CloseButton } from "./close-button";
 
 interface ReasonDialogProps {
   isOpen: boolean;
@@ -73,7 +74,7 @@ export function ReasonDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/55 p-0 backdrop-blur-sm animate-in fade-in duration-200 sm:items-center sm:p-4"
+      className="fixed inset-0 z-[110] flex items-end justify-center bg-slate-950/55 p-0 backdrop-blur-sm animate-in fade-in duration-200 sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="reason-dialog-title"
@@ -90,14 +91,7 @@ export function ReasonDialog({
             <h3 id="reason-dialog-title" className="text-lg font-bold text-slate-900">
               {title}
             </h3>
-            <button
-              onClick={onClose}
-              disabled={isLoading}
-              className="icon-button text-slate-400 hover:text-slate-600 -mr-2 -mt-2"
-              aria-label="Đóng hộp thoại"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <CloseButton onClick={onClose} disabled={isLoading} tone="neutral" />
           </div>
           
           {description && (

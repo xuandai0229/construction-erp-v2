@@ -1,8 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, CalendarIcon, AlertTriangle } from "lucide-react";
+import { CalendarIcon, AlertTriangle } from "lucide-react";
+import { CloseButton } from "@/components/ui/close-button";
 import { Button } from "@/components/ui/button";
+import { EnterpriseCombobox, type EnterpriseComboboxOption } from "@/components/ui/enterprise-combobox";
+import { fromDateInputValue, toDateInputValue } from "@/lib/date-utils";
 import type { ContractDto } from "@/app/(dashboard)/contracts/actions";
 import { stripMoney, formatVndInput, getVndShortText } from "@/lib/contracts/contract-money-utils";
 
@@ -49,9 +52,9 @@ export function ContractFormDialog({
         setStatus(initialData.status);
         const rawDbValue = initialData.value ? initialData.value.toString().split(".")[0] : "";
         setValue(formatVndInput(rawDbValue));
-        setSignDate(initialData.signDate ? initialData.signDate.substring(0, 10) : "");
-        setStartDate(initialData.startDate ? initialData.startDate.substring(0, 10) : "");
-        setEndDate(initialData.endDate ? initialData.endDate.substring(0, 10) : "");
+        setSignDate(toDateInputValue(initialData.signDate));
+        setStartDate(toDateInputValue(initialData.startDate));
+        setEndDate(toDateInputValue(initialData.endDate));
       } else {
         setProjectId(projects.length === 1 ? projects[0].id : "");
         setSupplierId("");
@@ -95,14 +98,23 @@ export function ContractFormDialog({
       return;
     }
 
+    if (!projectId) {
+      setError("Vui lòng chọn công trình.");
+      return;
+    }
+
     if (rawValue.length > 15) {
       setError("Giá trị hợp đồng quá lớn.");
       return;
     }
 
     if (startDate && endDate) {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
+      const start = fromDateInputValue(startDate);
+      const end = fromDateInputValue(endDate);
+      if (!start || !end) {
+        setError("Ngày hợp đồng không hợp lệ.");
+        return;
+      }
       if (end < start) {
         setError("Ngày kết thúc không được trước ngày bắt đầu.");
         return;
@@ -127,21 +139,27 @@ export function ContractFormDialog({
     }
   };
 
+  const projectOptions = projects.map<EnterpriseComboboxOption>((project) => ({
+    value: project.id,
+    code: project.code,
+    name: project.name,
+    label: `${project.code} — ${project.name}`,
+  }));
+  const supplierOptions = suppliers.map<EnterpriseComboboxOption>((supplier) => ({
+    value: supplier.id,
+    code: supplier.code,
+    name: supplier.name,
+    label: `${supplier.code} — ${supplier.name}`,
+  }));
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm sm:p-6">
+    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm sm:p-6">
       <div className="relative w-full max-w-2xl rounded-2xl bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
           <h2 className="text-lg font-bold text-slate-950">
             {initialData ? "Sửa hợp đồng" : "Thêm hợp đồng mới"}
           </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
-            disabled={isSubmitting}
-          >
-            <X className="h-4 w-4" />
-          </button>
+          <CloseButton onClick={onClose} disabled={isSubmitting} tone="neutral" />
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -149,18 +167,15 @@ export function ContractFormDialog({
             <div className="grid gap-5 sm:grid-cols-2">
               <div className="col-span-2 space-y-1.5">
                 <label className="text-sm font-semibold text-slate-700">Công trình <span className="text-rose-500">*</span></label>
-                <select
+                <EnterpriseCombobox
                   value={projectId}
-                  onChange={(e) => setProjectId(e.target.value)}
-                  className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                  required
+                  onChange={setProjectId}
+                  options={projectOptions}
+                  placeholder="Chọn công trình"
+                  searchPlaceholder="Tìm mã hoặc tên công trình..."
+                  emptyMessage="Không tìm thấy công trình phù hợp."
                   disabled={isSubmitting}
-                >
-                  <option value="">-- Chọn công trình --</option>
-                  {projects.map((p) => (
-                    <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
-                  ))}
-                </select>
+                />
               </div>
 
               <div className="space-y-1.5">
@@ -243,17 +258,15 @@ export function ContractFormDialog({
 
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-slate-700">Đối tác liên kết</label>
-                <select
+                <EnterpriseCombobox
                   value={supplierId}
-                  onChange={(e) => setSupplierId(e.target.value)}
-                  className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  onChange={setSupplierId}
+                  options={supplierOptions}
+                  placeholder="Không gắn đối tác"
+                  searchPlaceholder="Tìm mã hoặc tên đối tác..."
+                  emptyMessage="Không tìm thấy đối tác phù hợp."
                   disabled={isSubmitting || type === "CLIENT"}
-                >
-                  <option value="">-- Không gắn đối tác --</option>
-                  {suppliers.map((s) => (
-                    <option key={s.id} value={s.id}>{s.code} - {s.name}</option>
-                  ))}
-                </select>
+                />
                 {type === "CLIENT" ? (
                   <p className="text-xs text-slate-500">Hợp đồng chủ đầu tư không cần chọn đối tác.</p>
                 ) : (

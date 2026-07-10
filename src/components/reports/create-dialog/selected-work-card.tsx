@@ -1,5 +1,6 @@
 import React from "react";
-import { X, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
+import { CloseButton } from "@/components/ui/close-button";
 import { type ReportWorkLine } from "../types";
 import { formatPercentSafe } from "@/lib/reports/report-format-utils";
 
@@ -30,14 +31,12 @@ export function SelectedWorkCard({
 
   return (
     <div className={`bg-white rounded-2xl border shadow-sm overflow-hidden relative transition-all ${isOver ? 'border-red-300 ring-1 ring-red-300' : 'border-slate-200 hover:border-slate-300'}`}>
-      <button 
-        type="button" 
+      <CloseButton
         onClick={() => removeWorkLine(index)}
-        className="absolute top-3 right-3 p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors z-10"
+        className="absolute top-3 right-3 h-8 w-8 border-none bg-transparent hover:bg-rose-50"
         title="Xóa công việc khỏi báo cáo"
-      >
-        <X className="w-4 h-4" />
-      </button>
+        tone="danger"
+      />
 
       <div className="bg-slate-50/50 p-4 border-b border-slate-100 pr-12">
         {line.categoryName && <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">{line.categoryName}</div>}

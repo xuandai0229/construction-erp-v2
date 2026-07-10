@@ -1,6 +1,7 @@
 import React, { useRef, useState } from "react";
-import { Camera, Paperclip, X, ImagePlus, UploadCloud } from "lucide-react";
+import { Camera, Paperclip, ImagePlus, UploadCloud } from "lucide-react";
 import { ContentCard } from "@/components/ui/enterprise";
+import { CloseButton } from "@/components/ui/close-button";
 
 export function AttachmentsCard({
   photos,
@@ -100,13 +101,11 @@ export function AttachmentsCard({
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <button
-                      type="button"
+                    <CloseButton
                       onClick={() => onRemovePhoto(index)}
-                      className="bg-white text-red-500 p-1.5 rounded-full hover:bg-red-50 hover:scale-110 transition-all shadow-sm"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+                      tone="danger"
+                      className="h-8 w-8 shadow-sm hover:scale-110"
+                    />
                   </div>
                 </div>
               ))}
@@ -149,13 +148,11 @@ export function AttachmentsCard({
                     <p className="text-[13px] font-semibold text-slate-800 truncate">{file.name}</p>
                     <p className="text-[11px] text-slate-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                   </div>
-                  <button
-                    type="button"
+                  <CloseButton
                     onClick={() => onRemoveFile(index)}
-                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors shrink-0"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+                    tone="danger"
+                    className="h-8 w-8 shrink-0"
+                  />
                 </div>
               ))}
             </div>

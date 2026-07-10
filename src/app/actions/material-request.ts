@@ -5,6 +5,10 @@ import { requireProjectAccess } from "@/lib/rbac";
 import { createWithUniqueMaterialRequestNo } from "@/lib/material-request-number";
 import { revalidatePath } from "next/cache";
 
+function normalizeText(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
 function validateQty(val: any) {
   if (val === undefined || val === null || val === "") return 0;
   const num = Number(val);
@@ -12,8 +16,82 @@ function validateQty(val: any) {
   return num;
 }
 
+function validatePositiveQty(val: any, fieldName = "Số lượng đề xuất") {
+  const num = Number(val);
+  if (!Number.isFinite(num) || num <= 0) throw new Error(`${fieldName} phải lớn hơn 0`);
+  return num;
+}
+
+function validateDate(value: unknown, fieldName: string) {
+  if (!value) throw new Error(`Vui lòng chọn ${fieldName}`);
+  const date = new Date(value as any);
+  if (Number.isNaN(date.getTime())) throw new Error(`${fieldName} không hợp lệ`);
+  return date;
+}
+
+function dateKey(value: Date) {
+  return value.toISOString().slice(0, 10);
+}
+
+function validateMaterialRequestPayload(data: any) {
+  const projectId = normalizeText(data?.projectId);
+  if (!projectId) throw new Error("Vui lòng chọn công trình");
+
+  const requestDate = data?.requestDate ? validateDate(data.requestDate, "ngày đề xuất") : new Date();
+  const neededDate = validateDate(data?.neededDate, "ngày cần vật tư");
+  if (dateKey(neededDate) < dateKey(requestDate)) {
+    throw new Error("Ngày cần vật tư không được trước ngày đề xuất");
+  }
+
+  const items = Array.isArray(data?.items) ? data.items : [];
+  if (items.length === 0) {
+    throw new Error("Vui lòng thêm ít nhất một dòng vật tư");
+  }
+
+  items.forEach((item: any, index: number) => {
+    const line = `Dòng ${index + 1}`;
+    if (!normalizeText(item?.materialName)) throw new Error(`${line}: Tên vật tư là bắt buộc`);
+    if (!normalizeText(item?.unit)) throw new Error(`${line}: Đơn vị tính là bắt buộc`);
+    const requestedQuantity = validatePositiveQty(item?.requestedQuantity, `${line}: Số lượng đề xuất`);
+    const issuedQuantity = validateQty(item?.issuedQuantity);
+    const receivedQuantity = validateQty(item?.receivedQuantity);
+    if (issuedQuantity > requestedQuantity) {
+      throw new Error(`${line}: Số lượng đã cấp không được lớn hơn số lượng đề xuất`);
+    }
+    if (receivedQuantity > issuedQuantity) {
+      throw new Error(`${line}: Số lượng đã nhận không được lớn hơn số lượng đã cấp`);
+    }
+  });
+
+  return { projectId, requestDate, neededDate, items };
+}
+
+function validateMaterialRequestProgressItems(itemsData: any[]) {
+  if (!Array.isArray(itemsData) || itemsData.length === 0) {
+    throw new Error("Vui lòng cập nhật ít nhất một dòng vật tư");
+  }
+
+  itemsData.forEach((item: any, index: number) => {
+    const line = normalizeText(item?.materialName) || `Dòng ${index + 1}`;
+    const reqQty = validatePositiveQty(item?.requestedQuantity, `${line}: Số lượng đề xuất`);
+    const issQty = validateQty(item?.issuedQuantity);
+    const recvQty = validateQty(item?.receivedQuantity);
+    if (issQty > reqQty) {
+      throw new Error(`${line}: Số lượng đã cấp không được lớn hơn số lượng đề xuất`);
+    }
+    if (recvQty > issQty) {
+      throw new Error(`${line}: Số lượng đã nhận không được lớn hơn số lượng đã cấp`);
+    }
+  });
+}
+
 export async function createMaterialRequest(data: any) {
-  const { projectId, items, ...rest } = data;
+  const { projectId, items, requestDate, neededDate } = validateMaterialRequestPayload(data);
+  const rest = { ...data };
+  delete rest.projectId;
+  delete rest.items;
+  delete rest.requestDate;
+  delete rest.neededDate;
 
   // Guard: user must have access to this project
   const session = await requireProjectAccess(projectId);
@@ -24,6 +102,8 @@ export async function createMaterialRequest(data: any) {
         ...rest,
         projectId,
         requestNo,
+        requestDate,
+        neededDate,
         requestedById: session.id,
         items: {
           create: items.map((item: any) => ({
@@ -31,9 +111,9 @@ export async function createMaterialRequest(data: any) {
             fieldProgressItemId: item.fieldProgressItemId,
             workItemNameSnapshot: item.workItemNameSnapshot,
             materialCode: item.materialCode,
-            materialName: item.materialName,
-            unit: item.unit,
-            requestedQuantity: validateQty(item.requestedQuantity),
+            materialName: normalizeText(item.materialName),
+            unit: normalizeText(item.unit),
+            requestedQuantity: validatePositiveQty(item.requestedQuantity),
             issuedQuantity: validateQty(item.issuedQuantity),
             receivedQuantity: validateQty(item.receivedQuantity),
             remainingQuantity: Math.max(0, validateQty(item.requestedQuantity) - validateQty(item.receivedQuantity)),
@@ -70,7 +150,12 @@ export async function createMaterialRequest(data: any) {
 }
 
 export async function updateMaterialRequest(id: string, data: any) {
-  const { items, ...rest } = data;
+  const { items, requestDate, neededDate } = validateMaterialRequestPayload(data);
+  const rest = { ...data };
+  delete rest.projectId;
+  delete rest.items;
+  delete rest.requestDate;
+  delete rest.neededDate;
 
   // Verify exists and get projectId for access check
   const existing = await prisma.materialRequest.findUnique({ where: { id } });
@@ -79,8 +164,8 @@ export async function updateMaterialRequest(id: string, data: any) {
   // Guard: user must have access to this project
   const session = await requireProjectAccess(existing.projectId);
 
-  if (existing.status === "RECEIVED" || existing.status === "CANCELLED") {
-    throw new Error("Cannot edit request in this status");
+  if (!["DRAFT", "REJECTED"].includes(existing.status)) {
+    throw new Error("Chỉ có thể sửa phiếu nháp hoặc phiếu bị từ chối");
   }
 
   // Handle items: drop and recreate for safety
@@ -90,15 +175,17 @@ export async function updateMaterialRequest(id: string, data: any) {
       where: { id },
       data: {
         ...rest,
+        requestDate,
+        neededDate,
         items: {
           create: items.map((item: any) => ({
             wbsItemId: item.wbsItemId,
             fieldProgressItemId: item.fieldProgressItemId,
             workItemNameSnapshot: item.workItemNameSnapshot,
             materialCode: item.materialCode,
-            materialName: item.materialName,
-            unit: item.unit,
-            requestedQuantity: validateQty(item.requestedQuantity),
+            materialName: normalizeText(item.materialName),
+            unit: normalizeText(item.unit),
+            requestedQuantity: validatePositiveQty(item.requestedQuantity),
             issuedQuantity: validateQty(item.issuedQuantity),
             receivedQuantity: validateQty(item.receivedQuantity),
             remainingQuantity: Math.max(0, validateQty(item.requestedQuantity) - validateQty(item.receivedQuantity)),
@@ -152,7 +239,7 @@ export async function updateMaterialRequest(id: string, data: any) {
 }
 
 export async function updateMaterialRequestStatus(id: string, status: any, cancelReason?: string) {
-  const validStatuses = ["DRAFT", "REQUESTED", "SUBMITTED", "APPROVED", "RECEIVED", "CANCELLED", "REJECTED"];
+  const validStatuses = ["DRAFT", "REQUESTED", "SUBMITTED", "APPROVED", "REJECTED", "PROCESSING", "ISSUED", "RECEIVED", "CANCELLED"];
   if (!validStatuses.includes(status)) throw new Error("Trạng thái không hợp lệ");
   const existing = await prisma.materialRequest.findUnique({ where: { id } });
   if (!existing) throw new Error("Not found");
@@ -175,9 +262,13 @@ export async function updateMaterialRequestItems(id: string, itemsData: any[]) {
 
   // Guard: user must have access to this project
   await requireProjectAccess(existing.projectId);
+  if (!["APPROVED", "PROCESSING", "ISSUED"].includes(existing.status)) {
+    throw new Error("Chi co the cap nhat cap/nhan cho phieu da duyet hoac dang xu ly");
+  }
+  validateMaterialRequestProgressItems(itemsData);
 
   for (const item of itemsData) {
-    const reqQty = validateQty(item.requestedQuantity);
+    const reqQty = validatePositiveQty(item.requestedQuantity);
     const recvQty = validateQty(item.receivedQuantity);
     const issQty = validateQty(item.issuedQuantity);
     const remaining = reqQty - recvQty;

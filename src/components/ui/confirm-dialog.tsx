@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { AlertCircle, Info, AlertTriangle, CheckCircle, X } from "lucide-react";
+import { AlertCircle, Info, AlertTriangle, CheckCircle } from "lucide-react";
 import { Button } from "./button";
+import { CloseButton } from "./close-button";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -70,7 +71,7 @@ export function ConfirmDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/55 p-0 backdrop-blur-sm animate-in fade-in duration-200 sm:items-center sm:p-4"
+      className="fixed inset-0 z-[110] flex items-end justify-center bg-slate-950/55 p-0 backdrop-blur-sm animate-in fade-in duration-200 sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirm-dialog-title"
@@ -97,14 +98,7 @@ export function ConfirmDialog({
               </div>
             )}
           </div>
-          <button
-            onClick={onClose}
-            disabled={isLoading}
-            className="icon-button absolute right-3 top-3"
-            aria-label="Đóng hộp thoại"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <CloseButton onClick={onClose} disabled={isLoading} className="absolute right-3 top-3" tone="neutral" />
         </div>
         
         <div className="flex flex-col-reverse items-stretch justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-4 sm:flex-row sm:items-center sm:gap-3 sm:px-6">

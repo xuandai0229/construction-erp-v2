@@ -54,6 +54,35 @@ export default async function MaterialsPage({
         orderBy: { createdAt: 'desc' }
       });
 
+      const approvalRequests = await db.approvalRequest.findMany({
+        where: {
+          sourceType: "MATERIAL_REQUEST",
+          sourceId: { in: materialRequests.map(r => r.id) }
+        },
+        select: { id: true, sourceId: true, code: true }
+      });
+      const approvalMap = new Map(approvalRequests.map(a => [a.sourceId, a]));
+      materialRequests = materialRequests.map(r => ({
+        ...r,
+        requestDate: r.requestDate ? r.requestDate.toISOString() : null,
+        neededDate: r.neededDate ? r.neededDate.toISOString() : null,
+        createdAt: r.createdAt.toISOString(),
+        updatedAt: r.updatedAt.toISOString(),
+        deletedAt: r.deletedAt ? r.deletedAt.toISOString() : null,
+        items: r.items.map((item: any) => ({
+          ...item,
+          requestedQuantity: Number(item.requestedQuantity),
+          issuedQuantity: Number(item.issuedQuantity),
+          receivedQuantity: Number(item.receivedQuantity),
+          remainingQuantity: Number(item.remainingQuantity),
+          createdAt: item.createdAt.toISOString(),
+          updatedAt: item.updatedAt.toISOString(),
+          deletedAt: item.deletedAt ? item.deletedAt.toISOString() : null,
+        })),
+        approvalRequestId: approvalMap.get(r.id)?.id || null,
+        approvalRequestCode: approvalMap.get(r.id)?.code || null
+      }));
+
       const template = await db.fieldProgressTemplate.findFirst({
         where: { projectId: projectIdToLoad, deletedAt: null },
       });
@@ -92,6 +121,7 @@ export default async function MaterialsPage({
       permissions={permissions}
       materialRequests={JSON.parse(JSON.stringify(materialRequests))}
       wbsItems={JSON.parse(JSON.stringify(wbsItems))}
+      currentUserRole={session.role}
     />
   );
 }

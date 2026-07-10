@@ -5,7 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { DashboardProjectOverview } from "@/lib/dashboard/dashboard-queries";
 import { format } from "date-fns";
-import { X, CalendarDays, ExternalLink, CalendarClock } from "lucide-react";
+import { CalendarDays, ExternalLink, CalendarClock } from "lucide-react";
+import { CloseButton } from "@/components/ui/close-button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { getProjectStatusMeta } from "@/lib/project-status";
@@ -58,9 +59,7 @@ export function ProjectTimeProgressDrawer({ projects }: { projects: DashboardPro
               <div>
                 <h3 className="text-xl font-bold text-slate-900">Tiến độ lịch thi công</h3>
               </div>
-              <button onClick={closeDrawer} className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-slate-100 text-slate-500 transition-colors -mr-2">
-                <X className="h-5 w-5" />
-              </button>
+              <CloseButton onClick={closeDrawer} tone="neutral" />
             </div>
           </div>
           <div className="flex flex-col items-center justify-center py-12 flex-1">
@@ -113,12 +112,7 @@ export function ProjectTimeProgressDrawer({ projects }: { projects: DashboardPro
               <h3 className="text-xl font-bold text-slate-900">Tiến độ lịch thi công</h3>
               <p className="mt-1 text-sm text-slate-500">Theo ngày bắt đầu và ngày kết thúc</p>
             </div>
-            <button
-              onClick={closeDrawer}
-              className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-slate-100 text-slate-500 transition-colors -mr-2"
-            >
-              <X className="h-5 w-5" />
-            </button>
+            <CloseButton onClick={closeDrawer} tone="neutral" />
           </div>
           
           <div className="mt-5 flex flex-col gap-3 border-t border-slate-50 pt-5">
