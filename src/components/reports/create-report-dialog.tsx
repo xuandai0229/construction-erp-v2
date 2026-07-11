@@ -500,7 +500,7 @@ export function CreateReportDialog({
                                     <td className="px-3 py-4 text-right font-black text-slate-900">{remaining}</td>
                                     <td className="px-4 py-3">
                                       <div className="relative">
-                                        <input
+                                        <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                                           type="number"
                                           value={line.quantityToday || ''}
                                           onChange={e => updateWorkLine(idx, "quantityToday", Number(e.target.value))}
@@ -511,7 +511,7 @@ export function CreateReportDialog({
                                       {isOver && <div className="text-[10px] text-red-600 font-bold mt-1 leading-tight text-right">Vượt {remaining}!</div>}
                                     </td>
                                     <td className="px-3 py-3">
-                                      <input
+                                      <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                                         type="text"
                                         value={line.note || ''}
                                         onChange={e => updateWorkLine(idx, "note", e.target.value)}
@@ -520,7 +520,7 @@ export function CreateReportDialog({
                                       />
                                     </td>
                                     <td className="px-3 py-3">
-                                      <input
+                                      <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                                         type="text"
                                         value={line.proposalNote || ''}
                                         onChange={e => updateWorkLine(idx, "proposalNote", e.target.value)}
@@ -671,7 +671,7 @@ export function CreateReportDialog({
       
       {showConfirmClose && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="p-6">
               <h3 className="text-lg font-bold text-slate-900 mb-2">Bạn muốn xử lý báo cáo đang nhập thế nào?</h3>
               <p className="text-[14px] text-slate-500 mb-6">Có dữ liệu bạn đã nhập nhưng chưa được lưu lại.</p>

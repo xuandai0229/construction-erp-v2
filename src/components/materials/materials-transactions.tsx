@@ -1,16 +1,20 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, ArrowDownRight, ArrowUpRight, ClipboardList, Eye, Plus, Search, TrendingDown } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, ClipboardList, Eye, Plus, Search, Copy, Box, Repeat2, Edit2, Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnterpriseCombobox, type EnterpriseComboboxOption } from "@/components/ui/enterprise-combobox";
 import type { MaterialItemDto, MaterialMovementDto, ProjectStockDto } from "@/app/(dashboard)/materials/actions";
 import { formatDateTime, formatQuantity, getMovementSign } from "./materials-formatters";
 import { MovementTypeBadge } from "./materials-badges";
-import { ActionGroup, ContentCard, DateCell, EnterpriseTable, FilterBar, KpiCard, SafeText } from "@/components/ui/enterprise";
+import { ActionGroup, ContentCard, DateCell, SafeText } from "@/components/ui/enterprise";
+import { MaterialDataTable, MaterialFilterBar, MaterialToolbar, MaterialRowActionMenu, type MaterialActionItem } from "./materials-ui";
 import { TransactionDetailDrawer, type TransactionLedgerInfo } from "./transaction-detail-drawer";
 import { useSearchParams, useRouter } from "next/navigation";
 import { fromDateInputValue, safeParseDate, toDateInputValue } from "@/lib/date-utils";
+import { DateFieldVN } from "@/components/ui/date-field-vn";
+import { useRef } from "react";
+import { useToast } from "@/components/ui/toast-context";
 
 type MovementFilter = "ALL" | "IMPORT" | "EXPORT";
 
@@ -36,14 +40,6 @@ function displayNote(note: string | null | undefined) {
   if (!note?.trim()) return "—";
   if (isSeedNote(note)) return "Phiếu nhập/xuất từ dữ liệu khởi tạo";
   return note.trim();
-}
-
-function sameLocalDate(left: Date, right: Date) {
-  return (
-    left.getFullYear() === right.getFullYear() &&
-    left.getMonth() === right.getMonth() &&
-    left.getDate() === right.getDate()
-  );
 }
 
 function buildLedger(transactions: MaterialMovementDto[], stocks: ProjectStockDto[]) {
@@ -72,6 +68,12 @@ function buildLedger(transactions: MaterialMovementDto[], stocks: ProjectStockDt
   return ledger;
 }
 
+function formatDateLabel(value: string) {
+  const [year, month, day] = value.split("-");
+  if (!year || !month || !day) return value;
+  return `${day}/${month}/${year}`;
+}
+
 function updateParams(searchParams: URLSearchParams, next: Record<string, string>) {
   const params = new URLSearchParams(searchParams);
   Object.entries(next).forEach(([key, value]) => {
@@ -91,18 +93,22 @@ export function MaterialsTransactions({
 }: MaterialsTransactionsProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const toast = useToast();
   const movementIdFromUrl = searchParams.get("movementId") || searchParams.get("txId") || "";
   const movementType = (searchParams.get("movementType") || "ALL") as MovementFilter;
   const q = searchParams.get("q") || "";
   const materialId = searchParams.get("materialId") || "";
   const dateFrom = searchParams.get("dateFrom") || "";
   const dateTo = searchParams.get("dateTo") || "";
+  const [showArchived, setShowArchived] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<MaterialMovementDto | null>(null);
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  const advancedRef = useRef<HTMLDivElement>(null);
 
   const ledgerById = useMemo(() => buildLedger(transactions, stocks), [transactions, stocks]);
   const materialOptions = useMemo<EnterpriseComboboxOption[]>(
     () =>
-      materialItems.map((material) => ({
+      materialItems.filter((material) => material.isActive).map((material) => ({
         value: material.id,
         code: material.code,
         name: material.name,
@@ -117,6 +123,18 @@ export function MaterialsTransactions({
     const tx = transactions.find((transaction) => transaction.id === movementIdFromUrl);
     if (tx) setSelectedTransaction(tx);
   }, [movementIdFromUrl, transactions]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (advancedRef.current && !advancedRef.current.contains(event.target as Node)) {
+        setIsAdvancedOpen(false);
+      }
+    };
+    if (isAdvancedOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isAdvancedOpen]);
 
   const setFilter = (next: Record<string, string>) => {
     const params = updateParams(searchParams, next);
@@ -149,48 +167,31 @@ export function MaterialsTransactions({
       const movementDate = safeParseDate(transaction.movementDate);
       if (from && movementDate && movementDate < from) return false;
       if (to && movementDate && movementDate > to) return false;
+      if (!showArchived && !transaction.materialItem.isActive) return false;
       if (!normalized) return true;
       return [transaction.materialItem.code, transaction.materialItem.name, transaction.notes]
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(normalized));
     });
-  }, [dateFrom, dateTo, materialId, movementType, q, transactions]);
-
-  const today = new Date();
-  const importTotal = filteredTransactions.filter((transaction) => transaction.type === "IMPORT").reduce((sum, transaction) => sum + transaction.quantity, 0);
-  const exportTotal = filteredTransactions.filter((transaction) => transaction.type === "EXPORT").reduce((sum, transaction) => sum + transaction.quantity, 0);
-  const exportToday = transactions.filter((transaction) => {
-    const date = safeParseDate(transaction.movementDate);
-    return transaction.type === "EXPORT" && date && sameLocalDate(date, today);
-  }).length;
-  const negativeStocks = stocks.filter((stock) => stock.stock < 0);
-  const topExport = Object.values(
-    filteredTransactions
-      .filter((transaction) => transaction.type === "EXPORT")
-      .reduce<Record<string, { name: string; code: string; unit: string; quantity: number }>>((acc, transaction) => {
-        const current = acc[transaction.materialItemId] || {
-          name: transaction.materialItem.name,
-          code: transaction.materialItem.code,
-          unit: transaction.materialItem.unit,
-          quantity: 0,
-        };
-        current.quantity += transaction.quantity;
-        acc[transaction.materialItemId] = current;
-        return acc;
-      }, {}),
-  ).sort((a, b) => b.quantity - a.quantity)[0];
+  }, [dateFrom, dateTo, materialId, movementType, q, transactions, showArchived]);
 
   const hasActions = permissions.canImport || permissions.canExport;
   const selectedLedger = selectedTransaction ? ledgerById.get(selectedTransaction.id) : undefined;
+  
+  const hasAdvancedFilters = Boolean(dateFrom || dateTo || showArchived);
+  const hasAnyFilter = Boolean(q || movementType !== "ALL" || materialId || hasAdvancedFilters);
+
+  const clearFilter = () => {
+    setFilter({ q: "", movementType: "", materialId: "", dateFrom: "", dateTo: "" });
+    setShowArchived(false);
+  };
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <h2 className="text-lg font-bold text-slate-950">Nhập / Xuất vật tư</h2>
-          <p className="mt-1 text-sm text-slate-600">Command Center theo dõi luồng nhập kho, xuất kho và biến động tồn.</p>
-        </div>
-        {hasActions && (
+      <MaterialToolbar
+        title="Nhập / Xuất vật tư"
+        description="Theo dõi lịch sử nhập kho, xuất kho và biến động tồn."
+        action={hasActions ? (
           <ActionGroup className="shrink-0">
             {permissions.canImport && (
               <Button onClick={() => onAddTransaction("IMPORT", materialId)} variant="success" className="w-full sm:w-auto" disabled={!hasMaterials}>
@@ -211,71 +212,157 @@ export function MaterialsTransactions({
               </Button>
             )}
           </ActionGroup>
+        ) : null}
+      />
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <label className="relative min-w-0 lg:flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
+              value={q}
+              onChange={(event) => setFilter({ q: event.target.value })}
+              placeholder="Tìm mã, tên vật tư, ghi chú..."
+              className="h-10 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
+
+          <select
+            value={movementType}
+            onChange={(event) => setFilter({ movementType: event.target.value })}
+            className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 lg:w-[160px]"
+            aria-label="Lọc loại giao dịch"
+          >
+            <option value="ALL">Tất cả loại</option>
+            <option value="IMPORT">Nhập</option>
+            <option value="EXPORT">Xuất</option>
+          </select>
+
+          <EnterpriseCombobox
+            value={materialId}
+            options={materialOptions}
+            onChange={(value) => setFilter({ materialId: value })}
+            placeholder="Tất cả vật tư"
+            searchPlaceholder="Tìm mã hoặc tên vật tư..."
+            emptyMessage="Không tìm thấy vật tư phù hợp."
+            className="lg:w-[260px]"
+          />
+
+          <div className="relative" ref={advancedRef}>
+            <Button 
+              type="button" 
+              variant={hasAdvancedFilters ? "default" : "outline"} 
+              onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
+              className="w-full justify-between lg:w-auto"
+            >
+              Bộ lọc
+              <Filter className="ml-2 h-4 w-4" />
+            </Button>
+            
+            {isAdvancedOpen && (
+              <div className="absolute right-0 top-full z-10 mt-2 w-72 rounded-xl border border-slate-200 bg-white p-4 shadow-xl">
+                <div className="mb-3 flex items-center justify-between">
+                  <h4 className="font-semibold text-slate-900">Bộ lọc nâng cao</h4>
+                  <button onClick={() => setIsAdvancedOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="h-4 w-4"/></button>
+                </div>
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Từ ngày</label>
+                    <DateFieldVN
+                      value={toDateInputValue(dateFrom)}
+                      onChange={(value) => setFilter({ dateFrom: value })}
+                      className="border-slate-300 w-full"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Đến ngày</label>
+                    <DateFieldVN
+                      value={toDateInputValue(dateTo)}
+                      onChange={(value) => setFilter({ dateTo: value })}
+                      className="border-slate-300 w-full"
+                    />
+                  </div>
+                  <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer select-none pt-1">
+                    <input
+                      type="checkbox"
+                      checked={showArchived}
+                      onChange={(e) => setShowArchived(e.target.checked)}
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+                    />
+                    Bao gồm vật tư đã lưu trữ
+                  </label>
+                  <div className="border-t border-slate-100 pt-3 flex gap-2">
+                    <Button variant="outline" className="flex-1" onClick={() => { setFilter({ dateFrom: "", dateTo: "" }); setShowArchived(false); }}>Đặt lại</Button>
+                    <Button className="flex-1" onClick={() => setIsAdvancedOpen(false)}>Áp dụng</Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {hasAnyFilter && (
+            <Button type="button" variant="ghost" onClick={clearFilter} className="hidden lg:flex text-slate-500 hover:text-slate-900">
+              Xóa lọc
+            </Button>
+          )}
+        </div>
+
+        {hasAnyFilter && (
+          <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+            {q && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 py-1 pl-2.5 pr-1 text-[13px] font-medium text-blue-700">
+                Từ khóa: {q}
+                <button onClick={() => setFilter({ q: "" })} className="rounded-full p-0.5 hover:bg-blue-200"><X className="h-3 w-3"/></button>
+              </span>
+            )}
+            {movementType !== "ALL" && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 py-1 pl-2.5 pr-1 text-[13px] font-medium text-blue-700">
+                Loại: {movementType === "IMPORT" ? "Nhập" : "Xuất"}
+                <button onClick={() => setFilter({ movementType: "ALL" })} className="rounded-full p-0.5 hover:bg-blue-200"><X className="h-3 w-3"/></button>
+              </span>
+            )}
+            {materialId && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 py-1 pl-2.5 pr-1 text-[13px] font-medium text-blue-700">
+                Vật tư: {materialOptions.find(m => m.value === materialId)?.name || materialId}
+                <button onClick={() => setFilter({ materialId: "" })} className="rounded-full p-0.5 hover:bg-blue-200"><X className="h-3 w-3"/></button>
+              </span>
+            )}
+            {dateFrom && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 py-1 pl-2.5 pr-1 text-[13px] font-medium text-blue-700">
+                Từ: {formatDateLabel(dateFrom)}
+                <button onClick={() => setFilter({ dateFrom: "" })} className="rounded-full p-0.5 hover:bg-blue-200"><X className="h-3 w-3"/></button>
+              </span>
+            )}
+            {dateTo && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 py-1 pl-2.5 pr-1 text-[13px] font-medium text-blue-700">
+                Đến: {formatDateLabel(dateTo)}
+                <button onClick={() => setFilter({ dateTo: "" })} className="rounded-full p-0.5 hover:bg-blue-200"><X className="h-3 w-3"/></button>
+              </span>
+            )}
+            {showArchived && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 py-1 pl-2.5 pr-1 text-[13px] font-medium text-slate-700">
+                Có lưu trữ
+                <button onClick={() => setShowArchived(false)} className="rounded-full p-0.5 hover:bg-slate-200"><X className="h-3 w-3"/></button>
+              </span>
+            )}
+            <div className="ml-auto text-xs font-medium text-slate-500 hidden sm:block">
+              {formatQuantity(filteredTransactions.length, 0)} giao dịch khớp bộ lọc
+              {!showArchived && <span className="ml-2 font-normal text-slate-400">(Đang ẩn giao dịch của vật tư đã lưu trữ)</span>}
+            </div>
+          </div>
         )}
       </div>
 
-      <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
-        <KpiCard label="Tổng giao dịch" value={filteredTransactions.length} helper="Theo bộ lọc hiện tại" icon={<ClipboardList className="h-5 w-5" />} tone="slate" className="p-3" />
-        <KpiCard label="Nhập trong kỳ" value={formatQuantity(importTotal)} helper="Tổng số lượng nhập" icon={<ArrowDownRight className="h-5 w-5" />} tone="emerald" className="p-3" />
-        <KpiCard label="Xuất trong kỳ" value={formatQuantity(exportTotal)} helper="Tổng số lượng xuất" icon={<ArrowUpRight className="h-5 w-5" />} tone="amber" className="p-3" />
-        <KpiCard label="Xuất hôm nay" value={exportToday} helper="Giao dịch xuất kho" icon={<TrendingDown className="h-5 w-5" />} tone="blue" className="p-3" />
-        <KpiCard label="Xuất nhiều nhất" value={topExport ? formatQuantity(topExport.quantity) : "—"} helper={topExport ? `${topExport.code} · ${topExport.unit}` : "Chưa có xuất kho"} icon={<ArrowUpRight className="h-5 w-5" />} tone="indigo" className="p-3" />
-        <KpiCard label="Cảnh báo" value={negativeStocks.length} helper={negativeStocks.length ? "Có tồn âm cần kiểm tra" : "Không có tồn âm"} icon={<AlertTriangle className="h-5 w-5" />} tone={negativeStocks.length ? "rose" : "emerald"} className="p-3" />
-      </div>
+      {!hasAnyFilter && (
+        <div className="text-xs font-medium text-slate-500">
+          {formatQuantity(filteredTransactions.length, 0)} giao dịch
+          {!showArchived && <span className="ml-2 font-normal text-slate-400">(Đang ẩn giao dịch của vật tư đã lưu trữ)</span>}
+        </div>
+      )}
 
-      <FilterBar className="grid gap-3 lg:grid-cols-[minmax(220px,1fr)_140px_minmax(220px,280px)_160px_160px_auto] lg:items-center">
-        <label className="relative min-w-0">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input
-            value={q}
-            onChange={(event) => setFilter({ q: event.target.value })}
-            placeholder="Tìm mã, tên vật tư, ghi chú..."
-            className="h-10 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-          />
-        </label>
-
-        <select
-          value={movementType}
-          onChange={(event) => setFilter({ movementType: event.target.value })}
-          className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-          aria-label="Lọc loại giao dịch"
-        >
-          <option value="ALL">Tất cả</option>
-          <option value="IMPORT">Nhập</option>
-          <option value="EXPORT">Xuất</option>
-        </select>
-
-        <EnterpriseCombobox
-          value={materialId}
-          options={materialOptions}
-          onChange={(value) => setFilter({ materialId: value })}
-          placeholder="Tất cả vật tư"
-          searchPlaceholder="Tìm mã hoặc tên vật tư..."
-          emptyMessage="Không tìm thấy vật tư phù hợp."
-        />
-
-        <input
-          type="date"
-          value={toDateInputValue(dateFrom)}
-          onChange={(event) => setFilter({ dateFrom: event.target.value })}
-          className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-          aria-label="Từ ngày"
-        />
-        <input
-          type="date"
-          value={toDateInputValue(dateTo)}
-          onChange={(event) => setFilter({ dateTo: event.target.value })}
-          className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-          aria-label="Đến ngày"
-        />
-        <Button type="button" variant="outline" onClick={() => setFilter({ q: "", movementType: "", materialId: "", dateFrom: "", dateTo: "" })}>
-          Xóa lọc
-        </Button>
-      </FilterBar>
-
-      <EnterpriseTable className="hidden md:block max-h-[min(640px,calc(100vh-260px))]">
+      <MaterialDataTable className="hidden md:block">
         <table className="w-full min-w-[1080px] table-fixed text-left text-sm">
-          <thead className="sticky top-0 z-10 bg-slate-50/95 text-xs font-semibold uppercase tracking-wide text-slate-500 shadow-sm backdrop-blur">
+          <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
             <tr>
               <th className="w-[104px] border-b border-slate-200 px-3 py-3">Loại</th>
               <th className="w-[260px] border-b border-slate-200 px-3 py-3">Vật tư</th>
@@ -285,7 +372,7 @@ export function MaterialsTransactions({
               <th className="w-[130px] border-b border-slate-200 px-3 py-3">Người tạo</th>
               <th className="w-[180px] border-b border-slate-200 px-3 py-3">Nguồn</th>
               <th className="border-b border-slate-200 px-3 py-3">Ghi chú</th>
-              <th className="w-[72px] border-b border-slate-200 px-3 py-3 text-right">Thao tác</th>
+              <th className="w-[80px] whitespace-nowrap border-b border-slate-200 px-3 py-3 text-right">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -299,7 +386,14 @@ export function MaterialsTransactions({
                 <tr key={transaction.id} className="cursor-pointer transition hover:bg-slate-50" onClick={() => handleOpenDrawer(transaction)}>
                   <td className="px-3 py-3"><MovementTypeBadge type={transaction.type} /></td>
                   <td className="min-w-0 px-3 py-3">
-                    <SafeText className="font-semibold text-slate-950">{transaction.materialItem.name}</SafeText>
+                    <div className="flex items-center gap-2">
+                      <SafeText className="font-semibold text-slate-950">{transaction.materialItem.name}</SafeText>
+                      {!transaction.materialItem.isActive && (
+                        <span className="inline-flex items-center rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 border border-slate-200">
+                          Đã lưu trữ
+                        </span>
+                      )}
+                    </div>
                     <div className="mt-0.5 truncate font-mono text-xs font-medium text-slate-500" title={transaction.materialItem.code}>{transaction.materialItem.code}</div>
                   </td>
                   <td className={`px-3 py-3 text-right font-mono font-bold tabular-nums ${colorClass}`}>
@@ -315,18 +409,69 @@ export function MaterialsTransactions({
                   <td className="min-w-0 px-3 py-3">
                     <SafeText className="text-slate-600">{note}</SafeText>
                   </td>
-                  <td className="px-3 py-3 text-right">
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        handleOpenDrawer(transaction);
-                      }}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-                      aria-label="Xem chi tiết giao dịch"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </button>
+                  <td className="px-3 py-3 text-right relative">
+                    <div className="flex justify-end">
+                      <MaterialRowActionMenu
+                        actions={[
+                          {
+                            label: "Xem chi tiết",
+                            icon: <Eye className="h-4 w-4" />,
+                            onClick: () => handleOpenDrawer(transaction),
+                          },
+                          {
+                            label: "Xem vật tư",
+                            icon: <Box className="h-4 w-4" />,
+                            disabled: !transaction.materialItem.isActive,
+                            disabledReason: !transaction.materialItem.isActive ? "Vật tư đã được lưu trữ/xóa" : undefined,
+                            onClick: () => {
+                              if (transaction.materialItem.isActive) {
+                                const params = new URLSearchParams(window.location.search);
+                                params.set("tab", "catalog");
+                                if (transaction.materialItem?.code) params.set("search", transaction.materialItem.code);
+                                router.push(`?${params.toString()}`);
+                              }
+                            },
+                          },
+                          ...(transaction.type === "IMPORT" || transaction.type === "EXPORT" ? [
+                            {
+                              label: `${transaction.type === "IMPORT" ? "Nhập" : "Xuất"} tiếp vật tư này`,
+                              icon: <Repeat2 className="h-4 w-4" />,
+                              disabled: !transaction.materialItem.isActive,
+                              disabledReason: !transaction.materialItem.isActive ? "Vật tư không còn hoạt động" : undefined,
+                              onClick: () => {
+                                if (transaction.materialItem.isActive) {
+                                  onAddTransaction(transaction.type as "IMPORT" | "EXPORT", transaction.materialItemId);
+                                }
+                              },
+                            }
+                          ] : []),
+                          {
+                            label: "Sửa giao dịch",
+                            icon: <Edit2 className="h-4 w-4" />,
+                            disabled: true,
+                            disabledReason: "Chưa hỗ trợ sửa trực tiếp (cần tạo giao dịch điều chỉnh)",
+                            onClick: () => {},
+                          },
+                          {
+                            label: "Đảo giao dịch",
+                            icon: <Repeat2 className="h-4 w-4" />,
+                            danger: true,
+                            disabled: true,
+                            disabledReason: "Chưa hỗ trợ tạo tự động (hãy tạo phiếu ngược lại để hủy)",
+                            onClick: () => {},
+                          },
+                          {
+                            label: "Sao chép thông tin",
+                            icon: <Copy className="h-4 w-4" />,
+                            onClick: () => {
+                              const text = `${transaction.type === "IMPORT" ? "Nhập" : "Xuất"} ${formatQuantity(Number(transaction.quantity))} ${transaction.materialItem?.unit || ""} ${transaction.materialItem?.name || ""}`;
+                              void navigator.clipboard.writeText(text);
+                              toast.success("Da sao chep thong tin giao dich");
+                            },
+                          }
+                        ]}
+                      />
+                    </div>
                   </td>
                 </tr>
               );
@@ -342,7 +487,7 @@ export function MaterialsTransactions({
             )}
           </tbody>
         </table>
-      </EnterpriseTable>
+      </MaterialDataTable>
 
       <div className="space-y-3 md:hidden">
         {filteredTransactions.map((transaction) => {
@@ -353,7 +498,14 @@ export function MaterialsTransactions({
             <ContentCard key={transaction.id} className="cursor-pointer p-4 transition-transform active:scale-[0.99]" onClick={() => handleOpenDrawer(transaction)}>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <MovementTypeBadge type={transaction.type} />
+                  <div className="flex items-center gap-2">
+                    <MovementTypeBadge type={transaction.type} />
+                    {!transaction.materialItem.isActive && (
+                      <span className="inline-flex items-center rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 border border-slate-200">
+                        Đã lưu trữ
+                      </span>
+                    )}
+                  </div>
                   <SafeText className="mt-3 font-bold text-slate-950">{transaction.materialItem.name}</SafeText>
                   <div className="mt-1 truncate font-mono text-xs font-medium text-slate-500">{transaction.materialItem.code}</div>
                 </div>

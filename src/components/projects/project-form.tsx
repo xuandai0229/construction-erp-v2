@@ -50,7 +50,7 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
                 name="code"
                 type="text"
                 required
-                autoComplete="off"
+                
                 defaultValue={initialData?.code}
                 className={inputClass}
                 placeholder="VD: CT-001"
@@ -79,7 +79,7 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
                 id="investor"
                 name="investor"
                 type="text"
-                autoComplete="off"
+                
                 defaultValue={initialData?.investor || ""}
                 className={inputClass}
                 placeholder="Nhập tên chủ đầu tư"
@@ -129,7 +129,7 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
                 id="startDate"
                 name="startDate"
                 type="date"
-                autoComplete="off"
+                
                 defaultValue={toDateInputValue(initialData?.startDate)}
                 className={inputClass}
               />
@@ -155,7 +155,7 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
         <div>
           <h3 className="text-sm font-bold text-slate-900 mb-4 uppercase tracking-wide">Mô tả / Ghi chú</h3>
           <div className="space-y-1.5">
-            <textarea
+            <textarea autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
               id="description"
               name="description"
               rows={4}

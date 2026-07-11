@@ -101,26 +101,20 @@ export async function getGlobalProjectContext(
       const daysRemaining = end ? Math.ceil((end - today) / 86400000) : null;
 
       let health: "ON_TRACK" | "AT_RISK" | "DELAYED" | "COMPLETED" | "NO_DATA" = "ON_TRACK";
-      let warning = getProjectStatusMeta(project.status).label;
+      let warning = getProjectStatusMeta(project.status).label || "Chưa có trạng thái";
 
       if (project.status === "COMPLETED") {
         health = "COMPLETED";
-        warning = "Hoàn thành";
       } else if (isPreparationProjectStatus(project.status)) {
         health = "NO_DATA";
-        warning = "Công tác chuẩn bị";
       } else if (noWbs) {
         health = "NO_DATA";
-        warning = "Chưa thiết lập WBS";
       } else if (daysRemaining !== null && daysRemaining < 0) {
         health = "DELAYED";
-        warning = "Trễ tiến độ";
       } else if (noRecentEntry) {
         health = "AT_RISK";
-        warning = "Chưa có nhập liệu gần đây";
       } else if (daysRemaining !== null && daysRemaining <= 14) {
         health = "AT_RISK";
-        warning = "Sắp đến hạn";
       }
 
       overviewData = { health, warning };

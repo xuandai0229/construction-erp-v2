@@ -24,7 +24,7 @@ export function ResourcesAndQuality({ form, updateField }: {
             <label className="text-[13px] font-semibold text-slate-700 flex items-center gap-1.5">
               <Users className="w-4 h-4 text-slate-400" /> Nhân công / Máy móc
             </label>
-            <textarea
+            <textarea  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
               value={form.labor}
               onChange={e => updateField('labor', e.target.value)}
               className={textareaClass}
@@ -35,7 +35,7 @@ export function ResourcesAndQuality({ form, updateField }: {
             <label className="text-[13px] font-semibold text-slate-700 flex items-center gap-1.5">
               <Wrench className="w-4 h-4 text-slate-400" /> Vật tư sử dụng
             </label>
-            <textarea
+            <textarea autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
               value={form.materials}
               onChange={e => updateField('materials', e.target.value)}
               className={textareaClass}
@@ -74,7 +74,7 @@ export function ResourcesAndQuality({ form, updateField }: {
               <label className="text-[13px] font-semibold text-slate-700 flex items-center gap-1.5">
                 <ShieldAlert className="w-4 h-4 text-slate-400" /> Chất lượng thi công
               </label>
-              <textarea
+              <textarea  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                 value={form.quality}
                 onChange={e => updateField('quality', e.target.value)}
                 className={textareaClass}
@@ -85,7 +85,7 @@ export function ResourcesAndQuality({ form, updateField }: {
               <label className="text-[13px] font-semibold text-slate-700 flex items-center gap-1.5">
                 <FileWarning className="w-4 h-4 text-slate-400" /> Vướng mắc
               </label>
-              <textarea
+              <textarea autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                 value={form.issues}
                 onChange={e => updateField('issues', e.target.value)}
                 className={textareaClass}
@@ -96,7 +96,7 @@ export function ResourcesAndQuality({ form, updateField }: {
               <label className="text-[13px] font-semibold text-slate-700 flex items-center gap-1.5">
                 <Lightbulb className="w-4 h-4 text-slate-400" /> Kiến nghị / Đề xuất
               </label>
-              <textarea
+              <textarea autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                 value={form.recommendations}
                 onChange={e => updateField('recommendations', e.target.value)}
                 className={textareaClass}

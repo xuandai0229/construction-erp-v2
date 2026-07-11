@@ -252,7 +252,7 @@ export function SettingsWorkspace({ initialSettings }: { initialSettings: System
             </label>
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
+              <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                 id="settings-search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
@@ -763,7 +763,7 @@ function TextField({
           </span>
         )}
       </div>
-      <input
+      <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
         value={value}
         disabled={disabled}
         onChange={(event) => onChange(event.target.value)}
@@ -800,7 +800,7 @@ function NumberField({
         )}
       </div>
       <div className={cn("mt-1 flex overflow-hidden rounded-lg border border-slate-300 bg-white shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100", disabled && "bg-slate-50")}>
-        <input
+        <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
           value={value}
           min={0}
           disabled={disabled}

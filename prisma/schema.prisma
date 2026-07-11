@@ -590,6 +590,7 @@ model MaterialRequest {
   siteReport  SiteReport?           @relation(fields: [siteReportId], references: [id])
   requestedBy User                  @relation(fields: [requestedById], references: [id])
   items       MaterialRequestItem[]
+  movements   MaterialMovement[]
 
   @@index([projectId])
   @@index([requestNo])
@@ -619,6 +620,7 @@ model MaterialRequestItem {
   materialRequest   MaterialRequest    @relation(fields: [materialRequestId], references: [id], onDelete: Cascade)
   wbsItem           WBSItem?           @relation(fields: [wbsItemId], references: [id])
   fieldProgressItem FieldProgressItem? @relation(fields: [fieldProgressItemId], references: [id])
+  movements         MaterialMovement[]
 
   @@index([materialRequestId])
   @@index([wbsItemId])
@@ -646,22 +648,33 @@ model MaterialItem {
 }
 
 model MaterialMovement {
-  id             String               @id @default(cuid())
-  projectId      String
-  materialItemId String
-  type           MaterialMovementType
-  quantity       Decimal              @db.Decimal(19, 4)
-  unitPrice      Decimal?             @db.Decimal(19, 4)
-  movementDate   DateTime
-  notes          String?
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
+  id                    String               @id @default(cuid())
+  projectId             String
+  materialItemId        String
+  materialRequestId     String?
+  materialRequestItemId String?
+  materialCodeSnapshot  String?
+  materialNameSnapshot  String?
+  unitSnapshot          String?
+  type                  MaterialMovementType
+  quantity              Decimal              @db.Decimal(19, 4)
+  unitPrice             Decimal?             @db.Decimal(19, 4)
+  movementDate          DateTime
+  notes                 String?
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
 
-  project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  materialItem MaterialItem @relation(fields: [materialItemId], references: [id])
+  project             Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  materialItem        MaterialItem         @relation(fields: [materialItemId], references: [id])
+  materialRequest     MaterialRequest?     @relation(fields: [materialRequestId], references: [id], onDelete: SetNull)
+  materialRequestItem MaterialRequestItem? @relation(fields: [materialRequestItemId], references: [id], onDelete: SetNull)
 
   @@index([projectId])
   @@index([materialItemId])
+  @@index([materialRequestId])
+  @@index([materialRequestItemId])
+  @@index([projectId, materialItemId])
+  @@index([projectId, movementDate])
   @@index([movementDate])
 }
 

@@ -144,7 +144,7 @@ export function GlobalSearchCommand({ globalContext }: GlobalSearchCommandProps)
             <div className="flex items-center border-b border-slate-100 px-4 h-14 relative">
               <Search className="h-5 w-5 text-slate-400 shrink-0" />
               <div className="relative flex-1 flex items-center h-full">
-                <input
+                <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                   ref={inputRef}
                   className="flex h-full w-full bg-transparent py-3 pl-3 pr-10 text-slate-900 outline-none placeholder:text-slate-400 sm:text-base"
                   placeholder="Tìm công trình, báo cáo, hồ sơ, thông báo..."

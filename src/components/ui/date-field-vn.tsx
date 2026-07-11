@@ -19,7 +19,7 @@ export function DateTimeFieldVN({ id, name, value, onChange, className, required
 
   return (
     <div className="relative">
-      <input
+      <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
         id={id}
         name={name}
         ref={inputRef}
@@ -58,7 +58,7 @@ export function DateFieldVN({ id, name, value, onChange, className, required }: 
 
   return (
     <div className="relative">
-      <input
+      <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
         id={id}
         name={name}
         ref={inputRef}

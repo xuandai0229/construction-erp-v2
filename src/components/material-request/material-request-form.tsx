@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Plus, Trash2, Save, Send, AlertTriangle } from "lucide-react";
+import { Plus, Trash2, Save, Send, AlertTriangle, Copy, Eraser } from "lucide-react";
 import { useToast } from "@/components/ui/toast-context";
 import { CloseButton } from "@/components/ui/close-button";
 import { AppDrawer } from "@/components/ui/app-drawer";
@@ -10,7 +10,60 @@ import { createMaterialRequest, updateMaterialRequest } from "@/app/actions/mate
 import { EnterpriseCombobox, type EnterpriseComboboxOption } from "@/components/ui/enterprise-combobox";
 import { fromDateInputValue, safeParseDate, toDateInputValue } from "@/lib/date-utils";
 import { DateFieldVN } from "@/components/ui/date-field-vn";
+import { cn } from "@/lib/utils";
+import { MaterialRowActionMenu } from "@/components/materials/materials-ui";
+import { NumericInput } from "@/components/ui/numeric-input";
 import type { MaterialItemDto, ProjectStockDto } from "@/app/(dashboard)/materials/actions";
+
+type MaterialSourceMode = "CATALOG" | "CUSTOM";
+type WorkSourceMode = "CATALOG" | "CUSTOM";
+
+function createBlankRequestItem() {
+  return {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    materialSourceMode: "CATALOG" as MaterialSourceMode,
+    workSourceMode: "CATALOG" as WorkSourceMode,
+    materialItemId: "",
+    materialCode: "",
+    materialName: "",
+    unit: "",
+    requestedQuantity: "",
+    note: "",
+    fieldProgressItemId: "",
+    wbsItemId: "",
+    workItemNameSnapshot: "",
+  };
+}
+
+function ModeToggle<TMode extends string>({
+  value,
+  options,
+  onChange,
+  ariaLabel,
+}: {
+  value: TMode;
+  options: { value: TMode; label: string }[];
+  onChange: (value: TMode) => void;
+  ariaLabel: string;
+}) {
+  return (
+    <div className="flex h-7 w-fit rounded-md border border-slate-200 bg-slate-50 p-0.5" aria-label={ariaLabel}>
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          onClick={() => onChange(option.value)}
+          className={cn(
+            "h-6 rounded px-2 text-[11px] font-semibold transition-colors",
+            value === option.value ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-800",
+          )}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export function MaterialRequestForm({
   projectId,
@@ -56,17 +109,30 @@ export function MaterialRequestForm({
     status: initialData?.status || "DRAFT"
   });
 
-  const [items, setItems] = useState<any[]>(() => 
-    initialData?.items?.length ? initialData.items : [
-      { id: Date.now().toString(), materialName: "", unit: "Cái", requestedQuantity: "", note: "", fieldProgressItemId: "" }
-    ]
-  );
+  const [showLineErrors, setShowLineErrors] = useState(false);
+  const [items, setItems] = useState<any[]>(() => {
+    const sourceItems = initialData?.items?.length ? initialData.items : [createBlankRequestItem()];
+    return sourceItems.map((item: any) => {
+      const matchedMaterial = materialItems.find((material) =>
+        material.id === item.materialItemId ||
+        material.code === item.materialCode ||
+        material.name === item.materialName
+      );
+      const isCustomWork = Boolean(item.workItemNameSnapshot && !item.wbsItemId && !item.fieldProgressItemId);
+      return {
+        ...createBlankRequestItem(),
+        ...item,
+        materialItemId: item.materialItemId || matchedMaterial?.id || "",
+        materialSourceMode: matchedMaterial ? "CATALOG" : "CUSTOM",
+        workSourceMode: isCustomWork ? "CUSTOM" : "CATALOG",
+      };
+    });
+  });
 
   const isEditing = !!initialData;
   const stockByMaterialId = new Map(stocks.map((stock) => [stock.materialItemId, stock]));
   const stockByCode = new Map(stocks.map((stock) => [stock.materialItem.code, stock]));
-  const hasCatalog = materialItems.length > 0;
-  const materialOptions = materialItems.map<EnterpriseComboboxOption>((material) => ({
+  const materialOptions = materialItems.filter((material) => material.isActive).map<EnterpriseComboboxOption>((material) => ({
     value: material.id,
     code: material.code,
     name: material.name,
@@ -104,16 +170,72 @@ export function MaterialRequestForm({
   };
 
   const handleAddItem = () => {
-    setItems([...items, { id: Date.now().toString(), materialName: "", unit: "Cái", requestedQuantity: "", note: "", fieldProgressItemId: "" }]);
+    setItems([...items, createBlankRequestItem()]);
+  };
+
+  const handleDuplicateItem = (id: string) => {
+    setItems((prev) => {
+      const source = prev.find((i) => i.id === id);
+      if (!source) return prev;
+      const copy = { ...source, id: crypto.randomUUID() };
+      const index = prev.findIndex((i) => i.id === id);
+      const next = [...prev];
+      next.splice(index + 1, 0, copy);
+      return next;
+    });
+  };
+
+  const handleClearItem = (id: string) => {
+    setItems((prev) =>
+      prev.map((i) =>
+        i.id === id
+          ? {
+              ...createBlankRequestItem(),
+              id, // Keep the same id
+            }
+          : i
+      )
+    );
   };
 
   const handleRemoveItem = (id: string) => {
-    if (items.length <= 1) return;
-    setItems(items.filter(i => i.id !== id));
+    if (items.length <= 1) {
+      handleClearItem(id);
+      return;
+    }
+    setItems((prev) => prev.filter((i) => i.id !== id));
   };
 
   const handleItemChange = (id: string, field: string, value: any) => {
-    setItems(items.map(i => i.id === id ? { ...i, [field]: value } : i));
+    setItems(items.map(i => {
+      if (i.id !== id) return i;
+      
+      const updated = { ...i, [field]: value };
+      
+      if (field === "materialName" && value === "") {
+        updated.materialItemId = "";
+        updated.materialCode = "";
+        updated.unit = "";
+      }
+      
+      if (field === "workItemNameSnapshot" && value === "") {
+        updated.wbsItemId = "";
+        updated.fieldProgressItemId = "";
+      }
+      
+      return updated;
+    }));
+  };
+
+  const handleMaterialModeChange = (id: string, mode: MaterialSourceMode) => {
+    setItems(items.map((item) => item.id === id ? {
+      ...item,
+      materialSourceMode: mode,
+      materialItemId: "",
+      materialCode: "",
+      materialName: "",
+      unit: "",
+    } : item));
   };
 
   const handleMaterialSelect = (id: string, materialId: string) => {
@@ -124,11 +246,69 @@ export function MaterialRequestForm({
     }
     setItems(items.map((item) => item.id === id ? {
       ...item,
+      materialSourceMode: "CATALOG",
       materialItemId: selected.id,
       materialCode: selected.code,
       materialName: selected.name,
       unit: selected.unit,
     } : item));
+  };
+
+  const handleWorkModeChange = (id: string, mode: WorkSourceMode) => {
+    setItems(items.map((item) => item.id === id ? {
+      ...item,
+      workSourceMode: mode,
+      wbsItemId: "",
+      fieldProgressItemId: "",
+      workItemNameSnapshot: "",
+    } : item));
+  };
+
+  const handleWorkSelect = (id: string, workId: string) => {
+    const selected = wbsItems.find((work) => work.id === workId);
+    if (!selected) {
+      setItems(items.map((item) => item.id === id ? {
+        ...item,
+        wbsItemId: "",
+        fieldProgressItemId: "",
+        workItemNameSnapshot: "",
+      } : item));
+      return;
+    }
+
+    const label = workOptions.find((option) => option.value === workId)?.label || "";
+    const isFieldProgressItem = "templateId" in selected || "itemType" in selected;
+    setItems(items.map((item) => item.id === id ? {
+      ...item,
+      workSourceMode: "CATALOG",
+      wbsItemId: isFieldProgressItem ? "" : selected.id,
+      fieldProgressItemId: isFieldProgressItem ? selected.id : "",
+      workItemNameSnapshot: label,
+    } : item));
+  };
+
+  const getItemErrors = (item: any) => {
+    const errors: string[] = [];
+    const materialMode = (item.materialSourceMode || "CATALOG") as MaterialSourceMode;
+    if (materialMode === "CATALOG") {
+      if (!item.materialItemId && !getSelectedMaterial(item)) errors.push("Chọn vật tư từ danh mục");
+    } else {
+      if (!item.materialName?.trim()) errors.push("Nhập tên vật tư ngoài danh mục");
+      if (!item.unit?.trim()) errors.push("Nhập đơn vị tính");
+    }
+    if (!item.requestedQuantity || Number(item.requestedQuantity) <= 0) errors.push("Số lượng phải lớn hơn 0");
+    return errors;
+  };
+
+  const getLineMeta = (item: any) => {
+    const meta: string[] = [];
+    if (item.materialSourceMode === "CUSTOM" && item.materialName?.trim()) {
+      meta.push("Chỉ lưu vào phiếu, chưa thêm vào danh mục vật tư");
+    }
+    if (item.workSourceMode === "CUSTOM" && item.workItemNameSnapshot?.trim()) {
+      meta.push("Mô tả tự do, không tạo WBS mới");
+    }
+    return meta;
   };
 
   const executeSubmit = async (status: string) => {
@@ -145,9 +325,13 @@ export function MaterialRequestForm({
         note: formData.note,
         items: items.map(i => ({
           ...i,
+          materialCode: i.materialSourceMode === "CUSTOM" ? null : (i.materialCode || null),
+          materialName: String(i.materialName || "").trim(),
+          unit: String(i.unit || "").trim(),
           requestedQuantity: Number(i.requestedQuantity),
           fieldProgressItemId: i.fieldProgressItemId || undefined,
           wbsItemId: i.wbsItemId || undefined,
+          workItemNameSnapshot: i.workItemNameSnapshot?.trim() || undefined,
         }))
       };
 
@@ -192,10 +376,12 @@ export function MaterialRequestForm({
         throw new Error("Vui lòng thêm ít nhất một dòng vật tư.");
       }
 
-      const invalidItems = items.filter(i => !i.materialName?.trim() || !i.requestedQuantity || Number(i.requestedQuantity) <= 0);
+      const invalidItems = items.filter(i => getItemErrors(i).length > 0);
       if (invalidItems.length > 0) {
-        throw new Error("Vui lòng nhập đầy đủ tên và số lượng > 0 cho tất cả vật tư.");
+        setShowLineErrors(true);
+        throw new Error("Vui lòng kiểm tra các dòng vật tư còn thiếu thông tin.");
       }
+      setShowLineErrors(false);
 
       if (status === "SUBMITTED") {
         const hasOverStock = items.some(item => {
@@ -224,6 +410,7 @@ export function MaterialRequestForm({
     } catch (err: any) {
       setError(err.message || "Có lỗi xảy ra");
       submittingRef.current = false;
+      setLoadingAction(null);
     }
   };
 
@@ -241,7 +428,7 @@ export function MaterialRequestForm({
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto p-4 sm:px-6 pb-[calc(140px+env(safe-area-inset-bottom))] sm:pb-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:px-6 pb-[calc(220px+env(safe-area-inset-bottom))] sm:pb-[calc(180px+env(safe-area-inset-bottom))] space-y-6">
           {error && (
             <div className="p-3 bg-rose-50 text-rose-700 rounded-lg text-sm border border-rose-200 font-medium flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -278,7 +465,7 @@ export function MaterialRequestForm({
             </div>
             <div className="sm:col-span-2 space-y-1.5">
               <label htmlFor="note" className="text-sm font-semibold text-slate-700">Ghi chú chung</label>
-              <input 
+              <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" 
                 id="note"
                 name="note"
                 type="text" 
@@ -305,7 +492,7 @@ export function MaterialRequestForm({
             </div>
 
             {/* Desktop Table Header */}
-            <div className="hidden sm:grid grid-cols-[minmax(260px,1fr)_120px_140px_minmax(260px,1fr)_48px] gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-600">
+            <div className="hidden sm:grid grid-cols-[minmax(300px,1.3fr)_110px_130px_minmax(300px,1.2fr)_44px] gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-600">
               <div>Tên vật tư <span className="text-red-500">*</span></div>
               <div>Đơn vị</div>
               <div>SL đề xuất <span className="text-red-500">*</span></div>
@@ -315,132 +502,187 @@ export function MaterialRequestForm({
 
             {/* Items */}
             <div className="space-y-4 sm:space-y-3">
-              {items.map((item, index) => (
-                <div key={item.id} className="relative bg-slate-50 sm:bg-transparent p-3 sm:p-0 rounded-lg border border-slate-200 sm:border-none grid grid-cols-1 sm:grid-cols-[minmax(260px,1fr)_120px_140px_minmax(260px,1fr)_48px] gap-3 sm:gap-2 items-start">
-                  
-                  {/* Mobile Label */}
-                  <div className="sm:hidden font-semibold text-sm text-slate-700 border-b border-slate-200 pb-2 mb-1 flex justify-between">
-                    <span>Vật tư {index + 1}</span>
-                    <button aria-label={`Xóa dòng vật tư ${index + 1}`} onClick={() => handleRemoveItem(item.id)} className="text-red-500 hover:bg-red-50 p-1 rounded transition-colors">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+              {items.map((item, index) => {
+                const materialMode = (item.materialSourceMode || "CATALOG") as MaterialSourceMode;
+                const workMode = (item.workSourceMode || "CATALOG") as WorkSourceMode;
+                const lineErrors = showLineErrors ? getItemErrors(item) : [];
+                const stock = getStockForItem(item);
+                const requestedQty = Number(item.requestedQuantity || 0);
+                const isOverStock = Boolean(stock && requestedQty > stock.stock);
+                const lineMeta = [
+                  ...getLineMeta(item),
+                  stock ? `Tồn hiện tại: ${stock.stock} ${stock.materialItem.unit}` : "",
+                  isOverStock && stock ? `Thiếu ${(requestedQty - stock.stock).toFixed(2)} ${stock.materialItem.unit}` : "",
+                ].filter(Boolean);
 
-                  <div className="flex flex-col gap-1">
-                    <label htmlFor={`materialName-${index}`} className="sm:hidden text-xs font-medium text-slate-500 mb-1 block">Tên vật tư</label>
-                    <label htmlFor={`materialName-${index}`} className="hidden sm:block sr-only">Tên vật tư</label>
-                    {hasCatalog ? (
-                      <EnterpriseCombobox
-                        id={`materialName-${index}`}
-                        value={item.materialItemId || getSelectedMaterial(item)?.id || ""}
-                        options={materialOptions}
-                        onChange={(value) => handleMaterialSelect(item.id, value)}
-                        placeholder="Chọn từ danh mục..."
-                        searchPlaceholder="Tìm mã hoặc tên vật tư..."
-                        emptyMessage="Không tìm thấy vật tư phù hợp."
-                        buttonClassName="rounded-md border-slate-300"
+                return (
+                  <div key={item.id} className="relative grid grid-cols-1 items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 sm:grid-cols-[minmax(300px,1.3fr)_110px_130px_minmax(300px,1.2fr)_44px] sm:gap-2 sm:border-none sm:bg-transparent sm:p-0">
+                    <div className="flex justify-between border-b border-slate-200 pb-2 text-sm font-semibold text-slate-700 sm:hidden">
+                      <span>Vật tư {index + 1}</span>
+                      <button aria-label={`Xóa dòng vật tư ${index + 1}`} onClick={() => handleRemoveItem(item.id)} className="rounded p-1 text-red-500 transition-colors hover:bg-red-50">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    <div className="min-w-0 space-y-1">
+                      <label htmlFor={`materialName-${index}`} className="text-xs font-medium text-slate-500 sm:sr-only">Tên vật tư</label>
+                      <ModeToggle<MaterialSourceMode>
+                        value={materialMode}
+                        ariaLabel={`Chế độ nhập vật tư dòng ${index + 1}`}
+                        options={[
+                          { value: "CATALOG", label: "Danh mục" },
+                          { value: "CUSTOM", label: "Ngoài danh mục" },
+                        ]}
+                        onChange={(mode) => handleMaterialModeChange(item.id, mode)}
                       />
-                    ) : (
-                      <input 
-                        id={`materialName-${index}`}
-                        name={`materialName-${index}`}
+                      {materialMode === "CATALOG" ? (
+                        <EnterpriseCombobox
+                          id={`materialName-${index}`}
+                          value={item.materialItemId || getSelectedMaterial(item)?.id || ""}
+                          options={materialOptions}
+                          onChange={(value) => handleMaterialSelect(item.id, value)}
+                          placeholder="Chọn vật tư..."
+                          searchPlaceholder="Tìm mã, tên, nhóm vật tư..."
+                          emptyMessage="Không tìm thấy vật tư phù hợp."
+                          buttonClassName="rounded-md border-slate-300"
+                          density="compact"
+                          maxPanelHeight={220}
+                        />
+                      ) : (
+                        <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
+                          id={`materialName-${index}`}
+                          name={`materialName-${index}`}
+                          type="text"
+                          value={item.materialName}
+                          onChange={(event) => handleItemChange(item.id, "materialName", event.target.value)}
+                          placeholder="Nhập tên vật tư ngoài danh mục"
+                          className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition-all focus:ring-2 focus:ring-blue-500"
+                        />
+                      )}
+                    </div>
+
+                    <div className="min-w-0 space-y-1">
+                      <label htmlFor={`unit-${index}`} className="text-xs font-medium text-slate-500 sm:sr-only">Đơn vị</label>
+                      <div className="hidden h-7 sm:block" />
+                      <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
+                        id={`unit-${index}`}
+                        name={`unit-${index}`}
                         type="text"
-                        value={item.materialName}
-                        onChange={(e) => handleItemChange(item.id, "materialName", e.target.value)}
-                        placeholder="Tên vật tư..."
-                        className="w-full px-3 h-10 bg-white text-slate-900 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                        value={item.unit}
+                        disabled={materialMode === "CATALOG"}
+                        onChange={(event) => handleItemChange(item.id, "unit", event.target.value)}
+                        placeholder="Đơn vị"
+                        className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition-all focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-500"
                       />
+                    </div>
+
+                    <div className="min-w-0 space-y-1">
+                      <label htmlFor={`requestedQuantity-${index}`} className="text-xs font-medium text-slate-500 sm:sr-only">SL đề xuất</label>
+                      <div className="hidden h-7 sm:block" />
+                      <NumericInput
+                        id={`requestedQuantity-${index}`}
+                        value={item.requestedQuantity}
+                        onChange={(val) => handleItemChange(item.id, "requestedQuantity", val)}
+                        placeholder="0.00"
+                        className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition-all focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div className="min-w-0 space-y-1">
+                      <label htmlFor={`wbs-${index}`} className="text-xs font-medium text-slate-500 sm:sr-only">Công việc liên quan</label>
+                      <ModeToggle<WorkSourceMode>
+                        value={workMode}
+                        ariaLabel={`Chế độ công việc dòng ${index + 1}`}
+                        options={[
+                          { value: "CATALOG", label: "Chọn công việc" },
+                          { value: "CUSTOM", label: "Mô tả tự do" },
+                        ]}
+                        onChange={(mode) => handleWorkModeChange(item.id, mode)}
+                      />
+                      {workMode === "CATALOG" ? (
+                        <EnterpriseCombobox
+                          id={`wbs-${index}`}
+                          value={item.wbsItemId || item.fieldProgressItemId || ""}
+                          options={workOptions}
+                          onChange={(value) => handleWorkSelect(item.id, value)}
+                          placeholder="Chọn công việc..."
+                          searchPlaceholder="Tìm mã hoặc tên công việc..."
+                          emptyMessage="Không tìm thấy công việc phù hợp."
+                          buttonClassName="rounded-md border-slate-300"
+                          density="compact"
+                          maxPanelHeight={220}
+                        />
+                      ) : (
+                        <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
+                          id={`wbs-${index}`}
+                          name={`wbs-${index}`}
+                          type="text"
+                          value={item.workItemNameSnapshot || ""}
+                          onChange={(event) => handleItemChange(item.id, "workItemNameSnapshot", event.target.value)}
+                          placeholder="Nhập mô tả công việc"
+                          className="h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition-all focus:ring-2 focus:ring-blue-500"
+                        />
+                      )}
+                    </div>
+
+                    <div className="hidden sm:flex items-center justify-center pt-7">
+                      <MaterialRowActionMenu
+                        actions={[
+                          {
+                            label: "Nhân bản dòng",
+                            icon: <Copy className="h-4 w-4" />,
+                            onClick: () => handleDuplicateItem(item.id),
+                          },
+                          {
+                            label: "Xóa trắng",
+                            icon: <Eraser className="h-4 w-4" />,
+                            onClick: () => handleClearItem(item.id),
+                          },
+                          {
+                            label: "Xóa dòng",
+                            icon: <Trash2 className="h-4 w-4" />,
+                            danger: true,
+                            onClick: () => handleRemoveItem(item.id),
+                          },
+                        ]}
+                      />
+                    </div>
+
+                    {(lineErrors.length > 0 || lineMeta.length > 0) && (
+                      <div className="sm:col-span-5">
+                        {lineErrors.length > 0 ? (
+                          <div className="rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700">
+                            {lineErrors.join(" · ")}
+                          </div>
+                        ) : (
+                          <div className="truncate text-[11px] font-medium text-slate-500" title={lineMeta.join(" · ")}>
+                            {lineMeta.join(" · ")}
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label htmlFor={`unit-${index}`} className="sm:hidden text-xs font-medium text-slate-500 mb-1 block">Đơn vị</label>
-                    <label htmlFor={`unit-${index}`} className="hidden sm:block sr-only">Đơn vị</label>
-                    <input 
-                      id={`unit-${index}`}
-                      name={`unit-${index}`}
-                      type="text"
-                      value={item.unit}
-                      disabled={hasCatalog && !!item.materialCode}
-                      onChange={(e) => handleItemChange(item.id, "unit", e.target.value)}
-                      placeholder="Đơn vị..."
-                      className="w-full px-3 h-10 bg-white text-slate-900 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all disabled:bg-slate-100 disabled:text-slate-500"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label htmlFor={`requestedQuantity-${index}`} className="sm:hidden text-xs font-medium text-slate-500 mb-1 block">SL đề xuất</label>
-                    <label htmlFor={`requestedQuantity-${index}`} className="hidden sm:block sr-only">SL đề xuất</label>
-                    <input 
-                      id={`requestedQuantity-${index}`}
-                      name={`requestedQuantity-${index}`}
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={item.requestedQuantity}
-                      onChange={(e) => handleItemChange(item.id, "requestedQuantity", e.target.value)}
-                      placeholder="0.00"
-                      className="w-full px-3 h-10 bg-white text-slate-900 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                    />
-                    {(() => {
-                      const stock = getStockForItem(item);
-                      if (!stock) return null;
-                      const requestedQty = Number(item.requestedQuantity || 0);
-                      const isOverStock = requestedQty > stock.stock;
-                      return (
-                        <div className="flex flex-wrap items-center gap-1 mt-0.5 whitespace-nowrap">
-                          <span className="inline-flex bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[10px] font-medium border border-slate-200">
-                            Tồn: {stock.stock}
-                          </span>
-                          {isOverStock && (
-                            <span className="inline-flex bg-rose-50 text-rose-600 px-1.5 py-0.5 rounded text-[10px] font-bold border border-rose-100 ml-1">
-                              Thiếu {(requestedQty - stock.stock).toFixed(2)}
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })()}
-                  </div>
-
-                  <div className="flex flex-col gap-1">
-                    <label htmlFor={`wbs-${index}`} className="sm:hidden text-xs font-medium text-slate-500 mb-1 block">Công việc liên quan</label>
-                    <label htmlFor={`wbs-${index}`} className="hidden sm:block sr-only">Công việc liên quan</label>
-                    <EnterpriseCombobox
-                      id={`wbs-${index}`}
-                      value={item.wbsItemId || item.fieldProgressItemId || ""}
-                      options={workOptions}
-                      onChange={(value) => handleItemChange(item.id, "wbsItemId", value)}
-                      placeholder="Tùy chọn"
-                      searchPlaceholder="Tìm mã hoặc tên công việc..."
-                      emptyMessage="Không tìm thấy công việc phù hợp."
-                      buttonClassName="rounded-md border-slate-300"
-                    />
-                  </div>
-
-                  <div className="hidden sm:block text-center pt-2">
-                    <button 
-                      type="button"
-                      aria-label={`Xóa dòng vật tư ${index + 1}`}
-                      onClick={() => handleRemoveItem(item.id)}
-                      disabled={items.length <= 1}
-                      className="text-slate-400 hover:text-red-500 disabled:opacity-30 transition-colors p-1"
-                    >
-                      <Trash2 className="w-4 h-4 mx-auto" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
 
         {/* Footer actions */}
-        <div className="sticky bottom-0 z-10 border-t border-slate-200 bg-slate-50 px-4 sm:px-6 py-3 flex flex-col gap-3 rounded-b-xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        <div data-boundary="dropdown-boundary" data-combobox-boundary-footer="material-request-footer" className="sticky bottom-0 z-10 border-t border-slate-200 bg-slate-50 px-4 sm:px-6 py-3 flex flex-col gap-3 rounded-b-xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs font-medium border-b border-slate-200 pb-2 mb-1">
             <span className="text-slate-600">Tổng: <span className="font-bold text-slate-900">{items.length}</span> dòng</span>
             {(() => {
-              const missing = items.filter(i => !i.materialName?.trim() || !i.requestedQuantity || Number(i.requestedQuantity) <= 0).length;
-              return missing > 0 ? <span className="text-amber-600 font-bold">Thiếu thông tin: {missing}</span> : null;
+              const missing = items.filter(i => getItemErrors(i).length > 0).length;
+              return missing > 0 ? <span className="font-bold text-amber-600">Thiếu thông tin: {missing}</span> : null;
+            })()}
+            {(() => {
+              const customMaterials = items.filter(i => i.materialSourceMode === "CUSTOM" && i.materialName?.trim()).length;
+              return customMaterials > 0 ? <span className="text-slate-600">Vật tư ngoài danh mục: <span className="font-bold text-slate-900">{customMaterials}</span></span> : null;
+            })()}
+            {(() => {
+              const customWorks = items.filter(i => i.workSourceMode === "CUSTOM" && i.workItemNameSnapshot?.trim()).length;
+              return customWorks > 0 ? <span className="text-slate-600">Công việc tự nhập: <span className="font-bold text-slate-900">{customWorks}</span></span> : null;
             })()}
             {(() => {
               const over = items.filter(i => getStockForItem(i) && Number(i.requestedQuantity) > getStockForItem(i)!.stock).length;

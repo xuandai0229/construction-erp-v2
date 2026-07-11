@@ -1,14 +1,18 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import { format } from "date-fns";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Plus, Search, Filter, Package, AlertCircle, Eye, Edit2, CheckCircle2, Clock, XCircle, FileText, ArrowRight, AlertTriangle, Boxes, CalendarClock, ClipboardCheck } from "lucide-react";
+import { Plus, Search, Filter, Package, AlertCircle, Eye, Edit2, CheckCircle2, Clock, XCircle, FileText, AlertTriangle, Boxes, CalendarClock, Copy, Trash2, XSquare, FileCheck2, ArrowUpRight } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { MaterialRequestForm } from "./material-request-form";
 import { MaterialRequestDetail } from "./material-request-detail";
-import { KpiCard, EnterpriseTable, SafeText, ActionGroup, DateCell } from "@/components/ui/enterprise";
+import { EnterpriseTable, SafeText, DateCell } from "@/components/ui/enterprise";
+import { MaterialKpiRibbon, MaterialRowActionMenu, type MaterialActionItem } from "@/components/materials/materials-ui";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { deleteMaterialRequest, cancelMaterialRequest } from "@/app/actions/material-request";
 import type { MaterialItemDto, ProjectStockDto } from "@/app/(dashboard)/materials/actions";
+import { useToast } from "@/components/ui/toast-context";
 
 const statusConfig = {
   DRAFT: { label: "Nháp", variant: "neutral" as const, icon: FileText },
@@ -89,6 +93,7 @@ export function MaterialRequestList({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const toast = useToast();
   const requests = initialRequests;
   const search = searchParams.get("q") || "";
   const statusFilter = searchParams.get("requestStatus") || "ALL";
@@ -113,11 +118,46 @@ export function MaterialRequestList({
   const workById = useMemo(() => {
     const map = new Map<string, string>();
     wbsItems.forEach((work) => {
-      const label = `${work.code ? `${work.code} - ` : ""}${work.workContent || work.name || work.categoryName || "Chua co ten cong viec"}`;
+      const label = `${work.code ? `${work.code} — ` : ""}${work.workContent || work.name || work.categoryName || "Chưa có tên công việc"}`;
       map.set(work.id, label);
     });
     return map;
   }, [wbsItems]);
+
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deletingRequest, setDeletingRequest] = useState<any | null>(null);
+  const [isCanceling, setIsCanceling] = useState(false);
+  const [cancelingRequest, setCancelingRequest] = useState<any | null>(null);
+
+  const handleDelete = async () => {
+    if (!deletingRequest) return;
+    setIsDeleting(true);
+    try {
+      await deleteMaterialRequest(deletingRequest.id);
+      setDeletingRequest(null);
+      toast.success("Đã xóa phiếu yêu cầu vật tư");
+      router.refresh();
+    } catch (error: any) {
+      toast.error(error.message || "Có lỗi xảy ra");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!cancelingRequest) return;
+    setIsCanceling(true);
+    try {
+      await cancelMaterialRequest(cancelingRequest.id, "Người dùng hủy phiếu");
+      setCancelingRequest(null);
+      toast.success("Đã hủy phiếu yêu cầu vật tư");
+      router.refresh();
+    } catch (error: any) {
+      toast.error(error.message || "Có lỗi xảy ra");
+    } finally {
+      setIsCanceling(false);
+    }
+  };
 
   const getStockForItem = (item: any) => {
     return stockByMaterial.byCode.get(normalize(item.materialCode)) || stockByMaterial.byName.get(normalize(item.materialName)) || null;
@@ -160,6 +200,7 @@ export function MaterialRequestList({
         item.materialCode,
         item.materialName,
         item.note,
+        item.workItemNameSnapshot,
         workById.get(item.fieldProgressItemId) || workById.get(item.wbsItemId) || "",
       ]),
     ].map(normalize).join(" ");
@@ -183,14 +224,74 @@ export function MaterialRequestList({
   const totalRequests = requests.length;
   const pendingRequests = requests.filter(r => r.status === "SUBMITTED").length;
   const processingRequests = requests.filter(r => ["REQUESTED", "SUBMITTED", "APPROVED", "PROCESSING", "ISSUED"].includes(r.status)).length;
-  const approvedRequests = requests.filter(r => r.status === "APPROVED").length;
-  const partialRequests = requests.filter(isPartialIssue).length;
   const receivedRequests = requests.filter(r => r.status === "RECEIVED").length;
   const missingItemsRequests = requests.filter(r => 
     r.items.some((i: any) => Number(i.requestedQuantity) > Number(i.receivedQuantity)) && r.status !== "CANCELLED"
   ).length;
   const overdueRequests = requests.filter(isOverdue).length;
   const stockRiskRequests = requests.filter(hasStockRisk).length;
+  const kpiItems = [
+    {
+      key: "all",
+      label: "Tổng phiếu",
+      value: formatQty(totalRequests),
+      helper: "Toàn dự án",
+      icon: <FileText className="h-4 w-4" />,
+      tone: "slate" as const,
+      active: activeFlag === "all" && statusFilter === "ALL",
+      onClick: () => updateUrl({ requestFlag: null, requestStatus: null }),
+    },
+    {
+      key: "pending",
+      label: "Chờ duyệt",
+      value: formatQty(pendingRequests),
+      helper: "Đang chờ xử lý",
+      icon: <Clock className="h-4 w-4" />,
+      tone: "amber" as const,
+      active: statusFilter === "SUBMITTED",
+      onClick: () => updateUrl({ requestFlag: null, requestStatus: "SUBMITTED" }),
+    },
+    {
+      key: "active",
+      label: "Đang xử lý",
+      value: formatQty(processingRequests),
+      helper: "Chưa đóng phiếu",
+      icon: <AlertCircle className="h-4 w-4" />,
+      tone: "blue" as const,
+      active: activeFlag === "active",
+      onClick: () => updateUrl({ requestFlag: "active", requestStatus: null }),
+    },
+    {
+      key: "received",
+      label: "Đã nhận",
+      value: formatQty(receivedRequests),
+      helper: "Hoàn tất nhận",
+      icon: <CheckCircle2 className="h-4 w-4" />,
+      tone: "emerald" as const,
+      active: statusFilter === "RECEIVED",
+      onClick: () => updateUrl({ requestFlag: null, requestStatus: "RECEIVED" }),
+    },
+    {
+      key: "missing",
+      label: "Thiếu vật tư",
+      value: formatQty(missingItemsRequests),
+      helper: "Chưa nhận đủ",
+      icon: <Boxes className="h-4 w-4" />,
+      tone: "rose" as const,
+      active: activeFlag === "missing",
+      onClick: () => updateUrl({ requestFlag: "missing", requestStatus: null }),
+    },
+    {
+      key: "overdue",
+      label: "Quá hạn",
+      value: formatQty(overdueRequests),
+      helper: "Theo ngày cần",
+      icon: <CalendarClock className="h-4 w-4" />,
+      tone: "rose" as const,
+      active: activeFlag === "overdue",
+      onClick: () => updateUrl({ requestFlag: "overdue", requestStatus: null }),
+    },
+  ];
 
   const handleCreate = () => {
     updateUrl({ requestMode: "create", requestId: null });
@@ -215,54 +316,7 @@ export function MaterialRequestList({
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Request Command Ribbon */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-2">
-        {([
-          { key: "all", label: "Tổng phiếu", value: totalRequests, icon: <FileText className="h-3.5 w-3.5" />, color: "text-slate-500 bg-slate-50 border-slate-200", activeColor: "ring-2 ring-blue-500 bg-blue-50 border-blue-200 text-blue-700", filterAction: () => updateUrl({ requestFlag: null, requestStatus: null }), isActive: activeFlag === "all" && statusFilter === "ALL", isAlert: false },
-          { key: "pending", label: "Chờ duyệt", value: pendingRequests, icon: <Clock className="h-3.5 w-3.5" />, color: "text-amber-600 bg-amber-50/50 border-amber-200", activeColor: "ring-2 ring-amber-500 bg-amber-50 border-amber-300 text-amber-700", filterAction: () => updateUrl({ requestFlag: null, requestStatus: "SUBMITTED" }), isActive: statusFilter === "SUBMITTED", isAlert: false },
-          { key: "active", label: "Đang xử lý", value: processingRequests, icon: <AlertCircle className="h-3.5 w-3.5" />, color: "text-blue-600 bg-blue-50/50 border-blue-200", activeColor: "ring-2 ring-blue-500 bg-blue-50 border-blue-300 text-blue-700", filterAction: () => updateUrl({ requestFlag: "active", requestStatus: null }), isActive: activeFlag === "active", isAlert: false },
-          { key: "received", label: "Đã nhận", value: receivedRequests, icon: <CheckCircle2 className="h-3.5 w-3.5" />, color: "text-emerald-600 bg-emerald-50/50 border-emerald-200", activeColor: "ring-2 ring-emerald-500 bg-emerald-50 border-emerald-300 text-emerald-700", filterAction: () => updateUrl({ requestFlag: null, requestStatus: "RECEIVED" }), isActive: statusFilter === "RECEIVED", isAlert: false },
-          { key: "missing", label: "Thiếu vật tư", tooltip: "Chưa nhận đủ so với đề xuất", value: missingItemsRequests, icon: <Boxes className="h-3.5 w-3.5" />, isAlert: true, color: "", activeColor: "", filterAction: () => updateUrl({ requestFlag: "missing", requestStatus: null }), isActive: activeFlag === "missing" },
-          { key: "overdue", label: "Quá hạn", value: overdueRequests, icon: <CalendarClock className="h-3.5 w-3.5" />, isAlert: true, color: "", activeColor: "", filterAction: () => updateUrl({ requestFlag: "overdue", requestStatus: null }), isActive: activeFlag === "overdue" },
-          { key: "stock-risk", label: "Thiếu tồn", tooltip: "Tồn kho hiện tại không đủ cấp", value: stockRiskRequests, icon: <AlertTriangle className="h-3.5 w-3.5" />, isAlert: true, color: "", activeColor: "", filterAction: () => updateUrl({ requestFlag: "stock-risk", requestStatus: null }), isActive: activeFlag === "stock-risk" },
-        ] as any[]).map((kpi) => {
-          let styleClass = "bg-white border-slate-200 hover:border-slate-300";
-          let iconClass = kpi.isAlert ? "bg-slate-100 text-slate-400" : kpi.color.split(" ").slice(0, 2).join(" ");
-          let valueClass = "text-slate-900";
-          
-          if (kpi.isActive) {
-            styleClass = kpi.isAlert ? "ring-2 ring-rose-500 bg-rose-50 border-rose-300" : kpi.activeColor.split(" ").slice(0, 3).join(" ");
-            iconClass = kpi.isAlert ? "bg-rose-100 text-rose-600" : kpi.activeColor.split(" ")[1].replace("ring-", "bg-").replace("500", "100") + " " + kpi.activeColor.split(" ")[3];
-            valueClass = kpi.isAlert ? "text-rose-700" : "text-slate-900";
-          } else if (kpi.isAlert && kpi.value > 0) {
-            styleClass = "bg-rose-50/40 border-rose-200 hover:border-rose-300";
-            iconClass = "bg-rose-100 text-rose-600";
-            valueClass = "text-rose-700";
-          }
-
-          return (
-            <button
-              key={kpi.key}
-              type="button"
-              onClick={kpi.filterAction}
-              title={kpi.tooltip || undefined}
-              className={`flex h-[72px] items-center gap-3.5 rounded-2xl border px-4 shadow-sm transition-all hover:shadow-md active:scale-[0.98] ${styleClass}`}
-            >
-              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconClass}`}>
-                {kpi.icon}
-              </div>
-              <div className="flex flex-col items-start min-w-0">
-                <div className={`text-2xl font-bold leading-none tabular-nums tracking-tight ${valueClass}`}>
-                  {formatQty(kpi.value)}
-                </div>
-                <div className="mt-1 text-xs font-semibold whitespace-nowrap text-slate-500">
-                  {kpi.label}
-                </div>
-              </div>
-            </button>
-          );
-        })}
-      </div>
+      <MaterialKpiRibbon items={kpiItems} />
 
       {/* Filters and Actions */}
       <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
@@ -270,7 +324,7 @@ export function MaterialRequestList({
           <div className="relative flex-1 max-w-md min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
             <label htmlFor="search-request" className="sr-only">Tìm kiếm đề xuất</label>
-            <input 
+            <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" 
               id="search-request"
               name="search-request"
               type="text"
@@ -312,17 +366,19 @@ export function MaterialRequestList({
             </select>
             <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
           </div>
-          <button
-            type="button"
-            onClick={() => updateUrl({ requestFlag: activeFlag === "stock-risk" ? null : "stock-risk", requestStatus: null })}
-            className={`h-10 rounded-lg border px-3 text-sm font-semibold transition-colors shrink-0 whitespace-nowrap ${
-              activeFlag === "stock-risk"
-                ? "border-rose-200 bg-rose-50 text-rose-700"
-                : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-            }`}
-          >
-            Không đủ tồn
-          </button>
+          {stockRiskRequests > 0 && (
+            <button
+              type="button"
+              onClick={() => updateUrl({ requestFlag: activeFlag === "stock-risk" ? null : "stock-risk", requestStatus: null })}
+              className={`h-10 rounded-lg border px-3 text-sm font-semibold transition-colors shrink-0 whitespace-nowrap ${
+                activeFlag === "stock-risk"
+                  ? "border-rose-300 bg-rose-50 text-rose-700 ring-2 ring-rose-500/20"
+                  : "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
+              }`}
+            >
+              Không đủ tồn: {formatQty(stockRiskRequests)}
+            </button>
+          )}
         </div>
         <button 
           onClick={handleCreate}
@@ -343,7 +399,7 @@ export function MaterialRequestList({
               <th className="px-4 py-3 border-b border-slate-200">Trạng thái</th>
               <th className="px-4 py-3 border-b border-slate-200">Ưu tiên</th>
               <th className="px-4 py-3 border-b border-slate-200 w-1/4">Người tạo</th>
-              <th className="px-4 py-3 border-b border-slate-200 text-right">Thao tác</th>
+              <th className="px-4 py-3 border-b border-slate-200 text-right w-[80px] whitespace-nowrap">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -400,17 +456,85 @@ export function MaterialRequestList({
                   <td className="px-4 py-3 text-slate-600 max-w-0">
                     <SafeText>{req.requestedBy?.name}</SafeText>
                   </td>
-                  <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                    <ActionGroup className="justify-end flex-nowrap">
-                      {isEditable && (
-                        <button onClick={() => handleEdit(req)} aria-label={`Sửa đề xuất ${req.requestNo}`} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Sửa">
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                      )}
-                      <button onClick={() => handleView(req)} aria-label={`Chi tiết đề xuất ${req.requestNo}`} className="p-1.5 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors" title="Chi tiết">
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    </ActionGroup>
+                  <td className="px-4 py-3 text-right relative" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex justify-end">
+                      <MaterialRowActionMenu
+                        actions={[
+                          {
+                            label: "Chi tiết",
+                            icon: <Eye className="h-4 w-4" />,
+                            onClick: () => handleView(req),
+                          },
+                          {
+                            label: "Sao chép mã",
+                            icon: <Copy className="h-4 w-4" />,
+                            onClick: () => {
+                              void navigator.clipboard.writeText(req.requestNo);
+                              toast.success("Da sao chep ma phieu");
+                            },
+                          },
+                          ...(isEditable ? [
+                            {
+                              label: "Sửa phiếu",
+                              icon: <Edit2 className="h-4 w-4" />,
+                              onClick: () => handleEdit(req),
+                            },
+                            {
+                              label: "Nhân bản",
+                              icon: <Copy className="h-4 w-4" />,
+                              disabled: true,
+                              disabledReason: "Chưa hỗ trợ nhân bản phiếu",
+                              onClick: () => {},
+                            },
+                            {
+                              label: "Xóa phiếu",
+                              icon: <Trash2 className="h-4 w-4" />,
+                              danger: true,
+                              onClick: () => setDeletingRequest(req),
+                            }
+                          ] : []),
+                          ...(req.status === "SUBMITTED" ? [
+                            {
+                              label: "Xem phê duyệt",
+                              icon: <FileCheck2 className="h-4 w-4" />,
+                              disabled: !req.approvalRequestId,
+                              disabledReason: !req.approvalRequestId ? "Không tìm thấy dữ liệu phê duyệt" : undefined,
+                              onClick: () => {
+                                if (req.approvalRequestId) {
+                                  router.push(`/approvals?approvalId=${req.approvalRequestId}`);
+                                }
+                              },
+                            },
+                            {
+                              label: "Hủy phiếu",
+                              icon: <XSquare className="h-4 w-4" />,
+                              danger: true,
+                              onClick: () => setCancelingRequest(req),
+                            }
+                          ] : []),
+                          ...(req.status === "APPROVED" || req.status === "PROCESSING" || req.status === "ISSUED" ? [
+                            {
+                              label: "Xem phê duyệt",
+                              icon: <FileCheck2 className="h-4 w-4" />,
+                              disabled: !req.approvalRequestId,
+                              disabledReason: !req.approvalRequestId ? "Không tìm thấy dữ liệu phê duyệt" : undefined,
+                              onClick: () => {
+                                if (req.approvalRequestId) {
+                                  router.push(`/approvals?approvalId=${req.approvalRequestId}`);
+                                }
+                              },
+                            },
+                            {
+                              label: req.status === "APPROVED" ? "Xuất kho" : "Theo dõi cấp phát",
+                              icon: <ArrowUpRight className="h-4 w-4" />,
+                              disabled: true,
+                              disabledReason: "Chưa hỗ trợ tạo/theo dõi phiếu xuất kho từ yêu cầu",
+                              onClick: () => {},
+                            }
+                          ] : [])
+                        ]}
+                      />
+                    </div>
                   </td>
                 </tr>
               );
@@ -499,6 +623,32 @@ export function MaterialRequestList({
             if (selectedRequest) handleEdit(selectedRequest);
           }}
           onSuccess={handleMutationSuccess}
+        />
+      )}
+
+      {deletingRequest && (
+        <ConfirmDialog
+          isOpen={!!deletingRequest}
+          onClose={() => setDeletingRequest(null)}
+          title="Xóa phiếu yêu cầu vật tư"
+          description={`Bạn có chắc muốn xóa phiếu "${deletingRequest.requestNo}" không?\nThao tác này không thể hoàn tác.`}
+          confirmText="Xóa phiếu"
+          variant="danger"
+          isLoading={isDeleting}
+          onConfirm={handleDelete}
+        />
+      )}
+
+      {cancelingRequest && (
+        <ConfirmDialog
+          isOpen={!!cancelingRequest}
+          onClose={() => setCancelingRequest(null)}
+          title="Hủy phiếu yêu cầu vật tư"
+          description={`Bạn có chắc muốn hủy phiếu "${cancelingRequest.requestNo}" không?\nThao tác này sẽ cập nhật trạng thái phiếu và hủy yêu cầu phê duyệt liên quan.`}
+          confirmText="Hủy phiếu"
+          variant="danger"
+          isLoading={isCanceling}
+          onConfirm={handleCancel}
         />
       )}
     </div>

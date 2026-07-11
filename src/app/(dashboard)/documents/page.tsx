@@ -73,7 +73,7 @@ export default async function DocumentsOverviewPage({
           <form className="flex max-w-2xl flex-col gap-3 sm:flex-row" method="GET" action="/documents">
             <div className="relative flex-1">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-slate-400" />
-              <input 
+              <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" 
                 type="text" 
                 name="q"
                 defaultValue={q}

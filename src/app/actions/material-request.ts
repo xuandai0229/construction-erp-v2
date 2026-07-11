@@ -263,7 +263,7 @@ export async function updateMaterialRequestItems(id: string, itemsData: any[]) {
   // Guard: user must have access to this project
   await requireProjectAccess(existing.projectId);
   if (!["APPROVED", "PROCESSING", "ISSUED"].includes(existing.status)) {
-    throw new Error("Chi co the cap nhat cap/nhan cho phieu da duyet hoac dang xu ly");
+    throw new Error("Chỉ có thể cập nhật cấp/nhận cho phiếu đã duyệt hoặc đang xử lý");
   }
   validateMaterialRequestProgressItems(itemsData);
 
@@ -285,3 +285,60 @@ export async function updateMaterialRequestItems(id: string, itemsData: any[]) {
   revalidatePath(`/projects/${existing.projectId}/material-requests`);
   return { success: true };
 }
+
+export async function deleteMaterialRequest(id: string) {
+  const existing = await prisma.materialRequest.findUnique({ where: { id } });
+  if (!existing) throw new Error("Not found");
+  
+  await requireProjectAccess(existing.projectId);
+  
+  if (!["DRAFT", "REJECTED"].includes(existing.status)) {
+    throw new Error("Chỉ có thể xóa phiếu nháp hoặc phiếu bị từ chối");
+  }
+  
+  await prisma.$transaction([
+    prisma.materialRequestItem.updateMany({ 
+      where: { materialRequestId: id },
+      data: { deletedAt: new Date() }
+    }),
+    prisma.approvalRequest.updateMany({ 
+      where: { sourceType: "MATERIAL_REQUEST", sourceId: id, deletedAt: null },
+      data: { deletedAt: new Date() }
+    }),
+    prisma.materialRequest.update({ 
+      where: { id },
+      data: { deletedAt: new Date() }
+    })
+  ]);
+  
+  revalidatePath('/materials');
+  revalidatePath(`/projects/${existing.projectId}/material-requests`);
+  return { success: true };
+}
+
+export async function cancelMaterialRequest(id: string, reason?: string) {
+  const existing = await prisma.materialRequest.findUnique({ where: { id } });
+  if (!existing) throw new Error("Not found");
+  
+  await requireProjectAccess(existing.projectId);
+  
+  if (existing.status !== "SUBMITTED") {
+    throw new Error("Chỉ có thể hủy phiếu đang chờ duyệt");
+  }
+  
+  await prisma.$transaction([
+    prisma.materialRequest.update({
+      where: { id },
+      data: { status: "CANCELLED", cancelReason: reason || "Người dùng hủy phiếu" }
+    }),
+    prisma.approvalRequest.updateMany({
+      where: { sourceType: "MATERIAL_REQUEST", sourceId: id, status: "PENDING" },
+      data: { status: "CANCELLED", decisionNote: reason || "Người yêu cầu đã hủy" }
+    })
+  ]);
+  
+  revalidatePath('/materials');
+  revalidatePath(`/projects/${existing.projectId}/material-requests`);
+  return { success: true };
+}
+

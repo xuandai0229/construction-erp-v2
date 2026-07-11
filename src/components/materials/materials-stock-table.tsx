@@ -1,13 +1,15 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { ArrowDownRight, ArrowUpRight, Search, AlertCircle, X, Box } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Search, AlertCircle, X, Box, Pencil, Trash2, RotateCcw } from "lucide-react";
 import type { ProjectStockDto, MaterialMovementDto } from "@/app/(dashboard)/materials/actions";
 import { StockStatusBadge } from "./materials-badges";
 import { formatDate, getStockStatus } from "./materials-formatters";
-import { ContentCard, EnterpriseTable, QuantityCell, SafeText, ActionGroup, DateCell } from "@/components/ui/enterprise";
+import { ContentCard, EnterpriseTable, QuantityCell, SafeText, DateCell } from "@/components/ui/enterprise";
 import { useSearchParams, useRouter } from "next/navigation";
 import { StockDetailDrawer } from "./stock-detail-drawer";
+import { MaterialRowActionMenu, type MaterialActionItem } from "./materials-ui";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export type MaterialRequestWithItems = {
   id: string;
@@ -29,39 +31,47 @@ interface MaterialsStockTableProps {
   transactions?: MaterialMovementDto[];
   requests?: MaterialRequestWithItems[];
   onTransaction?: (type: "IMPORT" | "EXPORT", materialId?: string) => void;
+  onEditMaterial?: (materialId: string) => void;
+  onDeleteMaterial?: (materialId: string) => void;
+  onRestoreMaterial?: (materialId: string) => void;
   permissions: {
     canImport: boolean;
     canExport: boolean;
+    canUpdate?: boolean;
+    canDelete?: boolean;
   };
 }
 
-type StockFilter = "all" | "healthy" | "low" | "out" | "negative";
+type StockFilter = "all" | "active" | "archived" | "healthy" | "low" | "out" | "negative";
 
 const filters: { id: StockFilter; label: string }[] = [
+  { id: "active", label: "Đang sử dụng" },
   { id: "all", label: "Tất cả" },
   { id: "healthy", label: "Đủ hàng" },
   { id: "low", label: "Sắp hết" },
   { id: "out", label: "Hết hàng" },
   { id: "negative", label: "Âm kho" },
+  { id: "archived", label: "Đã lưu trữ" },
 ];
 
-export function MaterialsStockTable({ stocks, transactions = [], requests = [], onTransaction, permissions }: MaterialsStockTableProps) {
+export function MaterialsStockTable({ stocks, transactions = [], requests = [], onTransaction, onEditMaterial, onDeleteMaterial, onRestoreMaterial, permissions }: MaterialsStockTableProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   
   const urlSearch = searchParams.get("q") || "";
-  const urlStatus = (searchParams.get("stockStatus") || "all").toLowerCase();
-  const validStatus = filters.some(f => f.id === urlStatus) ? (urlStatus as StockFilter) : "all";
+  const urlStatus = (searchParams.get("stockStatus") || "active").toLowerCase();
+  const validStatus = filters.some(f => f.id === urlStatus) ? (urlStatus as StockFilter) : "active";
   const urlStockItemId = searchParams.get("stockItemId");
 
   const [search, setSearch] = useState(urlSearch);
   const [filter, setFilter] = useState<StockFilter>(validStatus);
   const [selectedStockId, setSelectedStockId] = useState<string | null>(urlStockItemId);
+  const [deletingStock, setDeletingStock] = useState<ProjectStockDto | null>(null);
   
   useEffect(() => {
     setSearch(searchParams.get("q") || "");
-    const newStatus = (searchParams.get("stockStatus") || "all").toLowerCase();
-    setFilter(filters.some(f => f.id === newStatus) ? (newStatus as StockFilter) : "all");
+    const newStatus = (searchParams.get("stockStatus") || "active").toLowerCase();
+    setFilter(filters.some(f => f.id === newStatus) ? (newStatus as StockFilter) : "active");
     setSelectedStockId(searchParams.get("stockItemId"));
   }, [searchParams]);
 
@@ -120,8 +130,8 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
 
   const clearFilters = () => {
     setSearch("");
-    setFilter("all");
-    updateUrl({ q: null, stockStatus: null });
+    setFilter("active");
+    updateUrl({ q: null, stockStatus: "active" });
   };
 
   const normalizedSearch = search.trim().toLowerCase();
@@ -129,6 +139,8 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
   const { filtered, counts } = useMemo(() => {
     const counts = {
       all: stocks.length,
+      active: 0,
+      archived: 0,
       healthy: 0,
       low: 0,
       out: 0,
@@ -145,60 +157,102 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
 
       if (!matchSearch) return false;
 
+      const isActive = stock.materialItem.isActive;
       const status = getStockStatus(stock.stock, stock.minStockLevel);
       
       // Update counts only for items matching search
-      if (status === "healthy") counts.healthy++;
-      if (status === "low") counts.low++;
-      if (status === "out") counts.out++;
-      if (status === "negative") counts.negative++;
+      if (isActive) {
+        counts.active++;
+        if (status === "healthy") counts.healthy++;
+        if (status === "low") counts.low++;
+        if (status === "out") counts.out++;
+        if (status === "negative") counts.negative++;
+      } else {
+        counts.archived++;
+      }
 
       // Filter by status
-      if (filter === "healthy") return status === "healthy";
-      if (filter === "low") return status === "low";
-      if (filter === "out") return status === "out";
-      if (filter === "negative") return status === "negative";
+      if (filter === "active") return isActive;
+      if (filter === "archived") return !isActive;
+      if (filter === "healthy") return isActive && status === "healthy";
+      if (filter === "low") return isActive && status === "low";
+      if (filter === "out") return isActive && status === "out";
+      if (filter === "negative") return isActive && status === "negative";
       
       return true;
     });
 
-    counts.all = counts.healthy + counts.low + counts.out + counts.negative;
-
     return { filtered, counts };
   }, [filter, normalizedSearch, stocks]);
 
-  const hasFilters = search !== "" || filter !== "all";
+  const hasFilters = search !== "" || filter !== "active";
 
-  const hasActions = permissions.canImport || permissions.canExport;
+  const hasActions = permissions.canImport || permissions.canExport || permissions.canUpdate || permissions.canDelete;
 
   const actionButtons = (stock: ProjectStockDto) => {
     if (!hasActions) return null;
+    
+    const actions: MaterialActionItem[] = [
+      {
+        label: "Xem chi tiết",
+        icon: <Search className="w-4 h-4" />,
+        onClick: () => handleRowClick(stock.id),
+      }
+    ];
+
+    if (permissions.canImport) {
+      actions.push({
+        label: "Nhập kho",
+        icon: <ArrowDownRight className="w-4 h-4" />,
+        onClick: () => onTransaction?.("IMPORT", stock.materialItemId),
+        disabled: !stock.materialItem.isActive,
+        disabledReason: "Vật tư đã lưu trữ",
+      });
+    }
+
+    if (permissions.canExport) {
+      actions.push({
+        label: "Xuất kho",
+        icon: <ArrowUpRight className="w-4 h-4" />,
+        onClick: () => onTransaction?.("EXPORT", stock.materialItemId),
+        disabled: !stock.materialItem.isActive || stock.stock <= 0,
+        disabledReason: "Chưa có tồn kho để xuất",
+      });
+    }
+
+    if (permissions.canUpdate && onEditMaterial) {
+      actions.push({
+        label: "Sửa vật tư",
+        icon: <Pencil className="w-4 h-4" />,
+        onClick: () => onEditMaterial(stock.materialItemId),
+      });
+    }
+
+    if (permissions.canDelete) {
+      if (stock.materialItem.isActive) {
+        if (onDeleteMaterial) {
+          actions.push({
+            label: "Xóa vật tư",
+            icon: <Trash2 className="w-4 h-4" />,
+            danger: true,
+            onClick: () => setDeletingStock(stock),
+          });
+        }
+      } else {
+        if (onRestoreMaterial) {
+          actions.push({
+            label: "Khôi phục vật tư",
+            icon: <RotateCcw className="w-4 h-4" />,
+            onClick: () => onRestoreMaterial(stock.materialItemId),
+          });
+        }
+      }
+    }
+
     return (
-      <ActionGroup className="justify-end flex-nowrap">
-        {permissions.canImport && (
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onTransaction?.("IMPORT", stock.materialItemId); }}
-            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 whitespace-nowrap"
-          >
-            <ArrowDownRight className="h-3.5 w-3.5" />
-            Nhập
-          </button>
-        )}
-        {permissions.canExport && (
-          <div title={stock.stock <= 0 ? "Chưa có tồn kho để xuất" : ""}>
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); onTransaction?.("EXPORT", stock.materialItemId); }}
-              disabled={stock.stock <= 0}
-              className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400 whitespace-nowrap"
-            >
-              <ArrowUpRight className="h-3.5 w-3.5" />
-              Xuất
-            </button>
-          </div>
-        )}
-      </ActionGroup>
+      <div className="flex justify-end">
+        <MaterialRowActionMenu actions={actions} />
+      </div>
     );
   };
 
@@ -245,7 +299,7 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
         <div className="relative min-w-0">
           <label htmlFor="materials-stock-search" className="sr-only">Tìm vật tư tồn kho</label>
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input
+          <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
             id="materials-stock-search"
             type="text"
             placeholder="Tìm mã, tên hoặc nhóm vật tư..."
@@ -255,7 +309,17 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
           />
         </div>
         <div className="flex gap-2 overflow-x-auto pb-1 lg:justify-end custom-scrollbar">
-          {filters.map((item) => (
+          {filters.map((item) => {
+            let count = 0;
+            if (item.id === "all") count = counts.all;
+            else if (item.id === "active") count = counts.active;
+            else if (item.id === "archived") count = counts.archived;
+            else if (item.id === "healthy") count = counts.healthy;
+            else if (item.id === "low") count = counts.low;
+            else if (item.id === "out") count = counts.out;
+            else if (item.id === "negative") count = counts.negative;
+
+            return (
             <button
               key={item.id}
               type="button"
@@ -267,11 +331,11 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
               }`}
             >
               <span>{item.label}</span>
-              <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${filter === item.id ? "bg-white/20" : "bg-slate-100"}`}>
-                {counts[item.id]}
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${filter === item.id ? "bg-white/20" : "bg-slate-100 text-slate-600"}`}>
+                {count}
               </span>
             </button>
-          ))}
+          )})}
         </div>
       </div>
 
@@ -283,10 +347,10 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
               <th className="px-3 py-2.5 border-b border-slate-200 w-[25%]">Tên vật tư</th>
               <th className="px-3 py-2.5 border-b border-slate-200">Nhóm</th>
               <th className="px-3 py-2.5 border-b border-slate-200 text-right">Tồn kho</th>
-              <th className="px-3 py-2.5 border-b border-slate-200 text-right">Tồn tối thiểu</th>
+              <th className="px-3 py-2.5 border-b border-slate-200 text-right">Ngưỡng cảnh báo</th>
               <th className="px-3 py-2.5 border-b border-slate-200 text-center">Trạng thái</th>
               <th className="px-3 py-2.5 border-b border-slate-200">Cập nhật</th>
-              {hasActions && <th className="px-3 py-2.5 border-b border-slate-200 text-right w-[140px]">Thao tác</th>}
+              {hasActions && <th className="px-3 py-2.5 border-b border-slate-200 text-right w-[80px] whitespace-nowrap">Thao tác</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -298,7 +362,14 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
               >
                 <td className="px-3 py-2 font-mono text-xs font-semibold text-slate-500 whitespace-nowrap">{stock.materialItem.code}</td>
                 <td className="px-3 py-2 font-semibold text-slate-950 max-w-0">
-                  <SafeText className="group-hover:text-blue-700 transition-colors line-clamp-1">{stock.materialItem.name}</SafeText>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <SafeText className="group-hover:text-blue-700 transition-colors line-clamp-1">{stock.materialItem.name}</SafeText>
+                    {!stock.materialItem.isActive && (
+                      <span className="shrink-0 rounded-sm border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600" title="Vật tư đã ngừng sử dụng, chỉ hiển thị để giữ lịch sử">
+                        Đã lưu trữ
+                      </span>
+                    )}
+                  </div>
                 </td>
                 <td className="px-3 py-2 text-slate-600 truncate max-w-[120px]">{stock.materialItem.group || "—"}</td>
                 <td className="px-3 py-2">
@@ -310,7 +381,7 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
                 <td className="px-3 py-2 text-center"><StockStatusBadge stock={stock.stock} minStockLevel={stock.minStockLevel} /></td>
                 <td className="px-3 py-2"><DateCell value={formatDate(stock.lastUpdated)} /></td>
                 {hasActions && (
-                  <td className="px-3 py-2 text-right">
+                  <td className="px-3 py-2 text-right relative">
                     {actionButtons(stock)}
                   </td>
                 )}
@@ -347,6 +418,11 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <SafeText className="font-bold text-slate-950 line-clamp-1">{stock.materialItem.name}</SafeText>
+                {!stock.materialItem.isActive && (
+                  <span className="mt-1 inline-flex rounded-sm border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600" title="Vật tư đã ngừng sử dụng, chỉ hiển thị để giữ lịch sử">
+                    Đã lưu trữ
+                  </span>
+                )}
                 <div className="mt-1 font-mono text-xs font-semibold text-slate-500">{stock.materialItem.code}</div>
               </div>
               <div className="shrink-0">
@@ -361,7 +437,7 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
                 </div>
               </div>
               <div className="rounded-lg bg-slate-50 p-3 text-right">
-                <div className="text-xs font-semibold text-slate-500">Tối thiểu</div>
+                <div className="text-xs font-semibold text-slate-500">Ngưỡng cảnh báo</div>
                 <div className="mt-1">
                   <QuantityCell value={stock.minStockLevel} unit={stock.materialItem.unit} />
                 </div>
@@ -410,6 +486,21 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
         }}
         permissions={permissions}
       />
+
+      {deletingStock && onDeleteMaterial && (
+        <ConfirmDialog
+          isOpen={!!deletingStock}
+          onClose={() => setDeletingStock(null)}
+          title="Xóa vật tư"
+          description={`Bạn có chắc muốn xóa vật tư "${deletingStock.materialItem.code} - ${deletingStock.materialItem.name}" không?\nNếu vật tư đã phát sinh giao dịch, hệ thống sẽ tự động ẩn vật tư này thay vì xóa vĩnh viễn để bảo toàn dữ liệu.`}
+          confirmText="Xóa vật tư"
+          variant="danger"
+          onConfirm={() => {
+            onDeleteMaterial(deletingStock.materialItemId);
+            setDeletingStock(null);
+          }}
+        />
+      )}
     </div>
   );
 }

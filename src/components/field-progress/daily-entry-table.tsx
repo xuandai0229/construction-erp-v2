@@ -459,7 +459,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
     return (
       <div>
         <label htmlFor={`daily-quantity-${item.id}${idSuffix}`} className="sr-only">Khối lượng ngày {dateStr}</label>
-        <input
+        <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
           id={`daily-quantity-${item.id}${idSuffix}`}
           name={`daily-quantity-${item.id}${idSuffix}`}
           ref={(el) => {
@@ -654,7 +654,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
               <span className="mb-2 block text-sm font-bold text-slate-800">
                 Nội dung công việc <span className="text-red-600">*</span>
               </span>
-              <input
+              <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                 id="quickAdd-workContent"
                 name="quickAdd-workContent"
                 value={quickAddData.workContent}
@@ -689,7 +689,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
                 <span className="mb-2 block text-sm font-bold text-blue-800">
                   Tên hạng mục chính mới <span className="text-red-600">*</span>
                 </span>
-                <input
+                <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                   id="quickAdd-newGroupName"
                   name="quickAdd-newGroupName"
                   value={newGroupName}
@@ -704,7 +704,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
             <div className="grid grid-cols-2 gap-4">
               <label className="block" htmlFor="quickAdd-constructionCrew">
                 <span className="mb-2 block text-sm font-bold text-slate-800">Mũi thi công</span>
-                <input
+                <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                   id="quickAdd-constructionCrew"
                   name="quickAdd-constructionCrew"
                   value={quickAddData.constructionCrew}
@@ -716,7 +716,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
 
               <label className="block" htmlFor="quickAdd-unit">
                 <span className="mb-2 block text-sm font-bold text-slate-800">Đơn vị</span>
-                <input
+                <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                   id="quickAdd-unit"
                   name="quickAdd-unit"
                   value={quickAddData.unit}
@@ -734,7 +734,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
                 name="quickAdd-designQuantity"
                 type="text"
                 inputMode="decimal"
-                autoComplete="off"
+                
                 value={quickAddData.designQuantity}
                 onChange={(e) => setQuickAddData(prev => ({ ...prev, designQuantity: e.target.value }))}
                 className="w-full rounded-xl border-2 border-slate-300 bg-white p-3 text-sm text-slate-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
@@ -788,7 +788,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
               <span className="mb-1 flex items-center gap-1 text-xs font-semibold text-slate-600">
                 <Calendar className="h-3.5 w-3.5" /> Ngày nhập
               </span>
-              <input
+              <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                 id="daily-dateStr1"
                 name="daily-dateStr1"
                 type="date"
@@ -861,7 +861,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
               <span className="mb-1 flex items-center gap-1 text-[11px] sm:text-xs font-bold text-slate-700">
                 <Calendar className="h-3 w-3 text-blue-600" /> Ngày nhập
               </span>
-              <input
+              <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                 id="daily-dateStr2"
                 name="daily-dateStr2"
                 type="date"
@@ -875,7 +875,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
               <span className="mb-1 flex items-center gap-1 text-[11px] sm:text-xs font-bold text-slate-700">
                 <Search className="h-3 w-3 text-blue-600" /> Tìm kiếm
               </span>
-              <input
+              <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                 id="daily-searchTerm"
                 name="daily-searchTerm"
                 value={searchTerm}
@@ -1003,7 +1003,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
                   </td>
                   <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.dailyCols.notes} p-2`}>
                     <label htmlFor={`daily-note-${item.id}`} className="sr-only">Ghi chú nhanh cho {item.name}</label>
-                    <input
+                    <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                       id={`daily-note-${item.id}`}
                       name={`daily-note-${item.id}`}
                       value={item.note}
@@ -1142,7 +1142,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
                   <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold">1</span>
                   Diễn biến công việc trong ngày
                 </span>
-                <textarea
+                <textarea autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                   value={activeDrawerItem.note}
                   onChange={(e) => {
                     patchItem(activeDrawerItem.id, "note", e.target.value);
@@ -1158,7 +1158,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
                   <span className="flex items-center justify-center w-6 h-6 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">2</span>
                   Khó khăn / Vướng mắc
                 </span>
-                <textarea
+                <textarea  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                   value={activeDrawerItem.issueNote}
                   onChange={(e) => {
                     patchItem(activeDrawerItem.id, "issueNote", e.target.value);
@@ -1174,7 +1174,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
                   <span className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold">3</span>
                   Đề xuất / Kiến nghị
                 </span>
-                <textarea
+                <textarea autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                   value={activeDrawerItem.proposalNote}
                   onChange={(e) => {
                     patchItem(activeDrawerItem.id, "proposalNote", e.target.value);

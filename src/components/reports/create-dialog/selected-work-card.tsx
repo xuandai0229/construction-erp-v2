@@ -56,7 +56,7 @@ export function SelectedWorkCard({
         <div className="md:col-span-4 space-y-1.5">
           <label className="text-[13px] font-semibold text-slate-700">Khối lượng thực hiện hôm nay <span className="text-red-500">*</span></label>
           <div className="relative">
-            <input
+            <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
               type="number"
               value={line.quantityToday || ''}
               onChange={e => updateWorkLine(index, "quantityToday", Number(e.target.value))}
@@ -80,7 +80,7 @@ export function SelectedWorkCard({
 
         <div className="md:col-span-4 space-y-1.5">
           <label className="text-[13px] font-semibold text-slate-700">Ghi chú vấn đề / Vị trí</label>
-          <input
+          <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
             type="text"
             value={line.note || ''}
             onChange={e => updateWorkLine(index, "note", e.target.value)}
@@ -91,7 +91,7 @@ export function SelectedWorkCard({
 
         <div className="md:col-span-4 space-y-1.5">
           <label className="text-[13px] font-semibold text-slate-700">Đề xuất / Xử lý</label>
-          <input
+          <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
             type="text"
             value={line.proposalNote || ''}
             onChange={e => updateWorkLine(index, "proposalNote", e.target.value)}

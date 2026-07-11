@@ -333,7 +333,7 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
 
         {showNewFolder && (
           <div className="p-3 bg-white border-b border-slate-200">
-            <input
+            <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
               type="text"
               className="w-full bg-white px-2 py-1.5 text-sm border border-slate-300 rounded-md focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-900 font-medium placeholder:text-slate-400"
               placeholder="Tên thư mục mới..."
@@ -388,7 +388,7 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
                     
                     {canEdit && (
                       <div className="shrink-0 flex gap-2 w-full sm:w-auto">
-                        <input 
+                        <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" 
                           type="file" 
                           className="hidden" 
                           ref={fileInputRef} 
@@ -415,7 +415,7 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
                 <div className="flex items-center flex-1 gap-2 min-w-0">
                   <div className="relative flex-1 max-w-sm">
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <input
+                    <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                       type="text"
                       placeholder="Tìm tên tệp..."
                       value={searchQuery}
@@ -538,7 +538,7 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
                 <h3 className="text-lg font-bold text-slate-900">Đổi tên thư mục</h3>
               </div>
               <div className="px-5 py-4">
-                <input
+                <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                   type="text"
                   value={renameModal.newName}
                   onChange={e => setRenameModal(prev => ({ ...prev, newName: e.target.value }))}

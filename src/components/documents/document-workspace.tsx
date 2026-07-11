@@ -1290,7 +1290,7 @@ const handleEditMetadata = async () => {
               <Folder className="h-4 w-4 shrink-0 text-slate-400" />
             )}
             {editingFolderId === folder.id ? (
-              <input
+              <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                 type="text"
                 autoFocus
                 value={editingFolderName}
@@ -1389,7 +1389,7 @@ const handleEditMetadata = async () => {
             <div className="mb-2 text-[11px] font-semibold text-slate-500 uppercase">
               {selectedFolderId ? `Tạo thư mục con trong: ${selectedFolderDisplayName}` : "Tạo thư mục gốc"}
             </div>
-            <input
+            <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
               type="text"
               className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               placeholder="Tên thư mục mới..."
@@ -1634,7 +1634,7 @@ const handleEditMetadata = async () => {
 
                 {!isTrashView && canUpload ? (
                   <>
-                    <input
+                    <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                       type="file"
                       className="hidden"
                       ref={fileInputRef}
@@ -1688,7 +1688,7 @@ const handleEditMetadata = async () => {
                   <div className="flex items-center gap-3 border-t border-slate-100 bg-white px-4 py-3">
                     <div className="relative min-w-0 flex-1">
                       <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                      <input
+                      <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                         type="text"
                         placeholder="Tìm tài liệu, thư mục hoặc file gốc..."
                         value={searchQuery}
@@ -2176,7 +2176,7 @@ const handleEditMetadata = async () => {
                 >
                   Tên hiển thị
                 </label>
-                <input
+                <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                   id="document-display-name"
                   value={pendingUpload.displayName}
                   onChange={(event) =>
@@ -2196,7 +2196,7 @@ const handleEditMetadata = async () => {
 
               <div>
                 <label className="mb-1.5 block text-sm font-semibold text-slate-700">Ghi chú</label>
-                <textarea
+                <textarea autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                   value={pendingUpload.note}
                   onChange={(e) => setPendingUpload(c => c ? { ...c, note: e.target.value } : c)}
                   className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
@@ -2278,7 +2278,7 @@ const handleEditMetadata = async () => {
             <div className="space-y-4 p-5">
               <div>
                 <label className="mb-1 block text-sm font-semibold text-slate-700">Tên hiển thị</label>
-                <input
+                <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                   value={editMetadataModal.displayName}
                   onChange={(e) => setEditMetadataModal(c => ({ ...c, displayName: e.target.value }))}
                   className="w-full rounded-md border border-slate-200 bg-white text-slate-900 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -2287,7 +2287,7 @@ const handleEditMetadata = async () => {
 
               <div>
                 <label className="mb-1 block text-sm font-semibold text-slate-700">Ghi chú</label>
-                <textarea
+                <textarea autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                   value={editMetadataModal.note}
                   onChange={(e) => setEditMetadataModal(c => ({ ...c, note: e.target.value }))}
                   className="w-full rounded-md border border-slate-200 bg-white text-slate-900 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -2471,7 +2471,7 @@ function RenameDialog({
           <h3 className="text-lg font-bold text-slate-900">{title}</h3>
         </div>
         <div className="px-5 py-4">
-          <input
+          <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
             type="text"
             value={value}
             onChange={(event) => onChange(event.target.value)}

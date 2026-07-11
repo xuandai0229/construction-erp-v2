@@ -112,7 +112,7 @@ export function SummaryMobileView({
         <div className="relative mb-3">
           <label htmlFor="mobile-search-input" className="sr-only">Tìm kiếm công việc, hạng mục, mũi thi công</label>
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <input
+          <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
             id="mobile-search-input"
             name="mobile-search-input"
             type="text"

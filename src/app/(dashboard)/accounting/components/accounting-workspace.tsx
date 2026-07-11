@@ -266,7 +266,7 @@ export function AccountingWorkspace({ paymentRequests, projects, suppliers, cont
         <FilterBar className="grid gap-3 lg:grid-cols-[1fr_auto_auto_auto] items-center">
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
+            <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
               type="text"
               placeholder="Tìm mã hồ sơ, tiêu đề, đối tác..."
               value={search}

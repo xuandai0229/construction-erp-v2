@@ -10,6 +10,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast-context";
 import { updateMaterialRequestStatus, updateMaterialRequestItems } from "@/app/actions/material-request";
 import { safeFormatDateTimeVN, safeFormatDateVN } from "@/lib/date-utils";
+import { NumericInput } from "@/components/ui/numeric-input";
 import type { MaterialItemDto, ProjectStockDto } from "@/app/(dashboard)/materials/actions";
 
 const statusConfig = {
@@ -74,25 +75,22 @@ export function MaterialRequestDetail({
     }
     router.push(`/approvals?approvalId=${request.approvalRequestId}&sourceType=MATERIAL_REQUEST&sourceId=${request.id}&projectId=${request.projectId}&type=MATERIAL`);
   };
-  const handleIssueFromRequest = () => {
-    const firstPendingItem = (request.items || []).find((item: any) => {
-      const requested = numberValue(item.requestedQuantity);
-      const issued = numberValue(item.issuedQuantity);
-      return requested > issued;
-    }) || request.items?.[0];
-    const material = firstPendingItem
-      ? materialItems.find((item) => item.code === firstPendingItem.materialCode || item.name === firstPendingItem.materialName)
-      : null;
+  const handleIssueItem = (item: any) => {
+    const catalogItem = materialItems.find((material) => material.code === item.materialCode || material.name === item.materialName);
+    if (!catalogItem) {
+      toast.error("Vật tư ngoài danh mục chưa liên kết kho. Cần liên kết danh mục vật tư trước khi xuất.");
+      return;
+    }
     const params = new URLSearchParams();
     params.set("tab", "transactions");
     params.set("projectId", request.projectId);
     params.set("movementType", "EXPORT");
     params.set("openTransaction", "EXPORT");
     params.set("requestId", request.id);
-    if (material) params.set("materialId", material.id);
+    params.set("requestItemId", item.id);
+    params.set("materialId", catalogItem.id);
     router.push(`/materials?${params.toString()}`);
   };
-  
   const canApprove = ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR", "MANAGER"].includes(currentUserRole || "");
 
   const [isApproving, setIsApproving] = useState(false);
@@ -203,10 +201,10 @@ export function MaterialRequestDetail({
       // Validate quantities
       for (const item of items) {
         if (Number(item.issuedQuantity) > Number(item.requestedQuantity)) {
-          throw new Error(`So luong da cap cua ${item.materialName} khong duoc lon hon so luong de xuat.`);
+          throw new Error(`Số lượng đã cấp của ${item.materialName} không được lớn hơn số lượng đề xuất.`);
         }
         if (Number(item.receivedQuantity) > Number(item.issuedQuantity)) {
-          throw new Error(`So luong da nhan cua ${item.materialName} khong duoc lon hon so luong da cap.`);
+          throw new Error(`Số lượng đã nhận của ${item.materialName} không được lớn hơn số lượng đã cấp.`);
         }
         if (Number(item.issuedQuantity) < 0 || Number(item.receivedQuantity) < 0) {
           throw new Error(`Số lượng cấp/nhận của ${item.materialName} không được nhỏ hơn 0.`);
@@ -399,7 +397,7 @@ export function MaterialRequestDetail({
                           {showRejectForm && (
                             <div className="p-3 bg-rose-50 border border-rose-100 rounded-lg space-y-2 w-full sm:w-[260px]">
                               <label className="text-xs font-bold text-rose-800">Lý do từ chối:</label>
-                              <textarea
+                              <textarea autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                                 value={rejectReason}
                                 onChange={e => setRejectReason(e.target.value)}
                                 className="w-full text-sm rounded border border-rose-200 p-2 outline-none focus:ring-1 focus:ring-rose-400"
@@ -439,18 +437,7 @@ export function MaterialRequestDetail({
                     <strong className="font-medium text-slate-700">Lưu ý:</strong> Duyệt phiếu chỉ xác nhận nhu cầu vật tư. Cấp phát và trừ tồn kho là bước sau do Thủ kho xử lý.
                   </p>
                 </div>
-                {request.status === "APPROVED" && (
-                  <div className="mt-3 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={handleIssueFromRequest}
-                      className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-amber-700"
-                    >
-                      <ArrowUpRight className="h-4 w-4" />
-                      Xuất kho theo phiếu
-                    </button>
-                  </div>
-                )}
+                {/* Nút xuất chung đã bị loại bỏ theo thiết kế mới */}
               </div>
             </div>
 
@@ -471,6 +458,9 @@ export function MaterialRequestDetail({
                       <th className="px-4 py-3 w-28">Cấp</th>
                       <th className="px-4 py-3 w-28">Nhận</th>
                       <th className="px-4 py-3 text-right">Còn thiếu</th>
+                      {["APPROVED", "PROCESSING"].includes(request.status) && (
+                        <th className="px-4 py-3 text-right">Thao tác</th>
+                      )}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -501,10 +491,9 @@ export function MaterialRequestDetail({
                           <td className="px-4 py-3 text-right font-bold text-slate-900">{formatQty(req)}</td>
                           <td className="px-2 py-2">
                             {canUpdateProgress ? (
-                              <input 
-                                type="number"
+                              <NumericInput 
                                 value={item.issuedQuantity}
-                                onChange={(e) => handleItemChange(item.id, 'issuedQuantity', e.target.value)}
+                                onChange={(val) => handleItemChange(item.id, 'issuedQuantity', val)}
                                 className="w-full px-2 py-1.5 border rounded text-right font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                               />
                             ) : (
@@ -513,10 +502,9 @@ export function MaterialRequestDetail({
                           </td>
                           <td className="px-2 py-2">
                             {canUpdateProgress ? (
-                              <input 
-                                type="number"
+                              <NumericInput 
                                 value={item.receivedQuantity}
-                                onChange={(e) => handleItemChange(item.id, 'receivedQuantity', e.target.value)}
+                                onChange={(val) => handleItemChange(item.id, 'receivedQuantity', val)}
                                 className="w-full px-2 py-1.5 border rounded text-right font-medium focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                               />
                             ) : (
@@ -524,6 +512,18 @@ export function MaterialRequestDetail({
                             )}
                           </td>
                           <td className="px-4 py-3 text-right font-bold text-amber-600">{rem > 0 ? `${formatQty(rem)} ${item.unit || ''}`.trim() : "-"}</td>
+                          {["APPROVED", "PROCESSING"].includes(request.status) && (
+                            <td className="px-4 py-3 text-right">
+                              {rem > 0 && (
+                                <button
+                                  onClick={() => handleIssueItem(item)}
+                                  className="text-xs text-blue-600 hover:text-blue-800 font-medium bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded transition-colors"
+                                >
+                                  Xuất kho dòng này
+                                </button>
+                              )}
+                            </td>
+                          )}
                         </tr>
                       );
                     })}

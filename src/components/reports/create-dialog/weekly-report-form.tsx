@@ -219,7 +219,7 @@ export function WeeklyReportForm({ form, updateField, errors, workItems = [], ac
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-[13px] font-semibold text-slate-700">Chọn ngày trong tuần <span className="text-red-500">*</span></label>
-                  <input
+                  <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                     type="date"
                     data-testid="weekly-picker-date"
                     value={form.weekStartDate || ""}
@@ -230,11 +230,11 @@ export function WeeklyReportForm({ form, updateField, errors, workItems = [], ac
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[13px] font-semibold text-slate-700">Từ ngày</label>
-                  <input type="date" data-testid="weekly-start-date" value={form.weekStartDate || ""} onChange={e => updateField("weekStartDate", e.target.value)} className={inputClass} />
+                  <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" type="date" data-testid="weekly-start-date" value={form.weekStartDate || ""} onChange={e => updateField("weekStartDate", e.target.value)} className={inputClass} />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[13px] font-semibold text-slate-700">Đến ngày</label>
-                  <input type="date" data-testid="weekly-end-date" value={form.weekEndDate || ""} onChange={e => updateField("weekEndDate", e.target.value)} className={inputClass} />
+                  <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" type="date" data-testid="weekly-end-date" value={form.weekEndDate || ""} onChange={e => updateField("weekEndDate", e.target.value)} className={inputClass} />
                 </div>
               </div>
               {form.weekStartDate && form.weekEndDate && (
@@ -474,14 +474,14 @@ export function WeeklyReportForm({ form, updateField, errors, workItems = [], ac
                         <tr key={plan.fieldProgressItemId || idx} className="border-b border-slate-100 bg-white hover:bg-slate-50">
                           <td className="px-3 py-2 text-slate-400 text-center">{idx + 1}</td>
                           <td className="px-2 py-2">
-                            <input type="text" value={plan.workContent} onChange={(e) => {
+                            <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" type="text" value={plan.workContent} onChange={(e) => {
                               const newPlan = [...(form.weeklyNote?.nextWeekPlan || [])];
                               newPlan[idx].workContent = e.target.value;
                               updateField("weeklyNote", { ...form.weeklyNote, nextWeekPlan: newPlan });
                             }} className="w-full bg-transparent border-b border-dashed border-slate-300 focus:border-blue-500 outline-none px-1 py-0.5" />
                           </td>
                           <td className="px-2 py-2 text-center">
-                            <input type="text" value={plan.unit || ""} onChange={(e) => {
+                            <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" type="text" value={plan.unit || ""} onChange={(e) => {
                               const newPlan = [...(form.weeklyNote?.nextWeekPlan || [])];
                               newPlan[idx].unit = e.target.value;
                               updateField("weeklyNote", { ...form.weeklyNote, nextWeekPlan: newPlan });
@@ -491,7 +491,7 @@ export function WeeklyReportForm({ form, updateField, errors, workItems = [], ac
                              {plan.remainingQuantity ? formatNumberSafe(plan.remainingQuantity) : "0"}
                           </td>
                           <td className="px-2 py-2 text-right">
-                            <input type="number" min="0" step="any" value={plan.plannedQuantityNextWeek || ""} onChange={(e) => {
+                            <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" type="number" min="0" step="any" value={plan.plannedQuantityNextWeek || ""} onChange={(e) => {
                               const newPlan = [...(form.weeklyNote?.nextWeekPlan || [])];
                               newPlan[idx].plannedQuantityNextWeek = Number(e.target.value);
                               updateField("weeklyNote", { ...form.weeklyNote, nextWeekPlan: newPlan });
@@ -501,42 +501,42 @@ export function WeeklyReportForm({ form, updateField, errors, workItems = [], ac
                             )}
                           </td>
                           <td className="px-2 py-2">
-                            <input type="date" value={plan.plannedStartDate || ""} onChange={(e) => {
+                            <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" type="date" value={plan.plannedStartDate || ""} onChange={(e) => {
                               const newPlan = [...(form.weeklyNote?.nextWeekPlan || [])];
                               newPlan[idx].plannedStartDate = e.target.value;
                               updateField("weeklyNote", { ...form.weeklyNote, nextWeekPlan: newPlan });
                             }} className="w-full bg-transparent border-b border-dashed border-slate-300 focus:border-blue-500 outline-none px-1 py-0.5 text-xs" />
                           </td>
                           <td className="px-2 py-2">
-                            <input type="date" value={plan.plannedEndDate || ""} onChange={(e) => {
+                            <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" type="date" value={plan.plannedEndDate || ""} onChange={(e) => {
                               const newPlan = [...(form.weeklyNote?.nextWeekPlan || [])];
                               newPlan[idx].plannedEndDate = e.target.value;
                               updateField("weeklyNote", { ...form.weeklyNote, nextWeekPlan: newPlan });
                             }} className="w-full bg-transparent border-b border-dashed border-slate-300 focus:border-blue-500 outline-none px-1 py-0.5 text-xs" />
                           </td>
                           <td className="px-2 py-2">
-                            <input type="text" value={plan.constructionCrew || ""} onChange={(e) => {
+                            <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" type="text" value={plan.constructionCrew || ""} onChange={(e) => {
                               const newPlan = [...(form.weeklyNote?.nextWeekPlan || [])];
                               newPlan[idx].constructionCrew = e.target.value;
                               updateField("weeklyNote", { ...form.weeklyNote, nextWeekPlan: newPlan });
                             }} className="w-full bg-transparent border-b border-dashed border-slate-300 focus:border-blue-500 outline-none px-1 py-0.5" placeholder="Tổ/đội..." />
                           </td>
                           <td className="px-2 py-2">
-                            <input type="text" value={plan.materialNeeds || ""} onChange={(e) => {
+                            <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" type="text" value={plan.materialNeeds || ""} onChange={(e) => {
                               const newPlan = [...(form.weeklyNote?.nextWeekPlan || [])];
                               newPlan[idx].materialNeeds = e.target.value;
                               updateField("weeklyNote", { ...form.weeklyNote, nextWeekPlan: newPlan });
                             }} className="w-full bg-transparent border-b border-dashed border-slate-300 focus:border-blue-500 outline-none px-1 py-0.5" placeholder="Vật tư..." />
                           </td>
                           <td className="px-2 py-2">
-                            <input type="text" value={plan.equipmentNeeds || ""} onChange={(e) => {
+                            <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" type="text" value={plan.equipmentNeeds || ""} onChange={(e) => {
                               const newPlan = [...(form.weeklyNote?.nextWeekPlan || [])];
                               newPlan[idx].equipmentNeeds = e.target.value;
                               updateField("weeklyNote", { ...form.weeklyNote, nextWeekPlan: newPlan });
                             }} className="w-full bg-transparent border-b border-dashed border-slate-300 focus:border-blue-500 outline-none px-1 py-0.5" placeholder="Thiết bị..." />
                           </td>
                           <td className="px-2 py-2">
-                            <input type="text" value={plan.riskNote || ""} onChange={(e) => {
+                            <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" type="text" value={plan.riskNote || ""} onChange={(e) => {
                               const newPlan = [...(form.weeklyNote?.nextWeekPlan || [])];
                               newPlan[idx].riskNote = e.target.value;
                               updateField("weeklyNote", { ...form.weeklyNote, nextWeekPlan: newPlan });
@@ -584,7 +584,7 @@ export function WeeklyReportForm({ form, updateField, errors, workItems = [], ac
                 <label className="text-[13px] font-semibold text-slate-700 flex items-center gap-1.5">
                   <Wrench className="w-4 h-4 text-slate-400" /> Tình hình thi công trong tuần
                 </label>
-                <textarea
+                <textarea  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                   value={form.summary || ""}
                   onChange={e => updateField("summary", e.target.value)}
                   className={`${textareaClass} ${errors.summary ? "border-red-400" : ""}`}
@@ -598,7 +598,7 @@ export function WeeklyReportForm({ form, updateField, errors, workItems = [], ac
                   <label className="text-[13px] font-semibold text-slate-700 flex items-center gap-1.5">
                     <Users className="w-4 h-4 text-slate-400" /> Nguồn lực sử dụng trong tuần
                   </label>
-                  <textarea
+                  <textarea autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                     value={form.labor || ""}
                     onChange={e => updateField("labor", e.target.value)}
                     className={textareaClass}
@@ -609,7 +609,7 @@ export function WeeklyReportForm({ form, updateField, errors, workItems = [], ac
                   <label className="text-[13px] font-semibold text-slate-700 flex items-center gap-1.5">
                     <Wrench className="w-4 h-4 text-slate-400" /> Vật tư sử dụng trong tuần
                   </label>
-                  <textarea
+                  <textarea  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                     value={form.materials || ""}
                     onChange={e => updateField("materials", e.target.value)}
                     className={textareaClass}
@@ -622,7 +622,7 @@ export function WeeklyReportForm({ form, updateField, errors, workItems = [], ac
                 <label className="text-[13px] font-semibold text-slate-700 flex items-center gap-1.5">
                   <ShieldAlert className="w-4 h-4 text-slate-400" /> Chất lượng / An toàn lao động
                 </label>
-                <textarea
+                <textarea autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                   value={form.quality || ""}
                   onChange={e => updateField("quality", e.target.value)}
                   className={textareaClass}
@@ -635,7 +635,7 @@ export function WeeklyReportForm({ form, updateField, errors, workItems = [], ac
                   <label className="text-[13px] font-semibold text-slate-700 flex items-center gap-1.5">
                     <FileWarning className="w-4 h-4 text-slate-400" /> Vướng mắc phát sinh
                   </label>
-                  <textarea
+                  <textarea  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                     value={form.issues || ""}
                     onChange={e => updateField("issues", e.target.value)}
                     className={textareaClass}
@@ -646,7 +646,7 @@ export function WeeklyReportForm({ form, updateField, errors, workItems = [], ac
                   <label className="text-[13px] font-semibold text-slate-700 flex items-center gap-1.5">
                     <Lightbulb className="w-4 h-4 text-slate-400" /> Kiến nghị / Đề xuất
                   </label>
-                  <textarea
+                  <textarea autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                     value={form.recommendations || ""}
                     onChange={e => updateField("recommendations", e.target.value)}
                     className={textareaClass}

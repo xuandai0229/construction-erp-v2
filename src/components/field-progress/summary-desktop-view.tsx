@@ -76,7 +76,7 @@ export function SummaryDesktopView({
         <div className="relative flex-1 min-w-[200px] max-w-[360px]">
           <label htmlFor="summary-desktop-search" className="sr-only">Tìm kiếm công việc</label>
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <input
+          <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
             id="summary-desktop-search"
             name="summary-desktop-search"
             type="text"

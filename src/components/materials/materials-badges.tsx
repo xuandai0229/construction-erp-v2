@@ -17,7 +17,7 @@ export function StockStatusBadge({ stock, minStockLevel, compact = false }: Stoc
 
   if (status === "negative") {
     return (
-      <StatusBadge variant="danger" size="sm" className="gap-1.5">
+      <StatusBadge variant="danger" size="sm" className="gap-1.5" title="Dữ liệu bất thường, cần kiểm tra ledger">
         <ShieldAlert className="h-3.5 w-3.5" />
         {label}
       </StatusBadge>
@@ -26,7 +26,7 @@ export function StockStatusBadge({ stock, minStockLevel, compact = false }: Stoc
 
   if (status === "out") {
     return (
-      <StatusBadge variant="neutral" size="sm" className="gap-1.5 bg-slate-100 text-slate-600 border-slate-200">
+      <StatusBadge variant="neutral" size="sm" className="gap-1.5 bg-slate-100 text-slate-600 border-slate-200" title="Đã hết hoàn toàn trong kho">
         <PackageX className="h-3.5 w-3.5" />
         {label}
       </StatusBadge>
@@ -35,7 +35,7 @@ export function StockStatusBadge({ stock, minStockLevel, compact = false }: Stoc
 
   if (status === "low") {
     return (
-      <StatusBadge variant="warning" size="sm" className="gap-1.5">
+      <StatusBadge variant="warning" size="sm" className="gap-1.5" title="Tồn hiện tại nhỏ hơn hoặc bằng ngưỡng cảnh báo">
         <ShieldAlert className="h-3.5 w-3.5" />
         {label}
       </StatusBadge>
@@ -43,7 +43,7 @@ export function StockStatusBadge({ stock, minStockLevel, compact = false }: Stoc
   }
 
   return (
-    <StatusBadge variant="success" size="sm" className="gap-1.5">
+    <StatusBadge variant="success" size="sm" className="gap-1.5" title="Tồn kho cao hơn ngưỡng cảnh báo">
       <CheckCircle2 className="h-3.5 w-3.5" />
       {label}
     </StatusBadge>

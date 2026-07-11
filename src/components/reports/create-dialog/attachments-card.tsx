@@ -68,8 +68,8 @@ export function AttachmentsCard({
               <Camera className="w-4 h-4 text-slate-400" /> Hình ảnh hiện trường ({photos.length})
             </h4>
             <div className="flex gap-2">
-              <input type="file" accept="image/*" capture="environment" className="hidden" ref={photoCaptureRef} onChange={onAddPhotos} />
-              <input type="file" accept="image/*" multiple className="hidden" ref={photoInputRef} onChange={onAddPhotos} />
+              <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" type="file" accept="image/*" capture="environment" className="hidden" ref={photoCaptureRef} onChange={onAddPhotos} />
+              <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" type="file" accept="image/*" multiple className="hidden" ref={photoInputRef} onChange={onAddPhotos} />
               
               <button type="button" onClick={() => photoCaptureRef.current?.click()} className="text-[12px] font-bold text-slate-700 bg-slate-100 px-3 py-1.5 rounded-lg hover:bg-slate-200 transition-colors flex items-center gap-1.5 border border-slate-200">
                 <Camera className="w-3.5 h-3.5" /> Chụp ảnh
@@ -119,7 +119,7 @@ export function AttachmentsCard({
             <h4 className="text-[13px] font-semibold text-slate-700 flex items-center gap-1.5">
               <Paperclip className="w-4 h-4 text-slate-400" /> Tài liệu đính kèm ({attachments.length})
             </h4>
-            <input type="file" multiple className="hidden" ref={fileInputRef} onChange={onAddFiles} />
+            <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" type="file" multiple className="hidden" ref={fileInputRef} onChange={onAddFiles} />
             <button type="button" onClick={() => fileInputRef.current?.click()} className="text-[12px] font-bold text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-1.5 border border-blue-100 self-start">
               <Paperclip className="w-3.5 h-3.5" /> Thêm file
             </button>

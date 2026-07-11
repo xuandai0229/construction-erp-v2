@@ -61,7 +61,7 @@ export function GeneralInfoCard({
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-[13px] font-semibold text-slate-700">Ngày lập báo cáo <span className="text-red-500">*</span></label>
-            <input
+            <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
               type="date"
               value={form.date}
               onChange={e => updateField('date', e.target.value)}
@@ -70,7 +70,7 @@ export function GeneralInfoCard({
           </div>
           <div className="space-y-1.5">
             <label className="text-[13px] font-semibold text-slate-700">Giờ <span className="text-red-500">*</span></label>
-            <input
+            <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
               type="time"
               value={form.time}
               onChange={e => updateField('time', e.target.value)}
@@ -94,7 +94,7 @@ export function GeneralInfoCard({
           </div>
           <div className="space-y-1.5">
             <label className="text-[13px] font-semibold text-slate-700">Nhiệt độ (°C)</label>
-            <input
+            <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
               type="number"
               placeholder="VD: 32"
               value={form.weatherTemperature || ''}
@@ -106,7 +106,7 @@ export function GeneralInfoCard({
 
         <div className="space-y-1.5">
           <label className="text-[13px] font-semibold text-slate-700">Người lập / Cán bộ</label>
-          <input
+          <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
             type="text"
             value={form.creatorName}
             onChange={e => updateField('creatorName', e.target.value)}
@@ -120,7 +120,7 @@ export function GeneralInfoCard({
             <MapPin className="w-4 h-4 text-slate-400" /> Vị trí GPS hiện trường
           </label>
           <div className="flex flex-col sm:flex-row gap-3">
-            <input
+            <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
               type="text"
               placeholder="VD: 21.0285, 105.8542"
               value={form.gpsLocation || ''}

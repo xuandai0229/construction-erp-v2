@@ -95,7 +95,7 @@ export function SupplierFormDialog({ isOpen, onClose, onSubmit, isSubmitting, in
 
   return (
     <div className="fixed inset-0 z-[90] flex items-end justify-center bg-slate-950/45 p-0 backdrop-blur-sm sm:items-center sm:p-4">
-      <div className="flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl shadow-slate-950/20 sm:rounded-2xl">
+      <div className="flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl shadow-slate-950/20 sm:rounded-2xl">
         <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
           <div>
             <h2 className="text-lg font-bold text-slate-950">{initialData ? "Sửa đối tác" : "Thêm đối tác"}</h2>
@@ -117,7 +117,7 @@ export function SupplierFormDialog({ isOpen, onClose, onSubmit, isSubmitting, in
                 <label htmlFor="supplier-code" className="mb-1.5 block text-sm font-semibold text-slate-700">
                   Mã đối tác <span className="font-normal text-slate-400">(tùy chọn)</span>
                 </label>
-                <input
+                <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                   id="supplier-code"
                   value={formData.code}
                   onChange={(e) => updateField("code", e.target.value)}
@@ -131,7 +131,7 @@ export function SupplierFormDialog({ isOpen, onClose, onSubmit, isSubmitting, in
               <label htmlFor="supplier-name" className="mb-1.5 block text-sm font-semibold text-slate-700">
                 Tên đối tác <span className="text-rose-600">*</span>
               </label>
-              <input
+              <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                 id="supplier-name"
                 value={formData.name}
                 onChange={(e) => updateField("name", e.target.value)}
@@ -144,7 +144,7 @@ export function SupplierFormDialog({ isOpen, onClose, onSubmit, isSubmitting, in
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label htmlFor="supplier-contact" className="mb-1.5 block text-sm font-semibold text-slate-700">Người liên hệ</label>
-                <input
+                <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                   id="supplier-contact"
                   value={formData.contactPerson}
                   onChange={(e) => updateField("contactPerson", e.target.value)}
@@ -154,7 +154,7 @@ export function SupplierFormDialog({ isOpen, onClose, onSubmit, isSubmitting, in
               </div>
               <div>
                 <label htmlFor="supplier-phone" className="mb-1.5 block text-sm font-semibold text-slate-700">Số điện thoại</label>
-                <input
+                <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                   id="supplier-phone"
                   type="tel"
                   value={formData.phone}
@@ -168,7 +168,7 @@ export function SupplierFormDialog({ isOpen, onClose, onSubmit, isSubmitting, in
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label htmlFor="supplier-email" className="mb-1.5 block text-sm font-semibold text-slate-700">Email</label>
-                <input
+                <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                   id="supplier-email"
                   type="email"
                   value={formData.email}
@@ -179,7 +179,7 @@ export function SupplierFormDialog({ isOpen, onClose, onSubmit, isSubmitting, in
               </div>
               <div>
                 <label htmlFor="supplier-tax" className="mb-1.5 block text-sm font-semibold text-slate-700">Mã số thuế</label>
-                <input
+                <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                   id="supplier-tax"
                   inputMode="numeric"
                   value={formData.taxCode}
@@ -192,7 +192,7 @@ export function SupplierFormDialog({ isOpen, onClose, onSubmit, isSubmitting, in
 
             <div>
               <label htmlFor="supplier-address" className="mb-1.5 block text-sm font-semibold text-slate-700">Địa chỉ</label>
-              <input
+              <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                 id="supplier-address"
                 value={formData.address}
                 onChange={(e) => updateField("address", e.target.value)}

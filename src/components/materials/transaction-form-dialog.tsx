@@ -7,6 +7,7 @@ import { EnterpriseCombobox, type EnterpriseComboboxOption } from "@/components/
 import { fromDateTimeLocalInputValue, toDateTimeLocalInputValue } from "@/lib/date-utils";
 import { DateTimeFieldVN } from "@/components/ui/date-field-vn";
 import { formatQuantity } from "./materials-formatters";
+import { NumericInput } from "@/components/ui/numeric-input";
 import type { MaterialItemDto, ProjectStockDto } from "@/app/(dashboard)/materials/actions";
 
 interface TransactionFormDialogProps {
@@ -54,7 +55,7 @@ export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting,
   const normalizedQty = Number.isFinite(qtyValue) && qtyValue > 0 ? qtyValue : 0;
   const stockAfter = selectedMaterial ? (type === "IMPORT" ? currentStock + normalizedQty : currentStock - normalizedQty) : null;
   const isOverStock = type === "EXPORT" && selectedMaterial && Number.isFinite(qtyValue) && qtyValue > currentStock;
-  const materialOptions = materialItems.map<EnterpriseComboboxOption>((material) => ({
+  const materialOptions = materialItems.filter((material) => material.isActive).map<EnterpriseComboboxOption>((material) => ({
     value: material.id,
     code: material.code,
     name: material.name,
@@ -95,7 +96,7 @@ export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting,
 
   return (
     <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/40 p-0 backdrop-blur-sm sm:items-center sm:p-4">
-      <div className="flex max-h-[92dvh] w-full max-w-md flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl sm:rounded-xl">
+      <div className="flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl sm:rounded-xl">
         <div className="flex justify-between items-center p-4 border-b border-slate-100">
           <h2 className="text-lg font-bold text-slate-800">
             {isImport ? "Nhập kho" : "Xuất kho"}
@@ -143,16 +144,12 @@ export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting,
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="transaction-quantity" className="block text-sm font-medium text-slate-700 mb-1">Số lượng <span className="text-red-500">*</span></label>
+              <label htmlFor="transaction-quantity" className="block text-sm font-medium text-slate-700 mb-1">Số lượng {isImport ? 'nhập kho thật' : 'xuất kho thật'} <span className="text-red-500">*</span></label>
               <div className="relative">
-                <input 
+                <NumericInput 
                   id="transaction-quantity"
-                  type="number" 
-                  step="0.01"
-                  min="0.01"
-                  inputMode="decimal"
                   value={formData.quantity} 
-                  onChange={e => setFormData({ ...formData, quantity: e.target.value })}
+                  onChange={val => setFormData({ ...formData, quantity: val })}
                   placeholder="0.00"
                   className="w-full h-10 pl-3 pr-10 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-right"
                   required
@@ -180,7 +177,7 @@ export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting,
 
           <div>
             <label htmlFor="transaction-notes" className="block text-sm font-medium text-slate-700 mb-1">Ghi chú</label>
-            <textarea 
+            <textarea autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" 
               id="transaction-notes"
               value={formData.notes} 
               onChange={e => setFormData({ ...formData, notes: e.target.value })}

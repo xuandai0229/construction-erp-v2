@@ -206,8 +206,8 @@ export function getStatusLabel(status: ReportStatus): string {
     case 'REVISION_REQUESTED': return 'Yêu cầu chỉnh sửa';
     case 'REJECTED': return 'Từ chối';
     case 'DRAFT': return 'Nháp';
-    case 'LOCKED': return 'Da khoa';
-    case 'CANCELLED': return 'Da huy';
+    case 'LOCKED': return 'Đã khóa';
+    case 'CANCELLED': return 'Đã hủy';
     default: return status;
   }
 }

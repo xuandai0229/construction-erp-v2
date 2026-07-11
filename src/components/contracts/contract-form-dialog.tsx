@@ -180,7 +180,7 @@ export function ContractFormDialog({
 
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-slate-700">Số hợp đồng <span className="text-rose-500">*</span></label>
-                <input
+                <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                   type="text"
                   value={contractNo}
                   onChange={(e) => setContractNo(e.target.value)}
@@ -193,7 +193,7 @@ export function ContractFormDialog({
 
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-slate-700">Tên hợp đồng <span className="text-rose-500">*</span></label>
-                <input
+                <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -241,7 +241,7 @@ export function ContractFormDialog({
                 <input
                   type="text"
                   inputMode="numeric"
-                  autoComplete="off"
+                  
                   value={value}
                   onChange={handleValueChange}
                   className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 font-mono text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
@@ -283,7 +283,7 @@ export function ContractFormDialog({
                   <label className="text-sm font-semibold text-slate-700">Ngày ký</label>
                   <div className="relative">
                     <CalendarIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input
+                    <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                       type="date"
                       value={signDate}
                       onChange={(e) => setSignDate(e.target.value)}
@@ -297,7 +297,7 @@ export function ContractFormDialog({
                   <label className="text-sm font-semibold text-slate-700">Ngày bắt đầu</label>
                   <div className="relative">
                     <CalendarIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input
+                    <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
@@ -311,7 +311,7 @@ export function ContractFormDialog({
                   <label className="text-sm font-semibold text-slate-700">Ngày kết thúc</label>
                   <div className="relative">
                     <CalendarIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input
+                    <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                       type="date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}

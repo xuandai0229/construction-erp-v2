@@ -164,7 +164,7 @@
                   <div className="p-2 border-b border-slate-100">
                     <div className="relative">
                       <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-                      <input
+                      <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                         type="text"
                         placeholder="Tìm tên hoặc mã..."
                         className="w-full rounded-lg border border-slate-200 bg-slate-50 py-1.5 pl-9 pr-3 text-sm outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"

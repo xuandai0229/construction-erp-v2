@@ -10,6 +10,7 @@ import { ContentCard, KpiCard, SafeText } from "@/components/ui/enterprise";
 interface MaterialsOverviewProps {
   stocks: ProjectStockDto[];
   transactions: MaterialMovementDto[];
+  requests?: { status?: string }[];
   onNavigate: (tab: string, additionalParams?: Record<string, string>) => void;
   onGoToCatalog: () => void;
   permissions: {
@@ -20,6 +21,7 @@ interface MaterialsOverviewProps {
 export function MaterialsOverview({
   stocks,
   transactions,
+  requests = [],
   onNavigate,
   onGoToCatalog,
   permissions,
@@ -36,6 +38,7 @@ export function MaterialsOverview({
   const negativeStocks = stocks.filter((stock) => stock.stock < 0);
   
   const recentTransactions = transactions.slice(0, 6);
+  const pendingRequests = requests.filter(r => r.status === "SUBMITTED" || r.status === "APPROVED").length;
 
   const cards = [
     {
@@ -59,14 +62,22 @@ export function MaterialsOverview({
       value: lowStocks.length + outOfStocks.length,
       helper: negativeStocks.length > 0 ? `${negativeStocks.length} mã âm kho` : "Dưới mức tối thiểu",
       icon: <AlertTriangle className="h-5 w-5" />,
-      tone: (lowStocks.length + outOfStocks.length > 0) ? "amber" as const : "slate" as const,
+      tone: "amber" as const,
       onClick: () => onNavigate("stock", { stockStatus: "low" }),
+    },
+    {
+      label: "Cần cấp / Chờ duyệt",
+      value: pendingRequests,
+      helper: "Phiếu yêu cầu",
+      icon: <ClipboardList className="h-5 w-5" />,
+      tone: pendingRequests > 0 ? ("rose" as const) : ("slate" as const),
+      onClick: () => onNavigate("requests", { requestStatus: "SUBMITTED" }),
     },
     {
       label: "Giao dịch tháng",
       value: monthlyTransactions.length,
       helper: "Nhập / Xuất kho",
-      icon: <ClipboardList className="h-5 w-5" />,
+      icon: <TrendingDown className="h-5 w-5" />,
       tone: "indigo" as const,
       onClick: () => onNavigate("transactions", { period: "thisMonth" }),
     },
@@ -76,7 +87,7 @@ export function MaterialsOverview({
 
   return (
     <div className="space-y-5">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         {cards.map((card) => (
           <KpiCard
             key={card.label}

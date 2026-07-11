@@ -139,7 +139,7 @@ export default async function FieldProgressSummaryPage({
           <div className="flex flex-1 flex-wrap sm:flex-nowrap gap-3">
             <div className="flex-1 min-w-[120px]">
               <label htmlFor="filter-from" className="block text-[11px] font-bold text-slate-700 mb-1">Từ ngày</label>
-              <input 
+              <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" 
                 id="filter-from"
                 type="date" 
                 name="from" 
@@ -149,7 +149,7 @@ export default async function FieldProgressSummaryPage({
             </div>
             <div className="flex-1 min-w-[120px]">
               <label htmlFor="filter-to" className="block text-[11px] font-bold text-slate-700 mb-1">Đến ngày</label>
-              <input 
+              <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" 
                 id="filter-to"
                 type="date" 
                 name="to" 

@@ -9,6 +9,20 @@ import { getMaterialPermissions, MaterialPermissionSet } from "@/lib/materials/m
 
 const MATERIALS_PATH = "/materials";
 
+function handlePrismaError(error: unknown, fallbackMessage: string): never {
+  if (
+    error instanceof Prisma.PrismaClientKnownRequestError ||
+    error instanceof Prisma.PrismaClientValidationError ||
+    error instanceof Prisma.PrismaClientUnknownRequestError ||
+    error instanceof Prisma.PrismaClientInitializationError ||
+    error instanceof Prisma.PrismaClientRustPanicError
+  ) {
+    console.error("[Prisma Error]", error);
+    throw new Error(fallbackMessage);
+  }
+  throw error;
+}
+
 type Session = NonNullable<Awaited<ReturnType<typeof getSession>>>;
 
 export interface MaterialItemDto {
@@ -288,6 +302,9 @@ export async function createMaterialItem(data: {
   group?: string;
   description?: string;
   minStockLevel?: number;
+  initialStock?: number;
+  initialStockDate?: Date;
+  initialStockNotes?: string;
 }) {
   const session = await requireSession();
 
@@ -302,6 +319,10 @@ export async function createMaterialItem(data: {
 
   const perms = await requireProjectPermissions(session, projectId);
   assertPermission(perms, "canCreate");
+
+  if (data.initialStock && data.initialStock > 0) {
+    assertPermission(perms, "canImport");
+  }
 
   const requestedCode = normalizeMaterialCode(data.code);
   const code = requestedCode || (await buildUniqueMaterialCode(name, projectId));
@@ -339,20 +360,31 @@ export async function createMaterialItem(data: {
             minStockLevel,
           },
         });
+
+        if (data.initialStock && data.initialStock > 0 && data.initialStockDate) {
+          await applyMaterialMovement(tx, {
+            projectId,
+            materialItemId: material.id,
+            type: "IMPORT",
+            quantity: data.initialStock,
+            movementDate: data.initialStockDate,
+            notes: normalizeOptionalText(data.initialStockNotes) || "Nhập tồn kho ban đầu",
+          });
+        }
       }
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       throw new Error("Mã vật tư đã tồn tại");
     }
-    throw error;
+    handlePrismaError(error, "Không thể tạo vật tư. Vui lòng kiểm tra lại dữ liệu.");
   }
 
   revalidatePath(MATERIALS_PATH);
   return { ok: true };
 }
 
-export async function updateMaterialItem(id: string, data: { name: string; unit: string; group?: string; description?: string }) {
+export async function updateMaterialItem(id: string, data: { code?: string; name: string; unit: string; group?: string; description?: string; minStockLevel?: number }) {
   const session = await requireSession();
 
   const name = normalizeText(data.name);
@@ -362,7 +394,7 @@ export async function updateMaterialItem(id: string, data: { name: string; unit:
 
   const material = await prisma.materialItem.findUnique({
     where: { id },
-    select: { id: true, projectId: true, unit: true },
+    select: { id: true, projectId: true, unit: true, code: true },
   });
   if (!material) throw new Error("Vật tư không tồn tại");
   if (!material.projectId) throw new Error("Vật tư không thuộc công trình nào");
@@ -370,17 +402,80 @@ export async function updateMaterialItem(id: string, data: { name: string; unit:
   const perms = await requireProjectPermissions(session, material.projectId);
   assertPermission(perms, "canUpdate");
 
-  // Cho phép sửa toàn bộ, không chặn đổi đơn vị tính
+  const requestedCode = data.code ? normalizeMaterialCode(data.code) : undefined;
 
-  await prisma.materialItem.update({
-    where: { id },
-    data: {
-      name,
-      unit,
-      group: normalizeOptionalText(data.group),
-      description: normalizeOptionalText(data.description),
-    },
-  });
+  // Block code modification if material is already used in transactions or requests
+  if (requestedCode && requestedCode !== material.code) {
+    const movementsCount = await prisma.materialMovement.count({
+      where: { materialItemId: id, projectId: material.projectId },
+    });
+    
+    const requestItemsCount = await prisma.materialRequestItem.count({
+      where: { 
+        materialCode: material.code,
+        materialRequest: { projectId: material.projectId }
+      }
+    });
+
+    if (movementsCount > 0 || requestItemsCount > 0) {
+      throw new Error("Không thể đổi mã vật tư vì vật tư này đã phát sinh giao dịch nhập/xuất hoặc đã được đưa vào phiếu yêu cầu.");
+    }
+  }
+
+  // Cho phép sửa các trường khác
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      if (requestedCode) {
+        // Check unique code within project
+        const existing = await tx.materialItem.findUnique({
+          where: { projectId_code: { projectId: material.projectId, code: requestedCode } },
+          select: { id: true },
+        });
+        if (existing && existing.id !== id) {
+          throw new Error("Mã vật tư đã tồn tại trong công trình này");
+        }
+      }
+
+      await tx.materialItem.update({
+        where: { id },
+        data: {
+          code: requestedCode,
+          name,
+          unit,
+          group: normalizeOptionalText(data.group),
+          description: normalizeOptionalText(data.description),
+        },
+      });
+
+      if (data.minStockLevel !== undefined) {
+        const minStockLevel = parseNonNegativeQuantity(data.minStockLevel, "Tồn tối thiểu");
+        await tx.projectMaterialStock.upsert({
+          where: {
+            projectId_materialItemId: {
+              projectId: material.projectId,
+              materialItemId: id,
+            },
+          },
+          update: {
+            minStockLevel,
+            lastUpdated: new Date(),
+          },
+          create: {
+            projectId: material.projectId,
+            materialItemId: id,
+            stock: 0,
+            minStockLevel,
+          },
+        });
+      }
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      throw new Error("Mã vật tư đã tồn tại");
+    }
+    handlePrismaError(error, "Không thể cập nhật vật tư. Vui lòng kiểm tra lại dữ liệu hợp lệ.");
+  }
   revalidatePath(MATERIALS_PATH);
   return { ok: true };
 }
@@ -390,7 +485,7 @@ export async function deleteMaterialItem(id: string) {
 
   const material = await prisma.materialItem.findUnique({
     where: { id },
-    select: { id: true, projectId: true },
+    select: { id: true, projectId: true, code: true },
   });
   if (!material) throw new Error("Vật tư không tồn tại");
   if (!material.projectId) throw new Error("Vật tư không thuộc công trình nào");
@@ -398,17 +493,62 @@ export async function deleteMaterialItem(id: string) {
   const perms = await requireProjectPermissions(session, material.projectId);
   assertPermission(perms, "canDelete");
 
-  await prisma.$transaction([
-    prisma.materialMovement.deleteMany({
-      where: { materialItemId: id, projectId: material.projectId },
-    }),
-    prisma.projectMaterialStock.deleteMany({
-      where: { materialItemId: id, projectId: material.projectId },
-    }),
-    prisma.materialItem.delete({
+  const movementsCount = await prisma.materialMovement.count({
+    where: { materialItemId: id, projectId: material.projectId },
+  });
+
+  const stockInfo = await prisma.projectMaterialStock.findUnique({
+    where: { projectId_materialItemId: { projectId: material.projectId, materialItemId: id } },
+  });
+
+  const requestItemsCount = await prisma.materialRequestItem.count({
+    where: { 
+      materialCode: material.code,
+      materialRequest: { projectId: material.projectId }
+    }
+  });
+
+  if (movementsCount > 0 || (stockInfo && Number(stockInfo.stock) > 0) || requestItemsCount > 0) {
+    // Soft delete/archive
+    await prisma.materialItem.update({
       where: { id },
-    }),
-  ]);
+      data: { isActive: false },
+    });
+  } else {
+    // Hard delete if completely unused
+    await prisma.$transaction([
+      prisma.projectMaterialStock.deleteMany({
+        where: { materialItemId: id, projectId: material.projectId },
+      }),
+      prisma.materialItem.delete({
+        where: { id },
+      }),
+    ]);
+  }
+
+  revalidatePath(MATERIALS_PATH);
+  return { ok: true };
+}
+
+export async function restoreMaterialItem(id: string) {
+  const session = await requireSession();
+
+  const material = await prisma.materialItem.findUnique({
+    where: { id },
+    select: { id: true, projectId: true, isActive: true },
+  });
+  if (!material) throw new Error("Vật tư không tồn tại");
+  if (!material.projectId) throw new Error("Vật tư không thuộc công trình nào");
+
+  const perms = await requireProjectPermissions(session, material.projectId);
+  assertPermission(perms, "canUpdate");
+
+  if (!material.isActive) {
+    await prisma.materialItem.update({
+      where: { id },
+      data: { isActive: true },
+    });
+  }
 
   revalidatePath(MATERIALS_PATH);
   return { ok: true };
@@ -462,6 +602,8 @@ export async function createMaterialTransaction(data: {
   unitPrice?: number;
   movementDate: Date;
   notes?: string;
+  materialRequestId?: string;
+  materialRequestItemId?: string;
 }) {
   const session = await requireSession();
   const projectId = normalizeText(data.projectId);
@@ -480,17 +622,31 @@ export async function createMaterialTransaction(data: {
   if (type === "IMPORT") assertPermission(perms, "canImport");
   if (type === "EXPORT") assertPermission(perms, "canExport");
 
-  await prisma.$transaction((tx) =>
-    applyMaterialMovement(tx, {
-      projectId,
-      materialItemId,
-      type,
-      quantity,
-      unitPrice,
-      movementDate,
-      notes: normalizeOptionalText(data.notes),
-    })
-  );
+  if (data.materialRequestId && !data.materialRequestItemId) {
+    throw new Error("Vui lòng chọn dòng vật tư cần xuất kho.");
+  }
+
+  try {
+    await prisma.$transaction((tx) =>
+      applyMaterialMovement(tx, {
+        projectId,
+        materialItemId,
+        type,
+        quantity,
+        unitPrice,
+        movementDate,
+        notes: normalizeOptionalText(data.notes),
+        materialRequestId: normalizeOptionalText(data.materialRequestId),
+        materialRequestItemId: normalizeOptionalText(data.materialRequestItemId),
+      })
+    );
+  } catch (error: any) {
+    if (error?.message?.includes("Invalid `tx.materialMovement.create()`") || error?.message?.includes("Unknown argument")) {
+      console.error("[Ledger Error]", error);
+      throw new Error("Không thể tạo giao dịch. Vui lòng kiểm tra lại số lượng hoặc dữ liệu.");
+    }
+    handlePrismaError(error, "Không thể tạo giao dịch. Vui lòng kiểm tra lại số lượng hoặc dữ liệu.");
+  }
 
   revalidatePath(MATERIALS_PATH);
   return { ok: true };
@@ -509,7 +665,6 @@ export async function getRecentTransactions(projectId: string): Promise<Material
       materialItem: true,
     },
     orderBy: { movementDate: "desc" },
-    take: 50,
   });
 
   return movements.map(toMovementDto);

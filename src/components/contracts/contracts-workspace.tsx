@@ -219,7 +219,7 @@ export function ContractsWorkspace({ contracts, projects, suppliers, globalPermi
           <div className="relative w-full">
             <label htmlFor="contracts-search" className="sr-only">Tìm mã, tên hợp đồng, đối tác...</label>
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
+            <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
               id="contracts-search"
               type="text"
               placeholder="Tìm mã, tên hợp đồng, đối tác..."

@@ -274,7 +274,7 @@ function ApprovalFormDialog({
 
           <label className="sm:col-span-2">
             <span className="text-sm font-semibold text-slate-700">Tiêu đề <span className="text-red-500">*</span></span>
-            <input
+            <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               className="mt-1.5 h-10 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
@@ -312,7 +312,7 @@ function ApprovalFormDialog({
 
           <label>
             <span className="text-sm font-semibold text-slate-700">Số tiền (VNĐ)</span>
-            <input
+            <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
               value={amount}
               onChange={(event) => setAmount(event.target.value)}
               className="mt-1.5 h-10 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
@@ -335,7 +335,7 @@ function ApprovalFormDialog({
 
           <label className="sm:col-span-2">
             <span className="text-sm font-semibold text-slate-700">Mô tả</span>
-            <textarea
+            <textarea  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               className="mt-1.5 min-h-[100px] w-full resize-y rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
@@ -928,7 +928,7 @@ export function ApprovalCenterClient({
             <div className="relative">
               <label htmlFor="approvals-search" className="sr-only">Tìm kiếm yêu cầu phê duyệt</label>
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
+              <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                 id="approvals-search"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}

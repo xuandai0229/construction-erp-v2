@@ -5,20 +5,20 @@ function normalizeText(value: unknown) {
 export function validateQty(val: any) {
   if (val === undefined || val === null || val === "") return 0;
   const num = Number(val);
-  if (!Number.isFinite(num) || num < 0) throw new Error("So luong khong hop le");
+  if (!Number.isFinite(num) || num < 0) throw new Error("Số lượng không hợp lệ");
   return num;
 }
 
-export function validatePositiveQty(val: any, fieldName = "So luong de xuat") {
+export function validatePositiveQty(val: any, fieldName = "Số lượng đề xuất") {
   const num = Number(val);
   if (!Number.isFinite(num) || num <= 0) throw new Error(`${fieldName} phai lon hon 0`);
   return num;
 }
 
 function validateDate(value: unknown, fieldName: string) {
-  if (!value) throw new Error(`Vui long chon ${fieldName}`);
+  if (!value) throw new Error(`Vui lòng chọn ${fieldName}`);
   const date = new Date(value as any);
-  if (Number.isNaN(date.getTime())) throw new Error(`${fieldName} khong hop le`);
+  if (Number.isNaN(date.getTime())) throw new Error(`${fieldName} không hợp lệ`);
   return date;
 }
 
@@ -28,31 +28,31 @@ function dateKey(value: Date) {
 
 export function validateMaterialRequestPayload(data: any) {
   const projectId = normalizeText(data?.projectId);
-  if (!projectId) throw new Error("Vui long chon cong trinh");
+  if (!projectId) throw new Error("Vui lòng chọn công trình");
 
-  const requestDate = data?.requestDate ? validateDate(data.requestDate, "ngay de xuat") : new Date();
-  const neededDate = validateDate(data?.neededDate, "ngay can vat tu");
+  const requestDate = data?.requestDate ? validateDate(data.requestDate, "ngày đề xuất") : new Date();
+  const neededDate = validateDate(data?.neededDate, "ngày cần vật tư");
   if (dateKey(neededDate) < dateKey(requestDate)) {
-    throw new Error("Ngay can vat tu khong duoc nho hon ngay de xuat");
+    throw new Error("Ngày cần vật tư không được nhỏ hơn ngày đề xuất");
   }
 
   const items = Array.isArray(data?.items) ? data.items : [];
   if (items.length === 0) {
-    throw new Error("Vui long them it nhat mot dong vat tu");
+    throw new Error("Vui lòng thêm ít nhất một dòng vật tư");
   }
 
   items.forEach((item: any, index: number) => {
-    const line = `Dong ${index + 1}`;
-    if (!normalizeText(item?.materialName)) throw new Error(`${line}: Ten vat tu la bat buoc`);
-    if (!normalizeText(item?.unit)) throw new Error(`${line}: Don vi tinh la bat buoc`);
-    const requestedQuantity = validatePositiveQty(item?.requestedQuantity, `${line}: So luong de xuat`);
+    const line = `Dòng ${index + 1}`;
+    if (!normalizeText(item?.materialName)) throw new Error(`${line}: Tên vật tư là bắt buộc`);
+    if (!normalizeText(item?.unit)) throw new Error(`${line}: Đơn vị tính là bắt buộc`);
+    const requestedQuantity = validatePositiveQty(item?.requestedQuantity, `${line}: Số lượng đề xuất`);
     const issuedQuantity = validateQty(item?.issuedQuantity);
     const receivedQuantity = validateQty(item?.receivedQuantity);
     if (issuedQuantity > requestedQuantity) {
-      throw new Error(`${line}: So luong da cap khong duoc lon hon so luong de xuat`);
+      throw new Error(`${line}: Số lượng đã cấp không được lớn hơn số lượng đề xuất`);
     }
     if (receivedQuantity > issuedQuantity) {
-      throw new Error(`${line}: So luong da nhan khong duoc lon hon so luong da cap`);
+      throw new Error(`${line}: Số lượng đã nhận không được lớn hơn số lượng đã cấp`);
     }
   });
 
@@ -61,19 +61,19 @@ export function validateMaterialRequestPayload(data: any) {
 
 export function validateMaterialRequestProgressItems(itemsData: any[]) {
   if (!Array.isArray(itemsData) || itemsData.length === 0) {
-    throw new Error("Vui long cap nhat it nhat mot dong vat tu");
+    throw new Error("Vui lòng cập nhật ít nhất một dòng vật tư");
   }
 
   itemsData.forEach((item: any, index: number) => {
-    const line = normalizeText(item?.materialName) || `Dong ${index + 1}`;
-    const reqQty = validatePositiveQty(item?.requestedQuantity, `${line}: So luong de xuat`);
+    const line = normalizeText(item?.materialName) || `Dòng ${index + 1}`;
+    const reqQty = validatePositiveQty(item?.requestedQuantity, `${line}: Số lượng đề xuất`);
     const issQty = validateQty(item?.issuedQuantity);
     const recvQty = validateQty(item?.receivedQuantity);
     if (issQty > reqQty) {
-      throw new Error(`${line}: So luong da cap khong duoc lon hon so luong de xuat`);
+      throw new Error(`${line}: Số lượng đã cấp không được lớn hơn số lượng đề xuất`);
     }
     if (recvQty > issQty) {
-      throw new Error(`${line}: So luong da nhan khong duoc lon hon so luong da cap`);
+      throw new Error(`${line}: Số lượng đã nhận không được lớn hơn số lượng đã cấp`);
     }
   });
 }

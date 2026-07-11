@@ -832,7 +832,7 @@ export function ReportDetailDrawer({
         <ActionFooter>
           {rejectMode ? (
             <div className="space-y-3">
-              <textarea
+              <textarea autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
                 placeholder="Nhập lý do từ chối (bắt buộc)..."

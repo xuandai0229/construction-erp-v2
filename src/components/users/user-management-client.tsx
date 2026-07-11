@@ -329,7 +329,7 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
       <div className="surface-panel flex flex-col gap-3 p-3 sm:flex-row">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-          <input id="user-search" type="text" autoComplete="off" placeholder="Tìm tên, email, SĐT..." aria-label="Tìm kiếm người dùng" value={search} onChange={e => setSearch(e.target.value)} className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white text-slate-900 placeholder:text-slate-400" />
+          <input id="user-search" type="text"  placeholder="Tìm tên, email, SĐT..." aria-label="Tìm kiếm người dùng" value={search} onChange={e => setSearch(e.target.value)} className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 bg-white text-slate-900 placeholder:text-slate-400" />
         </div>
         <select id="user-role-filter" aria-label="Lọc theo vai trò" value={roleFilter} onChange={e => setRoleFilter(e.target.value)} className="px-3 py-2 text-sm border border-slate-300 rounded-md bg-white text-slate-900">
           <option value="">Tất cả vai trò</option>
@@ -514,7 +514,7 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
                 </div>
                 <div>
                   <label htmlFor="create-username" className="block text-sm font-medium text-slate-700 mb-1">Tên đăng nhập</label>
-                  <input id="create-username" type="text" autoComplete="off" value={formUsername} onChange={e => setFormUsername(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="commander01" />
+                  <input id="create-username" type="text"  value={formUsername} onChange={e => setFormUsername(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="commander01" />
                 </div>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -676,7 +676,7 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
               {error && <div className="bg-red-50 text-red-700 text-sm px-3 py-2 rounded-md">{error}</div>}
               <div>
                 <label htmlFor="edit-name" className="block text-sm font-medium text-slate-700 mb-1">Họ tên *</label>
-                <input id="edit-name" type="text" autoComplete="off" value={formName} onChange={e => setFormName(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="Nguyễn Văn A" />
+                <input id="edit-name" type="text"  value={formName} onChange={e => setFormName(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="Nguyễn Văn A" />
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>

@@ -81,7 +81,7 @@ export function MaterialDetailDrawer({
                   </div>
                   {stock && stock.minStockLevel > 0 && (
                     <div className="text-right">
-                      <div className="text-xs font-medium text-slate-500 mb-1">Tối thiểu</div>
+                      <div className="text-xs font-medium text-slate-500 mb-1">Ngưỡng cảnh báo</div>
                       <div className="font-mono font-semibold text-slate-700">
                         {formatQuantity(stock.minStockLevel)} {material.unit}
                       </div>
@@ -92,9 +92,14 @@ export function MaterialDetailDrawer({
                 {stock && stock.minStockLevel > 0 && stock.stock <= stock.minStockLevel && (
                   <div className={`mt-4 rounded-lg p-3 text-sm ${stock.stock < 0 ? 'bg-amber-100 text-amber-800' : 'bg-rose-50 text-rose-700'}`}>
                     <span className="font-semibold">Cảnh báo: </span> 
-                    {stock.stock < 0 ? "Vật tư đang âm kho." : "Tồn kho đã chạm hoặc dưới mức tối thiểu."}
+                    {stock.stock < 0 ? "Vật tư đang âm kho." : "Tồn kho đã chạm hoặc dưới ngưỡng cảnh báo tối thiểu."}
                     {stock.stock < stock.minStockLevel && (
                        <span className="block mt-1">Cần bổ sung ít nhất: <span className="font-mono font-bold">{formatQuantity(stock.minStockLevel - stock.stock)}</span> {material.unit}</span>
+                    )}
+                    {stock.stock === 0 && permissions.canImport && (
+                      <Button variant="default" size="sm" onClick={onImport} className="mt-3 bg-emerald-600 hover:bg-emerald-700 w-full sm:w-auto">
+                        Nhập kho ban đầu
+                      </Button>
                     )}
                   </div>
                 )}

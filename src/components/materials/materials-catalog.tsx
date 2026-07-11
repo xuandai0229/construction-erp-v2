@@ -1,13 +1,15 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { ArrowDownRight, ArrowUpRight, PackagePlus, Pencil, Search, Trash2, Filter, MoreHorizontal, Eye, X } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, PackagePlus, Pencil, Search, Trash2, Filter, Eye, X, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ContentCard, EnterpriseTable, QuantityCell, SafeText, ActionGroup } from "@/components/ui/enterprise";
+import { ContentCard, EnterpriseTable, QuantityCell, SafeText } from "@/components/ui/enterprise";
 import type { MaterialItemDto, ProjectStockDto, MaterialMovementDto } from "@/app/(dashboard)/materials/actions";
 import { MaterialDetailDrawer } from "./material-detail-drawer";
 import { useSearchParams, useRouter } from "next/navigation";
 import { getStockStatus } from "./materials-formatters";
+import { MaterialRowActionMenu, type MaterialActionItem } from "./materials-ui";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface MaterialsCatalogProps {
   materialItems: MaterialItemDto[];
@@ -17,6 +19,7 @@ interface MaterialsCatalogProps {
   onTransaction: (type: "IMPORT" | "EXPORT", materialId?: string) => void;
   onEditMaterial: (materialId: string) => void;
   onDeleteMaterial: (materialId: string) => void;
+  onRestoreMaterial: (materialId: string) => void;
   permissions: {
     canCreate: boolean;
     canUpdate: boolean;
@@ -26,21 +29,24 @@ interface MaterialsCatalogProps {
   };
 }
 
-export function MaterialsCatalog({ materialItems, stocks, transactions = [], onAddMaterial, onTransaction, onEditMaterial, onDeleteMaterial, permissions }: MaterialsCatalogProps) {
+export function MaterialsCatalog({ materialItems, stocks, transactions = [], onAddMaterial, onTransaction, onEditMaterial, onDeleteMaterial, onRestoreMaterial, permissions }: MaterialsCatalogProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
   const [search, setSearch] = useState(searchParams.get("q") || "");
   const [selectedGroup, setSelectedGroup] = useState<string>(searchParams.get("group") || "ALL");
   const [selectedStockStatus, setSelectedStockStatus] = useState<string>(searchParams.get("stockStatus") || "ALL");
+  const [selectedMaterialStatus, setSelectedMaterialStatus] = useState<string>(searchParams.get("materialStatus") || "ACTIVE");
   
   const [selectedMaterialId, setSelectedMaterialId] = useState<string | null>(searchParams.get("materialId"));
+  const [deletingMaterial, setDeletingMaterial] = useState<MaterialItemDto | null>(null);
 
   // Sync with URL
   useEffect(() => {
     if (searchParams.has("q")) setSearch(searchParams.get("q") || "");
     if (searchParams.has("group")) setSelectedGroup(searchParams.get("group") || "ALL");
     if (searchParams.has("stockStatus")) setSelectedStockStatus(searchParams.get("stockStatus") || "ALL");
+    if (searchParams.has("materialStatus")) setSelectedMaterialStatus(searchParams.get("materialStatus") || "ACTIVE");
     if (searchParams.has("materialId")) setSelectedMaterialId(searchParams.get("materialId"));
   }, [searchParams]);
 
@@ -71,6 +77,11 @@ export function MaterialsCatalog({ materialItems, stocks, transactions = [], onA
     updateUrl({ stockStatus: val });
   };
 
+  const handleMaterialStatusChange = (val: string) => {
+    setSelectedMaterialStatus(val);
+    updateUrl({ materialStatus: val });
+  };
+
   const handleRowClick = (materialId: string) => {
     setSelectedMaterialId(materialId);
     updateUrl({ materialId });
@@ -85,7 +96,8 @@ export function MaterialsCatalog({ materialItems, stocks, transactions = [], onA
     setSearch("");
     setSelectedGroup("ALL");
     setSelectedStockStatus("ALL");
-    updateUrl({ q: null, group: null, stockStatus: null });
+    setSelectedMaterialStatus("ACTIVE");
+    updateUrl({ q: null, group: null, stockStatus: null, materialStatus: null });
   };
 
   const stockByMaterialId = useMemo(
@@ -94,14 +106,21 @@ export function MaterialsCatalog({ materialItems, stocks, transactions = [], onA
   );
   
   const groups = useMemo(() => {
-    const allGroups = new Set(materialItems.map(m => m.group).filter(Boolean));
-    return Array.from(allGroups) as string[];
-  }, [materialItems]);
+    let sourceItems = materialItems;
+    if (selectedMaterialStatus === "ACTIVE") sourceItems = materialItems.filter(m => m.isActive);
+    else if (selectedMaterialStatus === "ARCHIVED") sourceItems = materialItems.filter(m => !m.isActive);
+    
+    const allGroups = new Set(sourceItems.map(m => m.group?.trim()).filter(Boolean));
+    return Array.from(allGroups).sort((a, b) => a!.localeCompare(b!, 'vi')) as string[];
+  }, [materialItems, selectedMaterialStatus]);
 
   const normalizedSearch = search.trim().toLowerCase();
 
   const filtered = materialItems.filter((material) => {
     const stock = stockByMaterialId.get(material.id);
+
+    if (selectedMaterialStatus === "ACTIVE" && !material.isActive) return false;
+    if (selectedMaterialStatus === "ARCHIVED" && material.isActive) return false;
     
     // Group filter
     if (selectedGroup !== "ALL" && material.group !== selectedGroup && (selectedGroup !== "UNGROUPED" || material.group)) {
@@ -127,66 +146,72 @@ export function MaterialsCatalog({ materialItems, stocks, transactions = [], onA
     );
   });
 
-  const hasFilters = search !== "" || selectedGroup !== "ALL" || selectedStockStatus !== "ALL";
+  const hasFilters = search !== "" || selectedGroup !== "ALL" || selectedStockStatus !== "ALL" || selectedMaterialStatus !== "ACTIVE";
 
   const hasActions = permissions.canImport || permissions.canExport || permissions.canUpdate || permissions.canDelete;
 
   const renderActions = (material: MaterialItemDto, stock?: ProjectStockDto) => {
     if (!hasActions) return null;
+
+    const actions: MaterialActionItem[] = [
+      {
+        label: "Xem chi tiết",
+        icon: <Eye className="w-4 h-4" />,
+        onClick: () => handleRowClick(material.id),
+      }
+    ];
+
+    if (permissions.canImport) {
+      actions.push({
+        label: "Nhập kho",
+        icon: <ArrowDownRight className="w-4 h-4" />,
+        onClick: () => onTransaction("IMPORT", material.id),
+        disabled: !material.isActive,
+        disabledReason: "Vật tư đã lưu trữ",
+      });
+    }
+
+    if (permissions.canExport) {
+      actions.push({
+        label: "Xuất kho",
+        icon: <ArrowUpRight className="w-4 h-4" />,
+        onClick: () => onTransaction("EXPORT", material.id),
+        disabled: !material.isActive || !stock || stock.stock <= 0,
+        disabledReason: "Không có tồn kho",
+      });
+    }
+
+    if (permissions.canUpdate) {
+      actions.push({
+        label: "Sửa vật tư",
+        icon: <Pencil className="w-4 h-4" />,
+        onClick: () => onEditMaterial(material.id),
+      });
+    }
+
+    if (!material.isActive && permissions.canUpdate) {
+      actions.push({
+        label: "Khôi phục vật tư",
+        icon: <RotateCcw className="w-4 h-4" />,
+        onClick: () => onRestoreMaterial(material.id),
+      });
+    }
+
+    if (permissions.canDelete && material.isActive) {
+      actions.push({
+        label: "Xóa vật tư",
+        icon: <Trash2 className="w-4 h-4" />,
+        danger: true,
+        onClick: () => {
+          setDeletingMaterial(material);
+        },
+      });
+    }
+
     return (
-      <ActionGroup className="justify-end flex-nowrap opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-        {permissions.canImport && (
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onTransaction("IMPORT", material.id); }}
-            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-          >
-            <ArrowDownRight className="h-3.5 w-3.5" />
-            Nhập
-          </button>
-        )}
-        {permissions.canExport && (
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onTransaction("EXPORT", material.id); }}
-            disabled={!stock || stock.stock <= 0}
-            className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400 whitespace-nowrap"
-          >
-            <ArrowUpRight className="h-3.5 w-3.5" />
-            Xuất
-          </button>
-        )}
-        
-        {(permissions.canImport || permissions.canExport) && (permissions.canUpdate || permissions.canDelete) && (
-          <div className="w-px h-4 bg-slate-200 mx-1 shrink-0"></div>
-        )}
-        
-        {permissions.canUpdate && (
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onEditMaterial(material.id); }}
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 hover:text-blue-600"
-            title="Sửa vật tư"
-          >
-            <Pencil className="h-3.5 w-3.5" />
-          </button>
-        )}
-        {permissions.canDelete && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (window.confirm("Bạn có chắc muốn xóa vật tư này?")) {
-                onDeleteMaterial(material.id);
-              }
-            }}
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 ml-1"
-            title="Xóa vật tư"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
-        )}
-      </ActionGroup>
+      <div className="flex justify-end">
+        <MaterialRowActionMenu actions={actions} />
+      </div>
     );
   };
 
@@ -200,6 +225,10 @@ export function MaterialsCatalog({ materialItems, stocks, transactions = [], onA
         <div className="w-1 h-1 rounded-full bg-slate-300"></div>
         <div className="flex items-center gap-1.5 text-slate-600">
           <span className="font-semibold text-slate-900">{groups.length}</span> nhóm
+        </div>
+        <div className="w-1 h-1 rounded-full bg-slate-300"></div>
+        <div className="flex items-center gap-1.5 text-slate-600">
+          <span className="font-semibold text-slate-900">{materialItems.filter((item) => !item.isActive).length}</span> đã lưu trữ
         </div>
         {hasFilters && (
           <>
@@ -219,7 +248,7 @@ export function MaterialsCatalog({ materialItems, stocks, transactions = [], onA
           <div className="relative min-w-0 flex-1">
             <label htmlFor="materials-catalog-search" className="sr-only">Tìm danh mục vật tư</label>
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
+            <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
               id="materials-catalog-search"
               type="text"
               placeholder="Tìm mã, tên hoặc nhóm..."
@@ -256,6 +285,20 @@ export function MaterialsCatalog({ materialItems, stocks, transactions = [], onA
               <option value="NEGATIVE">Âm kho</option>
             </select>
           </div>
+
+          <div className="relative min-w-0 sm:w-48 shrink-0">
+            <Filter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <select
+              value={selectedMaterialStatus}
+              onChange={(e) => handleMaterialStatusChange(e.target.value)}
+              className="h-10 w-full appearance-none rounded-lg border border-slate-300 bg-white pl-9 pr-8 text-sm font-medium text-slate-900 outline-none transition hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              aria-label="Lọc trạng thái vật tư"
+            >
+              <option value="ACTIVE">Đang sử dụng</option>
+              <option value="ARCHIVED">Đã lưu trữ</option>
+              <option value="ALL">Tất cả trạng thái</option>
+            </select>
+          </div>
         </div>
 
         {permissions.canCreate && materialItems.length > 0 && (
@@ -275,7 +318,7 @@ export function MaterialsCatalog({ materialItems, stocks, transactions = [], onA
               <th className="px-3 py-2.5 border-b border-slate-200">Đơn vị</th>
               <th className="px-3 py-2.5 border-b border-slate-200">Nhóm</th>
               <th className="px-3 py-2.5 border-b border-slate-200 text-right">Tồn kho</th>
-              {hasActions && <th className="px-3 py-2.5 border-b border-slate-200 text-right w-[200px]">Thao tác</th>}
+              {hasActions && <th className="px-3 py-2.5 border-b border-slate-200 text-right w-[80px] whitespace-nowrap">Thao tác</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -289,7 +332,14 @@ export function MaterialsCatalog({ materialItems, stocks, transactions = [], onA
                 >
                   <td className="px-3 py-2 font-mono text-xs font-semibold text-slate-500 whitespace-nowrap">{material.code}</td>
                   <td className="px-3 py-2 font-semibold text-slate-950 max-w-0">
-                    <SafeText className="group-hover:text-blue-700 transition-colors line-clamp-1">{material.name}</SafeText>
+                    <div className="flex min-w-0 items-center gap-2">
+                      <SafeText className="group-hover:text-blue-700 transition-colors line-clamp-1">{material.name}</SafeText>
+                      {!material.isActive && (
+                        <span className="shrink-0 rounded-sm border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
+                          Đã lưu trữ
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-3 py-2 text-slate-600 whitespace-nowrap">{material.unit}</td>
                   <td className="px-3 py-2 text-slate-600 truncate max-w-[120px]">{material.group || "—"}</td>
@@ -298,12 +348,7 @@ export function MaterialsCatalog({ materialItems, stocks, transactions = [], onA
                   </td>
                   {hasActions && (
                     <td className="px-3 py-2 relative text-right">
-                      <div className="absolute inset-y-0 right-3 flex items-center justify-end md:opacity-100 md:group-hover:opacity-0 transition-opacity">
-                        <MoreHorizontal className="h-4 w-4 text-slate-300" />
-                      </div>
-                      <div className="relative z-10 flex justify-end bg-white/80 group-hover:bg-slate-50/80">
-                        {renderActions(material, stock)}
-                      </div>
+                      {renderActions(material, stock)}
                     </td>
                   )}
                 </tr>
@@ -344,6 +389,11 @@ export function MaterialsCatalog({ materialItems, stocks, transactions = [], onA
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <SafeText className="font-bold text-slate-950">{material.name}</SafeText>
+                  {!material.isActive && (
+                    <span className="mt-1 inline-flex rounded-sm border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
+                      Đã lưu trữ
+                    </span>
+                  )}
                   <div className="mt-1 font-mono text-xs font-semibold text-slate-500">{material.code}</div>
                 </div>
               </div>
@@ -395,14 +445,28 @@ export function MaterialsCatalog({ materialItems, stocks, transactions = [], onA
           onClose={closeDrawer}
           onEdit={() => onEditMaterial(selectedMaterialId)}
           onDelete={() => {
-            if (window.confirm("Bạn có chắc muốn xóa vật tư này?")) {
-              onDeleteMaterial(selectedMaterialId);
-              closeDrawer();
-            }
+            const material = materialItems.find(m => m.id === selectedMaterialId);
+            if (material) setDeletingMaterial(material);
+            closeDrawer();
           }}
           onImport={() => onTransaction("IMPORT", selectedMaterialId)}
           onExport={() => onTransaction("EXPORT", selectedMaterialId)}
           permissions={permissions}
+        />
+      )}
+
+      {deletingMaterial && (
+        <ConfirmDialog
+          isOpen={!!deletingMaterial}
+          onClose={() => setDeletingMaterial(null)}
+          title="Xóa vật tư"
+          description={`Bạn có chắc muốn xóa vật tư "${deletingMaterial.code} - ${deletingMaterial.name}" không?\nNếu vật tư đã phát sinh giao dịch, hệ thống sẽ tự động ẩn vật tư này thay vì xóa vĩnh viễn để bảo toàn dữ liệu.`}
+          confirmText="Xóa vật tư"
+          variant="danger"
+          onConfirm={() => {
+            onDeleteMaterial(deletingMaterial.id);
+            setDeletingMaterial(null);
+          }}
         />
       )}
     </div>

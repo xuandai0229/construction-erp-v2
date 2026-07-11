@@ -265,7 +265,7 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
                       )}
                       {!isGroup && <div className="w-5 flex-shrink-0" />}
                       <label htmlFor={`master-content-${item.id}`} className="sr-only">{isGroup ? "Tên hạng mục" : "Tên công việc"}</label>
-                      <textarea 
+                      <textarea  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" 
                         id={`master-content-${item.id}`}
                         name={`master-content-${item.id}`}
                         rows={2}
@@ -282,7 +282,7 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
                     {isGroup ? <span className="text-slate-400">—</span> : (
                       <>
                         <label htmlFor={`master-crew-${item.id}`} className="sr-only">Mũi thi công</label>
-                        <input 
+                        <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" 
                           id={`master-crew-${item.id}`}
                           name={`master-crew-${item.id}`}
                           value={item.constructionCrew || ""} 
@@ -327,7 +327,7 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
                     ) : (
                       <>
                         <label htmlFor={`master-designQty-${item.id}`} className="sr-only">Khối lượng thiết kế</label>
-                        <input 
+                        <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" 
                           id={`master-designQty-${item.id}`}
                           name={`master-designQty-${item.id}`}
                           type="number"
@@ -360,7 +360,7 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
                     {isGroup ? <span className="text-slate-400 block text-center">—</span> : (
                       <>
                         <label htmlFor={`master-note-${item.id}`} className="sr-only">Ghi chú</label>
-                        <input 
+                        <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" 
                           id={`master-note-${item.id}`}
                           name={`master-note-${item.id}`}
                           value={item.note || ""} 
@@ -432,7 +432,7 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
               <input
                 id="master-mobileSearch"
                 name="master-mobileSearch"
-                autoComplete="off"
+                
                 value={mobileSearch}
                 onChange={e => setMobileSearch(e.target.value)}
                 placeholder="Tìm công việc, mũi thi công..."
@@ -656,7 +656,7 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
                 {/* Name */}
                 <div>
                   <label htmlFor={`mobile-content-${item.id}`} className="text-[11px] font-semibold text-slate-600 mb-1.5 block">{isGroup ? "Tên hạng mục" : "Tên công việc"}</label>
-                  <input
+                  <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                     id={`mobile-content-${item.id}`}
                     name={`mobile-content-${item.id}`}
                     value={isGroup ? (item.categoryName || "") : (item.workContent || "")}
@@ -671,7 +671,7 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
                     {/* Construction Crew */}
                     <div>
                       <label htmlFor={`mobile-crew-${item.id}`} className="text-[11px] font-semibold text-slate-600 mb-1.5 block">Mũi thi công</label>
-                      <input
+                      <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                         id={`mobile-crew-${item.id}`}
                         name={`mobile-crew-${item.id}`}
                         value={item.constructionCrew || ""}
@@ -695,7 +695,7 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
                       </div>
                       <div>
                         <label htmlFor={`mobile-designQty-${item.id}`} className="text-[11px] font-semibold text-slate-600 mb-1.5 block">Khối lượng thiết kế</label>
-                        <input
+                        <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                           id={`mobile-designQty-${item.id}`}
                           name={`mobile-designQty-${item.id}`}
                           type="text"
@@ -723,7 +723,7 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
                     {/* Note */}
                     <div>
                       <label htmlFor={`mobile-note-${item.id}`} className="text-[11px] font-semibold text-slate-600 mb-1.5 block">Ghi chú</label>
-                      <input
+                      <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                         id={`mobile-note-${item.id}`}
                         name={`mobile-note-${item.id}`}
                         value={item.note || ""}
@@ -792,7 +792,7 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
                   <label className="text-xs font-bold text-slate-500 mb-2.5 block uppercase tracking-wide">Đơn vị khác</label>
                   <div className="flex items-stretch gap-3">
                     <label htmlFor={`mobile-customUnit-${item.id}`} className="sr-only">Đơn vị khác</label>
-                    <input 
+                    <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" 
                       id={`mobile-customUnit-${item.id}`}
                       name={`mobile-customUnit-${item.id}`}
                       value={item._tempCustomUnit !== undefined ? item._tempCustomUnit : (isCustom ? currentUnit : "")}
@@ -920,7 +920,7 @@ function DesktopUnitPickerPortal({
         <div className="border-t border-slate-100 pt-3 mt-auto">
           <div className="text-xs font-semibold text-slate-500 mb-2">Đơn vị khác</div>
           <div className="flex gap-2">
-            <input
+            <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
               value={customVal}
               onChange={e => setCustomVal(e.target.value)}
               onKeyDown={e => {

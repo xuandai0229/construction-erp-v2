@@ -147,7 +147,7 @@ export function PaymentRequestFormDialog({
           <div className="grid gap-5 sm:grid-cols-2">
             <div className="col-span-2 space-y-1.5">
               <label className="text-sm font-semibold text-slate-700">Tiêu đề <span className="text-rose-500">*</span></label>
-              <input
+              <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -238,7 +238,7 @@ export function PaymentRequestFormDialog({
                 <input
                   type="text"
                   inputMode="numeric"
-                  autoComplete="off"
+                  
                   value={vatAmount}
                   onChange={(e) => setVatAmount(formatVndInput(e.target.value))}
                   className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 font-mono text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
@@ -258,7 +258,7 @@ export function PaymentRequestFormDialog({
             <div className="space-y-1.5">
               <label className="text-sm font-semibold text-slate-700">Hạn thanh toán</label>
               <div className="relative">
-                <input
+                <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
@@ -270,7 +270,7 @@ export function PaymentRequestFormDialog({
 
             <div className="col-span-2 space-y-1.5">
               <label className="text-sm font-semibold text-slate-700">Ghi chú</label>
-              <textarea
+              <textarea autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}

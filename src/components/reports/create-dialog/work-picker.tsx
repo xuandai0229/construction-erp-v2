@@ -132,7 +132,7 @@ export function WorkPicker({
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
+              <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                 type="text"
                 placeholder="Tìm theo hạng mục, mã, tên công việc..."
                 value={search}
@@ -174,7 +174,7 @@ export function WorkPicker({
                 <Building2 className="w-8 h-8 text-blue-300" />
               </div>
               <h3 className="text-slate-700 font-bold mb-2">Chưa có bảng khối lượng</h3>
-              <p className="text-slate-500 text-[14px] max-w-sm mx-auto">
+              <p className="text-slate-500 text-[14px] max-w-xl mx-auto">
                 Bảng khối lượng gốc của công trình này trống. Vui lòng kiểm tra lại thiết lập dự án.
               </p>
             </div>

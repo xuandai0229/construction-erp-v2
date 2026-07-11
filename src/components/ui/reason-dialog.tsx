@@ -83,7 +83,7 @@ export function ReasonDialog({
       <div
         ref={dialogRef}
         tabIndex={-1}
-        className="relative flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl shadow-slate-950/20 outline-none animate-in zoom-in-95 duration-200 sm:rounded-2xl"
+        className="relative flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl shadow-slate-950/20 outline-none animate-in zoom-in-95 duration-200 sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex flex-col gap-3 px-5 pt-5 pb-2 sm:p-6 sm:pb-3">
@@ -101,7 +101,7 @@ export function ReasonDialog({
           )}
           
           <div className="mt-2">
-            <textarea
+            <textarea autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
               ref={textareaRef}
               value={reason}
               onChange={(e) => {
