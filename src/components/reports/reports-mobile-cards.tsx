@@ -73,8 +73,8 @@ export function ReportsMobileCards({ reports, onViewDetail, onViewGallery, onEdi
                 </span>
               )}
               {(report.photos.some(p => p.isMissing) || report.attachments.some(a => a.isMissing)) && (
-                <StatusBadge variant="danger" size="sm" title="Báo cáo có file/ảnh không còn tồn tại trong storage">
-                  File lỗi
+                <StatusBadge variant="danger" size="sm" title="Báo cáo có tệp hoặc ảnh không còn tồn tại trong hệ thống lưu trữ">
+                  Tệp lỗi
                 </StatusBadge>
               )}
               {report.photos.length === 0 && report.attachments.length === 0 && (

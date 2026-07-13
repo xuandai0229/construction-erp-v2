@@ -2,7 +2,7 @@ const WORK_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 function parseDateParts(dateStr: string) {
   if (!WORK_DATE_PATTERN.test(dateStr)) {
-    throw new Error(`Invalid work date: ${dateStr}`);
+    throw new Error(`Ngày làm việc không hợp lệ: ${dateStr}`);
   }
 
   const [year, month, day] = dateStr.split("-").map(Number);
@@ -13,7 +13,7 @@ function parseDateParts(dateStr: string) {
     date.getUTCMonth() !== month - 1 ||
     date.getUTCDate() !== day
   ) {
-    throw new Error(`Invalid work date: ${dateStr}`);
+    throw new Error(`Ngày làm việc không hợp lệ: ${dateStr}`);
   }
 
   return { year, month, day };

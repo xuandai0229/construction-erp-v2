@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { canAccessProject } from "@/lib/rbac";
+import { resolvePermission } from "@/lib/permissions/permission-resolver";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,7 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn." }, { status: 401 });
   }
 
   const url = req.nextUrl;
@@ -37,8 +38,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Missing projectId or type" }, { status: 400 });
   }
 
-  if (!(await canAccessProject(session, projectId))) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const permission = await resolvePermission(session, "documents.view", { projectId });
+  if (!permission.allowed || !(await canAccessProject(session, projectId))) {
+    return NextResponse.json({ error: "Bạn không có quyền xem tài liệu của công trình này." }, { status: 403 });
   }
 
   try {

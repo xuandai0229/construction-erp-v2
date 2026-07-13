@@ -89,7 +89,7 @@ export const DOCUMENT_FOLDER_RULES: Record<string, DocumentFolderRule> = {
     key: "07. Thanh toán quyết toán",
     title: "Thanh toán quyết toán",
     description: "Lưu trữ hồ sơ thanh toán, hồ sơ quyết toán, biên bản xác nhận khối lượng, đề nghị thanh toán và hóa đơn.",
-    uploadLabel: "Tải chứng từ TT/QT",
+    uploadLabel: "Tải chứng từ thanh toán/quyết toán",
     allowedExtensions: [".pdf", ".jpg", ".jpeg", ".png", ".xml", ".xls", ".xlsx"],
     accept: ".pdf,.jpg,.jpeg,.png,.xml,.xls,.xlsx",
     friendlyAllowedTypes: "PDF, Excel, Ảnh, XML",

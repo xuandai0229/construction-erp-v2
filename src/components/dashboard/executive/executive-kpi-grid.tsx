@@ -92,7 +92,7 @@ export function ExecutiveKpiGrid({ data }: { data: DashboardData }) {
     {
       label: 'Tổng công trình',
       value: totalCount,
-      subtext: 'Danh mục dự án',
+      subtext: 'Danh mục công trình',
       icon: Building2,
       tone: 'blue' as IconColorTone,
       href: '/projects'

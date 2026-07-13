@@ -687,7 +687,7 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
   const quickActions = [
     activeProjectForAction ? { label: "Tạo báo cáo", href: `/reports?projectId=${activeProjectForAction.id}`, tone: "primary" as const } : null,
     activeProjectForAction ? { label: "Nhập khối lượng", href: `/projects/${activeProjectForAction.id}/field-progress/daily`, tone: "secondary" as const } : null,
-    activeProjectForAction ? { label: "Upload tài liệu", href: `/documents/${activeProjectForAction.id}`, tone: "secondary" as const } : null,
+    activeProjectForAction ? { label: "Tải tài liệu lên", href: `/documents/${activeProjectForAction.id}`, tone: "secondary" as const } : null,
     canViewApprovals ? { label: "Trung tâm phê duyệt", href: "/approvals", tone: "secondary" as const } : null,
   ].filter((action): action is NonNullable<typeof action> => Boolean(action));
 
@@ -836,7 +836,7 @@ function getAuditTitle(action: string, entityType: string) {
 
   const act = action.toUpperCase();
   
-  if (t === "DOCUMENT" && (act.includes("CREATED") || act.includes("UPLOAD"))) return `Upload tài liệu`;
+  if (t === "DOCUMENT" && (act.includes("CREATED") || act.includes("UPLOAD"))) return `Tải tài liệu lên`;
   if (t === "SITEREPORT" && (act.includes("CREATED") || act.includes("CREATE"))) return `Tạo báo cáo`;
 
   if (act.includes("APPROVED")) return `Duyệt ${entityName}`;

@@ -27,6 +27,7 @@ import {
   type ApprovalRequestDto,
   type ApprovalSummaryDto,
 } from "@/lib/approvals/approval-dto";
+import { assertPermission } from "@/lib/permissions/permission-resolver";
 
 const APPROVALS_PATH = "/approvals";
 
@@ -60,12 +61,12 @@ function normalizeOptionalText(value: unknown) {
 }
 
 function isHighLevelViewRole(role: UserRole) {
-  return role === "ADMIN" || role === "DIRECTOR" || role === "DEPUTY_DIRECTOR" || role === "MANAGER";
+  return role === "ADMIN" || role === "DIRECTOR" || role === "DEPUTY_DIRECTOR";
 }
 
 function canCreateInAnyProject(role: UserRole, memberships: { role: ProjectRole }[]) {
-  if (isHighLevelViewRole(role) || role === "ACCOUNTANT") return true;
-  return memberships.length > 0;
+  if (isHighLevelViewRole(role)) return true;
+  return memberships.some((membership) => membership.role !== "VIEWER");
 }
 
 async function getActiveProjectRoles(userId: string) {
@@ -99,10 +100,6 @@ function buildApprovalWhere(
     scopedOr.push({ projectId: { in: projectIds } });
   }
 
-  if (actor.role === "ACCOUNTANT") {
-    scopedOr.push({ type: "PAYMENT" });
-  }
-
   return { ...base, OR: scopedOr };
 }
 
@@ -111,7 +108,7 @@ async function getProjectsForActor(
   projectIds: string[],
 ) {
   const where: Prisma.ProjectWhereInput = { deletedAt: null };
-  if (!isHighLevelViewRole(actor.role) && actor.role !== "ACCOUNTANT") {
+  if (!isHighLevelViewRole(actor.role)) {
     where.id = { in: projectIds };
   }
 
@@ -175,16 +172,8 @@ async function assertCanCreateApproval(
   projectId: string,
   type: ApprovalRequestType,
 ) {
-  if (isHighLevelViewRole(actor.role)) return;
-  if (actor.role === "ACCOUNTANT" && type === "PAYMENT") return;
-
-  const membership = await prisma.projectMember.findFirst({
-    where: { projectId, userId: actor.id, isActive: true, deletedAt: null, leftAt: null },
-    select: { id: true },
-  });
-  if (!membership) {
-    throw new Error("Bạn không có quyền tạo yêu cầu phê duyệt cho công trình này");
-  }
+  void type;
+  await assertPermission(actor, "approvals.create", { projectId });
 }
 
 async function generateApprovalCode() {
@@ -291,6 +280,7 @@ export async function updateApprovalRequest(data: UpdateApprovalRequestInput) {
   const actor: ApprovalActor = { id: session.id, role: session.role };
   const projectRoles = await getProjectRoleMapForDecision(actor, approval.projectId);
 
+  await assertPermission(actor, "approvals.create", { projectId: approval.projectId, ownerId: approval.requesterId });
   assertCanUpdateApproval(actor, approval, projectRoles);
 
   if (approval.projectId !== data.projectId) {
@@ -503,6 +493,7 @@ export async function approveApprovalRequest(id: string, note?: string) {
   const actor: ApprovalActor = { id: session.id, role: session.role };
   const approval = await getApprovalForDecision(id);
   const roleByProject = await getProjectRoleMapForDecision(actor, approval.projectId);
+  await assertPermission(actor, "approvals.decide", { projectId: approval.projectId, ownerId: approval.requesterId });
   assertCanApproveApproval(actor, approval, roleByProject);
 
   const decisionNote = normalizeOptionalText(note);
@@ -550,6 +541,7 @@ export async function rejectApprovalRequest(id: string, reason: string) {
   const actor: ApprovalActor = { id: session.id, role: session.role };
   const approval = await getApprovalForDecision(id);
   const roleByProject = await getProjectRoleMapForDecision(actor, approval.projectId);
+  await assertPermission(actor, "approvals.decide", { projectId: approval.projectId, ownerId: approval.requesterId });
   const normalizedReason = normalizeText(reason);
   assertCanRejectApproval(actor, approval, roleByProject, normalizedReason);
 
@@ -597,6 +589,7 @@ export async function cancelApprovalRequest(id: string) {
   const actor: ApprovalActor = { id: session.id, role: session.role };
   const approval = await getApprovalForDecision(id);
   const roleByProject = await getProjectRoleMapForDecision(actor, approval.projectId);
+  await assertPermission(actor, "approvals.view", { projectId: approval.projectId, ownerId: approval.requesterId });
   assertCanCancelApproval(actor, approval, roleByProject);
 
   const result = await prisma.approvalRequest.updateMany({
@@ -635,6 +628,7 @@ export async function softDeleteApprovalRequest(id: string) {
   const actor: ApprovalActor = { id: session.id, role: session.role };
   const approval = await getApprovalForDecision(id);
   const roleByProject = await getProjectRoleMapForDecision(actor, approval.projectId);
+  await assertPermission(actor, "approvals.view", { projectId: approval.projectId, ownerId: approval.requesterId });
   
   assertCanSoftDeleteApproval(actor, approval, roleByProject);
 
@@ -663,12 +657,17 @@ export async function getApprovalMaterialDetails(approvalId: string) {
   const session = await getSession();
   if (!session) return null;
 
-  const approval = await prisma.approvalRequest.findUnique({
-    where: { id: approvalId },
-    select: { sourceId: true, sourceType: true }
+  const approval = await prisma.approvalRequest.findFirst({
+    where: { id: approvalId, deletedAt: null },
+    select: { sourceId: true, sourceType: true, projectId: true, requesterId: true }
   });
 
   if (!approval || approval.sourceType !== "MATERIAL_REQUEST" || !approval.sourceId) return null;
+
+  await assertPermission({ id: session.id, role: session.role }, "approvals.view", {
+    projectId: approval.projectId,
+    ownerId: approval.requesterId,
+  });
 
   const materialReq = await prisma.materialRequest.findUnique({
     where: { id: approval.sourceId },

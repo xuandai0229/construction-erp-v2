@@ -111,7 +111,7 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
       toast.success(`Đã tải tài liệu lên thư mục ${formatFolderName(folderName || "")}`);
       router.refresh();
     } catch (error: unknown) {
-      toast.error("Lỗi upload: " + (error instanceof Error ? error.message : "Lỗi không xác định"));
+      toast.error("Lỗi tải tệp lên: " + (error instanceof Error ? error.message : "Lỗi không xác định"));
     } finally {
       uploadRef.current = false;
       setIsUploading(false);
@@ -482,7 +482,7 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
                         </div>
                         <div className="mt-3 pt-3 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
                           <span>{format(new Date(doc.createdAt), "dd/MM/yyyy HH:mm")}</span>
-                          <span className="truncate ml-2 max-w-[100px] text-right" title={doc.uploadedBy?.name}>{doc.uploadedBy?.name || "User"}</span>
+                          <span className="truncate ml-2 max-w-[100px] text-right" title={doc.uploadedBy?.name}>{doc.uploadedBy?.name || "Người dùng"}</span>
                         </div>
                       </div>
                     ))}

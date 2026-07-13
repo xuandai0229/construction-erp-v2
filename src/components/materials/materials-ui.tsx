@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { MoreVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ContentCard, FilterBar, KpiCard, EnterpriseTable, SectionHeader } from "@/components/ui/enterprise";
+import { InteractiveKpiCard } from "@/components/ui/interactive-kpi-card";
 
 export type MaterialKpiItem = {
   key: string;
@@ -42,21 +43,35 @@ export function MaterialKpiRibbon({
 }) {
   return (
     <div className={cn("grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-4", className)}>
-      {items.map((item) => (
-        <KpiCard
-          key={item.key}
-          label={item.label}
-          value={item.value}
-          helper={item.helper}
-          icon={item.icon}
-          tone={item.tone || "slate"}
-          onClick={item.onClick}
-          className={cn(
-            "min-h-[88px] p-3 [&>div:first-child>div:first-child]:truncate [&>div:first-child>div:first-child]:whitespace-nowrap [&_.text-2xl]:truncate [&_.text-2xl]:text-xl",
-            item.active && "border-blue-300 bg-blue-50 ring-2 ring-blue-500/30",
-          )}
-        />
-      ))}
+      {items.map((item) => {
+        const cardClassName = cn(
+          "min-h-[88px] p-3 [&>div:first-child>div:first-child]:truncate [&>div:first-child>div:first-child]:whitespace-nowrap [&_.text-2xl]:truncate [&_.text-2xl]:text-xl",
+          item.active && "border-blue-300 bg-blue-50 ring-2 ring-blue-500/30",
+        );
+
+        return item.onClick ? (
+          <InteractiveKpiCard
+            key={item.key}
+            label={item.label}
+            value={item.value}
+            helper={item.helper}
+            icon={item.icon}
+            tone={item.tone || "slate"}
+            onClick={item.onClick}
+            className={cardClassName}
+          />
+        ) : (
+          <KpiCard
+            key={item.key}
+            label={item.label}
+            value={item.value}
+            helper={item.helper}
+            icon={item.icon}
+            tone={item.tone || "slate"}
+            className={cardClassName}
+          />
+        );
+      })}
     </div>
   );
 }

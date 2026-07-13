@@ -255,7 +255,7 @@ export function MaterialRequestList({
       key: "all",
       label: "Tổng đề xuất",
       value: formatQty(totalRequests),
-      helper: "Toàn dự án",
+      helper: "Toàn công trình",
       icon: <FileText className="h-4 w-4" />,
       tone: "slate" as const,
       active: activeFlag === "all" && statusFilter === "ALL",
@@ -465,7 +465,7 @@ export function MaterialRequestList({
                             icon: <Copy className="h-4 w-4" />,
                             onClick: () => {
                               void navigator.clipboard.writeText(req.requestNo);
-                              toast.success("Da sao chep ma phieu");
+                              toast.success("Đã sao chép mã phiếu.");
                             },
                           },
                           ...(isEditable ? [

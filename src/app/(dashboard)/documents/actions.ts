@@ -27,7 +27,7 @@ export async function createFolder(projectId: string, name: string, parentId?: s
   const projectRole = await requireProjectScope(session, projectId);
   const sessionUser = { id: session.id, role: session.role as any, projectRole };
   if (!canCreateFolder(sessionUser)) {
-    return { error: "Khong co quyen tao thu muc trong cong trinh nay" };
+    return { error: "Bạn không có quyền tạo thư mục trong công trình này." };
   }
 
   if (parentId) {
@@ -443,7 +443,7 @@ export async function restoreFolder(projectId: string, folderId: string) {
       !isCompanyWideUser(session) &&
       !["PROJECT_MANAGER", "SITE_COMMANDER", "CHIEF_COMMANDER"].includes(projectRole || "")
     ) {
-      return { error: "Ban khong co quyen khoi phuc thu muc nay" };
+      return { error: "Bạn không có quyền khôi phục thư mục này." };
     }
   }
   if (!session) return { error: "Vui lòng đăng nhập" };

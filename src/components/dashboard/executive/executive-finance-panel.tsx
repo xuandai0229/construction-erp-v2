@@ -90,7 +90,7 @@ export function ExecutiveFinancePanel({
             ) : (
               <>
                 <span className="text-[15px] font-bold text-slate-900 pl-1 leading-tight">{summary.activeContracts}</span>
-                <span className="text-[9px] font-medium text-slate-500 pl-1 mt-0.5">Dự án hoạt động</span>
+                <span className="text-[9px] font-medium text-slate-500 pl-1 mt-0.5">Công trình hoạt động</span>
               </>
             )}
           </div>

@@ -97,7 +97,7 @@ export function AttachmentsCard({
                 <div key={index} className="relative aspect-square rounded-lg border border-slate-200 overflow-hidden group bg-slate-50">
                   <img
                     src={URL.createObjectURL(file)}
-                    alt="Preview"
+                    alt="Ảnh xem trước"
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">

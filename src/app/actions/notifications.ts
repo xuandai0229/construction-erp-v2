@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { assertPermission } from "@/lib/permissions/permission-resolver";
 
 type MarkNotificationReadInput = {
   id: string;
@@ -47,6 +48,10 @@ export async function markGlobalNotificationRead(input: MarkNotificationReadInpu
 
   const href = normalizeOptionalText(input.href);
   assertSafeInternalHref(href);
+  const projectId = normalizeOptionalText(input.projectId);
+  if (projectId) {
+    await assertPermission(session, "projects.view", { projectId });
+  }
 
   const now = new Date();
   await prisma.notification.upsert({
@@ -58,7 +63,7 @@ export async function markGlobalNotificationRead(input: MarkNotificationReadInpu
     create: {
       id: ledgerId,
       userId: session.id,
-      projectId: normalizeOptionalText(input.projectId),
+      projectId,
       type: normalizeText(input.type) || "SYSTEM",
       severity: normalizeText(input.severity) || "INFO",
       title: normalizeText(input.title) || "Thông báo",

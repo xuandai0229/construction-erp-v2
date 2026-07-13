@@ -127,7 +127,7 @@ export function MaterialRequestDetail({
     setConfirmState({
       isOpen: true,
       title: "Duyệt đề xuất vật tư",
-      description: "Vật tư trong đề xuất sẽ được tự động liên kết hoặc thêm vào Danh mục vật tư của dự án.\nBạn có chắc chắn muốn duyệt?",
+      description: "Vật tư trong đề xuất sẽ được tự động liên kết hoặc thêm vào Danh mục vật tư của công trình.\nBạn có chắc chắn muốn duyệt?",
       variant: "success",
       confirmText: "Duyệt đề xuất",
       cancelText: "Đóng",

@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import mime from "mime-types";
 import { canAccessProject } from "@/lib/rbac";
+import { resolvePermission } from "@/lib/permissions/permission-resolver";
 import { storageProvider } from "@/lib/storage/index";
 import { writeAuditLog } from "@/lib/audit";
 import { Readable } from "stream";
@@ -27,7 +28,8 @@ export async function GET(
       return new NextResponse("Không tìm thấy tài liệu", { status: 404 });
     }
 
-    if (!(await canAccessProject(session, document.projectId))) {
+    const permission = await resolvePermission(session, "documents.download", { projectId: document.projectId });
+    if (!permission.allowed || !(await canAccessProject(session, document.projectId))) {
       return new NextResponse("Không có quyền truy cập", { status: 403 });
     }
 

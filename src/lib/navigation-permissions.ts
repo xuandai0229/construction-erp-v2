@@ -28,6 +28,6 @@ export function canViewNavigationItem(role: UserRole, href: string) {
 }
 
 export function projectNavName(role: UserRole, href: string, name: string) {
-  if (href === "/projects" && !COMPANY_WIDE.includes(role)) return "Cong trinh cua toi";
+  if (href === "/projects" && !COMPANY_WIDE.includes(role)) return "Công trình của tôi";
   return name;
 }

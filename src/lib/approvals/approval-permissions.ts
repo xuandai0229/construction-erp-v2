@@ -33,7 +33,6 @@ const HIGH_LEVEL_VIEW_ROLES: UserRole[] = [
   "ADMIN",
   "DIRECTOR",
   "DEPUTY_DIRECTOR",
-  "MANAGER",
 ];
 
 const COMPANY_WIDE_DECISION_ROLES: UserRole[] = [
@@ -65,8 +64,6 @@ export function canViewApproval(
   if (isDeleted(approval)) return false;
   if (HIGH_LEVEL_VIEW_ROLES.includes(actor.role)) return true;
   if (approval.requesterId === actor.id) return true;
-  if (actor.role === "ACCOUNTANT" && approval.type === "PAYMENT") return true;
-
   const projectRole = getProjectRole(approval, projectRoles);
   return projectRole !== null;
 }
@@ -102,6 +99,7 @@ export function canCancelApproval(
   approval: ApprovalPermissionContext,
   projectRoles: ReadonlyMap<string, ProjectRole>,
 ) {
+  void projectRoles;
   if (isDeleted(approval)) return false;
   if (approval.status !== "PENDING") return false;
   if (approval.requesterId === actor.id) return true;
@@ -115,6 +113,7 @@ export function canSoftDeleteApproval(
   approval: ApprovalPermissionContext,
   projectRoles: ReadonlyMap<string, ProjectRole>,
 ) {
+  void projectRoles;
   if (isApprovalAdmin(actor)) return true;
   if (COMPANY_WIDE_DECISION_ROLES.includes(actor.role)) return true;
   
@@ -128,6 +127,7 @@ export function canEditApproval(
   approval: ApprovalPermissionContext,
   projectRoles: ReadonlyMap<string, ProjectRole>,
 ) {
+  void projectRoles;
   if (isDeleted(approval)) return false;
   if (approval.status !== "PENDING") return false;
   

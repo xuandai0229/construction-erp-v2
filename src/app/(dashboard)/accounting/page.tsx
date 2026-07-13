@@ -7,7 +7,7 @@ import { getGlobalProjectContext } from "@/lib/project-context";
 
 export const metadata = {
   title: "Kế toán & thanh toán | ERP Công trình",
-  description: "Quản lý hồ sơ thanh toán, hóa đơn và dòng tiền dự án.",
+  description: "Quản lý hồ sơ thanh toán, hóa đơn và dòng tiền công trình.",
 };
 
 export default async function AccountingPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {

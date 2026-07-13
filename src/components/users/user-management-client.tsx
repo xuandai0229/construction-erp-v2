@@ -1,17 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Search, Shield, ShieldCheck, UserCog, Lock, Unlock, Key, Building2, X, ChevronDown, Eye, Edit, Trash2, RefreshCcw } from "lucide-react";
+import { ArrowUpDown, ChevronLeft, ChevronRight, Plus, Search, ShieldCheck, Lock, Unlock, Key, Building2, X, Eye, Edit, Trash2, RefreshCcw } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast-context";
 import { createUser, toggleUserActive, assignProjectToUser, unassignProjectFromUser, resetUserPassword, updateUser, softDeleteUser, restoreUser } from "@/app/(dashboard)/users/actions";
-
-const ROLE_LEVEL: Record<string, number> = {
-  STAFF: 10, ENGINEER: 20, MANAGER: 30, ACCOUNTANT: 40,
-  CHIEF_COMMANDER: 50, DEPUTY_DIRECTOR: 80, DIRECTOR: 90, ADMIN: 100,
-};
 
 interface UserData {
   id: string;
@@ -24,7 +19,7 @@ interface UserData {
   isActive: boolean;
   deletedAt: string | null;
   createdAt: string;
-  assignedProjects: { id: string; code: string; name: string }[];
+  assignedProjects: { id: string; code: string; name: string; role: string; roleDisplay: string }[];
 }
 
 interface ProjectData {
@@ -34,21 +29,40 @@ interface ProjectData {
   status: string;
 }
 
-export function UserManagementClient({ initialUsers, projects, currentUserRole, allowedRoles }: {
+type SortField = "name" | "role" | "status";
+type SortDirection = "asc" | "desc";
+
+const PAGE_SIZE = 10;
+
+function getAccountStatus(user: UserData) {
+  if (user.deletedAt) return { label: "Ngừng sử dụng", variant: "danger" as const };
+  if (user.isActive) return { label: "Đang hoạt động", variant: "success" as const };
+  return { label: "Đã khóa", variant: "danger" as const };
+}
+
+export function UserManagementClient({ initialUsers, projects, currentUserId, currentUserRole, allowedRoles, projectRoleOptions, roleLevels }: {
   initialUsers: UserData[];
   projects: ProjectData[];
+  currentUserId: string;
   currentUserRole: string;
   allowedRoles: { role: string; label: string }[];
+  projectRoleOptions: { role: string; label: string }[];
+  roleLevels: Record<string, number>;
 }) {
-  const actorLevel = ROLE_LEVEL[currentUserRole] ?? 0;
+  const actorLevel = roleLevels[currentUserRole] ?? 0;
   const canManageUser = (user: UserData) => {
     if (currentUserRole === "ADMIN") return true;
-    return (ROLE_LEVEL[user.role] ?? 0) < actorLevel;
+    return (roleLevels[user.role] ?? 0) < actorLevel;
   };
+  const canPerformSensitiveAction = (user: UserData) => canManageUser(user) && user.id !== currentUserId;
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("all_active");
+  const [projectFilter, setProjectFilter] = useState("");
+  const [sortField, setSortField] = useState<SortField>("name");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [currentPage, setCurrentPage] = useState(1);
   const [showCreate, setShowCreate] = useState(false);
   const [loading, setLoading] = useState(false);
   const operationRef = useRef(false);
@@ -94,15 +108,18 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
   const [formPassword, setFormPassword] = useState("");
   const [formRole, setFormRole] = useState(allowedRoles.length > 0 ? allowedRoles[0].role : "STAFF");
   const [formProjectIds, setFormProjectIds] = useState<string[]>([]);
+  const [formProjectRoles, setFormProjectRoles] = useState<Record<string, string>>({});
   const [formNote, setFormNote] = useState("");
 
   // Assign project state
   const [assignUserId, setAssignUserId] = useState<string | null>(null);
   const [assignProjectId, setAssignProjectId] = useState("");
+  const [assignProjectRole, setAssignProjectRole] = useState("");
 
-  const filtered = initialUsers.filter(u => {
+  const filtered = useMemo(() => initialUsers.filter(u => {
     const matchSearch = !search || u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()) || (u.username || "").toLowerCase().includes(search.toLowerCase()) || (u.phone || "").includes(search);
     const matchRole = !roleFilter || u.role === roleFilter;
+    const matchProject = !projectFilter || u.assignedProjects.some((project) => project.id === projectFilter);
     let matchStatus = true;
     if (statusFilter === "all_active") {
       matchStatus = u.deletedAt === null;
@@ -113,8 +130,54 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
     } else if (statusFilter === "deleted") {
       matchStatus = u.deletedAt !== null;
     }
-    return matchSearch && matchRole && matchStatus;
-  });
+    return matchSearch && matchRole && matchProject && matchStatus;
+  }), [initialUsers, projectFilter, roleFilter, search, statusFilter]);
+
+  const sortedUsers = useMemo(() => [...filtered].sort((a, b) => {
+    const statusRank = (user: UserData) => user.deletedAt ? 2 : user.isActive ? 0 : 1;
+    const comparison = sortField === "name"
+      ? a.name.localeCompare(b.name, "vi")
+      : sortField === "role"
+        ? a.roleDisplay.localeCompare(b.roleDisplay, "vi")
+        : statusRank(a) - statusRank(b);
+    return sortDirection === "asc" ? comparison : -comparison;
+  }), [filtered, sortDirection, sortField]);
+
+  const totalPages = Math.max(1, Math.ceil(sortedUsers.length / PAGE_SIZE));
+  const paginatedUsers = sortedUsers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [projectFilter, roleFilter, search, statusFilter]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [currentPage, totalPages]);
+
+  useEffect(() => {
+    if (!showCreate && !detailUser && !editUser && !assignUserId && !resetPwUser) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || confirmState.isOpen) return;
+      if (resetPwUser) setResetPwUser(null);
+      else if (assignUserId) setAssignUserId(null);
+      else if (editUser) setEditUser(null);
+      else if (detailUser) setDetailUser(null);
+      else setShowCreate(false);
+    };
+
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [assignUserId, confirmState.isOpen, detailUser, editUser, resetPwUser, showCreate]);
+
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection((direction) => direction === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
 
   const handleCreate = async () => {
     if (operationRef.current) return;
@@ -132,13 +195,15 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
         username: formUsername || undefined,
         phone: formPhone || undefined,
         password: formPassword,
-        role: formRole as "ADMIN" | "DIRECTOR" | "DEPUTY_DIRECTOR" | "CHIEF_COMMANDER" | "MANAGER" | "ENGINEER" | "STAFF",
+        role: formRole as "ADMIN" | "DIRECTOR" | "DEPUTY_DIRECTOR" | "CHIEF_COMMANDER" | "MANAGER" | "ENGINEER" | "ACCOUNTANT" | "STAFF",
         projectIds: formProjectIds.length > 0 ? formProjectIds : undefined,
+        projectRoles: formProjectRoles as Record<string, "PROJECT_MANAGER" | "SITE_COMMANDER" | "CHIEF_COMMANDER" | "ASSISTANT_COMMANDER" | "QA_QC" | "HSE" | "SUPERVISOR" | "VIEWER">,
         note: formNote || undefined,
       });
       if (result.error) { setError(result.error); return; }
       setShowCreate(false);
       resetForm();
+      toast.success("Đã tạo tài khoản mới.");
       router.refresh();
     } catch {
       setError("Không thể tạo tài khoản. Vui lòng kiểm tra kết nối và thử lại.");
@@ -151,7 +216,7 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
   const resetForm = () => {
     setFormName(""); setFormEmail(""); setFormUsername(""); setFormPhone("");
     setFormPassword(""); setFormRole("CHIEF_COMMANDER");
-    setFormProjectIds([]); setFormNote(""); setError("");
+    setFormProjectIds([]); setFormProjectRoles({}); setFormNote(""); setError("");
   };
 
   const handleToggleActive = async (userId: string, isActive: boolean) => {
@@ -230,16 +295,18 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
     const result = await withOperation(() => updateUser(editUser.id, {
       name: formName,
       email: formEmail,
-      username: formUsername || undefined,
-      phone: formPhone || undefined,
-      role: formRole as "ADMIN" | "DIRECTOR" | "DEPUTY_DIRECTOR" | "CHIEF_COMMANDER" | "MANAGER" | "ENGINEER" | "STAFF",
+      username: formUsername,
+      phone: formPhone,
+      role: formRole as "ADMIN" | "DIRECTOR" | "DEPUTY_DIRECTOR" | "CHIEF_COMMANDER" | "MANAGER" | "ENGINEER" | "ACCOUNTANT" | "STAFF",
       projectIds: formProjectIds,
+      projectRoles: formProjectRoles as Record<string, "PROJECT_MANAGER" | "SITE_COMMANDER" | "CHIEF_COMMANDER" | "ASSISTANT_COMMANDER" | "QA_QC" | "HSE" | "SUPERVISOR" | "VIEWER">,
       note: formNote || undefined,
     }));
-    if (!result) return;
-    if (result.error) { setError(result.error); return; }
-    setEditUser(null);
-    router.refresh();
+      if (!result) return;
+      if (result.error) { setError(result.error); return; }
+      setEditUser(null);
+      toast.success("Đã cập nhật thông tin tài khoản.");
+      router.refresh();
   };
 
   const openEdit = (user: UserData) => {
@@ -254,16 +321,21 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
     setFormPhone(user.phone || "");
     setFormRole(user.role);
     setFormProjectIds(user.assignedProjects.map(p => p.id));
+    setFormProjectRoles(Object.fromEntries(user.assignedProjects.map((project) => [project.id, project.role])));
     setFormNote(""); // We don't have the note in UserData directly, but we can leave it empty
     setError("");
   };
 
   const handleAssignProject = async () => {
     if (!assignUserId || !assignProjectId) return;
-    const result = await withOperation(() => assignProjectToUser(assignUserId, assignProjectId));
+    const result = await withOperation(() => assignProjectToUser(
+      assignUserId,
+      assignProjectId,
+      assignProjectRole as "PROJECT_MANAGER" | "SITE_COMMANDER" | "CHIEF_COMMANDER" | "ASSISTANT_COMMANDER" | "QA_QC" | "HSE" | "SUPERVISOR" | "VIEWER",
+    ));
     if (!result) return;
     if (result.error) { setError(result.error); setTimeout(() => setError(""), 3000); }
-    setAssignUserId(null); setAssignProjectId("");
+    setAssignUserId(null); setAssignProjectId(""); setAssignProjectRole("");
     router.refresh();
   };
 
@@ -333,39 +405,44 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
         </div>
         <select id="user-role-filter" aria-label="Lọc theo vai trò" value={roleFilter} onChange={e => setRoleFilter(e.target.value)} className="px-3 py-2 text-sm border border-slate-300 rounded-md bg-white text-slate-900">
           <option value="">Tất cả vai trò</option>
-          <option value="ADMIN">Quản trị</option>
-          <option value="DIRECTOR">Giám đốc</option>
-          <option value="DEPUTY_DIRECTOR">Phó giám đốc</option>
-          <option value="CHIEF_COMMANDER">Chỉ huy trưởng</option>
+          {allowedRoles.map((role) => <option key={role.role} value={role.role}>{role.label}</option>)}
+        </select>
+        <select id="user-project-filter" aria-label="Lọc theo công trình" value={projectFilter} onChange={e => setProjectFilter(e.target.value)} className="px-3 py-2 text-sm border border-slate-300 rounded-md bg-white text-slate-900">
+          <option value="">Tất cả công trình</option>
+          {projects.map((project) => <option key={project.id} value={project.id}>{project.code} — {project.name}</option>)}
         </select>
         <select id="user-status-filter" aria-label="Lọc theo trạng thái" value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="px-3 py-2 text-sm border border-slate-300 rounded-md bg-white text-slate-900">
           <option value="all_active">Tất cả đang dùng</option>
-          <option value="active">Hoạt động</option>
+          <option value="active">Đang hoạt động</option>
           <option value="inactive">Đã khóa</option>
-          <option value="deleted">Đã xóa</option>
+          <option value="deleted">Ngừng sử dụng</option>
         </select>
         <button onClick={() => { setShowCreate(true); resetForm(); }} className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700">
-          <Plus className="h-4 w-4" /> Tạo tài khoản
+          <Plus className="h-4 w-4" /> Thêm tài khoản
         </button>
       </div>
+
+      <p className="text-xs text-slate-500" aria-live="polite">Hiển thị {sortedUsers.length} tài khoản phù hợp.</p>
 
       {/* Desktop Table */}
       <div className="hidden lg:block rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
-              <th className="px-4 py-3 font-semibold text-slate-900">Họ tên</th>
+              <th className="px-4 py-3 font-semibold text-slate-900"><button type="button" onClick={() => toggleSort("name")} className="inline-flex items-center gap-1 hover:text-blue-700">Người dùng <ArrowUpDown className="h-3.5 w-3.5" /></button></th>
               <th className="px-4 py-3 font-semibold text-slate-900">Đăng nhập / Email</th>
               <th className="px-4 py-3 font-semibold text-slate-900">SĐT</th>
-              <th className="px-4 py-3 font-semibold text-slate-900">Vai trò</th>
-              <th className="px-4 py-3 font-semibold text-slate-900">Công trình</th>
-              <th className="px-4 py-3 font-semibold text-slate-900">Trạng thái</th>
+              <th className="px-4 py-3 font-semibold text-slate-900"><button type="button" onClick={() => toggleSort("role")} className="inline-flex items-center gap-1 hover:text-blue-700">Vai trò hệ thống <ArrowUpDown className="h-3.5 w-3.5" /></button></th>
+              <th className="px-4 py-3 font-semibold text-slate-900">Công trình được gán</th>
+              <th className="px-4 py-3 font-semibold text-slate-900"><button type="button" onClick={() => toggleSort("status")} className="inline-flex items-center gap-1 hover:text-blue-700">Trạng thái <ArrowUpDown className="h-3.5 w-3.5" /></button></th>
               <th className="px-4 py-3 font-semibold text-slate-900 text-right">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {filtered.map(user => (
-              <tr key={user.id} className="hover:bg-blue-50/30 transition-colors">
+            {paginatedUsers.map(user => {
+              const status = getAccountStatus(user);
+              return (
+              <tr key={user.id} onClick={() => setDetailUser(user)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setDetailUser(user); } }} tabIndex={0} className="cursor-pointer hover:bg-blue-50/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500">
                 <td className="px-4 py-3 font-medium text-slate-900">{user.name}</td>
                 <td className="px-4 py-3 text-slate-600">
                   <div className="text-xs">{user.username || "-"}</div>
@@ -376,68 +453,47 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
                 <td className="px-4 py-3">
                   <div className="flex flex-wrap gap-1">
                     {user.assignedProjects.map(p => (
-                      <span key={p.id} className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 text-slate-700 text-[11px] rounded font-medium">
+                      <span key={p.id} title={`Vai trò tại công trình: ${p.roleDisplay}`} className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-slate-100 text-slate-700 text-[11px] rounded font-medium">
                         {p.code}
-                        <button onClick={() => handleUnassign(user.id, p.id)} className="hover:text-red-500 ml-0.5" aria-label={`Gỡ ${p.code}`}><X className="h-3 w-3" /></button>
+                        <button onClick={(event) => { event.stopPropagation(); handleUnassign(user.id, p.id); }} className="hover:text-red-500 ml-0.5" aria-label={`Gỡ ${p.code}`}><X className="h-3 w-3" /></button>
                       </span>
                     ))}
-                    <button onClick={() => { setAssignUserId(user.id); setAssignProjectId(""); }} className="inline-flex items-center px-1.5 py-0.5 text-[11px] text-blue-600 hover:bg-blue-50 rounded" aria-label="Gán công trình">
+                    <button onClick={(event) => { event.stopPropagation(); setAssignUserId(user.id); setAssignProjectId(""); setAssignProjectRole(""); }} className="inline-flex items-center px-1.5 py-0.5 text-[11px] text-blue-600 hover:bg-blue-50 rounded" aria-label="Gán công trình">
                       <Plus className="h-3 w-3 mr-0.5" />Gán
                     </button>
                   </div>
                 </td>
-                <td className="px-4 py-3">
-                  {user.deletedAt 
-                    ? <StatusBadge variant="danger" size="sm">Đã xóa</StatusBadge>
-                    : user.isActive
-                      ? <StatusBadge variant="success" size="sm">Hoạt động</StatusBadge>
-                      : <StatusBadge variant="danger" size="sm">Đã khóa</StatusBadge>}
-                </td>
+                <td className="px-4 py-3"><StatusBadge variant={status.variant} size="sm">{status.label}</StatusBadge></td>
                 <td className="px-4 py-3 text-right">
                   <div className="flex items-center justify-end gap-1">
-                    <button onClick={() => setDetailUser(user)} className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500" title="Xem chi tiết" aria-label={`Xem chi tiết tài khoản ${user.name}`}>
-                      <Eye className="h-4 w-4" />
-                    </button>
+                    <button onClick={(event) => { event.stopPropagation(); setDetailUser(user); }} className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500" title="Xem chi tiết" aria-label={`Xem chi tiết tài khoản ${user.name}`}><Eye className="h-4 w-4" /></button>
                     {!user.deletedAt ? (
-                      canManageUser(user) ? (
-                        <>
-                          <button onClick={() => openEdit(user)} className="p-1.5 rounded-md hover:bg-blue-50 text-blue-600" title="Sửa thông tin" aria-label={`Sửa thông tin tài khoản ${user.name}`}>
-                            <Edit className="h-4 w-4" />
-                          </button>
-                          <button onClick={() => handleToggleActive(user.id, user.isActive)} className={`p-1.5 rounded-md text-xs ${user.isActive ? "hover:bg-amber-50 text-amber-500" : "hover:bg-green-50 text-green-600"}`} title={user.isActive ? "Khóa" : "Mở khóa"} aria-label={user.isActive ? "Khóa tài khoản" : "Mở khóa tài khoản"}>
-                            {user.isActive ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
-                          </button>
-                          <button onClick={() => handleResetPwClick(user)} className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500" title="Đổi mật khẩu" aria-label="Đổi mật khẩu">
-                            <Key className="h-4 w-4" />
-                          </button>
-                          <button onClick={() => handleSoftDelete(user)} className="p-1.5 rounded-md hover:bg-red-50 text-red-600" title="Xóa mềm tài khoản" aria-label={`Xóa mềm tài khoản ${user.name}`}>
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </>
-                      ) : (
-                        <span className="text-[11px] text-slate-400 italic px-1">Không có quyền</span>
-                      )
-                    ) : (
-                      canManageUser(user) ? (
-                        <button onClick={() => handleRestore(user)} className="p-1.5 rounded-md hover:bg-emerald-50 text-emerald-600" title="Khôi phục tài khoản" aria-label={`Khôi phục tài khoản ${user.name}`}>
-                          <RefreshCcw className="h-4 w-4" />
-                        </button>
-                      ) : (
-                        <span className="text-[11px] text-slate-400 italic px-1">Không có quyền</span>
-                      )
-                    )}
+                      canManageUser(user) ? <>
+                        <button onClick={(event) => { event.stopPropagation(); openEdit(user); }} className="p-1.5 rounded-md hover:bg-blue-50 text-blue-600" title="Sửa thông tin" aria-label={`Sửa thông tin tài khoản ${user.name}`}><Edit className="h-4 w-4" /></button>
+                        {canPerformSensitiveAction(user) ? <>
+                          <button onClick={(event) => { event.stopPropagation(); handleToggleActive(user.id, user.isActive); }} className={`p-1.5 rounded-md text-xs ${user.isActive ? "hover:bg-amber-50 text-amber-500" : "hover:bg-green-50 text-green-600"}`} title={user.isActive ? "Khóa" : "Mở khóa"} aria-label={user.isActive ? "Khóa tài khoản" : "Mở khóa tài khoản"}>{user.isActive ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}</button>
+                          <button onClick={(event) => { event.stopPropagation(); handleResetPwClick(user); }} className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500" title="Đặt lại mật khẩu" aria-label="Đặt lại mật khẩu"><Key className="h-4 w-4" /></button>
+                          <button onClick={(event) => { event.stopPropagation(); handleSoftDelete(user); }} className="p-1.5 rounded-md hover:bg-red-50 text-red-600" title="Ngừng sử dụng tài khoản" aria-label={`Ngừng sử dụng tài khoản ${user.name}`}><Trash2 className="h-4 w-4" /></button>
+                        </> : null}
+                      </> : <span className="text-[11px] text-slate-400 italic px-1">Không có quyền</span>
+                    ) : canPerformSensitiveAction(user) ? (
+                      <button onClick={(event) => { event.stopPropagation(); handleRestore(user); }} className="p-1.5 rounded-md hover:bg-emerald-50 text-emerald-600" title="Khôi phục tài khoản" aria-label={`Khôi phục tài khoản ${user.name}`}><RefreshCcw className="h-4 w-4" /></button>
+                    ) : <span className="text-[11px] text-slate-400 italic px-1">Không có quyền</span>}
                   </div>
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
-        {filtered.length === 0 && <div className="p-8 text-center text-sm text-slate-500">Không tìm thấy tài khoản phù hợp</div>}
+        {paginatedUsers.length === 0 && <div className="p-8 text-center text-sm text-slate-500">Không tìm thấy tài khoản phù hợp với bộ lọc hiện tại.</div>}
       </div>
 
       {/* Mobile Cards */}
       <div className="space-y-3 lg:hidden">
-        {filtered.map(user => (
+        {paginatedUsers.map(user => {
+          const status = getAccountStatus(user);
+          return (
           <div key={user.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm space-y-3">
             <div className="flex items-start justify-between">
               <div>
@@ -446,11 +502,7 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
                 {user.phone && <p className="text-xs text-slate-400">{user.phone}</p>}
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                {user.deletedAt 
-                  ? <StatusBadge variant="danger" size="sm">Đã xóa</StatusBadge>
-                  : user.isActive
-                    ? <StatusBadge variant="success" size="sm">Hoạt động</StatusBadge>
-                    : <StatusBadge variant="danger" size="sm">Đã khóa</StatusBadge>}
+                <StatusBadge variant={status.variant} size="sm">{status.label}</StatusBadge>
                 {getRoleBadge(user.role, user.roleDisplay)}
               </div>
             </div>
@@ -461,7 +513,7 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
                   <button onClick={() => handleUnassign(user.id, p.id)} className="hover:text-red-500" aria-label={`Gỡ ${p.code}`}><X className="h-3 w-3" /></button>
                 </span>
               ))}
-              <button onClick={() => { setAssignUserId(user.id); setAssignProjectId(""); }} className="text-xs text-blue-600 hover:underline" aria-label="Gán công trình">+ Gán</button>
+              <button onClick={() => { setAssignUserId(user.id); setAssignProjectId(""); setAssignProjectRole(""); }} className="text-xs text-blue-600 hover:underline" aria-label="Gán công trình">+ Gán</button>
             </div>
             <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
               <button onClick={() => setDetailUser(user)} className="h-9 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50" aria-label={`Xem chi tiết tài khoản ${user.name}`}>Xem</button>
@@ -469,16 +521,16 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
                 canManageUser(user) ? (
                   <>
                     <button onClick={() => openEdit(user)} className="h-9 rounded-lg border border-blue-200 text-xs font-semibold text-blue-600 hover:bg-blue-50" aria-label={`Sửa thông tin tài khoản ${user.name}`}>Sửa</button>
-                    <button onClick={() => handleToggleActive(user.id, user.isActive)} className={`h-9 rounded-lg border text-xs font-semibold ${user.isActive ? "border-amber-200 text-amber-700 hover:bg-amber-50" : "border-emerald-200 text-emerald-700 hover:bg-emerald-50"}`} aria-label={user.isActive ? "Khóa tài khoản" : "Mở khóa tài khoản"}>
+                    {canPerformSensitiveAction(user) ? <button onClick={() => handleToggleActive(user.id, user.isActive)} className={`h-9 rounded-lg border text-xs font-semibold ${user.isActive ? "border-amber-200 text-amber-700 hover:bg-amber-50" : "border-emerald-200 text-emerald-700 hover:bg-emerald-50"}`} aria-label={user.isActive ? "Khóa tài khoản" : "Mở khóa tài khoản"}>
                       {user.isActive ? "Khóa" : "Mở khóa"}
-                    </button>
-                    <button onClick={() => handleSoftDelete(user)} className="h-9 rounded-lg border border-rose-200 text-xs font-semibold text-rose-700 hover:bg-rose-50" aria-label={`Xóa mềm tài khoản ${user.name}`}>Xóa</button>
+                    </button> : null}
+                    {canPerformSensitiveAction(user) ? <button onClick={() => handleSoftDelete(user)} className="h-9 rounded-lg border border-rose-200 text-xs font-semibold text-rose-700 hover:bg-rose-50" aria-label={`Ngừng sử dụng tài khoản ${user.name}`}>Ngừng dùng</button> : null}
                   </>
                 ) : (
                   <span className="h-9 flex items-center justify-center text-xs text-slate-400 italic col-span-1">Không có quyền</span>
                 )
               ) : (
-                canManageUser(user) ? (
+                canPerformSensitiveAction(user) ? (
                   <button onClick={() => handleRestore(user)} className="h-9 rounded-lg border border-emerald-200 text-xs font-semibold text-emerald-700 hover:bg-emerald-50" aria-label={`Khôi phục tài khoản ${user.name}`}>Khôi phục</button>
                 ) : (
                   <span className="h-9 flex items-center justify-center text-xs text-slate-400 italic col-span-1">Không có quyền</span>
@@ -486,8 +538,20 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
               )}
             </div>
           </div>
-        ))}
+          );
+        })}
+        {paginatedUsers.length === 0 && <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">Không tìm thấy tài khoản phù hợp với bộ lọc hiện tại.</div>}
       </div>
+
+      {sortedUsers.length > PAGE_SIZE && (
+        <nav className="flex items-center justify-between gap-3 border-t border-slate-200 pt-4" aria-label="Phân trang tài khoản">
+          <span className="text-sm text-slate-500">Trang {currentPage}/{totalPages}</span>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} disabled={currentPage === 1} className="inline-flex h-9 items-center gap-1 rounded-lg border border-slate-300 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"><ChevronLeft className="h-4 w-4" />Trước</button>
+            <button type="button" onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))} disabled={currentPage === totalPages} className="inline-flex h-9 items-center gap-1 rounded-lg border border-slate-300 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">Sau<ChevronRight className="h-4 w-4" /></button>
+          </div>
+        </nav>
+      )}
 
       {/* Create User Modal */}
       {showCreate && (
@@ -530,7 +594,7 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
                 </div>
               </div>
               <div>
-                <label htmlFor="create-role" className="block text-sm font-medium text-slate-700 mb-1">Vai trò *</label>
+                <label htmlFor="create-role" className="block text-sm font-medium text-slate-700 mb-1">Vai trò hệ thống *</label>
                 <select id="create-role" value={formRole} onChange={e => setFormRole(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500">
                   {allowedRoles.map(r => (
                     <option key={r.role} value={r.role}>{r.label}</option>
@@ -538,13 +602,32 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Công trình được giao</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Công trình được giao và vai trò tại công trình</label>
                 <div className="border border-slate-300 rounded-md max-h-40 overflow-y-auto p-2 space-y-1">
                   {projects.map(p => (
-                    <label key={p.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-slate-50 cursor-pointer">
-                      <input type="checkbox" checked={formProjectIds.includes(p.id)} onChange={e => { if (e.target.checked) setFormProjectIds([...formProjectIds, p.id]); else setFormProjectIds(formProjectIds.filter(id => id !== p.id)); }} className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
-                      <span className="text-sm text-slate-700"><span className="font-semibold">{p.code}</span> - {p.name}</span>
-                    </label>
+                    <div key={p.id} className="rounded px-2 py-1.5 hover:bg-slate-50">
+                      <label className="flex cursor-pointer items-center gap-2">
+                        <input type="checkbox" checked={formProjectIds.includes(p.id)} onChange={e => {
+                          if (e.target.checked) {
+                            setFormProjectIds([...formProjectIds, p.id]);
+                          } else {
+                            setFormProjectIds(formProjectIds.filter(id => id !== p.id));
+                            setFormProjectRoles((current) => {
+                              const remaining = { ...current };
+                              delete remaining[p.id];
+                              return remaining;
+                            });
+                          }
+                        }} className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                        <span className="text-sm text-slate-700"><span className="font-semibold">{p.code}</span> - {p.name}</span>
+                      </label>
+                      {formProjectIds.includes(p.id) ? (
+                        <select aria-label={`Vai trò tại công trình ${p.code}`} value={formProjectRoles[p.id] ?? ""} onChange={(event) => setFormProjectRoles((current) => ({ ...current, [p.id]: event.target.value }))} className="mt-2 ml-6 w-[calc(100%-1.5rem)] rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-900">
+                          <option value="" disabled>Chọn vai trò tại công trình</option>
+                          {projectRoleOptions.map((role) => <option key={role.role} value={role.role}>{role.label}</option>)}
+                        </select>
+                      ) : null}
+                    </div>
                   ))}
                 </div>
               </div>
@@ -565,18 +648,18 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
         </div>
       )}
 
-      {/* Detail User Modal */}
+      {/* Detail User Drawer */}
       {detailUser && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
+        <div className="fixed inset-0 z-50 flex justify-end">
           <div className="fixed inset-0 bg-slate-900/60" onClick={() => setDetailUser(null)} />
-          <div role="dialog" aria-modal="true" aria-label="Chi tiết tài khoản" className="relative max-h-[calc(100dvh-1rem)] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white shadow-2xl sm:max-h-[90dvh] sm:rounded-2xl">
-            <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+          <aside role="dialog" aria-modal="true" aria-label="Chi tiết tài khoản" className="relative flex h-full w-full max-w-xl flex-col overflow-hidden bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 bg-white px-5 py-4 sm:px-6">
               <h2 className="text-lg font-bold text-slate-900">Chi tiết tài khoản</h2>
               <button onClick={() => setDetailUser(null)} className="text-slate-400 hover:text-slate-600 p-1" aria-label="Đóng chi tiết">
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
               <div className="grid grid-cols-1 gap-4 border-b border-slate-100 pb-4 sm:grid-cols-2">
                 <div>
                   <p className="text-xs text-slate-500 font-medium">Họ tên</p>
@@ -605,7 +688,7 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500 font-medium">Vai trò</p>
+                  <p className="text-xs text-slate-500 font-medium">Vai trò hệ thống</p>
                   <div className="mt-1">{getRoleBadge(detailUser.role, detailUser.roleDisplay)}</div>
                 </div>
                 <div>
@@ -615,13 +698,16 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
               </div>
               
               <div>
-                <p className="text-xs text-slate-500 font-medium mb-2">Công trình được giao</p>
+                <p className="text-xs text-slate-500 font-medium mb-2">Công trình được giao và vai trò tại công trình</p>
                 {detailUser.assignedProjects.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {detailUser.assignedProjects.map(p => (
                       <div key={p.id} className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md">
                         <Building2 className="h-4 w-4 text-slate-400" />
-                        <span className="text-sm text-slate-700 font-medium">{p.code} - {p.name}</span>
+                        <div>
+                          <p className="text-sm font-medium text-slate-700">{p.code} - {p.name}</p>
+                          <p className="text-xs text-slate-500">Vai trò tại công trình: {p.roleDisplay}</p>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -635,29 +721,32 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
                   <ShieldCheck className="h-5 w-5 text-amber-600 mt-0.5" />
                   <div>
                     <h4 className="text-sm font-semibold text-amber-800">Bảo mật tài khoản</h4>
-                    <p className="text-sm text-amber-700 mt-1">Mật khẩu hiện tại không thể xem lại vì được mã hóa một chiều. Nếu người dùng quên mật khẩu, hãy dùng chức năng Reset mật khẩu.</p>
+                    <p className="text-sm text-amber-700 mt-1">Mật khẩu hiện tại không thể xem lại vì được mã hóa một chiều. Nếu người dùng quên mật khẩu, hãy dùng chức năng đặt lại mật khẩu.</p>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="sticky bottom-0 bg-white border-t border-slate-200 px-6 py-4 flex gap-3 justify-end rounded-b-2xl">
+            <div className="flex gap-3 justify-end border-t border-slate-200 bg-white px-5 py-4 sm:px-6">
               <button onClick={() => setDetailUser(null)} className="px-4 py-2 bg-slate-100 text-slate-700 rounded-md text-sm font-medium hover:bg-slate-200">Đóng</button>
               {canManageUser(detailUser) ? (
-                <button 
-                  onClick={() => { setDetailUser(null); handleResetPwClick(detailUser); }} 
-                  className="px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-md text-sm font-medium hover:bg-blue-100 flex items-center gap-2"
-                >
-                  <Key className="h-4 w-4" />
-                  Reset mật khẩu
-                </button>
+                <>
+                  <button onClick={() => { setDetailUser(null); openEdit(detailUser); }} className="px-4 py-2 border border-blue-200 bg-blue-50 text-blue-700 rounded-md text-sm font-medium hover:bg-blue-100 flex items-center gap-2"><Edit className="h-4 w-4" />Chỉnh sửa</button>
+                  {canPerformSensitiveAction(detailUser) ? <button
+                    onClick={() => { setDetailUser(null); handleResetPwClick(detailUser); }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 flex items-center gap-2"
+                  >
+                    <Key className="h-4 w-4" />
+                    Đặt lại mật khẩu
+                  </button> : null}
+                </>
               ) : (
-                <div className="px-4 py-2 text-sm text-slate-400 flex items-center italic" title="Bạn không có quyền reset mật khẩu tài khoản này.">
+                <div className="px-4 py-2 text-sm text-slate-400 flex items-center italic" title="Bạn không có quyền đặt lại mật khẩu tài khoản này.">
                   <Key className="h-4 w-4 mr-2" />
-                  Không có quyền reset
+                  Không có quyền đặt lại mật khẩu
                 </div>
               )}
             </div>
-          </div>
+          </aside>
         </div>
       )}
 
@@ -695,8 +784,8 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
                   <input id="edit-phone" type="tel" autoComplete="off" value={formPhone} onChange={e => setFormPhone(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500" placeholder="0901234567" />
                 </div>
                 <div>
-                  <label htmlFor="edit-role" className="block text-sm font-medium text-slate-700 mb-1">Vai trò *</label>
-                  <select id="edit-role" value={formRole} onChange={e => setFormRole(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500">
+                  <label htmlFor="edit-role" className="block text-sm font-medium text-slate-700 mb-1">Vai trò hệ thống *</label>
+                  <select id="edit-role" value={formRole} onChange={e => setFormRole(e.target.value)} disabled={editUser.id === currentUserId} className="w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500">
                     {allowedRoles.map(r => (
                       <option key={r.role} value={r.role}>{r.label}</option>
                     ))}
@@ -705,23 +794,43 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
                       <option value={editUser.role} disabled>{editUser.roleDisplay} (không đổi được)</option>
                     )}
                   </select>
+                  {editUser.id === currentUserId ? <p className="mt-1 text-[11px] text-slate-500">Bạn không thể tự thay đổi vai trò của chính mình.</p> : null}
                   {editUser && !allowedRoles.some(r => r.role === editUser.role) && (
                     <p className="text-[11px] text-amber-600 mt-1">Bạn không có quyền thay đổi vai trò của tài khoản này.</p>
                   )}
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Công trình được giao</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Công trình được giao và vai trò tại công trình</label>
                 <div className="border border-slate-300 rounded-md max-h-40 overflow-y-auto p-2 space-y-1">
                   {projects.map(p => (
-                    <label key={p.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-slate-50 cursor-pointer">
-                      <input type="checkbox" checked={formProjectIds.includes(p.id)} onChange={e => { if (e.target.checked) setFormProjectIds([...formProjectIds, p.id]); else setFormProjectIds(formProjectIds.filter(id => id !== p.id)); }} className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
-                      <span className="text-sm text-slate-700"><span className="font-semibold">{p.code}</span> - {p.name}</span>
-                    </label>
+                    <div key={p.id} className="rounded px-2 py-1.5 hover:bg-slate-50">
+                      <label className="flex cursor-pointer items-center gap-2">
+                        <input type="checkbox" checked={formProjectIds.includes(p.id)} onChange={e => {
+                          if (e.target.checked) {
+                            setFormProjectIds([...formProjectIds, p.id]);
+                          } else {
+                            setFormProjectIds(formProjectIds.filter(id => id !== p.id));
+                            setFormProjectRoles((current) => {
+                              const remaining = { ...current };
+                              delete remaining[p.id];
+                              return remaining;
+                            });
+                          }
+                        }} className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                        <span className="text-sm text-slate-700"><span className="font-semibold">{p.code}</span> - {p.name}</span>
+                      </label>
+                      {formProjectIds.includes(p.id) ? (
+                        <select aria-label={`Vai trò tại công trình ${p.code}`} value={formProjectRoles[p.id] ?? ""} onChange={(event) => setFormProjectRoles((current) => ({ ...current, [p.id]: event.target.value }))} className="mt-2 ml-6 w-[calc(100%-1.5rem)] rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-900">
+                          <option value="" disabled>Chọn vai trò tại công trình</option>
+                          {projectRoleOptions.map((role) => <option key={role.role} value={role.role}>{role.label}</option>)}
+                        </select>
+                      ) : null}
+                    </div>
                   ))}
                 </div>
                 {formRole === "CHIEF_COMMANDER" && formProjectIds.length === 0 && (
-                  <p className="text-[11px] text-amber-600 mt-1">Cảnh báo: Chỉ huy trưởng nên được giao ít nhất 1 công trình.</p>
+                  <p className="text-[11px] text-amber-600 mt-1">Cảnh báo: Chỉ huy trưởng hệ thống nên được giao ít nhất 1 công trình; vai trò tại từng công trình được chọn độc lập ở trên.</p>
                 )}
               </div>
               {formProjectIds.length > 0 && (
@@ -752,9 +861,17 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
               <option value="">Chọn công trình</option>
               {projects.map(p => <option key={p.id} value={p.id}>{p.code} - {p.name}</option>)}
             </select>
+            <div>
+              <label htmlFor="assign-project-role" className="mb-1 block text-sm font-medium text-slate-700">Vai trò tại công trình</label>
+              <select id="assign-project-role" value={assignProjectRole} onChange={(event) => setAssignProjectRole(event.target.value)} className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900">
+                <option value="" disabled>Chọn vai trò tại công trình</option>
+                {projectRoleOptions.map((role) => <option key={role.role} value={role.role}>{role.label}</option>)}
+              </select>
+            </div>
+            <p className="text-xs text-slate-500">Vai trò tại công trình độc lập với vai trò hệ thống của tài khoản.</p>
             <div className="flex gap-3">
               <button onClick={() => setAssignUserId(null)} className="flex-1 h-10 border border-slate-300 rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50">Hủy</button>
-              <button onClick={handleAssignProject} disabled={!assignProjectId || loading} className="flex-1 h-10 bg-blue-600 text-white rounded-md text-sm font-semibold hover:bg-blue-700 disabled:opacity-50">Gán</button>
+              <button onClick={handleAssignProject} disabled={!assignProjectId || !assignProjectRole || loading} className="flex-1 h-10 bg-blue-600 text-white rounded-md text-sm font-semibold hover:bg-blue-700 disabled:opacity-50">Gán</button>
             </div>
           </div>
         </div>
@@ -785,10 +902,10 @@ export function UserManagementClient({ initialUsers, projects, currentUserRole, 
                     <div className="bg-white border border-emerald-300 rounded-md py-3 px-4 font-mono text-lg font-bold text-slate-900 tracking-wider flex items-center justify-between">
                       <span>{tempPassword}</span>
                       <button 
-                        onClick={() => { navigator.clipboard.writeText(tempPassword); toast.success("Đã copy mật khẩu"); }}
+                        onClick={() => { navigator.clipboard.writeText(tempPassword); toast.success("Đã sao chép mật khẩu."); }}
                         className="text-sm font-sans font-medium text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-1 rounded"
                       >
-                        Copy
+                        Sao chép
                       </button>
                     </div>
                   </div>

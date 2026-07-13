@@ -6,6 +6,7 @@ import { Prisma, PaymentRequestStatus, PaymentRequestType } from "@prisma/client
 import { revalidatePath } from "next/cache";
 import { getAccountingPermissions } from "@/lib/accounting/accounting-permissions";
 import { canViewAllProjects, isSystemAdmin, requireProjectScope } from "@/lib/rbac";
+import { assertPermission } from "@/lib/permissions/permission-resolver";
 
 const ACCOUNTING_PATH = "/accounting";
 
@@ -270,6 +271,7 @@ export async function createPaymentRequest(data: {
   if (!projectId) throw new Error("Chưa chọn công trình");
 
   const projectRole = await requireProjectScope(session, projectId);
+  await assertPermission(session, "payments.create", { projectId, membership: projectRole ? { projectId, role: projectRole } : null });
   const perms = getAccountingPermissions(session.role, projectRole);
   if (!perms.canCreate) throw new Error("Bạn không có quyền tạo hồ sơ thanh toán");
 
@@ -317,7 +319,7 @@ export async function createPaymentRequest(data: {
         createdById: session.id
       }
     });
-  } catch (error) {
+  } catch {
     throw new Error("Lỗi khi tạo hồ sơ thanh toán");
   }
 
@@ -345,6 +347,7 @@ export async function updatePaymentRequest(id: string, data: {
   if (!pr) throw new Error("Hồ sơ thanh toán không tồn tại");
 
   const projectRole = await requireProjectScope(session, pr.projectId);
+  await assertPermission(session, "payments.update", { projectId: pr.projectId, ownerId: pr.createdById, membership: projectRole ? { projectId: pr.projectId, role: projectRole } : null });
   const perms = getAccountingPermissions(session.role, projectRole);
   
   if (!perms.canUpdate && pr.createdById !== session.id) {
@@ -395,6 +398,7 @@ export async function changePaymentStatus(id: string, action: "APPROVE" | "REJEC
   if (!pr) throw new Error("Hồ sơ không tồn tại");
 
   const projectRole = await requireProjectScope(session, pr.projectId);
+  await assertPermission(session, action === "APPROVE" || action === "REJECT" ? "payments.approve" : action === "MARK_PAID" ? "payments.mark_paid" : "payments.update", { projectId: pr.projectId, ownerId: pr.createdById, membership: projectRole ? { projectId: pr.projectId, role: projectRole } : null });
   const perms = getAccountingPermissions(session.role, projectRole);
 
   const updateData: any = {};
@@ -462,6 +466,7 @@ export async function deletePaymentRequest(id: string) {
   if (!pr) throw new Error("Hồ sơ không tồn tại");
 
   const projectRole = await requireProjectScope(session, pr.projectId);
+  await assertPermission(session, "payments.update", { projectId: pr.projectId, ownerId: pr.createdById, membership: projectRole ? { projectId: pr.projectId, role: projectRole } : null });
   const perms = getAccountingPermissions(session.role, projectRole);
 
   if (!perms.canDelete && pr.createdById !== session.id) {

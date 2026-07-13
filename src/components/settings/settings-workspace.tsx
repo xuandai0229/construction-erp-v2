@@ -491,7 +491,7 @@ export function SettingsWorkspace({ initialSettings }: { initialSettings: System
                     <div>
                       <h3 className="text-sm font-semibold text-blue-900">Giới hạn dung lượng tải lên</h3>
                       <p className="mt-1 text-sm leading-6 text-blue-700">
-                        Hệ thống không đặt giới hạn dung lượng ở tầng ứng dụng. Dung lượng thực tế phụ thuộc reverse proxy, hosting và storage.
+                        Hệ thống không đặt giới hạn dung lượng ở tầng ứng dụng. Dung lượng thực tế phụ thuộc máy chủ trung gian, dịch vụ lưu trữ và hệ thống lưu trữ tệp.
                       </p>
                     </div>
                   </div>

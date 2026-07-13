@@ -1593,7 +1593,7 @@ const handleEditMetadata = async () => {
                         : selectedFolderId && selectedFolderData
                         ? selectedParentFolder
                           ? `Tài liệu và mục bên trong của ${formatDocumentFolderName(selectedParentFolder.name)}`
-                          : selectedFolderRule?.description || "Thư mục hồ sơ chính của dự án."
+                          : selectedFolderRule?.description || "Thư mục hồ sơ chính của công trình."
                         : "Chọn thư mục bên trái hoặc mở trực tiếp các thư mục bên dưới."}
                     </p>
                   </div>

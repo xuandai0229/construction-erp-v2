@@ -41,7 +41,7 @@ const Decimal = Prisma.Decimal;
 
 export async function getActiveProjects() {
   const session = await getSession();
-  if (!session) throw new Error("Unauthorized");
+  if (!session) throw new Error("Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
   
   const user = { id: session.id, role: session.role as UserRole };
   const accessibleProjectIds = await getAccessibleProjectIds(user);
@@ -205,12 +205,12 @@ async function buildDailyReportLines(input: {
 
 export async function getProjectWorkItems(projectId: string, reportDate?: string) {
   const session = await getSession();
-  if (!session) throw new Error("Unauthorized");
+  if (!session) throw new Error("Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
 
   const user = { id: session.id, role: session.role as UserRole };
   const accessibleProjectIds = await getAccessibleProjectIds(user);
   if (accessibleProjectIds !== null && !accessibleProjectIds.includes(projectId)) {
-    throw new Error("Không có quyền truy cập dự án này");
+    throw new Error("Bạn không có quyền truy cập công trình này.");
   }
 
   const richFieldItems = await prisma.fieldProgressItem.findMany({
@@ -290,7 +290,7 @@ export async function getProjectWorkItems(projectId: string, reportDate?: string
 
 export async function createSiteReport(data: Record<string, unknown>, isDraft: boolean = false) {
   const session = await getSession();
-  if (!session) throw new Error("Unauthorized");
+  if (!session) throw new Error("Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
 
   if (!data.projectId) throw new Error("Missing projectId");
   if (!data.date) throw new Error("Missing date");
@@ -306,7 +306,7 @@ export async function createSiteReport(data: Record<string, unknown>, isDraft: b
   const user = { id: session.id, role: session.role as UserRole };
   const accessibleProjectIds = await getAccessibleProjectIds(user);
   if (accessibleProjectIds !== null && !accessibleProjectIds.includes(pId)) {
-    throw new Error("Không có quyền truy cập dự án này");
+    throw new Error("Bạn không có quyền truy cập công trình này.");
   }
 
   const hasProjectAccess = accessibleProjectIds === null || accessibleProjectIds.includes(pId);
@@ -379,7 +379,7 @@ export async function createSiteReport(data: Record<string, unknown>, isDraft: b
 
 export async function getSiteReports(filters: Record<string, unknown> = {}) {
   const session = await getSession();
-  if (!session) throw new Error("Unauthorized");
+  if (!session) throw new Error("Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
   
   const where: Record<string, unknown> = { 
     deletedAt: null,
@@ -582,7 +582,7 @@ function buildSiteReportsWhere(
 
 async function getSiteReportsPageLegacy(filters: ReportPageFilters) {
   const session = await getSession();
-  if (!session) throw new Error("Unauthorized");
+  if (!session) throw new Error("Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
   
   const user = { id: session.id, role: session.role as UserRole };
   const accessibleProjectIds = await getAccessibleProjectIds(user);
@@ -745,7 +745,7 @@ async function getSiteReportsPageLegacy(filters: ReportPageFilters) {
 
 export async function getSiteReportsPage(filters: ReportPageFilters) {
   const session = await getSession();
-  if (!session) throw new Error("Unauthorized");
+  if (!session) throw new Error("Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
 
   const user = { id: session.id, role: session.role as UserRole };
   const accessibleProjectIds = await getAccessibleProjectIds(user);
@@ -791,7 +791,7 @@ export async function getSiteReportsPage(filters: ReportPageFilters) {
 
 export async function submitSiteReport(reportId: string) {
   const session = await getSession();
-  if (!session) throw new Error("Unauthorized");
+  if (!session) throw new Error("Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
 
   const user = { id: session.id, role: session.role as UserRole };
   const report = await prisma.siteReport.findFirst({
@@ -813,7 +813,7 @@ export async function submitSiteReport(reportId: string) {
 
 export async function approveSiteReport(reportId: string, note?: string) {
   const session = await getSession();
-  if (!session) throw new Error("Unauthorized");
+  if (!session) throw new Error("Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
 
   const user = { id: session.id, role: session.role as UserRole };
   const report = await prisma.siteReport.findFirst({
@@ -835,7 +835,7 @@ export async function approveSiteReport(reportId: string, note?: string) {
 
 export async function rejectSiteReport(reportId: string, reason: string) {
   const session = await getSession();
-  if (!session) throw new Error("Unauthorized");
+  if (!session) throw new Error("Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
 
   const user = { id: session.id, role: session.role as UserRole };
   const report = await prisma.siteReport.findFirst({
@@ -862,7 +862,7 @@ export async function rejectSiteReport(reportId: string, reason: string) {
 
 export async function getSiteReportAuditLogs(reportId: string) {
   const session = await getSession();
-  if (!session) throw new Error("Unauthorized");
+  if (!session) throw new Error("Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
 
   const user = { id: session.id, role: session.role as UserRole };
   const report = await prisma.siteReport.findFirst({
@@ -909,11 +909,11 @@ export async function getSiteReportAuditLogs(reportId: string) {
 
 export async function getWeeklyReportSummary(projectId: string, start: Date, end: Date, options?: { includeSubmitted?: boolean, includeDraft?: boolean }) {
   const session = await getSession();
-  if (!session) throw new Error("Unauthorized");
+  if (!session) throw new Error("Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
 
   const user = { id: session.id, role: session.role as import('@prisma/client').UserRole };
   const hasProjectAccess = await canAccessProject(user, projectId);
-  if (!hasProjectAccess) throw new Error("Unauthorized");
+  if (!hasProjectAccess) throw new Error("Bạn không có quyền truy cập công trình này.");
 
   const fromDate = getVietnamDateString(start);
   const toDate = getVietnamDateString(end);
@@ -1061,7 +1061,7 @@ export async function createWeeklyReportFromApprovedDailyReports(input: {
   isDraft: boolean;
 }) {
   const session = await getSession();
-  if (!session) throw new Error("Unauthorized");
+  if (!session) throw new Error("Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
 
   const user = { id: session.id, role: session.role as UserRole };
   const hasProjectAccess = await canAccessProject(user, input.projectId);
@@ -1174,7 +1174,7 @@ export async function createWeeklyReportFromApprovedDailyReports(input: {
 
 export async function updateSiteReport(reportId: string, data: Record<string, unknown>) {
   const session = await getSession();
-  if (!session) throw new Error("Unauthorized");
+  if (!session) throw new Error("Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
 
   const user = await prisma.user.findUnique({
     where: { id: session.id },
@@ -1319,7 +1319,7 @@ export async function updateSiteReport(reportId: string, data: Record<string, un
 
 export async function softDeleteSiteReport(reportId: string) {
   const session = await getSession();
-  if (!session) throw new Error("Unauthorized");
+  if (!session) throw new Error("Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
 
   const user = await prisma.user.findUnique({
     where: { id: session.id },

@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import type { MaterialMovementDto, ProjectStockDto } from "@/app/(dashboard)/materials/actions";
 import { MovementTypeBadge, StockStatusBadge } from "./materials-badges";
 import { formatDateTime, formatQuantity, getMovementSign } from "./materials-formatters";
-import { ContentCard, KpiCard, SafeText } from "@/components/ui/enterprise";
+import { ContentCard, SafeText } from "@/components/ui/enterprise";
+import { InteractiveKpiCard } from "@/components/ui/interactive-kpi-card";
 
 interface MaterialsOverviewProps {
   stocks: ProjectStockDto[];
@@ -89,7 +90,7 @@ export function MaterialsOverview({
     <div className="space-y-5">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         {cards.map((card) => (
-          <KpiCard
+          <InteractiveKpiCard
             key={card.label}
             label={card.label}
             value={card.value}

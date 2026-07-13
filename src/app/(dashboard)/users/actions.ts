@@ -1,29 +1,46 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
 import { requireHighLevelUser, assertRoleHierarchy, getAllowedRolesForActor, ROLE_DISPLAY_NAMES } from "@/lib/rbac";
 import { writeAuditLog } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 import * as bcrypt from "bcryptjs";
-import { UserRole } from "@prisma/client";
+import { ProjectRole, UserRole } from "@prisma/client";
+import { assertPermission } from "@/lib/permissions/permission-resolver";
 
 const VALID_ROLES: UserRole[] = [
   "ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR", "CHIEF_COMMANDER",
   "MANAGER", "ENGINEER", "ACCOUNTANT", "STAFF",
 ];
+const VALID_PROJECT_ROLES: ProjectRole[] = [
+  "PROJECT_MANAGER", "SITE_COMMANDER", "CHIEF_COMMANDER", "ASSISTANT_COMMANDER",
+  "QA_QC", "HSE", "SUPERVISOR", "VIEWER",
+];
+
+function getExplicitProjectRole(projectId: string, projectRoles?: Record<string, ProjectRole>): ProjectRole {
+  const projectRole = projectRoles?.[projectId];
+  if (!projectRole) {
+    throw new Error("Vui lòng chọn vai trò tại công trình cho từng công trình được gán.");
+  }
+  if (!VALID_PROJECT_ROLES.includes(projectRole)) {
+    throw new Error("Vai trò tại công trình không hợp lệ.");
+  }
+  return projectRole;
+}
 
 // ─── Helpers ──────────────────────────────────────────────────
 
-async function countActiveAdmins(excludeUserId?: string) {
-  return prisma.user.count({
-    where: {
-      isActive: true,
-      deletedAt: null,
-      role: "ADMIN",
-      ...(excludeUserId ? { id: { not: excludeUserId } } : {}),
-    },
+async function assertValidProjectIds(projectIds: string[] | undefined) {
+  const uniqueProjectIds = [...new Set((projectIds ?? []).filter(Boolean))];
+  if (uniqueProjectIds.length === 0) return uniqueProjectIds;
+
+  const existingProjects = await prisma.project.count({
+    where: { id: { in: uniqueProjectIds }, deletedAt: null },
   });
+  if (existingProjects !== uniqueProjectIds.length) {
+    throw new Error("Một hoặc nhiều công trình được chọn không còn tồn tại hoặc đã ngừng sử dụng.");
+  }
+  return uniqueProjectIds;
 }
 
 /**
@@ -40,6 +57,7 @@ export async function getAllowedRoles(): Promise<{ role: UserRole; label: string
 
 export async function getUsers() {
   const session = await requireHighLevelUser();
+  await assertPermission(session, "users.view");
 
   const users = await prisma.user.findMany({
     where: { deletedAt: null },
@@ -67,11 +85,14 @@ interface CreateUserInput {
   password: string;
   role: UserRole;
   projectIds?: string[];
+  projectRoles?: Record<string, ProjectRole>;
   note?: string;
 }
 
 export async function createUser(input: CreateUserInput) {
   const session = await requireHighLevelUser();
+  await assertPermission(session, "users.create");
+  await assertPermission(session, "users.assign_system_role");
 
   // ── Role hierarchy: actor must be allowed to assign the requested role ──
   if (!VALID_ROLES.includes(input.role)) {
@@ -86,6 +107,8 @@ export async function createUser(input: CreateUserInput) {
   // ── Validate inputs ──
   const trimmedEmail = input.email.trim().toLowerCase();
   const trimmedName = input.name.trim();
+  const trimmedUsername = input.username?.trim() || null;
+  const trimmedPhone = input.phone?.trim() || null;
   if (!trimmedName) return { error: "Họ tên không được bỏ trống" };
   if (!trimmedEmail) return { error: "Email không được bỏ trống" };
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
@@ -101,13 +124,21 @@ export async function createUser(input: CreateUserInput) {
   }
 
   // Validate unique username if provided
-  if (input.username) {
+  if (trimmedUsername) {
     const existingUsername = await prisma.user.findUnique({
-      where: { username: input.username },
+      where: { username: trimmedUsername },
     });
     if (existingUsername) {
       return { error: "Tên đăng nhập đã tồn tại trong hệ thống" };
     }
+  }
+
+  if (trimmedPhone) {
+    const existingPhone = await prisma.user.findFirst({
+      where: { phone: trimmedPhone, deletedAt: null },
+      select: { id: true },
+    });
+    if (existingPhone) return { error: "Số điện thoại đã được sử dụng bởi một tài khoản đang hoạt động." };
   }
 
   // Validate password length
@@ -115,6 +146,13 @@ export async function createUser(input: CreateUserInput) {
     return { error: "Mật khẩu phải có ít nhất 6 ký tự" };
   }
 
+  const projectIds = await assertValidProjectIds(input.projectIds);
+  if (projectIds.length > 0) await assertPermission(session, "users.assign_project_role");
+  try {
+    projectIds.forEach((projectId) => getExplicitProjectRole(projectId, input.projectRoles));
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "Vai trò tại công trình không hợp lệ." };
+  }
   const hashedPassword = await bcrypt.hash(input.password, 10);
 
   try {
@@ -123,25 +161,23 @@ export async function createUser(input: CreateUserInput) {
         data: {
           name: trimmedName,
           email: trimmedEmail,
-          username: input.username || null,
-          phone: input.phone || null,
+          username: trimmedUsername,
+          phone: trimmedPhone,
           password: hashedPassword,
           role: input.role,
           isActive: true,
         },
       });
 
-      // Assign projects if provided (for CHIEF_COMMANDER)
-      if (input.projectIds && input.projectIds.length > 0) {
-        const projectRole = input.role === "CHIEF_COMMANDER" ? "CHIEF_COMMANDER" as const : "VIEWER" as const;
-        
+      // Project membership is explicit and independent from the system role.
+      if (projectIds.length > 0) {
         await Promise.all(
-          input.projectIds.map((projectId) =>
+          projectIds.map((projectId) =>
             tx.projectMember.create({
               data: {
                 projectId,
                 userId: newUser.id,
-                role: projectRole,
+                role: getExplicitProjectRole(projectId, input.projectRoles),
                 assignedById: session.id,
                 isActive: true,
                 note: input.note || null,
@@ -179,15 +215,20 @@ interface UpdateUserInput {
   phone?: string;
   role?: UserRole;
   projectIds?: string[];
+  projectRoles?: Record<string, ProjectRole>;
   note?: string;
 }
 
 export async function updateUser(userId: string, input: UpdateUserInput) {
   const session = await requireHighLevelUser();
+  await assertPermission(session, "users.update_profile");
+  if (input.role !== undefined) await assertPermission(session, "users.assign_system_role");
+  if (input.projectIds !== undefined) await assertPermission(session, "users.assign_project_role");
 
   const existing = await prisma.user.findUnique({ where: { id: userId } });
   if (!existing) return { error: "Không tìm thấy tài khoản" };
   if (existing.deletedAt) return { error: "Tài khoản đã bị xóa mềm. Vui lòng khôi phục trước khi chỉnh sửa." };
+
 
   // ── Role hierarchy: actor must outrank target ──
   try {
@@ -211,7 +252,19 @@ export async function updateUser(userId: string, input: UpdateUserInput) {
     }
   }
 
+  if (input.role && !VALID_ROLES.includes(input.role)) {
+    return { error: "Vai trò không hợp lệ." };
+  }
+  if (input.name !== undefined && !input.name.trim()) {
+    return { error: "Họ tên không được để trống." };
+  }
+  if (input.email !== undefined && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.email.trim())) {
+    return { error: "Email không đúng định dạng." };
+  }
+
   // Check email uniqueness if changing
+  const trimmedUsername = input.username?.trim() || null;
+  const trimmedPhone = input.phone?.trim() || null;
   if (input.email && input.email.trim().toLowerCase() !== existing.email) {
     const emailConflict = await prisma.user.findUnique({
       where: { email: input.email.trim().toLowerCase() },
@@ -220,40 +273,59 @@ export async function updateUser(userId: string, input: UpdateUserInput) {
   }
 
   // Check username uniqueness if changing
-  if (input.username && input.username !== existing.username) {
+  if (trimmedUsername && trimmedUsername !== existing.username) {
     const usernameConflict = await prisma.user.findUnique({
-      where: { username: input.username },
+      where: { username: trimmedUsername },
     });
     if (usernameConflict) return { error: "Tên đăng nhập đã tồn tại" };
   }
+
+  if (trimmedPhone && trimmedPhone !== existing.phone) {
+    const phoneConflict = await prisma.user.findFirst({
+      where: { phone: trimmedPhone, deletedAt: null, id: { not: userId } },
+      select: { id: true },
+    });
+    if (phoneConflict) return { error: "Số điện thoại đã được sử dụng bởi một tài khoản đang hoạt động." };
+  }
+
+  const projectIds = input.projectIds === undefined ? undefined : await assertValidProjectIds(input.projectIds);
 
   try {
     const updated = await prisma.$transaction(async (tx) => {
       const updatedUser = await tx.user.update({
         where: { id: userId },
         data: {
-          ...(input.name !== undefined && { name: input.name }),
+          ...(input.name !== undefined && { name: input.name.trim() }),
           ...(input.email !== undefined && { email: input.email.trim().toLowerCase() }),
-          ...(input.username !== undefined && { username: input.username || null }),
-          ...(input.phone !== undefined && { phone: input.phone || null }),
+          ...(input.username !== undefined && { username: trimmedUsername }),
+          ...(input.phone !== undefined && { phone: trimmedPhone }),
           ...(input.role !== undefined && { role: input.role }),
         },
       });
 
       // Handle project assignments if provided
-      if (input.projectIds !== undefined) {
+      if (projectIds !== undefined) {
         // Find existing active projects
         const existingMembers = await tx.projectMember.findMany({
           where: { userId, isActive: true, deletedAt: null },
         });
 
         const existingProjectIds = existingMembers.map((m) => m.projectId);
-        const newProjectIds = input.projectIds;
+        const newProjectIds = projectIds;
 
         const toAdd = newProjectIds.filter((id) => !existingProjectIds.includes(id));
         const toRemove = existingProjectIds.filter((id) => !newProjectIds.includes(id));
 
-        const projectRole = updatedUser.role === "CHIEF_COMMANDER" ? ("CHIEF_COMMANDER" as const) : ("VIEWER" as const);
+        // A project role changes only when this explicit membership form is submitted.
+        for (const member of existingMembers) {
+          const requestedProjectRole = input.projectRoles?.[member.projectId];
+          if (requestedProjectRole && requestedProjectRole !== member.role) {
+            await tx.projectMember.update({
+              where: { id: member.id },
+              data: { role: getExplicitProjectRole(member.projectId, input.projectRoles) },
+            });
+          }
+        }
 
         // Remove (soft delete/deactivate) unselected projects
         if (toRemove.length > 0) {
@@ -272,12 +344,15 @@ export async function updateUser(userId: string, input: UpdateUserInput) {
             });
 
             if (existingRecord) {
+              const requestedProjectRole = input.projectRoles?.[projectId];
               await tx.projectMember.update({
                 where: { id: existingRecord.id },
                 data: {
                   isActive: true,
                   deletedAt: null,
-                  role: projectRole,
+                  role: requestedProjectRole
+                    ? getExplicitProjectRole(projectId, input.projectRoles)
+                    : existingRecord.role,
                   assignedById: session.id,
                   note: input.note || null,
                 },
@@ -287,7 +362,7 @@ export async function updateUser(userId: string, input: UpdateUserInput) {
                 data: {
                   projectId,
                   userId,
-                  role: projectRole,
+                  role: getExplicitProjectRole(projectId, input.projectRoles),
                   assignedById: session.id,
                   isActive: true,
                   note: input.note || null,
@@ -378,6 +453,7 @@ export async function resetUserPassword(userId: string) {
 
 export async function toggleUserActive(userId: string) {
   const session = await requireHighLevelUser();
+  await assertPermission(session, "users.lock");
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) return { error: "Không tìm thấy tài khoản" };
@@ -431,9 +507,18 @@ export async function toggleUserActive(userId: string) {
 export async function assignProjectToUser(
   userId: string,
   projectId: string,
+  projectRole: ProjectRole,
   note?: string
 ) {
   const session = await requireHighLevelUser();
+  await assertPermission(session, "users.assign_project_role");
+  await assertValidProjectIds([projectId]);
+  if (!projectRole) {
+    return { error: "Vui lòng chọn vai trò tại công trình trước khi gán." };
+  }
+  if (!VALID_PROJECT_ROLES.includes(projectRole)) {
+    return { error: "Vai trò tại công trình không hợp lệ." };
+  }
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) return { error: "Không tìm thấy tài khoản" };
@@ -460,14 +545,12 @@ export async function assignProjectToUser(
       data: {
         isActive: true,
         deletedAt: null,
+        role: projectRole,
         assignedById: session.id,
         note: note || null,
       },
     });
   } else {
-    const projectRole =
-      user.role === "CHIEF_COMMANDER" ? ("CHIEF_COMMANDER" as const) : ("VIEWER" as const);
-
     await prisma.projectMember.create({
       data: {
         projectId,
@@ -499,6 +582,7 @@ export async function unassignProjectFromUser(
   projectId: string
 ) {
   const session = await requireHighLevelUser();
+  await assertPermission(session, "users.assign_project_role");
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) return { error: "Không tìm thấy tài khoản" };
@@ -549,6 +633,7 @@ export async function getProjectsForAssignment() {
 
 export async function softDeleteUser(userId: string) {
   const session = await requireHighLevelUser();
+  await assertPermission(session, "users.deactivate");
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) return { error: "Không tìm thấy tài khoản" };
@@ -599,6 +684,7 @@ export async function softDeleteUser(userId: string) {
 
 export async function restoreUser(userId: string) {
   const session = await requireHighLevelUser();
+  await assertPermission(session, "users.deactivate");
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) return { error: "Không tìm thấy tài khoản" };
@@ -628,6 +714,16 @@ export async function restoreUser(userId: string) {
     
     if (usernameConflict) {
       return { error: "Không thể khôi phục vì tên đăng nhập đã được tài khoản khác sử dụng." };
+    }
+  }
+
+  if (user.phone) {
+    const phoneConflict = await prisma.user.findFirst({
+      where: { phone: user.phone, deletedAt: null, id: { not: userId } },
+      select: { id: true },
+    });
+    if (phoneConflict) {
+      return { error: "Không thể khôi phục vì số điện thoại đã được tài khoản khác sử dụng." };
     }
   }
 

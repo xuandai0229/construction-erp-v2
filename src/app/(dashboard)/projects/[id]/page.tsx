@@ -202,7 +202,7 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
               <ListTree className="w-4 h-4" />
             </div>
             <h3 className="font-bold text-slate-900 text-[14px] mb-1">Bảng khối lượng gốc</h3>
-            <p className="text-[12.5px] text-slate-500 leading-relaxed mb-3">Thiết lập hạng mục, công việc, định mức cho dự án.</p>
+            <p className="text-[12.5px] text-slate-500 leading-relaxed mb-3">Thiết lập hạng mục, công việc, định mức cho công trình.</p>
             <div className="mt-auto pt-3 border-t border-slate-100 flex items-center justify-between">
               <span className={`text-[12px] font-semibold ${hasWbs ? 'text-emerald-600' : 'text-slate-400'}`}>
                 {hasWbs ? 'Đã thiết lập' : 'Chưa thiết lập'}

@@ -194,7 +194,7 @@ export function ReportPrintTemplate({ report }: ReportPrintTemplateProps) {
           <tbody>
             <tr>
               <td className="border-none py-1 w-[20px] font-bold align-top">1.</td>
-              <td className="border-none py-1 w-[160px] font-bold align-top">Dự án</td>
+              <td className="border-none py-1 w-[160px] font-bold align-top">Công trình</td>
               <td className="border-none py-1 align-top">: {normalizeVietnameseText(report.projectName)}</td>
             </tr>
             <tr>
@@ -342,7 +342,7 @@ export function ReportPrintTemplate({ report }: ReportPrintTemplateProps) {
                 <th className="border border-black py-2 px-1 text-left">Nội dung công việc</th>
                 <th className="border border-black py-2 px-1 w-[40px]">Đơn vị</th>
                 <th className="border border-black py-2 px-1 w-[60px]">Còn lại</th>
-                <th className="border border-black py-2 px-1 w-[60px]">KL Tuần tới</th>
+                <th className="border border-black py-2 px-1 w-[60px]">Khối lượng tuần tới</th>
                 <th className="border border-black py-2 px-1 w-[70px]">Từ ngày</th>
                 <th className="border border-black py-2 px-1 w-[70px]">Đến ngày</th>
                 <th className="border border-black py-2 px-1 w-[80px]">Phụ trách</th>

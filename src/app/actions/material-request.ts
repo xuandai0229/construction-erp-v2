@@ -165,7 +165,7 @@ export async function updateMaterialRequest(id: string, data: any) {
 
   // Verify exists and get projectId for access check
   const existing = await prisma.materialRequest.findUnique({ where: { id } });
-  if (!existing) throw new Error("Not found");
+  if (!existing) throw new Error("Không tìm thấy phiếu đề xuất vật tư.");
 
   const session = await requireProjectAccess(existing.projectId);
   const perms = await getProjectMaterialPermissions(session, existing.projectId);
@@ -255,7 +255,7 @@ export async function approveMaterialRequest(id: string) {
     where: { id },
     include: { items: true }
   });
-  if (!existing) throw new Error("Not found");
+  if (!existing) throw new Error("Không tìm thấy phiếu đề xuất vật tư.");
 
   const session = await requireProjectAccess(existing.projectId);
   const perms = await getProjectMaterialPermissions(session, existing.projectId);
@@ -388,7 +388,7 @@ export async function approveMaterialRequest(id: string) {
 
 export async function rejectMaterialRequest(id: string, reason: string) {
   const existing = await prisma.materialRequest.findUnique({ where: { id } });
-  if (!existing) throw new Error("Not found");
+  if (!existing) throw new Error("Không tìm thấy phiếu đề xuất vật tư.");
 
   const session = await requireProjectAccess(existing.projectId);
   const perms = await getProjectMaterialPermissions(session, existing.projectId);
@@ -442,7 +442,7 @@ export async function updateMaterialRequestStatus(id: string, status: any, cance
   const validStatuses = ["DRAFT", "REQUESTED", "SUBMITTED", "APPROVED", "REJECTED", "PROCESSING", "ISSUED", "RECEIVED", "CANCELLED"];
   if (!validStatuses.includes(status)) throw new Error("Trạng thái không hợp lệ");
   const existing = await prisma.materialRequest.findUnique({ where: { id } });
-  if (!existing) throw new Error("Not found");
+  if (!existing) throw new Error("Không tìm thấy phiếu đề xuất vật tư.");
 
   const session = await requireProjectAccess(existing.projectId);
   const perms = await getProjectMaterialPermissions(session, existing.projectId);
@@ -479,7 +479,7 @@ export async function updateMaterialRequestStatus(id: string, status: any, cance
 
 export async function updateMaterialRequestItems(id: string, itemsData: any[]) {
   const existing = await prisma.materialRequest.findUnique({ where: { id } });
-  if (!existing) throw new Error("Not found");
+  if (!existing) throw new Error("Không tìm thấy phiếu đề xuất vật tư.");
 
   const session = await requireProjectAccess(existing.projectId);
   const perms = await getProjectMaterialPermissions(session, existing.projectId);
@@ -513,7 +513,7 @@ export async function deleteMaterialRequest(id: string) {
     where: { id },
     include: { items: true }
   });
-  if (!existing) throw new Error("Not found");
+  if (!existing) throw new Error("Không tìm thấy phiếu đề xuất vật tư.");
   
   const session = await requireProjectAccess(existing.projectId);
   const perms = await getProjectMaterialPermissions(session, existing.projectId);
@@ -552,7 +552,7 @@ export async function deleteMaterialRequest(id: string) {
 
 export async function cancelMaterialRequest(id: string, reason?: string) {
   const existing = await prisma.materialRequest.findUnique({ where: { id } });
-  if (!existing) throw new Error("Not found");
+  if (!existing) throw new Error("Không tìm thấy phiếu đề xuất vật tư.");
   
   const session = await requireProjectAccess(existing.projectId);
   const perms = await getProjectMaterialPermissions(session, existing.projectId);

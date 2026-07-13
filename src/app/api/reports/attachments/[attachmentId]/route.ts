@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import mime from "mime-types";
 import path from "path";
 import { canAccessProject } from "@/lib/rbac";
+import { resolvePermission } from "@/lib/permissions/permission-resolver";
 import { LocalStorageProvider } from "@/lib/storage/local-storage-provider";
 import { Readable } from "stream";
 
@@ -23,7 +24,7 @@ function sanitizeDispositionFilename(name: string): string {
 export async function GET(req: NextRequest, { params }: { params: Promise<{ attachmentId: string }> }) {
   try {
     const session = await getSession();
-    if (!session) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session) return new NextResponse("Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.", { status: 401 });
 
     const resolvedParams = await params;
     const attachmentId = resolvedParams.attachmentId;
@@ -39,7 +40,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ atta
     });
 
     if (!attachment || attachment.report.deletedAt) {
-      return new NextResponse("Not Found", { status: 404 });
+      return new NextResponse("Không tìm thấy tệp đính kèm.", { status: 404 });
     }
 
     const hasAccess = await canAccessProject(
@@ -47,14 +48,15 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ atta
       attachment.report.projectId
     );
 
-    if (!hasAccess) {
-      return new NextResponse("Forbidden", { status: 403 });
+    const permission = await resolvePermission(session, "reports.view", { projectId: attachment.report.projectId });
+    if (!hasAccess || !permission.allowed) {
+      return new NextResponse("Bạn không có quyền truy cập tệp đính kèm này.", { status: 403 });
     }
 
     // Guard against path traversal
     if (attachment.storagePath.includes('..')) {
       console.error("Path traversal detected in storagePath:", attachment.id);
-      return new NextResponse("Forbidden", { status: 403 });
+      return new NextResponse("Bạn không có quyền tải tệp đính kèm này.", { status: 403 });
     }
 
     try {
@@ -99,7 +101,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ atta
       }
       return response;
     } catch {
-      return new NextResponse("File not found on disk", { status: 404 });
+      return new NextResponse("Không tìm thấy tệp trên hệ thống lưu trữ.", { status: 404 });
     }
 
   } catch (error) {

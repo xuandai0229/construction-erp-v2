@@ -2,6 +2,7 @@ import { UserRole } from "@prisma/client";
 import prisma from "./prisma";
 import { getSession } from "./auth";
 import { redirect } from "next/navigation";
+import { SYSTEM_ROLE_DISPLAY_NAMES, SYSTEM_ROLE_REGISTRY } from "./roles/role-registry";
 
 // ─── Role Constants ───────────────────────────────────────────
 export const SYSTEM_ADMIN_ROLES: UserRole[] = ["ADMIN"];
@@ -9,28 +10,12 @@ export const COMPANY_WIDE_ROLES: UserRole[] = ["ADMIN", "DIRECTOR", "DEPUTY_DIRE
 const HIGH_LEVEL_ROLES: UserRole[] = COMPANY_WIDE_ROLES;
 
 // ─── Role Display Names (Vietnamese) ─────────────────────────
-export const ROLE_DISPLAY_NAMES: Record<UserRole, string> = {
-  ADMIN: "Giám đốc điều hành",
-  DIRECTOR: "Giám đốc điều hành",
-  DEPUTY_DIRECTOR: "Phó giám đốc",
-  CHIEF_COMMANDER: "Chỉ huy trưởng",
-  MANAGER: "Quản lý",
-  ENGINEER: "Kỹ sư",
-  ACCOUNTANT: "Kế toán",
-  STAFF: "Nhân viên",
-};
+export const ROLE_DISPLAY_NAMES = SYSTEM_ROLE_DISPLAY_NAMES;
 
 // ─── Role Level Hierarchy ─────────────────────────────────────
-export const USER_ROLE_LEVEL: Record<UserRole, number> = {
-  STAFF: 10,
-  ENGINEER: 20,
-  MANAGER: 30,
-  ACCOUNTANT: 40,
-  CHIEF_COMMANDER: 50,
-  DEPUTY_DIRECTOR: 80,
-  DIRECTOR: 90,
-  ADMIN: 100,
-};
+export const USER_ROLE_LEVEL: Record<UserRole, number> = Object.fromEntries(
+  Object.entries(SYSTEM_ROLE_REGISTRY).map(([role, definition]) => [role, definition.level]),
+) as Record<UserRole, number>;
 
 export function getRoleLevel(role: UserRole): number {
   return USER_ROLE_LEVEL[role] ?? 0;
@@ -157,7 +142,7 @@ export async function requireProjectScope(
 
   const projectRole = await getProjectRoleForUser(user, projectId);
   if (!projectRole) {
-    throw new Error("Ban khong co quyen truy cap cong trinh nay");
+    throw new Error("Bạn không có quyền truy cập công trình này.");
   }
 
   return projectRole;
@@ -190,6 +175,7 @@ export async function canManageProject(
   user: { id: string; role: UserRole },
   projectId: string
 ): Promise<boolean> {
+  void projectId;
   return HIGH_LEVEL_ROLES.includes(user.role);
 }
 

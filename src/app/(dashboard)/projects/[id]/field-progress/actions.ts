@@ -102,8 +102,8 @@ export async function updateItem(itemId: string, projectId: string, data: any) {
     assertFieldProgressPermission(permissions, "canUpdateProgress");
 
     const before = await prisma.fieldProgressItem.findUnique({ where: { id: itemId } });
-    if (!before) return { error: "Item not found" };
-    if (before.projectId !== projectId) return { error: "Item does not belong to this project" };
+    if (!before) return { error: "Không tìm thấy hạng mục." };
+    if (before.projectId !== projectId) return { error: "Hạng mục không thuộc công trình này." };
 
     const item = await prisma.fieldProgressItem.update({
       where: { id: itemId },
@@ -145,8 +145,8 @@ export async function deleteItem(itemId: string, projectId: string) {
     assertFieldProgressPermission(permissions, "canUpdateProgress");
 
     const before = await prisma.fieldProgressItem.findUnique({ where: { id: itemId } });
-    if (!before) return { error: "Item not found" };
-    if (before.projectId !== projectId) return { error: "Item does not belong to this project" };
+    if (!before) return { error: "Không tìm thấy hạng mục." };
+    if (before.projectId !== projectId) return { error: "Hạng mục không thuộc công trình này." };
 
     const deletedTime = new Date();
 
@@ -212,7 +212,7 @@ export async function batchUpdateItems(projectId: string, updates: any[]) {
       where: { id: { in: itemIds } }
     });
     if (existingItems.some(item => item.projectId !== projectId)) {
-      return { error: "Some items do not belong to this project" };
+      return { error: "Một hoặc nhiều hạng mục không thuộc công trình này." };
     }
 
     // using a transaction to update multiple items

@@ -6,6 +6,7 @@ import { writeAuditLog } from "@/lib/audit";
 import path from "path";
 import { Readable } from "stream";
 import { canAccessProject, requireProjectScope } from "@/lib/rbac";
+import { resolvePermission } from "@/lib/permissions/permission-resolver";
 import { canUploadToFolder } from "@/lib/documents/permissions";
 import { getDocumentRule } from "@/lib/document-rules";
 import { getDocumentTypeOptionsForFolder } from "@/lib/documents/metadata-types";
@@ -134,7 +135,8 @@ export async function POST(req: NextRequest) {
       where: { id: upload.projectId, deletedAt: null },
     });
     if (!project) return json({ error: "Không tìm thấy công trình" }, { status: 404 });
-    if (!(await canAccessProject(session, upload.projectId))) {
+    const permission = await resolvePermission(session, "documents.upload", { projectId: upload.projectId });
+    if (!permission.allowed || !(await canAccessProject(session, upload.projectId))) {
       return json({ error: "Không có quyền truy cập công trình" }, { status: 403 });
     }
 

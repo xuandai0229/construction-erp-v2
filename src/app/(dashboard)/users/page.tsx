@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { canManageUsers, ROLE_DISPLAY_NAMES, getAllowedRolesForActor } from "@/lib/rbac";
+import { canManageUsers, ROLE_DISPLAY_NAMES, getAllowedRolesForActor, USER_ROLE_LEVEL } from "@/lib/rbac";
+import { PROJECT_ROLE_DISPLAY_NAMES } from "@/lib/roles/role-registry";
 import prisma from "@/lib/prisma";
 import { UserManagementClient } from "@/components/users/user-management-client";
 import { KpiCard, PageHeading } from "@/components/ui/enterprise";
@@ -51,6 +52,8 @@ export default async function UsersPage() {
       id: pm.project.id,
       code: pm.project.code,
       name: pm.project.name,
+      role: pm.role,
+      roleDisplay: PROJECT_ROLE_DISPLAY_NAMES[pm.role],
     })),
   }))));
 
@@ -59,6 +62,7 @@ export default async function UsersPage() {
     role: r,
     label: ROLE_DISPLAY_NAMES[r],
   }));
+  const projectRoleOptions = Object.entries(PROJECT_ROLE_DISPLAY_NAMES).map(([role, label]) => ({ role, label }));
 
   return (
     <div className="app-page space-y-6 pt-2 sm:pt-0">
@@ -67,10 +71,12 @@ export default async function UsersPage() {
         description="Tạo và quản lý tài khoản người dùng trong hệ thống"
       />
 
+      <p className="text-xs text-slate-500">KPI tính trên toàn hệ thống, không đổi theo bộ lọc bảng. “Tài khoản hiện hành”, “GĐ / Phó GĐ” và “Chỉ huy trưởng” loại tài khoản ngừng sử dụng; “Đang hoạt động” chỉ đếm `isActive=true`.</p>
+
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <KpiCard
-          label="Tổng tài khoản"
+          label="Tài khoản hiện hành"
           value={totalUsers}
           tone="slate"
           icon={<Users className="h-5 w-5" />}
@@ -98,8 +104,11 @@ export default async function UsersPage() {
       <UserManagementClient 
         initialUsers={serializedUsers}
         projects={JSON.parse(JSON.stringify(projects))}
+        currentUserId={session.id}
         currentUserRole={session.role}
         allowedRoles={allowedRoles}
+        projectRoleOptions={projectRoleOptions}
+        roleLevels={USER_ROLE_LEVEL}
       />
     </div>
   );

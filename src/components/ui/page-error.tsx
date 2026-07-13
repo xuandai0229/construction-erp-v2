@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { AlertCircle, RefreshCw, Home } from "lucide-react";
 
 export function PageError({
@@ -15,8 +16,11 @@ export function PageError({
   title?: string;
   message?: string;
 }) {
+  const router = useRouter();
+  const showTechnicalDetails = process.env.NODE_ENV !== "production";
+
   useEffect(() => {
-    console.error("Page Crash:", error);
+    console.error("Page Crash:", { message: error.message, digest: error.digest, error });
   }, [error]);
 
   return (
@@ -30,11 +34,12 @@ export function PageError({
           {message}
         </p>
         
-        {error.message && (
+        {showTechnicalDetails && error.message && (
           <div className="mt-4 p-3 bg-slate-50 border border-slate-100 rounded-lg text-left text-xs font-mono text-slate-500 overflow-x-auto max-h-32">
             {error.message}
           </div>
         )}
+        {error.digest ? <p className="mt-3 text-xs text-slate-400">Mã tham chiếu: {error.digest}</p> : null}
         
         <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
           {reset && (
@@ -47,6 +52,13 @@ export function PageError({
               Thử lại
             </button>
           )}
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-50 hover:text-slate-900 active:scale-95 shadow-sm"
+          >
+            Quay lại
+          </button>
           <Link
             href="/dashboard"
             className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-50 hover:text-slate-900 active:scale-95 shadow-sm"

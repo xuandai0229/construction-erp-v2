@@ -480,7 +480,7 @@ export function ReportsWorkspace({
               Quản lý báo cáo ngày, báo cáo tuần và phát sinh tại công trường
               {globalContext?.selectedProjectId && (
                 <span className="ml-2 inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-200">
-                  {activeProjects.find(p => p.id === globalContext.selectedProjectId)?.name || 'Dự án đang chọn'}
+                  {activeProjects.find(p => p.id === globalContext.selectedProjectId)?.name || 'Công trình đang chọn'}
                 </span>
               )}
               {searchParams.get("reportId") && (

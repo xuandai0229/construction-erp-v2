@@ -175,7 +175,7 @@ export function WorkPicker({
               </div>
               <h3 className="text-slate-700 font-bold mb-2">Chưa có bảng khối lượng</h3>
               <p className="text-slate-500 text-[14px] max-w-xl mx-auto">
-                Bảng khối lượng gốc của công trình này trống. Vui lòng kiểm tra lại thiết lập dự án.
+                Bảng khối lượng gốc của công trình này trống. Vui lòng kiểm tra lại thiết lập công trình.
               </p>
             </div>
           ) : filtered.length === 0 ? (

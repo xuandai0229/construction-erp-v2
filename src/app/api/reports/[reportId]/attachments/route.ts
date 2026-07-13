@@ -9,6 +9,7 @@ import {
   canUploadReportAttachment,
 } from "@/lib/reports/report-workflow-policy";
 import { canAccessProject } from "@/lib/rbac";
+import { resolvePermission } from "@/lib/permissions/permission-resolver";
 import { pipeline } from "stream/promises";
 import { createWriteStream } from "fs";
 import { Readable } from "stream";
@@ -86,7 +87,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ rep
       report.projectId
     );
 
-    if (!hasAccess) {
+    const permission = await resolvePermission(session, "reports.update", { projectId: report.projectId, ownerId: report.createdById });
+    if (!hasAccess || !permission.allowed) {
       return NextResponse.json({ error: "Không có quyền thêm file vào báo cáo này" }, { status: 403 });
     }
 
@@ -154,7 +156,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ rep
         continue;
       }
 
-      const stream = file.stream();
       // Wait, we can't easily stream for magic bytes and write at the same time without custom logic,
       // but we can slice the file Blob!
       const magicBytesBuffer = Buffer.from(await file.slice(0, 16).arrayBuffer());

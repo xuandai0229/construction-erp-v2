@@ -274,7 +274,7 @@ export function WeeklyReportForm({ form, updateField, errors, workItems = [], ac
                 <div className="space-y-4">
                   {/* Stats grid */}
                   <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-                    <StatBadge label="Tổng BC ngày" value={preview.dayStatuses.filter(d => d.hasReport).length} color="blue" />
+                    <StatBadge label="Tổng báo cáo ngày" value={preview.dayStatuses.filter(d => d.hasReport).length} color="blue" />
                     <StatBadge label="Đã duyệt" value={preview.stats.approvedReports} color="emerald" />
                     <StatBadge label="Chờ duyệt" value={preview.stats.submittedReports} color="amber" />
                     <StatBadge label="Từ chối" value={preview.stats.rejectedReports} color="red" />

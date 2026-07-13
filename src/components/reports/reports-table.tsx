@@ -104,7 +104,7 @@ export function ReportsTable({
           <thead className="sticky top-0 z-20">
             <tr className="border-b border-slate-100 bg-slate-50/95 shadow-sm backdrop-blur">
               <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wider whitespace-nowrap w-[15%]">
-                Mã BC
+                Mã báo cáo
               </th>
               {showProjectColumn && (
                 <th className="text-left py-3 px-3 font-semibold text-slate-600 text-xs uppercase tracking-wider min-w-[150px]">
@@ -248,8 +248,8 @@ export function ReportsTable({
                                 </span>
                               )}
                               {(report.photos.some(p => p.isMissing) || report.attachments.some(a => a.isMissing)) && (
-                                <StatusBadge variant="danger" size="sm" title="Báo cáo có file/ảnh không còn tồn tại trong storage">
-                                  File lỗi
+                                <StatusBadge variant="danger" size="sm" title="Báo cáo có tệp hoặc ảnh không còn tồn tại trong hệ thống lưu trữ">
+                                  Tệp lỗi
                                 </StatusBadge>
                               )}
                               {report.photos.length === 0 && report.attachments.length === 0 && (

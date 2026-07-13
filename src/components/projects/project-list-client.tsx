@@ -144,7 +144,7 @@ export function ProjectsListClient({
             
             <div className="grid grid-cols-1 gap-2 text-[13px] text-slate-600 mb-4">
               <p className="truncate" title={project.investor || undefined}>
-                <span className="text-slate-400">CĐT:</span> <span className="font-medium text-slate-800">{project.investor || "—"}</span>
+                <span className="text-slate-400">Chủ đầu tư:</span> <span className="font-medium text-slate-800">{project.investor || "—"}</span>
               </p>
               <p className="truncate" title={project.location || undefined}>
                 <span className="text-slate-400">Vị trí:</span> <span className="font-medium text-slate-800">{project.location || "—"}</span>

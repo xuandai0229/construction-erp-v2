@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { 
   LayoutDashboard, Building2, FolderOpen, ClipboardCheck, 
   FileText, Users as UsersIcon, Package, CreditCard, 
-  CheckSquare, History, Settings, UserCog, ChevronDown
+  CheckSquare, Settings, UserCog, ChevronDown
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { UserRole } from '@prisma/client';
@@ -16,7 +16,6 @@ import { GlobalProjectContextSwitcher } from './global-project-context-switcher'
 import { GlobalNotificationBell } from './global-notification-bell';
 import { GlobalSearchCommand } from './global-search-command';
 import type { GlobalProjectContext } from '@/lib/project-context';
-import { useToast } from '@/components/ui/toast-context';
 import { canViewNavigationItem, projectNavName } from '@/lib/navigation-permissions';
 
 const mobileNavSections = [
@@ -84,7 +83,6 @@ function getFilteredMobileSections(role: UserRole) {
 export function Header({ userName, userRole, userRoleRaw, globalContext }: { userName?: string, userRole?: string, userRoleRaw?: UserRole, globalContext?: GlobalProjectContext }) {
   const router = useRouter();
   const pathname = usePathname();
-  const toast = useToast();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const filteredSections = getFilteredMobileSections(userRoleRaw || 'STAFF');
@@ -182,7 +180,7 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
                 <ChevronDown className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-600 transition-colors" />
               </div>
               <span className="max-w-[140px] truncate text-[11px] font-medium text-slate-500 leading-tight mt-0.5">
-                {userRole === 'ADMIN' ? 'Giám đốc điều hành' : (userRole || 'Quản trị viên')}
+                {userRole || 'Chưa xác định vai trò'}
               </span>
             </div>
           </div>

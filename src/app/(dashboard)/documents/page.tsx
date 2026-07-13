@@ -195,7 +195,7 @@ export default async function DocumentsOverviewPage({
           <div className="p-8">
             <EmptyState 
               title="Không tìm thấy công trình" 
-              description={q ? "Không có công trình nào khớp với từ khóa tìm kiếm." : "Bạn chưa được phân quyền vào dự án nào hoặc hệ thống chưa có dự án."} 
+              description={q ? "Không có công trình nào khớp với từ khóa tìm kiếm." : "Bạn chưa được phân quyền vào công trình nào hoặc hệ thống chưa có công trình."}
               icon={<Building2 className="h-12 w-12 text-slate-300" />}
             />
           </div>

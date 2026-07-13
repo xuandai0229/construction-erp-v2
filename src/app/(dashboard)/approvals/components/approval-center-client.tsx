@@ -278,7 +278,7 @@ function ApprovalFormDialog({
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               className="mt-1.5 h-10 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              placeholder="Ví dụ: Xin ý kiến phương án móng cọc dự án A..."
+              placeholder="Ví dụ: Xin ý kiến phương án móng cọc công trình A..."
               required
             />
           </label>
@@ -403,7 +403,7 @@ function MaterialRequestPreview({ approvalId }: { approvalId: string }) {
           <span className="font-medium text-slate-900">{formatDate(data.neededDate)}</span>
         </div>
         <div className="text-sm">
-          <span className="text-slate-500">Trạng thái phiếu VT: </span>
+          <span className="text-slate-500">Trạng thái phiếu vật tư: </span>
           <StatusBadge status={data.status} />
         </div>
         <div className="text-sm">
@@ -937,7 +937,7 @@ export function ApprovalCenterClient({
               />
             </div>
             <select value={projectFilter} onChange={(event) => handleProjectFilterChange(event.target.value)} className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-              <option value="">Tất cả dự án</option>
+              <option value="">Tất cả công trình</option>
               {projects.map((project) => (
                 <option key={project.id} value={project.id}>{project.code}</option>
               ))}

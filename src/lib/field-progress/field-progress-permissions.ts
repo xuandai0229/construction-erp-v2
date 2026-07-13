@@ -60,6 +60,6 @@ export function assertFieldProgressPermission(
   action: keyof FieldProgressPermissionSet,
 ) {
   if (!permissions[action]) {
-    throw new Error("Ban khong co quyen thuc hien thao tac khoi luong nay.");
+    throw new Error("Bạn không có quyền thực hiện thao tác khối lượng này.");
   }
 }

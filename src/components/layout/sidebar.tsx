@@ -23,31 +23,31 @@ import { canViewNavigationItem, projectNavName } from "@/lib/navigation-permissi
 const navigationSections = [
   {
     label: null,
-    items: [{ name: "Tong quan", href: "/dashboard", icon: LayoutDashboard }],
+    items: [{ name: "Tổng quan", href: "/dashboard", icon: LayoutDashboard }],
   },
   {
-    label: "QUAN LY",
+    label: "QUẢN LÝ",
     items: [
-      { name: "Cong trinh", href: "/projects", icon: Building2 },
-      { name: "Tai lieu", href: "/documents", icon: FolderOpen },
-      { name: "Bao cao hien truong", href: "/reports", icon: ClipboardCheck },
-      { name: "Vat tu", href: "/materials", icon: Package },
-      { name: "Nha cung cap", href: "/suppliers", icon: Users },
+      { name: "Công trình", href: "/projects", icon: Building2 },
+      { name: "Tài liệu", href: "/documents", icon: FolderOpen },
+      { name: "Báo cáo hiện trường", href: "/reports", icon: ClipboardCheck },
+      { name: "Vật tư", href: "/materials", icon: Package },
+      { name: "Nhà cung cấp", href: "/suppliers", icon: Users },
     ],
   },
   {
-    label: "TAI CHINH",
+    label: "TÀI CHÍNH",
     items: [
-      { name: "Hop dong", href: "/contracts", icon: FileText },
-      { name: "Thanh toan", href: "/accounting", icon: CreditCard },
-      { name: "Phe duyet", href: "/approvals", icon: CheckSquare },
+      { name: "Hợp đồng", href: "/contracts", icon: FileText },
+      { name: "Thanh toán", href: "/accounting", icon: CreditCard },
+      { name: "Phê duyệt", href: "/approvals", icon: CheckSquare },
     ],
   },
   {
-    label: "HE THONG",
+    label: "HỆ THỐNG",
     items: [
-      { name: "Tai khoan", href: "/users", icon: UserCog },
-      { name: "Cai dat", href: "/settings", icon: Settings },
+      { name: "Tài khoản", href: "/users", icon: UserCog },
+      { name: "Cài đặt", href: "/settings", icon: Settings },
     ],
   },
 ];
@@ -79,8 +79,8 @@ export function Sidebar({ userRole }: { userRole: UserRole }) {
             </svg>
           </div>
           <div className="flex flex-col">
-            <span className={styles.brandName}>CT2 Ha Noi</span>
-            <span className={styles.brandSub}>ERP CONG TRINH</span>
+            <span className={styles.brandName}>CT2 Hà Nội</span>
+            <span className={styles.brandSub}>ERP CÔNG TRÌNH</span>
           </div>
         </Link>
       </div>
@@ -116,7 +116,7 @@ export function Sidebar({ userRole }: { userRole: UserRole }) {
       </div>
 
       <div className={styles.footer}>
-        <div className={styles.footerBadge}>v2.0 Noi bo</div>
+        <div className={styles.footerBadge}>v2.0 Nội bộ</div>
       </div>
     </div>
   );

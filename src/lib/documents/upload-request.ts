@@ -45,7 +45,7 @@ export function parseDocumentUploadRequest(
   const contentLength = request.headers.get("content-length");
   const size = contentLength ? Number(contentLength) : Number.NaN;
   if (!Number.isSafeInteger(size) || size <= 0) {
-    throw new Error("Dung lượng upload không hợp lệ hoặc thiếu Content-Length");
+    throw new Error("Dung lượng tệp tải lên không hợp lệ hoặc thiếu thông tin dung lượng.");
   }
 
   return {

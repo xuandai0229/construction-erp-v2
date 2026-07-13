@@ -15,7 +15,7 @@ export type ReportTransitionActor = {
 };
 
 const REPORT_STATUS_CONFLICT_MESSAGE =
-  "Trang thai bao cao da thay doi, vui long tai lai.";
+  "Trạng thái báo cáo đã thay đổi. Vui lòng tải lại.";
 
 async function getExistingReport(
   tx: Prisma.TransactionClient,
@@ -25,7 +25,7 @@ async function getExistingReport(
     where: { id: reportId, deletedAt: null },
   });
   if (!report) {
-    throw new Error("Khong tim thay bao cao");
+    throw new Error("Không tìm thấy báo cáo.");
   }
   return report;
 }
@@ -38,7 +38,7 @@ export async function submitSiteReportTransition(
   return client.$transaction(async (tx) => {
     const report = await getExistingReport(tx, reportId);
     if (report.createdById !== actor.id) {
-      throw new Error("Khong co quyen gui bao cao nay");
+      throw new Error("Bạn không có quyền gửi báo cáo này.");
     }
 
     const result = await tx.siteReport.updateMany({
@@ -93,7 +93,7 @@ export async function approveSiteReportTransition(
       actorId: actor.id,
       requesterId: report.createdById,
     })) {
-      throw new Error("Khong co quyen duyet bao cao");
+      throw new Error("Bạn không có quyền phê duyệt báo cáo này.");
     }
 
     const result = await tx.siteReport.updateMany({
@@ -141,7 +141,7 @@ export async function rejectSiteReportTransition(
   reason?: string,
 ) {
   if (!reason?.trim()) {
-    throw new Error("Bat buoc nhap ly do tu choi");
+    throw new Error("Vui lòng nhập lý do từ chối.");
   }
 
   return client.$transaction(async (tx) => {
@@ -152,7 +152,7 @@ export async function rejectSiteReportTransition(
       actorId: actor.id,
       requesterId: report.createdById,
     })) {
-      throw new Error("Khong co quyen tu choi bao cao");
+      throw new Error("Bạn không có quyền từ chối báo cáo này.");
     }
 
     const result = await tx.siteReport.updateMany({

@@ -142,7 +142,7 @@ export function ExecutiveProjectProgress({
             <thead className="bg-slate-50/50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100">
               <tr>
                 <th className="px-4 py-3 w-10 font-semibold">#</th>
-                <th className="px-4 py-3 font-semibold whitespace-nowrap">Mã CT</th>
+                <th className="px-4 py-3 font-semibold whitespace-nowrap">Mã công trình</th>
                 <th className="px-4 py-3 font-semibold">Tên công trình</th>
                 <th className="px-4 py-3 font-semibold whitespace-nowrap hidden xl:table-cell">Mức độ</th>
                 <th className="px-4 py-3 w-32 font-semibold whitespace-nowrap">Tiến độ</th>

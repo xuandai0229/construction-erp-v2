@@ -38,12 +38,12 @@ export function PurchaseRequestPlaceholder({ lowStockCount }: { lowStockCount: n
         </div>
 
         <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center">
-          <div title="Tính năng này đang trong quá trình thiết kế workflow">
+          <div title="Tính năng này đang trong quá trình thiết kế quy trình xử lý">
             <Button disabled className="w-full sm:w-auto bg-slate-100 text-slate-400 cursor-not-allowed">
               Tạo đề xuất mua
             </Button>
           </div>
-          <span className="text-xs font-medium text-slate-500">Chờ chốt workflow phê duyệt.</span>
+          <span className="text-xs font-medium text-slate-500">Chờ hoàn thiện quy trình phê duyệt.</span>
         </div>
       </div>
 
@@ -54,7 +54,7 @@ export function PurchaseRequestPlaceholder({ lowStockCount }: { lowStockCount: n
             <div>
               <div className="text-sm font-bold">Gợi ý từ tồn kho hiện tại</div>
               <p className="mt-1 text-sm leading-6">
-                Có {lowStockCount} vật tư đang hết hoặc sắp chạm tồn tối thiểu. Khi workflow mở, danh sách này sẽ là nguồn tạo đề xuất nhanh.
+                Có {lowStockCount} vật tư đang hết hoặc sắp chạm tồn tối thiểu. Khi quy trình mở, danh sách này sẽ là nguồn tạo đề xuất nhanh.
               </p>
             </div>
           </div>

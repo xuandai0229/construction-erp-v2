@@ -155,7 +155,7 @@ export const SETTINGS_REGISTRY: SettingDefinition[] = [
     key: "requireProjectCodeBeforeSpending",
     category: "approvals",
     label: "Bắt buộc mã công trình",
-    description: "Bắt buộc chọn mã dự án khi chi tiêu",
+    description: "Bắt buộc chọn mã công trình khi chi tiêu",
     editable: false,
     implemented: false,
     readOnlyReason: "Đã có cấu hình nhưng module nghiệp vụ chưa đọc setting này ở runtime.",

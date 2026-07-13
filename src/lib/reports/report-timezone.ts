@@ -26,7 +26,7 @@ function ymdToString(value: Ymd): string {
 function parseYmd(value: string): Ymd {
   const [year, month, day] = value.split("-").map(Number);
   if (!year || !month || !day) {
-    throw new Error(`Invalid date: ${value}`);
+    throw new Error(`Ngày không hợp lệ: ${value}`);
   }
   return { year, month, day };
 }

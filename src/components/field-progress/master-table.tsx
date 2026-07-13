@@ -227,9 +227,9 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.content} sticky left-[56px] z-20 text-left`}>Hạng mục / Công việc</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.crew} text-center`}>Mũi thi công</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.unit} text-center`}>Đơn vị</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.designQty} text-right`}>KL thiết kế</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.designQty} text-right`}>Khối lượng thiết kế</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.cumulative} text-right text-blue-700 bg-blue-50/60`}>
-                KL đã duyệt
+                Khối lượng đã duyệt
               </th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.percent} text-right text-blue-700 bg-blue-50/60`}>Hoàn thành</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.notes} text-left`}>Ghi chú</th>

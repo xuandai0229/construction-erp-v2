@@ -21,11 +21,11 @@ async function getClientIpAndUserAgent() {
 export async function getSystemSettings() {
   const session = await getSession();
   if (!session) {
-    throw new Error("Unauthorized");
+    throw new Error("Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
   }
   // Allow ADMIN, DIRECTOR, DEPUTY_DIRECTOR to view settings
   if (!canManageUsers(session)) {
-    throw new Error("Forbidden");
+    throw new Error("Bạn không có quyền thực hiện thao tác này.");
   }
 
   if (!("systemSetting" in prisma)) {
@@ -104,11 +104,11 @@ function checkUpdatePermission(
 export async function updateSystemSettings(input: SystemSettingsInput) {
   const session = await getSession();
   if (!session) {
-    throw new Error("Unauthorized");
+    throw new Error("Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
   }
   // First layer: Must be high level user
   if (!canManageUsers(session)) {
-    throw new Error("Forbidden");
+    throw new Error("Bạn không có quyền thực hiện thao tác này.");
   }
 
   const validatedData = systemSettingsSchema.parse(input);

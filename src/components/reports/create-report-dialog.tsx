@@ -351,7 +351,7 @@ export function CreateReportDialog({
                   </div>
                   <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
                     <div className="bg-emerald-50 p-2.5 rounded-lg text-emerald-600"><CheckCircle2 className="w-5 h-5" /></div>
-                    <div><p className="text-[11px] font-bold text-slate-400 uppercase">Tổng KL nhập</p><p className="font-bold text-slate-800 text-[18px] leading-tight">{formatNumberSafe(totalQtyToday)}</p></div>
+                    <div><p className="text-[11px] font-bold text-slate-400 uppercase">Tổng khối lượng nhập</p><p className="font-bold text-slate-800 text-[18px] leading-tight">{formatNumberSafe(totalQtyToday)}</p></div>
                   </div>
                   <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
                     <div className="bg-purple-50 p-2.5 rounded-lg text-purple-600"><FileImage className="w-5 h-5" /></div>
@@ -370,7 +370,7 @@ export function CreateReportDialog({
                   </div>
                   <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
                     <div className="bg-emerald-50 p-2.5 rounded-lg text-emerald-600"><BarChart3 className="w-5 h-5" /></div>
-                    <div><p className="text-[11px] font-bold text-slate-400 uppercase">Tổng hợp từ</p><p className="font-bold text-slate-800 text-[14px] leading-tight">BC ngày đã duyệt</p></div>
+                    <div><p className="text-[11px] font-bold text-slate-400 uppercase">Tổng hợp từ</p><p className="font-bold text-slate-800 text-[14px] leading-tight">Báo cáo ngày đã duyệt</p></div>
                   </div>
                   <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
                     <div className="bg-purple-50 p-2.5 rounded-lg text-purple-600"><FileImage className="w-5 h-5" /></div>
@@ -464,7 +464,7 @@ export function CreateReportDialog({
                                 <th className="w-20 px-2 py-3 text-center">Đơn vị</th>
                                 <th className="w-24 px-3 py-3 text-right">TK/Duyệt</th>
                                 <th className="w-24 px-3 py-3 text-right">Còn lại</th>
-                                <th className="w-32 px-4 py-3 text-right text-blue-700">KL hôm nay</th>
+                                <th className="w-32 px-4 py-3 text-right text-blue-700">Khối lượng hôm nay</th>
                                 <th className="w-48 px-3 py-3">Ghi chú</th>
                                 <th className="w-48 px-3 py-3">Đề xuất</th>
                                 <th className="w-12 px-3 py-3 text-center">Xóa</th>

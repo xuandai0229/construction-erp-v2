@@ -108,7 +108,6 @@ export function KpiCard({
   icon,
   tone = "blue",
   className,
-  onClick,
 }: {
   label: React.ReactNode;
   value: React.ReactNode;
@@ -116,26 +115,13 @@ export function KpiCard({
   icon?: React.ReactNode;
   tone?: Tone;
   className?: string;
-  onClick?: () => void;
 }) {
-  const isInteractive = !!onClick;
-  
   return (
-    <ContentCard 
+    <ContentCard
       className={cn(
-        "p-4 relative group", 
-        isInteractive && "cursor-pointer transition-all hover:shadow-md hover:border-blue-300 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
+        "group relative p-4",
         className
       )}
-      onClick={onClick}
-      role={isInteractive ? "button" : undefined}
-      tabIndex={isInteractive ? 0 : undefined}
-      onKeyDown={(e) => {
-        if (isInteractive && (e.key === "Enter" || e.key === " ")) {
-          e.preventDefault();
-          onClick();
-        }
-      }}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0 text-sm font-semibold text-slate-600 whitespace-nowrap">{label}</div>
@@ -148,11 +134,6 @@ export function KpiCard({
       <div className="mt-3 text-2xl font-bold tracking-tight text-slate-950">{value}</div>
       {helper ? <div className="mt-1 text-xs leading-5 text-slate-500">{helper}</div> : null}
       
-      {isInteractive && (
-        <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-          <svg className="w-4 h-4 text-slate-400 group-hover:text-blue-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-        </div>
-      )}
     </ContentCard>
   );
 }

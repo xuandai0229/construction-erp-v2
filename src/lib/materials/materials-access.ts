@@ -12,7 +12,7 @@ export async function getProjectMaterialPermissions(
     select: { id: true },
   });
 
-  if (!project) throw new Error("Khong tim thay cong trinh");
+  if (!project) throw new Error("Không tìm thấy công trình.");
 
   let projectRole = null;
   if (!canViewAllProjects(user)) {
@@ -27,7 +27,7 @@ export async function getProjectMaterialPermissions(
       select: { role: true },
     });
 
-    if (!membership) throw new Error("Ban khong co quyen thao tac cong trinh nay");
+    if (!membership) throw new Error("Bạn không có quyền thao tác trên công trình này.");
     projectRole = membership.role;
   }
 
@@ -39,6 +39,6 @@ export function assertMaterialPermission(
   action: keyof MaterialPermissionSet,
 ) {
   if (!permissions[action]) {
-    throw new Error("Ban khong co quyen thuc hien thao tac vat tu nay.");
+    throw new Error("Bạn không có quyền thực hiện thao tác vật tư này.");
   }
 }

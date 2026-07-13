@@ -69,7 +69,7 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
                 autoComplete="off"
                 defaultValue={initialData?.name}
                 className={inputClass}
-                placeholder="VD: Dự án Nguyễn Trãi"
+                placeholder="VD: Công trình Nguyễn Trãi"
               />
             </div>
 

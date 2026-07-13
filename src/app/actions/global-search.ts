@@ -15,6 +15,12 @@ export async function searchSystem(query: string, globalProjectId: string | null
 
   const user = { id: session.id, role: session.role as UserRole };
   const accessibleProjectIds = await getAccessibleProjectIds(user);
+  const selectedProjectId = globalProjectId && (
+    accessibleProjectIds === null || accessibleProjectIds.includes(globalProjectId)
+  ) ? globalProjectId : null;
+  const recordProjectScope = selectedProjectId
+    ? { projectId: selectedProjectId }
+    : accessibleProjectIds === null ? {} : { projectId: { in: accessibleProjectIds } };
 
   // 1. Projects Search
   const projects = await prisma.project.findMany({
@@ -35,7 +41,7 @@ export async function searchSystem(query: string, globalProjectId: string | null
     where: {
       deletedAt: null,
       status: "PENDING",
-      ...(globalProjectId ? { projectId: globalProjectId } : (accessibleProjectIds === null ? {} : { projectId: { in: accessibleProjectIds } })),
+      ...recordProjectScope,
       OR: [
         { title: { contains: q, mode: "insensitive" } },
       ]
@@ -68,7 +74,7 @@ export async function searchSystem(query: string, globalProjectId: string | null
   const reports = await prisma.siteReport.findMany({
     where: {
       deletedAt: null,
-      ...(globalProjectId ? { projectId: globalProjectId } : (accessibleProjectIds === null ? {} : { projectId: { in: accessibleProjectIds } })),
+      ...recordProjectScope,
       OR: [
         { reportNo: { contains: q, mode: "insensitive" } },
         { title: { contains: q, mode: "insensitive" } },

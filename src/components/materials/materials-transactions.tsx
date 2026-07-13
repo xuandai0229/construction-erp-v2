@@ -484,7 +484,7 @@ export function MaterialsTransactions({
                             onClick: () => {
                               const text = `${transaction.type === "IMPORT" ? "Nhập" : "Xuất"} ${formatQuantity(Number(transaction.quantity))} ${transaction.materialItem?.unit || ""} ${transaction.materialItem?.name || ""}`;
                               void navigator.clipboard.writeText(text);
-                              toast.success("Da sao chep thong tin giao dich");
+                              toast.success("Đã sao chép thông tin giao dịch.");
                             },
                           }
                         ]}

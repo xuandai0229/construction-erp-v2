@@ -185,7 +185,7 @@ export async function getWorkQuantityBalance(
   const map = await getBulkWorkQuantityBalance(client, projectId, [itemId], options);
   const result = map.get(itemId);
   if (!result) {
-    throw new Error(`Item ${itemId} not found`);
+    throw new Error(`Không tìm thấy hạng mục có mã ${itemId}.`);
   }
   return result;
 }

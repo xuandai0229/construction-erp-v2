@@ -1,7 +1,15 @@
 import { EmptyState } from '@/components/ui/empty-state';
 import { History } from 'lucide-react';
+import { getSession } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { resolvePermission } from "@/lib/permissions/permission-resolver";
 
-export default function AuditPage() {
+export default async function AuditPage() {
+  const session = await getSession();
+  if (!session) redirect("/login?reason=session_expired");
+  const permission = await resolvePermission(session, "audit.view_global");
+  if (!permission.allowed) redirect("/projects");
+
   return (
     <div className="app-page space-y-6">
       <div className="flex items-center justify-between">
