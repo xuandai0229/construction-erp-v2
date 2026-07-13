@@ -344,7 +344,7 @@ export function WeeklyReportForm({ form, updateField, errors, workItems = [], ac
                       <tr>
                         <th className="w-12 px-2 py-3 text-center">STT</th>
                         <th className="px-3 py-3">Hạng mục / Công việc</th>
-                        <th className="w-16 px-2 py-3 text-center">ĐVT</th>
+                        <th className="w-16 px-2 py-3 text-center">Đơn vị</th>
                         <th className="w-20 px-2 py-3 text-right">Thiết kế</th>
                         <th className="w-20 px-2 py-3 text-right">Trước tuần</th>
                         <th className="w-20 px-2 py-3 text-right text-blue-700">Tuần này</th>
@@ -457,7 +457,7 @@ export function WeeklyReportForm({ form, updateField, errors, workItems = [], ac
                       <tr>
                         <th className="px-3 py-2 w-8">#</th>
                         <th className="px-3 py-2 min-w-[200px]">Công việc</th>
-                        <th className="px-2 py-2 w-16 text-center">ĐVT</th>
+                        <th className="px-2 py-2 w-16 text-center">Đơn vị</th>
                         <th className="px-2 py-2 w-24 text-right">Còn lại HT</th>
                         <th className="px-2 py-2 w-28 text-right text-blue-700">Dự kiến tuần tới</th>
                         <th className="px-2 py-2 w-32">Từ ngày</th>

@@ -125,7 +125,7 @@ export function canApproveReport(
       hasProjectAccess &&
       !isDeletedReport(reportOrStatus) &&
       REVIEWABLE_STATUSES.has(reportOrStatus.status) &&
-      ["ADMIN", "DIRECTOR"].includes(user.role),
+      isHighLevelReportUser(user),
   );
 }
 
@@ -149,7 +149,7 @@ export function canRejectReport(
       hasProjectAccess &&
       !isDeletedReport(reportOrStatus) &&
       REVIEWABLE_STATUSES.has(reportOrStatus.status) &&
-      ["ADMIN", "DIRECTOR"].includes(user.role),
+      isHighLevelReportUser(user),
   );
 }
 

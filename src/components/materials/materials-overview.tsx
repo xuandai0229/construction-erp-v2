@@ -101,7 +101,7 @@ export function MaterialsOverview({
         ))}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
+      <div className="grid gap-4 lg:grid-cols-3">
         <ContentCard className="flex flex-col">
           <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 bg-slate-50/50">
             <div>
@@ -189,6 +189,53 @@ export function MaterialsOverview({
                 </div>
                 <p className="text-sm font-semibold text-slate-900">Chưa có giao dịch</p>
                 <p className="text-xs text-slate-500 mt-1 max-w-[250px]">Các phiếu nhập/xuất kho sẽ hiển thị tại đây.</p>
+              </div>
+            )}
+          </div>
+        </ContentCard>
+
+        <ContentCard className="flex flex-col">
+          <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 bg-slate-50/50">
+            <div>
+              <h2 className="text-base font-bold text-slate-950">Đề xuất chờ duyệt</h2>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => onNavigate("requests")}>Xem tất cả</Button>
+          </div>
+          <div className="divide-y divide-slate-100">
+            {requests.filter(r => r.status === "SUBMITTED" || r.status === "REQUESTED" || r.status === "PENDING").slice(0, 5).map((req: any) => (
+              <div 
+                key={req.id} 
+                className="grid gap-3 px-4 py-3 sm:grid-cols-[1fr_auto] sm:items-center hover:bg-slate-50 transition-all cursor-pointer group active:scale-[0.99]"
+                onClick={() => onNavigate("requests", { requestId: req.id })}
+                role="button"
+                tabIndex={0}
+              >
+                <div className="min-w-0">
+                  <SafeText className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">
+                    {req.items && req.items.length > 0 ? req.items[0].materialName : "Phiếu yêu cầu"}
+                    {req.items && req.items.length > 1 && <span className="text-slate-500 text-xs ml-1">(+{req.items.length - 1})</span>}
+                  </SafeText>
+                  <div className="mt-0.5 text-xs text-slate-500 flex items-center gap-2">
+                    <span className="font-mono text-[10px] bg-slate-100 px-1 rounded">{req.requestNo}</span>
+                    <span>·</span>
+                    <span className="truncate">{req.requestedBy?.name || "Người tạo"}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="inline-flex items-center rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">
+                    Chờ duyệt
+                  </span>
+                  <ArrowDownRight className="h-4 w-4 text-slate-300 group-hover:text-blue-500 -rotate-90 hidden sm:block" />
+                </div>
+              </div>
+            ))}
+            {requests.filter(r => r.status === "SUBMITTED" || r.status === "REQUESTED" || r.status === "PENDING").length === 0 && (
+              <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-50 text-slate-400 mb-3">
+                  <ClipboardList className="h-6 w-6" />
+                </div>
+                <p className="text-sm font-semibold text-slate-900">Không có đề xuất</p>
+                <p className="text-xs text-slate-500 mt-1 max-w-[250px]">Chưa có đề xuất vật tư nào đang chờ duyệt.</p>
               </div>
             )}
           </div>

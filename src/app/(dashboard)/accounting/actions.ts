@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth";
 import { Prisma, PaymentRequestStatus, PaymentRequestType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { getAccountingPermissions } from "@/lib/accounting/accounting-permissions";
+import { canViewAllProjects, isSystemAdmin, requireProjectScope } from "@/lib/rbac";
 
 const ACCOUNTING_PATH = "/accounting";
 
@@ -80,8 +81,8 @@ export async function getPaymentRequestsData() {
   
   const roleByProject = new Map(memberships.map(m => [m.projectId, m.role]));
   
-  let projectWhere: Prisma.ProjectWhereInput = { deletedAt: null };
-  const hasGlobalView = session.role === "ADMIN" || session.role === "DIRECTOR" || session.role === "DEPUTY_DIRECTOR" || session.role === "MANAGER" || session.role === "ACCOUNTANT";
+  const projectWhere: Prisma.ProjectWhereInput = { deletedAt: null };
+  const hasGlobalView = canViewAllProjects(session);
   
   if (!hasGlobalView) {
     projectWhere.id = { in: Array.from(roleByProject.keys()) };
@@ -268,10 +269,8 @@ export async function createPaymentRequest(data: {
   const projectId = normalizeText(data.projectId);
   if (!projectId) throw new Error("Chưa chọn công trình");
 
-  const membership = await prisma.projectMember.findFirst({
-    where: { projectId, userId: session.id, isActive: true, deletedAt: null, leftAt: null }
-  });
-  const perms = getAccountingPermissions(session.role, membership?.role);
+  const projectRole = await requireProjectScope(session, projectId);
+  const perms = getAccountingPermissions(session.role, projectRole);
   if (!perms.canCreate) throw new Error("Bạn không có quyền tạo hồ sơ thanh toán");
 
   const title = normalizeText(data.title);
@@ -345,10 +344,8 @@ export async function updatePaymentRequest(id: string, data: {
 
   if (!pr) throw new Error("Hồ sơ thanh toán không tồn tại");
 
-  const membership = await prisma.projectMember.findFirst({
-    where: { projectId: pr.projectId, userId: session.id, isActive: true, deletedAt: null, leftAt: null }
-  });
-  const perms = getAccountingPermissions(session.role, membership?.role);
+  const projectRole = await requireProjectScope(session, pr.projectId);
+  const perms = getAccountingPermissions(session.role, projectRole);
   
   if (!perms.canUpdate && pr.createdById !== session.id) {
     throw new Error("Bạn không có quyền sửa hồ sơ này");
@@ -397,10 +394,8 @@ export async function changePaymentStatus(id: string, action: "APPROVE" | "REJEC
   const pr = await prisma.paymentRequest.findFirst({ where: { id, deletedAt: null } });
   if (!pr) throw new Error("Hồ sơ không tồn tại");
 
-  const membership = await prisma.projectMember.findFirst({
-    where: { projectId: pr.projectId, userId: session.id, isActive: true, deletedAt: null, leftAt: null }
-  });
-  const perms = getAccountingPermissions(session.role, membership?.role);
+  const projectRole = await requireProjectScope(session, pr.projectId);
+  const perms = getAccountingPermissions(session.role, projectRole);
 
   const updateData: any = {};
 
@@ -409,14 +404,14 @@ export async function changePaymentStatus(id: string, action: "APPROVE" | "REJEC
       if (pr.status !== "DRAFT" && pr.status !== "REJECTED") {
         throw new Error("Chỉ có thể gửi duyệt hồ sơ Nháp hoặc Bị từ chối");
       }
-      if (pr.createdById !== session.id && session.role !== "ADMIN") {
-        throw new Error("Chỉ người tạo hồ sơ hoặc Quản trị viên mới có quyền gửi duyệt");
+      if (pr.createdById !== session.id && !perms.canUpdate) {
+        throw new Error("Chỉ người tạo hồ sơ hoặc người có quyền sửa mới có quyền gửi duyệt");
       }
       updateData.status = "SUBMITTED";
       break;
     case "APPROVE":
       if (!perms.canApprove) throw new Error("Bạn không có quyền duyệt");
-      if (pr.createdById === session.id && session.role !== "ADMIN") throw new Error("Bạn không thể tự duyệt hồ sơ của chính mình");
+      if (pr.createdById === session.id && !isSystemAdmin(session)) throw new Error("Bạn không thể tự duyệt hồ sơ của chính mình");
       if (pr.status !== "SUBMITTED") throw new Error("Chỉ có thể duyệt hồ sơ chờ duyệt");
       updateData.status = "APPROVED";
       updateData.approvedById = session.id;
@@ -424,7 +419,7 @@ export async function changePaymentStatus(id: string, action: "APPROVE" | "REJEC
       break;
     case "REJECT":
       if (!perms.canApprove) throw new Error("Bạn không có quyền từ chối");
-      if (pr.createdById === session.id && session.role !== "ADMIN") throw new Error("Bạn không thể tự từ chối hồ sơ của chính mình");
+      if (pr.createdById === session.id && !isSystemAdmin(session)) throw new Error("Bạn không thể tự từ chối hồ sơ của chính mình");
       if (pr.status !== "SUBMITTED") throw new Error("Chỉ có thể từ chối hồ sơ chờ duyệt");
       if (!reason || !reason.trim()) throw new Error("Lý do từ chối là bắt buộc");
       updateData.status = "REJECTED";
@@ -443,8 +438,8 @@ export async function changePaymentStatus(id: string, action: "APPROVE" | "REJEC
       if (pr.status !== "DRAFT" && pr.status !== "REJECTED" && pr.status !== "SUBMITTED") {
         throw new Error("Chỉ có thể hủy hồ sơ ở trạng thái Nháp, Chờ duyệt hoặc Bị từ chối");
       }
-      if (pr.status === "SUBMITTED" && pr.createdById !== session.id && session.role !== "ADMIN") {
-        throw new Error("Chỉ người tạo hồ sơ hoặc Quản trị viên mới được hủy hồ sơ đang chờ duyệt");
+      if (pr.status === "SUBMITTED" && pr.createdById !== session.id && !perms.canApprove && !isSystemAdmin(session)) {
+        throw new Error("Chỉ người tạo hồ sơ, người có quyền duyệt hoặc system admin mới được hủy hồ sơ đang chờ duyệt");
       }
       updateData.status = "CANCELLED";
       break;
@@ -466,10 +461,8 @@ export async function deletePaymentRequest(id: string) {
   const pr = await prisma.paymentRequest.findFirst({ where: { id, deletedAt: null } });
   if (!pr) throw new Error("Hồ sơ không tồn tại");
 
-  const membership = await prisma.projectMember.findFirst({
-    where: { projectId: pr.projectId, userId: session.id, isActive: true, deletedAt: null, leftAt: null }
-  });
-  const perms = getAccountingPermissions(session.role, membership?.role);
+  const projectRole = await requireProjectScope(session, pr.projectId);
+  const perms = getAccountingPermissions(session.role, projectRole);
 
   if (!perms.canDelete && pr.createdById !== session.id) {
     throw new Error("Bạn không có quyền xóa hồ sơ này");

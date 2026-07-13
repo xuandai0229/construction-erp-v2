@@ -6,6 +6,7 @@ import { applyMaterialMovement, parseNonNegativeQuantity, parsePositiveQuantity 
 import { MaterialMovementType, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { getMaterialPermissions, MaterialPermissionSet } from "@/lib/materials/materials-permissions";
+import { canViewAllProjects } from "@/lib/rbac";
 
 const MATERIALS_PATH = "/materials";
 
@@ -36,6 +37,9 @@ export interface MaterialItemDto {
   hasMovement: boolean;
   createdAt: string;
   updatedAt: string;
+  approvedProposalQuantity?: number;
+  importedFromProposalQuantity?: number;
+  pendingProposalQuantity?: number;
 }
 
 export interface ProjectStockDto {
@@ -59,6 +63,11 @@ export interface MaterialMovementDto {
   notes: string | null;
   createdAt: string;
   materialItem: MaterialItemDto;
+  materialRequestId?: string | null;
+  materialRequest?: {
+    requestNo: string;
+    requestedBy?: { name: string | null };
+  } | null;
 }
 
 function normalizeText(value: unknown) {
@@ -127,6 +136,9 @@ function toMaterialItemDto(item: {
     hasMovement: item._count ? item._count.movements > 0 : false,
     createdAt: item.createdAt.toISOString(),
     updatedAt: item.updatedAt.toISOString(),
+    approvedProposalQuantity: Number((item as any).approvedProposalQuantity || 0),
+    importedFromProposalQuantity: Number((item as any).importedFromProposalQuantity || 0),
+    pendingProposalQuantity: Number((item as any).pendingProposalQuantity || 0),
   };
 }
 
@@ -161,6 +173,8 @@ function toMovementDto(movement: {
   notes: string | null;
   createdAt: Date;
   materialItem: Parameters<typeof toMaterialItemDto>[0];
+  materialRequestId?: string | null;
+  materialRequest?: any;
 }): MaterialMovementDto {
   return {
     id: movement.id,
@@ -173,6 +187,11 @@ function toMovementDto(movement: {
     notes: movement.notes,
     createdAt: movement.createdAt.toISOString(),
     materialItem: toMaterialItemDto(movement.materialItem),
+    materialRequestId: movement.materialRequestId || null,
+    materialRequest: movement.materialRequest ? {
+      requestNo: movement.materialRequest.requestNo,
+      requestedBy: movement.materialRequest.requestedBy
+    } : null
   };
 }
 
@@ -191,7 +210,7 @@ export async function requireProjectPermissions(session: Session, projectId: str
   if (!project) throw new Error("Không tìm thấy công trình");
 
   let projectRole = null;
-  if (session.role !== "ADMIN") {
+  if (!canViewAllProjects(session)) {
     const membership = await prisma.projectMember.findFirst({
       where: {
         projectId,
@@ -224,7 +243,7 @@ export async function getActiveProjects() {
   if (!session) return [];
 
   const whereClause: Prisma.ProjectWhereInput =
-    session.role === "ADMIN"
+    canViewAllProjects(session)
       ? { status: { in: ["PLANNING", "ACTIVE", "ON_HOLD"] }, deletedAt: null }
       : {
           status: { in: ["PLANNING", "ACTIVE", "ON_HOLD"] },
@@ -265,7 +284,49 @@ export async function getMaterialItems(projectId: string): Promise<MaterialItemD
     orderBy: [{ group: "asc" }, { name: "asc" }],
   });
 
-  return items.map(toMaterialItemDto);
+  const proposalSummaries = await prisma.materialRequestItem.groupBy({
+    by: ['materialCode'],
+    _sum: {
+      requestedQuantity: true,
+      receivedQuantity: true,
+    },
+    where: {
+      materialRequest: {
+        projectId,
+        status: "APPROVED"
+      }
+    }
+  });
+
+  const pendingProposalSummaries = await prisma.materialRequestItem.groupBy({
+    by: ['materialCode'],
+    _sum: {
+      requestedQuantity: true,
+    },
+    where: {
+      materialRequest: {
+        projectId,
+        status: { in: ["SUBMITTED", "REQUESTED", "DRAFT"] }
+      }
+    }
+  });
+
+  const summaryMap = new Map(proposalSummaries.map(s => [s.materialCode, s]));
+  const pendingSummaryMap = new Map(pendingProposalSummaries.map(s => [s.materialCode, s]));
+
+  return items.map(item => {
+    const summary = summaryMap.get(item.code);
+    const pendingSummary = pendingSummaryMap.get(item.code);
+    const requested = Number(summary?._sum?.requestedQuantity || 0);
+    const received = Number(summary?._sum?.receivedQuantity || 0);
+    const pending = Number(pendingSummary?._sum?.requestedQuantity || 0);
+    return toMaterialItemDto({
+      ...item,
+      approvedProposalQuantity: requested,
+      importedFromProposalQuantity: received,
+      pendingProposalQuantity: pending
+    } as any);
+  });
 }
 
 // ========================
@@ -400,7 +461,7 @@ export async function updateMaterialItem(id: string, data: { code?: string; name
   if (!material.projectId) throw new Error("Vật tư không thuộc công trình nào");
 
   const perms = await requireProjectPermissions(session, material.projectId);
-  assertPermission(perms, "canUpdate");
+  assertPermission(perms, "canRestore");
 
   const requestedCode = data.code ? normalizeMaterialCode(data.code) : undefined;
 
@@ -619,6 +680,7 @@ export async function createMaterialTransaction(data: {
   if (Number.isNaN(movementDate.getTime())) throw new Error("Ngày giao dịch không hợp lệ");
 
   const perms = await requireProjectPermissions(session, projectId);
+  assertPermission(perms, "canViewTransactions");
   if (type === "IMPORT") assertPermission(perms, "canImport");
   if (type === "EXPORT") assertPermission(perms, "canExport");
 
@@ -663,6 +725,7 @@ export async function getRecentTransactions(projectId: string): Promise<Material
     where: { projectId },
     include: {
       materialItem: true,
+      materialRequest: { select: { requestNo: true, requestedBy: { select: { name: true } } } }
     },
     orderBy: { movementDate: "desc" },
   });

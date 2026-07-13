@@ -17,6 +17,7 @@ import { GlobalNotificationBell } from './global-notification-bell';
 import { GlobalSearchCommand } from './global-search-command';
 import type { GlobalProjectContext } from '@/lib/project-context';
 import { useToast } from '@/components/ui/toast-context';
+import { canViewNavigationItem, projectNavName } from '@/lib/navigation-permissions';
 
 const mobileNavSections = [
   {
@@ -52,22 +53,22 @@ const mobileNavSections = [
   },
 ];
 
-const HIDDEN_FOR_COMMANDER = [
-  '/accounting',
-  '/approvals',
-  '/settings',
-  '/users',
-  '/contracts',
-  '/suppliers',
-];
-
 function getFilteredMobileSections(role: UserRole) {
   return mobileNavSections
     .map(section => {
+      const items = section.items
+        .filter(item => canViewNavigationItem(role, item.href))
+        .map(item => ({ ...item, name: projectNavName(role, item.href, item.name) }));
+      return { ...section, items };
+    })
+    .filter(section => section.items.length > 0);
+
+  return mobileNavSections
+    .map(section => {
       let items = section.items;
-      if (role === 'CHIEF_COMMANDER') {
+      if (false) {
         items = items
-          .filter(item => !HIDDEN_FOR_COMMANDER.includes(item.href))
+          .filter(item => !([] as string[]).includes(item.href))
           .map(item => {
             if (item.href === '/projects') {
               return { ...item, name: 'Công trình của tôi' };

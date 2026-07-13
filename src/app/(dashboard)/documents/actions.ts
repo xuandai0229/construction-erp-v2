@@ -3,10 +3,11 @@
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { writeAuditLog } from "@/lib/audit";
-import { canAccessProject, canManageProjects } from "@/lib/rbac";
+import { canAccessProject, isCompanyWideUser, isSystemAdmin, requireProjectScope } from "@/lib/rbac";
 import { buildDocumentDisplayName } from "@/lib/document-file-utils";
 import { revalidatePath } from "next/cache";
 import { 
+  canCreateFolder,
   canRenameFolder, 
   canDeleteFolder, 
   canDeleteDocument, 
@@ -22,6 +23,12 @@ export async function createFolder(projectId: string, name: string, parentId?: s
   const session = await getSession();
   if (!session) return { error: "Vui lòng đăng nhập" };
   if (!(await canAccessProject(session, projectId))) return { error: "Bạn không có quyền truy cập công trình này" };
+
+  const projectRole = await requireProjectScope(session, projectId);
+  const sessionUser = { id: session.id, role: session.role as any, projectRole };
+  if (!canCreateFolder(sessionUser)) {
+    return { error: "Khong co quyen tao thu muc trong cong trinh nay" };
+  }
 
   if (parentId) {
     const parent = await prisma.documentFolder.findFirst({
@@ -66,7 +73,8 @@ export async function renameFolder(projectId: string, folderId: string, newName:
     });
     if (!existing) return { error: "Thư mục không tồn tại" };
 
-    const sessionUser = { id: session.id, role: session.role as any };
+    const projectRole = await requireProjectScope(session, projectId);
+    const sessionUser = { id: session.id, role: session.role as any, projectRole };
     if (!canRenameFolder(sessionUser, { id: existing.id, name: existing.name })) {
       return { error: "Không có quyền đổi tên thư mục" };
     }
@@ -105,7 +113,8 @@ export async function deleteFolder(projectId: string, folderId: string) {
     
     if (!existing) return { error: "Thư mục không tồn tại" };
     
-    const sessionUser = { id: session.id, role: session.role as any };
+    const projectRole = await requireProjectScope(session, projectId);
+    const sessionUser = { id: session.id, role: session.role as any, projectRole };
     if (!canDeleteFolder(sessionUser, { id: existing.id, name: existing.name })) {
       return { error: "Không có quyền xóa thư mục" };
     }
@@ -170,7 +179,8 @@ export async function deleteDocument(projectId: string, documentId: string) {
       return { error: "Hồ sơ đã duyệt/lưu trữ/thay thế không thể sửa hoặc xóa." };
     }
 
-    const sessionUser = { id: session.id, role: session.role as any };
+    const projectRole = await requireProjectScope(session, projectId);
+    const sessionUser = { id: session.id, role: session.role as any, projectRole };
     const docContext = { id: existing.id, status: existing.status, uploadedById: existing.uploadedById };
     const folderContext = { id: existing.folder.id, name: existing.folder.name };
     if (!canDeleteDocument(sessionUser, docContext, folderContext)) {
@@ -227,7 +237,8 @@ export async function renameDocument(projectId: string, documentId: string, requ
       return { error: "Hồ sơ đã duyệt/lưu trữ/thay thế không thể sửa hoặc xóa." };
     }
 
-    const sessionUser = { id: session.id, role: session.role as any };
+    const projectRole = await requireProjectScope(session, projectId);
+    const sessionUser = { id: session.id, role: session.role as any, projectRole };
     const docContext = { id: existing.id, status: existing.status, uploadedById: existing.uploadedById };
     const folderContext = { id: existing.folder.id, name: existing.folder.name };
     if (!canRenameDocument(sessionUser, docContext, folderContext)) {
@@ -296,7 +307,8 @@ export async function updateDocumentMetadata(
       return { error: "Hồ sơ đã duyệt/lưu trữ/thay thế không thể sửa hoặc xóa." };
     }
 
-    const sessionUser = { id: session.id, role: session.role as any };
+    const projectRole = await requireProjectScope(session, projectId);
+    const sessionUser = { id: session.id, role: session.role as any, projectRole };
     const docContext = { id: existing.id, status: existing.status, uploadedById: existing.uploadedById };
     const folderContext = { id: existing.folder.id, name: existing.folder.name };
     
@@ -361,7 +373,8 @@ export async function changeDocumentStatus(
     });
     if (!existing) return { error: "Tệp không tồn tại" };
 
-    const sessionUser = { id: session.id, role: session.role as any };
+    const projectRole = await requireProjectScope(session, projectId);
+    const sessionUser = { id: session.id, role: session.role as any, projectRole };
     const docContext = { id: existing.id, status: existing.status, uploadedById: existing.uploadedById };
     
     if (!canChangeDocumentStatus(sessionUser, docContext)) {
@@ -424,6 +437,15 @@ export async function changeDocumentStatus(
 
 export async function restoreFolder(projectId: string, folderId: string) {
   const session = await getSession();
+  if (session) {
+    const projectRole = await requireProjectScope(session, projectId);
+    if (
+      !isCompanyWideUser(session) &&
+      !["PROJECT_MANAGER", "SITE_COMMANDER", "CHIEF_COMMANDER"].includes(projectRole || "")
+    ) {
+      return { error: "Ban khong co quyen khoi phuc thu muc nay" };
+    }
+  }
   if (!session) return { error: "Vui lòng đăng nhập" };
   if (!(await canAccessProject(session, projectId))) return { error: "Không có quyền khôi phục" };
 
@@ -485,9 +507,12 @@ export async function restoreDocument(projectId: string, documentId: string) {
   const session = await getSession();
   if (!session) return { error: "Vui lòng đăng nhập" };
   if (!(await canAccessProject(session, projectId))) return { error: "Không có quyền khôi phục" };
-  const sessionUser = { id: session.id, role: session.role as any };
-  if (sessionUser.role !== "ADMIN" && sessionUser.role !== "PROJECT_MANAGER") {
-    return { error: "Chỉ Admin/PM mới có quyền khôi phục" };
+  const projectRole = await requireProjectScope(session, projectId);
+  if (
+    !isCompanyWideUser(session) &&
+    !["PROJECT_MANAGER", "SITE_COMMANDER", "CHIEF_COMMANDER"].includes(projectRole || "")
+  ) {
+    return { error: "Bạn không có quyền khôi phục tài liệu này" };
   }
   try {
     const existing = await prisma.document.findFirst({
@@ -516,8 +541,8 @@ export async function restoreDocument(projectId: string, documentId: string) {
 export async function permanentDeleteFolder(projectId: string, folderId: string) {
   const session = await getSession();
   if (!session) return { error: "Vui lòng đăng nhập" };
-  if (session.role !== "ADMIN" && session.role !== "DIRECTOR") {
-    return { error: "Chỉ Admin hoặc Director mới được xóa vĩnh viễn" };
+  if (!isSystemAdmin(session)) {
+    return { error: "Chỉ system admin mới được xóa vĩnh viễn" };
   }
 
   try {
@@ -580,8 +605,8 @@ export async function permanentDeleteFolder(projectId: string, folderId: string)
 export async function permanentDeleteDocument(projectId: string, documentId: string) {
   const session = await getSession();
   if (!session) return { error: "Vui lòng đăng nhập" };
-  if (session.role !== "ADMIN" && session.role !== "DIRECTOR") {
-    return { error: "Chỉ Admin hoặc Director mới được xóa vĩnh viễn" };
+  if (!isSystemAdmin(session)) {
+    return { error: "Chỉ system admin mới được xóa vĩnh viễn" };
   }
 
   try {
@@ -603,4 +628,3 @@ export async function permanentDeleteDocument(projectId: string, documentId: str
     return { error: "Lỗi hệ thống khi xóa vĩnh viễn tài liệu" };
   }
 }
-

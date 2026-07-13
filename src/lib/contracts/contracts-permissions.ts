@@ -54,15 +54,10 @@ export function getContractPermissions(
     return { canView: true, canCreate: true, canUpdate: true, canDelete: true };
   }
 
-  // If no project role, check system role
+  // Non company-wide roles must be project-scoped. Without a project assignment,
+  // they cannot view or mutate contract data.
   if (!projectRole) {
-    // MANAGER and ACCOUNTANT can view/create/update but not delete
-    if (userRole === "MANAGER" || userRole === "ACCOUNTANT") {
-      return { canView: true, canCreate: true, canUpdate: true, canDelete: false };
-    }
-
-    // Other system roles: view only (assuming they can view global list if permitted by page logic)
-    return { canView: true, canCreate: false, canUpdate: false, canDelete: false };
+    return { canView: false, canCreate: false, canUpdate: false, canDelete: false };
   }
 
   // Management project roles have full access within their project

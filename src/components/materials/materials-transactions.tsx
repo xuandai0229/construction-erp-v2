@@ -227,16 +227,19 @@ export function MaterialsTransactions({
             />
           </label>
 
-          <select
-            value={movementType}
-            onChange={(event) => setFilter({ movementType: event.target.value })}
-            className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 lg:w-[160px]"
-            aria-label="Lọc loại giao dịch"
-          >
-            <option value="ALL">Tất cả loại</option>
-            <option value="IMPORT">Nhập</option>
-            <option value="EXPORT">Xuất</option>
-          </select>
+          <div className="relative min-w-0 lg:w-[180px] shrink-0">
+            <Filter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <select
+              value={movementType}
+              onChange={(event) => setFilter({ movementType: event.target.value })}
+              className="h-10 w-full appearance-none rounded-lg border border-slate-300 bg-white pl-9 pr-8 text-sm font-medium text-slate-900 outline-none transition hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              aria-label="Lọc loại giao dịch"
+            >
+              <option value="ALL">Tất cả loại</option>
+              <option value="IMPORT">Nhập</option>
+              <option value="EXPORT">Xuất</option>
+            </select>
+          </div>
 
           <EnterpriseCombobox
             value={materialId}
@@ -364,14 +367,14 @@ export function MaterialsTransactions({
         <table className="w-full min-w-[1080px] table-fixed text-left text-sm">
           <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
             <tr>
-              <th className="w-[104px] border-b border-slate-200 px-3 py-3">Loại</th>
-              <th className="w-[260px] border-b border-slate-200 px-3 py-3">Vật tư</th>
-              <th className="w-[150px] border-b border-slate-200 px-3 py-3 text-right">Số lượng</th>
-              <th className="w-[150px] border-b border-slate-200 px-3 py-3 text-right">Tồn sau</th>
-              <th className="w-[160px] border-b border-slate-200 px-3 py-3">Ngày giao dịch</th>
-              <th className="w-[130px] border-b border-slate-200 px-3 py-3">Người tạo</th>
-              <th className="w-[180px] border-b border-slate-200 px-3 py-3">Nguồn</th>
-              <th className="border-b border-slate-200 px-3 py-3">Ghi chú</th>
+              <th className="w-[104px] border-b border-slate-200 px-3 py-3 whitespace-nowrap">Loại</th>
+              <th className="w-[260px] border-b border-slate-200 px-3 py-3 whitespace-nowrap">Vật tư</th>
+              <th className="w-[150px] border-b border-slate-200 px-3 py-3 text-right whitespace-nowrap">Số lượng</th>
+              <th className="w-[150px] border-b border-slate-200 px-3 py-3 text-right whitespace-nowrap">Tồn sau</th>
+              <th className="w-[160px] border-b border-slate-200 px-3 py-3 whitespace-nowrap">Ngày giao dịch</th>
+              <th className="w-[130px] border-b border-slate-200 px-3 py-3 whitespace-nowrap">Người tạo</th>
+              <th className="w-[180px] border-b border-slate-200 px-3 py-3 whitespace-nowrap">Nguồn</th>
+              <th className="border-b border-slate-200 px-3 py-3 whitespace-nowrap">Ghi chú</th>
               <th className="w-[80px] whitespace-nowrap border-b border-slate-200 px-3 py-3 text-right">Thao tác</th>
             </tr>
           </thead>
@@ -404,8 +407,23 @@ export function MaterialsTransactions({
                     {ledger ? `${formatQuantity(ledger.stockAfter)} ${transaction.materialItem.unit}` : "—"}
                   </td>
                   <td className="px-3 py-3"><DateCell value={formatDateTime(transaction.movementDate)} /></td>
-                  <td className="px-3 py-3 text-sm text-slate-500">Chưa ghi nhận</td>
-                  <td className="px-3 py-3 text-sm text-slate-500">Giao dịch thủ công</td>
+                  <td className="px-3 py-3 text-sm text-slate-500">
+                    {transaction.materialRequest ? (
+                      <SafeText>{transaction.materialRequest.requestedBy?.name || "Hệ thống"}</SafeText>
+                    ) : (
+                      "Chưa ghi nhận"
+                    )}
+                  </td>
+                  <td className="px-3 py-3 text-sm text-slate-500">
+                    {transaction.materialRequest ? (
+                      <div className="flex flex-col">
+                        <span className="font-medium text-blue-700">Đề xuất vật tư</span>
+                        <span className="text-xs font-mono">{transaction.materialRequest.requestNo}</span>
+                      </div>
+                    ) : (
+                      "Giao dịch thủ công"
+                    )}
+                  </td>
                   <td className="min-w-0 px-3 py-3">
                     <SafeText className="text-slate-600">{note}</SafeText>
                   </td>
@@ -540,7 +558,7 @@ export function MaterialsTransactions({
       <TransactionDetailDrawer
         transaction={selectedTransaction}
         ledgerInfo={selectedLedger}
-        sourceLabel="Giao dịch thủ công, chưa liên kết phiếu yêu cầu"
+        sourceLabel="Giao dịch thủ công, chưa liên kết đề xuất vật tư"
         displayNote={selectedTransaction ? displayNote(selectedTransaction.notes) : "—"}
         onClose={handleCloseDrawer}
       />

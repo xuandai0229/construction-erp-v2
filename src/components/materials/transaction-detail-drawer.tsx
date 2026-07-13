@@ -106,7 +106,7 @@ export function TransactionDetailDrawer({
             <div>
               <h3 className="mb-2 text-sm font-semibold text-slate-900">Nguồn liên quan</h3>
               <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600">
-                {sourceLabel || "Giao dịch thủ công, chưa liên kết phiếu yêu cầu"}
+                {sourceLabel || "Giao dịch thủ công, chưa liên kết đề xuất vật tư"}
               </div>
             </div>
 

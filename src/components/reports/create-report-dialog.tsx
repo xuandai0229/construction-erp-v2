@@ -461,7 +461,7 @@ export function CreateReportDialog({
                               <tr>
                                 <th className="w-12 px-3 py-3 text-center">STT</th>
                                 <th className="px-4 py-3">Công việc</th>
-                                <th className="w-20 px-2 py-3 text-center">ĐVT</th>
+                                <th className="w-20 px-2 py-3 text-center">Đơn vị</th>
                                 <th className="w-24 px-3 py-3 text-right">TK/Duyệt</th>
                                 <th className="w-24 px-3 py-3 text-right">Còn lại</th>
                                 <th className="w-32 px-4 py-3 text-right text-blue-700">KL hôm nay</th>

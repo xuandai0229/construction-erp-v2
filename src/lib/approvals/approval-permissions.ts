@@ -4,6 +4,7 @@ import type {
   ProjectRole,
   UserRole,
 } from "@prisma/client";
+import { canApproveByRequestType } from "./approval-policy";
 
 export type ApprovalActor = {
   id: string;
@@ -35,17 +36,10 @@ const HIGH_LEVEL_VIEW_ROLES: UserRole[] = [
   "MANAGER",
 ];
 
-const HIGH_LEVEL_DECISION_ROLES: UserRole[] = [
+const COMPANY_WIDE_DECISION_ROLES: UserRole[] = [
   "ADMIN",
   "DIRECTOR",
   "DEPUTY_DIRECTOR",
-  "MANAGER",
-];
-
-const PROJECT_DECISION_ROLES: ProjectRole[] = [
-  "PROJECT_MANAGER",
-  "SITE_COMMANDER",
-  "CHIEF_COMMANDER",
 ];
 
 function isDeleted(approval: ApprovalPermissionContext) {
@@ -84,11 +78,15 @@ export function canApproveApproval(
 ) {
   if (isDeleted(approval)) return false;
   if (approval.status !== "PENDING") return false;
-  if (approval.requesterId === actor.id && !isApprovalAdmin(actor)) return false;
-  if (HIGH_LEVEL_DECISION_ROLES.includes(actor.role)) return true;
 
   const projectRole = getProjectRole(approval, projectRoles);
-  return projectRole ? PROJECT_DECISION_ROLES.includes(projectRole) : false;
+  return canApproveByRequestType({
+    userRole: actor.role,
+    projectRole,
+    requestType: approval.type,
+    actorId: actor.id,
+    requesterId: approval.requesterId,
+  });
 }
 
 export function canRejectApproval(
@@ -107,10 +105,9 @@ export function canCancelApproval(
   if (isDeleted(approval)) return false;
   if (approval.status !== "PENDING") return false;
   if (approval.requesterId === actor.id) return true;
-  if (isApprovalAdmin(actor)) return true;
+  if (COMPANY_WIDE_DECISION_ROLES.includes(actor.role)) return true;
 
-  const projectRole = getProjectRole(approval, projectRoles);
-  return projectRole ? PROJECT_DECISION_ROLES.includes(projectRole) : false;
+  return false;
 }
 
 export function canSoftDeleteApproval(
@@ -119,10 +116,7 @@ export function canSoftDeleteApproval(
   projectRoles: ReadonlyMap<string, ProjectRole>,
 ) {
   if (isApprovalAdmin(actor)) return true;
-  if (HIGH_LEVEL_DECISION_ROLES.includes(actor.role)) return true;
-  
-  const projectRole = getProjectRole(approval, projectRoles);
-  if (projectRole && PROJECT_DECISION_ROLES.includes(projectRole)) return true;
+  if (COMPANY_WIDE_DECISION_ROLES.includes(actor.role)) return true;
   
   if (approval.requesterId === actor.id && approval.status === "PENDING") return true;
 
@@ -138,9 +132,7 @@ export function canEditApproval(
   if (approval.status !== "PENDING") return false;
   
   if (isApprovalAdmin(actor)) return true;
-  
-  const projectRole = getProjectRole(approval, projectRoles);
-  if (projectRole && PROJECT_DECISION_ROLES.includes(projectRole)) return true;
+  if (COMPANY_WIDE_DECISION_ROLES.includes(actor.role)) return true;
   
   if (approval.requesterId === actor.id) return true;
   

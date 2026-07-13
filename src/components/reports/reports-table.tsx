@@ -9,6 +9,7 @@ import { useMemo, Fragment } from "react";
 import { getVietnamIsoWeekInfo } from "@/lib/reports/report-timezone";
 import { formatDateVN, formatTimeVN, formatReportCode } from "@/lib/utils";
 import { ContentCard } from "@/components/ui/enterprise";
+import { isCompanyWideRole } from "@/lib/rbac-rules";
 
 interface ReportsTableProps {
   reports: FieldReport[];
@@ -39,6 +40,7 @@ export function ReportsTable({
   showProjectColumn = true,
   currentUser,
 }: ReportsTableProps) {
+  const currentUserHasCompanyScope = isCompanyWideRole(currentUser?.role);
   const totalPages = Math.ceil(totalReports / pageSize) || 1;
   const start = totalReports === 0 ? 0 : (page - 1) * pageSize + 1;
   const end = Math.min(page * pageSize, totalReports);
@@ -261,7 +263,7 @@ export function ReportsTable({
                               {currentUser && (
                                 <>
                                   {(report.status === "DRAFT" || report.status === "REJECTED" || report.status === "REVISION_REQUESTED") && 
-                                   (report.createdById === currentUser.id || ['ADMIN', 'DIRECTOR', 'DEPUTY_DIRECTOR'].includes(currentUser.role || '')) && (
+                                   (report.createdById === currentUser.id || currentUserHasCompanyScope) && (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); onEdit?.(report); }}
                                       className="icon-button h-9 w-9 text-slate-500 hover:text-blue-700"
@@ -273,7 +275,7 @@ export function ReportsTable({
                                   )}
                                   
                                   {(report.status === "DRAFT" || report.status === "REJECTED" || report.status === "REVISION_REQUESTED" || report.status === "SUBMITTED") && 
-                                   ['ADMIN', 'DIRECTOR', 'DEPUTY_DIRECTOR'].includes(currentUser.role || '') && (
+                                   currentUserHasCompanyScope && (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); onDelete?.(report); }}
                                       className="icon-button h-9 w-9 text-slate-500 hover:bg-rose-50 hover:text-rose-700"

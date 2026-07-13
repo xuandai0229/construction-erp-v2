@@ -7,9 +7,12 @@ import { MovementTypeBadge, StockStatusBadge } from "./materials-badges";
 import type { MaterialItemDto, ProjectStockDto, MaterialMovementDto } from "@/app/(dashboard)/materials/actions";
 import { SafeText, DateCell, QuantityCell, ActionGroup } from "@/components/ui/enterprise";
 import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import { getApprovedProposalSummaryByMaterial } from "@/app/actions/material-request";
 
 interface MaterialDetailDrawerProps {
   material: MaterialItemDto | null;
+  projectId: string;
   stock?: ProjectStockDto;
   recentTransactions?: MaterialMovementDto[];
   onClose: () => void;
@@ -27,6 +30,7 @@ interface MaterialDetailDrawerProps {
 
 export function MaterialDetailDrawer({
   material,
+  projectId,
   stock,
   recentTransactions = [],
   onClose,
@@ -36,7 +40,34 @@ export function MaterialDetailDrawer({
   onExport,
   permissions
 }: MaterialDetailDrawerProps) {
+  const [proposalSummary, setProposalSummary] = useState<any>(null);
+  const [isLoadingProposals, setIsLoadingProposals] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    if (material && projectId) {
+      setIsLoadingProposals(true);
+      getApprovedProposalSummaryByMaterial(projectId, material.id, material.code)
+        .then((res: any) => {
+          if (mounted) setProposalSummary(res);
+        })
+        .catch(console.error)
+        .finally(() => {
+          if (mounted) setIsLoadingProposals(false);
+        });
+    } else {
+      setProposalSummary(null);
+    }
+    return () => { mounted = false; };
+  }, [material, projectId]);
+
   if (!material) return null;
+
+  // Hide raw tags from description
+  const cleanDescription = (material.description || "")
+    .replace(/\[HAS_APPROVED_REQUEST:[^\]]+\]/g, "")
+    .replace(/\[CREATED_FROM_REQUEST:[^\]]+\]/g, "")
+    .trim();
 
   return (
     <AppDrawer isOpen={!!material} onClose={onClose} ariaLabel="Chi tiết vật tư">
@@ -120,9 +151,76 @@ export function MaterialDetailDrawer({
                 </div>
                 <div className="grid grid-cols-3">
                   <div className="p-3 font-medium text-slate-500 bg-slate-50/50">Ghi chú</div>
-                  <div className="p-3 col-span-2 text-slate-900 whitespace-pre-wrap">{material.description || "—"}</div>
+                  <div className="p-3 col-span-2 text-slate-900 whitespace-pre-wrap">{cleanDescription || "—"}</div>
                 </div>
               </div>
+            </div>
+
+            {/* ĐỀ XUẤT LIÊN QUAN */}
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900 mb-3">Đề xuất liên quan</h3>
+              {isLoadingProposals ? (
+                <div className="rounded-xl border border-slate-200 p-6 text-center text-sm text-slate-500">
+                  Đang tải...
+                </div>
+              ) : proposalSummary ? (
+                <div className="space-y-4">
+                  {/* SUMMARY BOX */}
+                  <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4">
+                    <h4 className="font-semibold text-blue-900 mb-3 text-sm">Tổng hợp số lượng từ đề xuất</h4>
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <div className="bg-white rounded-lg p-3 border border-blue-100 shadow-sm">
+                        <div className="text-xs text-slate-500 mb-1 font-medium">Tổng Số lượng đề xuất đã duyệt</div>
+                        <div className="text-lg font-bold text-slate-800 font-mono">
+                          {formatQuantity(proposalSummary.approvedRequestedQuantityTotal)} <span className="text-sm font-medium text-slate-500">{material.unit}</span>
+                        </div>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 border border-blue-100 shadow-sm">
+                        <div className="text-xs text-slate-500 mb-1 font-medium">Đã nhập vào kho từ đề xuất</div>
+                        <div className="text-lg font-bold text-blue-700 font-mono">
+                          {formatQuantity(proposalSummary.importedFromProposalQuantity)} <span className="text-sm font-medium text-slate-500">{material.unit}</span>
+                        </div>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 border border-blue-100 shadow-sm">
+                        <div className="text-xs text-slate-500 mb-1 font-medium">Số đề xuất liên quan</div>
+                        <div className="text-lg font-bold text-emerald-600 font-mono">
+                          {proposalSummary.relatedRequests.length} <span className="text-sm font-medium text-slate-500">phiếu</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* LIST */}
+                  <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+                    <div className="divide-y divide-slate-100">
+                    {proposalSummary.relatedRequests.map((reqItem: any) => (
+                      <div key={reqItem.id} className="p-4 flex flex-col gap-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-sm text-slate-900">{reqItem.materialRequest?.requestNo}</span>
+                          <span className="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-medium border border-emerald-200">
+                            Đã duyệt
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4 mt-1 text-sm text-slate-600">
+                          <div><span className="text-slate-400">Số lượng:</span> <span className="font-semibold text-slate-900">{formatQuantity(reqItem.requestedQuantity)}</span> {reqItem.unit}</div>
+                          {reqItem.workItemNameSnapshot && (
+                            <div><span className="text-slate-400">Công việc:</span> {reqItem.workItemNameSnapshot}</div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-4 text-xs text-slate-500 mt-1">
+                          <div>Tạo bởi: {reqItem.materialRequest?.requestedBy?.name || "Người dùng"}</div>
+                          <div>Ngày: {formatDateTime(reqItem.materialRequest?.requestDate || reqItem.materialRequest?.createdAt)}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">
+                  Không có đề xuất nào được duyệt cho vật tư này.
+                </div>
+              )}
             </div>
 
             {/* GIAO DỊCH GẦN ĐÂY */}

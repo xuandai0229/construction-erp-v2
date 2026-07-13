@@ -4,7 +4,9 @@ import { getSession } from "./auth";
 import { redirect } from "next/navigation";
 
 // ─── Role Constants ───────────────────────────────────────────
-const HIGH_LEVEL_ROLES: UserRole[] = ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"];
+export const SYSTEM_ADMIN_ROLES: UserRole[] = ["ADMIN"];
+export const COMPANY_WIDE_ROLES: UserRole[] = ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"];
+const HIGH_LEVEL_ROLES: UserRole[] = COMPANY_WIDE_ROLES;
 
 // ─── Role Display Names (Vietnamese) ─────────────────────────
 export const ROLE_DISPLAY_NAMES: Record<UserRole, string> = {
@@ -98,18 +100,26 @@ export function isHighLevelUser(user: { role: UserRole }): boolean {
   return HIGH_LEVEL_ROLES.includes(user.role);
 }
 
+export function isSystemAdmin(user: { role: UserRole }): boolean {
+  return SYSTEM_ADMIN_ROLES.includes(user.role);
+}
+
+export function isCompanyWideUser(user: { role: UserRole }): boolean {
+  return COMPANY_WIDE_ROLES.includes(user.role);
+}
+
 /**
  * Check if user can view all projects (not just assigned ones)
  */
 export function canViewAllProjects(user: { role: UserRole }): boolean {
-  return HIGH_LEVEL_ROLES.includes(user.role);
+  return isCompanyWideUser(user);
 }
 
 /**
  * Check if user can manage (create/edit/delete) projects
  */
 export function canManageProjects(user: { role: UserRole }): boolean {
-  return HIGH_LEVEL_ROLES.includes(user.role);
+  return isCompanyWideUser(user);
 }
 
 /**
@@ -117,6 +127,40 @@ export function canManageProjects(user: { role: UserRole }): boolean {
  */
 export function canManageUsers(user: { role: UserRole }): boolean {
   return HIGH_LEVEL_ROLES.includes(user.role);
+}
+
+export async function getProjectRoleForUser(
+  user: { id: string; role: UserRole },
+  projectId: string
+) {
+  if (isCompanyWideUser(user)) return null;
+
+  const member = await prisma.projectMember.findFirst({
+    where: {
+      projectId,
+      userId: user.id,
+      isActive: true,
+      deletedAt: null,
+      leftAt: null,
+    },
+    select: { role: true },
+  });
+
+  return member?.role ?? null;
+}
+
+export async function requireProjectScope(
+  user: { id: string; role: UserRole },
+  projectId: string
+) {
+  if (isCompanyWideUser(user)) return null;
+
+  const projectRole = await getProjectRoleForUser(user, projectId);
+  if (!projectRole) {
+    throw new Error("Ban khong co quyen truy cap cong trinh nay");
+  }
+
+  return projectRole;
 }
 
 /**

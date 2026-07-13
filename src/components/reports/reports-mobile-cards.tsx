@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { PhotoPreviewStack } from "./photo-preview-stack";
 import { formatDateVN, formatReportCode } from "@/lib/utils";
 import { ContentCard } from "@/components/ui/enterprise";
+import { isCompanyWideRole } from "@/lib/rbac-rules";
 
 interface ReportsMobileCardsProps {
   reports: FieldReport[];
@@ -19,6 +20,7 @@ interface ReportsMobileCardsProps {
 
 export function ReportsMobileCards({ reports, onViewDetail, onViewGallery, onEdit, onDelete, currentUser }: ReportsMobileCardsProps) {
   if (!reports.length) return null;
+  const currentUserHasCompanyScope = isCompanyWideRole(currentUser?.role);
 
   return (
     <div className="flex flex-col gap-3">
@@ -83,7 +85,7 @@ export function ReportsMobileCards({ reports, onViewDetail, onViewGallery, onEdi
               {currentUser && (
                 <>
                   {(report.status === "DRAFT" || report.status === "REJECTED" || report.status === "REVISION_REQUESTED" || report.status === "SUBMITTED") && 
-                   ['ADMIN', 'DIRECTOR', 'DEPUTY_DIRECTOR'].includes(currentUser.role || '') && (
+                   currentUserHasCompanyScope && (
                     <button
                       onClick={(e) => { e.stopPropagation(); onDelete?.(report); }}
                       className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-red-600 transition-colors hover:bg-red-50"
@@ -94,7 +96,7 @@ export function ReportsMobileCards({ reports, onViewDetail, onViewGallery, onEdi
                     </button>
                   )}
                   {(report.status === "DRAFT" || report.status === "REJECTED" || report.status === "REVISION_REQUESTED") && 
-                   (report.createdById === currentUser.id || ['ADMIN', 'DIRECTOR', 'DEPUTY_DIRECTOR'].includes(currentUser.role || '')) && (
+                   (report.createdById === currentUser.id || currentUserHasCompanyScope) && (
                     <button
                       onClick={(e) => { e.stopPropagation(); onEdit?.(report); }}
                       className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-blue-600 transition-colors hover:bg-blue-50"

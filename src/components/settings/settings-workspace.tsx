@@ -450,7 +450,7 @@ export function SettingsWorkspace({ initialSettings }: { initialSettings: System
                 />
                 <SwitchRow
                   title="Vật tư phải qua phê duyệt"
-                  description="Phiếu yêu cầu vật tư từ hiện trường cần được duyệt trước khi xuất."
+                  description="Đề xuất vật tư từ hiện trường cần được duyệt trước khi nhập kho tự động."
                   checked={profile.materialRequestApproval}
                   onChange={(value) => updateField("materialRequestApproval", value)}
                   disabled={true}

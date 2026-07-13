@@ -1,4 +1,5 @@
 import { Prisma, type UserRole } from "@prisma/client";
+import { canApproveByRequestType } from "@/lib/approvals/approval-policy";
 import { syncSiteReportProgressEntriesInTransaction } from "./report-progress-sync";
 
 export type ReportTransitionClient = {
@@ -13,9 +14,8 @@ export type ReportTransitionActor = {
   role: UserRole;
 };
 
-const REPORT_REVIEW_ROLES: UserRole[] = ["ADMIN", "DIRECTOR"];
 const REPORT_STATUS_CONFLICT_MESSAGE =
-  "Trạng thái báo cáo đã thay đổi, vui lòng tải lại.";
+  "Trang thai bao cao da thay doi, vui long tai lai.";
 
 async function getExistingReport(
   tx: Prisma.TransactionClient,
@@ -25,7 +25,7 @@ async function getExistingReport(
     where: { id: reportId, deletedAt: null },
   });
   if (!report) {
-    throw new Error("Không tìm thấy báo cáo");
+    throw new Error("Khong tim thay bao cao");
   }
   return report;
 }
@@ -38,7 +38,7 @@ export async function submitSiteReportTransition(
   return client.$transaction(async (tx) => {
     const report = await getExistingReport(tx, reportId);
     if (report.createdById !== actor.id) {
-      throw new Error("Không có quyền gửi báo cáo này");
+      throw new Error("Khong co quyen gui bao cao nay");
     }
 
     const result = await tx.siteReport.updateMany({
@@ -85,12 +85,17 @@ export async function approveSiteReportTransition(
   actor: ReportTransitionActor,
   note?: string,
 ) {
-  if (!REPORT_REVIEW_ROLES.includes(actor.role)) {
-    throw new Error("Không có quyền duyệt báo cáo");
-  }
-
   return client.$transaction(async (tx) => {
     const report = await getExistingReport(tx, reportId);
+    if (!canApproveByRequestType({
+      userRole: actor.role,
+      requestType: "REPORT",
+      actorId: actor.id,
+      requesterId: report.createdById,
+    })) {
+      throw new Error("Khong co quyen duyet bao cao");
+    }
+
     const result = await tx.siteReport.updateMany({
       where: {
         id: reportId,
@@ -136,14 +141,20 @@ export async function rejectSiteReportTransition(
   reason?: string,
 ) {
   if (!reason?.trim()) {
-    throw new Error("Bắt buộc nhập lý do từ chối");
-  }
-  if (!REPORT_REVIEW_ROLES.includes(actor.role)) {
-    throw new Error("Không có quyền từ chối báo cáo");
+    throw new Error("Bat buoc nhap ly do tu choi");
   }
 
   return client.$transaction(async (tx) => {
     const report = await getExistingReport(tx, reportId);
+    if (!canApproveByRequestType({
+      userRole: actor.role,
+      requestType: "REPORT",
+      actorId: actor.id,
+      requesterId: report.createdById,
+    })) {
+      throw new Error("Khong co quyen tu choi bao cao");
+    }
+
     const result = await tx.siteReport.updateMany({
       where: {
         id: reportId,

@@ -424,9 +424,9 @@ function MaterialRequestPreview({ approvalId }: { approvalId: string }) {
           <table className="w-full text-left text-sm whitespace-nowrap min-w-[500px]">
             <thead className="bg-slate-50 text-slate-600">
               <tr>
-                <th className="px-3 py-2 font-medium">Mã VT</th>
+                <th className="px-3 py-2 font-medium">Mã vật tư</th>
                 <th className="px-3 py-2 font-medium">Tên vật tư</th>
-                <th className="px-3 py-2 font-medium">ĐVT</th>
+                <th className="px-3 py-2 font-medium">Đơn vị</th>
                 <th className="px-3 py-2 font-medium text-right">Đề xuất</th>
                 <th className="px-3 py-2 font-medium text-right">Đã cấp</th>
                 <th className="px-3 py-2 font-medium text-right">Đã nhận</th>

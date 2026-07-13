@@ -1,23 +1,25 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
 import { writeAuditLog } from "@/lib/audit";
-import { requireProjectAccess } from "@/lib/rbac";
+import { requireProjectAccess, requireProjectScope } from "@/lib/rbac";
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { getWorkDateRange } from "@/lib/date/work-date";
 import { evaluateVolumeGuard } from "@/lib/field-progress/volume-guard";
-import { assertFieldProgressEntryWritable } from "@/lib/field-progress/entry-workflow-policy";
+import { assertFieldProgressPermission, getFieldProgressPermissions } from "@/lib/field-progress/field-progress-permissions";
 const Decimal = Prisma.Decimal;
 
 // Safer batch save function
 export async function batchSaveDailyEntries(projectId: string, templateId: string, entryDateStr: string, entries: any[], _submit: boolean = false) {
   const session = await requireProjectAccess(projectId);
+  const projectRole = await requireProjectScope(session, projectId);
+  const permissions = getFieldProgressPermissions(session.role, projectRole);
+  assertFieldProgressPermission(permissions, "canUpdateProgress");
 
   try {
     const { start, end } = getWorkDateRange(entryDateStr);
-    const isApprover = ["ADMIN", "DIRECTOR", "MANAGER", "SITE_MANAGER"].includes(session.role as string);
+    const isApprover = permissions.canApproveProgress;
     const status = _submit ? (isApprover ? "APPROVED" : "SUBMITTED") : "DRAFT";
     
     const itemIds = entries.map(e => e.itemId);

@@ -4,8 +4,9 @@ import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { getContractPermissions, ContractPermissionSet } from "@/lib/contracts/contracts-permissions";
+import { getContractPermissions } from "@/lib/contracts/contracts-permissions";
 import { ContractType, ContractStatus } from "@prisma/client";
+import { canViewAllProjects, requireProjectScope } from "@/lib/rbac";
 
 const CONTRACTS_PATH = "/contracts";
 
@@ -62,8 +63,8 @@ export async function getContractsData() {
   const roleByProject = new Map(memberships.map(m => [m.projectId, m.role]));
   
   // Xác định các project user được xem
-  let projectWhere: Prisma.ProjectWhereInput = { deletedAt: null };
-  const hasGlobalView = session.role === "ADMIN" || session.role === "DIRECTOR" || session.role === "DEPUTY_DIRECTOR" || session.role === "MANAGER" || session.role === "ACCOUNTANT";
+  const projectWhere: Prisma.ProjectWhereInput = { deletedAt: null };
+  const hasGlobalView = canViewAllProjects(session);
   
   if (!hasGlobalView) {
     projectWhere.id = { in: Array.from(roleByProject.keys()) };
@@ -170,10 +171,8 @@ export async function createContract(data: {
   const projectId = normalizeText(data.projectId);
   if (!projectId) throw new Error("Chưa chọn công trình");
 
-  const membership = await prisma.projectMember.findFirst({
-    where: { projectId, userId: session.id, isActive: true, deletedAt: null, leftAt: null }
-  });
-  const perms = getContractPermissions(session.role, membership?.role);
+  const projectRole = await requireProjectScope(session, projectId);
+  const perms = getContractPermissions(session.role, projectRole);
   if (!perms.canCreate) throw new Error("Bạn không có quyền tạo hợp đồng cho công trình này");
 
   const contractNo = normalizeText(data.contractNo);
@@ -238,10 +237,8 @@ export async function updateContract(id: string, data: {
   const contract = await prisma.contract.findFirst({ where: { id, deletedAt: null } });
   if (!contract) throw new Error("Hợp đồng không tồn tại");
 
-  const membership = await prisma.projectMember.findFirst({
-    where: { projectId: contract.projectId, userId: session.id, isActive: true, deletedAt: null, leftAt: null }
-  });
-  const perms = getContractPermissions(session.role, membership?.role);
+  const projectRole = await requireProjectScope(session, contract.projectId);
+  const perms = getContractPermissions(session.role, projectRole);
   if (!perms.canUpdate) throw new Error("Bạn không có quyền sửa hợp đồng này");
 
   const contractNo = normalizeText(data.contractNo);
@@ -264,10 +261,8 @@ export async function updateContract(id: string, data: {
   const newProjectId = normalizeText(data.projectId) || contract.projectId;
 
   if (newProjectId !== contract.projectId) {
-    const newMembership = await prisma.projectMember.findFirst({
-      where: { projectId: newProjectId, userId: session.id, isActive: true, deletedAt: null, leftAt: null }
-    });
-    const newPerms = getContractPermissions(session.role, newMembership?.role);
+    const newProjectRole = await requireProjectScope(session, newProjectId);
+    const newPerms = getContractPermissions(session.role, newProjectRole);
     if (!newPerms.canCreate) throw new Error("Bạn không có quyền chuyển hợp đồng sang công trình này");
   }
 
@@ -308,10 +303,8 @@ export async function deleteContract(id: string) {
   });
   if (!contract) throw new Error("Hợp đồng không tồn tại");
 
-  const membership = await prisma.projectMember.findFirst({
-    where: { projectId: contract.projectId, userId: session.id, isActive: true, deletedAt: null, leftAt: null }
-  });
-  const perms = getContractPermissions(session.role, membership?.role);
+  const projectRole = await requireProjectScope(session, contract.projectId);
+  const perms = getContractPermissions(session.role, projectRole);
   if (!perms.canDelete) throw new Error("Bạn không có quyền xóa hợp đồng này");
 
   if (contract._count.paymentPlans > 0) {

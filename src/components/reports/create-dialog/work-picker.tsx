@@ -194,7 +194,7 @@ export function WorkPicker({
                     <th className="w-12 px-4 py-3 text-center">Chọn</th>
                     <th className="w-16 px-2 py-3 text-center">STT</th>
                     <th className="px-4 py-3">Mã & Tên Công Việc</th>
-                    <th className="w-20 px-2 py-3 text-center">ĐVT</th>
+                    <th className="w-20 px-2 py-3 text-center">Đơn vị</th>
                     <th className="w-28 px-4 py-3 text-right">Thiết kế</th>
                     <th className="w-28 px-4 py-3 text-right">Lũy kế</th>
                     <th className="w-28 px-4 py-3 text-right text-blue-700">Hôm nay</th>

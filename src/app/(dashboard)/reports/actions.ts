@@ -1180,8 +1180,6 @@ export async function updateSiteReport(reportId: string, data: Record<string, un
     where: { id: session.id },
     select: { role: true }
   });
-  const isSystemAdmin = user && ['ADMIN', 'DIRECTOR'].includes(user.role);
-
   const report = await prisma.siteReport.findUnique({
     where: { id: reportId },
     include: { lines: true }
@@ -1327,8 +1325,6 @@ export async function softDeleteSiteReport(reportId: string) {
     where: { id: session.id },
     select: { role: true }
   });
-  const isSystemAdmin = user && ['ADMIN', 'DIRECTOR'].includes(user.role);
-
   const report = await prisma.siteReport.findUnique({
     where: { id: reportId }
   });

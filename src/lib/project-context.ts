@@ -101,7 +101,7 @@ export async function getGlobalProjectContext(
       const daysRemaining = end ? Math.ceil((end - today) / 86400000) : null;
 
       let health: "ON_TRACK" | "AT_RISK" | "DELAYED" | "COMPLETED" | "NO_DATA" = "ON_TRACK";
-      let warning = getProjectStatusMeta(project.status).label || "Chưa có trạng thái";
+      const warning = getProjectStatusMeta(project.status).label || "Chưa có trạng thái";
 
       if (project.status === "COMPLETED") {
         health = "COMPLETED";

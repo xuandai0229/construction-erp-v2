@@ -10,20 +10,21 @@ import { MaterialRequestDetail } from "./material-request-detail";
 import { EnterpriseTable, SafeText, DateCell } from "@/components/ui/enterprise";
 import { MaterialKpiRibbon, MaterialRowActionMenu, type MaterialActionItem } from "@/components/materials/materials-ui";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { deleteMaterialRequest, cancelMaterialRequest } from "@/app/actions/material-request";
+import { deleteMaterialRequest, cancelMaterialRequest, approveMaterialRequest, rejectMaterialRequest } from "@/app/actions/material-request";
 import type { MaterialItemDto, ProjectStockDto } from "@/app/(dashboard)/materials/actions";
 import { useToast } from "@/components/ui/toast-context";
 
 const statusConfig = {
   DRAFT: { label: "Nháp", variant: "neutral" as const, icon: FileText },
-  REQUESTED: { label: "Đã đề xuất", variant: "info" as const, icon: Clock },
-  SUBMITTED: { label: "Chờ phê duyệt", variant: "warning" as const, icon: Clock },
+  SUBMITTED: { label: "Chờ duyệt", variant: "warning" as const, icon: Clock },
   APPROVED: { label: "Đã duyệt", variant: "success" as const, icon: CheckCircle2 },
   REJECTED: { label: "Từ chối", variant: "danger" as const, icon: XCircle },
-  PROCESSING: { label: "Đang xử lý", variant: "info" as const, icon: AlertCircle },
-  ISSUED: { label: "Đã cấp", variant: "info" as const, icon: Package },
-  RECEIVED: { label: "Đã nhận", variant: "success" as const, icon: CheckCircle2 },
-  CANCELLED: { label: "Hủy", variant: "danger" as const, icon: XCircle },
+  // Legacy mappings
+  REQUESTED: { label: "Chờ duyệt", variant: "warning" as const, icon: Clock },
+  PROCESSING: { label: "Đã duyệt", variant: "success" as const, icon: CheckCircle2 },
+  ISSUED: { label: "Đã duyệt", variant: "success" as const, icon: CheckCircle2 },
+  RECEIVED: { label: "Đã duyệt", variant: "success" as const, icon: CheckCircle2 },
+  CANCELLED: { label: "Từ chối", variant: "danger" as const, icon: XCircle },
 };
 
 const priorityConfig = {
@@ -33,7 +34,7 @@ const priorityConfig = {
   URGENT: { label: "Khẩn cấp", variant: "danger" as const },
 };
 
-type RequestFlag = "all" | "pending" | "active" | "approved" | "partial" | "received" | "missing" | "overdue" | "stock-risk";
+type RequestFlag = "all" | "pending" | "approved" | "rejected";
 
 function numberValue(value: unknown) {
   const numeric = Number(value ?? 0);
@@ -83,6 +84,7 @@ export function MaterialRequestList({
   materialItems = [],
   stocks = [],
   currentUserRole,
+  currentUserId,
 }: { 
   projectId: string;
   initialRequests: any[];
@@ -90,6 +92,7 @@ export function MaterialRequestList({
   materialItems?: MaterialItemDto[];
   stocks?: ProjectStockDto[];
   currentUserRole?: string;
+  currentUserId?: string;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -128,14 +131,19 @@ export function MaterialRequestList({
   const [deletingRequest, setDeletingRequest] = useState<any | null>(null);
   const [isCanceling, setIsCanceling] = useState(false);
   const [cancelingRequest, setCancelingRequest] = useState<any | null>(null);
-
+  
+  const [isApproving, setIsApproving] = useState(false);
+  const [approvingRequest, setApprovingRequest] = useState<any | null>(null);
+  const [isRejecting, setIsRejecting] = useState(false);
+  const [rejectingRequest, setRejectingRequest] = useState<any | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
   const handleDelete = async () => {
     if (!deletingRequest) return;
     setIsDeleting(true);
     try {
       await deleteMaterialRequest(deletingRequest.id);
       setDeletingRequest(null);
-      toast.success("Đã xóa phiếu yêu cầu vật tư");
+      toast.success("Đã xóa đề xuất vật tư");
       router.refresh();
     } catch (error: any) {
       toast.error(error.message || "Có lỗi xảy ra");
@@ -144,18 +152,38 @@ export function MaterialRequestList({
     }
   };
 
-  const handleCancel = async () => {
-    if (!cancelingRequest) return;
-    setIsCanceling(true);
+  const handleApprove = async () => {
+    if (!approvingRequest) return;
+    setIsApproving(true);
     try {
-      await cancelMaterialRequest(cancelingRequest.id, "Người dùng hủy phiếu");
-      setCancelingRequest(null);
-      toast.success("Đã hủy phiếu yêu cầu vật tư");
+      await approveMaterialRequest(approvingRequest.id);
+      setApprovingRequest(null);
+      toast.success("Đã duyệt phiếu đề xuất vật tư");
       router.refresh();
     } catch (error: any) {
       toast.error(error.message || "Có lỗi xảy ra");
     } finally {
-      setIsCanceling(false);
+      setIsApproving(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!rejectingRequest) return;
+    if (!rejectReason.trim()) {
+      toast.error("Vui lòng nhập lý do từ chối");
+      return;
+    }
+    setIsRejecting(true);
+    try {
+      await rejectMaterialRequest(rejectingRequest.id, rejectReason);
+      setRejectingRequest(null);
+      setRejectReason("");
+      toast.success("Đã từ chối phiếu đề xuất vật tư");
+      router.refresh();
+    } catch (error: any) {
+      toast.error(error.message || "Có lỗi xảy ra");
+    } finally {
+      setIsRejecting(false);
     }
   };
 
@@ -192,6 +220,8 @@ export function MaterialRequestList({
 
   // Filter Logic
   const filteredRequests = requests.filter(req => {
+    // Hide Cancelled from main list if wanted, but since they are mapped to "Từ chối (Hủy)", we can keep them or hide.
+    // Let's filter out legacy if needed, or just let them show.
     const haystack = [
       req.requestNo,
       req.note,
@@ -205,35 +235,25 @@ export function MaterialRequestList({
       ]),
     ].map(normalize).join(" ");
     const matchesSearch = !search || haystack.includes(normalize(search));
-    const matchesStatus = statusFilter === "ALL" || req.status === statusFilter;
-    const matchesPriority = priorityFilter === "ALL" || req.priority === priorityFilter;
+    const normalizedStatus = ["PROCESSING", "ISSUED", "RECEIVED"].includes(req.status) ? "APPROVED" : (req.status === "REQUESTED" ? "SUBMITTED" : (req.status === "CANCELLED" ? "REJECTED" : req.status));
+    const matchesStatus = statusFilter === "ALL" || normalizedStatus === statusFilter;
     const matchesFlag =
       activeFlag === "all" ||
-      (activeFlag === "pending" && req.status === "SUBMITTED") ||
-      (activeFlag === "active" && ["REQUESTED", "SUBMITTED", "APPROVED", "PROCESSING", "ISSUED"].includes(req.status)) ||
-      (activeFlag === "approved" && req.status === "APPROVED") ||
-      (activeFlag === "partial" && isPartialIssue(req)) ||
-      (activeFlag === "received" && req.status === "RECEIVED") ||
-      (activeFlag === "missing" && requestRemaining(req) > 0 && !["CANCELLED", "REJECTED"].includes(req.status)) ||
-      (activeFlag === "overdue" && isOverdue(req)) ||
-      (activeFlag === "stock-risk" && hasStockRisk(req));
-    return matchesSearch && matchesStatus && matchesPriority && matchesFlag;
+      (activeFlag === "pending" && normalizedStatus === "SUBMITTED") ||
+      (activeFlag === "approved" && normalizedStatus === "APPROVED") ||
+      (activeFlag === "rejected" && normalizedStatus === "REJECTED");
+    return matchesSearch && matchesStatus && matchesFlag;
   });
 
   // KPI Calculation
   const totalRequests = requests.length;
-  const pendingRequests = requests.filter(r => r.status === "SUBMITTED").length;
-  const processingRequests = requests.filter(r => ["REQUESTED", "SUBMITTED", "APPROVED", "PROCESSING", "ISSUED"].includes(r.status)).length;
-  const receivedRequests = requests.filter(r => r.status === "RECEIVED").length;
-  const missingItemsRequests = requests.filter(r => 
-    r.items.some((i: any) => Number(i.requestedQuantity) > Number(i.receivedQuantity)) && r.status !== "CANCELLED"
-  ).length;
-  const overdueRequests = requests.filter(isOverdue).length;
-  const stockRiskRequests = requests.filter(hasStockRisk).length;
+  const pendingRequests = requests.filter(r => ["SUBMITTED", "REQUESTED"].includes(r.status)).length;
+  const approvedRequests = requests.filter(r => ["APPROVED", "PROCESSING", "ISSUED", "RECEIVED"].includes(r.status)).length;
+  const rejectedRequests = requests.filter(r => ["REJECTED", "CANCELLED"].includes(r.status)).length;
   const kpiItems = [
     {
       key: "all",
-      label: "Tổng phiếu",
+      label: "Tổng đề xuất",
       value: formatQty(totalRequests),
       helper: "Toàn dự án",
       icon: <FileText className="h-4 w-4" />,
@@ -245,51 +265,31 @@ export function MaterialRequestList({
       key: "pending",
       label: "Chờ duyệt",
       value: formatQty(pendingRequests),
-      helper: "Đang chờ xử lý",
+      helper: "Đang chờ duyệt",
       icon: <Clock className="h-4 w-4" />,
       tone: "amber" as const,
       active: statusFilter === "SUBMITTED",
       onClick: () => updateUrl({ requestFlag: null, requestStatus: "SUBMITTED" }),
     },
     {
-      key: "active",
-      label: "Đang xử lý",
-      value: formatQty(processingRequests),
-      helper: "Chưa đóng phiếu",
-      icon: <AlertCircle className="h-4 w-4" />,
-      tone: "blue" as const,
-      active: activeFlag === "active",
-      onClick: () => updateUrl({ requestFlag: "active", requestStatus: null }),
-    },
-    {
-      key: "received",
-      label: "Đã nhận",
-      value: formatQty(receivedRequests),
-      helper: "Hoàn tất nhận",
+      key: "approved",
+      label: "Đã duyệt",
+      value: formatQty(approvedRequests),
+      helper: "Đã được phê duyệt",
       icon: <CheckCircle2 className="h-4 w-4" />,
       tone: "emerald" as const,
-      active: statusFilter === "RECEIVED",
-      onClick: () => updateUrl({ requestFlag: null, requestStatus: "RECEIVED" }),
+      active: statusFilter === "APPROVED",
+      onClick: () => updateUrl({ requestFlag: null, requestStatus: "APPROVED" }),
     },
     {
-      key: "missing",
-      label: "Thiếu vật tư",
-      value: formatQty(missingItemsRequests),
-      helper: "Chưa nhận đủ",
-      icon: <Boxes className="h-4 w-4" />,
+      key: "rejected",
+      label: "Từ chối",
+      value: formatQty(rejectedRequests),
+      helper: "Bị từ chối",
+      icon: <XCircle className="h-4 w-4" />,
       tone: "rose" as const,
-      active: activeFlag === "missing",
-      onClick: () => updateUrl({ requestFlag: "missing", requestStatus: null }),
-    },
-    {
-      key: "overdue",
-      label: "Quá hạn",
-      value: formatQty(overdueRequests),
-      helper: "Theo ngày cần",
-      icon: <CalendarClock className="h-4 w-4" />,
-      tone: "rose" as const,
-      active: activeFlag === "overdue",
-      onClick: () => updateUrl({ requestFlag: "overdue", requestStatus: null }),
+      active: statusFilter === "REJECTED",
+      onClick: () => updateUrl({ requestFlag: null, requestStatus: "REJECTED" }),
     },
   ];
 
@@ -328,57 +328,28 @@ export function MaterialRequestList({
               id="search-request"
               name="search-request"
               type="text"
-              placeholder="Tìm mã phiếu, ghi chú..."
+              placeholder="Tìm tên vật tư, công việc, người tạo..."
               className="w-full pl-9 pr-4 py-2 bg-white text-slate-900 placeholder:text-slate-400 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
               value={search}
               onChange={(e) => updateUrl({ q: e.target.value, requestId: null, requestMode: null }, true)}
             />
           </div>
-          <div className="relative min-w-0">
+          <div className="relative min-w-0 sm:w-44 shrink-0">
             <label htmlFor="filter-status" className="sr-only">Bộ lọc trạng thái</label>
+            <Filter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <select
               id="filter-status"
               name="filter-status"
-              className="w-full sm:w-auto appearance-none pl-3 pr-8 py-2 bg-white text-slate-900 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+              className="w-full appearance-none rounded-lg border border-slate-300 bg-white pl-9 pr-8 h-10 text-sm font-medium text-slate-900 outline-none transition hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               value={statusFilter}
               onChange={(e) => updateUrl({ requestStatus: e.target.value, requestFlag: null })}
             >
               <option value="ALL">Tất cả trạng thái</option>
-              {Object.entries(statusConfig).map(([key, config]) => (
-                <option key={key} value={key}>{config.label}</option>
-              ))}
+              <option value="SUBMITTED">Chờ duyệt</option>
+              <option value="APPROVED">Đã duyệt</option>
+              <option value="REJECTED">Từ chối</option>
             </select>
-            <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
           </div>
-          <div className="relative min-w-0">
-            <label htmlFor="filter-priority" className="sr-only">Bộ lọc ưu tiên</label>
-            <select
-              id="filter-priority"
-              name="filter-priority"
-              className="w-full sm:w-auto appearance-none pl-3 pr-8 py-2 bg-white text-slate-900 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
-              value={priorityFilter}
-              onChange={(e) => updateUrl({ requestPriority: e.target.value })}
-            >
-              <option value="ALL">Tất cả ưu tiên</option>
-              {Object.entries(priorityConfig).map(([key, config]) => (
-                <option key={key} value={key}>{config.label}</option>
-              ))}
-            </select>
-            <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
-          </div>
-          {stockRiskRequests > 0 && (
-            <button
-              type="button"
-              onClick={() => updateUrl({ requestFlag: activeFlag === "stock-risk" ? null : "stock-risk", requestStatus: null })}
-              className={`h-10 rounded-lg border px-3 text-sm font-semibold transition-colors shrink-0 whitespace-nowrap ${
-                activeFlag === "stock-risk"
-                  ? "border-rose-300 bg-rose-50 text-rose-700 ring-2 ring-rose-500/20"
-                  : "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
-              }`}
-            >
-              Không đủ tồn: {formatQty(stockRiskRequests)}
-            </button>
-          )}
         </div>
         <button 
           onClick={handleCreate}
@@ -393,68 +364,92 @@ export function MaterialRequestList({
         <table className="w-full text-left text-sm relative">
           <thead className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur shadow-sm text-xs font-semibold uppercase tracking-wide text-slate-500">
             <tr>
-              <th className="px-4 py-3 border-b border-slate-200">Mã phiếu</th>
-              <th className="px-4 py-3 border-b border-slate-200">Ngày cần</th>
-              <th className="px-4 py-3 border-b border-slate-200">Số loại VT</th>
-              <th className="px-4 py-3 border-b border-slate-200">Trạng thái</th>
-              <th className="px-4 py-3 border-b border-slate-200">Ưu tiên</th>
-              <th className="px-4 py-3 border-b border-slate-200 w-1/4">Người tạo</th>
+              <th className="px-4 py-3 border-b border-slate-200 whitespace-nowrap">Tên vật tư</th>
+              <th className="px-4 py-3 border-b border-slate-200 text-right whitespace-nowrap">Số lượng đề xuất</th>
+              <th className="px-4 py-3 border-b border-slate-200 whitespace-nowrap">Đơn vị</th>
+              <th className="px-4 py-3 border-b border-slate-200 whitespace-nowrap">Công việc liên quan</th>
+              <th className="px-4 py-3 border-b border-slate-200 whitespace-nowrap">Người tạo</th>
+              <th className="px-4 py-3 border-b border-slate-200 whitespace-nowrap">Ngày tạo</th>
+              <th className="px-4 py-3 border-b border-slate-200 whitespace-nowrap">Trạng thái</th>
               <th className="px-4 py-3 border-b border-slate-200 text-right w-[80px] whitespace-nowrap">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filteredRequests.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
-                  Không tìm thấy đề xuất vật tư nào.
+                <td colSpan={8} className="px-4 py-16 text-center text-slate-500 bg-slate-50/50">
+                  <div className="flex flex-col items-center justify-center">
+                    <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm border border-slate-200 text-slate-400">
+                      <Package className="h-6 w-6" />
+                    </div>
+                    <div className="font-semibold text-slate-900 text-base">Chưa có đề xuất vật tư</div>
+                    <p className="mt-1 mb-4 text-sm text-slate-500 max-w-sm mx-auto">Tạo đề xuất đầu tiên để gửi nhu cầu bổ sung vật tư cho công trình.</p>
+                    <button
+                      type="button"
+                      onClick={handleCreate}
+                      className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 transition-colors"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Tạo đề xuất
+                    </button>
+                  </div>
                 </td>
               </tr>
             ) : filteredRequests.map(req => {
               const StatusIcon = statusConfig[req.status as keyof typeof statusConfig]?.icon || FileText;
-              const isEditable = ["DRAFT", "REJECTED"].includes(req.status);
+              
+              const isOwner = currentUserId && req.requestedById === currentUserId;
+              const isManager = currentUserRole === "ADMIN" || currentUserRole === "DIRECTOR";
+              const isEditable = ["DRAFT", "SUBMITTED", "REQUESTED", "PENDING"].includes(req.status) && (isOwner || isManager);
+              const isDeletable = ["DRAFT", "REJECTED", "SUBMITTED", "REQUESTED", "PENDING"].includes(req.status) && (isOwner || isManager);
               
               return (
                 <tr key={req.id} className="hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => handleView(req)}>
-                  <td className="px-4 py-3 font-semibold text-slate-900 whitespace-nowrap">{req.requestNo}</td>
-                  <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
-                    <DateCell value={req.neededDate ? format(new Date(req.neededDate), "dd/MM/yyyy") : "-"} />
-                    {isOverdue(req) ? (
-                      <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700">
-                        <CalendarClock className="h-3 w-3" /> Quá hạn
-                      </span>
-                    ) : null}
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">
-                    <div className="space-y-1">
-                      <div className="font-semibold text-slate-900">{req.items?.length || 0} loại VT</div>
-                      <div className="text-[11px]">
-                        Đề xuất {formatQty(requestTotal(req))} · Cấp {formatQty(requestIssued(req))} · Nhận {formatQty(requestReceived(req))}
+                  <td className="px-4 py-3 text-slate-900 font-medium max-w-[250px]">
+                    {req.items && req.items.length > 0 ? (
+                      <div className="line-clamp-2">
+                        {req.items[0].materialName}
+                        {req.items.length > 1 ? <span className="text-slate-500 text-xs ml-1">(+{req.items.length - 1} loại)</span> : ''}
                       </div>
-                      {requestRemaining(req) > 0 && !isClosedStatus(req.status) && (
-                        <div className="text-[11px] font-semibold text-amber-600">
-                          Thiếu {formatQty(requestRemaining(req))}
-                        </div>
-                      )}
-                      {hasStockRisk(req) ? (
-                        <div className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700">
-                          <AlertTriangle className="h-3 w-3" /> Không đủ tồn
-                        </div>
-                      ) : null}
+                    ) : '-'}
+                  </td>
+                  <td className="px-4 py-3 text-slate-900 font-bold text-right whitespace-nowrap">
+                    {formatQty(requestTotal(req))}
+                  </td>
+                  <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
+                    {req.items?.[0]?.unit || '-'}
+                  </td>
+                  <td className="px-4 py-3 text-slate-600 max-w-[200px]">
+                    <div className="line-clamp-2 text-xs">
+                      {req.items?.[0]?.workItemNameSnapshot || '-'}
                     </div>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <StatusBadge variant={statusConfig[req.status as keyof typeof statusConfig]?.variant || "neutral"} size="sm" className="gap-1.5 px-2.5 py-1">
-                      <StatusIcon className="w-3.5 h-3.5" />
-                      {statusConfig[req.status as keyof typeof statusConfig]?.label}
-                    </StatusBadge>
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <StatusBadge variant={priorityConfig[req.priority as keyof typeof priorityConfig]?.variant || "neutral"} size="sm">
-                      {priorityConfig[req.priority as keyof typeof priorityConfig]?.label}
-                    </StatusBadge>
-                  </td>
-                  <td className="px-4 py-3 text-slate-600 max-w-0">
+                  <td className="px-4 py-3 text-slate-600 truncate max-w-[150px]">
                     <SafeText>{req.requestedBy?.name}</SafeText>
+                  </td>
+                  <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
+                    <DateCell value={req.requestDate || req.createdAt ? format(new Date(req.requestDate || req.createdAt), "dd/MM/yyyy") : "-"} />
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    {(() => {
+                      const hasMovement = req.movements && req.movements.length > 0;
+                      let label = statusConfig[req.status as keyof typeof statusConfig]?.label;
+                      let variant = statusConfig[req.status as keyof typeof statusConfig]?.variant || "neutral";
+                      if (["APPROVED", "PROCESSING", "ISSUED", "RECEIVED"].includes(req.status)) {
+                        if (hasMovement) {
+                          label = "Đã duyệt · Đã nhập";
+                        } else {
+                          label = "Đã duyệt · Chưa nhập kho";
+                          variant = "danger";
+                        }
+                      }
+                      return (
+                        <StatusBadge variant={variant} size="sm" className="gap-1.5 px-2.5 py-1">
+                          <StatusIcon className="w-3.5 h-3.5" />
+                          {label}
+                        </StatusBadge>
+                      );
+                    })()}
                   </td>
                   <td className="px-4 py-3 text-right relative" onClick={(e) => e.stopPropagation()}>
                     <div className="flex justify-end">
@@ -475,19 +470,14 @@ export function MaterialRequestList({
                           },
                           ...(isEditable ? [
                             {
-                              label: "Sửa phiếu",
+                              label: "Sửa đề xuất",
                               icon: <Edit2 className="h-4 w-4" />,
                               onClick: () => handleEdit(req),
-                            },
+                            }
+                          ] : []),
+                          ...(isDeletable ? [
                             {
-                              label: "Nhân bản",
-                              icon: <Copy className="h-4 w-4" />,
-                              disabled: true,
-                              disabledReason: "Chưa hỗ trợ nhân bản phiếu",
-                              onClick: () => {},
-                            },
-                            {
-                              label: "Xóa phiếu",
+                              label: "Xóa đề xuất",
                               icon: <Trash2 className="h-4 w-4" />,
                               danger: true,
                               onClick: () => setDeletingRequest(req),
@@ -495,41 +485,23 @@ export function MaterialRequestList({
                           ] : []),
                           ...(req.status === "SUBMITTED" ? [
                             {
-                              label: "Xem phê duyệt",
-                              icon: <FileCheck2 className="h-4 w-4" />,
-                              disabled: !req.approvalRequestId,
-                              disabledReason: !req.approvalRequestId ? "Không tìm thấy dữ liệu phê duyệt" : undefined,
-                              onClick: () => {
-                                if (req.approvalRequestId) {
-                                  router.push(`/approvals?approvalId=${req.approvalRequestId}`);
-                                }
-                              },
+                              label: "Duyệt đề xuất",
+                              icon: <CheckCircle2 className="h-4 w-4" />,
+                              onClick: () => setApprovingRequest(req),
                             },
                             {
-                              label: "Hủy phiếu",
-                              icon: <XSquare className="h-4 w-4" />,
+                              label: "Từ chối",
+                              icon: <XCircle className="h-4 w-4" />,
                               danger: true,
-                              onClick: () => setCancelingRequest(req),
+                              onClick: () => setRejectingRequest(req),
                             }
                           ] : []),
-                          ...(req.status === "APPROVED" || req.status === "PROCESSING" || req.status === "ISSUED" ? [
+                          ...(req.status === "REJECTED" ? [
                             {
-                              label: "Xem phê duyệt",
-                              icon: <FileCheck2 className="h-4 w-4" />,
-                              disabled: !req.approvalRequestId,
-                              disabledReason: !req.approvalRequestId ? "Không tìm thấy dữ liệu phê duyệt" : undefined,
-                              onClick: () => {
-                                if (req.approvalRequestId) {
-                                  router.push(`/approvals?approvalId=${req.approvalRequestId}`);
-                                }
-                              },
-                            },
-                            {
-                              label: req.status === "APPROVED" ? "Xuất kho" : "Theo dõi cấp phát",
-                              icon: <ArrowUpRight className="h-4 w-4" />,
-                              disabled: true,
-                              disabledReason: "Chưa hỗ trợ tạo/theo dõi phiếu xuất kho từ yêu cầu",
-                              onClick: () => {},
+                              label: "Xóa đề xuất",
+                              icon: <Trash2 className="h-4 w-4" />,
+                              danger: true,
+                              onClick: () => setDeletingRequest(req),
                             }
                           ] : [])
                         ]}
@@ -546,8 +518,20 @@ export function MaterialRequestList({
       {/* Mobile Cards */}
       <div className="md:hidden space-y-3">
         {filteredRequests.length === 0 ? (
-          <div className="bg-white p-8 text-center rounded-xl border border-slate-200 text-slate-500 text-sm">
-            Không tìm thấy đề xuất vật tư nào. Hãy tạo đề xuất vật tư đầu tiên.
+          <div className="bg-slate-50/50 p-8 text-center rounded-xl border border-slate-200">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm border border-slate-200 text-slate-400">
+              <Package className="h-6 w-6" />
+            </div>
+            <div className="font-semibold text-slate-900 text-base">Chưa có đề xuất vật tư</div>
+            <p className="mt-1 mb-4 text-sm text-slate-500">Tạo đề xuất đầu tiên để gửi nhu cầu bổ sung vật tư cho công trình.</p>
+            <button
+              type="button"
+              onClick={handleCreate}
+              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 transition-colors w-full justify-center"
+            >
+              <Plus className="h-4 w-4" />
+              Tạo đề xuất
+            </button>
           </div>
         ) : filteredRequests.map(req => {
           const StatusIcon = statusConfig[req.status as keyof typeof statusConfig]?.icon || FileText;
@@ -555,43 +539,50 @@ export function MaterialRequestList({
             <div key={req.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3 active:scale-[0.99] transition-transform" onClick={() => handleView(req)}>
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0">
-                  <SafeText className="font-bold text-slate-900 text-base">{req.requestNo}</SafeText>
+                  <SafeText className="font-bold text-slate-900 text-base">
+                    {req.items && req.items.length > 0 ? (
+                      <>
+                        {req.items[0].materialName}
+                        {req.items.length > 1 ? <span className="text-slate-500 text-xs ml-1">(+{req.items.length - 1} loại)</span> : ''}
+                      </>
+                    ) : 'Chưa có vật tư'}
+                  </SafeText>
                   <p className="mt-1 text-xs font-medium text-slate-600">
-                    <SafeText>{req.requestedBy?.name}</SafeText>
+                    {formatQty(requestTotal(req))} {req.items?.[0]?.unit || ''}
                   </p>
                 </div>
-                <StatusBadge variant={statusConfig[req.status as keyof typeof statusConfig]?.variant || "neutral"} size="sm" className="shrink-0 gap-1.5">
-                  <StatusIcon className="w-3.5 h-3.5" />
-                  {statusConfig[req.status as keyof typeof statusConfig]?.label}
-                </StatusBadge>
+                {(() => {
+                  const hasMovement = req.movements && req.movements.length > 0;
+                  let label = statusConfig[req.status as keyof typeof statusConfig]?.label;
+                  let variant = statusConfig[req.status as keyof typeof statusConfig]?.variant || "neutral";
+                  if (["APPROVED", "PROCESSING", "ISSUED", "RECEIVED"].includes(req.status)) {
+                    if (hasMovement) {
+                      label = "Đã duyệt · Đã nhập";
+                    } else {
+                      label = "Đã duyệt · Chưa nhập kho";
+                      variant = "danger";
+                    }
+                  }
+                  return (
+                    <StatusBadge variant={variant} size="sm" className="shrink-0 gap-1.5">
+                      <StatusIcon className="w-3.5 h-3.5" />
+                      {label}
+                    </StatusBadge>
+                  );
+                })()}
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-sm bg-slate-50 p-2 rounded-lg">
                 <div>
-                  <span className="text-slate-500 block text-xs">Vật tư:</span>
-                  <span className="font-semibold text-slate-900">{req.items?.length || 0} loại</span>
+                  <span className="text-slate-500 block text-xs">Người tạo:</span>
+                  <span className="font-semibold text-slate-900 line-clamp-1">{req.requestedBy?.name || '-'}</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 block text-xs">Ngày cần:</span>
-                  <div className="font-semibold text-slate-900 flex items-center gap-1">
-                    {req.neededDate ? format(new Date(req.neededDate), "dd/MM/yyyy") : "-"}
-                    {isOverdue(req) && <CalendarClock className="w-3 h-3 text-rose-500" />}
+                  <span className="text-slate-500 block text-xs">Ngày tạo:</span>
+                  <div className="font-semibold text-slate-900">
+                    {req.requestDate || req.createdAt ? format(new Date(req.requestDate || req.createdAt), "dd/MM/yyyy") : "-"}
                   </div>
                 </div>
-              </div>
-
-              <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100">
-                <div className="flex flex-col text-[11px]">
-                  <span className="text-slate-500">Đề xuất {formatQty(requestTotal(req))} · Cấp {formatQty(requestIssued(req))} · Nhận {formatQty(requestReceived(req))}</span>
-                  {requestRemaining(req) > 0 && !isClosedStatus(req.status) && (
-                    <span className="font-semibold text-amber-600">Thiếu {formatQty(requestRemaining(req))}</span>
-                  )}
-                </div>
-                {hasStockRisk(req) && (
-                  <span className="inline-flex items-center gap-1 rounded bg-rose-50 px-1.5 py-0.5 text-[10px] font-semibold text-rose-700">
-                    <AlertTriangle className="w-3 h-3" /> Không đủ tồn
-                  </span>
-                )}
               </div>
             </div>
           )
@@ -618,6 +609,7 @@ export function MaterialRequestList({
           materialItems={materialItems}
           stocks={stocks}
           currentUserRole={currentUserRole}
+          currentUserId={currentUserId}
           onClose={handleCloseOverlay}
           onEdit={() => {
             if (selectedRequest) handleEdit(selectedRequest);
@@ -630,25 +622,48 @@ export function MaterialRequestList({
         <ConfirmDialog
           isOpen={!!deletingRequest}
           onClose={() => setDeletingRequest(null)}
-          title="Xóa phiếu yêu cầu vật tư"
-          description={`Bạn có chắc muốn xóa phiếu "${deletingRequest.requestNo}" không?\nThao tác này không thể hoàn tác.`}
-          confirmText="Xóa phiếu"
+          title="Xóa đề xuất vật tư"
+          description={`Bạn có chắc muốn xóa đề xuất này không?\nThao tác này không thể hoàn tác.`}
+          confirmText="Xóa đề xuất"
           variant="danger"
           isLoading={isDeleting}
           onConfirm={handleDelete}
         />
       )}
 
-      {cancelingRequest && (
+      {approvingRequest && (
         <ConfirmDialog
-          isOpen={!!cancelingRequest}
-          onClose={() => setCancelingRequest(null)}
-          title="Hủy phiếu yêu cầu vật tư"
-          description={`Bạn có chắc muốn hủy phiếu "${cancelingRequest.requestNo}" không?\nThao tác này sẽ cập nhật trạng thái phiếu và hủy yêu cầu phê duyệt liên quan.`}
-          confirmText="Hủy phiếu"
+          isOpen={!!approvingRequest}
+          onClose={() => setApprovingRequest(null)}
+          title="Duyệt và ghi nhận nhập kho?"
+          description={`Duyệt đề xuất này.\nGhi nhận nhập kho số lượng đã đề xuất.\nTăng tồn kho thật.\nGắn nguồn nhập: Đề xuất vật tư.\nKhông cần nhập kho lần hai.`}
+          confirmText="Duyệt đề xuất"
+          variant="success"
+          isLoading={isApproving}
+          onConfirm={handleApprove}
+        />
+      )}
+
+      {rejectingRequest && (
+        <ConfirmDialog
+          isOpen={!!rejectingRequest}
+          onClose={() => { setRejectingRequest(null); setRejectReason(""); }}
+          title="Từ chối đề xuất vật tư"
+          description={
+            <div className="space-y-3">
+              <p>{`Vui lòng nhập lý do từ chối đề xuất "${rejectingRequest.requestNo}":`}</p>
+              <textarea
+                className="h-24 w-full rounded-lg border border-slate-300 p-3 outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
+                placeholder="Nhập lý do từ chối..."
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+              />
+            </div>
+          }
+          confirmText="Từ chối"
           variant="danger"
-          isLoading={isCanceling}
-          onConfirm={handleCancel}
+          isLoading={isRejecting}
+          onConfirm={handleReject}
         />
       )}
     </div>

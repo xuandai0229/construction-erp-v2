@@ -7,7 +7,7 @@ import { ContentCard, EnterpriseTable, QuantityCell, SafeText } from "@/componen
 import type { MaterialItemDto, ProjectStockDto, MaterialMovementDto } from "@/app/(dashboard)/materials/actions";
 import { MaterialDetailDrawer } from "./material-detail-drawer";
 import { useSearchParams, useRouter } from "next/navigation";
-import { getStockStatus } from "./materials-formatters";
+import { getStockStatus, formatQuantity } from "./materials-formatters";
 import { MaterialRowActionMenu, type MaterialActionItem } from "./materials-ui";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
@@ -313,11 +313,11 @@ export function MaterialsCatalog({ materialItems, stocks, transactions = [], onA
         <table className="w-full text-left text-sm relative">
           <thead className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur shadow-sm text-xs font-semibold uppercase tracking-wide text-slate-500">
             <tr>
-              <th className="px-3 py-2.5 border-b border-slate-200">Mã VT</th>
-              <th className="px-3 py-2.5 border-b border-slate-200 w-1/3">Tên vật tư</th>
-              <th className="px-3 py-2.5 border-b border-slate-200">Đơn vị</th>
-              <th className="px-3 py-2.5 border-b border-slate-200">Nhóm</th>
-              <th className="px-3 py-2.5 border-b border-slate-200 text-right">Tồn kho</th>
+              <th className="px-3 py-2.5 border-b border-slate-200 whitespace-nowrap">Mã vật tư</th>
+              <th className="px-3 py-2.5 border-b border-slate-200 w-1/3 whitespace-nowrap">Tên vật tư</th>
+              <th className="px-3 py-2.5 border-b border-slate-200 whitespace-nowrap">Đơn vị</th>
+              <th className="px-3 py-2.5 border-b border-slate-200 whitespace-nowrap">Nhóm</th>
+              <th className="px-3 py-2.5 border-b border-slate-200 text-right whitespace-nowrap">Tồn kho</th>
               {hasActions && <th className="px-3 py-2.5 border-b border-slate-200 text-right w-[80px] whitespace-nowrap">Thao tác</th>}
             </tr>
           </thead>
@@ -337,6 +337,30 @@ export function MaterialsCatalog({ materialItems, stocks, transactions = [], onA
                       {!material.isActive && (
                         <span className="shrink-0 rounded-sm border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
                           Đã lưu trữ
+                        </span>
+                      )}
+                      {material.description?.includes("[CREATED_FROM_REQUEST:") && (
+                        <span 
+                          title={`Tạo từ đề xuất. Tổng duyệt: ${formatQuantity(material.approvedProposalQuantity || 0)} ${material.unit}. Đã nhập kho: ${formatQuantity(material.importedFromProposalQuantity || 0)} ${material.unit}.`}
+                          className="shrink-0 rounded-sm border border-blue-200 bg-blue-50 text-blue-700 px-1.5 py-0.5 text-[10px] font-medium"
+                        >
+                          Từ đề xuất
+                        </span>
+                      )}
+                      {material.importedFromProposalQuantity !== undefined && material.importedFromProposalQuantity > 0 && !material.description?.includes("[CREATED_FROM_REQUEST:") && (
+                        <span 
+                          title={`Đã nhập kho từ đề xuất: ${formatQuantity(material.importedFromProposalQuantity)} ${material.unit}.`}
+                          className="shrink-0 rounded-sm border border-emerald-200 bg-emerald-50 text-emerald-700 px-1.5 py-0.5 text-[10px] font-medium"
+                        >
+                          Đã nhập từ đề xuất
+                        </span>
+                      )}
+                      {material.pendingProposalQuantity !== undefined && material.pendingProposalQuantity > 0 && (
+                        <span 
+                          title={`Đang có đề xuất chờ duyệt ${formatQuantity(material.pendingProposalQuantity)} ${material.unit}.`}
+                          className="shrink-0 rounded-sm border border-indigo-200 bg-indigo-50 text-indigo-700 px-1.5 py-0.5 text-[10px] font-medium"
+                        >
+                          Có đề xuất chờ duyệt
                         </span>
                       )}
                     </div>
@@ -389,11 +413,37 @@ export function MaterialsCatalog({ materialItems, stocks, transactions = [], onA
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <SafeText className="font-bold text-slate-950">{material.name}</SafeText>
-                  {!material.isActive && (
-                    <span className="mt-1 inline-flex rounded-sm border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
-                      Đã lưu trữ
-                    </span>
-                  )}
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {!material.isActive && (
+                      <span className="inline-flex rounded-sm border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
+                        Đã lưu trữ
+                      </span>
+                    )}
+                    {material.description?.includes("[CREATED_FROM_REQUEST:") && (
+                      <span 
+                        title={`Tạo từ đề xuất. Tổng duyệt: ${formatQuantity(material.approvedProposalQuantity || 0)} ${material.unit}. Đã nhập kho: ${formatQuantity(material.importedFromProposalQuantity || 0)} ${material.unit}.`}
+                        className="inline-flex rounded-sm border border-blue-200 bg-blue-50 text-blue-700 px-1.5 py-0.5 text-[10px] font-medium"
+                      >
+                        Từ đề xuất
+                      </span>
+                    )}
+                    {material.importedFromProposalQuantity !== undefined && material.importedFromProposalQuantity > 0 && !material.description?.includes("[CREATED_FROM_REQUEST:") && (
+                      <span 
+                        title={`Đã nhập kho từ đề xuất: ${formatQuantity(material.importedFromProposalQuantity)} ${material.unit}.`}
+                        className="inline-flex rounded-sm border border-emerald-200 bg-emerald-50 text-emerald-700 px-1.5 py-0.5 text-[10px] font-medium"
+                      >
+                        Đã nhập từ đề xuất
+                      </span>
+                    )}
+                    {material.pendingProposalQuantity !== undefined && material.pendingProposalQuantity > 0 && (
+                      <span 
+                        title={`Đang có đề xuất chờ duyệt ${formatQuantity(material.pendingProposalQuantity)} ${material.unit}.`}
+                        className="inline-flex rounded-sm border border-indigo-200 bg-indigo-50 text-indigo-700 px-1.5 py-0.5 text-[10px] font-medium"
+                      >
+                        Có đề xuất chờ duyệt
+                      </span>
+                    )}
+                  </div>
                   <div className="mt-1 font-mono text-xs font-semibold text-slate-500">{material.code}</div>
                 </div>
               </div>
@@ -440,6 +490,7 @@ export function MaterialsCatalog({ materialItems, stocks, transactions = [], onA
       {selectedMaterialId && (
         <MaterialDetailDrawer
           material={materialItems.find(m => m.id === selectedMaterialId) || null}
+          projectId={searchParams.get("projectId") || ""}
           stock={stockByMaterialId.get(selectedMaterialId)}
           recentTransactions={transactions.filter(t => t.materialItemId === selectedMaterialId).slice(0, 5)}
           onClose={closeDrawer}

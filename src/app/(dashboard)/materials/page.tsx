@@ -49,7 +49,8 @@ export default async function MaterialsPage({
         where: { projectId: projectIdToLoad, deletedAt: null },
         include: {
           items: true,
-          requestedBy: { select: { name: true } }
+          requestedBy: { select: { name: true } },
+          movements: { select: { id: true } }
         },
         orderBy: { createdAt: 'desc' }
       });
@@ -122,6 +123,7 @@ export default async function MaterialsPage({
       materialRequests={JSON.parse(JSON.stringify(materialRequests))}
       wbsItems={JSON.parse(JSON.stringify(wbsItems))}
       currentUserRole={session.role}
+      currentUserId={session.id}
     />
   );
 }

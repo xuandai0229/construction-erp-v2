@@ -5,6 +5,7 @@ export type MaterialPermission =
   | "materials.item.create"
   | "materials.item.update"
   | "materials.item.delete"
+  | "materials.item.restore"
   | "materials.stock.view"
   | "materials.stock.import"
   | "materials.stock.export"
@@ -17,77 +18,88 @@ export interface MaterialPermissionSet {
   canCreate: boolean;
   canUpdate: boolean;
   canDelete: boolean;
+  canRestore: boolean;
   canImport: boolean;
   canExport: boolean;
   canViewTransactions: boolean;
   canViewPurchase: boolean;
+  canApproveRequest: boolean;
+  canUpdateMaterialRequests: boolean;
 }
+
+const NO_MATERIAL_PERMISSIONS: MaterialPermissionSet = {
+  canView: false,
+  canCreate: false,
+  canUpdate: false,
+  canDelete: false,
+  canRestore: false,
+  canImport: false,
+  canExport: false,
+  canViewTransactions: false,
+  canViewPurchase: false,
+  canApproveRequest: false,
+  canUpdateMaterialRequests: false,
+};
+
+const READ_ONLY_MATERIAL_PERMISSIONS: MaterialPermissionSet = {
+  canView: true,
+  canCreate: false,
+  canUpdate: false,
+  canDelete: false,
+  canRestore: false,
+  canImport: false,
+  canExport: false,
+  canViewTransactions: true,
+  canViewPurchase: true,
+  canApproveRequest: false,
+  canUpdateMaterialRequests: false,
+};
+
+const FULL_MATERIAL_PERMISSIONS: MaterialPermissionSet = {
+  canView: true,
+  canCreate: true,
+  canUpdate: true,
+  canDelete: true,
+  canRestore: true,
+  canImport: true,
+  canExport: true,
+  canViewTransactions: true,
+  canViewPurchase: true,
+  canApproveRequest: true,
+  canUpdateMaterialRequests: true,
+};
 
 export function getMaterialPermissions(
   userRole?: UserRole,
   projectRole?: ProjectRole | null
 ): MaterialPermissionSet {
-  // ADMIN always has full access
-  if (userRole === "ADMIN") {
-    return {
-      canView: true,
-      canCreate: true,
-      canUpdate: true,
-      canDelete: true,
-      canImport: true,
-      canExport: true,
-      canViewTransactions: true,
-      canViewPurchase: true,
-    };
+  // System admin and company-wide leadership have full business visibility.
+  if (userRole === "ADMIN" || userRole === "DIRECTOR" || userRole === "DEPUTY_DIRECTOR") {
+    return FULL_MATERIAL_PERMISSIONS;
   }
 
   // If not admin and no project role, no access
   if (!projectRole) {
-    return {
-      canView: false,
-      canCreate: false,
-      canUpdate: false,
-      canDelete: false,
-      canImport: false,
-      canExport: false,
-      canViewTransactions: false,
-      canViewPurchase: false,
-    };
+    return NO_MATERIAL_PERMISSIONS;
   }
 
-  // Management roles have full access
+  // Project role is authoritative for project-scoped operations. VIEWER is
+  // always read-only, even if the global role is ACCOUNTANT/ENGINEER/STAFF.
+  if (projectRole === "VIEWER") {
+    return READ_ONLY_MATERIAL_PERMISSIONS;
+  }
+
+  // Project operations roles have full materials operations within the project.
   const isManager =
     projectRole === "PROJECT_MANAGER" ||
     projectRole === "SITE_COMMANDER" ||
     projectRole === "CHIEF_COMMANDER" ||
     projectRole === "ASSISTANT_COMMANDER";
 
-  // Storekeeper and Accountant
-  const isAccountant = userRole === "ACCOUNTANT";
-  const isStorekeeper = userRole === "STAFF" && projectRole === "SUPERVISOR";
-
-  if (isManager || isAccountant || isStorekeeper) {
-    return {
-      canView: true,
-      canCreate: isManager, // Only managers can create/update master data
-      canUpdate: isManager,
-      canDelete: isManager,
-      canImport: true,
-      canExport: true,
-      canViewTransactions: true,
-      canViewPurchase: true,
-    };
+  if (isManager) {
+    return FULL_MATERIAL_PERMISSIONS;
   }
 
   // Other roles only have view access
-  return {
-    canView: true,
-    canCreate: false,
-    canUpdate: false,
-    canDelete: false,
-    canImport: false,
-    canExport: false,
-    canViewTransactions: true,
-    canViewPurchase: true,
-  };
+  return READ_ONLY_MATERIAL_PERMISSIONS;
 }

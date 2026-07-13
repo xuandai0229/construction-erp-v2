@@ -1,13 +1,15 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
 import { writeAuditLog } from "@/lib/audit";
-import { requireProjectAccess } from "@/lib/rbac";
+import { requireProjectAccess, requireProjectScope } from "@/lib/rbac";
 import { revalidatePath } from "next/cache";
+import { assertFieldProgressPermission, getFieldProgressPermissions } from "@/lib/field-progress/field-progress-permissions";
 
 export async function getOrCreateTemplate(projectId: string) {
   const session = await requireProjectAccess(projectId);
+  const projectRole = await requireProjectScope(session, projectId);
+  const permissions = getFieldProgressPermissions(session.role, projectRole);
 
   let template = await prisma.fieldProgressTemplate.findFirst({
     where: { projectId, deletedAt: null },
@@ -17,6 +19,7 @@ export async function getOrCreateTemplate(projectId: string) {
   });
 
   if (!template) {
+    assertFieldProgressPermission(permissions, "canUpdateProgress");
     template = await prisma.fieldProgressTemplate.create({
       data: {
         projectId,
@@ -43,6 +46,10 @@ export async function createItem(templateId: string, projectId: string, data: an
   try { session = await requireProjectAccess(projectId); } catch { return { error: "Bạn không có quyền truy cập công trình này" }; }
 
   try {
+    const projectRole = await requireProjectScope(session, projectId);
+    const permissions = getFieldProgressPermissions(session.role, projectRole);
+    assertFieldProgressPermission(permissions, "canUpdateProgress");
+
     const maxOrder = await prisma.fieldProgressItem.findFirst({
       where: { templateId, parentId: data.parentId || null, deletedAt: null },
       orderBy: { sortOrder: "desc" },
@@ -90,6 +97,10 @@ export async function updateItem(itemId: string, projectId: string, data: any) {
   try { session = await requireProjectAccess(projectId); } catch { return { error: "Bạn không có quyền truy cập công trình này" }; }
 
   try {
+    const projectRole = await requireProjectScope(session, projectId);
+    const permissions = getFieldProgressPermissions(session.role, projectRole);
+    assertFieldProgressPermission(permissions, "canUpdateProgress");
+
     const before = await prisma.fieldProgressItem.findUnique({ where: { id: itemId } });
     if (!before) return { error: "Item not found" };
     if (before.projectId !== projectId) return { error: "Item does not belong to this project" };
@@ -129,6 +140,10 @@ export async function deleteItem(itemId: string, projectId: string) {
   try { session = await requireProjectAccess(projectId); } catch { return { error: "Bạn không có quyền truy cập công trình này" }; }
 
   try {
+    const projectRole = await requireProjectScope(session, projectId);
+    const permissions = getFieldProgressPermissions(session.role, projectRole);
+    assertFieldProgressPermission(permissions, "canUpdateProgress");
+
     const before = await prisma.fieldProgressItem.findUnique({ where: { id: itemId } });
     if (!before) return { error: "Item not found" };
     if (before.projectId !== projectId) return { error: "Item does not belong to this project" };
@@ -188,6 +203,10 @@ export async function batchUpdateItems(projectId: string, updates: any[]) {
   try { session = await requireProjectAccess(projectId); } catch { return { error: "Bạn không có quyền truy cập công trình này" }; }
 
   try {
+    const projectRole = await requireProjectScope(session, projectId);
+    const permissions = getFieldProgressPermissions(session.role, projectRole);
+    assertFieldProgressPermission(permissions, "canUpdateProgress");
+
     const itemIds = updates.map(u => u.id);
     const existingItems = await prisma.fieldProgressItem.findMany({
       where: { id: { in: itemIds } }

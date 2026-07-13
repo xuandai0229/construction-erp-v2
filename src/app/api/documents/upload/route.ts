@@ -5,7 +5,7 @@ import { storageProvider } from "@/lib/storage/index";
 import { writeAuditLog } from "@/lib/audit";
 import path from "path";
 import { Readable } from "stream";
-import { canAccessProject } from "@/lib/rbac";
+import { canAccessProject, requireProjectScope } from "@/lib/rbac";
 import { canUploadToFolder } from "@/lib/documents/permissions";
 import { getDocumentRule } from "@/lib/document-rules";
 import { getDocumentTypeOptionsForFolder } from "@/lib/documents/metadata-types";
@@ -143,7 +143,8 @@ export async function POST(req: NextRequest) {
     });
     if (!folder) return json({ error: "Không tìm thấy thư mục" }, { status: 404 });
 
-    const sessionUser = { id: session.id, role: session.role as any };
+    const projectRole = await requireProjectScope(session, upload.projectId);
+    const sessionUser = { id: session.id, role: session.role as any, projectRole };
     if (!canUploadToFolder(sessionUser, { id: folder.id, name: folder.name })) {
       return json({ error: "Không có quyền upload vào thư mục này." }, { status: 403 });
     }

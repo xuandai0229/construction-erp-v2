@@ -1,6 +1,6 @@
 import { ProjectForm } from "@/components/projects/project-form";
 import prisma from "@/lib/prisma";
-import { requireManagementAccessOrRedirect } from "@/lib/rbac";
+import { isSystemAdmin, requireManagementAccessOrRedirect } from "@/lib/rbac";
 import { Building2 } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 
@@ -15,7 +15,7 @@ export default async function EditProjectPage({ params }: { params: Promise<{ id
     notFound();
   }
 
-  if ((project.status === 'COMPLETED' || project.status === 'CANCELLED') && session.role !== 'ADMIN') {
+  if ((project.status === 'COMPLETED' || project.status === 'CANCELLED') && !isSystemAdmin(session)) {
     redirect(`/projects/${project.id}`);
   }
 

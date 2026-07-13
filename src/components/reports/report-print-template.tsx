@@ -257,7 +257,7 @@ export function ReportPrintTemplate({ report }: ReportPrintTemplateProps) {
                 <tr className="bg-gray-100 font-bold text-center">
                   <th className="border border-black py-2 px-1 w-[30px]">STT</th>
                   <th className="border border-black py-2 px-1 text-left">Hạng mục / Công việc</th>
-                  <th className="border border-black py-2 px-1 w-[40px]">ĐVT</th>
+                  <th className="border border-black py-2 px-1 w-[40px]">Đơn vị</th>
                   <th className="border border-black py-2 px-1 w-[60px]">Thiết kế</th>
                   <th className="border border-black py-2 px-1 w-[60px]">Trước tuần</th>
                   <th className="border border-black py-2 px-1 w-[60px]">Tuần này</th>
@@ -340,7 +340,7 @@ export function ReportPrintTemplate({ report }: ReportPrintTemplateProps) {
             <thead>
               <tr className="bg-gray-100 font-bold text-center">
                 <th className="border border-black py-2 px-1 text-left">Nội dung công việc</th>
-                <th className="border border-black py-2 px-1 w-[40px]">ĐVT</th>
+                <th className="border border-black py-2 px-1 w-[40px]">Đơn vị</th>
                 <th className="border border-black py-2 px-1 w-[60px]">Còn lại</th>
                 <th className="border border-black py-2 px-1 w-[60px]">KL Tuần tới</th>
                 <th className="border border-black py-2 px-1 w-[70px]">Từ ngày</th>

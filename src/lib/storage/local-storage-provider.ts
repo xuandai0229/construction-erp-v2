@@ -1,6 +1,7 @@
 import path from 'path';
 import fs from 'fs/promises';
 import { createWriteStream, createReadStream } from 'fs';
+import { PassThrough } from 'stream';
 import { pipeline } from 'stream/promises';
 import { randomUUID, createHash } from 'crypto';
 import { DocumentStorageProvider, SaveFileInput, StoredFileResult } from './types';
@@ -62,7 +63,6 @@ export class LocalStorageProvider implements DocumentStorageProvider {
     
     if (stream) {
       const writeStream = createWriteStream(absolutePath);
-      const { PassThrough } = require('stream') as typeof import('stream');
       const counter = new PassThrough();
       let sizeCounter = 0;
       counter.on('data', (chunk: Buffer) => {

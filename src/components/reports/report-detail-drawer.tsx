@@ -7,6 +7,7 @@ import {
   formatProgressQuantityDisplay,
   normalizeReportProgressLine,
 } from "@/lib/reports/report-progress-display";
+import { isCompanyWideRole } from "@/lib/rbac-rules";
 import {
   X,
   MapPin,
@@ -398,20 +399,21 @@ export function ReportDetailDrawer({
   const projectStatusMeta = getProjectStatusMeta(report.projectStatus);
 
   const displayWorkLines = buildDisplayWorkLines(report);
+  const currentUserHasCompanyScope = isCompanyWideRole(currentUser?.role);
   const isReportDeletable =
     !!currentUser &&
     (report.status === "DRAFT" ||
       report.status === "REJECTED" ||
       report.status === "REVISION_REQUESTED" ||
       report.status === "SUBMITTED") &&
-    ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"].includes(currentUser.role || "");
+    currentUserHasCompanyScope;
   const isReportEditable =
     !!currentUser &&
     (report.status === "DRAFT" ||
       report.status === "REJECTED" ||
       report.status === "REVISION_REQUESTED") &&
     (report.createdById === currentUser.id ||
-      ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"].includes(currentUser.role || ""));
+      currentUserHasCompanyScope);
   const canSubmitReport =
     (report.status === "DRAFT" ||
       report.status === "REJECTED" ||
@@ -420,7 +422,7 @@ export function ReportDetailDrawer({
   const canModerateReport =
     report.status === "SUBMITTED" &&
     !!currentUser &&
-    ["ADMIN", "DIRECTOR"].includes(currentUser.role || "");
+    currentUserHasCompanyScope;
 
   return (
     <AppDrawer
@@ -649,7 +651,7 @@ export function ReportDetailDrawer({
                     <thead className="bg-slate-50 border-b border-slate-200">
                       <tr>
                         <th className="px-3 py-2 text-left font-semibold text-slate-600">Công việc</th>
-                        <th className="px-3 py-2 text-center font-semibold text-slate-600 w-16">ĐVT</th>
+                        <th className="px-3 py-2 text-center font-semibold text-slate-600 w-16">Đơn vị</th>
                         <th className="px-3 py-2 text-right font-semibold text-slate-600 w-24">Còn lại</th>
                         <th className="px-3 py-2 text-right font-semibold text-slate-600 w-28 text-blue-700">Tuần tới</th>
                         <th className="px-3 py-2 text-left font-semibold text-slate-600 w-24">Từ ngày</th>

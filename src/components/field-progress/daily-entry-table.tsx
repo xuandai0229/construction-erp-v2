@@ -28,6 +28,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { sharedTableStyles } from "./table-styles";
 import { evaluateVolumeGuard } from "@/lib/field-progress/volume-guard";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { isCompanyWideRole } from "@/lib/rbac-rules";
 import { useToast } from "@/components/ui/toast-context";
 
 type DailyItem = {
@@ -454,7 +455,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
     const math = getItemMath(item);
     const idSuffix = compact ? "-mobile" : "-desktop";
     const isReportSourced = item.note && item.note.includes("[SOURCE:SITE_REPORT:");
-    const isReadOnly = Boolean(isReportSourced) && userRole !== 'ADMIN' && userRole !== 'DIRECTOR';
+    const isReadOnly = Boolean(isReportSourced) && !isCompanyWideRole(userRole);
 
     return (
       <div>

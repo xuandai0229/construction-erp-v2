@@ -3,7 +3,7 @@
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { writeAuditLog } from "@/lib/audit";
-import { canManageProjects } from "@/lib/rbac";
+import { canManageProjects, isSystemAdmin } from "@/lib/rbac";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -117,7 +117,7 @@ export async function updateProject(id: string, prevState: unknown, formData: Fo
     if (!existing) return { error: "Không tìm thấy công trình" };
 
     // Chặn sửa đổi nếu công trình đã hoàn thành/hủy trừ khi là Admin
-    if ((existing.status === 'COMPLETED' || existing.status === 'CANCELLED') && session.role !== 'ADMIN') {
+    if ((existing.status === 'COMPLETED' || existing.status === 'CANCELLED') && !isSystemAdmin(session)) {
       return { error: "Công trình đã hoàn thành hoặc đã hủy, không thể chỉnh sửa." };
     }
 
@@ -166,7 +166,7 @@ export async function deleteProject(id: string) {
     if (!existing || existing.deletedAt !== null) return { error: "Không tìm thấy công trình" };
 
     // Chặn xóa nếu công trình đã hoàn thành/hủy trừ khi là Admin
-    if ((existing.status === 'COMPLETED' || existing.status === 'CANCELLED') && session.role !== 'ADMIN') {
+    if ((existing.status === 'COMPLETED' || existing.status === 'CANCELLED') && !isSystemAdmin(session)) {
       return { error: "Công trình đã hoàn thành hoặc đã hủy, không thể xóa." };
     }
 

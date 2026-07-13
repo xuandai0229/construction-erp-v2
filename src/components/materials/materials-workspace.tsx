@@ -35,6 +35,7 @@ interface MaterialsWorkspaceProps {
   materialRequests?: any[];
   wbsItems?: any[];
   currentUserRole?: string;
+  currentUserId?: string;
 }
 
 export function MaterialsWorkspace({
@@ -47,6 +48,7 @@ export function MaterialsWorkspace({
   materialRequests = [],
   wbsItems = [],
   currentUserRole,
+  currentUserId,
 }: MaterialsWorkspaceProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -79,7 +81,7 @@ export function MaterialsWorkspace({
     { id: "overview", label: "Tổng quan", icon: ClipboardList, visible: permissions.canView },
     { id: "catalog", label: "Danh mục vật tư", icon: Package, visible: permissions.canView },
     { id: "stock", label: "Tồn kho", icon: Factory, visible: permissions.canView },
-    { id: "requests", label: "Yêu cầu vật tư", icon: ClipboardList, visible: permissions.canView },
+    { id: "requests", label: "Đề xuất vật tư", icon: ClipboardList, visible: permissions.canView },
     { id: "transactions", label: "Nhập / Xuất", icon: ArrowDownRight, visible: permissions.canViewTransactions },
   ].filter(t => t.visible);
 
@@ -291,7 +293,21 @@ export function MaterialsWorkspace({
           )}
           {currentTab === "stock" && (
             <MaterialsStockTable
-              stocks={initialStocks}
+              stocks={initialStocks.map(stock => {
+                const catalogItem = materialItems.find(m => m.id === stock.materialItemId);
+                if (catalogItem) {
+                  return {
+                    ...stock,
+                    materialItem: {
+                      ...stock.materialItem,
+                      importedFromProposalQuantity: catalogItem.importedFromProposalQuantity,
+                      approvedProposalQuantity: catalogItem.approvedProposalQuantity,
+                      pendingProposalQuantity: catalogItem.pendingProposalQuantity,
+                    }
+                  };
+                }
+                return stock;
+              })}
               transactions={initialTransactions}
               requests={materialRequests}
               onTransaction={(type, materialId) => {
@@ -326,6 +342,7 @@ export function MaterialsWorkspace({
                 materialItems={materialItems}
                 stocks={initialStocks}
                 currentUserRole={currentUserRole}
+                currentUserId={currentUserId}
               />
             </div>
           )}

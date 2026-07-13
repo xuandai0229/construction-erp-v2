@@ -148,7 +148,7 @@ export function SummaryDesktopView({
               <th className={`${thBase} text-center`}>STT</th>
               <th className={`${thBase} text-left`}>Hạng mục / Công việc</th>
               <th className={`${thBase} text-center`}>Mũi thi công</th>
-              <th className={`${thBase} text-center`}>ĐVT</th>
+              <th className={`${thBase} text-center`}>Đơn vị</th>
               <th className={`${thBase} text-right`}>Thiết kế</th>
               <th className={`${thBase} text-right`} title={`Tổng khối lượng đã duyệt trước ngày ${formattedFromDate}`}>Trước kỳ</th>
               <th className={`${thBase} text-right text-blue-700 bg-blue-50/60`}>Trong kỳ</th>

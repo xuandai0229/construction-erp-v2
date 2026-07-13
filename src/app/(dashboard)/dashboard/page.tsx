@@ -3,6 +3,7 @@ import { getDashboardData } from '@/lib/dashboard/dashboard-queries';
 import { OperationalDashboard } from '@/components/dashboard/operational-dashboard';
 import { ExecutiveDashboard } from '@/components/dashboard/executive/executive-dashboard';
 import { getGlobalProjectContext } from '@/lib/project-context';
+import { isCompanyWideRole } from '@/lib/rbac-rules';
 
 type DashboardPageProps = {
   searchParams: Promise<{ period?: string; projectId?: string }>;
@@ -17,7 +18,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   
   const data = await getDashboardData(currentSession, params.period, globalContext.selectedProjectId || undefined);
 
-  const isHighLevel = ['ADMIN', 'DIRECTOR', 'DEPUTY_DIRECTOR'].includes(currentSession.role);
+  const isHighLevel = isCompanyWideRole(currentSession.role);
 
   if (isHighLevel) {
     return <ExecutiveDashboard data={data} />;

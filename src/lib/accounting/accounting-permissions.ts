@@ -25,7 +25,7 @@ export function getAccountingPermissions(
   if (!userRole) return perms;
 
   // Global Admins / Directors see everything
-  if (userRole === "ADMIN" || userRole === "DIRECTOR") {
+  if (userRole === "ADMIN" || userRole === "DIRECTOR" || userRole === "DEPUTY_DIRECTOR") {
     perms.canView = true;
     perms.canCreate = true;
     perms.canUpdate = true;
@@ -35,48 +35,35 @@ export function getAccountingPermissions(
     return perms;
   }
 
-  if (userRole === "ACCOUNTANT") {
+  if (!projectRole) return perms;
+
+  // Project role is authoritative inside a project. VIEWER remains read-only
+  // even if the user's global role is ACCOUNTANT or MANAGER.
+  if (projectRole === "VIEWER") {
     perms.canView = true;
-    perms.canCreate = true;
-    perms.canUpdate = true;
-    perms.canDelete = false; // accountants usually don't delete
-    perms.canApprove = false; // usually PD or manager approves
-    perms.canMarkPaid = true;
     return perms;
   }
 
-  if (userRole === "DEPUTY_DIRECTOR" || userRole === "MANAGER") {
-    perms.canView = true;
-    perms.canCreate = true;
-    perms.canUpdate = true;
-    perms.canApprove = true;
+  perms.canView = true;
+
+  switch (projectRole) {
+    case "PROJECT_MANAGER":
+    case "SITE_COMMANDER":
+    case "CHIEF_COMMANDER":
+    case "ASSISTANT_COMMANDER":
+      perms.canCreate = true;
+      perms.canUpdate = true;
+      break;
+    case "QA_QC":
+    case "HSE":
+    case "SUPERVISOR":
+      break;
   }
 
-  // Project scoped roles
-  if (projectRole) {
-    perms.canView = true;
-
-    switch (projectRole) {
-      case "PROJECT_MANAGER":
-      case "SITE_COMMANDER":
-        perms.canCreate = true;
-        perms.canUpdate = true;
-        perms.canApprove = true; // Can approve payment requests at site level
-        break;
-      case "CHIEF_COMMANDER":
-      case "ASSISTANT_COMMANDER":
-        perms.canCreate = true;
-        perms.canUpdate = true;
-        break;
-      case "QA_QC":
-      case "HSE":
-      case "SUPERVISOR":
-        perms.canCreate = true;
-        break;
-      case "VIEWER":
-        // just view
-        break;
-    }
+  if (userRole === "ACCOUNTANT") {
+    perms.canCreate = true;
+    perms.canUpdate = true;
+    perms.canMarkPaid = true;
   }
 
   return perms;

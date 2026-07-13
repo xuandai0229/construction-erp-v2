@@ -103,8 +103,6 @@ export function MaterialRequestForm({
   });
   
   const [formData, setFormData] = useState({
-    neededDate: toDateInputValue(initialData?.neededDate),
-    priority: initialData?.priority || "MEDIUM",
     note: initialData?.note || "",
     status: initialData?.status || "DRAFT"
   });
@@ -161,12 +159,6 @@ export function MaterialRequestForm({
 
   const getSelectedMaterial = (item: any) => {
     return materialItems.find((material) => material.id === item.materialItemId || material.code === item.materialCode || material.name === item.materialName) || null;
-  };
-
-  const getStockForItem = (item: any) => {
-    const selected = getSelectedMaterial(item);
-    if (selected) return stockByMaterialId.get(selected.id) || stockByCode.get(selected.code) || null;
-    return stockByCode.get(item.materialCode) || null;
   };
 
   const handleAddItem = () => {
@@ -319,8 +311,6 @@ export function MaterialRequestForm({
       const payload = {
         projectId,
         requestDate: initialData?.requestDate || new Date(),
-        neededDate: fromDateInputValue(formData.neededDate) || new Date(),
-        priority: formData.priority,
         status: status,
         note: formData.note,
         items: items.map(i => ({
@@ -363,15 +353,6 @@ export function MaterialRequestForm({
       setError("");
 
       // Validate
-      if (!formData.neededDate || formData.neededDate.trim() === "") {
-        throw new Error("Vui lòng chọn ngày cần vật tư.");
-      }
-      
-      const requestDateStr = toDateInputValue(safeParseDate(initialData?.requestDate) || new Date());
-      if (formData.neededDate < requestDateStr) {
-        throw new Error("Ngày cần vật tư không được trước ngày đề xuất.");
-      }
-
       if (items.length === 0) {
         throw new Error("Vui lòng thêm ít nhất một dòng vật tư.");
       }
@@ -384,26 +365,7 @@ export function MaterialRequestForm({
       setShowLineErrors(false);
 
       if (status === "SUBMITTED") {
-        const hasOverStock = items.some(item => {
-          const stock = getStockForItem(item);
-          return stock && Number(item.requestedQuantity) > stock.stock;
-        });
-
-        if (hasOverStock) {
-          setConfirmState({
-            isOpen: true,
-            title: "Cảnh báo vượt tồn kho",
-            description: "Có vật tư vượt tồn hiện tại. Bạn vẫn muốn gửi phê duyệt?",
-            variant: "warning",
-            confirmText: "Gửi phê duyệt",
-            onConfirm: () => {
-              setConfirmState(prev => ({ ...prev, isOpen: false }));
-              executeSubmit(status);
-            }
-          });
-          submittingRef.current = false;
-          return;
-        }
+        // Validation for SUBMITTED is same as DRAFT
       }
 
       await executeSubmit(status);
@@ -421,7 +383,7 @@ export function MaterialRequestForm({
         <div className="sticky top-0 z-10 border-b border-slate-200 bg-white px-4 py-4 sm:px-6">
           <div className="flex items-start justify-between gap-4">
             <h2 id="modal-title" className="text-lg font-bold text-slate-900">
-              {isEditing ? `Sửa đề xuất: ${initialData.requestNo}` : "Tạo đề xuất vật tư mới"}
+              {isEditing ? `Sửa đề xuất: ${initialData.requestNo}` : "Tạo đề xuất"}
             </h2>
             <CloseButton onClick={onClose} tone="neutral" />
           </div>
@@ -438,31 +400,6 @@ export function MaterialRequestForm({
 
           {/* General Info */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label htmlFor="neededDate" className="text-sm font-semibold text-slate-700">Ngày cần vật tư <span className="text-red-500">*</span></label>
-              <DateFieldVN 
-                id="neededDate"
-                name="neededDate"
-                value={formData.neededDate}
-                onChange={(val) => setFormData({ ...formData, neededDate: val })}
-                className="border-slate-300"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label htmlFor="priority" className="text-sm font-semibold text-slate-700">Mức ưu tiên</label>
-              <select 
-                id="priority"
-                name="priority"
-                value={formData.priority}
-                onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                className="w-full px-3 py-2 bg-white text-slate-900 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-              >
-                <option value="LOW">Thấp</option>
-                <option value="MEDIUM">Trung bình</option>
-                <option value="HIGH">Cao</option>
-                <option value="URGENT">Khẩn cấp</option>
-              </select>
-            </div>
             <div className="sm:col-span-2 space-y-1.5">
               <label htmlFor="note" className="text-sm font-semibold text-slate-700">Ghi chú chung</label>
               <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" 
@@ -495,7 +432,7 @@ export function MaterialRequestForm({
             <div className="hidden sm:grid grid-cols-[minmax(300px,1.3fr)_110px_130px_minmax(300px,1.2fr)_44px] gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-600">
               <div>Tên vật tư <span className="text-red-500">*</span></div>
               <div>Đơn vị</div>
-              <div>SL đề xuất <span className="text-red-500">*</span></div>
+              <div>Số lượng đề xuất <span className="text-red-500">*</span></div>
               <div>Công việc liên quan (Tùy chọn)</div>
               <div className="text-center">Xóa</div>
             </div>
@@ -506,13 +443,8 @@ export function MaterialRequestForm({
                 const materialMode = (item.materialSourceMode || "CATALOG") as MaterialSourceMode;
                 const workMode = (item.workSourceMode || "CATALOG") as WorkSourceMode;
                 const lineErrors = showLineErrors ? getItemErrors(item) : [];
-                const stock = getStockForItem(item);
-                const requestedQty = Number(item.requestedQuantity || 0);
-                const isOverStock = Boolean(stock && requestedQty > stock.stock);
                 const lineMeta = [
-                  ...getLineMeta(item),
-                  stock ? `Tồn hiện tại: ${stock.stock} ${stock.materialItem.unit}` : "",
-                  isOverStock && stock ? `Thiếu ${(requestedQty - stock.stock).toFixed(2)} ${stock.materialItem.unit}` : "",
+                  ...getLineMeta(item)
                 ].filter(Boolean);
 
                 return (
@@ -577,7 +509,7 @@ export function MaterialRequestForm({
                     </div>
 
                     <div className="min-w-0 space-y-1">
-                      <label htmlFor={`requestedQuantity-${index}`} className="text-xs font-medium text-slate-500 sm:sr-only">SL đề xuất</label>
+                      <label htmlFor={`requestedQuantity-${index}`} className="text-xs font-medium text-slate-500 sm:sr-only">Số lượng đề xuất</label>
                       <div className="hidden h-7 sm:block" />
                       <NumericInput
                         id={`requestedQuantity-${index}`}
@@ -684,10 +616,6 @@ export function MaterialRequestForm({
               const customWorks = items.filter(i => i.workSourceMode === "CUSTOM" && i.workItemNameSnapshot?.trim()).length;
               return customWorks > 0 ? <span className="text-slate-600">Công việc tự nhập: <span className="font-bold text-slate-900">{customWorks}</span></span> : null;
             })()}
-            {(() => {
-              const over = items.filter(i => getStockForItem(i) && Number(i.requestedQuantity) > getStockForItem(i)!.stock).length;
-              return over > 0 ? <span className="text-rose-600 font-bold">Vượt tồn: {over}</span> : null;
-            })()}
           </div>
           <div className="flex flex-col sm:flex-row sm:justify-end gap-3">
             <button 
@@ -698,24 +626,38 @@ export function MaterialRequestForm({
             >
               Hủy
             </button>
-            <button 
-              type="button"
-              onClick={() => handleSubmit("DRAFT")}
-              disabled={loadingAction !== null}
-              className="w-full sm:w-auto px-4 h-10 bg-white border border-slate-300 text-slate-700 font-semibold rounded-lg text-sm hover:bg-slate-50 active:bg-slate-100 flex items-center justify-center gap-2 transition-all shadow-sm disabled:opacity-50"
-            >
-              <Save className="w-4 h-4" /> 
-              {loadingAction === "DRAFT" ? "Đang lưu..." : "Lưu nháp"}
-            </button>
-            <button 
-              type="button"
-              onClick={() => handleSubmit("SUBMITTED")}
-              disabled={loadingAction !== null}
-              className="w-full sm:w-auto px-6 h-10 bg-blue-600 text-white font-semibold rounded-lg text-sm hover:bg-blue-700 active:bg-blue-800 flex items-center justify-center gap-2 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Send className="w-4 h-4" /> 
-              {loadingAction === "SUBMITTED" ? "Đang gửi..." : "Gửi phê duyệt"}
-            </button>
+            {initialData && ["SUBMITTED", "REQUESTED", "PENDING"].includes(initialData.status) ? (
+              <button 
+                type="button"
+                onClick={() => handleSubmit(initialData.status)}
+                disabled={loadingAction !== null}
+                className="w-full sm:w-auto px-6 h-10 bg-blue-600 text-white font-semibold rounded-lg text-sm hover:bg-blue-700 active:bg-blue-800 flex items-center justify-center gap-2 transition-all shadow-sm disabled:opacity-50"
+              >
+                <Save className="w-4 h-4" /> 
+                {loadingAction !== null ? "Đang lưu..." : "Lưu thay đổi"}
+              </button>
+            ) : (
+              <>
+                <button 
+                  type="button"
+                  onClick={() => handleSubmit("DRAFT")}
+                  disabled={loadingAction !== null}
+                  className="w-full sm:w-auto px-4 h-10 bg-white border border-slate-300 text-slate-700 font-semibold rounded-lg text-sm hover:bg-slate-50 active:bg-slate-100 flex items-center justify-center gap-2 transition-all shadow-sm disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" /> 
+                  {loadingAction === "DRAFT" ? "Đang lưu..." : "Lưu nháp"}
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => handleSubmit("SUBMITTED")}
+                  disabled={loadingAction !== null}
+                  className="w-full sm:w-auto px-6 h-10 bg-blue-600 text-white font-semibold rounded-lg text-sm hover:bg-blue-700 active:bg-blue-800 flex items-center justify-center gap-2 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Send className="w-4 h-4" /> 
+                  {loadingAction === "SUBMITTED" ? "Đang gửi..." : "Gửi phê duyệt"}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
