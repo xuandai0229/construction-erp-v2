@@ -6,10 +6,7 @@ export const PERMISSIONS = [
   "documents.view", "documents.upload", "documents.update", "documents.delete", "documents.download",
   "reports.view", "reports.create", "reports.update", "reports.submit", "reports.approve", "reports.reject", "reports.export",
   "materials.view", "materials.request", "materials.update", "materials.approve", "materials.receive", "materials.issue",
-  "contracts.view", "contracts.create", "contracts.update", "contracts.delete",
-  "payments.view", "payments.create", "payments.update", "payments.review", "payments.approve", "payments.mark_paid", "payments.export",
   "approvals.view", "approvals.create", "approvals.decide",
-  "suppliers.view", "suppliers.manage",
   "audit.view_global", "audit.view_project", "audit.export",
   "settings.company", "settings.system",
 ] as const;
@@ -33,4 +30,3 @@ export type PermissionResolution = {
 };
 
 export type PermissionActor = Pick<{ id: string; role: UserRole }, "id" | "role">;
-

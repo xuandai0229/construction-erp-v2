@@ -55,7 +55,7 @@ const sectionMeta: {
   {
     id: "workflow",
     title: "Quy trình",
-    description: "Luồng phê duyệt cho vật tư, thanh toán, hợp đồng và báo cáo.",
+    description: "Luồng phê duyệt cho vật tư, hồ sơ kỹ thuật và báo cáo.",
     icon: Workflow,
   },
   {
@@ -77,12 +77,6 @@ const sectionMeta: {
     icon: DatabaseBackup,
   },
 ];
-
-const currencyFormatter = new Intl.NumberFormat("vi-VN", {
-  style: "currency",
-  currency: "VND",
-  maximumFractionDigits: 0,
-});
 
 function formatSavedAt(value: Date | string | undefined) {
   if (!value) return "Chưa có";
@@ -163,9 +157,7 @@ export function SettingsWorkspace({ initialSettings }: { initialSettings: System
   const enabledControls = [
     profile.requireTwoFactorForAdmins,
     profile.auditSensitiveActions,
-    profile.requireProjectCodeBeforeSpending,
     profile.materialRequestApproval,
-    profile.paymentTwoStepApproval,
     profile.reportLockAfterApproval,
     profile.enforceNamingConvention,
     profile.autoVersioning,
@@ -365,18 +357,6 @@ export function SettingsWorkspace({ initialSettings }: { initialSettings: System
                     ["USD", "USD"],
                   ]}
                 />
-                <SelectField
-                  label="Tháng bắt đầu năm tài chính"
-                  value={profile.fiscalYearStartMonth}
-                  onChange={(value) => updateField("fiscalYearStartMonth", value)}
-                  disabled={true}
-                  badge="Chưa kích hoạt"
-                  options={[
-                    ["01", "Tháng 01"],
-                    ["04", "Tháng 04"],
-                    ["07", "Tháng 07"],
-                  ]}
-                />
               </div>
             )}
 
@@ -392,7 +372,7 @@ export function SettingsWorkspace({ initialSettings }: { initialSettings: System
                 />
                 <SwitchRow
                   title="Ghi audit cho thao tác nhạy cảm"
-                  description="Ghi lại thay đổi quyền, xuất dữ liệu, duyệt thanh toán và xóa mềm."
+                  description="Ghi lại thay đổi quyền, xuất dữ liệu, duyệt hồ sơ và xóa mềm."
                   checked={profile.auditSensitiveActions}
                   onChange={(value) => updateField("auditSensitiveActions", value)}
                   disabled={true}
@@ -441,26 +421,10 @@ export function SettingsWorkspace({ initialSettings }: { initialSettings: System
             {activeSection === "workflow" && (
               <div className="space-y-4">
                 <SwitchRow
-                  title="Bắt buộc mã công trình trước khi chi"
-                  description="Không cho tạo đề nghị thanh toán nếu chưa chọn công trình."
-                  checked={profile.requireProjectCodeBeforeSpending}
-                  onChange={(value) => updateField("requireProjectCodeBeforeSpending", value)}
-                  disabled={true}
-                  badge="Chưa kích hoạt"
-                />
-                <SwitchRow
                   title="Vật tư phải qua phê duyệt"
                   description="Đề xuất vật tư từ hiện trường cần được duyệt trước khi nhập kho tự động."
                   checked={profile.materialRequestApproval}
                   onChange={(value) => updateField("materialRequestApproval", value)}
-                  disabled={true}
-                  badge="Chưa kích hoạt"
-                />
-                <SwitchRow
-                  title="Thanh toán duyệt hai bước"
-                  description="Tách bước kiểm tra kế toán và bước duyệt điều hành."
-                  checked={profile.paymentTwoStepApproval}
-                  onChange={(value) => updateField("paymentTwoStepApproval", value)}
                   disabled={true}
                   badge="Chưa kích hoạt"
                 />
@@ -471,14 +435,6 @@ export function SettingsWorkspace({ initialSettings }: { initialSettings: System
                   onChange={(value) => updateField("reportLockAfterApproval", value)}
                   disabled={true}
                   badge="Chưa kích hoạt"
-                />
-                <NumberField
-                  label="Ngưỡng hợp đồng cần duyệt cấp cao"
-                  suffix={currencyFormatter.format(profile.contractValueThreshold)}
-                  value={profile.contractValueThreshold}
-                  onChange={(value) => updateField("contractValueThreshold", value)}
-                  disabled={true}
-                  badge="Chỉ hiển thị"
                 />
               </div>
             )}

@@ -5,7 +5,6 @@ const PROJECT_BUSINESS_ROLES: UserRole[] = [
   "CHIEF_COMMANDER",
   "MANAGER",
   "ENGINEER",
-  "ACCOUNTANT",
   "STAFF",
 ];
 
@@ -16,8 +15,8 @@ export function canViewNavigationItem(role: UserRole, href: string) {
     return COMPANY_WIDE.includes(role) || PROJECT_BUSINESS_ROLES.includes(role);
   }
 
-  if (["/suppliers", "/contracts", "/accounting", "/approvals"].includes(href)) {
-    return COMPANY_WIDE.includes(role) || ["CHIEF_COMMANDER", "MANAGER", "ACCOUNTANT"].includes(role);
+  if (href === "/approvals") {
+    return COMPANY_WIDE.includes(role) || ["CHIEF_COMMANDER", "MANAGER"].includes(role);
   }
 
   if (["/users", "/settings"].includes(href)) {

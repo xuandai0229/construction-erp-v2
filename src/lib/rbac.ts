@@ -273,7 +273,6 @@ export interface NavItem {
 export function getVisibleNavItems(role: UserRole): string[] {
   // Items hidden from CHIEF_COMMANDER
   const hiddenForCommander = [
-    "/accounting",
     "/approvals",
     "/audit",
     "/settings",

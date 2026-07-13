@@ -61,6 +61,7 @@ backups/
 .local-audit-quarantine/
 *.dump
 *.sql
+!prisma/migrations/**/migration.sql
 *.backup
 *.bak
 

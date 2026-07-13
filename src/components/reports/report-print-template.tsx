@@ -18,7 +18,6 @@ export function translateRole(role?: string | null) {
     case "CHIEF_COMMANDER": return "Chỉ huy trưởng";
     case "PROJECT_MANAGER": return "Quản lý dự án";
     case "ENGINEER": return "Kỹ sư";
-    case "ACCOUNTANT": return "Kế toán";
     case "ADMIN": return "Giám đốc";
     case "DIRECTOR": return "Giám đốc";
     case "DEPUTY_DIRECTOR": return "Phó giám đốc";

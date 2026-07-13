@@ -55,26 +55,10 @@ export const PERMISSION_REGISTRY: Record<Permission, PermissionDefinition> = {
   "materials.receive": { globalRoles: COMPANY_WIDE, projectRoles: PROJECT_MANAGERS, defaultScope: "ASSIGNED_PROJECTS", sourcePolicy: "materials-project-role" },
   "materials.issue": { globalRoles: COMPANY_WIDE, projectRoles: PROJECT_MANAGERS, defaultScope: "ASSIGNED_PROJECTS", sourcePolicy: "materials-project-role" },
 
-  "contracts.view": { globalRoles: COMPANY_WIDE, projectRoles: ANY_PROJECT_MEMBER, defaultScope: "ASSIGNED_PROJECTS", sourcePolicy: "contracts-project-scope" },
-  "contracts.create": { globalRoles: COMPANY_WIDE, projectRoles: PROJECT_MANAGERS, defaultScope: "ASSIGNED_PROJECTS", sourcePolicy: "contracts-project-role" },
-  "contracts.update": { globalRoles: COMPANY_WIDE, projectRoles: PROJECT_MANAGERS, defaultScope: "ASSIGNED_PROJECTS", sourcePolicy: "contracts-project-role" },
-  "contracts.delete": { globalRoles: COMPANY_WIDE, projectRoles: PROJECT_MANAGERS, defaultScope: "ASSIGNED_PROJECTS", sourcePolicy: "contracts-project-role" },
-
-  "payments.view": { globalRoles: COMPANY_WIDE, projectRoles: ANY_PROJECT_MEMBER, defaultScope: "ASSIGNED_PROJECTS", sourcePolicy: "payments-project-scope" },
-  "payments.create": { globalRoles: COMPANY_WIDE, projectRoles: PROJECT_MANAGERS, defaultScope: "ASSIGNED_PROJECTS", sourcePolicy: "payments-project-role" },
-  "payments.update": { globalRoles: COMPANY_WIDE, projectRoles: PROJECT_MANAGERS, allowOwnRecord: true, defaultScope: "ASSIGNED_PROJECTS", sourcePolicy: "payments-project-role" },
-  "payments.review": { globalRoles: COMPANY_WIDE, defaultScope: "GLOBAL", sourcePolicy: "payments-legacy-company-approver" },
-  "payments.approve": { globalRoles: COMPANY_WIDE, defaultScope: "GLOBAL", sourcePolicy: "payments-legacy-company-approver" },
-  "payments.mark_paid": { globalRoles: COMPANY_WIDE, projectRoles: PROJECT_MANAGERS, defaultScope: "ASSIGNED_PROJECTS", sourcePolicy: "payments-accountant-with-membership" },
-  "payments.export": { globalRoles: COMPANY_WIDE, projectRoles: ANY_PROJECT_MEMBER, defaultScope: "ASSIGNED_PROJECTS", sourcePolicy: "payments-project-scope" },
-
   "approvals.view": { globalRoles: COMPANY_WIDE, projectRoles: ANY_PROJECT_MEMBER, allowOwnRecord: true, defaultScope: "ASSIGNED_PROJECTS", sourcePolicy: "approvals-least-privilege" },
   // A viewer can inspect approvals in an assigned project, but cannot initiate a workflow.
   "approvals.create": { globalRoles: COMPANY_WIDE, projectRoles: PROJECT_OPERATORS, defaultScope: "ASSIGNED_PROJECTS", sourcePolicy: "approvals-least-privilege" },
   "approvals.decide": { globalRoles: COMPANY_WIDE, projectRoles: PROJECT_APPROVERS, defaultScope: "ASSIGNED_PROJECTS", sourcePolicy: "approvals-project-approver" },
-
-  "suppliers.view": { defaultScope: "GLOBAL", sourcePolicy: "suppliers-legacy-master-data" },
-  "suppliers.manage": { globalRoles: COMPANY_WIDE, defaultScope: "GLOBAL", sourcePolicy: "suppliers-company-admin" },
 
   "audit.view_global": { globalRoles: ["ADMIN"], defaultScope: "GLOBAL", sourcePolicy: "audit-system-admin" },
   "audit.view_project": { globalRoles: COMPANY_WIDE, projectRoles: PROJECT_MANAGERS, defaultScope: "ASSIGNED_PROJECTS", sourcePolicy: "audit-project-scope" },

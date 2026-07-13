@@ -3,19 +3,15 @@ import {
   ChevronRight, 
   Building2, 
   TriangleAlert, 
-  ReceiptText, 
-  Wallet, 
   ClipboardCheck, 
   FileCheck, 
   Package, 
   TrendingUp, 
-  UploadCloud, 
   AlertCircle 
 } from 'lucide-react';
 import type { DashboardActionItem } from '@/lib/dashboard/dashboard-queries';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
 import { formatStatusLabel } from '@/lib/dashboard/dashboard-formatters';
 
 function getPriorityBadge(priority: DashboardActionItem['priority']) {
@@ -53,10 +49,8 @@ function getIcon(type: string, priority: string) {
   if (type === 'Tiến độ' && priority === 'HIGH') { icon = TriangleAlert; tone = 'rose'; }
   else if (type === 'Tiến độ') { icon = TrendingUp; tone = 'emerald'; }
   else if (type === 'Phê duyệt') { icon = FileCheck; tone = 'emerald'; }
-  else if (type === 'Thanh toán') { icon = Wallet; tone = 'amber'; }
   else if (type === 'Báo cáo') { icon = ClipboardCheck; tone = 'blue'; }
   else if (type === 'Vật tư') { icon = Package; tone = 'orange'; }
-  else if (type === 'Hợp đồng') { icon = ReceiptText; tone = 'violet'; }
   else if (type === 'Công trình') { icon = Building2; tone = 'blue'; }
 
   return <ExecutiveSmallIcon icon={icon as any} tone={tone} />;

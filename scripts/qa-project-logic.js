@@ -58,7 +58,7 @@ async function runTest() {
   const fRes = await client.query('SELECT name FROM "DocumentFolder" WHERE "projectId" = $1', [project.id]);
   const folderNames = fRes.rows.map(f => f.name);
   console.log(`[+] Auto-created folders: ${folderNames.length}`);
-  const requiredFolders = ['01_Hợp đồng', '02_Bản vẽ', '03_Dự toán', '04_Nghiệm thu', '05_Hóa đơn', '06_Thanh toán', '07_Hình ảnh hiện trường', '08_Báo cáo ngày'];
+  const requiredFolders = ['01_Hồ sơ pháp lý công trình', '02_Bản vẽ thiết kế', '03_Biên bản nghiệm thu', '04_Vật tư thiết bị', '05_Hình ảnh tiến độ', '06_Báo cáo hiện trường'];
   const hasAllFolders = requiredFolders.every(f => folderNames.includes(f));
   if (!hasAllFolders) throw new Error("Missing default folders");
   console.log('[+] Auto-created folders PASS');

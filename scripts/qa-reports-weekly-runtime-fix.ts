@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 // Giả lập getSession cho server action nếu cần, nhưng trong script độc lập thì server action check `await getSession()` sẽ bị tạch nếu không inject!
 // Tuy nhiên để kiểm tra structure output, ta có thể copy logic hoặc chỉ viết type checks.
-// Do actions.ts có `await getSession()` và ném lỗi nếu không có context Next.js, script này chỉ test TYPE CONTRACT hoặc chạy trong e2e mock.
+// Do actions.ts có `await getSession()` và ném lỗi nếu không có context Next.js, script này chỉ test shape hoặc chạy trong e2e mock.
 
 type WeeklyReportPreviewClient = {
   range: { fromDate: string; toDate: string; };
@@ -17,8 +17,8 @@ type WeeklyReportPreviewClient = {
 };
 
 async function runTest() {
-  console.log("=== KIỂM TRA WEEKLY PREVIEW CONTRACT ===");
-  // Kiểm tra type contract xem có thể build được mảng giả lập đúng shape không:
+  console.log("=== KIỂM TRA WEEKLY PREVIEW SHAPE ===");
+  // Kiểm tra shape có thể build được mảng giả lập đúng yêu cầu không:
   const mockPreview: WeeklyReportPreviewClient = {
     range: { fromDate: "2026-06-22", toDate: "2026-06-28" },
     dayStatuses: [],

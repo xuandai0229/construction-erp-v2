@@ -34,18 +34,14 @@ export function evaluatePermissionPolicy(context: PermissionPolicyContext): Perm
   if (projectId && context.projectActive === false) return outcome(context, false, "NONE", "PROJECT_INACTIVE", "Công trình không còn hoạt động.");
   if (context.permission === "approvals.decide" && context.resourceOwnerId === context.actorUserId) return outcome(context, false, "NONE", "SELF_APPROVAL_FORBIDDEN", "Không thể tự phê duyệt yêu cầu của chính mình.");
   if (context.permission === "approvals.decide" && context.resourceStatus && context.resourceStatus !== "PENDING") return outcome(context, false, "NONE", "INVALID_WORKFLOW_STATUS", "Yêu cầu không ở trạng thái chờ phê duyệt.");
-  if (context.permission === "approvals.decide" && context.resourceType && !["PAYMENT", "MATERIAL", "REPORT", "CONTRACT", "CHANGE_ORDER", "OTHER"].includes(context.resourceType)) return outcome(context, false, "NONE", "INVALID_RESOURCE_TYPE", "Loại yêu cầu không hợp lệ.");
+  if (context.permission === "approvals.decide" && context.resourceType && !["MATERIAL", "REPORT", "VOLUME", "INSPECTION", "PLAN", "DRAWING", "METHOD_STATEMENT", "SAFETY", "QUALITY", "SITE_ISSUE", "CHANGE_ORDER", "OTHER"].includes(context.resourceType)) return outcome(context, false, "NONE", "INVALID_RESOURCE_TYPE", "Loại yêu cầu không hợp lệ.");
   if (definition.globalRoles?.includes(context.systemRole)) return outcome(context, true, "GLOBAL", "GLOBAL_ROLE", "Vai trò có quyền toàn cục theo policy hiện hành.");
   if (!projectId) {
-    if (context.permission === "suppliers.view") return outcome(context, true, "GLOBAL", "LEGACY_GLOBAL_MASTER_DATA", "Danh mục nhà cung cấp là master data dùng chung.");
     if (definition.allowOwnRecord && context.resourceOwnerId === context.actorUserId) return outcome(context, true, "OWN_RECORDS", "OWNER_SCOPE", "Bạn là người tạo bản ghi.");
     return outcome(context, false, "NONE", "PROJECT_REQUIRED", "Thao tác cần xác định công trình để kiểm tra phạm vi.");
   }
   if (!membership || membership.projectId !== projectId) return outcome(context, false, "NONE", "MEMBERSHIP_REQUIRED", "Bạn không được gán vào công trình này.");
   if (membership.isActive === false || membership.deletedAt || membership.leftAt) return outcome(context, false, "NONE", "MEMBERSHIP_INACTIVE", "Phân công tại công trình không còn hiệu lực.");
-  if (context.systemRole === "ACCOUNTANT" && ["payments.create", "payments.update", "payments.mark_paid"].includes(context.permission) && membership.role !== "VIEWER") {
-    return outcome(context, true, "ASSIGNED_PROJECTS", "ACCOUNTANT_ASSIGNED_PROJECT", "Kế toán có quyền tài chính tại công trình được gán.");
-  }
   if (definition.projectRoles?.includes(membership.role)) {
     return outcome(context, true, "ASSIGNED_PROJECTS", "PROJECT_ROLE", "Quyền được cấp theo vai trò tại công trình.");
   }

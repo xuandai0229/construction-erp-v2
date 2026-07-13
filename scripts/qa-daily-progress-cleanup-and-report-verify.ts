@@ -408,7 +408,7 @@ function renderCleanupResult(pre: Snapshot, post: Snapshot, cleanupResult: Await
     `- Soft-deleted entries: ${cleanupResult?.softDeletedEntries ?? 0}`,
     `- Cancelled QA-tag reports: ${cleanupResult?.cancelledQaReports ?? 0}`,
     `- Soft-deleted QA-tag lines: ${cleanupResult?.softDeletedQaLines ?? 0}`,
-    "- Không xóa `FieldProgressItem`, `FieldProgressTemplate`, `Project`, `User`, `Supplier`, `Contract`, `Document`.",
+    "- Không xóa `FieldProgressItem`, `FieldProgressTemplate`, `Project`, `User`, `Document`.",
     "",
     "| Chỉ số | Trước cleanup | Sau cleanup | Kết quả |",
     "|---|---:|---:|---|",

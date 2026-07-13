@@ -73,14 +73,6 @@ export const SYSTEM_ROLE_REGISTRY: Record<UserRole, SystemRoleDefinition> = {
     sensitive: false,
     defaultScope: "ASSIGNED_PROJECTS",
   },
-  ACCOUNTANT: {
-    category: "SYSTEM",
-    label: "Kế toán",
-    description: "Vai trò nghiệp vụ tài chính-kế toán.",
-    level: 40,
-    sensitive: false,
-    defaultScope: "ASSIGNED_PROJECTS",
-  },
   STAFF: {
     category: "SYSTEM",
     label: "Nhân viên",

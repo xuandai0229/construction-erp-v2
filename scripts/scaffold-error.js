@@ -1,5 +1,5 @@
 const fs = require('fs');
-const dirs = ['approvals', 'materials', 'reports', 'documents', 'contracts', 'accounting', 'suppliers', 'users', 'audit', 'settings'];
+const dirs = ['approvals', 'materials', 'reports', 'documents', 'users', 'audit', 'settings'];
 const content = `"use client";
 
 import { PageError } from "@/components/ui/page-error";

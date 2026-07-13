@@ -25,14 +25,6 @@ export function canApproveReport(input: ApprovalPolicyInput): boolean {
   return COMPANY_WIDE_APPROVERS.includes(input.userRole);
 }
 
-export function canApprovePayment(input: ApprovalPolicyInput): boolean {
-  return COMPANY_WIDE_APPROVERS.includes(input.userRole);
-}
-
-export function canApproveContract(input: ApprovalPolicyInput): boolean {
-  return COMPANY_WIDE_APPROVERS.includes(input.userRole);
-}
-
 export function canApproveProgress(input: ApprovalPolicyInput): boolean {
   if (COMPANY_WIDE_APPROVERS.includes(input.userRole)) return true;
   return Boolean(input.projectRole && PROGRESS_PROJECT_APPROVERS.includes(input.projectRole));
@@ -48,11 +40,16 @@ export function canApproveByRequestType(input: ApprovalPolicyInput): boolean {
       return canApproveMaterialRequest(input);
     case "REPORT":
       return canApproveReport(input);
-    case "PAYMENT":
-      return canApprovePayment(input);
-    case "CONTRACT":
     case "CHANGE_ORDER":
-      return canApproveContract(input);
+    case "VOLUME":
+    case "INSPECTION":
+    case "PLAN":
+    case "DRAWING":
+    case "METHOD_STATEMENT":
+    case "SAFETY":
+    case "QUALITY":
+    case "SITE_ISSUE":
+      return canApproveProgress(input);
     case "OTHER":
     default:
       return COMPANY_WIDE_APPROVERS.includes(input.userRole);

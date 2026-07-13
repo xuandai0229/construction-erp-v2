@@ -1,4 +1,4 @@
-import { Building2, TriangleAlert, ReceiptText, Wallet, ClipboardCheck, ArrowUp, ArrowDown, Hammer } from 'lucide-react';
+import { Building2, TriangleAlert, ClipboardCheck, ArrowUp, ArrowDown, Hammer, ListChecks } from 'lucide-react';
 import type { DashboardData } from '@/lib/dashboard/dashboard-queries';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -14,22 +14,10 @@ export function ExecutiveKpiGrid({ data }: { data: DashboardData }) {
 
   const atRiskCount = data.projectOverview.filter(p => p.health === 'AT_RISK' || p.health === 'DELAYED').length;
 
-  const contractValue = data.financeSummary?.totalContractValue || 0;
-  const pendingPayment = data.financeSummary?.pendingPaymentAmount || 0;
-  const pendingPaymentCount = data.financeSummary?.pendingPaymentCount || 0;
-
   const reportsKpi = data.kpis.find(k => k.id === 'documents-reports');
   const reportsCount = reportsKpi ? parseInt(reportsKpi.value) : 0;
-
-  function formatCompactCurrency(value: number) {
-    if (value >= 1_000_000_000) {
-      return `${(value / 1_000_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} tỷ`;
-    }
-    if (value >= 1_000_000) {
-      return `${(value / 1_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} tr`;
-    }
-    return value.toLocaleString('vi-VN');
-  }
+  const entriesToday = Number(data.kpis.find(k => k.id === 'entries-today')?.value ?? 0);
+  const actionCount = data.actionItems.length;
 
   const isSingleProject = !!data.selectedProjectId;
   const currentProject = isSingleProject && data.projectOverview.length > 0 ? data.projectOverview[0] : null;
@@ -63,21 +51,21 @@ export function ExecutiveKpiGrid({ data }: { data: DashboardData }) {
       href: '/approvals'
     },
     {
-      label: 'Giá trị hợp đồng',
-      value: contractValue === 0 ? '0 đ' : formatCompactCurrency(contractValue),
-      subtext: contractValue === 0 ? 'Chưa có hợp đồng' : 'Giá trị đã ký',
-      icon: ReceiptText,
+      label: 'Khối lượng hôm nay',
+      value: entriesToday,
+      subtext: 'Bản ghi hiện trường',
+      icon: Hammer,
       tone: 'violet' as IconColorTone,
-      href: `/contracts?projectId=${currentProject.id}`
+      href: `/projects/${currentProject.id}/field-progress/daily`
     },
     {
-      label: 'Chờ thanh toán',
-      value: pendingPayment === 0 && pendingPaymentCount === 0 ? '0 đ' : formatCompactCurrency(pendingPayment),
-      subtext: pendingPayment === 0 && pendingPaymentCount === 0 ? 'Không có hồ sơ' : `${pendingPaymentCount} hồ sơ`,
-      icon: Wallet,
+      label: 'Việc cần xử lý',
+      value: actionCount,
+      subtext: actionCount > 0 ? 'Cần hành động' : 'Không có tồn đọng',
+      icon: ListChecks,
       tone: 'orange' as IconColorTone,
-      trend: pendingPaymentCount > 0 ? 'neutral' : undefined,
-      href: `/accounting?projectId=${currentProject.id}`
+      trend: actionCount > 0 ? 'neutral' : undefined,
+      href: '/dashboard'
     },
     {
       label: 'Báo cáo 7 ngày',
@@ -116,21 +104,21 @@ export function ExecutiveKpiGrid({ data }: { data: DashboardData }) {
       href: '/projects'
     },
     {
-      label: 'Giá trị hợp đồng',
-      value: contractValue === 0 ? '0 đ' : formatCompactCurrency(contractValue),
-      subtext: 'Tổng toàn hệ thống',
-      icon: ReceiptText,
+      label: 'Khối lượng hôm nay',
+      value: entriesToday,
+      subtext: 'Bản ghi hiện trường',
+      icon: Hammer,
       tone: 'violet' as IconColorTone,
-      href: '/contracts'
+      href: '/projects'
     },
     {
-      label: 'Chờ thanh toán',
-      value: pendingPayment === 0 && pendingPaymentCount === 0 ? '0 đ' : formatCompactCurrency(pendingPayment),
-      subtext: pendingPayment === 0 && pendingPaymentCount === 0 ? 'Chưa có hồ sơ thanh toán nào' : `${pendingPaymentCount} hồ sơ`,
-      icon: Wallet,
+      label: 'Việc cần xử lý',
+      value: actionCount,
+      subtext: actionCount > 0 ? 'Cần hành động' : 'Không có tồn đọng',
+      icon: ListChecks,
       tone: 'orange' as IconColorTone,
-      trend: pendingPaymentCount > 0 ? 'neutral' : undefined,
-      href: '/accounting'
+      trend: actionCount > 0 ? 'neutral' : undefined,
+      href: '/dashboard'
     },
     {
       label: 'Báo cáo 7 ngày',

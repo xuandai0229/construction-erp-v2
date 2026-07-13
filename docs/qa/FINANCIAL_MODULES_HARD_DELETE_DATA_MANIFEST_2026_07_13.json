@@ -1,0 +1,42 @@
+{
+  "generatedAt": "2026-07-13T02:57:01.883Z",
+  "readOnlyAudit": true,
+  "databaseClassification": "DEVELOPMENT_LIKE",
+  "database": {
+    "host": "127.0.0.1",
+    "port": 5432,
+    "name": "construction_erp_v2",
+    "user": "postgres"
+  },
+  "backup": {
+    "path": "backups/construction-erp-v2-pre-financial-hard-delete-20260713.dump",
+    "bytes": 162447,
+    "sha256": "7911F27F91B585503846BA8EEA4BAAE197F81372EA630837CF413D0C291A0B4F",
+    "gitIgnored": true
+  },
+  "tables": {
+    "Supplier": 5,
+    "Contract": 5,
+    "PaymentPlan": 4,
+    "PaymentRecord": 1,
+    "PaymentRequest": 5
+  },
+  "approvalRowsRemovedByMigration": {
+    "CONTRACT": 1,
+    "PAYMENT": 1
+  },
+  "foreignKeys": [
+    "Contract.projectId -> Project.id",
+    "Contract.supplierId -> Supplier.id",
+    "PaymentPlan.contractId -> Contract.id",
+    "PaymentPlan.projectId -> Project.id",
+    "PaymentRecord.paymentPlanId -> PaymentPlan.id",
+    "PaymentRecord.projectId -> Project.id",
+    "PaymentRequest.approvedById -> User.id",
+    "PaymentRequest.contractId -> Contract.id",
+    "PaymentRequest.createdById -> User.id",
+    "PaymentRequest.projectId -> Project.id",
+    "PaymentRequest.supplierId -> Supplier.id"
+  ],
+  "migrationAppliedToCurrentDatabase": false
+}

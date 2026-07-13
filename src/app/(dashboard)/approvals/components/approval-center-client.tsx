@@ -15,7 +15,6 @@ import {
   X,
   XCircle,
   type LucideIcon,
-  Check,
 } from "lucide-react";
 import type { ApprovalPriority, ApprovalRequestStatus, ApprovalRequestType } from "@prisma/client";
 import { Button } from "@/components/ui/button";
@@ -53,19 +52,23 @@ type ApprovalsCenterClientProps = {
 };
 
 const TYPE_LABELS: Record<ApprovalRequestType, string> = {
-  PAYMENT: "Thanh toán",
   MATERIAL: "Vật tư",
   REPORT: "Báo cáo",
-  CONTRACT: "Hợp đồng",
+  VOLUME: "Khối lượng",
+  INSPECTION: "Nghiệm thu",
+  PLAN: "Kế hoạch",
+  DRAWING: "Bản vẽ",
+  METHOD_STATEMENT: "Biện pháp thi công",
+  SAFETY: "An toàn",
+  QUALITY: "Chất lượng",
+  SITE_ISSUE: "Phát sinh hiện trường",
   CHANGE_ORDER: "Phát sinh",
   OTHER: "Khác",
 };
 
 const SOURCE_TYPE_LABELS: Record<string, string> = {
-  PAYMENT_REQUEST: "Thanh toán",
   MATERIAL_REQUEST: "Yêu cầu vật tư",
   SITE_REPORT: "Báo cáo hiện trường",
-  CONTRACT: "Hợp đồng",
   FIELD_PROGRESS: "Nghiệm thu khối lượng",
   CHANGE_ORDER: "Phát sinh",
   DOCUMENT: "Tài liệu",
@@ -101,17 +104,7 @@ const PRIORITY_STYLES: Record<ApprovalPriority, string> = {
 };
 
 const TYPE_OPTIONS = Object.keys(TYPE_LABELS) as ApprovalRequestType[];
-const STATUS_OPTIONS = ["PENDING", "APPROVED", "REJECTED", "CANCELLED"] as ApprovalRequestStatus[];
 const PRIORITY_OPTIONS = Object.keys(PRIORITY_LABELS) as ApprovalPriority[];
-
-function formatCurrency(value: number | null) {
-  if (value === null) return "—";
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
 
 function formatDate(value: string | null) {
   return safeFormatDateVN(value);
@@ -170,20 +163,6 @@ function SummaryCard({
   );
 }
 
-function formatCompactCurrency(value: number | string | null | undefined) {
-  if (value == null) return "—";
-  const num = typeof value === "string" ? parseFloat(value) : value;
-  if (isNaN(num)) return "—";
-
-  if (num >= 1_000_000_000) {
-    return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 }).format(num / 1_000_000_000) + " tỷ ₫";
-  }
-  if (num >= 1_000_000) {
-    return new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 1 }).format(num / 1_000_000) + " triệu ₫";
-  }
-  return new Intl.NumberFormat('vi-VN').format(num) + " ₫";
-}
-
 function ApprovalFormDialog({
   isOpen,
   onClose,
@@ -202,7 +181,6 @@ function ApprovalFormDialog({
     description: string;
     type: ApprovalRequestType;
     priority: ApprovalPriority;
-    amount: string;
     dueDate: string;
   }) => Promise<void>;
   initialData?: ApprovalRequestDto;
@@ -210,16 +188,15 @@ function ApprovalFormDialog({
   const [projectId, setProjectId] = useState(initialData?.projectId ?? projects[0]?.id ?? "");
   const [title, setTitle] = useState(initialData?.title ?? "");
   const [description, setDescription] = useState(initialData?.description ?? "");
-  const [type, setType] = useState<ApprovalRequestType>(initialData?.type ?? "PAYMENT");
+  const [type, setType] = useState<ApprovalRequestType>(initialData?.type ?? "MATERIAL");
   const [priority, setPriority] = useState<ApprovalPriority>(initialData?.priority ?? "NORMAL");
-  const [amount, setAmount] = useState(initialData?.amount?.toString() ?? "");
   const [dueDate, setDueDate] = useState(toDateInputValue(initialData?.dueDate));
 
   if (!isOpen) return null;
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    await onSubmit({ projectId, title, description, type, priority, amount, dueDate });
+    await onSubmit({ projectId, title, description, type, priority, dueDate });
   };
 
   return (
@@ -252,7 +229,7 @@ function ApprovalFormDialog({
         {!initialData && (
           <div className="px-5 py-4 sm:px-6">
              <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-800">
-               <strong>Lưu ý:</strong> Yêu cầu tạo thủ công sẽ không tự liên kết với hồ sơ nguồn. Với hồ sơ thanh toán, vật tư, hợp đồng, nên tạo trực tiếp từ module tương ứng khi chức năng đó sẵn sàng.
+               <strong>Lưu ý:</strong> Yêu cầu tạo thủ công sẽ không tự liên kết với hồ sơ nguồn. Với yêu cầu vật tư, báo cáo, khối lượng hoặc hồ sơ kỹ thuật, hãy khởi tạo từ quy trình gốc khi khả dụng.
              </div>
           </div>
         )}
@@ -308,19 +285,6 @@ function ApprovalFormDialog({
                 <option key={option} value={option}>{PRIORITY_LABELS[option]}</option>
               ))}
             </select>
-          </label>
-
-          <label>
-            <span className="text-sm font-semibold text-slate-700">Số tiền (VNĐ)</span>
-            <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
-              value={amount}
-              onChange={(event) => setAmount(event.target.value)}
-              className="mt-1.5 h-10 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              inputMode="numeric"
-              placeholder="Nhập 0 nếu không áp dụng"
-              min="0"
-              type="number"
-            />
           </label>
 
           <label>
@@ -543,7 +507,7 @@ function ApprovalDetailDrawer({
                   ) : (
                     <>
                       <strong className="block mb-1">Thiếu chứng từ đính kèm</strong>
-                      Chưa có chứng từ đính kèm (hóa đơn, PDF, bảng khối lượng) trong giao diện này. Hãy kiểm tra kỹ phân hệ gốc trước khi duyệt để tránh sai sót. Quyết định tại đây sẽ đồng bộ lập tức về module gốc.
+                      Chưa có tài liệu đính kèm (PDF, ảnh hiện trường, bảng khối lượng) trong giao diện này. Hãy kiểm tra kỹ hồ sơ gốc trước khi duyệt để tránh sai sót. Quyết định tại đây sẽ đồng bộ lập tức về module gốc.
                     </>
                   )}
                 </div>
@@ -559,7 +523,6 @@ function ApprovalDetailDrawer({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <DetailItem label="Công trình" value={`${approval.project.code} - ${approval.project.name}`} />
                 <DetailItem label="Người tạo" value={approval.requester.name} />
-                <DetailItem label="Giá trị" value={formatCurrency(approval.amount)} />
                 <DetailItem label="Hạn xử lý" value={formatDate(approval.dueDate)} />
                 <DetailItem label="Loại yêu cầu" value={TYPE_LABELS[approval.type]} />
                 <div className="rounded-xl border border-slate-100 bg-slate-50/50 px-4 py-3">
@@ -584,7 +547,7 @@ function ApprovalDetailDrawer({
                         </div>
                       )}
                     </div>
-                    {!["PaymentRequest", "Contract", "MaterialRequest", "MATERIAL_REQUEST"].includes(approval.sourceType ?? "") ? (
+                    {approval.sourceType !== "MATERIAL_REQUEST" ? (
                        <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
                          Tham chiếu nội bộ
                        </span>
@@ -822,10 +785,6 @@ export function ApprovalCenterClient({
       overdueCount: filteredApprovals.filter((approval) => isApprovalOverdue(approval)).length,
       approvedCount: filteredApprovals.filter((approval) => approval.status === "APPROVED").length,
       rejectedCount: filteredApprovals.filter((approval) => approval.status === "REJECTED").length,
-      pendingAmount: pending.reduce((sum, approval) => {
-        if (approval.type === "MATERIAL" || approval.sourceType === "MATERIAL_REQUEST") return sum;
-        return sum + (approval.amount ?? 0);
-      }, 0),
     };
   }, [filteredApprovals]);
 
@@ -848,7 +807,6 @@ export function ApprovalCenterClient({
     description: string;
     type: ApprovalRequestType;
     priority: ApprovalPriority;
-    amount: string;
     dueDate: string;
   }) => {
     await createApprovalRequest(data);
@@ -863,7 +821,6 @@ export function ApprovalCenterClient({
     description: string;
     type: ApprovalRequestType;
     priority: ApprovalPriority;
-    amount: string;
     dueDate: string;
   }) => {
     if (!editing) return;
@@ -900,7 +857,7 @@ export function ApprovalCenterClient({
         <SummaryCard label="Quá hạn" value={displaySummary.overdueCount} helper="Chưa xử lý và đã quá hạn" icon={AlertTriangle} tone="amber" />
         <SummaryCard label="Đã duyệt" value={displaySummary.approvedCount} helper="Yêu cầu đã được chấp thuận" icon={CheckCircle2} tone="emerald" />
         <SummaryCard label="Từ chối" value={displaySummary.rejectedCount} helper="Yêu cầu đã bị từ chối" icon={XCircle} tone="rose" />
-        <SummaryCard label="Giá trị chờ xử lý" value={formatCompactCurrency(displaySummary.pendingAmount)} helper="Tổng giá trị các yêu cầu đang chờ" icon={ShieldCheck} tone="slate" />
+        <SummaryCard label="Đã hủy" value={filteredApprovals.filter((approval) => approval.status === "CANCELLED").length} helper="Yêu cầu đã đóng quy trình" icon={ShieldCheck} tone="slate" />
       </div>
 
       {deepLinkMissing && (
@@ -968,7 +925,7 @@ export function ApprovalCenterClient({
                 <tr>
                   <th className="px-5 py-3.5 min-w-[120px]">Yêu cầu</th>
                   <th className="px-5 py-3.5 min-w-[150px]">Nguồn / Công trình</th>
-                  <th className="px-5 py-3.5 text-right min-w-[160px]">Giá trị / Hạn</th>
+                  <th className="px-5 py-3.5 text-right min-w-[160px]">Ưu tiên / Hạn</th>
                   <th className="px-5 py-3.5 min-w-[120px]">Trạng thái</th>
                   <th className="px-5 py-3.5 text-right sticky right-0 bg-slate-50 z-10 border-l border-slate-100 shadow-[-5px_0_15px_-5px_rgba(0,0,0,0.05)]">Thao tác</th>
                 </tr>
@@ -1016,9 +973,6 @@ export function ApprovalCenterClient({
                         </div>
                       </td>
                       <td className="px-5 py-3 text-right">
-                         <div className="font-mono font-semibold text-slate-900 mb-1.5">
-                           {approval.type === "MATERIAL" || approval.sourceType === "MATERIAL_REQUEST" ? "—" : formatCurrency(approval.amount)}
-                         </div>
                          <div className="flex items-center justify-end gap-2">
                             <PriorityBadge priority={approval.priority} />
                             <span className={`font-mono text-[11px] ${overdue ? "font-bold text-red-600" : "text-slate-500"}`}>
@@ -1087,12 +1041,6 @@ export function ApprovalCenterClient({
                     </div>
                     <div className="font-medium text-slate-900 text-right">
                       {SOURCE_TYPE_LABELS[approval.sourceType ?? ""] ?? approval.sourceType ?? "Khác"}
-                    </div>
-                    <div className="text-slate-500">
-                      Giá trị:
-                    </div>
-                    <div className="font-mono font-semibold text-slate-900 text-right">
-                      {approval.type === "MATERIAL" || approval.sourceType === "MATERIAL_REQUEST" ? "—" : formatCurrency(approval.amount)}
                     </div>
                   </div>
                   <div className="flex items-center justify-between mt-1">
@@ -1182,7 +1130,6 @@ export function ApprovalCenterClient({
               <p className="font-semibold text-slate-900 mb-3">{rejecting.code} - {rejecting.title}</p>
               <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-sm text-slate-600">
                 <div className="col-span-2"><span className="text-slate-500 mr-2">Công trình:</span> {rejecting.project.code}</div>
-                <div><span className="text-slate-500 mr-2">Giá trị:</span> <span className="font-mono text-slate-900 font-medium">{formatCurrency(rejecting.amount)}</span></div>
                 <div><span className="text-slate-500 mr-2">Hạn xử lý:</span> <span className="font-mono text-slate-900 font-medium">{formatDate(rejecting.dueDate)}</span></div>
               </div>
             </div>

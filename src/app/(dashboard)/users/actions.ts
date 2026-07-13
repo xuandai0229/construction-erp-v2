@@ -10,7 +10,7 @@ import { assertPermission } from "@/lib/permissions/permission-resolver";
 
 const VALID_ROLES: UserRole[] = [
   "ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR", "CHIEF_COMMANDER",
-  "MANAGER", "ENGINEER", "ACCOUNTANT", "STAFF",
+  "MANAGER", "ENGINEER", "STAFF",
 ];
 const VALID_PROJECT_ROLES: ProjectRole[] = [
   "PROJECT_MANAGER", "SITE_COMMANDER", "CHIEF_COMMANDER", "ASSISTANT_COMMANDER",

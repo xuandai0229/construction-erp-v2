@@ -45,7 +45,6 @@ type CreateApprovalRequestInput = {
   description?: string | null;
   type: ApprovalRequestType;
   priority: ApprovalPriority;
-  amount?: number | string | null;
   dueDate?: string | null;
   sourceType?: string | null;
   sourceId?: string | null;
@@ -212,13 +211,6 @@ export async function createApprovalRequest(data: CreateApprovalRequestInput) {
   const priority = data.priority;
   await assertCanCreateApproval({ id: session.id, role: session.role }, projectId, type);
 
-  const amount = data.amount === null || data.amount === undefined || data.amount === ""
-    ? null
-    : Number(data.amount);
-  if (amount !== null && (Number.isNaN(amount) || amount < 0)) {
-    throw new Error("Số tiền phải lớn hơn hoặc bằng 0");
-  }
-
   const dueDate = normalizeOptionalText(data.dueDate);
   const parsedDueDate = dueDate ? new Date(dueDate) : null;
   if (parsedDueDate && Number.isNaN(parsedDueDate.getTime())) {
@@ -235,7 +227,6 @@ export async function createApprovalRequest(data: CreateApprovalRequestInput) {
       description: normalizeOptionalText(data.description),
       type,
       priority,
-      amount,
       dueDate: parsedDueDate,
       requesterId: session.id,
       status: "PENDING",
@@ -254,7 +245,6 @@ export type UpdateApprovalRequestInput = {
   title: string;
   description?: string | null;
   priority: ApprovalPriority;
-  amount?: number | string | null;
   dueDate?: string | null;
 };
 
@@ -290,13 +280,6 @@ export async function updateApprovalRequest(data: UpdateApprovalRequestInput) {
   const title = normalizeText(data.title);
   if (title.length < 3) throw new Error("Tiêu đề yêu cầu là bắt buộc");
 
-  const amount = data.amount === null || data.amount === undefined || data.amount === ""
-    ? null
-    : Number(data.amount);
-  if (amount !== null && (Number.isNaN(amount) || amount < 0)) {
-    throw new Error("Số tiền phải lớn hơn hoặc bằng 0");
-  }
-
   const dueDate = normalizeOptionalText(data.dueDate);
   const parsedDueDate = dueDate ? new Date(dueDate) : null;
   if (parsedDueDate && Number.isNaN(parsedDueDate.getTime())) {
@@ -310,7 +293,6 @@ export async function updateApprovalRequest(data: UpdateApprovalRequestInput) {
       title,
       description: normalizeOptionalText(data.description),
       priority: data.priority,
-      amount,
       dueDate: parsedDueDate,
     },
   });
@@ -322,7 +304,7 @@ export async function updateApprovalRequest(data: UpdateApprovalRequestInput) {
       action: "APPROVAL_REQUEST_UPDATED",
       entityType: "ApprovalRequest",
       entityId: approval.id,
-      afterData: JSON.stringify({ title, projectId: data.projectId, amount, dueDate: parsedDueDate }),
+      afterData: JSON.stringify({ title, projectId: data.projectId, dueDate: parsedDueDate }),
     },
   });
 
@@ -341,7 +323,6 @@ async function getApprovalForDecision(id: string) {
       type: true,
       sourceId: true,
       sourceType: true,
-      amount: true,
       deletedAt: true,
     },
   });
@@ -351,87 +332,14 @@ async function getApprovalForDecision(id: string) {
 
 async function syncSourceOnApprovalTx(
   tx: Prisma.TransactionClient,
-  approval: { type: ApprovalRequestType; sourceId: string | null; amount: any; id: string; projectId: string },
-  actorId: string,
+  approval: { type: ApprovalRequestType; sourceId: string | null; id: string; projectId: string },
   decision: "APPROVED" | "REJECTED",
   note: string | null
 ) {
-  if (["CHANGE_ORDER", "OTHER"].includes(approval.type)) {
-     throw new Error("Loại phê duyệt này chưa hỗ trợ đồng bộ tự động. Vui lòng xử lý ở phân hệ gốc.");
-  }
-  if (!approval.sourceId) {
-     throw new Error("Không thể duyệt vì yêu cầu phê duyệt không có bản ghi gốc để đồng bộ.");
-  }
-
-  const now = new Date();
+  if (["CHANGE_ORDER", "OTHER", "VOLUME", "INSPECTION", "PLAN", "DRAWING", "METHOD_STATEMENT", "SAFETY", "QUALITY", "SITE_ISSUE"].includes(approval.type)) return;
+  if (!approval.sourceId) throw new Error("Không thể duyệt vì yêu cầu phê duyệt không có bản ghi gốc để đồng bộ.");
 
   switch (approval.type) {
-    case "PAYMENT": {
-      const payment = await tx.paymentRequest.findUnique({
-        where: { id: approval.sourceId }
-      });
-      if (!payment || payment.deletedAt) {
-        throw new Error("Không thể duyệt vì bản ghi gốc không tồn tại hoặc đã bị xóa.");
-      }
-      if (payment.projectId !== approval.projectId) {
-        throw new Error("Bản ghi gốc không thuộc cùng công trình với yêu cầu phê duyệt.");
-      }
-      const validStatuses = ["SUBMITTED"]; // Adjust if DRAFT is allowed, but usually SUBMITTED
-      if (!validStatuses.includes(payment.status)) {
-        throw new Error(`Trạng thái phiếu thanh toán hiện tại (${payment.status}) không cho phép phê duyệt.`);
-      }
-
-      // Check Contract Limit only on APPROVE
-      if (decision === "APPROVED" && payment.contractId) {
-         const contract = await tx.contract.findUnique({ where: { id: payment.contractId } });
-         if (!contract || contract.deletedAt) throw new Error("Hợp đồng không tồn tại hoặc đã bị xóa.");
-         
-         const otherPayments = await tx.paymentRequest.findMany({
-           where: {
-             contractId: payment.contractId,
-             deletedAt: null,
-             status: { in: ["DRAFT", "SUBMITTED", "APPROVED", "PAID"] },
-             id: { not: payment.id }
-           },
-           select: { totalAmount: true }
-         });
-         const usedAmount = otherPayments.reduce((sum, p) => sum + Number(p.totalAmount), 0);
-         if (usedAmount + Number(payment.totalAmount) > Number(contract.value)) {
-           throw new Error("Tổng đề nghị thanh toán vượt giá trị hợp đồng.");
-         }
-      }
-
-      await tx.paymentRequest.update({
-        where: { id: payment.id },
-        data: decision === "APPROVED" ? {
-          status: "APPROVED",
-          approvedById: actorId,
-          approvedAt: now,
-        } : {
-          status: "REJECTED",
-          rejectedReason: note ?? undefined,
-        }
-      });
-      break;
-    }
-    case "CONTRACT": {
-      const contract = await tx.contract.findUnique({
-        where: { id: approval.sourceId }
-      });
-      if (!contract || contract.deletedAt) throw new Error("Không thể duyệt vì bản ghi gốc không tồn tại hoặc đã bị xóa.");
-      if (contract.projectId !== approval.projectId) throw new Error("Bản ghi gốc không thuộc cùng công trình với yêu cầu phê duyệt.");
-      if (contract.status !== "DRAFT") throw new Error(`Trạng thái hợp đồng hiện tại (${contract.status}) không cho phép phê duyệt.`);
-      
-      await tx.contract.update({
-        where: { id: contract.id },
-        data: decision === "APPROVED" ? {
-          status: "ACTIVE",
-        } : {
-          status: "DRAFT", // keep draft or whatever
-        }
-      });
-      break;
-    }
     case "MATERIAL": {
       const matReq = await tx.materialRequest.findUnique({
         where: { id: approval.sourceId }
@@ -513,7 +421,7 @@ export async function approveApprovalRequest(id: string, note?: string) {
       throw new Error("Trạng thái yêu cầu đã thay đổi, vui lòng tải lại");
     }
 
-    await syncSourceOnApprovalTx(tx, approval, actor.id, "APPROVED", decisionNote);
+    await syncSourceOnApprovalTx(tx, approval, "APPROVED", decisionNote);
 
     await tx.auditLog.create({
       data: {
@@ -561,7 +469,7 @@ export async function rejectApprovalRequest(id: string, reason: string) {
       throw new Error("Trạng thái yêu cầu đã thay đổi, vui lòng tải lại");
     }
 
-    await syncSourceOnApprovalTx(tx, approval, actor.id, "REJECTED", normalizedReason);
+    await syncSourceOnApprovalTx(tx, approval, "REJECTED", normalizedReason);
 
     await tx.auditLog.create({
       data: {

@@ -1,7 +1,7 @@
 "use client";
 
 import { type MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Bell, AlertTriangle, CheckCircle, Info, Receipt, FileText } from 'lucide-react';
+import { Bell, AlertTriangle, CheckCircle, Info, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -267,9 +267,6 @@ function NotificationIcon({ type, severity }: { type: string; severity: string }
 
   if (type === 'APPROVAL') {
     return <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full", colorClass)}><CheckCircle className="h-4 w-4" /></div>;
-  }
-  if (type === 'PAYMENT') {
-    return <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full", colorClass)}><Receipt className="h-4 w-4" /></div>;
   }
   if (type === 'REPORT') {
     return <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full", colorClass)}><FileText className="h-4 w-4" /></div>;

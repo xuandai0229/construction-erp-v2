@@ -10,7 +10,7 @@ import { getProjectStatusMeta } from "@/lib/project-status";
 import { type ElementType, type ReactNode } from "react";
 
 const folderPrefixMap: Record<string, string> = {
-  "01": "01. Hợp đồng pháp lý",
+  "01": "01. Hồ sơ pháp lý công trình",
   "02": "02. Bản vẽ thiết kế",
   "03": "03. Biên bản nghiệm thu",
   "04": "04. Vật tư thiết bị",

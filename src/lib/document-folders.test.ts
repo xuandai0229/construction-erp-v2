@@ -12,11 +12,9 @@ const folders = [
   { id: "root-2", parentId: null },
 ];
 
-test("maps system and legacy folder names to Vietnamese display labels", () => {
-  assert.equal(formatDocumentFolderName("01_Hop_dong_Phap_ly"), "01. Hợp đồng pháp lý");
-  assert.equal(formatDocumentFolderName("01_Hop_dong"), "01. Hợp đồng");
-  assert.equal(formatDocumentFolderName("02_Phu_luc_hop_dong"), "02. Phụ lục hợp đồng");
-  assert.equal(formatDocumentFolderName("03_Bao_lanh_Bao_hiem"), "03. Bảo lãnh bảo hiểm");
+test("maps technical system folder names to Vietnamese display labels", () => {
+  assert.equal(formatDocumentFolderName("02_Ban_ve_Thiet_ke"), "02. Bản vẽ thiết kế");
+  assert.equal(formatDocumentFolderName("03_Bien_ban_Nghiem_thu"), "03. Biên bản nghiệm thu");
   assert.equal(formatDocumentFolderName("ok_1"), "ok_1");
 });
 

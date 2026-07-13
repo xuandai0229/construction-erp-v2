@@ -36,8 +36,8 @@ async function main() {
   }
 
   // 2. Find & delete empty duplicate folders created by QA seed
-  //    These are the "01. Hợp đồng" style folders (dot-separated) that are duplicates
-  //    of the original "01_Hợp đồng" style folders (underscore-separated)
+  //    These are legacy legal-folder names (dot-separated) that duplicate the
+  //    original underscore-separated names.
   const project = await prisma.project.findFirst({
     where: { deletedAt: null, OR: [{ code: { contains: "CT_01" } }, { name: { contains: "Công Trình test" } }] }
   }) || await prisma.project.findFirst({ where: { deletedAt: null } });

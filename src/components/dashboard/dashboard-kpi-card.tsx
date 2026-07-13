@@ -4,7 +4,6 @@ import {
   Building2,
   CalendarCheck,
   ClipboardCheck,
-  CreditCard,
   FileText,
   FolderOpen,
 } from "lucide-react";
@@ -21,7 +20,6 @@ const toneClasses: Record<DashboardKpi["tone"], { icon: string; bg: string; valu
 };
 
 function KpiIcon({ id }: { id: string }) {
-  if (id.includes("payment")) return <CreditCard className="h-5 w-5" />;
   if (id.includes("approval")) return <ClipboardCheck className="h-5 w-5" />;
   if (id.includes("document")) return <FolderOpen className="h-5 w-5" />;
   if (id.includes("report")) return <FileText className="h-5 w-5" />;

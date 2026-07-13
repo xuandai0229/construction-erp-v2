@@ -196,9 +196,6 @@ export function GlobalSearchCommand({ globalContext }: GlobalSearchCommandProps)
                       <Link href="/approvals" onClick={closeSearch} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors">
                         <ClipboardCheck className="h-4 w-4 text-slate-400" /> Hồ sơ chờ xử lý
                       </Link>
-                      <Link href="/contracts" onClick={closeSearch} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors">
-                        <FileText className="h-4 w-4 text-slate-400" /> Hợp đồng / thanh toán
-                      </Link>
                     </div>
                   </div>
                   <div>

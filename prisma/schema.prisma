@@ -14,7 +14,6 @@ enum UserRole {
   CHIEF_COMMANDER
   MANAGER
   ENGINEER
-  ACCOUNTANT
   STAFF
 }
 
@@ -37,50 +36,11 @@ enum ProjectStatus {
   CANCELLED
 }
 
-enum ContractType {
-  CLIENT
-  SUBCONTRACTOR
-  SUPPLIER
-  LABOR
-}
-
-enum ContractStatus {
-  DRAFT
-  ACTIVE
-  COMPLETED
-  TERMINATED
-}
-
 enum MaterialMovementType {
   IMPORT
   EXPORT
   TRANSFER
   RETURN
-}
-
-enum PaymentStatus {
-  PENDING
-  APPROVED
-  PARTIAL
-  PAID
-  REJECTED
-}
-
-enum PaymentRequestStatus {
-  DRAFT
-  SUBMITTED
-  APPROVED
-  PAID
-  REJECTED
-  CANCELLED
-}
-
-enum PaymentRequestType {
-  ADVANCE
-  PROGRESS
-  FINAL
-  RETENTION
-  OTHER
 }
 
 enum ApprovalRequestStatus {
@@ -91,10 +51,16 @@ enum ApprovalRequestStatus {
 }
 
 enum ApprovalRequestType {
-  PAYMENT
   MATERIAL
   REPORT
-  CONTRACT
+  VOLUME
+  INSPECTION
+  PLAN
+  DRAWING
+  METHOD_STATEMENT
+  SAFETY
+  QUALITY
+  SITE_ISSUE
   CHANGE_ORDER
   OTHER
 }
@@ -228,26 +194,24 @@ model User {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  projectMembers          ProjectMember[]
-  assignedProjectMembers  ProjectMember[]         @relation("ProjectMemberAssigner")
-  auditLogs               AuditLog[]
-  messages                ChatMessage[]
-  createdSiteReports      SiteReport[]            @relation("ReportCreator")
-  approvedSiteReports     SiteReport[]            @relation("ReportApprover")
-  createdWBSItems         WBSItem[]
-  materialRequests        MaterialRequest[]
-  approvalRequests        ApprovalRequest[]       @relation("Requester")
-  approvals               ApprovalRequest[]       @relation("Approver")
-  documents               Document[]
-  createdPaymentRequests  PaymentRequest[]        @relation("PaymentCreator")
-  approvedPaymentRequests PaymentRequest[]        @relation("PaymentApprover")
-  createdFieldTemplates   FieldProgressTemplate[] @relation("FieldTemplateCreator")
-  createdFieldItems       FieldProgressItem[]     @relation("FieldItemCreator")
-  createdFieldEntries     FieldProgressEntry[]    @relation("FieldEntryCreator")
-  approvedFieldEntries    FieldProgressEntry[]    @relation("FieldEntryApprover")
-  fieldMaterialRequests   FieldMaterialRequest[]  @relation("FieldMaterialRequester")
-  updatedSettings         SystemSetting[]         @relation("SettingUpdater")
-  notifications           Notification[]
+  projectMembers         ProjectMember[]
+  assignedProjectMembers ProjectMember[]         @relation("ProjectMemberAssigner")
+  auditLogs              AuditLog[]
+  messages               ChatMessage[]
+  createdSiteReports     SiteReport[]            @relation("ReportCreator")
+  approvedSiteReports    SiteReport[]            @relation("ReportApprover")
+  createdWBSItems        WBSItem[]
+  materialRequests       MaterialRequest[]
+  approvalRequests       ApprovalRequest[]       @relation("Requester")
+  approvals              ApprovalRequest[]       @relation("Approver")
+  documents              Document[]
+  createdFieldTemplates  FieldProgressTemplate[] @relation("FieldTemplateCreator")
+  createdFieldItems      FieldProgressItem[]     @relation("FieldItemCreator")
+  createdFieldEntries    FieldProgressEntry[]    @relation("FieldEntryCreator")
+  approvedFieldEntries   FieldProgressEntry[]    @relation("FieldEntryApprover")
+  fieldMaterialRequests  FieldMaterialRequest[]  @relation("FieldMaterialRequester")
+  updatedSettings        SystemSetting[]         @relation("SettingUpdater")
+  notifications          Notification[]
 
   @@index([email])
   @@index([username])
@@ -271,15 +235,11 @@ model Project {
 
   members                ProjectMember[]
   wbsItems               WBSItem[]
-  contracts              Contract[]
   documentFolders        DocumentFolder[]
   siteReports            SiteReport[]
   siteReportLines        SiteReportLine[]
   materialMovements      MaterialMovement[]
   materialRequests       MaterialRequest[]
-  paymentPlans           PaymentPlan[]
-  paymentRecords         PaymentRecord[]
-  paymentRequests        PaymentRequest[]
   documents              Document[]
   fieldProgressTemplates FieldProgressTemplate[]
   fieldProgressItems     FieldProgressItem[]
@@ -349,51 +309,6 @@ model WBSItem {
   @@unique([projectId, code])
   @@index([projectId])
   @@index([parentId])
-}
-
-model Supplier {
-  id            String    @id @default(cuid())
-  code          String    @unique
-  name          String
-  taxCode       String?
-  address       String?
-  phone         String?
-  email         String?
-  contactPerson String?
-  deletedAt     DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  contracts       Contract[]
-  paymentRequests PaymentRequest[]
-
-  @@index([code])
-}
-
-model Contract {
-  id         String         @id @default(cuid())
-  projectId  String
-  supplierId String?
-  contractNo String         @unique
-  name       String
-  type       ContractType
-  status     ContractStatus @default(DRAFT)
-  value      Decimal        @db.Decimal(19, 4)
-  signDate   DateTime?
-  startDate  DateTime?
-  endDate    DateTime?
-  deletedAt  DateTime?
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
-
-  project         Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  supplier        Supplier?        @relation(fields: [supplierId], references: [id])
-  paymentPlans    PaymentPlan[]
-  paymentRequests PaymentRequest[]
-
-  @@index([projectId])
-  @@index([supplierId])
-  @@index([contractNo])
 }
 
 model DocumentFolder {
@@ -696,79 +611,6 @@ model ProjectMaterialStock {
   @@index([materialItemId])
 }
 
-model PaymentPlan {
-  id          String        @id @default(cuid())
-  projectId   String
-  contractId  String?
-  name        String
-  amount      Decimal       @db.Decimal(19, 4)
-  plannedDate DateTime
-  status      PaymentStatus @default(PENDING)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-
-  project  Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  contract Contract?       @relation(fields: [contractId], references: [id])
-  records  PaymentRecord[]
-
-  @@index([projectId])
-  @@index([contractId])
-}
-
-model PaymentRecord {
-  id            String   @id @default(cuid())
-  projectId     String
-  paymentPlanId String?
-  amount        Decimal  @db.Decimal(19, 4)
-  paymentDate   DateTime
-  referenceNo   String?
-  notes         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  paymentPlan PaymentPlan? @relation(fields: [paymentPlanId], references: [id])
-
-  @@index([projectId])
-  @@index([paymentPlanId])
-}
-
-model PaymentRequest {
-  id             String               @id @default(cuid())
-  requestCode    String               @unique
-  projectId      String
-  title          String
-  supplierId     String?
-  contractId     String?
-  type           PaymentRequestType   @default(OTHER)
-  status         PaymentRequestStatus @default(DRAFT)
-  subTotal       Decimal              @default(0) @db.Decimal(19, 4)
-  vatAmount      Decimal              @default(0) @db.Decimal(19, 4)
-  totalAmount    Decimal              @default(0) @db.Decimal(19, 4)
-  dueDate        DateTime?
-  notes          String?
-  createdById    String
-  approvedById   String?
-  approvedAt     DateTime?
-  paidAt         DateTime?
-  rejectedReason String?
-  deletedAt      DateTime?
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
-
-  project    Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  supplier   Supplier? @relation(fields: [supplierId], references: [id])
-  contract   Contract? @relation(fields: [contractId], references: [id])
-  createdBy  User      @relation("PaymentCreator", fields: [createdById], references: [id])
-  approvedBy User?     @relation("PaymentApprover", fields: [approvedById], references: [id])
-
-  @@index([projectId])
-  @@index([supplierId])
-  @@index([contractId])
-  @@index([createdById])
-  @@index([status])
-}
-
 model ApprovalRequest {
   id           String                @id @default(cuid())
   code         String                @unique
@@ -778,7 +620,6 @@ model ApprovalRequest {
   type         ApprovalRequestType   @default(OTHER)
   status       ApprovalRequestStatus @default(PENDING)
   priority     ApprovalPriority      @default(NORMAL)
-  amount       Decimal?              @db.Decimal(19, 4)
   dueDate      DateTime?
   requesterId  String
   decidedById  String?
@@ -1006,12 +847,11 @@ model SystemSetting {
   id String @id @default(cuid())
 
   // Organization
-  companyName          String
-  taxCode              String
-  hotline              String
-  timezone             String
-  currency             String
-  fiscalYearStartMonth String
+  companyName String
+  taxCode     String
+  hotline     String
+  timezone    String
+  currency    String
 
   // Security
   requireTwoFactorForAdmins Boolean @default(true)
@@ -1022,11 +862,8 @@ model SystemSetting {
   auditSensitiveActions     Boolean @default(true)
 
   // Workflow
-  requireProjectCodeBeforeSpending Boolean @default(true)
-  materialRequestApproval          Boolean @default(true)
-  paymentTwoStepApproval           Boolean @default(true)
-  reportLockAfterApproval          Boolean @default(true)
-  contractValueThreshold           Decimal @db.Decimal(19, 4)
+  materialRequestApproval Boolean @default(true)
+  reportLockAfterApproval Boolean @default(true)
 
   // Documents
   enforceNamingConvention Boolean @default(true)

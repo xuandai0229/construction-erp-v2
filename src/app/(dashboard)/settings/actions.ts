@@ -58,17 +58,12 @@ export async function getSystemSettings() {
     });
   }
 
-  // Convert Decimal to number for client safety, since Next.js server actions
-  // have trouble sending Decimal objects to client components directly if not careful
-  const plainSetting = {
-    ...setting,
-    contractValueThreshold: Number(setting.contractValueThreshold.toString()),
-  } as SystemSettingsInput & { id: string; updatedAt: Date; updatedById: string | null };
+  const plainSetting = setting as SystemSettingsInput & { id: string; updatedAt: Date; updatedById: string | null };
 
   return plainSetting;
 }
 
-import { SETTINGS_REGISTRY, SettingDefinition } from "@/lib/settings/settings-registry";
+import { SETTINGS_REGISTRY } from "@/lib/settings/settings-registry";
 
 function checkUpdatePermission(
   key: keyof SystemSettingsInput,
@@ -123,11 +118,7 @@ export async function updateSystemSettings(input: SystemSettingsInput) {
   }
 
   // Second layer: check specific keys
-  // Convert existing threshold back to number for comparison
-  const existingValues = {
-    ...existingSetting,
-    contractValueThreshold: Number(existingSetting.contractValueThreshold.toString()),
-  };
+  const existingValues = existingSetting;
 
   const changedData: any = {};
   for (const key of Object.keys(validatedData) as (keyof SystemSettingsInput)[]) {
@@ -145,7 +136,6 @@ export async function updateSystemSettings(input: SystemSettingsInput) {
     // No actual changes
     return {
       ...existingSetting,
-      contractValueThreshold: Number(existingSetting.contractValueThreshold.toString()),
     } as SystemSettingsInput & { id: string; updatedAt: Date; updatedById: string | null };
   }
 
@@ -189,6 +179,5 @@ export async function updateSystemSettings(input: SystemSettingsInput) {
 
   return {
     ...updatedSetting,
-    contractValueThreshold: Number(updatedSetting.contractValueThreshold.toString()),
   } as SystemSettingsInput & { id: string; updatedAt: Date; updatedById: string | null };
 }

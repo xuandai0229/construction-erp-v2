@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+const RETIRED_ROUTE_PREFIXES = ["/suppliers", "/contracts", "/accounting"] as const;
+
+function isRetiredRoute(pathname: string) {
+  return RETIRED_ROUTE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
+
 function decodeBase64Url(value: string): ArrayBuffer {
   const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
   const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
@@ -52,6 +58,10 @@ async function hasValidSession(request: NextRequest): Promise<boolean> {
 }
 
 export default async function proxy(request: NextRequest) {
+  if (isRetiredRoute(request.nextUrl.pathname)) {
+    return new NextResponse(null, { status: 404 });
+  }
+
   const hasSession = await hasValidSession(request);
   
   const isAuthPage = request.nextUrl.pathname.startsWith('/login');

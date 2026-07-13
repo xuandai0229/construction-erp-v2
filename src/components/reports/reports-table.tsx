@@ -212,7 +212,6 @@ export function ReportsTable({
                                 {report.creatorRole === 'CHIEF_COMMANDER' ? 'Chỉ huy trưởng' : 
                                  report.creatorRole === 'PROJECT_MANAGER' ? 'Quản lý dự án' :
                                  report.creatorRole === 'ENGINEER' ? 'Kỹ sư' :
-                                 report.creatorRole === 'ACCOUNTANT' ? 'Kế toán' :
                                  report.creatorRole === 'ADMIN' ? 'Giám đốc' : report.creatorRole}
                               </span>
                             </div>

@@ -951,7 +951,7 @@ export async function getWeeklyReportSummary(projectId: string, start: Date, end
       rejectedCount: dayReps.filter(r => r.status === "REJECTED").length,
       hasIssues: dayReps.some(r => r.issues && r.issues.trim() !== "Không có")
     });
-    // Advance curr by 1 day in UTC safely
+    // Move curr by 1 day in UTC safely
     curr.setUTCDate(curr.getUTCDate() + 1);
   }
 

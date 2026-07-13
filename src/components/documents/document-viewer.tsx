@@ -108,9 +108,9 @@ function getFallbackCopy(extension: string) {
   }
   if (normalized === ".xml") {
     return {
-      title: "Dữ liệu XML hóa đơn",
+      title: "Dữ liệu tệp XML",
       description:
-        "Phase A.1 chưa đọc nội dung XML trong app. Vui lòng tải xuống để kiểm tra bằng phần mềm hóa đơn phù hợp.",
+        "Hệ thống chưa đọc nội dung XML trực tiếp. Vui lòng tải xuống để kiểm tra bằng phần mềm phù hợp.",
       icon: FileCode,
       iconClassName: "text-amber-600",
     };

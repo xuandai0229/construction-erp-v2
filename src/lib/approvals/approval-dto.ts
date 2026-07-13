@@ -2,15 +2,12 @@ import type {
   ApprovalPriority,
   ApprovalRequestType,
   ApprovalRequestStatus,
-  Prisma,
 } from "@prisma/client";
 import type { ApprovalPermissionSet } from "./approval-permissions";
 
 export type ApprovalSourceType =
-  | "PAYMENT_REQUEST"
   | "MATERIAL_REQUEST"
   | "SITE_REPORT"
-  | "CONTRACT"
   | "FIELD_PROGRESS"
   | "CHANGE_ORDER"
   | "DOCUMENT"
@@ -37,7 +34,6 @@ export type ApprovalRequestDto = {
   type: ApprovalRequestType;
   status: ApprovalRequestStatus;
   priority: ApprovalPriority;
-  amount: number | null;
   dueDate: string | null;
   requesterId: string;
   decidedById: string | null;
@@ -59,7 +55,6 @@ export type ApprovalSummaryDto = {
   approvedCount: number;
   rejectedCount: number;
   cancelledCount: number;
-  pendingAmount: number;
 };
 
 export type ApprovalRequestSerializableRecord = {
@@ -71,7 +66,6 @@ export type ApprovalRequestSerializableRecord = {
   type: ApprovalRequestType;
   status: ApprovalRequestStatus;
   priority: ApprovalPriority;
-  amount: Prisma.Decimal | number | string | null;
   dueDate: Date | string | null;
   requesterId: string;
   decidedById: string | null;
@@ -86,13 +80,6 @@ export type ApprovalRequestSerializableRecord = {
   requester: ApprovalUserOptionDto;
   decidedBy: ApprovalUserOptionDto | null;
 };
-
-function decimalToNumber(value: Prisma.Decimal | number | string | null) {
-  if (value === null) return null;
-  if (typeof value === "number") return value;
-  if (typeof value === "string") return Number(value);
-  return Number(value.toString());
-}
 
 function dateToIso(value: Date | string | null) {
   if (value === null) return null;
@@ -120,7 +107,6 @@ export function serializeApprovalRequest(
     type: approval.type,
     status: approval.status,
     priority: approval.priority,
-    amount: decimalToNumber(approval.amount),
     dueDate: dateToIso(approval.dueDate),
     requesterId: approval.requesterId,
     decidedById: approval.decidedById,
@@ -157,7 +143,6 @@ export function buildApprovalSummary(
     (summary, approval) => {
       if (approval.status === "PENDING") {
         summary.pendingCount += 1;
-        summary.pendingAmount += approval.amount ?? 0;
         if (isApprovalOverdue(approval, now)) summary.overdueCount += 1;
       }
       if (approval.status === "APPROVED") summary.approvedCount += 1;
@@ -171,7 +156,6 @@ export function buildApprovalSummary(
       approvedCount: 0,
       rejectedCount: 0,
       cancelledCount: 0,
-      pendingAmount: 0,
     },
   );
 }

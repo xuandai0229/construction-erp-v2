@@ -33,7 +33,7 @@ function main() {
     const hasProjectScope = /\b(canAccessProject|requireProjectAccess|requireProjectScope|getAccessibleProjectIds|projectMember)\b/.test(code);
     const hasPermission = /\b(assert[A-Za-z]*Permission|assertRoleHierarchy|get[A-Za-z]*Permissions|can[A-Z][A-Za-z]+|canManageUsers|canManageProjects)\b/.test(code);
     const isGlobalMutation =
-      /src\/app\/\(dashboard\)\/(projects|settings|suppliers|users)\/actions\.ts$/.test(rel) ||
+      /src\/app\/\(dashboard\)\/(projects|settings|users)\/actions\.ts$/.test(rel) ||
       /src\/app\/api\/auth\/(login|logout)\/route\.ts$/.test(rel);
     const level =
       hasSession && (hasProjectScope || isGlobalMutation) && hasPermission

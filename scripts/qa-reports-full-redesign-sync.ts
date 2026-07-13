@@ -119,7 +119,7 @@ async function main() {
     const balance = balances.get(item.id) as any;
     if (!balance) throw new Error("Missing balance result");
 
-    expectEqual(balance.designQuantity, 180, "Balance contract must expose designQuantity alias");
+    expectEqual(balance.designQuantity, 180, "Balance result must expose designQuantity alias");
     expectEqual(balance.plannedQuantity, 180, "plannedQuantity remains compatible");
     expectEqual(balance.cumulativeBeforeDate, 10, "cumulativeBeforeDate");
     expectEqual(balance.todayQuantity, 50, "todayQuantity alias includes submitted + draft on date");

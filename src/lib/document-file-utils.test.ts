@@ -28,12 +28,12 @@ test("uses details fallback for HEIC, Office, CAD and XML files", () => {
 
 test("preserves the original extension while accepting a clean display name", () => {
   assert.equal(
-    buildDocumentDisplayName("Hợp đồng chính 2026", ".pdf"),
-    "Hợp đồng chính 2026.pdf",
+    buildDocumentDisplayName("Ho_so_phap_ly_2026", ".pdf"),
+    "Ho_so_phap_ly_2026.pdf",
   );
   assert.equal(
-    buildDocumentDisplayName("Hợp đồng chính 2026.PDF", ".pdf"),
-    "Hợp đồng chính 2026.pdf",
+    buildDocumentDisplayName("Ho_so_phap_ly_2026.PDF", ".pdf"),
+    "Ho_so_phap_ly_2026.pdf",
   );
 });
 

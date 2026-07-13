@@ -17,22 +17,6 @@ export type FolderContext = {
   name: string;
 };
 
-const ACCOUNTING_FOLDER_KEYWORDS = [
-  "hop dong",
-  "phap ly",
-  "phu luc",
-  "bao lanh",
-  "bao hiem",
-  "du toan",
-  "hoa don",
-  "chung tu",
-  "bao gia",
-  "thanh toan",
-  "quyet toan",
-  "tam ung",
-  "ho so thanh toan",
-];
-
 const ENGINEERING_FOLDER_KEYWORDS = [
   "ban ve",
   "thiet ke",
@@ -72,10 +56,6 @@ export function isDocumentContentLocked(status: DocumentStatus) {
 
 function isProjectViewer(user: SessionUser) {
   return user.projectRole === ProjectRole.VIEWER;
-}
-
-function isAccountant(role: UserRole) {
-  return role === UserRole.ACCOUNTANT;
 }
 
 function isEngineerOrManager(role: UserRole) {
@@ -120,10 +100,6 @@ export function canUploadToFolder(user: SessionUser, folder: FolderContext) {
   if (FULL_ACCESS_ROLES.includes(user.role)) return true;
   if (isProjectViewer(user)) return false;
 
-  if (isAccountant(user.role)) {
-    return folderMatches(folder.name, ACCOUNTING_FOLDER_KEYWORDS);
-  }
-
   if (isEngineerOrManager(user.role)) {
     return folderMatches(folder.name, ENGINEERING_FOLDER_KEYWORDS);
   }
@@ -142,10 +118,6 @@ export function canEditDocumentMetadata(user: SessionUser, document: DocumentCon
 
   if (isEngineerOrManager(user.role)) {
     return folderMatches(folder.name, ENGINEERING_FOLDER_KEYWORDS);
-  }
-
-  if (isAccountant(user.role)) {
-    return folderMatches(folder.name, ACCOUNTING_FOLDER_KEYWORDS);
   }
 
   return false;
@@ -176,10 +148,6 @@ export function canDeleteDocument(user: SessionUser, document: DocumentContext, 
   if (isProjectViewer(user)) return false;
 
   if (document.uploadedById !== user.id) return false;
-
-  if (isAccountant(user.role)) {
-    return folderMatches(folder.name, ACCOUNTING_FOLDER_KEYWORDS);
-  }
 
   if (isEngineerOrManager(user.role)) {
     return folderMatches(folder.name, ENGINEERING_FOLDER_KEYWORDS);

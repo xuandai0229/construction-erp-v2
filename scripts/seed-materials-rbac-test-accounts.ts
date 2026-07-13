@@ -41,7 +41,7 @@ async function main() {
     { email: "viewer.materials@test.local", name: "Chỉ xem", role: UserRole.STAFF, projectRole: ProjectRole.VIEWER },
     { email: "guest.materials@test.local", name: "User không thuộc công trình", role: UserRole.STAFF, projectRole: null },
     { email: "director.materials@test.local", name: "Giám đốc chưa gán công trình", role: UserRole.DIRECTOR, projectRole: null },
-    { email: "accountant.materials@test.local", name: "Kế toán được gán chỉ xem", role: UserRole.ACCOUNTANT, projectRole: ProjectRole.VIEWER },
+    { email: "staff.materials@test.local", name: "Nhân viên được gán chỉ xem", role: UserRole.STAFF, projectRole: ProjectRole.VIEWER },
   ];
 
   let createdCount = 0;

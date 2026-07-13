@@ -28,7 +28,7 @@ function walk(dir: string, out: string[] = []) {
 function categoryFor(rel: string, line: string): Category {
   if (/^docs\//.test(rel) || /\.md$/.test(rel)) return "docs/report";
   if (/^(scripts|prisma|scratch)\//.test(rel)) return "seed/test/script";
-  if (/src\/lib\/(rbac|rbac-rules|permissions|.*permissions|.*policy|navigation-permissions|dashboard\/dashboard-permissions|suppliers\/suppliers-permissions)/.test(rel)) return "helper permission";
+  if (/src\/lib\/(rbac|rbac-rules|permissions|.*permissions|.*policy|navigation-permissions|dashboard\/dashboard-permissions)/.test(rel)) return "helper permission";
   if (/src\/app\/.*(actions|route)\.(ts|tsx)$/.test(rel)) return "production server action";
   if (/src\/components\//.test(rel) || /src\/app\/.*page\.tsx$/.test(rel)) {
     if (/ROLE_DISPLAY|roleDisplay|case\s+"(ADMIN|DIRECTOR)"|<option value=|creatorRole|userRole ===/.test(line)) {

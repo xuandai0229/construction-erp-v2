@@ -6,7 +6,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { 
   LayoutDashboard, Building2, FolderOpen, ClipboardCheck, 
-  FileText, Users as UsersIcon, Package, CreditCard, 
+  Package,
   CheckSquare, Settings, UserCog, ChevronDown
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -32,14 +32,11 @@ const mobileNavSections = [
       { name: 'Tài liệu', href: '/documents', icon: FolderOpen },
       { name: 'Báo cáo hiện trường', href: '/reports', icon: ClipboardCheck },
       { name: 'Vật tư', href: '/materials', icon: Package },
-      { name: 'Nhà cung cấp', href: '/suppliers', icon: UsersIcon },
     ],
   },
   {
-    label: 'TÀI CHÍNH',
+    label: 'ĐIỀU HÀNH',
     items: [
-      { name: 'Hợp đồng', href: '/contracts', icon: FileText },
-      { name: 'Thanh toán', href: '/accounting', icon: CreditCard },
       { name: 'Phê duyệt', href: '/approvals', icon: CheckSquare },
     ],
   },
@@ -152,7 +149,7 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
                     <li>Chuông thông báo hiển thị các cảnh báo thật theo công trình đang chọn.</li>
                     <li>Bấm từng thông báo để mở đúng báo cáo, hồ sơ hoặc mục cần xử lý.</li>
                     <li>Nếu chọn Toàn hệ thống, các KPI là tổng hợp toàn bộ công trình trong phạm vi quyền.</li>
-                    <li>Nếu số tài chính trống, hãy kiểm tra công trình đang chọn có hợp đồng/hồ sơ thanh toán hay không.</li>
+                    <li>Nếu số liệu điều hành trống, hãy kiểm tra phạm vi công trình, tiến độ và báo cáo hiện trường.</li>
                   </ol>
                 </div>
               </>

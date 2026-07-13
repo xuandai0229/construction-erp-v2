@@ -185,7 +185,7 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
               <h4 className="font-bold text-sm">Sau khi tạo công trình</h4>
             </div>
             <p className="text-sm text-blue-700/80 leading-relaxed">
-              Hệ thống sẽ tự tạo các thư mục tài liệu mặc định: Hợp đồng, Bản vẽ, Dự toán, Nghiệm thu, Hóa đơn, Thanh toán, Hình ảnh hiện trường, Báo cáo ngày.
+              Hệ thống sẽ tự tạo các thư mục tài liệu mặc định: Hồ sơ pháp lý, Bản vẽ, Nghiệm thu, Vật tư thiết bị, Hình ảnh tiến độ và Báo cáo hiện trường.
             </p>
           </div>
         </div>

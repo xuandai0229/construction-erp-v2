@@ -24,13 +24,12 @@ const projectSchema = z.object({
 });
 
 const DEFAULT_FOLDERS = [
-  "01. Hợp đồng pháp lý",
+  "01. Hồ sơ pháp lý công trình",
   "02. Bản vẽ thiết kế",
   "03. Biên bản nghiệm thu",
   "04. Vật tư thiết bị",
   "05. Hình ảnh tiến độ",
   "06. Báo cáo hiện trường",
-  "07. Thanh toán quyết toán",
 ];
 
 export async function createProject(prevState: unknown, formData: FormData) {

@@ -33,7 +33,6 @@ async function run() {
     "/materials",
     "/documents",
     "/reports",
-    "/accounting",
     `/projects/cmqvpchlg000918wkf2arrago/field-progress/summary`
   ];
 

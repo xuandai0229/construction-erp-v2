@@ -84,7 +84,7 @@ export function getMaterialPermissions(
   }
 
   // Project role is authoritative for project-scoped operations. VIEWER is
-  // always read-only, even if the global role is ACCOUNTANT/ENGINEER/STAFF.
+  // always read-only for system roles without an explicit project permission.
   if (projectRole === "VIEWER") {
     return READ_ONLY_MATERIAL_PERMISSIONS;
   }

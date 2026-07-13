@@ -27,7 +27,7 @@ export function PurchaseRequestPlaceholder({ lowStockCount }: { lowStockCount: n
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
           {[
             ["Nguồn đề xuất", "Tồn tối thiểu và nhu cầu công trường"],
-            ["Luồng duyệt", "Chỉ huy trưởng, kế toán, ban giám đốc"],
+            ["Luồng duyệt", "Chỉ huy trưởng, điều phối vật tư, ban giám đốc"],
             ["Theo dõi", "Số lượng đề xuất, đã mua, đã nhận"],
           ].map(([title, description]) => (
             <div key={title} className="rounded-xl border border-slate-200 bg-slate-50 p-4">

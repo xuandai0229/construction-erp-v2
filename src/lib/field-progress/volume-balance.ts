@@ -19,7 +19,7 @@ export type VolumeBalanceResult = {
   designQuantity: number;
   plannedQuantity: number;
   totalActiveEnteredQuantity: number; // All dates total
-  todayQuantity: number; // Alias for sameDateEnteredQuantity for UI contract
+  todayQuantity: number; // Alias for sameDateEnteredQuantity for UI compatibility
   sameDateEnteredQuantity: number; // Today only
   cumulativeBeforeDate: number; // Total before target date
   cumulativeAfterDate: number; // beforeDate + today

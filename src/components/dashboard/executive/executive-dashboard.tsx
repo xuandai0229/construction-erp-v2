@@ -3,11 +3,9 @@ import { ExecutiveHeader } from './executive-header';
 import { ExecutiveKpiGrid } from './executive-kpi-grid';
 import { ExecutiveActionList } from './executive-action-list';
 import { ExecutiveProjectProgress } from './executive-project-progress';
-import { ExecutiveFinancePanel } from './executive-finance-panel';
 import { ExecutiveSiteReportHighlights } from './executive-site-report-highlights';
 import { ExecutiveStatusChart } from './executive-status-chart';
 import { ProjectTimeProgressDrawer } from './project-time-progress-drawer';
-import { ContentCard } from '@/components/ui/enterprise';
 
 export function ExecutiveDashboard({ data }: { data: DashboardData }) {
   const pendingApprovals = data.pendingApprovals || [];
@@ -37,29 +35,20 @@ export function ExecutiveDashboard({ data }: { data: DashboardData }) {
         </div>
       </div>
 
-      {/* Row 2: Progress & Finance */}
+      {/* Row 2: Progress & construction status */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12 lg:gap-6 items-stretch">
         <div className="flex flex-col lg:col-span-7">
           <ExecutiveProjectProgress projects={data.projectOverview} />
         </div>
         <div className="flex flex-col lg:col-span-5">
-          {data.permissions.canViewFinanceDashboard && data.financeSummary ? (
-            <ExecutiveFinancePanel summary={data.financeSummary} />
-          ) : (
-            <ContentCard className="flex h-full w-full min-h-[300px] items-center justify-center p-6 text-sm text-slate-500">
-              Không có quyền xem Tài chính
-            </ContentCard>
-          )}
+          <ExecutiveStatusChart projects={data.projectOverview} />
         </div>
       </div>
 
-      {/* Row 3: Reports & Chart */}
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12 lg:gap-6 items-stretch">
-        <div className="flex flex-col lg:col-span-7">
+      {/* Row 3: Field reports */}
+      <div className="grid grid-cols-1 gap-5 items-stretch">
+        <div className="flex flex-col">
           <ExecutiveSiteReportHighlights reports={data.recentSiteReports} />
-        </div>
-        <div className="flex flex-col lg:col-span-5">
-          <ExecutiveStatusChart projects={data.projectOverview} />
         </div>
       </div>
       

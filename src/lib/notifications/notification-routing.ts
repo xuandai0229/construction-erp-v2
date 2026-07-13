@@ -2,10 +2,8 @@ import type { ApprovalRequestType } from "@prisma/client";
 
 export type NotificationTargetType =
   | "MATERIAL_REQUEST"
-  | "PAYMENT_REQUEST"
   | "APPROVAL_REQUEST"
   | "SITE_REPORT"
-  | "CONTRACT"
   | "DOCUMENT"
   | "PROJECT"
   | "SYSTEM";
@@ -33,19 +31,23 @@ export type NotificationTarget = {
 };
 
 const APPROVAL_TYPE_QUERY: Record<ApprovalRequestType, string> = {
-  PAYMENT: "payment-request",
   MATERIAL: "material-request",
   REPORT: "site-report",
-  CONTRACT: "contract",
+  VOLUME: "field-progress",
+  INSPECTION: "inspection",
+  PLAN: "plan",
+  DRAWING: "drawing",
+  METHOD_STATEMENT: "method-statement",
+  SAFETY: "safety",
+  QUALITY: "quality",
+  SITE_ISSUE: "site-issue",
   CHANGE_ORDER: "change-order",
   OTHER: "approval-request",
 };
 
 const SOURCE_TARGET_TYPES = new Set<NotificationTargetType>([
   "MATERIAL_REQUEST",
-  "PAYMENT_REQUEST",
   "SITE_REPORT",
-  "CONTRACT",
   "DOCUMENT",
 ]);
 

@@ -255,7 +255,6 @@ export default async function ProjectDocumentsPage({
   const rawSettings: any = await getEnforcedSystemSettings();
   const systemSettings = {
     ...rawSettings,
-    contractValueThreshold: rawSettings.contractValueThreshold ? Number(rawSettings.contractValueThreshold) : 0,
     createdAt: rawSettings.createdAt ? rawSettings.createdAt.toISOString() : undefined,
     updatedAt: rawSettings.updatedAt ? rawSettings.updatedAt.toISOString() : undefined,
   };

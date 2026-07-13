@@ -7,7 +7,6 @@ export const systemSettingsSchema = z.object({
   hotline: z.string().max(50, "Hotline quá dài").optional().nullable(),
   timezone: z.string().min(1, "Múi giờ không được để trống").max(100),
   currency: z.string().min(1, "Tiền tệ không được để trống").max(10),
-  fiscalYearStartMonth: z.string().regex(/^(0[1-9]|1[0-2])$/, "Tháng tài chính không hợp lệ"),
 
   // Security
   requireTwoFactorForAdmins: z.boolean(),
@@ -18,11 +17,8 @@ export const systemSettingsSchema = z.object({
   auditSensitiveActions: z.boolean(),
 
   // Workflow
-  requireProjectCodeBeforeSpending: z.boolean(),
   materialRequestApproval: z.boolean(),
-  paymentTwoStepApproval: z.boolean(),
   reportLockAfterApproval: z.boolean(),
-  contractValueThreshold: z.number().min(0, "Ngưỡng không được âm"),
 
   // Documents
   enforceNamingConvention: z.boolean(),
@@ -53,18 +49,14 @@ export const DEFAULT_SYSTEM_SETTINGS = {
   hotline: "024 3868 2026",
   timezone: "Asia/Bangkok",
   currency: "VND",
-  fiscalYearStartMonth: "01",
   requireTwoFactorForAdmins: true,
   sessionTimeoutMinutes: 60,
   passwordRotationDays: 90,
   allowedIpMode: "restricted" as const,
   trustedDeviceReviewDays: 30,
   auditSensitiveActions: true,
-  requireProjectCodeBeforeSpending: true,
   materialRequestApproval: true,
-  paymentTwoStepApproval: true,
   reportLockAfterApproval: true,
-  contractValueThreshold: 500000000,
   enforceNamingConvention: true,
   autoVersioning: true,
   allowedExtensions: "pdf, doc, docx, xls, xlsx, dwg, dxf, jpg, jpeg, png, heic, webp, xml",

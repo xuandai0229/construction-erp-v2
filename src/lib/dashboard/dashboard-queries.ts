@@ -9,7 +9,6 @@ import { isPreparationProjectStatus } from "@/lib/project-status";
 import {
   canViewApprovalDashboard,
   canViewCompanyWideDashboard,
-  canViewFinanceDashboard,
   getDashboardProjectScope,
 } from "./dashboard-permissions";
 
@@ -49,22 +48,6 @@ export type DashboardProjectOverview = {
   health: "ON_TRACK" | "AT_RISK" | "DELAYED" | "COMPLETED" | "NO_DATA";
   warning: string;
 };
-
-export type DashboardFinanceSummary = {
-  totalContractValue: number;
-  activeContracts: number;
-  pendingPaymentAmount: number;
-  pendingPaymentCount: number;
-  recentPayments: {
-    id: string;
-    title: string;
-    projectName: string;
-    status: string;
-    amount: number;
-    createdAt: Date;
-    href: string;
-  }[];
-} | null;
 
 export type DashboardDocumentItem = {
   id: string;
@@ -119,7 +102,6 @@ export type DashboardData = {
   };
   permissions: {
     canViewCompanyWideDashboard: boolean;
-    canViewFinanceDashboard: boolean;
     canViewApprovalDashboard: boolean;
   };
   period: {
@@ -137,7 +119,6 @@ export type DashboardData = {
   actionItems: DashboardActionItem[];
   pendingApprovals: DashboardActionItem[];
   projectOverview: DashboardProjectOverview[];
-  financeSummary: DashboardFinanceSummary;
   recentDocuments: DashboardDocumentItem[];
   recentSiteReports: DashboardSiteReportItem[];
   activityTimeline: DashboardActivityItem[];
@@ -198,7 +179,6 @@ function statusLabel(status: string) {
     REQUESTED: "Đã yêu cầu",
     DRAFT: "Nháp",
     APPROVED: "Đã duyệt",
-    PAID: "Đã thanh toán",
     REJECTED: "Từ chối",
     REVISION_REQUESTED: "Cần sửa",
     CANCELLED: "Đã hủy",
@@ -322,7 +302,6 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
   const today = todayWorkDate();
   const todayRange = getWorkDateRange(today);
   const lastSevenStart = getWorkDateRange(formatWorkDate(addWorkDays(parseWorkDate(today), -6))).start;
-  const canViewFinance = canViewFinanceDashboard(session.role);
   const canViewApprovals = canViewApprovalDashboard(session.role);
   const canViewCompanyWide = canViewCompanyWideDashboard(session.role);
   const activeProjectWhere: Prisma.ProjectWhereInput = { ...projectWhere, status: "ACTIVE" };
@@ -434,7 +413,6 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
             "Document", "DOCUMENT",
             "SiteReport", "SITE_REPORT",
             "ApprovalRequest", "APPROVAL_REQUEST",
-            "PaymentRequest", "PAYMENT_REQUEST",
             "MaterialRequest", "MATERIAL_REQUEST",
             "FieldMaterialRequest", "FIELD_MATERIAL_REQUEST"
           ] 
@@ -447,8 +425,7 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
     }),
   ]);
 
-  const overviewProjectIds = overviewProjects.map((project) => project.id);
-  const [pendingApprovals, financeSummary] = await Promise.all([
+  const pendingApprovals = await (
     canViewApprovals
       ? prisma.approvalRequest.findMany({
           where: { deletedAt: null, status: "PENDING", ...projectIdScope(accessibleProjectIds) },
@@ -456,9 +433,8 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
           take: 5,
           include: { project: { select: { name: true } }, requester: { select: { name: true } } },
         })
-      : Promise.resolve([]),
-    canViewFinance ? getFinanceSummary(accessibleProjectIds) : Promise.resolve(null),
-  ]);
+      : Promise.resolve([])
+  );
 
   const todayStart = todayRange.start;
   const attentionProjects = activeProjectsForAttention
@@ -518,21 +494,6 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
     href: "/approvals",
   }));
 
-  const financeActions: DashboardActionItem[] =
-    financeSummary?.recentPayments
-      .filter((payment) => payment.status === "SUBMITTED")
-      .slice(0, 3)
-      .map((payment) => ({
-        id: `payment-${payment.id}`,
-        title: payment.title,
-        projectName: payment.projectName,
-        type: "Thanh toán",
-        priority: payment.status === "SUBMITTED" ? "HIGH" as const : "MEDIUM" as const,
-        status: statusLabel(payment.status),
-        createdAt: payment.createdAt,
-        href: payment.href,
-      })) ?? [];
-
   const projectActions: DashboardActionItem[] = [];
   
   projectActions.push(...attentionProjects.slice(0, 5).map(({ project, reason, priority }) => ({
@@ -583,10 +544,10 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
     })),
   ].slice(0, 4);
 
-  const forbiddenStatuses = ["APPROVED", "COMPLETED", "DONE", "FINISHED", "PAID", "RESOLVED", "Đã duyệt", "Hoàn thành", "Đã thanh toán"];
+  const forbiddenStatuses = ["APPROVED", "COMPLETED", "DONE", "FINISHED", "RESOLVED", "Đã duyệt", "Hoàn thành"];
   
   // Do NOT include approvalItems in actionItems to separate them
-  const actionItems = [...financeActions, ...projectActions, ...reportActions, ...materialActions]
+  const actionItems = [...projectActions, ...reportActions, ...materialActions]
     .filter((item) => !forbiddenStatuses.includes(item.status) && !forbiddenStatuses.includes(item.status.toUpperCase()))
     .sort((a, b) => {
       const priorityScore = { HIGH: 3, MEDIUM: 2, LOW: 1 };
@@ -658,23 +619,6 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
     });
   });
 
-  // 4. Pending Payments
-  if (financeSummary?.recentPayments) {
-    financeSummary.recentPayments.filter(p => p.status === 'SUBMITTED').forEach(p => {
-      notifications.push({
-        id: `notif-pay-${p.id}`,
-        type: 'PAYMENT',
-        severity: 'MEDIUM',
-        title: p.title,
-        message: 'Thanh toán chờ xử lý',
-        href: p.href,
-        createdAt: p.createdAt,
-        isRead: false,
-        projectName: p.projectName,
-      });
-    });
-  }
-
   // Sort notifications by severity and date
   notifications.sort((a, b) => {
     const score = { HIGH: 3, MEDIUM: 2, LOW: 1, INFO: 0 };
@@ -733,17 +677,6 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
     },
   ];
 
-  if (financeSummary) {
-    kpis.push({
-      id: "pending-payments",
-      label: "Thanh toán chờ xử lý",
-      value: String(financeSummary.pendingPaymentCount),
-      description: "Hồ sơ thanh toán chưa hoàn tất",
-      tone: financeSummary.pendingPaymentCount > 0 ? "rose" : "emerald",
-      href: "/accounting",
-    });
-  }
-
   return {
     session: {
       id: session.id,
@@ -753,7 +686,6 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
     },
     permissions: {
       canViewCompanyWideDashboard: canViewCompanyWide,
-      canViewFinanceDashboard: canViewFinance,
       canViewApprovalDashboard: canViewApprovals,
     },
     period,
@@ -762,7 +694,6 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
     actionItems,
     pendingApprovals: approvalItems,
     projectOverview,
-    financeSummary,
     recentDocuments: recentDocuments.map((document) => ({
       id: document.id,
       title: document.displayName || document.originalName,
@@ -790,39 +721,6 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
   };
 }
 
-async function getFinanceSummary(accessibleProjectIds: string[] | null): Promise<DashboardFinanceSummary> {
-  const contractWhere: Prisma.ContractWhereInput = { deletedAt: null, ...projectIdScope(accessibleProjectIds) };
-  const paymentWhere: Prisma.PaymentRequestWhereInput = { deletedAt: null, ...projectIdScope(accessibleProjectIds) };
-  const [contractSum, activeContracts, pendingPaymentSum, pendingPaymentCount, recentPayments] = await Promise.all([
-    prisma.contract.aggregate({ where: contractWhere, _sum: { value: true } }),
-    prisma.contract.count({ where: { ...contractWhere, status: "ACTIVE" } }),
-    prisma.paymentRequest.aggregate({ where: { ...paymentWhere, status: { in: ["SUBMITTED", "APPROVED"] } }, _sum: { totalAmount: true } }),
-    prisma.paymentRequest.count({ where: { ...paymentWhere, status: { in: ["SUBMITTED", "APPROVED"] } } }),
-    prisma.paymentRequest.findMany({
-      where: paymentWhere,
-      orderBy: { createdAt: "desc" },
-      take: 5,
-      include: { project: { select: { name: true } } },
-    }),
-  ]);
-
-  return {
-    totalContractValue: Number(contractSum._sum.value ?? 0),
-    activeContracts,
-    pendingPaymentAmount: Number(pendingPaymentSum._sum.totalAmount ?? 0),
-    pendingPaymentCount,
-    recentPayments: recentPayments.map((payment) => ({
-      id: payment.id,
-      title: payment.title,
-      projectName: payment.project.name,
-      status: payment.status,
-      amount: Number(payment.totalAmount),
-      createdAt: payment.createdAt,
-      href: "/accounting",
-    })),
-  };
-}
-
 function getAuditTitle(action: string, entityType: string) {
   let entityName = entityType;
   const t = entityType.toUpperCase();
@@ -830,7 +728,6 @@ function getAuditTitle(action: string, entityType: string) {
   else if (t === "DOCUMENT") entityName = "tài liệu";
   else if (t === "SITEREPORT" || t === "SITE_REPORT") entityName = "báo cáo";
   else if (t === "APPROVALREQUEST" || t === "APPROVAL_REQUEST") entityName = "hồ sơ";
-  else if (t === "PAYMENTREQUEST" || t === "PAYMENT_REQUEST") entityName = "hồ sơ thanh toán";
   else if (t === "MATERIALREQUEST" || t === "MATERIAL_REQUEST" || t === "FIELDMATERIALREQUEST" || t === "FIELD_MATERIAL_REQUEST") entityName = "yêu cầu vật tư";
   else if (t === "PROJECT") entityName = "công trình";
 
@@ -852,7 +749,6 @@ function getAuditTitle(action: string, entityType: string) {
 function getAuditTone(action: string): DashboardActivityItem["tone"] {
   if (action.includes("APPROVED")) return "emerald";
   if (action.includes("REJECTED") || action.includes("DELETE")) return "rose";
-  if (action.includes("PAYMENT") || action.includes("CONTRACT")) return "amber";
   if (action.includes("DOCUMENT")) return "blue";
   return "slate";
 }
