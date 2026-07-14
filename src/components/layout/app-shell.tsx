@@ -1,5 +1,7 @@
 import { Sidebar } from './sidebar';
 import { Header } from './header';
+import { MobileBottomNav } from './mobile-bottom-nav';
+import { MobileProjectContextBar } from './mobile-project-context-bar';
 import { getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { ROLE_DISPLAY_NAMES } from '@/lib/rbac';
@@ -28,11 +30,13 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
           userRoleRaw={session.role}
           globalContext={globalContext}
         />
+        <MobileProjectContextBar globalContext={globalContext} />
         <main className="min-w-0 flex-1 bg-slate-50">
-          <div className="app-page-container p-4 pb-[calc(24px+env(safe-area-inset-bottom))] sm:p-6 sm:pb-[calc(24px+env(safe-area-inset-bottom))]">
+          <div className="app-page-container p-3 pb-[calc(72px+env(safe-area-inset-bottom))] sm:p-5 lg:p-6 lg:pb-6">
             {children}
           </div>
         </main>
+        <MobileBottomNav userRole={session.role} />
       </div>
     </div>
   );

@@ -217,8 +217,8 @@ export function MaterialsWorkspace({
   };
 
   return (
-    <div className="app-page mx-auto max-w-[1400px] space-y-5 pb-24">
-      <PageHeader className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="app-page mx-auto max-w-[1400px] space-y-4 sm:space-y-5 pb-24">
+      <PageHeader className="flex flex-col gap-2.5 sm:gap-3 py-3 sm:py-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-950">Quản lý vật tư</h1>
           <p className="mt-1 text-sm text-slate-600">
@@ -231,7 +231,7 @@ export function MaterialsWorkspace({
         </div>
       </PageHeader>
 
-      <nav className="sticky top-0 z-30 -mx-4 px-4 sm:mx-0 sm:px-0 bg-slate-50/90 backdrop-blur-md overflow-x-auto border-b border-slate-200" aria-label="Tabs quản lý vật tư">
+      <nav className="sticky top-0 z-30 -mx-3 px-3 sm:mx-0 sm:px-0 bg-slate-50/90 backdrop-blur-md overflow-x-auto border-b border-slate-200" aria-label="Tabs quản lý vật tư">
         <div className="flex min-w-max gap-1">
           {tabs.map((tab) => {
             const Icon = tab.icon;

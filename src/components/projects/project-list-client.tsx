@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Eye, Pencil, ChevronRight } from "lucide-react";
+import { Eye, Pencil, ChevronRight, MoreVertical } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getProjectStatusMeta } from "@/lib/project-status";
 import { ContentCard, EnterpriseTable } from "@/components/ui/enterprise";
@@ -120,54 +120,44 @@ export function ProjectsListClient({
       </EnterpriseTable>
 
       {/* Mobile/Tablet View (< lg) */}
-      <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50/50">
+      <div className="lg:hidden flex flex-col gap-3">
         {projects.map((project) => (
-          <ContentCard 
+          <div 
             key={project.id} 
             role="button"
             tabIndex={0}
             onClick={() => handleRowClick(project.id)}
             onKeyDown={(e) => handleKeyDown(e, project.id)}
-            className="group cursor-pointer p-4 flex flex-col hover:shadow-md transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30"
+            className="group block rounded-[16px] border border-slate-200/80 bg-white p-4 shadow-[0_2px_10px_rgba(15,23,42,0.02)] transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md active:scale-[0.98] cursor-pointer"
           >
-            <div className="mb-3">
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <span className="text-[12px] font-semibold px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg shrink-0 break-all max-w-[120px]">
-                  {project.code}
-                </span>
-                {getStatusBadge(project.status)}
-              </div>
-              <span className="text-[15px] font-bold text-blue-600 transition-colors group-hover:text-blue-700 line-clamp-2 leading-tight break-words">
-                {project.name}
-              </span>
-            </div>
-            
-            <div className="grid grid-cols-1 gap-2 text-[13px] text-slate-600 mb-4">
-              <p className="truncate" title={project.investor || undefined}>
-                <span className="text-slate-400">Chủ đầu tư:</span> <span className="font-medium text-slate-800">{project.investor || "—"}</span>
-              </p>
-              <p className="truncate" title={project.location || undefined}>
-                <span className="text-slate-400">Vị trí:</span> <span className="font-medium text-slate-800">{project.location || "—"}</span>
-              </p>
-              <div className="flex justify-between items-center text-slate-500 mt-1 bg-slate-50/70 p-2.5 rounded-xl border border-slate-100">
-                <span className="font-medium">{project.dateRangeLabel}</span>
-              </div>
-            </div>
-
-            <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
-              <span className="flex-1 text-[13px] text-slate-400 font-medium px-2">Bấm để xem chi tiết</span>
+            <div className="flex items-start justify-between gap-3 mb-1.5">
+              <span className="font-bold text-[11px] sm:text-[12px] text-slate-500 uppercase tracking-wider">{project.code}</span>
               {canManage && (
                 <Link 
                   href={`/projects/${project.id}/edit`} 
                   onClick={(e) => e.stopPropagation()}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+                  className="p-1.5 -mr-1.5 -mt-1.5 rounded-full text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                 >
-                  <Pencil className="h-4 w-4" />
-                  Sửa
+                  <MoreVertical className="h-4 w-4" />
                 </Link>
               )}
             </div>
-          </ContentCard>
+            
+            <h3 className="text-[15px] sm:text-[16px] font-bold text-slate-900 leading-snug mb-3 group-hover:text-blue-700 transition-colors line-clamp-2">
+              {project.name}
+            </h3>
+            
+            <div className="flex items-center justify-between mb-3">
+              {getStatusBadge(project.status)}
+              <span className="text-[12px] font-semibold text-slate-600">
+                {project.dateRangeLabel !== "Chưa cập nhật" ? project.dateRangeLabel : ""}
+              </span>
+            </div>
+            
+            <div className="border-t border-slate-100 pt-3 flex items-center justify-between text-[12.5px] font-medium text-slate-500">
+              <span className="truncate pr-4">{project.location || "Chưa cập nhật địa điểm"}</span>
+            </div>
+          </div>
         ))}
       </div>
     </>

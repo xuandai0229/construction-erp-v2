@@ -87,7 +87,7 @@ export function MaterialsOverview({
   const issues = [...negativeStocks, ...outOfStocks, ...lowStocks].slice(0, 5);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         {cards.map((card) => (
           <InteractiveKpiCard

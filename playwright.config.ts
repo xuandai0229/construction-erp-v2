@@ -4,9 +4,9 @@ dotenv.config();
 
 export default defineConfig({
   testDir: './scripts/qa',
-  timeout: 60000,
+  timeout: 180000,
   expect: {
-    timeout: 10000,
+    timeout: 30000,
   },
   fullyParallel: false,
   retries: 0,

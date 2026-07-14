@@ -29,22 +29,22 @@ export function DashboardActivityTimeline({ activities }: { activities: Dashboar
         <h2 className="text-base font-bold text-slate-950">Hoạt động gần đây</h2>
         <Clock className="h-4 w-4 text-slate-500" />
       </div>
-      <div className="p-4">
+      <div className="p-3 sm:p-4">
         {activities.length === 0 ? (
-          <DashboardEmptyState title="Chưa có hoạt động gần đây" className="min-h-[160px]" />
+          <DashboardEmptyState title="Chưa có hoạt động gần đây" className="min-h-[120px] sm:min-h-[160px]" />
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2.5 sm:space-y-3">
             {activities.map((activity) => (
-              <Link key={activity.id} href={activity.href} className="group flex gap-3 rounded-xl p-2 hover:bg-slate-50">
-                <span className={cn("mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full", toneClasses[activity.tone])}>
+              <Link key={activity.id} href={activity.href} className="group flex gap-2.5 sm:gap-3 rounded-xl p-2 hover:bg-slate-50 transition-colors">
+                <span className={cn("mt-0.5 flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full", toneClasses[activity.tone])}>
                   <TimelineIcon tone={activity.tone} />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="line-clamp-1 text-sm font-bold text-slate-950">{activity.title}</span>
-                  <span className="mt-1 line-clamp-1 text-xs font-medium text-slate-600">{activity.actorName} · {activity.projectName}</span>
-                  <span className="mt-1 block text-xs text-slate-600">{formatDateTimeVN(activity.createdAt)}</span>
+                  <span className="line-clamp-1 text-[13px] sm:text-sm font-bold text-slate-950">{activity.title}</span>
+                  <span className="mt-0.5 sm:mt-1 line-clamp-1 text-[11px] sm:text-xs font-medium text-slate-600">{activity.actorName} · {activity.projectName}</span>
+                  <span className="mt-0.5 sm:mt-1 block text-[11px] sm:text-xs text-slate-500">{formatDateTimeVN(activity.createdAt)}</span>
                 </span>
-                <ArrowRight className="mt-2 h-4 w-4 shrink-0 text-slate-400 group-hover:text-blue-700" />
+                <ArrowRight className="mt-1 sm:mt-2 h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-slate-300 sm:text-slate-400 group-hover:text-blue-700" />
               </Link>
             ))}
           </div>

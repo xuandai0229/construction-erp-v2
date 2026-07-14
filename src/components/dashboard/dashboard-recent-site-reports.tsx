@@ -31,19 +31,19 @@ export function DashboardRecentSiteReports({ reports }: { reports: DashboardSite
         ) : (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-1">
             {reports.map((report) => (
-              <Link key={report.id} href={report.href} className="block rounded-xl border border-slate-200 p-4 transition-colors hover:border-blue-200 hover:bg-blue-50/40">
-                <div className="flex items-start gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
-                    <ClipboardCheck className="h-5 w-5" />
+              <Link key={report.id} href={report.href} className="block rounded-xl border border-slate-200 p-3 sm:p-4 transition-colors hover:border-blue-200 hover:bg-blue-50/40">
+                <div className="flex items-start gap-2.5 sm:gap-3">
+                  <span className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-violet-50 text-violet-700">
+                    <ClipboardCheck className="h-4 w-4 sm:h-5 sm:w-5" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                       <StatusBadge variant={reportVariant(report.status, report.hasIssue)} size="sm">{report.hasIssue ? "Có vấn đề" : report.status}</StatusBadge>
-                      <span className="text-xs font-semibold text-slate-600">{report.type === "WEEKLY" ? "Tuần" : "Ngày"}</span>
+                      <span className="text-[11px] sm:text-xs font-semibold text-slate-600">{report.type === "WEEKLY" ? "Tuần" : "Ngày"}</span>
                     </div>
-                    <p className="mt-2 line-clamp-1 text-sm font-bold text-slate-950">{report.title}</p>
-                    <p className="mt-1 line-clamp-1 text-xs font-medium text-slate-600">{report.projectName} · {report.reporterName}</p>
-                    <p className="mt-1 text-xs text-slate-600">{formatDateVNShort(report.reportDate)}</p>
+                    <p className="mt-1.5 line-clamp-1 text-[13px] sm:text-sm font-bold text-slate-950">{report.title}</p>
+                    <p className="mt-1 line-clamp-1 text-[11px] sm:text-xs font-medium text-slate-600">{report.projectName} · {report.reporterName}</p>
+                    <p className="mt-0.5 text-[11px] sm:text-xs text-slate-500">{formatDateVNShort(report.reportDate)}</p>
                   </div>
                 </div>
               </Link>

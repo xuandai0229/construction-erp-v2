@@ -20,18 +20,18 @@ function ActionIcon({ label }: { label: string }) {
 
 export function DashboardHeader({ data }: { data: DashboardData }) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-950/[0.03] sm:p-5 lg:p-6">
-      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+    <section className="mb-2 sm:mb-0 sm:rounded-2xl sm:border sm:border-slate-200 sm:bg-white sm:p-5 lg:p-6 sm:shadow-sm">
+      <div className="flex flex-col gap-3 sm:gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-blue-700">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[12px] sm:text-sm font-semibold text-blue-700">
             <span>{data.session.roleDisplayName}</span>
-            <span className="text-slate-300">/</span>
-            <span>{data.permissions.canViewCompanyWideDashboard ? "Toàn hệ thống" : "Theo công trình được phân quyền"}</span>
+            <span className="text-slate-300 hidden sm:inline-block">/</span>
+            <span className="hidden sm:inline-block">{data.permissions.canViewCompanyWideDashboard ? "Toàn hệ thống" : "Theo công trình được phân quyền"}</span>
           </div>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
-            Xin chào, {data.session.name}
+          <h1 className="mt-1 sm:mt-2 text-[22px] sm:text-2xl font-black tracking-tight text-slate-900 lg:text-3xl">
+            Xin chào, {data.session.name.split(' ').pop()}
           </h1>
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-600">
+          <div className="mt-1.5 sm:mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 sm:gap-x-4 sm:gap-y-2 text-[12px] sm:text-sm text-slate-500">
             <span className="inline-flex items-center gap-1.5">
               <Clock className="h-4 w-4 text-slate-500" />
               {formatDateTimeVN(new Date())}
@@ -43,8 +43,8 @@ export function DashboardHeader({ data }: { data: DashboardData }) {
           </div>
         </div>
 
-        <div className="flex flex-col gap-3 lg:items-end">
-          <div className="grid grid-cols-3 gap-2 rounded-xl bg-slate-100 p-1">
+        <div className="flex flex-col gap-4 lg:items-end w-full lg:w-auto">
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-2 rounded-xl bg-slate-200/50 sm:bg-slate-100 p-1 w-full sm:w-auto">
             {periodOptions.map((option) => (
               <Link
                 key={option.value}
@@ -59,9 +59,9 @@ export function DashboardHeader({ data }: { data: DashboardData }) {
             ))}
           </div>
           {data.quickActions.length > 0 && (
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:flex lg:flex-wrap lg:justify-end">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 lg:flex lg:flex-wrap lg:justify-end w-full">
               {data.quickActions.map((action) => (
-                <Button key={action.href} asChild size="sm" variant={action.tone === "primary" ? "default" : "outline"}>
+                <Button key={action.href} asChild size="sm" variant={action.tone === "primary" ? "default" : "outline"} className={cn("w-full sm:w-auto", action.tone !== "primary" && "bg-white")}>
                   <Link href={action.href}>
                     <ActionIcon label={action.label} />
                     {action.label}

@@ -25,6 +25,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { sharedTableStyles } from "./table-styles";
 import { evaluateVolumeGuard } from "@/lib/field-progress/volume-guard";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { EnterpriseTable } from "@/components/ui/enterprise";
 import { isCompanyWideRole } from "@/lib/rbac-rules";
 import { useToast } from "@/components/ui/toast-context";
 
@@ -930,21 +931,21 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
         </div>
       </div>
 
-      <div className="hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:block overflow-x-auto overflow-y-hidden max-w-full">
+      <EnterpriseTable className="hidden lg:block shadow-sm">
         <table className="w-full text-left text-sm border-collapse min-w-[1100px]">
-          <thead className="border-b-2 border-slate-200 bg-slate-50">
+          <thead className="border-b border-slate-200 bg-slate-50 sticky top-0 z-30 shadow-sm">
             <tr>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.stt} bg-slate-100 border-r-slate-200`}>STT</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.content} bg-slate-100 border-r-slate-200`}>Công việc</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.crew}`}>Mũi</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.unit}`}>Đơn vị</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.designQty}`}>Tổng<br />khối lượng</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.cumulative}`}>Lũy kế<br />trước ngày</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.dayQty} bg-blue-100 text-blue-800`}>Khối lượng<br />ngày</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.remaining}`}>Sau<br />cập nhật</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.percent}`}>Hoàn<br />thành</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.notes}`}>Ghi chú<br />nhanh</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.action} bg-slate-100 border-l border-slate-200`}>Chi<br />tiết</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.stt} sticky left-0 z-20 text-center`}>STT</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.content} sticky left-[48px] z-20 text-left shadow-[1px_0_0_#e2e8f0]`}>Công việc</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.crew} text-center`}>Mũi</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.unit} text-center`}>Đơn vị</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.designQty} text-right`}>Tổng<br />khối lượng</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.cumulative} text-right`}>Lũy kế<br />trước ngày</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.dayQty} bg-blue-50/80 text-blue-800 text-right`}>Khối lượng<br />ngày</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.remaining} text-right`}>Sau<br />cập nhật</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.percent} text-right`}>Hoàn<br />thành</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.notes} text-left`}>Ghi chú<br />nhanh</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.action} sticky right-0 z-20 text-center shadow-[-1px_0_0_#e2e8f0]`}>Chi<br />tiết</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -955,12 +956,12 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
               return (
                 <tr
                   key={item.id}
-                  className={`transition ${sharedTableStyles.workRow} ${math.isOver ? "bg-red-50/60" : isDirty ? "bg-amber-50/40" : ""}`}
+                  className={`group/row transition-colors ${math.isOver ? 'bg-red-50/20' : isDirty ? 'bg-amber-50/20' : 'hover:bg-slate-50/50'}`}
                 >
-                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.dailyCols.stt} bg-white border-r-slate-100 ${math.isOver ? '!bg-red-50/60' : isDirty ? '!bg-amber-50/40' : ''}`}>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.dailyCols.stt} sticky left-0 z-10 text-center text-slate-400 shadow-[1px_0_0_#f1f5f9] ${math.isOver ? 'bg-red-50/70' : isDirty ? 'bg-amber-50/70' : 'bg-white group-hover/row:bg-slate-50/50'}`}>
                     {index + 1}
                   </td>
-                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.dailyCols.content} bg-white ${math.isOver ? '!bg-red-50/60' : isDirty ? '!bg-amber-50/40' : ''}`}>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.dailyCols.content} sticky left-[48px] z-10 shadow-[1px_0_0_#f1f5f9] ${math.isOver ? 'bg-red-50/70' : isDirty ? 'bg-amber-50/70' : 'bg-white group-hover/row:bg-slate-50/50'}`}>
                     {item.parentName && <div className="mb-0.5 text-[10px] font-medium uppercase tracking-wider text-slate-400 truncate w-full">{item.parentName}</div>}
                     <div className="font-semibold text-slate-800 line-clamp-2 w-full leading-tight" title={item.name}>
                       {item.name}
@@ -1008,7 +1009,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
                       placeholder="Ghi chú nhanh..."
                     />
                   </td>
-                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.dailyCols.action} bg-white border-l border-slate-100 ${math.isOver ? '!bg-red-50/60' : isDirty ? '!bg-amber-50/40' : ''}`}>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.dailyCols.action} sticky right-0 z-10 text-center shadow-[-1px_0_0_#f1f5f9] ${math.isOver ? 'bg-red-50/70' : isDirty ? 'bg-amber-50/70' : 'bg-white group-hover/row:bg-slate-50/50'}`}>
                     <Button variant="ghost" aria-label={`Xem chi tiết ${item.name}`} className="h-8 w-8 p-0 text-slate-400 hover:text-blue-600 mx-auto block hover:bg-slate-100 rounded-full" onClick={() => setActiveDrawerItem(item)}>
                       <Info className="h-4 w-4 mx-auto" />
                     </Button>
@@ -1019,7 +1020,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
 
             {filteredItems.length === 0 && (
               <tr>
-                <td colSpan={10} className="px-4 py-12 text-center text-slate-500">
+                <td colSpan={11} className="px-4 py-12 text-center text-slate-500">
                   <ClipboardList className="mx-auto mb-2 h-8 w-8 text-slate-300" />
                   Không có công việc phù hợp bộ lọc.
                 </td>
@@ -1027,7 +1028,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
             )}
           </tbody>
         </table>
-      </div>
+      </EnterpriseTable>
 
       <div className="flex flex-col pb-24 lg:hidden">
         {groupedItems.map(([groupName, groupItems]) => renderMobileGroup(groupName, groupItems))}

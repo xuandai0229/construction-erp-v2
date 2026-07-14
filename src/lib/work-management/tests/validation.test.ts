@@ -1,0 +1,5 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { createTaskSchema, dependencySchema, handoverRequestSchema, progressUpdateSchema } from "../validation/schemas";
+test("create rejects empty title, invalid dates and mass assignment", () => { assert.equal(createTaskSchema.safeParse({ title: " ", unexpected: true }).success, false); assert.equal(createTaskSchema.safeParse({ title: "Valid", plannedStartAt: "2026-07-15", currentDueAt: "2026-07-14" }).success, false); assert.equal(createTaskSchema.safeParse({ title: "Valid task", actorId: "attacker" }).success, false); });
+test("mutation schemas require expected version and reject invalid graph/progress/handover", () => { assert.equal(progressUpdateSchema.safeParse({ taskId: "t", progressPercent: 101, expectedVersion: 1 }).success, false); assert.equal(dependencySchema.safeParse({ predecessorTaskId: "t", successorTaskId: "t", expectedVersion: 1 }).success, false); assert.equal(handoverRequestSchema.safeParse({ taskId: "t", fromUserId: "u", toUserId: "u", effectiveAt: "2026-07-14", reason: "reason", expectedVersion: 1 }).success, false); });

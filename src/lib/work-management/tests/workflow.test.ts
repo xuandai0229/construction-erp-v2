@@ -1,0 +1,14 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { evaluateTaskTransition } from "../domain/workflow";
+import type { TaskAction, TaskState } from "../domain/types";
+import { activeState, draftState, now } from "./fixtures";
+
+const evaluate = (state: TaskState, action: TaskAction, actorHasPermission = true) => evaluateTaskTransition({ currentState: state, action, actorHasPermission, now, taskId: "task-1" });
+test("draft is assigned but never jumps directly to completed", () => { assert.equal(evaluate(draftState(), "ASSIGN").nextState?.lifecycle, "ASSIGNED"); assert.equal(evaluate(draftState(), "CONFIRM_COMPLETION").allowed, false); });
+test("assigned task needs acceptance before start under the pending policy", () => { const state = { ...draftState(), lifecycle: "ASSIGNED" as const, acceptance: "PENDING" as const }; assert.equal(evaluate(state, "START").allowed, false); assert.equal(evaluate(state, "ACCEPT").nextState?.acceptance, "ACCEPTED"); });
+test("submitted task supports request changes then resubmission", () => { const submitted = { ...activeState(), lifecycle: "SUBMITTED" as const, review: "PENDING" as const }; assert.equal(evaluate(submitted, "REQUEST_CHANGES").nextState?.lifecycle, "IN_PROGRESS"); assert.equal(evaluate(submitted, "APPROVE_RESULT").nextState?.review, "RESULT_APPROVED"); });
+test("completion needs result approval and reopen is an event back to in progress", () => { const approved = { ...activeState(), lifecycle: "SUBMITTED" as const, review: "RESULT_APPROVED" as const }; const completed = evaluate(approved, "CONFIRM_COMPLETION").nextState!; assert.equal(completed.lifecycle, "COMPLETED"); assert.equal(evaluate(completed, "REOPEN").nextState?.lifecycle, "IN_PROGRESS"); });
+test("cancelled task cannot resume and archived task rejects ordinary updates", () => { const cancelled = { ...activeState(), lifecycle: "CANCELLED" as const }; const archived = { ...activeState(), lifecycle: "ARCHIVED" as const }; assert.equal(evaluate(cancelled, "RESUME").allowed, false); assert.equal(evaluate(archived, "UPDATE_PROGRESS").allowed, false); });
+test("handover is a separate axis and leaves execution lifecycle intact", () => { const requested = evaluate(activeState(), "REQUEST_HANDOVER").nextState!; assert.equal(requested.lifecycle, "IN_PROGRESS"); assert.equal(requested.handover, "PENDING_TO_USER"); const accepted = evaluate(requested, "ACCEPT_HANDOVER").nextState!; const approved = evaluate(accepted, "APPROVE_HANDOVER").nextState!; assert.equal(evaluate(approved, "EXECUTE_HANDOVER").nextState?.handover, "EFFECTIVE"); });
+test("action permission denial is fail-closed and produces no event", () => { const decision = evaluate(activeState(), "SUBMIT", false); assert.equal(decision.errorCode, "TASK_ACCESS_DENIED"); assert.deepEqual(decision.requiredEvents, []); });

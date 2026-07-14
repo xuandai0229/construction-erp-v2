@@ -92,31 +92,43 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
 
   return (
     <>
-      <header className="sticky top-0 z-60 flex h-16 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/90 px-4 shadow-sm shadow-slate-950/[0.025] backdrop-blur-xl md:px-6">
-        <div className="flex items-center lg:hidden">
-          <button
-            onClick={() => setMobileMenuOpen(true)}
-            className="icon-button"
-            aria-label="Mở menu"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
-          <span className="ml-2 text-lg font-bold text-blue-600">ERP</span>
+      <header className="sticky top-0 z-50 flex h-[52px] lg:h-16 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/90 px-3 shadow-sm backdrop-blur-md md:px-6">
+        <div className="flex items-center">
+          {/* Logo */}
+          <Link href="/dashboard" className="flex items-center gap-2" aria-label="Trang chủ">
+            <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-blue-600 text-white shadow-sm">
+              <Building2 className="h-4 w-4" />
+            </div>
+            <span className="hidden sm:inline-flex text-[17px] font-black text-slate-900 tracking-tight">CT2</span>
+          </Link>
         </div>
         
-        <div className="flex flex-1 justify-end lg:justify-start lg:pl-6 px-4">
+        {/* Mobile Page Title (Middle) */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 lg:hidden pointer-events-none">
+          <span className="text-[15px] font-bold text-slate-900">
+            {pathname.startsWith('/projects') ? 'Công trình' :
+             pathname.startsWith('/documents') ? 'Tài liệu' :
+             pathname.startsWith('/reports') ? 'Báo cáo' :
+             pathname.startsWith('/materials') ? 'Vật tư' :
+             pathname.startsWith('/approvals') ? 'Phê duyệt' :
+             pathname.startsWith('/users') ? 'Tài khoản' :
+             pathname.startsWith('/settings') ? 'Cài đặt' :
+             'Tổng quan'}
+          </span>
+        </div>
+        
+        {/* Desktop Project Switcher */}
+        <div className="hidden lg:flex flex-1 justify-start pl-6">
           {globalContext && (
-            <div className="hidden lg:flex">
-              <GlobalProjectContextSwitcher 
-                projects={globalContext.accessibleProjects} 
-                selectedProjectId={globalContext.selectedProjectId}
-                overviewData={globalContext.overviewData}
-              />
-            </div>
+            <GlobalProjectContextSwitcher 
+              projects={globalContext.accessibleProjects} 
+              selectedProjectId={globalContext.selectedProjectId}
+              overviewData={globalContext.overviewData}
+            />
           )}
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Global Search */}
           <GlobalSearchCommand globalContext={globalContext} />
           
@@ -124,16 +136,16 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
           {globalContext ? (
             <GlobalNotificationBell notifications={globalContext.notifications} />
           ) : (
-            <button className="relative flex items-center justify-center h-9 w-9 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors" aria-label="Thông báo">
+            <button className="relative flex items-center justify-center h-10 w-10 sm:h-9 sm:w-9 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors" aria-label="Thông báo">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
             </button>
           )}
 
-          {/* Help Icon */}
-          <div className="relative">
+          {/* Help Icon (Desktop Only) */}
+          <div className="relative hidden lg:block">
             <button 
               onClick={() => setIsHelpOpen(!isHelpOpen)}
-              className="flex items-center justify-center h-9 w-9 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors" 
+              className="flex items-center justify-center h-10 w-10 sm:h-9 sm:w-9 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors" 
               aria-label="Trợ giúp"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
@@ -142,7 +154,7 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
             {isHelpOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setIsHelpOpen(false)} />
-                <div className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-slate-200 bg-white p-4 shadow-lg z-50">
+                <div className="fixed inset-x-2 sm:inset-x-auto sm:absolute sm:right-0 top-14 sm:top-full sm:mt-2 w-[calc(100vw-16px)] sm:w-80 rounded-xl border border-slate-200 bg-white p-4 shadow-lg z-50">
                   <h4 className="font-bold text-slate-900 mb-3">Hướng dẫn nhanh</h4>
                   <ol className="space-y-2 text-[13px] text-slate-600 list-decimal pl-4">
                     <li>Chọn công trình trên thanh trên để lọc dữ liệu Dashboard và các phân hệ theo công trình.</li>
@@ -160,16 +172,16 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
 
           {/* User Profile */}
           <div className="flex items-center gap-3 group cursor-pointer pr-1">
-            <div className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full overflow-hidden bg-gradient-to-br from-blue-100 to-blue-50 border border-blue-200 shadow-sm ring-2 ring-transparent group-hover:ring-blue-100 transition-all">
+            <div className="flex h-10 w-10 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full overflow-hidden bg-gradient-to-br from-blue-100 to-blue-50 border border-blue-200 shadow-sm ring-2 ring-transparent group-hover:ring-blue-100 transition-all">
                {userName ? (
-                 <span className="font-bold text-blue-700 text-[13px] sm:text-sm">
+                 <span className="font-bold text-blue-700 text-[14px]">
                    {userName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
                  </span>
                ) : (
-                 <User className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+                 <User className="h-5 w-5 text-blue-600" />
                )}
             </div>
-            <div className="flex flex-col items-start">
+            <div className="hidden sm:flex flex-col items-start">
               <div className="flex items-center gap-1.5">
                 <span className="max-w-[140px] truncate font-bold text-slate-900 text-[13px] leading-tight group-hover:text-blue-600 transition-colors">
                   {userName || userRole}
@@ -184,11 +196,11 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
 
           <button
             onClick={handleLogout}
-            className="icon-button ml-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+            className="hidden lg:flex h-10 w-10 sm:h-9 sm:w-9 items-center justify-center rounded-full text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
             title="Đăng xuất"
             aria-label="Đăng xuất"
           >
-            <LogOut className="h-[18px] w-[18px]" />
+            <LogOut className="h-5 w-5 sm:h-[18px] sm:w-[18px]" />
           </button>
         </div>
       </header>

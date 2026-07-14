@@ -167,7 +167,7 @@ export function SummaryMobileView({
             <div key={g.group.id} className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
               <button 
                 onClick={() => toggleGroup(g.group.id)}
-                className="w-full text-left p-3.5 bg-slate-50 flex items-start gap-3 active:bg-slate-100 transition-colors"
+                className="w-full text-left p-3 bg-slate-50 flex items-start gap-3 active:bg-slate-100 transition-colors"
                 aria-expanded={isExpanded}
                 aria-label={isExpanded ? `Thu gọn hạng mục ${g.group.categoryName}` : `Mở rộng hạng mục ${g.group.categoryName}`}
               >
@@ -199,7 +199,7 @@ export function SummaryMobileView({
                     const daysWithEntries = dynamicDates.filter(d => (item.dayTotals[formatWorkDate(d)] || 0) > 0);
 
                     return (
-                      <div key={item.id} className={`p-3.5 ${iOver ? 'bg-red-50/30' : 'bg-white'}`}>
+                      <div key={item.id} className={`p-3 ${iOver ? 'bg-red-50/30' : 'bg-white'}`}>
                         <div className="flex justify-between items-start gap-2 mb-2">
                           <h4 className="text-[14px] font-bold text-slate-800 leading-snug line-clamp-2">{item.workContent}</h4>
                           <Button 

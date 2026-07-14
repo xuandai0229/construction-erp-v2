@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Plus, Save, Trash2, ChevronRight, ChevronDown, ListTree, FileText, X, Search, Pencil } from "lucide-react";
+import { Plus, Save, Trash2, Search, X, Calendar, ChevronRight, CheckCircle2, ChevronDown, ListTree, FileText, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createItem, deleteItem, batchUpdateItems } from "@/app/(dashboard)/projects/[id]/field-progress/actions";
 import { formatQuantity } from "@/lib/field-progress";
+import { EnterpriseTable } from "@/components/ui/enterprise";
 import { sharedTableStyles } from "./table-styles";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast-context";
@@ -219,24 +220,24 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto hidden md:block">
-        <table className="w-full text-sm min-w-[1200px]">
-          <thead>
-            <tr className="bg-slate-50 border-b-2 border-slate-200 sticky top-0 z-30 shadow-sm">
+      <EnterpriseTable className="hidden md:block shadow-sm">
+        <table className="w-full text-sm min-w-[1200px] border-collapse">
+          <thead className="bg-slate-50 border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+            <tr>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.stt} sticky left-0 z-20 text-center`}>STT</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.content} sticky left-[56px] z-20 text-left`}>Hạng mục / Công việc</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.content} sticky left-[48px] z-20 text-left shadow-[1px_0_0_#e2e8f0]`}>Hạng mục / Công việc</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.crew} text-center`}>Mũi thi công</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.unit} text-center`}>Đơn vị</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.designQty} text-right`}>Khối lượng<br />thiết kế</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.cumulative} text-right text-blue-700 bg-blue-50/60`}>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.cumulative} text-right text-blue-700 bg-blue-50/80`}>
                 Khối lượng<br />đã duyệt
               </th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.percent} text-right text-blue-700 bg-blue-50/60`}>Hoàn thành</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.percent} text-right text-blue-700 bg-blue-50/80`}>Hoàn thành</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.notes} text-left`}>Ghi chú</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.action} text-center`}>Thao tác</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.action} sticky right-0 z-20 text-center shadow-[-1px_0_0_#e2e8f0]`}>Thao tác</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-slate-100">
             {items.map((item, index) => {
               if (item.parentId && !expanded[item.parentId]) return null;
               
@@ -250,20 +251,20 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
               return (
                 <tr 
                   key={item.id} 
-                  className={isGroup ? sharedTableStyles.groupRow : isDirty ? 'bg-amber-50/30 border-slate-100' : sharedTableStyles.workRow}
+                  className={`group/row transition-colors ${isGroup ? sharedTableStyles.groupRow : isDirty ? 'bg-amber-50/30' : sharedTableStyles.workRow}`}
                 >
-                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.stt} sticky left-0 z-10 ${isGroup ? 'bg-slate-50' : isDirty ? 'bg-amber-50/30' : 'bg-white'} text-center text-slate-400`}>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.stt} sticky left-0 z-10 shadow-[1px_0_0_#f1f5f9] text-center text-slate-400 ${isGroup ? 'bg-slate-50/70' : isDirty ? 'bg-amber-50/30' : 'bg-white group-hover/row:bg-slate-50/50'}`}>
                     {index + 1}
                   </td>
                   
-                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.content} sticky left-[56px] z-10 ${isGroup ? 'bg-slate-50' : isDirty ? 'bg-amber-50/30' : 'bg-white'}`} style={{ paddingLeft: `${item.displayLevel * 24 + 12}px` }}>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.content} sticky left-[48px] z-10 shadow-[1px_0_0_#f1f5f9] ${isGroup ? 'bg-slate-50/70' : isDirty ? 'bg-amber-50/30' : 'bg-white group-hover/row:bg-slate-50/50'}`} style={{ paddingLeft: `${item.displayLevel * 24 + 12}px` }}>
                     <div className="flex items-center gap-1.5">
                       {isGroup && (
                         <button aria-label={expanded[item.id] ? "Thu gọn hạng mục" : "Mở rộng hạng mục"} onClick={() => toggleExpand(item.id)} className="p-0.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors flex-shrink-0">
                           {expanded[item.id] ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                         </button>
                       )}
-                      {!isGroup && <div className="w-5 flex-shrink-0" />}
+                      {!isGroup && <div className="w-4 flex-shrink-0" />}
                       <label htmlFor={`master-content-${item.id}`} className="sr-only">{isGroup ? "Tên hạng mục" : "Tên công việc"}</label>
                       <textarea  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" 
                         id={`master-content-${item.id}`}
@@ -379,7 +380,7 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
                     )}
                   </td>
 
-                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.action} text-center`}>
+                  <td className={`${sharedTableStyles.cellTd} ${sharedTableStyles.cols.action} sticky right-0 z-10 shadow-[-1px_0_0_#f1f5f9] text-center ${isGroup ? 'bg-slate-50/70' : isDirty ? 'bg-amber-50/30' : 'bg-white group-hover/row:bg-slate-50/50'}`}>
                     <div className="flex items-center justify-center gap-1">
                       {isGroup && (
                         <button 
@@ -425,7 +426,7 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
             )}
           </tbody>
         </table>
-      </div>
+      </EnterpriseTable>
 
       {/* Mobile View — Compact Large-List UX */}
       <div className="md:hidden flex flex-col pb-24 bg-slate-50/50">

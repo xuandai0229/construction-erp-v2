@@ -27,7 +27,7 @@ export function ReportsMobileCards({ reports, onViewDetail, onViewGallery, onEdi
       {reports.map((report) => (
         <ContentCard
           key={report.id}
-          className="p-4 space-y-3 active:bg-slate-50 transition-colors"
+          className="p-3 space-y-3 active:bg-slate-50 transition-colors"
           onClick={() => onViewDetail(report)}
           role="button"
           tabIndex={0}

@@ -90,7 +90,7 @@ export function EditableCombobox({
   const updatePanelPosition = () => {
     if (!rootRef.current) return;
     const rect = rootRef.current.getBoundingClientRect();
-    const mobile = window.innerWidth < 640;
+    const mobile = typeof window !== 'undefined' ? window.matchMedia("(max-width: 639px)").matches : false;
     setIsMobile(mobile);
     const vh = window.innerHeight;
 

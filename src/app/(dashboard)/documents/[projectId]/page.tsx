@@ -261,22 +261,21 @@ export default async function ProjectDocumentsPage({
 
   return (
     <div className="app-page flex min-h-[calc(100dvh-7rem)] flex-col lg:h-[calc(100dvh-7rem)]">
-      <div className="mb-4">
-        <nav className="flex items-center text-sm font-medium text-slate-500 mb-2">
+      <div className="mb-3 sm:mb-4">
+        <nav className="flex items-center text-sm font-medium text-slate-500 mb-1 sm:mb-2">
           <Link href="/documents" className="flex items-center hover:text-blue-600 transition-colors">
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Tài liệu
+            Tất cả dự án
           </Link>
           <span className="mx-2">/</span>
-          <span className="text-slate-900">{project.name}</span>
+          <span className="text-slate-900">Tài liệu</span>
         </nav>
         <div className="flex items-center justify-between">
-          <div>
+          <div className="min-w-0">
             <h1 className="page-heading flex items-center gap-2">
-              <FolderOpen className="h-6 w-6 text-blue-500" />
-              Tài liệu: {project.name}
+              <FolderOpen className="h-5 w-5 sm:h-6 sm:w-6 text-blue-500 shrink-0" />
+              <span className="truncate">{project.name}</span>
             </h1>
-            <p className="text-sm text-slate-500 mt-1">Mã: {project.code}</p>
           </div>
         </div>
       </div>

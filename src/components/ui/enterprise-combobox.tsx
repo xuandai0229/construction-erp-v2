@@ -88,7 +88,7 @@ export function EnterpriseCombobox({
     if (!rootRef.current) return;
     const triggerRect = rootRef.current.getBoundingClientRect();
     const safePadding = 12;
-    const mobile = window.innerWidth < 640;
+    const mobile = typeof window !== 'undefined' ? window.matchMedia("(max-width: 639px)").matches : false;
     setIsMobile(mobile);
 
     const viewportHeight = window.innerHeight;

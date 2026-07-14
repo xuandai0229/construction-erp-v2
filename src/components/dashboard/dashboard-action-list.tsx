@@ -30,41 +30,41 @@ export function DashboardActionList({
   emptyTitle: string;
 }) {
   return (
-    <ContentCard className="flex flex-col">
-      <div className="border-b border-slate-100 p-4 sm:p-5">
-        <h2 className="text-base font-bold text-slate-950">{title}</h2>
-        {description && <p className="mt-1 text-sm text-slate-600">{description}</p>}
+    <div className="flex flex-col gap-3">
+      <div className="px-1 flex flex-col">
+        <h2 className="text-[17px] sm:text-[18px] font-black text-slate-900 tracking-tight">{title}</h2>
+        {description && <p className="text-[12px] sm:text-[13.5px] text-slate-500 mt-0.5">{description}</p>}
       </div>
-      <div className="p-3 sm:p-4">
-        {items.length === 0 ? (
-          <DashboardEmptyState title={emptyTitle} className="min-h-[180px]" />
-        ) : (
-          <div className="space-y-3">
-            {items.map((item) => (
-              <Link key={item.id} href={item.href} className="group block rounded-xl border border-slate-200 bg-white p-3 transition-colors hover:border-blue-200 hover:bg-blue-50/40 sm:p-4">
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-50">
-                    <TypeIcon priority={item.priority} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-xs font-semibold text-slate-600">{item.type}</span>
-                      {priorityBadge(item.priority)}
-                      <StatusBadge variant={item.status.includes("duyệt") ? "warning" : "neutral"} size="sm">{item.status}</StatusBadge>
-                    </div>
-                    <p className="mt-2 line-clamp-2 text-sm font-bold leading-5 text-slate-950">{item.title}</p>
-                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-slate-600">
-                      <span className="truncate">{item.projectName}</span>
-                      <span>{formatDateVNShort(item.createdAt)}</span>
-                    </div>
-                  </div>
-                  <ArrowRight className="mt-2 h-4 w-4 shrink-0 text-slate-400 transition-colors group-hover:text-blue-700" />
+      
+      {items.length === 0 ? (
+        <div className="rounded-[16px] border border-slate-200/60 bg-white/50 border-dashed p-4">
+           <DashboardEmptyState title={emptyTitle} className="min-h-[120px]" />
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2.5 sm:gap-3">
+          {items.map((item) => (
+            <Link key={item.id} href={item.href} className="group flex items-start gap-3 rounded-[16px] border border-slate-200/80 bg-white p-3.5 sm:p-4 shadow-[0_2px_10px_rgba(15,23,42,0.02)] transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md active:scale-[0.98]">
+              <div className="mt-0.5 flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-[10px] sm:rounded-xl bg-slate-50 border border-slate-100 group-hover:bg-blue-50/50 group-hover:border-blue-100 transition-colors">
+                <TypeIcon priority={item.priority} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1.5">
+                  <span className="text-[11px] sm:text-[12px] font-bold text-slate-600 tracking-wide uppercase">{item.type}</span>
+                  {priorityBadge(item.priority)}
+                  <StatusBadge variant={item.status.includes("duyệt") ? "warning" : "neutral"} size="sm">{item.status}</StatusBadge>
                 </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
-    </ContentCard>
+                <p className="line-clamp-2 text-[14px] sm:text-[15px] font-bold leading-snug text-slate-900 group-hover:text-blue-700 transition-colors">{item.title}</p>
+                <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] sm:text-[12.5px] font-medium text-slate-500">
+                  <span className="truncate max-w-[140px] sm:max-w-none text-slate-700">{item.projectName}</span>
+                  <span className="hidden sm:inline-block text-slate-300">•</span>
+                  <span>{formatDateVNShort(item.createdAt)}</span>
+                </div>
+              </div>
+              <ArrowRight className="mt-2 h-4 w-4 shrink-0 text-slate-300 transition-colors group-hover:text-blue-600 group-hover:translate-x-0.5" />
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

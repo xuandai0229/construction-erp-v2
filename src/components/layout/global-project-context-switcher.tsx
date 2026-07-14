@@ -138,29 +138,29 @@
             <button
               onClick={() => setIsOpen(!isOpen)}
               className={cn(
-                "flex items-center justify-between gap-2 rounded-xl border border-slate-200 px-3 py-1.5 text-sm transition-colors hover:bg-slate-50",
+                "flex items-center justify-between gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl border border-slate-200 px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm transition-colors hover:bg-slate-50",
                 displayProjectId
                   ? "bg-blue-50/50 text-blue-900 border-blue-200"
                   : "bg-white text-slate-700"
               )}
             >
-              <div className="flex items-center gap-2 truncate max-w-[120px] sm:max-w-[200px]">
+              <div className="flex items-center gap-1.5 sm:gap-2 truncate max-w-[100px] sm:max-w-[200px]">
                 {displayProjectId ? (
-                  <Building2 className="h-4 w-4 shrink-0 text-blue-600" />
+                  <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-blue-600" />
                 ) : (
-                  <Globe className="h-4 w-4 shrink-0 text-slate-500" />
+                  <Globe className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-slate-500" />
                 )}
                 <span className="truncate font-medium">
                   {selectedProject ? selectedProject.name : displayProjectId ? "Đang xem công trình" : "Toàn hệ thống"}
                 </span>
               </div>
-              <ChevronsUpDown className="h-4 w-4 shrink-0 text-slate-400" />
+              <ChevronsUpDown className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-slate-400" />
             </button>
 
             {isOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-                <div className="absolute right-0 sm:left-0 top-full z-50 mt-2 w-[280px] sm:w-[320px] overflow-hidden rounded-xl border border-slate-100 bg-white shadow-lg">
+                <div className="absolute left-0 top-full z-50 mt-2 w-[260px] sm:w-[320px] overflow-hidden rounded-xl border border-slate-100 bg-white shadow-lg">
                   <div className="p-2 border-b border-slate-100">
                     <div className="relative">
                       <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />

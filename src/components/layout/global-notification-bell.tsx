@@ -136,7 +136,7 @@ export function GlobalNotificationBell({ notifications }: { notifications: Notif
         ref={buttonRef}
         type="button"
         onClick={() => { const willOpen = !isOpen; window.dispatchEvent(new Event("close-overlays")); setIsOpen(willOpen); }}
-        className="relative flex items-center justify-center h-9 w-9 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+        className="relative flex items-center justify-center h-10 w-10 sm:h-9 sm:w-9 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
         aria-haspopup="dialog"
         aria-expanded={isOpen}
         aria-label="Thông báo"
@@ -152,7 +152,7 @@ export function GlobalNotificationBell({ notifications }: { notifications: Notif
       {isOpen && (
           <div
             ref={panelRef}
-            className="absolute right-0 top-full z-[80] mt-2 w-[calc(100vw-2rem)] max-w-[420px] overflow-hidden rounded-2xl border border-slate-200/60 bg-white/95 backdrop-blur-xl shadow-2xl shadow-slate-900/10 sm:w-[420px] animate-in slide-in-from-top-2 fade-in duration-200"
+            className="fixed inset-x-2 sm:inset-x-auto sm:absolute sm:right-0 top-14 sm:top-full z-[80] sm:mt-2 w-[calc(100vw-16px)] sm:w-[420px] max-w-[420px] overflow-hidden rounded-2xl border border-slate-200/60 bg-white/95 backdrop-blur-xl shadow-2xl shadow-slate-900/10 animate-in slide-in-from-top-2 fade-in duration-200"
             role="dialog"
             aria-label="Thông báo"
           >

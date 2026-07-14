@@ -48,14 +48,14 @@ export const sharedTableStyles = {
   },
 
   // Common header styling
-  headerTh: "align-middle px-3 py-2.5 text-[12px] font-semibold text-slate-600 uppercase tracking-wide border-r border-slate-200 bg-slate-50 whitespace-normal leading-snug",
+  headerTh: "align-middle px-3 py-2.5 text-[12px] font-semibold text-slate-500 bg-slate-50 whitespace-normal leading-snug border-b border-slate-200",
   
   // Common cell styling
-  cellTd: "align-middle min-h-[48px] px-2 py-2 border-r border-slate-100 text-[13px] font-medium bg-white text-slate-700 leading-snug",
+  cellTd: "align-middle min-h-[48px] px-2 py-2 border-b border-slate-100 text-[13px] font-medium bg-white text-slate-700 leading-snug group-hover/row:bg-slate-50/50",
   
-  // Group row styling - uses ! to override cellTd's bg-white 
-  groupRow: "bg-slate-50 border-slate-200 [&>td]:bg-slate-50",
+  // Group row styling
+  groupRow: "bg-slate-50/70 border-slate-200 [&>td]:bg-slate-50/70 [&>td]:border-b-slate-200 [&>td]:border-t-slate-200 [&>td]:border-t",
   
   // Work row styling
-  workRow: "bg-white hover:bg-slate-50/50 transition-colors"
+  workRow: "bg-white group/row transition-colors"
 };

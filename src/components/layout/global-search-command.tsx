@@ -124,7 +124,7 @@ export function GlobalSearchCommand({ globalContext }: GlobalSearchCommandProps)
     <>
       <button 
         onClick={() => { window.dispatchEvent(new Event("close-overlays")); setIsOpen(true); }}
-        className="hidden sm:flex items-center justify-center h-9 w-9 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors" 
+        className="flex items-center justify-center h-10 w-10 sm:h-9 sm:w-9 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors" 
         aria-label="Tìm kiếm"
         title="Tìm kiếm (Cmd+K)"
       >

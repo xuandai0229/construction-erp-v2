@@ -513,7 +513,7 @@ export function MaterialsTransactions({
           const colorClass = sign === "+" ? "text-emerald-700" : "text-rose-700";
           const ledger = ledgerById.get(transaction.id);
           return (
-            <ContentCard key={transaction.id} className="cursor-pointer p-4 transition-transform active:scale-[0.99]" onClick={() => handleOpenDrawer(transaction)}>
+            <ContentCard key={transaction.id} className="cursor-pointer p-3 active:scale-[0.99] transition-transform" onClick={() => handleOpenDrawer(transaction)}>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
@@ -532,7 +532,7 @@ export function MaterialsTransactions({
                   <div className="font-sans text-xs font-medium text-slate-500">{transaction.materialItem.unit}</div>
                 </div>
               </div>
-              <div className="mt-3 grid grid-cols-2 gap-2 rounded-lg bg-slate-50 p-3 text-sm text-slate-600">
+              <div className="mt-3 grid grid-cols-2 gap-2 rounded-lg bg-slate-50 p-2.5 sm:p-3 text-sm text-slate-600">
                 <div>
                   <div className="text-xs text-slate-500">Ngày</div>
                   <div className="font-medium text-slate-900">{formatDateTime(transaction.movementDate)}</div>

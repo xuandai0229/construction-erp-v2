@@ -74,6 +74,7 @@ import {
   DocumentListItem,
   DocumentViewer,
 } from "@/components/documents/document-viewer";
+import { MobileFolderNavigator } from "@/components/documents/mobile-folder-navigator";
 
 interface FolderItem {
   id: string;
@@ -200,6 +201,8 @@ export function DocumentWorkspace({
   const [selectedTrashFolderId, setSelectedTrashFolderId] = useState<string | null>(
     () => searchParams.get("trashFolder") || null
   );
+
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   const [selectedFolderId, setSelectedFolderIdRaw] = useState<string | null>(
     initialFolder,
@@ -540,6 +543,7 @@ export function DocumentWorkspace({
           return next;
         });
       }
+      setIsMobileNavOpen(false);
     },
     [foldersByParentId, setSelectedFolderId],
   );
@@ -1364,7 +1368,7 @@ const handleEditMetadata = async () => {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[22px] border border-slate-200/70 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)] md:flex-row">
-      <aside className="flex max-h-[240px] w-full shrink-0 flex-col overflow-y-auto border-r border-slate-200/80 bg-slate-50/70 md:h-auto md:max-h-none md:w-[330px]">
+      <aside className="hidden max-h-[240px] w-full shrink-0 flex-col overflow-y-auto border-r border-slate-200/80 bg-slate-50/70 md:flex md:h-auto md:max-h-none md:w-[330px]">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200/80 bg-slate-50/95 p-4 backdrop-blur">
           <div className="flex flex-col">
             <h2 className="font-semibold text-slate-900">Thư mục</h2>
@@ -1647,11 +1651,19 @@ const handleEditMetadata = async () => {
                       }
                     />
                     <div className="flex flex-col sm:flex-row items-center gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowNewFolder(true)}
+                        className="h-10 w-full rounded-lg sm:w-auto border-slate-200 text-slate-700 bg-white hover:bg-slate-50 md:hidden"
+                      >
+                        <FolderPlus className="mr-2 h-4 w-4" />
+                        Tạo thư mục
+                      </Button>
                       {selectedFolderId && (
                         <Button
                           variant="outline"
                           onClick={() => setShowNewFolder(true)}
-                          className="h-10 w-full rounded-lg sm:w-auto border-slate-200 text-slate-700 bg-white hover:bg-slate-50"
+                          className="hidden md:inline-flex h-10 w-full rounded-lg sm:w-auto border-slate-200 text-slate-700 bg-white hover:bg-slate-50"
                         >
                           <FolderPlus className="mr-2 h-4 w-4" />
                           Tạo mục bên trong
@@ -1665,10 +1677,21 @@ const handleEditMetadata = async () => {
                         title={!selectedFolderId ? "Hãy chọn hoặc mở một thư mục để tải tài liệu lên" : undefined}
                       >
                         <UploadCloud className="mr-2 h-4 w-4" />
-                        {isUploading ? "Đang tải..." : selectedFolderId ? "Tải tài liệu lên thư mục này" : "Tải tài liệu lên"}
+                        {isUploading ? "Đang tải..." : selectedFolderId ? "Tải lên thư mục này" : "Tải tài liệu lên"}
                       </Button>
                     </div>
                   </>
+                ) : !isTrashView && !selectedFolderId && canCreateFolderContextually ? (
+                  <div className="flex w-full sm:w-auto md:hidden">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowNewFolder(true)}
+                      className="h-10 w-full rounded-lg sm:w-auto border-slate-200 text-slate-700 bg-white hover:bg-slate-50"
+                    >
+                      <FolderPlus className="mr-2 h-4 w-4" />
+                      Tạo thư mục
+                    </Button>
+                  </div>
                 ) : null}
               </div>
             </div>
@@ -1690,12 +1713,20 @@ const handleEditMetadata = async () => {
                       <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                       <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                         type="text"
-                        placeholder="Tìm tài liệu, thư mục hoặc file gốc..."
+                        placeholder="Tìm tài liệu..."
                         value={searchQuery}
                         onChange={(event) => setSearchQuery(event.target.value)}
                         className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/60 pl-10 pr-4 text-sm font-medium text-slate-900 placeholder:text-slate-400 outline-none transition-all focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
                       />
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsMobileNavOpen(true)}
+                      className="flex md:hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+                      title="Duyệt cây thư mục"
+                    >
+                      <FolderOpen className="h-5 w-5" />
+                    </button>
 
                     <select
                       value={sortBy}
@@ -1758,7 +1789,7 @@ const handleEditMetadata = async () => {
                           {displayFolders.length} mục
                         </span>
                       </div>
-                      <div className={`${density === 'list' ? 'flex flex-col gap-2' : density === 'compact' ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5' : 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
+                      <div className={`${density === 'list' ? 'flex flex-col gap-2' : density === 'compact' ? 'grid grid-cols-1 min-[400px]:grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5' : 'grid grid-cols-1 min-[400px]:grid-cols-2 gap-2 sm:gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'}`}>
                           {displayFolders.map((folder) => {
                             const isDeleted = !!(folder as any).deletedAt;
                             return (
@@ -1767,7 +1798,7 @@ const handleEditMetadata = async () => {
                                 className={`group relative flex cursor-pointer transition-all hover:shadow-md ${
                                   density === 'list' 
                                     ? 'flex-row items-center gap-4 rounded-lg border border-slate-200 bg-white px-4 py-3' 
-                                    : 'flex-col rounded-lg border border-slate-200 bg-white p-4 hover:-translate-y-0.5'
+                                    : 'flex-col rounded-lg border border-slate-200 bg-white p-3 sm:p-4 hover:-translate-y-0.5'
                                 } ${isTrashView ? 'hover:border-red-300' : 'hover:border-blue-300'}`}
                                 onClick={() => {
                                   if (isTrashView) {
@@ -1787,7 +1818,7 @@ const handleEditMetadata = async () => {
                                   });
                                 }}
                               >
-                                <div className="absolute right-1 top-1 sm:right-2 sm:top-2">
+                                <div className="absolute right-2 top-2 sm:right-3 sm:top-3">
                                   <button
                                     type="button"
                                     onClick={(event) => {
@@ -1855,7 +1886,7 @@ const handleEditMetadata = async () => {
                       {displayDocs.length} file
                     </span>
                   </div>
-                  <div className={`${density === 'list' ? 'flex flex-col gap-2' : density === 'compact' ? 'grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5' : 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
+                  <div className={`${density === 'list' ? 'flex flex-col gap-2' : density === 'compact' ? 'grid grid-cols-1 min-[400px]:grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5' : 'grid grid-cols-1 min-[400px]:grid-cols-2 gap-2 sm:gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4'}`}>
                     {displayDocs.map((document) => {
                           const matchesRule = hasAllowedDocumentExtension(
                             document.extension,
@@ -1869,7 +1900,7 @@ const handleEditMetadata = async () => {
                             <article
                               key={document.id}
                               tabIndex={0}
-                              className="group relative flex cursor-pointer flex-col rounded-lg border border-slate-200 bg-white p-4 transition-all hover:border-blue-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="group relative flex cursor-pointer flex-col rounded-lg border border-slate-200 bg-white p-3 sm:p-4 transition-all hover:border-blue-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                               onClick={() => openDocument(document)}
                               onKeyDown={(event) => {
                                 if (event.key === "Enter" || event.key === " ") {
@@ -2437,6 +2468,38 @@ const handleEditMetadata = async () => {
         canCreateFolder={canCreateFolderContext}
         isTrashView={isTrashView}
       />
+
+      <MobileFolderNavigator
+        isOpen={isMobileNavOpen}
+        onClose={() => setIsMobileNavOpen(false)}
+      >
+        <div className="flex-1 p-2">
+          {rootFolders.map((folder) => (
+            <FolderNode key={folder.id} folder={folder} />
+          ))}
+          {rootFolders.length === 0 && (
+            <p className="py-4 text-center text-sm text-slate-500">
+              Chưa có thư mục
+            </p>
+          )}
+        </div>
+        
+        <div className="border-t border-slate-200 p-2 mt-auto shrink-0">
+          <div
+            className={`group flex min-h-12 cursor-pointer items-center gap-3 rounded-xl px-4 py-3 transition-colors hover:bg-red-50 ${isTrashView ? "bg-red-50 text-red-700 shadow-sm ring-1 ring-red-100" : "text-slate-700"
+              }`}
+            onClick={() => {
+              setTrashState(true, null);
+              setIsMobileNavOpen(false);
+            }}
+          >
+            <Trash2 className={`h-5 w-5 shrink-0 ${isTrashView ? "text-red-600" : "text-slate-400"}`} />
+            <span className="truncate text-[15px] font-medium">
+              Thùng rác
+            </span>
+          </div>
+        </div>
+      </MobileFolderNavigator>
     </div>
   );
 }
@@ -2545,7 +2608,7 @@ export function DocumentContextMenu({
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth <= 480);
+    const checkMobile = () => setIsMobile(window.matchMedia("(max-width: 639px)").matches);
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);

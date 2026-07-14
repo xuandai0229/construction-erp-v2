@@ -536,7 +536,7 @@ export function MaterialRequestList({
         ) : filteredRequests.map(req => {
           const StatusIcon = statusConfig[req.status as keyof typeof statusConfig]?.icon || FileText;
           return (
-            <div key={req.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3 active:scale-[0.99] transition-transform" onClick={() => handleView(req)}>
+            <div key={req.id} className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm space-y-3 active:scale-[0.99] transition-transform" onClick={() => handleView(req)}>
               <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0">
                   <SafeText className="font-bold text-slate-900 text-base">

@@ -465,7 +465,7 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
         {filtered.map((stock) => (
           <ContentCard 
             key={stock.id} 
-            className="p-4 active:scale-[0.99] transition-transform cursor-pointer"
+            className="p-3 active:scale-[0.99] transition-transform cursor-pointer"
             onClick={() => handleRowClick(stock.id)}
           >
             <div className="flex items-start justify-between gap-3">
@@ -490,13 +490,13 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
               </div>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-2">
-              <div className="rounded-lg bg-slate-50 p-3">
+              <div className="rounded-lg bg-slate-50 p-2.5 sm:p-3">
                 <div className="text-xs font-semibold text-slate-500">Tồn kho</div>
                 <div className="mt-1">
                   <QuantityCell value={stock.stock} unit={stock.materialItem.unit} />
                 </div>
               </div>
-              <div className="rounded-lg bg-slate-50 p-3 text-right">
+              <div className="rounded-lg bg-slate-50 p-2.5 sm:p-3 text-right">
                 <div className="text-xs font-semibold text-slate-500">Ngưỡng cảnh báo</div>
                 <div className="mt-1">
                   <QuantityCell value={stock.minStockLevel} unit={stock.materialItem.unit} />

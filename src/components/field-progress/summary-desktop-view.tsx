@@ -7,6 +7,7 @@ import { formatWorkDate } from "@/lib/date/work-date";
 import { formatQuantity } from "@/lib/field-progress";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { CloseButton } from "@/components/ui/close-button";
+import { EnterpriseTable } from "@/components/ui/enterprise";
 
 interface SummaryDesktopViewProps {
   displayItems: any[];
@@ -66,8 +67,8 @@ export function SummaryDesktopView({
     });
   }, [displayItems, searchTerm, filterStatus, includesUnapproved]);
 
-  const thBase = "px-3 py-2.5 text-[12px] font-semibold text-slate-600 uppercase tracking-wide border-b border-slate-200 bg-slate-50 whitespace-nowrap";
-  const tdBase = "px-3 py-2.5 text-sm border-b border-slate-100 bg-white";
+  const thBase = "px-3 py-2.5 text-[12px] font-semibold text-slate-500 bg-slate-50 whitespace-nowrap border-b border-slate-200 sticky top-0 z-30 shadow-sm";
+  const tdBase = "px-3 py-2.5 text-sm border-b border-slate-100 bg-white group-hover/row:bg-slate-50/50";
 
   return (
     <div className="hidden md:block">
@@ -125,7 +126,7 @@ export function SummaryDesktopView({
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-sm bg-white">
+      <EnterpriseTable className="hidden md:block shadow-sm">
         <table className="w-full text-left" style={{ tableLayout: 'auto', minWidth: showDayColumns ? '100%' : '100%' }}>
           <colgroup>
             <col style={{ width: '48px' }} />
@@ -151,8 +152,8 @@ export function SummaryDesktopView({
               <th className={`${thBase} text-center`}>Đơn vị</th>
               <th className={`${thBase} text-right`}>Thiết kế</th>
               <th className={`${thBase} text-right`} title={`Tổng khối lượng đã duyệt trước ngày ${formattedFromDate}`}>Trước kỳ</th>
-              <th className={`${thBase} text-right text-blue-700 bg-blue-50/60`}>Trong kỳ</th>
-              <th className={`${thBase} text-right text-blue-700 bg-blue-50/60`}>Lũy kế</th>
+              <th className={`${thBase} text-right text-blue-700 bg-blue-50/80`}>Trong kỳ</th>
+              <th className={`${thBase} text-right text-blue-700 bg-blue-50/80`}>Lũy kế</th>
               <th className={`${thBase} text-right`}>Tỷ lệ</th>
               {!showDayColumns && (
                 <th className={`${thBase} text-left`}>Phát sinh</th>
@@ -182,10 +183,10 @@ export function SummaryDesktopView({
               const daysWithEntries = dynamicDates.filter(d => (item.dayTotals[formatWorkDate(d)] || 0) > 0);
 
               const rowBg = isGroup
-                ? "bg-slate-50 [&>td]:bg-slate-50"
+                ? "bg-slate-50/70 [&>td]:bg-slate-50/70"
                 : isOver
                 ? "bg-red-50/40 [&>td]:bg-red-50/40 hover:bg-red-50/60"
-                : "hover:bg-slate-50/50";
+                : "bg-white group/row";
 
               return (
                 <tr key={item.id} className={`${rowBg} transition-colors`}>
@@ -283,7 +284,7 @@ export function SummaryDesktopView({
             )}
           </tbody>
         </table>
-      </div>
+      </EnterpriseTable>
 
       {/* Detail Drawer / Modal */}
       {activeItem && (

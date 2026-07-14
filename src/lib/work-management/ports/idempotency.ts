@@ -1,0 +1,2 @@
+export type IdempotencyReservation = { key: string; payloadHash: string; status: "IN_PROGRESS" | "COMPLETED" | "FAILED"; result?: unknown };
+export interface IdempotencyRepository { findResult(key: string): Promise<IdempotencyReservation | null>; reserve(entry: IdempotencyReservation): Promise<"RESERVED" | "EXISTS">; complete(key: string, result: unknown): Promise<void>; fail(key: string): Promise<void>; }
