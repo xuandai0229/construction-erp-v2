@@ -1,12 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, RefreshCw, Home } from "lucide-react";
 
 export function PageError({
-  error,
   reset,
   title = "Đã xảy ra lỗi khi tải dữ liệu",
   message = "Hệ thống đang gặp sự cố khi xử lý trang này. Vui lòng thử lại sau hoặc quay về trang chủ.",
@@ -17,11 +15,6 @@ export function PageError({
   message?: string;
 }) {
   const router = useRouter();
-  const showTechnicalDetails = process.env.NODE_ENV !== "production";
-
-  useEffect(() => {
-    console.error("Page Crash:", { message: error.message, digest: error.digest, error });
-  }, [error]);
 
   return (
     <div className="mx-auto flex min-h-[420px] w-full items-center justify-center p-4">
@@ -33,13 +26,7 @@ export function PageError({
         <p className="mx-auto mt-2 text-sm leading-relaxed text-slate-600">
           {message}
         </p>
-        
-        {showTechnicalDetails && error.message && (
-          <div className="mt-4 p-3 bg-slate-50 border border-slate-100 rounded-lg text-left text-xs font-mono text-slate-500 overflow-x-auto max-h-32">
-            {error.message}
-          </div>
-        )}
-        {error.digest ? <p className="mt-3 text-xs text-slate-400">Mã tham chiếu: {error.digest}</p> : null}
+        <p className="mt-3 text-xs text-slate-400">Mã tham chiếu: ERR-PAGE-UNAVAILABLE</p>
         
         <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
           {reset && (

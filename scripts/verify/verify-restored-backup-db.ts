@@ -1,9 +1,10 @@
+import "dotenv/config";
 import { PrismaClient } from '@prisma/client';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 
-// Use the restore test DB
-const connectionString = 'postgresql://postgres:123456@127.0.0.1:5432/construction_erp_restore_test';
+const connectionString = process.env.QA_RESTORE_DATABASE_URL;
+if (!connectionString) throw new Error("QA_RESTORE_DATABASE_URL is required for restore verification.");
 const pool = new Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });

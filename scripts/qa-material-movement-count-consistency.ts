@@ -1,14 +1,7 @@
-import { PrismaClient } from "@prisma/client";
-import { Pool } from "pg";
-import { PrismaPg } from "@prisma/adapter-pg";
-
-const connectionString =
-  process.env.DATABASE_URL ||
-  "postgresql://postgres:123456@127.0.0.1:5432/construction_erp_v2?schema=public";
-
-const pool = new Pool({ connectionString });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+import "dotenv/config";
+import type { Prisma } from "@prisma/client";
+import { assertSafeQaDatabase } from "./qa/assert-safe-qa-database";
+import { createSafeQaPrismaClient } from "./qa/create-safe-qa-prisma-client";
 
 type MovementTypeFilter = "ALL" | "IMPORT" | "EXPORT";
 
@@ -17,6 +10,10 @@ function normalize(value: string | undefined) {
 }
 
 async function main() {
+  const safety = await assertSafeQaDatabase();
+  if (!safety.safe || !process.env.QA_DATABASE_URL) throw new Error("QA safety guard chưa đạt; không chạy audit.");
+  const { prisma, close } = createSafeQaPrismaClient(process.env.QA_DATABASE_URL);
+  try {
   const projectIdInput = normalize(process.env.QA_PROJECT_ID);
   const projectCodeInput = normalize(process.env.QA_PROJECT_CODE);
   const movementType = (normalize(process.env.QA_MOVEMENT_TYPE) || "ALL") as MovementTypeFilter;
@@ -40,7 +37,7 @@ async function main() {
   const dbTotal = await prisma.materialMovement.count({ where: { projectId: project.id } });
   const dbActiveNotDeletedTotal = dbTotal; // MaterialMovement schema hiện không có deletedAt.
 
-  const where: any = { projectId: project.id };
+  const where: Prisma.MaterialMovementWhereInput = { projectId: project.id };
   if (movementType !== "ALL") where.type = movementType;
   if (materialId) where.materialItemId = materialId;
   if (dateFrom || dateTo) {
@@ -105,15 +102,14 @@ async function main() {
     ),
   );
 
-  if (!pass) process.exitCode = 1;
+    if (!pass) process.exitCode = 1;
+  } finally {
+    await close();
+  }
 }
 
 main()
-  .catch((error) => {
-    console.error(error);
+  .catch(() => {
+    console.error("QA material movement consistency audit failed.");
     process.exitCode = 1;
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-    await pool.end();
   });

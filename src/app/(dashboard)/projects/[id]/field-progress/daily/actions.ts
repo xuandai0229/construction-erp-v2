@@ -88,7 +88,7 @@ export async function batchSaveDailyEntries(projectId: string, templateId: strin
       const existingEntry = existingEntries[0];
       
       if (existingEntry && existingEntry.sourceType === "SITE_REPORT") {
-        throw new Error("Dòng này đến từ Báo cáo hiện trường. Không thể sửa trực tiếp tại màn Nhập khối lượng ngày. Hãy sửa báo cáo gốc hoặc tạo điều chỉnh có lý do.");
+        throw new Error("Dòng này đến từ Báo cáo hiện trường. Không thể sửa trực tiếp tại màn Khối lượng thực hiện. Hãy sửa báo cáo gốc hoặc tạo điều chỉnh có lý do.");
       }
 
       // Handle quantity = 0

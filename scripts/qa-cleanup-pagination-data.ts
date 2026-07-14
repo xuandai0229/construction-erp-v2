@@ -1,14 +1,12 @@
 import "dotenv/config";
-import { PrismaClient } from "@prisma/client";
-import { Pool } from "pg";
-import { PrismaPg } from "@prisma/adapter-pg";
-
-const connectionString = process.env.DATABASE_URL || "postgres://postgres:postgres@localhost:5432/construction_erp";
-const pool = new Pool({ connectionString });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+import { assertSafeQaDatabase } from "./qa/assert-safe-qa-database";
+import { createSafeQaPrismaClient } from "./qa/create-safe-qa-prisma-client";
 
 async function main() {
+  const safety = await assertSafeQaDatabase();
+  if (!safety.safe || !process.env.QA_DATABASE_URL) throw new Error("QA safety guard chưa đạt; không chạy cleanup.");
+  const { prisma, close } = createSafeQaPrismaClient(process.env.QA_DATABASE_URL);
+  try {
   const paginationProjects = await prisma.project.findMany({
     where: { code: { startsWith: "QA_TEST_PAGINATION_" } }
   });
@@ -33,10 +31,13 @@ async function main() {
     });
   }
 
-  console.log(`Cleaned up ${paginationProjects.length} QA_TEST_PAGINATION_ projects.`);
+    console.log(`Cleaned up ${paginationProjects.length} QA_TEST_PAGINATION_ projects.`);
+  } finally {
+    await close();
+  }
 }
 
-main().catch(console.error).finally(async () => {
-  await prisma.$disconnect();
-  await pool.end();
+main().catch(() => {
+  console.error("QA pagination cleanup failed.");
+  process.exitCode = 1;
 });

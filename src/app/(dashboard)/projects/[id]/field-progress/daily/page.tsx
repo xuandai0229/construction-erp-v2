@@ -140,10 +140,10 @@ export default async function FieldProgressDailyPage({
             >
               <ArrowLeft className="h-5 w-5" />
             </Link>
-            Khối lượng theo ngày
+            Khối lượng thực hiện theo ngày
           </h1>
           <p className="text-slate-600 mt-1.5 ml-8 sm:ml-11 text-sm sm:text-base hidden sm:block">
-            Xem và điều chỉnh khối lượng thi công thực tế (dữ liệu được đồng bộ từ Báo cáo hiện trường).
+            Cập nhật và theo dõi khối lượng thi công thực tế theo từng ngày.
           </p>
           <p className="text-xs sm:text-sm text-slate-500 mt-1 sm:mt-1.5 ml-8 sm:ml-11 line-clamp-1">
             Công trình: <span className="font-semibold text-slate-700">{project.code}</span> - {project.name}
@@ -165,7 +165,7 @@ export default async function FieldProgressDailyPage({
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
         </div>
         <div>
-          <h4 className="font-bold text-blue-900 text-sm">Nguồn dữ liệu ưu tiên từ Báo cáo hiện trường</h4>
+          <h4 className="font-bold text-blue-900 text-sm">Dữ liệu từ Báo cáo hiện trường</h4>
           <p className="text-blue-700 text-sm mt-0.5">
             Các dòng khối lượng đã duyệt từ báo cáo hiện trường sẽ bị khóa để đảm bảo tính nhất quán. Chỉ người có quyền phê duyệt mới được điều chỉnh thủ công.
           </p>

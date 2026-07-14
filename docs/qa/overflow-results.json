@@ -1,0 +1,1634 @@
+[
+  {
+    "route": "/login",
+    "viewport": {
+      "width": 320,
+      "height": 568,
+      "name": "iPhone_SE"
+    },
+    "overflowStatus": {
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -32,
+        "right": 128,
+        "width": 160,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 192,
+        "right": 352,
+        "width": 160,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.66929817199707,
+        "right": 247.64808464050293,
+        "width": 268.3173828125,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.66929817199707,
+        "right": 247.64808464050293,
+        "width": 268.3173828125,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/login",
+    "viewport": {
+      "width": 360,
+      "height": 800,
+      "name": "Android_Medium"
+    },
+    "overflowStatus": {
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -36,
+        "right": 144,
+        "width": 180,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 216,
+        "right": 396,
+        "width": 180,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.70218276977539,
+        "right": 247.63055038452148,
+        "width": 268.3327331542969,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.70218276977539,
+        "right": 247.63055038452148,
+        "width": 268.3327331542969,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/login",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "name": "iPhone_12"
+    },
+    "overflowStatus": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -39,
+        "right": 156,
+        "width": 195,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 234,
+        "right": 429,
+        "width": 195,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.63650894165039,
+        "right": 247.66555404663086,
+        "width": 268.30206298828125,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.63650894165039,
+        "right": 247.66555404663086,
+        "width": 268.30206298828125,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/login",
+    "viewport": {
+      "width": 412,
+      "height": 915,
+      "name": "Android_Large"
+    },
+    "overflowStatus": {
+      "scrollWidth": 412,
+      "clientWidth": 412,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -41.1875,
+        "right": 164.8125,
+        "width": 206,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 247.1875,
+        "right": 453.1875,
+        "width": 206,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.71864891052246,
+        "right": 247.6217746734619,
+        "width": 268.3404235839844,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.71864891052246,
+        "right": 247.6217746734619,
+        "width": 268.3404235839844,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/dashboard",
+    "viewport": {
+      "width": 320,
+      "height": 568,
+      "name": "iPhone_SE"
+    },
+    "overflowStatus": {
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -32,
+        "right": 128,
+        "width": 160,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 192,
+        "right": 352,
+        "width": 160,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.735143661499023,
+        "right": 247.61297035217285,
+        "width": 268.3481140136719,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.735143661499023,
+        "right": 247.61297035217285,
+        "width": 268.3481140136719,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/dashboard",
+    "viewport": {
+      "width": 360,
+      "height": 800,
+      "name": "Android_Medium"
+    },
+    "overflowStatus": {
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -36,
+        "right": 144,
+        "width": 180,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 216,
+        "right": 396,
+        "width": 180,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.735136032104492,
+        "right": 247.61297798156738,
+        "width": 268.3481140136719,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.735136032104492,
+        "right": 247.61297798156738,
+        "width": 268.3481140136719,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/dashboard",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "name": "iPhone_12"
+    },
+    "overflowStatus": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -39,
+        "right": 156,
+        "width": 195,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 234,
+        "right": 429,
+        "width": 195,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.751596450805664,
+        "right": 247.6042079925537,
+        "width": 268.3558044433594,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.751596450805664,
+        "right": 247.6042079925537,
+        "width": 268.3558044433594,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/dashboard",
+    "viewport": {
+      "width": 412,
+      "height": 915,
+      "name": "Android_Large"
+    },
+    "overflowStatus": {
+      "scrollWidth": 412,
+      "clientWidth": 412,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -41.1875,
+        "right": 164.8125,
+        "width": 206,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 247.1875,
+        "right": 453.1875,
+        "width": 206,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.751619338989258,
+        "right": 247.60418510437012,
+        "width": 268.3558044433594,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.751619338989258,
+        "right": 247.60418510437012,
+        "width": 268.3558044433594,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/projects",
+    "viewport": {
+      "width": 320,
+      "height": 568,
+      "name": "iPhone_SE"
+    },
+    "overflowStatus": {
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -32,
+        "right": 128,
+        "width": 160,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 192,
+        "right": 352,
+        "width": 160,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.73516082763672,
+        "right": 247.61295318603516,
+        "width": 268.3481140136719,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.73516082763672,
+        "right": 247.61295318603516,
+        "width": 268.3481140136719,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/projects",
+    "viewport": {
+      "width": 360,
+      "height": 800,
+      "name": "Android_Medium"
+    },
+    "overflowStatus": {
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -36,
+        "right": 144,
+        "width": 180,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 216,
+        "right": 396,
+        "width": 180,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.73515510559082,
+        "right": 247.61298942565918,
+        "width": 268.34814453125,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.73515510559082,
+        "right": 247.61298942565918,
+        "width": 268.34814453125,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/projects",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "name": "iPhone_12"
+    },
+    "overflowStatus": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -39,
+        "right": 156,
+        "width": 195,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 234,
+        "right": 429,
+        "width": 195,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.718690872192383,
+        "right": 247.62176322937012,
+        "width": 268.3404541015625,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.718690872192383,
+        "right": 247.62176322937012,
+        "width": 268.3404541015625,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/projects",
+    "viewport": {
+      "width": 412,
+      "height": 915,
+      "name": "Android_Large"
+    },
+    "overflowStatus": {
+      "scrollWidth": 412,
+      "clientWidth": 412,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -41.1875,
+        "right": 164.8125,
+        "width": 206,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 247.1875,
+        "right": 453.1875,
+        "width": 206,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.751611709594727,
+        "right": 247.60419273376465,
+        "width": 268.3558044433594,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.751611709594727,
+        "right": 247.60419273376465,
+        "width": 268.3558044433594,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/users",
+    "viewport": {
+      "width": 320,
+      "height": 568,
+      "name": "iPhone_SE"
+    },
+    "overflowStatus": {
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -32,
+        "right": 128,
+        "width": 160,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 192,
+        "right": 352,
+        "width": 160,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.735158920288086,
+        "right": 247.6129550933838,
+        "width": 268.3481140136719,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.735158920288086,
+        "right": 247.6129550933838,
+        "width": 268.3481140136719,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/users",
+    "viewport": {
+      "width": 360,
+      "height": 800,
+      "name": "Android_Medium"
+    },
+    "overflowStatus": {
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -36,
+        "right": 144,
+        "width": 180,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 216,
+        "right": 396,
+        "width": 180,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.75162696838379,
+        "right": 247.6041774749756,
+        "width": 268.3558044433594,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.75162696838379,
+        "right": 247.6041774749756,
+        "width": 268.3558044433594,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/users",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "name": "iPhone_12"
+    },
+    "overflowStatus": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -39,
+        "right": 156,
+        "width": 195,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 234,
+        "right": 429,
+        "width": 195,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.73514175415039,
+        "right": 247.61297225952148,
+        "width": 268.3481140136719,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.73514175415039,
+        "right": 247.61297225952148,
+        "width": 268.3481140136719,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/users",
+    "viewport": {
+      "width": 412,
+      "height": 915,
+      "name": "Android_Large"
+    },
+    "overflowStatus": {
+      "scrollWidth": 412,
+      "clientWidth": 412,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -41.1875,
+        "right": 164.8125,
+        "width": 206,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 247.1875,
+        "right": 453.1875,
+        "width": 206,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.73515510559082,
+        "right": 247.61298942565918,
+        "width": 268.34814453125,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.73515510559082,
+        "right": 247.61298942565918,
+        "width": 268.34814453125,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/settings",
+    "viewport": {
+      "width": 320,
+      "height": 568,
+      "name": "iPhone_SE"
+    },
+    "overflowStatus": {
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -32,
+        "right": 128,
+        "width": 160,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 192,
+        "right": 352,
+        "width": 160,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.735149383544922,
+        "right": 247.61296463012695,
+        "width": 268.3481140136719,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.735149383544922,
+        "right": 247.61296463012695,
+        "width": 268.3481140136719,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/settings",
+    "viewport": {
+      "width": 360,
+      "height": 800,
+      "name": "Android_Medium"
+    },
+    "overflowStatus": {
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -36,
+        "right": 144,
+        "width": 180,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 216,
+        "right": 396,
+        "width": 180,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.735124588012695,
+        "right": 247.61298942565918,
+        "width": 268.3481140136719,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.735124588012695,
+        "right": 247.61298942565918,
+        "width": 268.3481140136719,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/settings",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "name": "iPhone_12"
+    },
+    "overflowStatus": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -39,
+        "right": 156,
+        "width": 195,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 234,
+        "right": 429,
+        "width": 195,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.735149383544922,
+        "right": 247.61296463012695,
+        "width": 268.3481140136719,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.735149383544922,
+        "right": 247.61296463012695,
+        "width": 268.3481140136719,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/settings",
+    "viewport": {
+      "width": 412,
+      "height": 915,
+      "name": "Android_Large"
+    },
+    "overflowStatus": {
+      "scrollWidth": 412,
+      "clientWidth": 412,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -41.1875,
+        "right": 164.8125,
+        "width": 206,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 247.1875,
+        "right": 453.1875,
+        "width": 206,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.71866226196289,
+        "right": 247.62176132202148,
+        "width": 268.3404235839844,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.71866226196289,
+        "right": 247.62176132202148,
+        "width": 268.3404235839844,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/audit",
+    "viewport": {
+      "width": 320,
+      "height": 568,
+      "name": "iPhone_SE"
+    },
+    "overflowStatus": {
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -32,
+        "right": 128,
+        "width": 160,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 192,
+        "right": 352,
+        "width": 160,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.718650817871094,
+        "right": 247.62177276611328,
+        "width": 268.3404235839844,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.718650817871094,
+        "right": 247.62177276611328,
+        "width": 268.3404235839844,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/audit",
+    "viewport": {
+      "width": 360,
+      "height": 800,
+      "name": "Android_Medium"
+    },
+    "overflowStatus": {
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -36,
+        "right": 144,
+        "width": 180,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 216,
+        "right": 396,
+        "width": 180,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.735151290893555,
+        "right": 247.61296272277832,
+        "width": 268.3481140136719,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.735151290893555,
+        "right": 247.61296272277832,
+        "width": 268.3481140136719,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/audit",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "name": "iPhone_12"
+    },
+    "overflowStatus": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -39,
+        "right": 156,
+        "width": 195,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 234,
+        "right": 429,
+        "width": 195,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.718645095825195,
+        "right": 247.62177848815918,
+        "width": 268.3404235839844,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.718645095825195,
+        "right": 247.62177848815918,
+        "width": 268.3404235839844,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/audit",
+    "viewport": {
+      "width": 412,
+      "height": 915,
+      "name": "Android_Large"
+    },
+    "overflowStatus": {
+      "scrollWidth": 412,
+      "clientWidth": 412,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -41.1875,
+        "right": 164.8125,
+        "width": 206,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 247.1875,
+        "right": 453.1875,
+        "width": 206,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.71865463256836,
+        "right": 247.62176895141602,
+        "width": 268.3404235839844,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.71865463256836,
+        "right": 247.62176895141602,
+        "width": 268.3404235839844,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/materials",
+    "viewport": {
+      "width": 320,
+      "height": 568,
+      "name": "iPhone_SE"
+    },
+    "overflowStatus": {
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -32,
+        "right": 128,
+        "width": 160,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 192,
+        "right": 352,
+        "width": 160,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.73514747619629,
+        "right": 247.6129665374756,
+        "width": 268.3481140136719,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.73514747619629,
+        "right": 247.6129665374756,
+        "width": 268.3481140136719,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/materials",
+    "viewport": {
+      "width": 360,
+      "height": 800,
+      "name": "Android_Medium"
+    },
+    "overflowStatus": {
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -36,
+        "right": 144,
+        "width": 180,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 216,
+        "right": 396,
+        "width": 180,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.735132217407227,
+        "right": 247.61298179626465,
+        "width": 268.3481140136719,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.735132217407227,
+        "right": 247.61298179626465,
+        "width": 268.3481140136719,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/materials",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "name": "iPhone_12"
+    },
+    "overflowStatus": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -39,
+        "right": 156,
+        "width": 195,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 234,
+        "right": 429,
+        "width": 195,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.71866798400879,
+        "right": 247.6217555999756,
+        "width": 268.3404235839844,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.71866798400879,
+        "right": 247.6217555999756,
+        "width": 268.3404235839844,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/materials",
+    "viewport": {
+      "width": 412,
+      "height": 915,
+      "name": "Android_Large"
+    },
+    "overflowStatus": {
+      "scrollWidth": 412,
+      "clientWidth": 412,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -41.1875,
+        "right": 164.8125,
+        "width": 206,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 247.1875,
+        "right": 453.1875,
+        "width": 206,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.751615524291992,
+        "right": 247.60418891906738,
+        "width": 268.3558044433594,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.751615524291992,
+        "right": 247.60418891906738,
+        "width": 268.3558044433594,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/approvals",
+    "viewport": {
+      "width": 320,
+      "height": 568,
+      "name": "iPhone_SE"
+    },
+    "overflowStatus": {
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -32,
+        "right": 128,
+        "width": 160,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 192,
+        "right": 352,
+        "width": 160,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.751630783081055,
+        "right": 247.60417366027832,
+        "width": 268.3558044433594,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.751630783081055,
+        "right": 247.60417366027832,
+        "width": 268.3558044433594,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/approvals",
+    "viewport": {
+      "width": 360,
+      "height": 800,
+      "name": "Android_Medium"
+    },
+    "overflowStatus": {
+      "scrollWidth": 360,
+      "clientWidth": 360,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -36,
+        "right": 144,
+        "width": 180,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 216,
+        "right": 396,
+        "width": 180,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.73514747619629,
+        "right": 247.6129665374756,
+        "width": 268.3481140136719,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.73514747619629,
+        "right": 247.6129665374756,
+        "width": 268.3481140136719,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/approvals",
+    "viewport": {
+      "width": 390,
+      "height": 844,
+      "name": "iPhone_12"
+    },
+    "overflowStatus": {
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -39,
+        "right": 156,
+        "width": 195,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 234,
+        "right": 429,
+        "width": 195,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.73516273498535,
+        "right": 247.61295127868652,
+        "width": 268.3481140136719,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.73516273498535,
+        "right": 247.61295127868652,
+        "width": 268.3481140136719,
+        "display": "flex"
+      }
+    ]
+  },
+  {
+    "route": "/approvals",
+    "viewport": {
+      "width": 412,
+      "height": 915,
+      "name": "Android_Large"
+    },
+    "overflowStatus": {
+      "scrollWidth": 412,
+      "clientWidth": 412,
+      "isOverflowing": false
+    },
+    "offenders": [
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute top-[-15%] left-[-10%] w-[50%] h-[60%] bg-blue-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": -41.1875,
+        "right": 164.8125,
+        "width": 206,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute bottom-[-10%] right-[-10%] w-[50%] h-[60%] bg-indigo-400/20 rounded-full mix-blend-multiply filter blur-[120px]",
+        "left": 247.1875,
+        "right": 453.1875,
+        "width": 206,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "absolute -bottom-4 -left-4 lg:bottom-8 lg:left-8 opacity-40 lg:opacity-50 blur-[1px] animate-bg-3d-1",
+        "left": -20.75162124633789,
+        "right": 247.60418319702148,
+        "width": 268.3558044433594,
+        "display": "block"
+      },
+      {
+        "tag": "DIV",
+        "id": "",
+        "className": "w-64 h-80 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-2xl p-5 flex flex-col justify-between relative",
+        "left": -20.75162124633789,
+        "right": 247.60418319702148,
+        "width": 268.3558044433594,
+        "display": "flex"
+      }
+    ]
+  }
+]

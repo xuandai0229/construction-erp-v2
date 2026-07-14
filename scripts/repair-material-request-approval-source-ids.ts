@@ -1,22 +1,17 @@
 import "dotenv/config";
-import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool } from "pg";
-
-const connectionString =
-  process.env.DATABASE_URL ||
-  "postgresql://postgres:123456@127.0.0.1:5432/construction_erp_v2?schema=public";
+import { assertSafeQaDatabase } from "./qa/assert-safe-qa-database";
+import { createSafeQaPrismaClient } from "./qa/create-safe-qa-prisma-client";
 
 const APPLY_CONFIRMATION = "REPAIR_MATERIAL_APPROVAL_SOURCE_IDS";
 const args = new Set(process.argv.slice(2));
 const shouldApply = args.has("--apply");
 const confirmed = args.has("--confirm") && process.argv.includes(APPLY_CONFIRMATION);
 
-const pool = new Pool({ connectionString });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
-
 async function main() {
+  const safety = await assertSafeQaDatabase();
+  if (!safety.safe || !process.env.QA_DATABASE_URL) throw new Error("QA safety guard chưa đạt; không chạy repair.");
+  const { prisma, close } = createSafeQaPrismaClient(process.env.QA_DATABASE_URL);
+  try {
   if (shouldApply && !confirmed) {
     throw new Error(`Apply mode requires: --apply --confirm ${APPLY_CONFIRMATION}`);
   }
@@ -133,15 +128,14 @@ async function main() {
     ),
   );
 
-  if (unresolved.length > 0) process.exitCode = 1;
+    if (unresolved.length > 0) process.exitCode = 1;
+  } finally {
+    await close();
+  }
 }
 
 main()
-  .catch((error) => {
-    console.error(error);
+  .catch(() => {
+    console.error("QA material approval source repair failed.");
     process.exitCode = 1;
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-    await pool.end();
   });

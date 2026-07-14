@@ -1787,7 +1787,7 @@ const handleEditMetadata = async () => {
                                   });
                                 }}
                               >
-                                <div className="absolute right-2 top-2">
+                                <div className="absolute right-1 top-1 sm:right-2 sm:top-2">
                                   <button
                                     type="button"
                                     onClick={(event) => {
@@ -1800,17 +1800,17 @@ const handleEditMetadata = async () => {
                                         y: event.clientY,
                                       });
                                     }}
-                                    className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                                    className="flex h-10 w-10 sm:h-8 sm:w-8 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-900 transition-colors"
                                     title="Thêm thao tác"
                                   >
                                     <MoreVertical className="h-4 w-4" />
                                   </button>
                                 </div>
-                                <div className={`flex items-center justify-center rounded-lg ${density === 'list' ? 'h-10 w-10 shrink-0 bg-blue-50/50' : 'mb-3 h-12 w-12 bg-blue-50/50'}`}>
-                                  <Folder className={`${isTrashView ? 'text-red-400' : 'text-blue-500'} ${density === 'list' ? 'h-5 w-5' : 'h-6 w-6'}`} />
+                                <div className={`flex items-center justify-center rounded-lg ${density === 'list' ? 'h-9 w-9 sm:h-10 sm:w-10 shrink-0 bg-blue-50/50' : 'mb-2 sm:mb-3 h-10 w-10 sm:h-12 sm:w-12 bg-blue-50/50'}`}>
+                                  <Folder className={`${isTrashView ? 'text-red-400' : 'text-blue-500'} ${density === 'list' ? 'h-4 w-4 sm:h-5 sm:w-5' : 'h-5 w-5 sm:h-6 sm:w-6'}`} />
                                 </div>
                                 <div className="min-w-0 flex-1 pr-6">
-                                  <p className={`truncate font-semibold text-slate-900 ${density === 'compact' ? 'text-sm' : 'text-sm'}`}>
+                                  <p className={`truncate font-semibold text-slate-900 ${density === 'compact' ? 'text-xs sm:text-sm' : 'text-sm'}`}>
                                     {formatDocumentFolderName(folder.name)}
                                   </p>
                                   {density !== 'compact' && (
@@ -2494,6 +2494,7 @@ function RenameDialog({
   );
 }
 
+
 export function DocumentContextMenu({
   contextMenu,
   onClose,
@@ -2541,9 +2542,17 @@ export function DocumentContextMenu({
 }) {
   const menuRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<{ x: number | null; y: number | null }>({ x: null, y: null });
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    if (!contextMenu || !menuRef.current) return;
+    const checkMobile = () => setIsMobile(window.innerWidth <= 480);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  useEffect(() => {
+    if (!contextMenu || !menuRef.current || isMobile) return;
     const { innerWidth, innerHeight } = window;
     const { offsetWidth, offsetHeight } = menuRef.current;
     
@@ -2560,7 +2569,7 @@ export function DocumentContextMenu({
     newY = Math.max(12, newY);
     
     setPosition({ x: newX, y: newY });
-  }, [contextMenu]);
+  }, [contextMenu, isMobile]);
 
   useEffect(() => {
     if (!contextMenu) return;
@@ -2572,13 +2581,15 @@ export function DocumentContextMenu({
     const handleScrollOrResize = () => onClose();
     const handleEscape = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     
-    // Slight delay to prevent immediate close on the click that opens the menu
     setTimeout(() => {
       document.addEventListener("click", handleClickOutside);
       document.addEventListener("contextmenu", handleClickOutside);
     }, 0);
     
-    window.addEventListener("scroll", handleScrollOrResize, true);
+    // Don't close on scroll if it's mobile drawer
+    if (!isMobile) {
+      window.addEventListener("scroll", handleScrollOrResize, true);
+    }
     window.addEventListener("resize", handleScrollOrResize);
     document.addEventListener("keydown", handleEscape);
     
@@ -2589,18 +2600,21 @@ export function DocumentContextMenu({
       window.removeEventListener("resize", handleScrollOrResize);
       document.removeEventListener("keydown", handleEscape);
     };
-  }, [contextMenu, onClose]);
+  }, [contextMenu, onClose, isMobile]);
 
   if (!contextMenu) return null;
 
-  return createPortal(
-    <div
-      ref={menuRef}
-      className="fixed z-[9999] min-w-[220px] rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xl overflow-hidden"
-      style={{ top: position.y !== null ? position.y : contextMenu.y, left: position.x !== null ? position.x : contextMenu.x, opacity: position.x !== null ? 1 : 0 }}
-      onClick={(e) => e.stopPropagation()}
-      onContextMenu={(e) => e.preventDefault()}
-    >
+  const contentUI = (
+    <div className={`flex flex-col gap-1 ${isMobile ? "w-full overflow-y-auto max-h-[70vh] p-4 pb-8" : ""}`}>
+      {isMobile && (
+        <div className="mb-4 flex items-center justify-between pb-2 border-b border-slate-100">
+          <h4 className="font-bold text-slate-800 text-base">Tùy chọn</h4>
+          <button onClick={onClose} className="p-2 rounded-full bg-slate-100 hover:bg-slate-200">
+            <X className="h-5 w-5 text-slate-600" />
+          </button>
+        </div>
+      )}
+
       {isTrashView ? (
         <>
           {contextMenu.type === "workspace" && (
@@ -2751,6 +2765,36 @@ export function DocumentContextMenu({
           </button>
         </>
       )}
-    </div>, document.body
+    
+    </div>
+  );
+
+  return createPortal(
+    isMobile ? (
+      <div 
+        className="fixed inset-0 z-[9999] flex items-end bg-slate-900/40 backdrop-blur-sm sm:hidden"
+        onClick={onClose}
+        onContextMenu={(e) => e.preventDefault()}
+      >
+        <div 
+          ref={menuRef}
+          className="w-full max-h-[85vh] rounded-t-2xl bg-white shadow-2xl transition-transform"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {contentUI}
+        </div>
+      </div>
+    ) : (
+      <div
+        ref={menuRef}
+        className="fixed z-[9999] min-w-[220px] max-w-[calc(100vw-24px)] rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xl overflow-hidden hidden sm:block"
+        style={{ top: position.y !== null ? position.y : contextMenu.y, left: position.x !== null ? position.x : contextMenu.x, opacity: position.x !== null ? 1 : 0 }}
+        onClick={(e) => e.stopPropagation()}
+        onContextMenu={(e) => e.preventDefault()}
+      >
+        {contentUI}
+      </div>
+    ),
+    document.body
   );
 }

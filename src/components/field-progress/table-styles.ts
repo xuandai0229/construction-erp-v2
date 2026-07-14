@@ -13,7 +13,7 @@ export const sharedTableStyles = {
     percent: "min-w-[100px] w-[110px] max-w-[130px]",
     status: "w-[90px]",
     action: "w-[64px] min-w-[64px] max-w-[80px]",
-    notes: "min-w-[160px] max-w-[240px]"
+    notes: "min-w-[200px] max-w-[300px]"
   },
   
   // Shared column classes
@@ -30,7 +30,7 @@ export const sharedTableStyles = {
     percent: "min-w-[100px] w-[110px] max-w-[130px] text-right font-mono",
     status: "w-[90px] text-center",
     action: "w-[64px] min-w-[64px] max-w-[80px] text-center",
-    notes: "min-w-[160px] max-w-[240px] text-left"
+    notes: "min-w-[200px] max-w-[300px] text-left"
   },
 
   dailyCols: {
@@ -43,15 +43,15 @@ export const sharedTableStyles = {
     dayQty: "w-[120px] min-w-[120px] max-w-[130px] text-center font-mono",
     remaining: "w-[100px] min-w-[100px] max-w-[110px] text-right font-mono",
     percent: "min-w-[80px] w-[90px] max-w-[100px] text-right font-mono",
-    notes: "min-w-[140px] w-[160px] max-w-[200px] text-left",
+    notes: "min-w-[200px] w-[240px] max-w-[300px] text-left",
     action: "w-[56px] min-w-[56px] max-w-[64px] text-center",
   },
 
   // Common header styling
-  headerTh: "align-middle px-2 py-2 text-[12px] font-semibold text-slate-600 uppercase tracking-wide border-r border-slate-200 bg-slate-50 whitespace-nowrap",
+  headerTh: "align-middle px-3 py-2.5 text-[12px] font-semibold text-slate-600 uppercase tracking-wide border-r border-slate-200 bg-slate-50 whitespace-normal leading-snug",
   
   // Common cell styling
-  cellTd: "align-middle h-12 px-2 py-2 border-r border-slate-100 text-[13px] font-medium bg-white text-slate-700 leading-snug",
+  cellTd: "align-middle min-h-[48px] px-2 py-2 border-r border-slate-100 text-[13px] font-medium bg-white text-slate-700 leading-snug",
   
   // Group row styling - uses ! to override cellTd's bg-white 
   groupRow: "bg-slate-50 border-slate-200 [&>td]:bg-slate-50",

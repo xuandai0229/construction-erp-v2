@@ -137,7 +137,7 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
                 <div className="sm:col-span-2 pt-3 mt-1 border-t border-slate-100">
                   <span className="text-[12px] font-medium text-slate-500 mb-1.5 block">Ghi chú</span>
                   {project.description ? (
-                    <p className="text-[13.5px] text-slate-700 whitespace-pre-wrap leading-relaxed line-clamp-2" title={project.description}>{project.description}</p>
+                    <p className="text-[13.5px] text-slate-700 whitespace-pre-wrap leading-relaxed" title={project.description}>{project.description}</p>
                   ) : (
                     <p className="text-slate-400 text-[13.5px]">—</p>
                   )}
@@ -194,15 +194,15 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
       </div>
 
       <div className="pt-2">
-        <h2 className="text-[17px] font-bold text-slate-900 mb-4 tracking-tight">Phân hệ quản lý</h2>
+        <h2 className="text-[17px] font-bold text-slate-900 mb-4 tracking-tight">Khối lượng thi công</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
 
           <Link href={`/projects/${project.id}/field-progress`} className="group flex flex-col rounded-[20px] bg-white border border-slate-200/70 p-4 shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md hover:border-blue-200">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100/60 flex items-center justify-center text-blue-600 mb-3 shrink-0 transition-transform duration-300 group-hover:scale-105">
               <ListTree className="w-4 h-4" />
             </div>
-            <h3 className="font-bold text-slate-900 text-[14px] mb-1">Bảng khối lượng gốc</h3>
-            <p className="text-[12.5px] text-slate-500 leading-relaxed mb-3">Thiết lập hạng mục, công việc, định mức cho công trình.</p>
+            <h3 className="font-bold text-slate-900 text-[14px] mb-1">Hạng mục & Công việc</h3>
+            <p className="text-[12.5px] text-slate-500 leading-relaxed mb-3">Quản lý danh mục hạng mục, công việc, đơn vị và khối lượng thiết kế của công trình.</p>
             <div className="mt-auto pt-3 border-t border-slate-100 flex items-center justify-between">
               <span className={`text-[12px] font-semibold ${hasWbs ? 'text-emerald-600' : 'text-slate-400'}`}>
                 {hasWbs ? 'Đã thiết lập' : 'Chưa thiết lập'}
@@ -218,11 +218,11 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/60 flex items-center justify-center text-emerald-600 mb-3 shrink-0 transition-transform duration-300 group-hover:scale-105">
                 <ClipboardCheck className="w-4 h-4" />
               </div>
-              <h3 className="font-bold text-slate-900 text-[14px] mb-1">Nhập khối lượng ngày</h3>
-              <p className="text-[12.5px] text-slate-500 leading-relaxed mb-3">Nhập khối lượng thi công thực tế tại hiện trường.</p>
+              <h3 className="font-bold text-slate-900 text-[14px] mb-1">Khối lượng thực hiện</h3>
+              <p className="text-[12.5px] text-slate-500 leading-relaxed mb-3">Cập nhật và theo dõi khối lượng thi công thực tế theo từng ngày.</p>
               <div className="mt-auto pt-3 border-t border-slate-100 flex items-center justify-between">
                 <span className="text-[12px] font-semibold text-slate-500">
-                  Cập nhật tiến độ
+                  Cập nhật khối lượng
                 </span>
                 <div className="w-7 h-7 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors">
                   <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
@@ -234,8 +234,8 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
               <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600/50 mb-3 shrink-0">
                 <ClipboardCheck className="w-4 h-4" />
               </div>
-              <h3 className="font-bold text-slate-700 text-[14px] mb-1">Nhập khối lượng ngày</h3>
-              <p className="text-[12.5px] text-slate-500 leading-relaxed mb-3">Nhập khối lượng thi công thực tế tại hiện trường.</p>
+              <h3 className="font-bold text-slate-700 text-[14px] mb-1">Khối lượng thực hiện</h3>
+              <p className="text-[12.5px] text-slate-500 leading-relaxed mb-3">Cập nhật và theo dõi khối lượng thi công thực tế theo từng ngày.</p>
               <div className="mt-auto pt-3 border-t border-slate-200 flex items-center justify-between">
                 <span className="text-[12px] font-semibold text-slate-400">
                   Cần thiết lập WBS
@@ -253,7 +253,7 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
                 <BarChart2 className="w-4 h-4" />
               </div>
               <h3 className="font-bold text-slate-900 text-[14px] mb-1">Tổng hợp khối lượng</h3>
-              <p className="text-[12.5px] text-slate-500 leading-relaxed mb-3">Xem báo cáo lũy kế, tỷ lệ hoàn thành so với kế hoạch.</p>
+              <p className="text-[12.5px] text-slate-500 leading-relaxed mb-3">Theo dõi khối lượng thiết kế, khối lượng đã thực hiện, lũy kế và tỷ lệ hoàn thành.</p>
               <div className="mt-auto pt-3 border-t border-slate-100 flex items-center justify-between">
                 <span className="text-[12px] font-semibold text-slate-500">
                   Báo cáo chi tiết
@@ -269,7 +269,7 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
                 <BarChart2 className="w-4 h-4" />
               </div>
               <h3 className="font-bold text-slate-700 text-[14px] mb-1">Tổng hợp khối lượng</h3>
-              <p className="text-[12.5px] text-slate-500 leading-relaxed mb-3">Xem báo cáo lũy kế, tỷ lệ hoàn thành so với kế hoạch.</p>
+              <p className="text-[12.5px] text-slate-500 leading-relaxed mb-3">Theo dõi khối lượng thiết kế, khối lượng đã thực hiện, lũy kế và tỷ lệ hoàn thành.</p>
               <div className="mt-auto pt-3 border-t border-slate-200 flex items-center justify-between">
                 <span className="text-[12px] font-semibold text-slate-400">
                   Cần thiết lập WBS

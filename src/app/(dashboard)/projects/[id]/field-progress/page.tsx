@@ -76,10 +76,13 @@ export default async function FieldProgressPage({ params }: { params: Promise<{ 
             >
               <ArrowLeft className="h-5 w-5" />
             </Link>
-            Bảng khối lượng gốc
+            Hạng mục & Công việc
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5 sm:mt-1.5 ml-7 sm:ml-11 line-clamp-1">
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5 sm:mt-1.5 ml-7 sm:ml-11">
             <span className="font-semibold text-slate-700">{project.code}</span> - {project.name}
+          </p>
+          <p className="text-sm text-slate-600 mt-1 ml-7 sm:ml-11">
+            Quản lý danh mục hạng mục, công việc, đơn vị và khối lượng thiết kế của công trình.
           </p>
         </div>
         

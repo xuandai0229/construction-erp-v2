@@ -1,19 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
 
 export default function DashboardError({
-  error,
   unstable_retry,
 }: {
   error: Error & { digest?: string };
   unstable_retry: () => void;
 }) {
-  useEffect(() => {
-    console.error("Dashboard Crash:", error);
-  }, [error]);
-
   return (
     <div className="mx-auto flex min-h-[420px] w-full max-w-[900px] items-center justify-center px-4">
       <div className="w-full rounded-2xl border border-red-100 bg-white p-6 text-center shadow-sm shadow-slate-950/[0.04] sm:p-8">
@@ -24,7 +18,7 @@ export default function DashboardError({
         <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">
           Hệ thống đang gặp lỗi khi tổng hợp dữ liệu. Vui lòng thử lại, hoặc quay về danh sách công trình để tiếp tục làm việc.
         </p>
-        {error.digest && <p className="mt-3 text-xs font-medium text-slate-500">Mã lỗi: {error.digest}</p>}
+        <p className="mt-3 text-xs font-medium text-slate-500">Mã tham chiếu: ERR-DASHBOARD-UNAVAILABLE</p>
         <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
           <button
             type="button"

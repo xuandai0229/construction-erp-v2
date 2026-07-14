@@ -10,12 +10,9 @@ import {
   ClipboardList,
   FileText,
   Info,
-  Package,
   Plus,
   Save,
   Search,
-  Send,
-  SlidersHorizontal,
   X,
   ChevronDown,
   ArrowRight
@@ -209,9 +206,7 @@ export function DailyEntryTable({
     setDirtyEntries({});
   }, [initialItems]);
 
-  const crews = useMemo(() => {
-    return Array.from(new Set(items.map((item) => item.constructionCrew).filter(Boolean))).sort() as string[];
-  }, [items]);
+  
 
 function parseVietnameseDecimalInput(raw: string | number | null | undefined): number | null {
   if (raw === "" || raw === null || raw === undefined) return null;
@@ -299,7 +294,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
 
   useEffect(() => {
     if (Object.keys(expandedGroups).length === 0 && groupedItems.length > 0) {
-      const firstGroupToExpand = groupedItems.find(([_, gItems]) => gItems.some(i => !getItemMath(i).hasTodayQuantity));
+      const firstGroupToExpand = groupedItems.find(([/*_*/, gItems]) => gItems.some(i => !getItemMath(i).hasTodayQuantity));
       if (firstGroupToExpand) {
         setExpandedGroups({ [firstGroupToExpand[0]]: true });
       } else if (groupedItems[0]) {
@@ -361,7 +356,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
   };
 
   const focusNextQuantity = (index: number) => {
-    const flatGrouped = groupedItems.flatMap(([_, items]) => items);
+    const flatGrouped = groupedItems.flatMap(([/*_*/, items]) => items);
     const currentIndex = flatGrouped.findIndex(i => i.id === filteredItems[index]?.id);
     const next = flatGrouped[currentIndex + 1] || filteredItems[index + 1];
     if (next) {
@@ -546,7 +541,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
           <div className="mt-3 w-full rounded-lg bg-red-50 border border-red-200 p-2.5 text-left">
             <div className="text-xs font-bold text-red-600 flex items-center gap-1.5"><AlertCircle className="h-3.5 w-3.5" /> Vượt khối lượng thiết kế</div>
             <div className="text-[11px] font-medium text-red-600 mt-1 flex items-center justify-between">
-              <span>Sau nhập: {formatQuantity(math.cumulativeAfter)} / Thiết kế: {item.designQuantity ? formatQuantity(item.designQuantity) : "-"}</span>
+              <span>Sau cập nhật: {formatQuantity(math.cumulativeAfter)} / Thiết kế: {item.designQuantity ? formatQuantity(item.designQuantity) : "-"}</span>
             </div>
             <div className="text-[10px] font-semibold text-red-500 mt-0.5">Cần ghi chú giải trình</div>
           </div>
@@ -773,7 +768,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-1 flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
               <div>
-                <h2 className="text-xl font-bold text-slate-900">Theo dõi khối lượng theo ngày</h2>
+                <h2 className="text-xl font-bold text-slate-900">Khối lượng thực hiện theo ngày</h2>
                 <p className="text-sm text-slate-500">Công trình: {projectLabel}</p>
               </div>
               <Button
@@ -787,7 +782,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
           <div className="mt-4 border-t border-slate-100 pt-4">
             <label className="block max-w-xs" htmlFor="daily-dateStr1">
               <span className="mb-1 flex items-center gap-1 text-xs font-semibold text-slate-600">
-                <Calendar className="h-3.5 w-3.5" /> Ngày nhập
+                <Calendar className="h-3.5 w-3.5" /> Ngày thực hiện
               </span>
               <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                 id="daily-dateStr1"
@@ -803,9 +798,9 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
 
         <div className="rounded-xl border border-slate-200 bg-white p-12 text-center shadow-sm">
           <ClipboardList className="mx-auto mb-4 h-16 w-16 text-slate-300" />
-          <h3 className="text-lg font-bold text-slate-800">Chưa có công việc để nhập khối lượng</h3>
+          <h3 className="text-lg font-bold text-slate-800">Chưa có công việc để cập nhật khối lượng</h3>
           <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">
-            Bạn cần tạo bảng mẫu trước, sau đó mới nhập khối lượng theo ngày.
+            Bạn cần tạo hạng mục và công việc trước, sau đó mới cập nhật khối lượng theo ngày.
           </p>
           <div className="mt-6 flex items-center justify-center gap-3">
             <Link href={`/projects/${projectId}/field-progress`}>
@@ -943,13 +938,13 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.content} bg-slate-100 border-r-slate-200`}>Công việc</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.crew}`}>Mũi</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.unit}`}>Đơn vị</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.designQty}`}>Tổng khối lượng</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.cumulative}`}>Lũy kế trước ngày</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.dayQty} bg-blue-100 text-blue-800`}>Nhập hôm nay</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.remaining}`}>Sau nhập</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.percent}`}>%</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.notes}`}>Ghi chú nhanh</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.action} bg-slate-100 border-l border-slate-200`}>Chi tiết</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.designQty}`}>Tổng<br />khối lượng</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.cumulative}`}>Lũy kế<br />trước ngày</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.dayQty} bg-blue-100 text-blue-800`}>Khối lượng<br />ngày</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.remaining}`}>Sau<br />cập nhật</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.percent}`}>Hoàn<br />thành</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.notes}`}>Ghi chú<br />nhanh</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.dailyCols.action} bg-slate-100 border-l border-slate-200`}>Chi<br />tiết</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">

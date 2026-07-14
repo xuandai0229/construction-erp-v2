@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Plus, Save, Trash2, ChevronRight, ChevronDown, ListTree, FileText, Info, X, Search, Pencil } from "lucide-react";
+import { Plus, Save, Trash2, ChevronRight, ChevronDown, ListTree, FileText, X, Search, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { createItem, updateItem, deleteItem, batchUpdateItems } from "@/app/(dashboard)/projects/[id]/field-progress/actions";
+import { createItem, deleteItem, batchUpdateItems } from "@/app/(dashboard)/projects/[id]/field-progress/actions";
 import { formatQuantity } from "@/lib/field-progress";
 import { sharedTableStyles } from "./table-styles";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -227,9 +227,9 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.content} sticky left-[56px] z-20 text-left`}>Hạng mục / Công việc</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.crew} text-center`}>Mũi thi công</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.unit} text-center`}>Đơn vị</th>
-              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.designQty} text-right`}>Khối lượng thiết kế</th>
+              <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.designQty} text-right`}>Khối lượng<br />thiết kế</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.cumulative} text-right text-blue-700 bg-blue-50/60`}>
-                Khối lượng đã duyệt
+                Khối lượng<br />đã duyệt
               </th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.percent} text-right text-blue-700 bg-blue-50/60`}>Hoàn thành</th>
               <th className={`${sharedTableStyles.headerTh} ${sharedTableStyles.cols.notes} text-left`}>Ghi chú</th>
@@ -360,15 +360,21 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
                     {isGroup ? <span className="text-slate-400 block text-center">—</span> : (
                       <>
                         <label htmlFor={`master-note-${item.id}`} className="sr-only">Ghi chú</label>
-                        <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" 
-                          id={`master-note-${item.id}`}
-                          name={`master-note-${item.id}`}
-                          value={item.note || ""} 
-                          onChange={e => handleChange(item.id, 'note', e.target.value)}
-                          title={item.note || ""}
-                          className="w-full bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded px-2 py-1 text-slate-600 text-sm transition-all outline-none text-ellipsis overflow-hidden whitespace-nowrap"
-                          placeholder="Ghi chú..."
-                        />
+                        <div className="relative w-full">
+  <div className="whitespace-pre-wrap invisible px-2 py-1 text-[13px] border border-transparent w-full rounded min-h-[32px]" style={{ wordBreak: 'break-word' }}>
+    {(item.note || "") + " "}
+  </div>
+  <textarea autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" 
+    id={`master-note-${item.id}`}
+    name={`master-note-${item.id}`}
+    value={item.note || ""} 
+    onChange={e => handleChange(item.id, 'note', e.target.value)}
+    title={item.note || ""}
+    className="absolute inset-0 w-full h-full bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 hover:border-slate-300 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 rounded px-2 py-1 text-slate-600 text-[13px] transition-all outline-none resize-none overflow-hidden"
+    style={{ wordBreak: 'break-word' }}
+    placeholder="Ghi chú..."
+  />
+</div>
                       </>
                     )}
                   </td>
@@ -723,14 +729,19 @@ export function MasterTable({ projectId, templateId, initialItems }: { projectId
                     {/* Note */}
                     <div>
                       <label htmlFor={`mobile-note-${item.id}`} className="text-[11px] font-semibold text-slate-600 mb-1.5 block">Ghi chú</label>
-                      <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
-                        id={`mobile-note-${item.id}`}
-                        name={`mobile-note-${item.id}`}
-                        value={item.note || ""}
-                        onChange={e => handleChange(item.id, 'note', e.target.value)}
-                        placeholder="Ghi chú..."
-                        className="w-full bg-slate-50 focus:bg-white border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 rounded-xl px-4 py-3 outline-none text-[15px] text-slate-700 transition-all"
-                      />
+                      <div className="relative w-full">
+                        <div className="invisible px-4 py-3 text-[15px] whitespace-pre-wrap break-words min-h-[48px]" aria-hidden="true">
+                          {(item.note || " ") + "\n"}
+                        </div>
+                        <textarea  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
+                          id={`mobile-note-${item.id}`}
+                          name={`mobile-note-${item.id}`}
+                          value={item.note || ""}
+                          onChange={e => handleChange(item.id, 'note', e.target.value)}
+                          placeholder="Ghi chú..."
+                          className="absolute inset-0 w-full h-full bg-slate-50 focus:bg-white border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 rounded-xl px-4 py-3 outline-none text-[15px] text-slate-700 transition-all resize-none overflow-hidden"
+                        />
+                      </div>
                     </div>
                   </>
                 )}

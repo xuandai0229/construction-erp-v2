@@ -1,12 +1,12 @@
-import { PrismaClient } from "@prisma/client";
-import { Pool } from "pg";
-import { PrismaPg } from "@prisma/adapter-pg";
+import "dotenv/config";
+import { assertSafeQaDatabase } from "./qa/assert-safe-qa-database";
+import { createSafeQaPrismaClient } from "./qa/create-safe-qa-prisma-client";
 
-const connectionString = process.env.DATABASE_URL || "postgresql://postgres:123456@127.0.0.1:5432/construction_erp_v2?schema=public";
-const pool = new Pool({ connectionString });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
 async function main() {
+  const safety = await assertSafeQaDatabase();
+  if (!safety.safe || !process.env.QA_DATABASE_URL) throw new Error("QA safety guard chưa đạt; không chạy mutation test.");
+  const { prisma, close } = createSafeQaPrismaClient(process.env.QA_DATABASE_URL);
+  try {
   console.log("Starting QA: Material Delete Sync");
 
   // 1. Create a mock project
@@ -98,15 +98,14 @@ async function main() {
   await prisma.materialItem.deleteMany({ where: { projectId: project.id } });
   await prisma.project.delete({ where: { id: project.id } });
 
-  console.log("Cleanup complete.");
+    console.log("Cleanup complete.");
+  } finally {
+    await close();
+  }
 }
 
 main()
-  .catch((e) => {
-    console.error(e);
+  .catch(() => {
+    console.error("QA material delete sync test failed.");
     process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-    await pool.end();
   });

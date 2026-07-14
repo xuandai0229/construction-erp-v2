@@ -630,7 +630,7 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
   const activeProjectForAction = overviewProjects[0] ?? null;
   const quickActions = [
     activeProjectForAction ? { label: "Tạo báo cáo", href: `/reports?projectId=${activeProjectForAction.id}`, tone: "primary" as const } : null,
-    activeProjectForAction ? { label: "Nhập khối lượng", href: `/projects/${activeProjectForAction.id}/field-progress/daily`, tone: "secondary" as const } : null,
+    activeProjectForAction ? { label: "Khối lượng thực hiện", href: `/projects/${activeProjectForAction.id}/field-progress/daily`, tone: "secondary" as const } : null,
     activeProjectForAction ? { label: "Tải tài liệu lên", href: `/documents/${activeProjectForAction.id}`, tone: "secondary" as const } : null,
     canViewApprovals ? { label: "Trung tâm phê duyệt", href: "/approvals", tone: "secondary" as const } : null,
   ].filter((action): action is NonNullable<typeof action> => Boolean(action));
@@ -656,7 +656,7 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
     },
     {
       id: "entries-today",
-      label: "Nhập khối lượng",
+      label: "Khối lượng thực hiện",
       value: String(entriesToday),
       description: "Hôm nay",
       tone: entriesToday > 0 ? "emerald" : "amber",

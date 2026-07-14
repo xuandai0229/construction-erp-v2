@@ -120,10 +120,10 @@ export default async function FieldProgressSummaryPage({
             >
               <ArrowLeft className="h-5 w-5" />
             </Link>
-            Tổng hợp khối lượng thi công
+            Tổng hợp khối lượng
           </h1>
           <p className="text-slate-600 mt-1.5 ml-8 sm:ml-11 text-sm sm:text-base hidden sm:block">
-            Theo dõi lũy kế, phát sinh trong kỳ và tiến độ hoàn thành theo từng công việc.
+            Theo dõi khối lượng thiết kế, khối lượng đã thực hiện, lũy kế và tỷ lệ hoàn thành.
           </p>
           <p className="text-xs sm:text-sm text-slate-500 mt-1 sm:mt-1.5 ml-8 sm:ml-11 line-clamp-1">
             Công trình: <span className="font-semibold text-slate-700">{project.code}</span> - {project.name}

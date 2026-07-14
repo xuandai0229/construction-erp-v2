@@ -223,7 +223,7 @@ async function main() {
       "Ensure real projects are not accidentally classified as safe."
     ],
     generatedAt: new Date().toISOString(),
-    databaseNameMasked: "postgresql://***:***@127.0.0.1:5432/construction_erp_v2"
+    database: "Database được lấy từ cấu hình môi trường của phiên chạy."
   };
 
   const outputDir = path.join(process.cwd(), "docs", "qa");

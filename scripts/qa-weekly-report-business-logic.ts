@@ -24,9 +24,9 @@ async function main() {
     });
     projectId = project.id;
 
-    // Create user if not exist
-    const user = await prisma.user.findFirst({ where: { email: "tayho.admin@seed.local" } });
-    if (!user) throw new Error("Need user tayho.admin@seed.local");
+    // Fetch any available user to use as creator
+    const user = await prisma.user.findFirst();
+    if (!user) throw new Error("No users found in database to create template");
 
     // Create FieldProgressTemplate
     const template = await prisma.fieldProgressTemplate.create({
