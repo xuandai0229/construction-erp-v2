@@ -27,7 +27,7 @@ export function ReportsMobileCards({ reports, onViewDetail, onViewGallery, onEdi
       {reports.map((report) => (
         <ContentCard
           key={report.id}
-          className="p-3 space-y-3 active:bg-slate-50 transition-colors"
+          className="p-3 space-y-3 active:bg-[var(--surface-subtle)] transition-colors"
           onClick={() => onViewDetail(report)}
           role="button"
           tabIndex={0}
@@ -51,24 +51,24 @@ export function ReportsMobileCards({ reports, onViewDetail, onViewGallery, onEdi
           </div>
 
           {/* Info row */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-500">
-            <span className="font-medium text-slate-700 truncate max-w-[120px]">{report.creatorName}</span>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-[var(--muted-foreground)]">
+            <span className="font-medium text-[var(--foreground)] truncate max-w-[120px]">{report.creatorName}</span>
             <span className="inline-flex items-center gap-1">
-              <Calendar className="w-3 h-3 text-slate-400" />
+              <Calendar className="w-3 h-3 text-[var(--muted-foreground)] opacity-70" />
               {report.type === 'WEEKLY' ? `${formatDateVN(report.weekStartDate)} - ${formatDateVN(report.weekEndDate)}` : formatDateVN(report.date)}
             </span>
           </div>
 
           {/* Bottom row: photos + action */}
-          <div className="flex items-center justify-between gap-3 pt-2 border-t border-slate-100">
+          <div className="flex items-center justify-between gap-3 pt-2 border-t border-[var(--border)]">
             <div className="flex flex-wrap items-center gap-1.5" onClick={(e) => { e.stopPropagation(); onViewGallery?.(report); }}>
               {report.photos.length > 0 && (
-                <span className="text-[11px] text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded font-medium">
+                <span className="text-[11px] text-[var(--muted-foreground)] bg-[var(--border)] px-1.5 py-0.5 rounded font-medium">
                   {report.photos.length} ảnh
                 </span>
               )}
               {report.attachments.length > 0 && (
-                <span className="text-[11px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded font-medium">
+                <span className="text-[11px] text-[var(--muted-foreground)] bg-[var(--border)] px-1.5 py-0.5 rounded font-medium">
                   +{report.attachments.length} file
                 </span>
               )}
@@ -88,7 +88,7 @@ export function ReportsMobileCards({ reports, onViewDetail, onViewGallery, onEdi
                    currentUserHasCompanyScope && (
                     <button
                       onClick={(e) => { e.stopPropagation(); onDelete?.(report); }}
-                      className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-red-600 transition-colors hover:bg-red-50"
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-[var(--radius-lg)] text-red-600 transition-colors hover:bg-red-50"
                       aria-label="Xóa"
                       title="Xóa báo cáo"
                     >
@@ -99,7 +99,7 @@ export function ReportsMobileCards({ reports, onViewDetail, onViewGallery, onEdi
                    (report.createdById === currentUser.id || currentUserHasCompanyScope) && (
                     <button
                       onClick={(e) => { e.stopPropagation(); onEdit?.(report); }}
-                      className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-blue-600 transition-colors hover:bg-blue-50"
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-[var(--radius-lg)] text-blue-600 transition-colors hover:bg-blue-50"
                       aria-label="Sửa"
                       title="Sửa báo cáo"
                     >
@@ -110,7 +110,7 @@ export function ReportsMobileCards({ reports, onViewDetail, onViewGallery, onEdi
               )}
               <button
                 onClick={(e) => { e.stopPropagation(); onViewDetail(report); }}
-                className="inline-flex h-11 items-center gap-1.5 rounded-lg bg-blue-50 px-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+                className="inline-flex h-11 items-center gap-1.5 rounded-[var(--radius-lg)] bg-blue-50 px-3 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-100"
                 aria-label="Xem"
                 title="Xem chi tiết"
               >

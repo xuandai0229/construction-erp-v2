@@ -45,9 +45,9 @@ export function ProjectsListClient({
   return (
     <>
       {/* Desktop View (lg and up) */}
-      <EnterpriseTable className="hidden lg:block border-x-0 sm:border-x border-t-0 sm:border-t rounded-none sm:rounded-2xl">
-        <table className="w-full table-fixed text-left text-[14px] text-slate-600">
-          <thead className="bg-slate-50 border-b border-slate-100 text-slate-500 uppercase text-[11px] font-semibold tracking-wider">
+      <EnterpriseTable className="hidden lg:block border-x-0 sm:border-x border-t-0 sm:border-t rounded-none sm:rounded-[var(--radius-lg)]">
+        <table className="w-full table-fixed text-left text-[14px] text-[var(--muted-foreground)]">
+          <thead className="bg-[var(--surface-subtle)] border-b border-[var(--border)] text-[var(--muted-foreground)] uppercase text-[11px] font-bold tracking-wider">
             <tr>
               <th className="w-[150px] px-5 py-3.5 whitespace-nowrap">Mã công trình</th>
               <th className="w-[230px] px-5 py-3.5 whitespace-nowrap">Tên công trình</th>
@@ -58,7 +58,7 @@ export function ProjectsListClient({
               <th className="w-[140px] px-5 py-3.5 text-right whitespace-nowrap">Thao tác</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 bg-white">
+          <tbody className="divide-y divide-[var(--border-light)] bg-[var(--surface)]">
             {projects.map((project) => (
               <tr 
                 key={project.id} 
@@ -66,30 +66,30 @@ export function ProjectsListClient({
                 tabIndex={0}
                 onClick={() => handleRowClick(project.id)}
                 onKeyDown={(e) => handleKeyDown(e, project.id)}
-                className="group cursor-pointer border-b border-slate-100 transition-colors duration-200 ease-out hover:bg-blue-50/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30"
+                className="group cursor-pointer border-b border-[var(--border-light)] transition-colors duration-150 ease-out hover:bg-[var(--surface-subtle)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30"
               >
-                <td className="px-5 py-4 font-medium text-slate-700 truncate">
+                <td className="px-5 py-4 font-semibold text-[var(--foreground)] truncate">
                   {project.code}
                 </td>
                 <td className="px-5 py-4 truncate">
-                  <span className="font-semibold text-blue-600 transition-colors group-hover:text-blue-700 group-hover:underline decoration-blue-600/30 underline-offset-4">
+                  <span className="font-bold text-blue-600 transition-colors group-hover:text-blue-700 group-hover:underline decoration-blue-600/30 underline-offset-4">
                     {project.name}
                   </span>
                 </td>
                 <td className="hidden 2xl:table-cell px-5 py-4 truncate">
-                  <span className="text-slate-600" title={project.investor || undefined}>
+                  <span className="text-[var(--muted-foreground)]" title={project.investor || undefined}>
                     {project.investor || <span className="text-slate-400">—</span>}
                   </span>
                 </td>
                 <td className="hidden xl:table-cell px-5 py-4 truncate">
-                  <span className="text-slate-600" title={project.location || undefined}>
+                  <span className="text-[var(--muted-foreground)]" title={project.location || undefined}>
                     {project.location || <span className="text-slate-400">—</span>}
                   </span>
                 </td>
                 <td className="px-5 py-4 whitespace-nowrap">
                   {getStatusBadge(project.status)}
                 </td>
-                <td className="px-5 py-4 whitespace-nowrap text-[13px] text-slate-500 font-medium">
+                <td className="px-5 py-4 whitespace-nowrap text-[13px] text-[var(--muted-foreground)] font-semibold">
                   {project.dateRangeLabel === "Chưa cập nhật" ? (
                     <span className="text-slate-400">{project.dateRangeLabel}</span>
                   ) : (
@@ -102,7 +102,7 @@ export function ProjectsListClient({
                       <Link 
                         href={`/projects/${project.id}/edit`} 
                         onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-slate-700 bg-transparent transition-colors hover:bg-slate-100 hover:text-slate-900"
+                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-[var(--muted-foreground)] bg-transparent transition-colors hover:bg-[var(--border-light)] hover:text-[var(--foreground)]"
                       >
                         <Pencil className="h-4 w-4" />
                         Sửa
@@ -128,10 +128,10 @@ export function ProjectsListClient({
             tabIndex={0}
             onClick={() => handleRowClick(project.id)}
             onKeyDown={(e) => handleKeyDown(e, project.id)}
-            className="group block rounded-[16px] border border-slate-200/80 bg-white p-4 shadow-[0_2px_10px_rgba(15,23,42,0.02)] transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md active:scale-[0.98] cursor-pointer"
+            className="group block rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-card)] transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md active:scale-[0.98] cursor-pointer"
           >
             <div className="flex items-start justify-between gap-3 mb-1.5">
-              <span className="font-bold text-[11px] sm:text-[12px] text-slate-500 uppercase tracking-wider">{project.code}</span>
+              <span className="font-bold text-[11px] sm:text-[12px] text-[var(--muted-foreground)] uppercase tracking-wider">{project.code}</span>
               {canManage && (
                 <Link 
                   href={`/projects/${project.id}/edit`} 
@@ -143,18 +143,18 @@ export function ProjectsListClient({
               )}
             </div>
             
-            <h3 className="text-[15px] sm:text-[16px] font-bold text-slate-900 leading-snug mb-3 group-hover:text-blue-700 transition-colors line-clamp-2">
+            <h3 className="text-[15px] sm:text-[16px] font-bold text-[var(--foreground)] leading-snug mb-3 group-hover:text-blue-700 transition-colors line-clamp-2">
               {project.name}
             </h3>
             
             <div className="flex items-center justify-between mb-3">
               {getStatusBadge(project.status)}
-              <span className="text-[12px] font-semibold text-slate-600">
+              <span className="text-[12px] font-bold text-[var(--muted-foreground)]">
                 {project.dateRangeLabel !== "Chưa cập nhật" ? project.dateRangeLabel : ""}
               </span>
             </div>
             
-            <div className="border-t border-slate-100 pt-3 flex items-center justify-between text-[12.5px] font-medium text-slate-500">
+            <div className="border-t border-[var(--border-light)] pt-3 flex items-center justify-between text-[12.5px] font-semibold text-[var(--muted-foreground)]">
               <span className="truncate pr-4">{project.location || "Chưa cập nhật địa điểm"}</span>
             </div>
           </div>

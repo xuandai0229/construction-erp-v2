@@ -215,24 +215,24 @@ export function MaterialsTransactions({
         ) : null}
       />
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+      <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow-card)]">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <label className="relative min-w-0 lg:flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted-foreground)] opacity-70" />
             <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
               value={q}
               onChange={(event) => setFilter({ q: event.target.value })}
               placeholder="Tìm mã, tên vật tư, ghi chú..."
-              className="h-10 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="h-10 w-full rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] pl-9 pr-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
 
           <div className="relative min-w-0 lg:w-[180px] shrink-0">
-            <Filter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Filter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted-foreground)] opacity-70" />
             <select
               value={movementType}
               onChange={(event) => setFilter({ movementType: event.target.value })}
-              className="h-10 w-full appearance-none rounded-lg border border-slate-300 bg-white pl-9 pr-8 text-sm font-medium text-slate-900 outline-none transition hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="h-10 w-full appearance-none rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] pl-9 pr-8 text-sm font-medium text-[var(--foreground)] outline-none transition hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               aria-label="Lọc loại giao dịch"
             >
               <option value="ALL">Tất cả loại</option>
@@ -263,38 +263,38 @@ export function MaterialsTransactions({
             </Button>
             
             {isAdvancedOpen && (
-              <div className="absolute right-0 top-full z-10 mt-2 w-72 rounded-xl border border-slate-200 bg-white p-4 shadow-xl">
+              <div className="absolute right-0 top-full z-10 mt-2 w-72 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-xl">
                 <div className="mb-3 flex items-center justify-between">
-                  <h4 className="font-semibold text-slate-900">Bộ lọc nâng cao</h4>
-                  <button onClick={() => setIsAdvancedOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="h-4 w-4"/></button>
+                  <h4 className="font-semibold text-[var(--foreground)]">Bộ lọc nâng cao</h4>
+                  <button onClick={() => setIsAdvancedOpen(false)} className="text-[var(--muted-foreground)] opacity-70 hover:text-[var(--muted-foreground)]"><X className="h-4 w-4"/></button>
                 </div>
                 <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-700">Từ ngày</label>
+                    <label className="text-xs font-semibold text-[var(--foreground)]">Từ ngày</label>
                     <DateFieldVN
                       value={toDateInputValue(dateFrom)}
                       onChange={(value) => setFilter({ dateFrom: value })}
-                      className="border-slate-300 w-full"
+                      className="border-[var(--border)] w-full"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-700">Đến ngày</label>
+                    <label className="text-xs font-semibold text-[var(--foreground)]">Đến ngày</label>
                     <DateFieldVN
                       value={toDateInputValue(dateTo)}
                       onChange={(value) => setFilter({ dateTo: value })}
-                      className="border-slate-300 w-full"
+                      className="border-[var(--border)] w-full"
                     />
                   </div>
-                  <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer select-none pt-1">
+                  <label className="flex items-center gap-2 text-sm text-[var(--foreground)] cursor-pointer select-none pt-1">
                     <input
                       type="checkbox"
                       checked={showArchived}
                       onChange={(e) => setShowArchived(e.target.checked)}
-                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+                      className="rounded border-[var(--border)] text-blue-600 focus:ring-blue-500 h-4 w-4"
                     />
                     Bao gồm vật tư đã lưu trữ
                   </label>
-                  <div className="border-t border-slate-100 pt-3 flex gap-2">
+                  <div className="border-t border-[var(--border)] pt-3 flex gap-2">
                     <Button variant="outline" className="flex-1" onClick={() => { setFilter({ dateFrom: "", dateTo: "" }); setShowArchived(false); }}>Đặt lại</Button>
                     <Button className="flex-1" onClick={() => setIsAdvancedOpen(false)}>Áp dụng</Button>
                   </div>
@@ -304,14 +304,14 @@ export function MaterialsTransactions({
           </div>
 
           {hasAnyFilter && (
-            <Button type="button" variant="ghost" onClick={clearFilter} className="hidden lg:flex text-slate-500 hover:text-slate-900">
+            <Button type="button" variant="ghost" onClick={clearFilter} className="hidden lg:flex text-[var(--muted-foreground)] hover:text-[var(--foreground)]">
               Xóa lọc
             </Button>
           )}
         </div>
 
         {hasAnyFilter && (
-          <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+          <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-[var(--border)] pt-3">
             {q && (
               <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 py-1 pl-2.5 pr-1 text-[13px] font-medium text-blue-700">
                 Từ khóa: {q}
@@ -343,39 +343,39 @@ export function MaterialsTransactions({
               </span>
             )}
             {showArchived && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 py-1 pl-2.5 pr-1 text-[13px] font-medium text-slate-700">
+              <span className="inline-flex items-center gap-1 rounded-full bg-[var(--border)] py-1 pl-2.5 pr-1 text-[13px] font-medium text-[var(--foreground)]">
                 Có lưu trữ
                 <button onClick={() => setShowArchived(false)} className="rounded-full p-0.5 hover:bg-slate-200"><X className="h-3 w-3"/></button>
               </span>
             )}
-            <div className="ml-auto text-xs font-medium text-slate-500 hidden sm:block">
+            <div className="ml-auto text-xs font-medium text-[var(--muted-foreground)] hidden sm:block">
               {formatQuantity(filteredTransactions.length, 0)} giao dịch khớp bộ lọc
-              {!showArchived && <span className="ml-2 font-normal text-slate-400">(Đang ẩn giao dịch của vật tư đã lưu trữ)</span>}
+              {!showArchived && <span className="ml-2 font-normal text-[var(--muted-foreground)] opacity-70">(Đang ẩn giao dịch của vật tư đã lưu trữ)</span>}
             </div>
           </div>
         )}
       </div>
 
       {!hasAnyFilter && (
-        <div className="text-xs font-medium text-slate-500">
+        <div className="text-xs font-medium text-[var(--muted-foreground)]">
           {formatQuantity(filteredTransactions.length, 0)} giao dịch
-          {!showArchived && <span className="ml-2 font-normal text-slate-400">(Đang ẩn giao dịch của vật tư đã lưu trữ)</span>}
+          {!showArchived && <span className="ml-2 font-normal text-[var(--muted-foreground)] opacity-70">(Đang ẩn giao dịch của vật tư đã lưu trữ)</span>}
         </div>
       )}
 
       <MaterialDataTable className="hidden md:block">
         <table className="w-full min-w-[1080px] table-fixed text-left text-sm">
-          <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <thead className="bg-[var(--surface-subtle)] text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
             <tr>
-              <th className="w-[104px] border-b border-slate-200 px-3 py-3 whitespace-nowrap">Loại</th>
-              <th className="w-[260px] border-b border-slate-200 px-3 py-3 whitespace-nowrap">Vật tư</th>
-              <th className="w-[150px] border-b border-slate-200 px-3 py-3 text-right whitespace-nowrap">Số lượng</th>
-              <th className="w-[150px] border-b border-slate-200 px-3 py-3 text-right whitespace-nowrap">Tồn sau</th>
-              <th className="w-[160px] border-b border-slate-200 px-3 py-3 whitespace-nowrap">Ngày giao dịch</th>
-              <th className="w-[130px] border-b border-slate-200 px-3 py-3 whitespace-nowrap">Người tạo</th>
-              <th className="w-[180px] border-b border-slate-200 px-3 py-3 whitespace-nowrap">Nguồn</th>
-              <th className="border-b border-slate-200 px-3 py-3 whitespace-nowrap">Ghi chú</th>
-              <th className="w-[80px] whitespace-nowrap border-b border-slate-200 px-3 py-3 text-right">Thao tác</th>
+              <th className="w-[104px] border-b border-[var(--border)] px-3 py-3 whitespace-nowrap">Loại</th>
+              <th className="w-[260px] border-b border-[var(--border)] px-3 py-3 whitespace-nowrap">Vật tư</th>
+              <th className="w-[150px] border-b border-[var(--border)] px-3 py-3 text-right whitespace-nowrap">Số lượng</th>
+              <th className="w-[150px] border-b border-[var(--border)] px-3 py-3 text-right whitespace-nowrap">Tồn sau</th>
+              <th className="w-[160px] border-b border-[var(--border)] px-3 py-3 whitespace-nowrap">Ngày giao dịch</th>
+              <th className="w-[130px] border-b border-[var(--border)] px-3 py-3 whitespace-nowrap">Người tạo</th>
+              <th className="w-[180px] border-b border-[var(--border)] px-3 py-3 whitespace-nowrap">Nguồn</th>
+              <th className="border-b border-[var(--border)] px-3 py-3 whitespace-nowrap">Ghi chú</th>
+              <th className="w-[80px] whitespace-nowrap border-b border-[var(--border)] px-3 py-3 text-right">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -386,35 +386,35 @@ export function MaterialsTransactions({
               const note = displayNote(transaction.notes);
 
               return (
-                <tr key={transaction.id} className="cursor-pointer transition hover:bg-slate-50" onClick={() => handleOpenDrawer(transaction)}>
+                <tr key={transaction.id} className="cursor-pointer transition hover:bg-[var(--surface-subtle)]" onClick={() => handleOpenDrawer(transaction)}>
                   <td className="px-3 py-3"><MovementTypeBadge type={transaction.type} /></td>
                   <td className="min-w-0 px-3 py-3">
                     <div className="flex items-center gap-2">
                       <SafeText className="font-semibold text-slate-950">{transaction.materialItem.name}</SafeText>
                       {!transaction.materialItem.isActive && (
-                        <span className="inline-flex items-center rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 border border-slate-200">
+                        <span className="inline-flex items-center rounded-sm bg-[var(--border)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--muted-foreground)] border border-[var(--border)]">
                           Đã lưu trữ
                         </span>
                       )}
                     </div>
-                    <div className="mt-0.5 truncate font-mono text-xs font-medium text-slate-500" title={transaction.materialItem.code}>{transaction.materialItem.code}</div>
+                    <div className="mt-0.5 truncate font-mono text-xs font-medium text-[var(--muted-foreground)]" title={transaction.materialItem.code}>{transaction.materialItem.code}</div>
                   </td>
                   <td className={`px-3 py-3 text-right font-mono font-bold tabular-nums ${colorClass}`}>
                     {sign}{formatQuantity(transaction.quantity)}
-                    <span className="ml-1 font-sans text-xs font-medium text-slate-500">{transaction.materialItem.unit}</span>
+                    <span className="ml-1 font-sans text-xs font-medium text-[var(--muted-foreground)]">{transaction.materialItem.unit}</span>
                   </td>
-                  <td className="px-3 py-3 text-right font-mono font-semibold text-slate-900 tabular-nums">
+                  <td className="px-3 py-3 text-right font-mono font-semibold text-[var(--foreground)] tabular-nums">
                     {ledger ? `${formatQuantity(ledger.stockAfter)} ${transaction.materialItem.unit}` : "—"}
                   </td>
                   <td className="px-3 py-3"><DateCell value={formatDateTime(transaction.movementDate)} /></td>
-                  <td className="px-3 py-3 text-sm text-slate-500">
+                  <td className="px-3 py-3 text-sm text-[var(--muted-foreground)]">
                     {transaction.materialRequest ? (
                       <SafeText>{transaction.materialRequest.requestedBy?.name || "Hệ thống"}</SafeText>
                     ) : (
                       "Chưa ghi nhận"
                     )}
                   </td>
-                  <td className="px-3 py-3 text-sm text-slate-500">
+                  <td className="px-3 py-3 text-sm text-[var(--muted-foreground)]">
                     {transaction.materialRequest ? (
                       <div className="flex flex-col">
                         <span className="font-medium text-blue-700">Đề xuất vật tư</span>
@@ -425,7 +425,7 @@ export function MaterialsTransactions({
                     )}
                   </td>
                   <td className="min-w-0 px-3 py-3">
-                    <SafeText className="text-slate-600">{note}</SafeText>
+                    <SafeText className="text-[var(--muted-foreground)]">{note}</SafeText>
                   </td>
                   <td className="px-3 py-3 text-right relative">
                     <div className="flex justify-end">
@@ -498,8 +498,8 @@ export function MaterialsTransactions({
               <tr>
                 <td colSpan={9} className="px-4 py-12 text-center">
                   <ClipboardList className="mx-auto h-9 w-9 text-slate-300" />
-                  <div className="mt-2 font-semibold text-slate-700">Chưa có giao dịch phù hợp.</div>
-                  {!hasMaterials && <p className="mt-1 text-sm text-slate-500">Tạo vật tư ở tab Danh mục trước.</p>}
+                  <div className="mt-2 font-semibold text-[var(--foreground)]">Chưa có giao dịch phù hợp.</div>
+                  {!hasMaterials && <p className="mt-1 text-sm text-[var(--muted-foreground)]">Tạo vật tư ở tab Danh mục trước.</p>}
                 </td>
               </tr>
             )}
@@ -519,38 +519,38 @@ export function MaterialsTransactions({
                   <div className="flex items-center gap-2">
                     <MovementTypeBadge type={transaction.type} />
                     {!transaction.materialItem.isActive && (
-                      <span className="inline-flex items-center rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 border border-slate-200">
+                      <span className="inline-flex items-center rounded-sm bg-[var(--border)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--muted-foreground)] border border-[var(--border)]">
                         Đã lưu trữ
                       </span>
                     )}
                   </div>
                   <SafeText className="mt-3 font-bold text-slate-950">{transaction.materialItem.name}</SafeText>
-                  <div className="mt-1 truncate font-mono text-xs font-medium text-slate-500">{transaction.materialItem.code}</div>
+                  <div className="mt-1 truncate font-mono text-xs font-medium text-[var(--muted-foreground)]">{transaction.materialItem.code}</div>
                 </div>
                 <div className={`shrink-0 text-right font-mono text-lg font-bold ${colorClass}`}>
                   {sign}{formatQuantity(transaction.quantity)}
-                  <div className="font-sans text-xs font-medium text-slate-500">{transaction.materialItem.unit}</div>
+                  <div className="font-sans text-xs font-medium text-[var(--muted-foreground)]">{transaction.materialItem.unit}</div>
                 </div>
               </div>
-              <div className="mt-3 grid grid-cols-2 gap-2 rounded-lg bg-slate-50 p-2.5 sm:p-3 text-sm text-slate-600">
+              <div className="mt-3 grid grid-cols-2 gap-2 rounded-[var(--radius-lg)] bg-[var(--surface-subtle)] p-2.5 sm:p-3 text-sm text-[var(--muted-foreground)]">
                 <div>
-                  <div className="text-xs text-slate-500">Ngày</div>
-                  <div className="font-medium text-slate-900">{formatDateTime(transaction.movementDate)}</div>
+                  <div className="text-xs text-[var(--muted-foreground)]">Ngày</div>
+                  <div className="font-medium text-[var(--foreground)]">{formatDateTime(transaction.movementDate)}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-slate-500">Tồn sau</div>
-                  <div className="font-mono font-semibold text-slate-900">{ledger ? `${formatQuantity(ledger.stockAfter)} ${transaction.materialItem.unit}` : "—"}</div>
+                  <div className="text-xs text-[var(--muted-foreground)]">Tồn sau</div>
+                  <div className="font-mono font-semibold text-[var(--foreground)]">{ledger ? `${formatQuantity(ledger.stockAfter)} ${transaction.materialItem.unit}` : "—"}</div>
                 </div>
               </div>
-              {transaction.notes && <SafeText className="mt-2 text-sm text-slate-500">{displayNote(transaction.notes)}</SafeText>}
+              {transaction.notes && <SafeText className="mt-2 text-sm text-[var(--muted-foreground)]">{displayNote(transaction.notes)}</SafeText>}
             </ContentCard>
           );
         })}
         {filteredTransactions.length === 0 && (
-          <div className="rounded-[14px] border border-dashed border-slate-300 bg-white p-8 text-center">
+          <div className="rounded-[var(--radius-md)] border border-dashed border-[var(--border)] bg-[var(--surface)] p-8 text-center">
             <ClipboardList className="mx-auto h-9 w-9 text-slate-300" />
-            <div className="mt-2 font-semibold text-slate-700">Chưa có giao dịch phù hợp.</div>
-            {!hasMaterials && <p className="mt-1 text-sm text-slate-500">Tạo vật tư ở tab Danh mục trước.</p>}
+            <div className="mt-2 font-semibold text-[var(--foreground)]">Chưa có giao dịch phù hợp.</div>
+            {!hasMaterials && <p className="mt-1 text-sm text-[var(--muted-foreground)]">Tạo vật tư ở tab Danh mục trước.</p>}
           </div>
         )}
       </div>

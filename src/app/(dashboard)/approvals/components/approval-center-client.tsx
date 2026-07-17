@@ -93,11 +93,11 @@ const STATUS_STYLES: Record<ApprovalRequestStatus, string> = {
   PENDING: "border-blue-200 bg-blue-50 text-blue-700",
   APPROVED: "border-emerald-200 bg-emerald-50 text-emerald-700",
   REJECTED: "border-rose-200 bg-rose-50 text-rose-700",
-  CANCELLED: "border-slate-200 bg-slate-100 text-slate-600",
+  CANCELLED: "border-[var(--border)] bg-[var(--border)] text-[var(--muted-foreground)]",
 };
 
 const PRIORITY_STYLES: Record<ApprovalPriority, string> = {
-  LOW: "border-slate-200 bg-slate-50 text-slate-600",
+  LOW: "border-[var(--border)] bg-[var(--surface-subtle)] text-[var(--muted-foreground)]",
   NORMAL: "border-blue-200 bg-blue-50 text-blue-700",
   HIGH: "border-amber-200 bg-amber-50 text-amber-700",
   URGENT: "border-rose-200 bg-rose-50 text-rose-700",
@@ -112,7 +112,7 @@ function formatDate(value: string | null) {
 
 function StatusBadge({ status }: { status: ApprovalRequestStatus }) {
   return (
-    <span className={`inline-flex items-center whitespace-nowrap rounded-md border px-2 py-1 text-[11px] font-semibold uppercase tracking-wider ${STATUS_STYLES[status]}`}>
+    <span className={`inline-flex items-center whitespace-nowrap rounded-[var(--radius-md)] border px-2 py-1 text-[11px] font-semibold uppercase tracking-wider ${STATUS_STYLES[status]}`}>
       {STATUS_LABELS[status]}
     </span>
   );
@@ -120,7 +120,7 @@ function StatusBadge({ status }: { status: ApprovalRequestStatus }) {
 
 function PriorityBadge({ priority }: { priority: ApprovalPriority }) {
   return (
-    <span className={`inline-flex items-center whitespace-nowrap rounded-md border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${PRIORITY_STYLES[priority]}`}>
+    <span className={`inline-flex items-center whitespace-nowrap rounded-[var(--radius-md)] border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${PRIORITY_STYLES[priority]}`}>
       {PRIORITY_LABELS[priority]}
     </span>
   );
@@ -144,21 +144,21 @@ function SummaryCard({
     amber: "border-amber-100 bg-gradient-to-br from-amber-50 to-white text-amber-700",
     emerald: "border-emerald-100 bg-gradient-to-br from-emerald-50 to-white text-emerald-700",
     rose: "border-rose-100 bg-gradient-to-br from-rose-50 to-white text-rose-700",
-    slate: "border-slate-200 bg-gradient-to-br from-slate-50 to-white text-slate-700",
+    slate: "border-[var(--border)] bg-gradient-to-br from-slate-50 to-white text-[var(--foreground)]",
   }[tone];
 
   return (
-    <div className={`rounded-2xl border ${toneClass} p-4 shadow-sm`}>
+    <div className={`rounded-[var(--radius-xl)] border ${toneClass} p-4 shadow-[var(--shadow-card)]`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-slate-600 truncate" title={label}>{label}</p>
+          <p className="text-sm font-medium text-[var(--muted-foreground)] truncate" title={label}>{label}</p>
           <p className="mt-1 text-2xl font-bold tracking-tight text-slate-950 truncate" title={String(value)}>{value}</p>
         </div>
-        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-950/5`}>
+        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-xl)] bg-[var(--surface)] shadow-[var(--shadow-card)] ring-1 ring-slate-950/5`}>
           <Icon className="h-5 w-5" />
         </div>
       </div>
-      <p className="mt-3 text-xs leading-5 text-slate-500">{helper}</p>
+      <p className="mt-3 text-xs leading-5 text-[var(--muted-foreground)]">{helper}</p>
     </div>
   );
 }
@@ -209,15 +209,15 @@ function ApprovalFormDialog({
     >
       <form
         onSubmit={handleSubmit}
-        className="max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-t-2xl bg-white shadow-2xl shadow-slate-950/20 sm:rounded-3xl"
+        className="max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-t-2xl bg-[var(--surface)] shadow-2xl shadow-slate-950/20 sm:rounded-3xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-slate-100 bg-slate-50/50 px-5 py-5 sm:px-6">
+        <div className="flex items-start justify-between gap-4 border-b border-[var(--border)] bg-[var(--surface-subtle)] px-5 py-5 sm:px-6">
           <div>
             <h2 id="approval-create-title" className="text-xl font-bold text-slate-950">
               {initialData ? "Sửa yêu cầu phê duyệt" : "Tạo yêu cầu phê duyệt ngoài hồ sơ nguồn"}
             </h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-[var(--muted-foreground)]">
               {initialData ? "Cập nhật thông tin yêu cầu phê duyệt hiện tại." : "Dùng cho các trường hợp cần xin ý kiến thủ công ngoài quy trình hệ thống."}
             </p>
           </div>
@@ -228,7 +228,7 @@ function ApprovalFormDialog({
 
         {!initialData && (
           <div className="px-5 py-4 sm:px-6">
-             <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-800">
+             <div className="rounded-[var(--radius-xl)] border border-blue-100 bg-blue-50 p-4 text-sm text-blue-800">
                <strong>Lưu ý:</strong> Yêu cầu tạo thủ công sẽ không tự liên kết với hồ sơ nguồn. Với yêu cầu vật tư, báo cáo, khối lượng hoặc hồ sơ kỹ thuật, hãy khởi tạo từ quy trình gốc khi khả dụng.
              </div>
           </div>
@@ -236,11 +236,11 @@ function ApprovalFormDialog({
 
         <div className="grid gap-5 px-5 pb-6 sm:grid-cols-2 sm:px-6">
           <label className="sm:col-span-2">
-            <span className="text-sm font-semibold text-slate-700">Công trình <span className="text-red-500">*</span></span>
+            <span className="text-sm font-semibold text-[var(--foreground)]">Công trình <span className="text-red-500">*</span></span>
             <select
               value={projectId}
               onChange={(event) => setProjectId(event.target.value)}
-              className="mt-1.5 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="mt-1.5 h-10 w-full rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] px-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               required
             >
               {projects.map((project) => (
@@ -250,23 +250,23 @@ function ApprovalFormDialog({
           </label>
 
           <label className="sm:col-span-2">
-            <span className="text-sm font-semibold text-slate-700">Tiêu đề <span className="text-red-500">*</span></span>
+            <span className="text-sm font-semibold text-[var(--foreground)]">Tiêu đề <span className="text-red-500">*</span></span>
             <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              className="mt-1.5 h-10 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="mt-1.5 h-10 w-full rounded-[var(--radius-lg)] border border-[var(--border)] px-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               placeholder="Ví dụ: Xin ý kiến phương án móng cọc công trình A..."
               required
             />
           </label>
 
           <label>
-            <span className="text-sm font-semibold text-slate-700">Loại yêu cầu</span>
+            <span className="text-sm font-semibold text-[var(--foreground)]">Loại yêu cầu</span>
             <select
               value={type}
               onChange={(event) => setType(event.target.value as ApprovalRequestType)}
               disabled={!!initialData}
-              className={`mt-1.5 h-10 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-100 ${initialData ? "bg-slate-50 text-slate-500" : "bg-white"}`}
+              className={`mt-1.5 h-10 w-full rounded-[var(--radius-lg)] border border-[var(--border)] px-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-100 ${initialData ? "bg-[var(--surface-subtle)] text-[var(--muted-foreground)]" : "bg-[var(--surface)]"}`}
             >
               {TYPE_OPTIONS.map((option) => (
                 <option key={option} value={option}>{TYPE_LABELS[option]}</option>
@@ -275,11 +275,11 @@ function ApprovalFormDialog({
           </label>
 
           <label>
-            <span className="text-sm font-semibold text-slate-700">Ưu tiên</span>
+            <span className="text-sm font-semibold text-[var(--foreground)]">Ưu tiên</span>
             <select
               value={priority}
               onChange={(event) => setPriority(event.target.value as ApprovalPriority)}
-              className="mt-1.5 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="mt-1.5 h-10 w-full rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] px-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >
               {PRIORITY_OPTIONS.map((option) => (
                 <option key={option} value={option}>{PRIORITY_LABELS[option]}</option>
@@ -288,7 +288,7 @@ function ApprovalFormDialog({
           </label>
 
           <label>
-            <span className="text-sm font-semibold text-slate-700">Hạn xử lý <span className="text-red-500">*</span></span>
+            <span className="text-sm font-semibold text-[var(--foreground)]">Hạn xử lý <span className="text-red-500">*</span></span>
             <DateFieldVN
               value={dueDate}
               onChange={(val) => setDueDate(val)}
@@ -298,17 +298,17 @@ function ApprovalFormDialog({
           </label>
 
           <label className="sm:col-span-2">
-            <span className="text-sm font-semibold text-slate-700">Mô tả</span>
+            <span className="text-sm font-semibold text-[var(--foreground)]">Mô tả</span>
             <textarea  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              className="mt-1.5 min-h-[100px] w-full resize-y rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="mt-1.5 min-h-[100px] w-full resize-y rounded-[var(--radius-lg)] border border-[var(--border)] px-3 py-2 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               placeholder="Ghi rõ các nội dung trọng tâm cần cấp trên xem xét và quyết định..."
             />
           </label>
         </div>
 
-        <div className="flex flex-col-reverse gap-3 border-t border-slate-100 bg-slate-50 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
+        <div className="flex flex-col-reverse gap-3 border-t border-[var(--border)] bg-[var(--surface-subtle)] px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
           <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>Hủy</Button>
           <Button type="submit" disabled={isSubmitting || projects.length === 0}>
             {isSubmitting ? "Đang xử lý..." : (initialData ? "Cập nhật" : "Tạo yêu cầu")}
@@ -321,9 +321,9 @@ function ApprovalFormDialog({
 
 function DetailItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-slate-100 bg-slate-50/50 px-4 py-3">
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{label}</div>
-      <div className="mt-1 text-sm font-semibold text-slate-900">{value}</div>
+    <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface-subtle)] px-4 py-3">
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">{label}</div>
+      <div className="mt-1 text-sm font-semibold text-[var(--foreground)]">{value}</div>
     </div>
   );
 }
@@ -343,50 +343,50 @@ function MaterialRequestPreview({ approvalId }: { approvalId: string }) {
     return () => { active = false; };
   }, [approvalId]);
 
-  if (loading) return <div className="text-sm text-slate-500 animate-pulse mt-4">Đang tải chi tiết phiếu vật tư...</div>;
+  if (loading) return <div className="text-sm text-[var(--muted-foreground)] animate-pulse mt-4">Đang tải chi tiết phiếu vật tư...</div>;
   if (!data) return <div className="text-sm text-rose-500 mt-4">Không tìm thấy phiếu yêu cầu vật tư liên kết. Phiếu có thể đã bị xóa hoặc bạn không có quyền xem.</div>;
 
   return (
-    <div className="mt-4 border-t border-slate-100 pt-4">
-      <h4 className="text-sm font-semibold text-slate-900 mb-3 text-blue-700">Yêu cầu vật tư cần phê duyệt</h4>
+    <div className="mt-4 border-t border-[var(--border)] pt-4">
+      <h4 className="text-sm font-semibold text-[var(--foreground)] mb-3 text-blue-700">Yêu cầu vật tư cần phê duyệt</h4>
       <div className="grid grid-cols-2 gap-y-2 gap-x-4 mb-4">
         <div className="text-sm">
-          <span className="text-slate-500">Mã phiếu: </span>
-          <span className="font-semibold text-slate-900">{data.requestNo || "—"}</span>
+          <span className="text-[var(--muted-foreground)]">Mã phiếu: </span>
+          <span className="font-semibold text-[var(--foreground)]">{data.requestNo || "—"}</span>
         </div>
         <div className="text-sm">
-          <span className="text-slate-500">Người gửi: </span>
-          <span className="font-semibold text-slate-900">{data.requestedBy?.name || "Không rõ"}</span>
+          <span className="text-[var(--muted-foreground)]">Người gửi: </span>
+          <span className="font-semibold text-[var(--foreground)]">{data.requestedBy?.name || "Không rõ"}</span>
         </div>
         <div className="text-sm">
-          <span className="text-slate-500">Ngày đề xuất: </span>
-          <span className="font-medium text-slate-900">{formatDate(data.requestDate)}</span>
+          <span className="text-[var(--muted-foreground)]">Ngày đề xuất: </span>
+          <span className="font-medium text-[var(--foreground)]">{formatDate(data.requestDate)}</span>
         </div>
         <div className="text-sm">
-          <span className="text-slate-500">Ngày cần vật tư: </span>
-          <span className="font-medium text-slate-900">{formatDate(data.neededDate)}</span>
+          <span className="text-[var(--muted-foreground)]">Ngày cần vật tư: </span>
+          <span className="font-medium text-[var(--foreground)]">{formatDate(data.neededDate)}</span>
         </div>
         <div className="text-sm">
-          <span className="text-slate-500">Trạng thái phiếu vật tư: </span>
+          <span className="text-[var(--muted-foreground)]">Trạng thái phiếu vật tư: </span>
           <StatusBadge status={data.status} />
         </div>
         <div className="text-sm">
-          <span className="text-slate-500">Ưu tiên: </span>
-          <span className="font-medium text-slate-900">{PRIORITY_LABELS[data.priority as ApprovalPriority] || data.priority}</span>
+          <span className="text-[var(--muted-foreground)]">Ưu tiên: </span>
+          <span className="font-medium text-[var(--foreground)]">{PRIORITY_LABELS[data.priority as ApprovalPriority] || data.priority}</span>
         </div>
         {data.note && (
           <div className="text-sm col-span-2">
-            <span className="text-slate-500">Ghi chú: </span>
-            <span className="text-slate-700">{data.note}</span>
+            <span className="text-[var(--muted-foreground)]">Ghi chú: </span>
+            <span className="text-[var(--foreground)]">{data.note}</span>
           </div>
         )}
       </div>
         
       <div className="mt-3">
-        <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Danh sách vật tư yêu cầu ({data.items?.length || 0})</div>
-        <div className="rounded-lg border border-slate-200 overflow-x-auto">
+        <div className="text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)] mb-2">Danh sách vật tư yêu cầu ({data.items?.length || 0})</div>
+        <div className="rounded-[var(--radius-lg)] border border-[var(--border)] overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap min-w-[500px]">
-            <thead className="bg-slate-50 text-slate-600">
+            <thead className="bg-[var(--surface-subtle)] text-[var(--muted-foreground)]">
               <tr>
                 <th className="px-3 py-2 font-medium">Mã vật tư</th>
                 <th className="px-3 py-2 font-medium">Tên vật tư</th>
@@ -397,15 +397,15 @@ function MaterialRequestPreview({ approvalId }: { approvalId: string }) {
                 <th className="px-3 py-2 font-medium text-right text-rose-600">Còn thiếu</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 bg-white">
+            <tbody className="divide-y divide-slate-100 bg-[var(--surface)]">
               {data.items?.map((item: any) => {
                 const formatQty = (num: number) => new Intl.NumberFormat('vi-VN').format(num);
                 return (
-                  <tr key={item.id} className="hover:bg-slate-50">
-                    <td className="px-3 py-2 text-slate-500 font-mono text-xs">{item.materialCode || "—"}</td>
-                    <td className="px-3 py-2 text-slate-900 font-medium">{item.materialName || "Vật tư không rõ"}</td>
-                    <td className="px-3 py-2 text-slate-500">{item.unit || "—"}</td>
-                    <td className="px-3 py-2 text-right font-semibold text-slate-900">{formatQty(item.requestedQuantity)}</td>
+                  <tr key={item.id} className="hover:bg-[var(--surface-subtle)]">
+                    <td className="px-3 py-2 text-[var(--muted-foreground)] font-mono text-xs">{item.materialCode || "—"}</td>
+                    <td className="px-3 py-2 text-[var(--foreground)] font-medium">{item.materialName || "Vật tư không rõ"}</td>
+                    <td className="px-3 py-2 text-[var(--muted-foreground)]">{item.unit || "—"}</td>
+                    <td className="px-3 py-2 text-right font-semibold text-[var(--foreground)]">{formatQty(item.requestedQuantity)}</td>
                     <td className="px-3 py-2 text-right text-emerald-600">{formatQty(item.issuedQuantity)}</td>
                     <td className="px-3 py-2 text-right text-blue-600">{formatQty(item.receivedQuantity)}</td>
                     <td className="px-3 py-2 text-right font-medium text-rose-600">{formatQty(item.remainingQuantity)}</td>
@@ -414,7 +414,7 @@ function MaterialRequestPreview({ approvalId }: { approvalId: string }) {
               })}
               {(!data.items || data.items.length === 0) && (
                 <tr>
-                  <td colSpan={7} className="px-3 py-4 text-center text-slate-500 italic">Không có vật tư nào</td>
+                  <td colSpan={7} className="px-3 py-4 text-center text-[var(--muted-foreground)] italic">Không có vật tư nào</td>
                 </tr>
               )}
             </tbody>
@@ -472,22 +472,22 @@ function ApprovalDetailDrawer({
 
   return (
     <div className="fixed inset-0 z-[90] flex justify-end bg-slate-950/40 backdrop-blur-sm" role="dialog" aria-modal="true" onMouseDown={onClose}>
-      <div className="flex h-full w-full flex-col bg-white shadow-2xl shadow-slate-950/20 sm:max-w-[600px]" onMouseDown={(event) => event.stopPropagation()}>
+      <div className="flex h-full w-full flex-col bg-[var(--surface)] shadow-2xl shadow-slate-950/20 sm:max-w-[600px]" onMouseDown={(event) => event.stopPropagation()}>
         {/* Header */}
-        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5 bg-slate-50/50">
+        <div className="flex items-start justify-between gap-4 border-b border-[var(--border)] px-6 py-5 bg-[var(--surface-subtle)]">
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-1.5">
-              <span className="font-mono text-xs font-semibold text-slate-500 bg-white border border-slate-200 px-1.5 py-0.5 rounded">{approval.code}</span>
+              <span className="font-mono text-xs font-semibold text-[var(--muted-foreground)] bg-[var(--surface)] border border-[var(--border)] px-1.5 py-0.5 rounded">{approval.code}</span>
               <StatusBadge status={approval.status} />
               {overdue && (
-                <span className="inline-flex items-center rounded-md bg-red-100 px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-red-700">
+                <span className="inline-flex items-center rounded-[var(--radius-md)] bg-red-100 px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-red-700">
                   Quá hạn
                 </span>
               )}
             </div>
             <h2 className="text-xl font-bold leading-tight text-slate-950">{approval.title}</h2>
           </div>
-          <button type="button" onClick={onClose} className="icon-button shrink-0 bg-white shadow-sm ring-1 ring-slate-200" aria-label="Đóng chi tiết">
+          <button type="button" onClick={onClose} className="icon-button shrink-0 bg-[var(--surface)] shadow-[var(--shadow-card)] ring-1 ring-slate-200" aria-label="Đóng chi tiết">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -495,7 +495,7 @@ function ApprovalDetailDrawer({
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-6 py-6">
           {approval.status === "PENDING" && (
-            <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <div className="mb-6 rounded-[var(--radius-xl)] border border-amber-200 bg-amber-50 p-4">
               <div className="flex gap-3">
                 <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
                 <div className="text-sm text-amber-800">
@@ -517,7 +517,7 @@ function ApprovalDetailDrawer({
 
           <div className="space-y-8">
             <section>
-              <h3 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+              <h3 className="text-sm font-bold text-[var(--foreground)] mb-3 flex items-center gap-2">
                 Thông tin tổng quan
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -525,30 +525,30 @@ function ApprovalDetailDrawer({
                 <DetailItem label="Người tạo" value={approval.requester.name} />
                 <DetailItem label="Hạn xử lý" value={formatDate(approval.dueDate)} />
                 <DetailItem label="Loại yêu cầu" value={TYPE_LABELS[approval.type]} />
-                <div className="rounded-xl border border-slate-100 bg-slate-50/50 px-4 py-3">
-                  <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Mức ưu tiên</div>
+                <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface-subtle)] px-4 py-3">
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Mức ưu tiên</div>
                   <div className="mt-1"><PriorityBadge priority={approval.priority} /></div>
                 </div>
               </div>
             </section>
 
             <section>
-              <h3 className="text-sm font-bold text-slate-900 mb-3">Hồ sơ gốc liên kết</h3>
+              <h3 className="text-sm font-bold text-[var(--foreground)] mb-3">Hồ sơ gốc liên kết</h3>
               {(approval.sourceType || approval.sourceId) ? (
-                <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-card)]">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                      <div className="text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)] mb-1">
                         {SOURCE_TYPE_LABELS[approval.sourceType ?? ""] ?? approval.sourceType ?? "Nguồn"}
                       </div>
                       {approval.sourceType !== "MATERIAL_REQUEST" && (
-                        <div className="font-mono text-sm font-semibold text-slate-900">
+                        <div className="font-mono text-sm font-semibold text-[var(--foreground)]">
                           {approval.sourceId || "Không có mã"}
                         </div>
                       )}
                     </div>
                     {approval.sourceType !== "MATERIAL_REQUEST" ? (
-                       <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                       <span className="inline-flex items-center rounded-full bg-[var(--border)] px-2.5 py-1 text-xs font-medium text-[var(--muted-foreground)]">
                          Tham chiếu nội bộ
                        </span>
                     ) : (
@@ -562,34 +562,34 @@ function ApprovalDetailDrawer({
                   )}
                 </div>
               ) : (
-                <div className="rounded-xl border border-dashed border-slate-300 p-4 text-center text-sm text-slate-500">
+                <div className="rounded-[var(--radius-xl)] border border-dashed border-[var(--border)] p-4 text-center text-sm text-[var(--muted-foreground)]">
                   Yêu cầu này không liên kết với hồ sơ gốc nào.
                 </div>
               )}
             </section>
             
             <section>
-              <h3 className="text-sm font-bold text-slate-900 mb-3">Mô tả chi tiết</h3>
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-relaxed text-slate-700">
-                {approval.description || <span className="text-slate-400 italic">Người tạo không cung cấp mô tả bổ sung.</span>}
+              <h3 className="text-sm font-bold text-[var(--foreground)] mb-3">Mô tả chi tiết</h3>
+              <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface-subtle)] p-4 text-sm leading-relaxed text-[var(--foreground)]">
+                {approval.description || <span className="text-[var(--muted-foreground)] opacity-70 italic">Người tạo không cung cấp mô tả bổ sung.</span>}
               </div>
             </section>
 
             {approval.status !== "PENDING" && (
               <section>
-                <h3 className="text-sm font-bold text-slate-900 mb-3">Quyết định</h3>
-                <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                <h3 className="text-sm font-bold text-[var(--foreground)] mb-3">Quyết định</h3>
+                <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-card)]">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold">
+                    <div className="h-8 w-8 rounded-full bg-[var(--border)] flex items-center justify-center text-[var(--muted-foreground)] font-bold">
                       {approval.decidedBy?.name.charAt(0) ?? "?"}
                     </div>
                     <div>
-                      <div className="text-sm font-semibold text-slate-900">{approval.decidedBy?.name ?? "Chưa rõ người quyết định"}</div>
-                      <div className="text-xs text-slate-500">{approval.decidedAt ? formatDate(approval.decidedAt) : "Chưa rõ thời gian"}</div>
+                      <div className="text-sm font-semibold text-[var(--foreground)]">{approval.decidedBy?.name ?? "Chưa rõ người quyết định"}</div>
+                      <div className="text-xs text-[var(--muted-foreground)]">{approval.decidedAt ? formatDate(approval.decidedAt) : "Chưa rõ thời gian"}</div>
                     </div>
                   </div>
                   {approval.decisionNote && (
-                    <div className="rounded-lg bg-slate-50 p-3 text-sm text-slate-700 border border-slate-100">
+                    <div className="rounded-[var(--radius-lg)] bg-[var(--surface-subtle)] p-3 text-sm text-[var(--foreground)] border border-[var(--border)]">
                       <strong>Ghi chú:</strong> {approval.decisionNote}
                     </div>
                   )}
@@ -598,24 +598,24 @@ function ApprovalDetailDrawer({
             )}
             
             <section>
-               <h3 className="text-sm font-bold text-slate-900 mb-3">Lịch sử thao tác (Audit Log)</h3>
-               <div className="rounded-xl border border-dashed border-slate-300 p-6 text-center">
-                 <Clock className="mx-auto h-6 w-6 text-slate-400 mb-2" />
-                 <p className="text-sm text-slate-500">Lịch sử thao tác chi tiết sẽ được hiển thị ở phase sau.</p>
+               <h3 className="text-sm font-bold text-[var(--foreground)] mb-3">Lịch sử thao tác (Audit Log)</h3>
+               <div className="rounded-[var(--radius-xl)] border border-dashed border-[var(--border)] p-6 text-center">
+                 <Clock className="mx-auto h-6 w-6 text-[var(--muted-foreground)] opacity-70 mb-2" />
+                 <p className="text-sm text-[var(--muted-foreground)]">Lịch sử thao tác chi tiết sẽ được hiển thị ở phase sau.</p>
                </div>
             </section>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="border-t border-slate-200 bg-white px-6 py-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        <div className="border-t border-[var(--border)] bg-[var(--surface)] px-6 py-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">Đóng</Button>
             {canEdit && (
               <Button type="button" variant="outline" onClick={() => onEdit(approval)} className="w-full sm:w-auto text-blue-600 border-blue-200 hover:bg-blue-50">Sửa</Button>
             )}
             {canCancel && (
-              <Button type="button" variant="outline" onClick={() => onCancel(approval)} className="w-full sm:w-auto text-slate-600">Hủy yêu cầu</Button>
+              <Button type="button" variant="outline" onClick={() => onCancel(approval)} className="w-full sm:w-auto text-[var(--muted-foreground)]">Hủy yêu cầu</Button>
             )}
             {canDecide && (
               <>
@@ -840,12 +840,12 @@ export function ApprovalCenterClient({
             Trung tâm phê duyệt
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Phê duyệt</h1>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
+          <p className="mt-2 text-sm leading-6 text-[var(--muted-foreground)]">
             Tổng hợp các yêu cầu cần xử lý theo công trình.
           </p>
         </div>
         {canCreate && projects.length > 0 && (
-          <Button type="button" onClick={() => setCreating(true)} className="w-full sm:w-auto shadow-sm">
+          <Button type="button" onClick={() => setCreating(true)} className="w-full sm:w-auto shadow-[var(--shadow-card)]">
             <Plus className="h-4 w-4" />
             Tạo yêu cầu
           </Button>
@@ -861,22 +861,22 @@ export function ApprovalCenterClient({
       </div>
 
       {deepLinkMissing && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
+        <div className="rounded-[var(--radius-xl)] border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
           Không tìm thấy nội dung thông báo hoặc bạn không có quyền truy cập.
         </div>
       )}
 
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-card)]">
         {/* Toolbar & Tabs */}
-        <div className="flex flex-col gap-4 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="inline-flex h-9 items-center justify-center rounded-lg bg-slate-100 p-1 text-sm text-slate-500">
-             <button onClick={() => setActiveTab("PENDING")} className={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 font-medium transition-all ${activeTab === "PENDING" ? "bg-white text-slate-950 shadow-sm" : "hover:text-slate-900"}`}>
+        <div className="flex flex-col gap-4 border-b border-[var(--border)] p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="inline-flex h-9 items-center justify-center rounded-[var(--radius-lg)] bg-[var(--border)] p-1 text-sm text-[var(--muted-foreground)]">
+             <button onClick={() => setActiveTab("PENDING")} className={`inline-flex items-center justify-center whitespace-nowrap rounded-[var(--radius-md)] px-3 py-1 font-medium transition-all ${activeTab === "PENDING" ? "bg-[var(--surface)] text-slate-950 shadow-[var(--shadow-card)]" : "hover:text-[var(--foreground)]"}`}>
                 Cần xử lý
              </button>
-             <button onClick={() => setActiveTab("RESOLVED")} className={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 font-medium transition-all ${activeTab === "RESOLVED" ? "bg-white text-slate-950 shadow-sm" : "hover:text-slate-900"}`}>
+             <button onClick={() => setActiveTab("RESOLVED")} className={`inline-flex items-center justify-center whitespace-nowrap rounded-[var(--radius-md)] px-3 py-1 font-medium transition-all ${activeTab === "RESOLVED" ? "bg-[var(--surface)] text-slate-950 shadow-[var(--shadow-card)]" : "hover:text-[var(--foreground)]"}`}>
                 Đã xử lý
              </button>
-             <button onClick={() => setActiveTab("ALL")} className={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 font-medium transition-all ${activeTab === "ALL" ? "bg-white text-slate-950 shadow-sm" : "hover:text-slate-900"}`}>
+             <button onClick={() => setActiveTab("ALL")} className={`inline-flex items-center justify-center whitespace-nowrap rounded-[var(--radius-md)] px-3 py-1 font-medium transition-all ${activeTab === "ALL" ? "bg-[var(--surface)] text-slate-950 shadow-[var(--shadow-card)]" : "hover:text-[var(--foreground)]"}`}>
                 Tất cả
              </button>
           </div>
@@ -884,22 +884,22 @@ export function ApprovalCenterClient({
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <div className="relative">
               <label htmlFor="approvals-search" className="sr-only">Tìm kiếm yêu cầu phê duyệt</label>
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted-foreground)] opacity-70" />
               <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                 id="approvals-search"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Tìm kiếm..."
-                className="h-9 w-full sm:w-64 rounded-md border border-slate-200 bg-white pl-9 pr-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="h-9 w-full sm:w-64 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] pl-9 pr-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               />
             </div>
-            <select value={projectFilter} onChange={(event) => handleProjectFilterChange(event.target.value)} className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+            <select value={projectFilter} onChange={(event) => handleProjectFilterChange(event.target.value)} className="h-9 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
               <option value="">Tất cả công trình</option>
               {projects.map((project) => (
                 <option key={project.id} value={project.id}>{project.code}</option>
               ))}
             </select>
-            <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)} className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+            <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)} className="h-9 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-3 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
               <option value="">Loại yêu cầu</option>
               {TYPE_OPTIONS.map((type) => (
                 <option key={type} value={type}>{TYPE_LABELS[type]}</option>
@@ -914,20 +914,20 @@ export function ApprovalCenterClient({
             <EmptyState
               title={activeTab === "PENDING" ? "Hiện không có yêu cầu nào chờ duyệt" : "Không tìm thấy yêu cầu phù hợp"}
               description={activeTab === "PENDING" ? "Bạn đã xử lý xong mọi việc. Các đề xuất mới sẽ hiển thị tại đây." : "Thử thay đổi bộ lọc hoặc tìm kiếm với từ khóa khác."}
-              icon={<FileCheck2 className="h-8 w-8 text-slate-400" />}
+              icon={<FileCheck2 className="h-8 w-8 text-[var(--muted-foreground)] opacity-70" />}
             />
           </div>
         ) : (
           <>
           <div className="hidden sm:block overflow-x-auto">
             <table className="min-w-[800px] w-full text-left text-sm whitespace-nowrap">
-              <thead className="bg-slate-50 border-b border-slate-100 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+              <thead className="bg-[var(--surface-subtle)] border-b border-[var(--border)] text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">
                 <tr>
                   <th className="px-5 py-3.5 min-w-[120px]">Yêu cầu</th>
                   <th className="px-5 py-3.5 min-w-[150px]">Nguồn / Công trình</th>
                   <th className="px-5 py-3.5 text-right min-w-[160px]">Ưu tiên / Hạn</th>
                   <th className="px-5 py-3.5 min-w-[120px]">Trạng thái</th>
-                  <th className="px-5 py-3.5 text-right sticky right-0 bg-slate-50 z-10 border-l border-slate-100 shadow-[-5px_0_15px_-5px_rgba(0,0,0,0.05)]">Thao tác</th>
+                  <th className="px-5 py-3.5 text-right sticky right-0 bg-[var(--surface-subtle)] z-10 border-l border-[var(--border)] shadow-[-5px_0_15px_-5px_rgba(0,0,0,0.05)]">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -940,42 +940,42 @@ export function ApprovalCenterClient({
                       id={`approval-row-${approval.id}`}
                       key={approval.id}
                       className={cn(
-                        "group hover:bg-slate-50/50 transition-colors",
+                        "group hover:bg-[var(--surface-subtle)] transition-colors",
                         deepLinkedApprovalId === approval.id && "bg-blue-50/80 ring-2 ring-inset ring-blue-200"
                       )}
                     >
                       <td className="px-5 py-3">
                         <div className="flex flex-col gap-1">
-                          <button type="button" onClick={() => setViewing(approval)} className="text-left font-semibold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1">
+                          <button type="button" onClick={() => setViewing(approval)} className="text-left font-semibold text-[var(--foreground)] group-hover:text-blue-600 transition-colors line-clamp-1">
                             {approval.title}
                           </button>
                           <div className="flex items-center gap-2">
-                            <span className="font-mono text-[11px] font-medium text-slate-500">{approval.code}</span>
+                            <span className="font-mono text-[11px] font-medium text-[var(--muted-foreground)]">{approval.code}</span>
                             <span className="text-[11px] text-slate-300">•</span>
-                            <span className="text-[11px] text-slate-500">{TYPE_LABELS[approval.type]}</span>
+                            <span className="text-[11px] text-[var(--muted-foreground)]">{TYPE_LABELS[approval.type]}</span>
                           </div>
-                          <div className="text-[11px] text-slate-400">Tạo bởi: {approval.requester.name}</div>
+                          <div className="text-[11px] text-[var(--muted-foreground)] opacity-70">Tạo bởi: {approval.requester.name}</div>
                         </div>
                       </td>
                       <td className="px-5 py-3">
                         <div className="flex flex-col gap-1">
-                          <div className="font-medium text-slate-900 line-clamp-1 max-w-[250px]" title={`${approval.project.code} - ${approval.project.name}`}>
+                          <div className="font-medium text-[var(--foreground)] line-clamp-1 max-w-[250px]" title={`${approval.project.code} - ${approval.project.name}`}>
                             {approval.project.code} - {approval.project.name}
                           </div>
                           {approval.sourceType || approval.sourceId ? (
-                            <div className="text-[11px] text-slate-500">
+                            <div className="text-[11px] text-[var(--muted-foreground)]">
                                <span className="font-medium">{SOURCE_TYPE_LABELS[approval.sourceType ?? ""] ?? approval.sourceType ?? "Nguồn"}</span>
                                {approval.sourceType === "MATERIAL_REQUEST" ? ` • ${approval.title.replace("Yêu cầu vật tư: ", "")}` : (approval.sourceId && ` • ${approval.sourceId}`)}
                             </div>
                           ) : (
-                            <div className="text-[11px] text-slate-400 italic">Chỉ tham chiếu nội bộ</div>
+                            <div className="text-[11px] text-[var(--muted-foreground)] opacity-70 italic">Chỉ tham chiếu nội bộ</div>
                           )}
                         </div>
                       </td>
                       <td className="px-5 py-3 text-right">
                          <div className="flex items-center justify-end gap-2">
                             <PriorityBadge priority={approval.priority} />
-                            <span className={`font-mono text-[11px] ${overdue ? "font-bold text-red-600" : "text-slate-500"}`}>
+                            <span className={`font-mono text-[11px] ${overdue ? "font-bold text-red-600" : "text-[var(--muted-foreground)]"}`}>
                                {formatDate(approval.dueDate)}
                             </span>
                          </div>
@@ -983,9 +983,9 @@ export function ApprovalCenterClient({
                       <td className="px-5 py-3">
                          <StatusBadge status={approval.status} />
                       </td>
-                      <td className="px-5 py-3 sticky right-0 bg-white group-hover:bg-slate-50/50 transition-colors z-10 border-l border-slate-100 shadow-[-5px_0_15px_-5px_rgba(0,0,0,0.05)]">
+                      <td className="px-5 py-3 sticky right-0 bg-[var(--surface)] group-hover:bg-[var(--surface-subtle)] transition-colors z-10 border-l border-[var(--border)] shadow-[-5px_0_15px_-5px_rgba(0,0,0,0.05)]">
                         <div className="flex justify-end gap-1.5">
-                          <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0 text-slate-600 hover:text-blue-600" onClick={() => setViewing(approval)}>
+                          <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0 text-[var(--muted-foreground)] hover:text-blue-600" onClick={() => setViewing(approval)}>
                             <Eye className="h-4 w-4" />
                           </Button>
                           {canEdit && (
@@ -1024,29 +1024,29 @@ export function ApprovalCenterClient({
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                         <span className="font-mono text-[10px] font-medium text-slate-500">{approval.code}</span>
+                         <span className="font-mono text-[10px] font-medium text-[var(--muted-foreground)]">{approval.code}</span>
                          <StatusBadge status={approval.status} />
                       </div>
-                      <button type="button" onClick={() => setViewing(approval)} className="text-left font-semibold text-slate-900 leading-snug line-clamp-2">
+                      <button type="button" onClick={() => setViewing(approval)} className="text-left font-semibold text-[var(--foreground)] leading-snug line-clamp-2">
                         {approval.title}
                       </button>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-y-2 text-sm">
-                    <div className="col-span-2 text-slate-600 line-clamp-1">
+                    <div className="col-span-2 text-[var(--muted-foreground)] line-clamp-1">
                       <span className="font-medium">{approval.project.code}</span> - {approval.project.name}
                     </div>
-                    <div className="text-slate-500">
+                    <div className="text-[var(--muted-foreground)]">
                       Nguồn:
                     </div>
-                    <div className="font-medium text-slate-900 text-right">
+                    <div className="font-medium text-[var(--foreground)] text-right">
                       {SOURCE_TYPE_LABELS[approval.sourceType ?? ""] ?? approval.sourceType ?? "Khác"}
                     </div>
                   </div>
                   <div className="flex items-center justify-between mt-1">
                     <div className="flex items-center gap-2">
                       <PriorityBadge priority={approval.priority} />
-                      <span className={`font-mono text-[11px] ${overdue ? "font-bold text-red-600" : "text-slate-500"}`}>
+                      <span className={`font-mono text-[11px] ${overdue ? "font-bold text-red-600" : "text-[var(--muted-foreground)]"}`}>
                          {formatDate(approval.dueDate)}
                       </span>
                     </div>
@@ -1059,7 +1059,7 @@ export function ApprovalCenterClient({
                        ) : approval.permissions?.canSoftDelete ? (
                           <Button type="button" size="sm" variant="ghost" className="h-8 px-3 text-rose-600 hover:bg-rose-50 hover:text-rose-700" onClick={() => handleDeleteApproval(approval)} disabled={isPending}>Xóa</Button>
                        ) : (
-                          <Button type="button" variant="ghost" size="sm" className="h-8 px-3 text-slate-600 hover:bg-slate-50" onClick={() => setViewing(approval)}>Chi tiết</Button>
+                          <Button type="button" variant="ghost" size="sm" className="h-8 px-3 text-[var(--muted-foreground)] hover:bg-[var(--surface-subtle)]" onClick={() => setViewing(approval)}>Chi tiết</Button>
                        )}
                     </div>
                   </div>
@@ -1126,11 +1126,11 @@ export function ApprovalCenterClient({
         title="Từ chối yêu cầu"
         description={
           rejecting ? (
-            <div className="mb-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
-              <p className="font-semibold text-slate-900 mb-3">{rejecting.code} - {rejecting.title}</p>
-              <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-sm text-slate-600">
-                <div className="col-span-2"><span className="text-slate-500 mr-2">Công trình:</span> {rejecting.project.code}</div>
-                <div><span className="text-slate-500 mr-2">Hạn xử lý:</span> <span className="font-mono text-slate-900 font-medium">{formatDate(rejecting.dueDate)}</span></div>
+            <div className="mb-4 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface-subtle)] p-4">
+              <p className="font-semibold text-[var(--foreground)] mb-3">{rejecting.code} - {rejecting.title}</p>
+              <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-sm text-[var(--muted-foreground)]">
+                <div className="col-span-2"><span className="text-[var(--muted-foreground)] mr-2">Công trình:</span> {rejecting.project.code}</div>
+                <div><span className="text-[var(--muted-foreground)] mr-2">Hạn xử lý:</span> <span className="font-mono text-[var(--foreground)] font-medium">{formatDate(rejecting.dueDate)}</span></div>
               </div>
             </div>
           ) : undefined

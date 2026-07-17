@@ -51,10 +51,10 @@ function validPayload(key: WorkManagementCommandSchemaKey): Record<string, unkno
     case "changesRequest": return { ...versionedTask, submissionId: "submission-1", reason: "Add evidence" };
     case "approveSubmission": return { ...versionedTask, submissionId: "submission-1" };
     case "completeTask": return versionedTask;
-    case "handoverRequest": return { ...versionedTask, fromUserId: "user-1", toUserId: "user-2", effectiveAt: new Date("2026-08-01"), reason: "Leave coverage" };
-    case "acceptHandover": return { handoverId: "handover-1", expectedVersion: 0 };
-    case "rejectHandover": return { handoverId: "handover-1", expectedVersion: 0, reason: "Unavailable" };
-    case "approveHandover": return { handoverId: "handover-1", expectedVersion: 0 };
+    case "handoverRequest": return { ...versionedTask, receiverId: "user-2", reason: "Leave coverage" };
+    case "acceptHandover": return { ...versionedTask, handoverId: "handover-1" };
+    case "rejectHandover": return { ...versionedTask, handoverId: "handover-1", reason: "Unavailable" };
+    case "approveHandover": return { ...versionedTask, handoverId: "handover-1" };
     case "executeHandover": return { ...versionedTask, handoverId: "handover-1" };
   }
 }

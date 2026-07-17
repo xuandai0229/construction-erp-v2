@@ -7,11 +7,11 @@ export default async function NewProjectPage() {
   return (
     <div className="app-page space-y-6">
       <div className="flex items-center space-x-2">
-        <Building2 className="h-6 w-6 text-slate-500" />
+        <Building2 className="h-6 w-6 text-[var(--muted-foreground)]" />
         <h1 className="page-heading">Tạo mới công trình</h1>
       </div>
       
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow-card)]">
         <ProjectForm />
       </div>
     </div>

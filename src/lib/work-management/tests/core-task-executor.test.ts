@@ -14,7 +14,7 @@ const now = new Date("2026-07-14T08:00:00.000Z");
 const permissions: readonly WorkManagementPermission[] = ["task.create.personal", "task.update.assignee", "task.accept", "task.request_clarification", "task.update_progress", "task.request_extension", "task.update.deadline", "task.pause", "task.resume"];
 const actor = (permissionSet = permissions, actorId = "actor-1", companyId: string | null = null): WorkManagementActorContext => ({ actorType: "USER", actorId, companyId, permissionSet: new Set(permissionSet), resolvedScopes: ["OWN"], correlationId: "correlation-1", causationId: "cause-1", requestId: "request-1" });
 const state = (patch: Partial<TaskState> = {}): TaskState => ({ lifecycle: "IN_PROGRESS", acceptance: "ACCEPTED", execution: "ACTIVE", review: "NOT_SUBMITTED", handover: "NONE", waitingReason: null, ...patch });
-const task = (patch: Partial<CoreTaskAggregate> = {}): CoreTaskAggregate => ({ id: "task-1", creatorId: "actor-1", assignedById: "manager-1", primaryAssigneeId: "actor-1", projectId: "project-1", confidentiality: "NORMAL", requiresIndependentReviewer: false, reviewerId: null, approverId: null, participants: [], state: state(), deadlineAt: new Date("2026-07-20"), progressPercent: 20, version: 3, activeBlockerId: null, ...patch });
+const task = (patch: Partial<CoreTaskAggregate> = {}): CoreTaskAggregate => ({ id: "task-1", creatorId: "actor-1", assignedById: "manager-1", primaryAssigneeId: "actor-1", projectId: "project-1", confidentiality: "NORMAL", requiresIndependentReviewer: false, reviewerId: null, approverId: null, participants: [], state: state(), deadlineAt: new Date("2026-07-20"), progressPercent: 20, version: 3, activeBlockerId: null, ...patch, assignmentHistory: patch.assignmentHistory ?? [] });
 
 class FakeIdempotency {
   inspection: IdempotencyInspection = { status: "PROCEED" };
@@ -41,6 +41,7 @@ class FakeUow implements CoreTaskUnitOfWork {
           compareAndSave: async (id, expectedVersion, value) => { this.saves += 1; const existing = this.tasks.get(id); if (!this.saveAllowed || !existing || existing.version !== expectedVersion) return false; this.tasks.set(id, structuredClone(value)); return true; },
         },
         effects: { stage: async (effects) => { if (this.failStage) throw new WorkManagementDomainError("TASK_CONCURRENCY_CONFLICT"); this.effects.push(structuredClone(effects)); } },
+        outbox: { stage: async () => {} },
         idempotency: this.idempotency,
       };
       const result = await operation(transaction); this.commits += 1; return result;
@@ -99,6 +100,14 @@ test("all twelve Slice A actions save exact policy state and typed effects", asy
     assert.equal(result.effects.notifications.length, ["CREATE_DRAFT", "START", "UPDATE_PROGRESS"].includes(action) ? 0 : 1);
     assert.equal(result.effects.domainEvents[0]?.payload.action, action); assert.equal(result.effects.domainEvents[0]?.payload.taskId, result.task.id);
     for (const key of payloadKeys[action]) assert.equal(Object.hasOwn(result.effects.domainEvents[0]?.payload ?? {}, key), true);
+    if (action === "ASSIGN") {
+      assert.equal(result.task.assignmentHistory.length, 1);
+      assert.deepEqual(result.task.assignmentHistory[0], {
+        id: "assignment:new-task", taskId: "task-1", generation: 1, previousAssigneeId: null,
+        newAssigneeId: "user-2", assignedById: "actor-1", sourceAction: "ASSIGN",
+        sourceHandoverId: null, reason: "New owner", effectiveAt: now,
+      });
+    } else assert.deepEqual(result.task.assignmentHistory, []);
     assert.equal(run.uow.commits, 1); assert.equal(run.uow.rollbacks, 0); assert.equal(run.idempotency.completions.length, 1);
     assert.equal(run.idempotency.requests[0]?.key, "key");
     assert.deepEqual(run.idempotency.completionRequests[0], run.idempotency.requests[0]);
@@ -134,6 +143,58 @@ test("authorization, scope, confidentiality, concurrency and eligibility deny wi
   }
 });
 
+test("malformed assignment history fails closed before idempotency begin or transaction mutation", async () => {
+  const malformed = task({
+    assignmentHistory: [{
+      id: "assignment-1", taskId: "other-task", generation: 1,
+      previousAssigneeId: null, newAssigneeId: "actor-1", assignedById: "manager-1",
+      sourceAction: "ASSIGN", sourceHandoverId: null, reason: null, effectiveAt: now,
+    }],
+  });
+  const run = fixture(malformed);
+
+  await assert.rejects(
+    () => run.executor.execute({ action: "START", rawCommand: commands.START, actor: actor(), idempotencyKey: "malformed-history" }),
+    (error: unknown) => error instanceof WorkManagementDomainError && error.code === "TASK_ASSIGNMENT_HISTORY_TASK_MISMATCH",
+  );
+
+  assert.deepEqual(run.tasks.get("task-1"), malformed);
+  assert.equal(run.idempotency.begins, 0);
+  assert.equal(run.uow.saves, 0);
+  assert.equal(run.uow.effects.length, 0);
+  assert.equal(run.uow.commits, 0);
+});
+
+test("two competing ASSIGN commands commit one append-only generation and reject the stale writer", async () => {
+  const current = success.ASSIGN!;
+  const run = fixture(current, { relations: ["CREATOR"] });
+  const first = run.executor.execute({
+    action: "ASSIGN",
+    rawCommand: { ...commands.ASSIGN, primaryAssigneeId: "user-2" },
+    actor: actor(),
+    idempotencyKey: "competing-a",
+  });
+  const second = run.executor.execute({
+    action: "ASSIGN",
+    rawCommand: { ...commands.ASSIGN, primaryAssigneeId: "user-3" },
+    actor: actor(),
+    idempotencyKey: "competing-b",
+  });
+  const outcomes = await Promise.allSettled([first, second]);
+  const successes = outcomes.filter((outcome): outcome is PromiseFulfilledResult<StableCoreTaskExecutionResult> => outcome.status === "fulfilled");
+  const failures = outcomes.filter((outcome): outcome is PromiseRejectedResult => outcome.status === "rejected");
+
+  assert.equal(successes.length, 1);
+  assert.equal(failures.length, 1);
+  const failure = failures[0]?.reason;
+  assert.ok(failure instanceof WorkManagementDomainError);
+  assert.equal(failure.code, "TASK_CONCURRENCY_CONFLICT");
+  const committed = run.tasks.get("task-1");
+  assert.equal(committed?.assignmentHistory.length, 1);
+  assert.equal(committed?.assignmentHistory[0]?.generation, 1);
+  assert.equal(committed?.primaryAssigneeId, committed?.assignmentHistory[0]?.newAssigneeId);
+});
+
 test("action invariants retain extension deadline, history, blocker identity and progress boundary", async () => {
   const extension = fixture(success.REQUEST_EXTENSION); const extensionResult = await extension.executor.execute({ action: "REQUEST_EXTENSION", rawCommand: commands.REQUEST_EXTENSION, actor: actor(), idempotencyKey: "extension" });
   assert.equal(extensionResult.task.deadlineAt?.toISOString(), success.REQUEST_EXTENSION?.deadlineAt?.toISOString()); assert.equal(extensionResult.effects.deadlineHistoryIntents.length, 0);
@@ -164,7 +225,7 @@ test("transaction rollback restores task, effects and idempotency completion", a
 });
 
 test("idempotency replay, conflict and in-progress do not load or mutate", async () => {
-  const replay = fixture(success.START); const stored: StableCoreTaskExecutionResult = { task: task({ id: "stored", version: 9 }), effects: { domainEvents: [], activities: [], audits: [], notifications: [], assignmentIntents: [], deadlineHistoryIntents: [], blockerIntents: [], clarificationIntents: [], extensionRequestIntents: [], executionHistoryIntents: [], submissionIntents: [], reviewDecisionIntents: [], completionIntents: [] } };
+  const replay = fixture(success.START); const stored: StableCoreTaskExecutionResult = { task: task({ id: "stored", version: 9 }), effects: { domainEvents: [], activities: [], audits: [], notifications: [], assignmentIntents: [], deadlineHistoryIntents: [], blockerIntents: [], clarificationIntents: [], extensionRequestIntents: [], executionHistoryIntents: [], submissionIntents: [], reviewDecisionIntents: [], completionIntents: [], reopenIntents: [], cancellationIntents: [], archiveIntents: [], restoreIntents: [], handoverRequestIntents: [], handoverDecisionIntents: [], handoverExecutionIntents: [] } };
   replay.idempotency.replayResult = stored;
   assert.equal((await replay.executor.execute({ action: "START", rawCommand: commands.START, actor: actor(), idempotencyKey: "replay" })).task.id, "stored"); assert.equal(replay.uow.saves, 0);
   for (const status of ["CONFLICT", "IN_PROGRESS"] as const) {
@@ -178,6 +239,10 @@ test("create validates project access and confidentiality without losing parsed 
   const personal = fixture(null);
   const personalResult = await personal.executor.execute({ action: "CREATE_DRAFT", rawCommand: { title: "Personal task", confidentiality: "NORMAL", priority: "HIGH" }, actor: actor(), idempotencyKey: "personal" });
   assert.equal(personalResult.task.confidentiality, "NORMAL"); assert.equal(personalResult.task.priority, "HIGH"); assert.equal(personalResult.effects.domainEvents[0]?.payload.title, "Personal task");
+  const frozenUnassigned = fixture(null);
+  const frozenUnassignedResult = await frozenUnassigned.executor.execute({ action: "CREATE_DRAFT", rawCommand: { title: "Frozen unassigned draft", primaryAssigneeId: "ignored-in-slice-a" }, actor: actor(), idempotencyKey: "frozen-unassigned" });
+  assert.equal(frozenUnassignedResult.task.primaryAssigneeId, null);
+  assert.equal(frozenUnassignedResult.task.assignedById, null);
   const project = fixture(null);
   assert.equal((await project.executor.execute({ action: "CREATE_DRAFT", rawCommand: { title: "Project task", projectId: "project-1" }, actor: actor(), idempotencyKey: "project" })).task.projectId, "project-1");
   const unavailable = fixture(null, { projectExists: false });
@@ -198,6 +263,7 @@ test("assign emits exact history and all structured eligibility failures are sta
   const eligible = fixture(success.ASSIGN!, { relations: ["CREATOR"] });
   const assigned = await eligible.executor.execute({ action: "ASSIGN", rawCommand: commands.ASSIGN, actor: actor(), idempotencyKey: "assign" });
   assert.deepEqual(assigned.effects.assignmentIntents[0], { taskId: "task-1", previousAssigneeId: null, newAssigneeId: "user-2", assignedById: "actor-1", reason: "New owner", effectiveAt: now, occurredAt: now });
+  assert.equal(assigned.task.assignmentHistory.length, 1);
   const cases = [
     ["inactive", "TASK_ASSIGNEE_INACTIVE"], ["project", "TASK_ASSIGNEE_PROJECT_ACCESS"], ["reviewer", "TASK_REVIEWER_CONFLICT"], ["approver", "TASK_APPROVER_CONFLICT"], ["not-found", "TASK_ASSIGNEE_NOT_FOUND"], ["not-assignable", "TASK_ASSIGNEE_NOT_ASSIGNABLE"],
   ] as const;
@@ -226,7 +292,7 @@ test("execution history and blocker identifiers propagate through every relevant
 });
 
 test("replay identity is isolated by actor, company, and target while the policy resolver controls next state", async () => {
-  const stored: StableCoreTaskExecutionResult = { task: task({ id: "stored" }), effects: { domainEvents: [], activities: [], audits: [], notifications: [], assignmentIntents: [], deadlineHistoryIntents: [], blockerIntents: [], clarificationIntents: [], extensionRequestIntents: [], executionHistoryIntents: [], submissionIntents: [], reviewDecisionIntents: [], completionIntents: [] } };
+  const stored: StableCoreTaskExecutionResult = { task: task({ id: "stored" }), effects: { domainEvents: [], activities: [], audits: [], notifications: [], assignmentIntents: [], deadlineHistoryIntents: [], blockerIntents: [], clarificationIntents: [], extensionRequestIntents: [], submissionIntents: [], reviewDecisionIntents: [], completionIntents: [], executionHistoryIntents: [], reopenIntents: [], cancellationIntents: [], archiveIntents: [], restoreIntents: [], handoverRequestIntents: [], handoverDecisionIntents: [], handoverExecutionIntents: [] } };
   for (const patch of [{ actorId: "other" }, { companyId: "other-company" }, { taskId: "other-task" }]) {
     const run = fixture(success.START); run.idempotency.replayResult = stored; run.idempotency.replayIdentityPatch = patch;
     await assert.rejects(() => run.executor.execute({ action: "START", rawCommand: commands.START, actor: actor(), idempotencyKey: "same" }), (error: unknown) => error instanceof WorkManagementDomainError && error.code === "TASK_IDEMPOTENCY_CONFLICT");

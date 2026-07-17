@@ -137,15 +137,15 @@ export function ExecutiveKpiGrid({ data }: { data: DashboardData }) {
         <Link
           key={index}
           href={kpi.href || '#'}
-          className="group flex min-h-[120px] flex-col justify-between rounded-[20px] border border-slate-200/70 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-blue-200 hover:shadow-md"
+          className="group flex min-h-[120px] flex-col justify-between rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-sm)] transition-all duration-300 hover:-translate-y-1 hover:border-[var(--border-strong)] hover:shadow-[var(--shadow-elevated)] ring-1 ring-inset ring-slate-900/5 dark:ring-white/5"
         >
           <div className="flex items-start justify-between gap-2">
             <div className="space-y-1 flex-1 min-w-0 pr-2">
-              <p className="truncate whitespace-nowrap text-[12px] font-bold uppercase tracking-wide text-slate-500">
+              <p className="truncate whitespace-nowrap text-[12px] font-bold uppercase tracking-wide text-[var(--muted-foreground)]">
                 {kpi.label}
               </p>
               <h3 className={cn(
-                "text-slate-900 mt-1.5",
+                "text-[var(--foreground)] mt-1.5",
                 typeof kpi.value === 'string' && kpi.value.length > 14 
                   ? "text-[16px] sm:text-[17px] font-semibold leading-tight whitespace-normal break-words line-clamp-2" 
                   : "text-[18px] sm:text-[19px] font-semibold whitespace-nowrap leading-tight"
@@ -162,7 +162,7 @@ export function ExecutiveKpiGrid({ data }: { data: DashboardData }) {
             {kpi.trend === 'down' && <ArrowDown className="h-3 w-3 shrink-0 text-rose-500" />}
             {kpi.trend === 'up-bad' && <ArrowUp className="h-3 w-3 shrink-0 text-rose-500" />}
             {kpi.trend === 'neutral' && <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />}
-            <span className="truncate whitespace-nowrap text-[11px] font-medium text-slate-500">
+            <span className="truncate whitespace-nowrap text-[11px] font-medium text-[var(--muted-foreground)]">
               {kpi.subtext}
             </span>
           </div>

@@ -92,14 +92,14 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
 
   return (
     <>
-      <header className="sticky top-0 z-50 flex h-[52px] lg:h-16 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/90 px-3 shadow-sm backdrop-blur-md md:px-6">
+      <header className="sticky top-0 z-50 flex h-[52px] lg:h-16 shrink-0 items-center justify-between border-b border-[var(--border)] bg-white/90 px-3 shadow-[var(--shadow-card)] backdrop-blur-md md:px-6">
         <div className="flex items-center">
           {/* Logo */}
           <Link href="/dashboard" className="flex items-center gap-2" aria-label="Trang chủ">
-            <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-blue-600 text-white shadow-sm">
+            <div className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] bg-blue-600 text-white shadow-sm">
               <Building2 className="h-4 w-4" />
             </div>
-            <span className="hidden sm:inline-flex text-[17px] font-black text-slate-900 tracking-tight">CT2</span>
+            <span className="hidden sm:inline-flex text-[17px] font-black text-[var(--foreground)] tracking-tight">CT2</span>
           </Link>
         </div>
         
@@ -172,7 +172,7 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
 
           {/* User Profile */}
           <div className="flex items-center gap-3 group cursor-pointer pr-1">
-            <div className="flex h-10 w-10 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full overflow-hidden bg-gradient-to-br from-blue-100 to-blue-50 border border-blue-200 shadow-sm ring-2 ring-transparent group-hover:ring-blue-100 transition-all">
+            <div className="flex h-10 w-10 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full overflow-hidden bg-gradient-to-br from-blue-100/70 to-blue-50/50 border border-blue-200/50 shadow-sm ring-2 ring-transparent group-hover:ring-blue-100/50 transition-all">
                {userName ? (
                  <span className="font-bold text-blue-700 text-[14px]">
                    {userName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
@@ -183,12 +183,12 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
             </div>
             <div className="hidden sm:flex flex-col items-start">
               <div className="flex items-center gap-1.5">
-                <span className="max-w-[140px] truncate font-bold text-slate-900 text-[13px] leading-tight group-hover:text-blue-600 transition-colors">
+                <span className="max-w-[140px] truncate font-bold text-[var(--foreground)] text-[13px] leading-tight group-hover:text-blue-600 transition-colors">
                   {userName || userRole}
                 </span>
                 <ChevronDown className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-600 transition-colors" />
               </div>
-              <span className="max-w-[140px] truncate text-[11px] font-medium text-slate-500 leading-tight mt-0.5">
+              <span className="max-w-[140px] truncate text-[11px] font-medium text-[var(--muted-foreground)] leading-tight mt-0.5">
                 {userRole || 'Chưa xác định vai trò'}
               </span>
             </div>
@@ -196,7 +196,7 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
 
           <button
             onClick={handleLogout}
-            className="hidden lg:flex h-10 w-10 sm:h-9 sm:w-9 items-center justify-center rounded-full text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+            className="hidden lg:flex h-10 w-10 sm:h-9 sm:w-9 items-center justify-center rounded-full text-slate-500 hover:text-rose-600 hover:bg-rose-50/80 transition-colors"
             title="Đăng xuất"
             aria-label="Đăng xuất"
           >

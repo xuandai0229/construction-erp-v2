@@ -13,7 +13,7 @@ export function StatusBadge({ className, variant = "neutral", size = "md", ...pr
   return (
     <span
       className={cn(
-        "inline-flex min-w-fit items-center justify-center whitespace-nowrap rounded-full border font-semibold leading-none tracking-[-0.01em] transition-colors",
+        "inline-flex min-w-fit items-center justify-center whitespace-nowrap rounded-[var(--radius-sm)] border font-semibold leading-none tracking-[-0.01em] transition-colors",
         {
           // Sizes
           "h-6 px-2 text-[11px] sm:text-xs": size === "sm",

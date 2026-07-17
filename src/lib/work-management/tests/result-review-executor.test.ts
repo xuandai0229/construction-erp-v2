@@ -13,8 +13,8 @@ const now = new Date("2026-07-14T08:00:00.000Z");
 const state = (patch: Partial<CoreTaskAggregate["state"]> = {}): CoreTaskAggregate["state"] => ({ lifecycle: "IN_PROGRESS", acceptance: "ACCEPTED", execution: "ACTIVE", review: "NOT_SUBMITTED", handover: "NONE", waitingReason: null, ...patch });
 const permissions: readonly WorkManagementPermission[] = ["task.submit", "task.review", "task.approve", "task.complete"];
 const actor = (actorId: string, permissionSet = permissions): WorkManagementActorContext => ({ actorType: "USER", actorId, companyId: null, permissionSet: new Set(permissionSet), resolvedScopes: ["PARTICIPATING"], correlationId: "corr", causationId: "cause", requestId: "request" });
-const aggregate = (patch: Partial<CoreTaskAggregate> = {}): CoreTaskAggregate => ({ id: "task-1", creatorId: "creator", assignedById: "manager", primaryAssigneeId: "assignee", projectId: "project", confidentiality: "NORMAL", requiresIndependentReviewer: true, reviewerId: "reviewer", approverId: "approver", participants: [], state: state(), deadlineAt: new Date("2026-07-20"), progressPercent: 100, version: 3, activeBlockerId: null, submissions: [], reviewDecisions: [], currentSubmissionId: null, currentSubmissionSequence: 0, completedById: null, completedAt: null, completionSubmissionId: null, ...patch });
-const emptyEffects = (): CoreTaskEffects => ({ domainEvents: [], activities: [], audits: [], notifications: [], assignmentIntents: [], deadlineHistoryIntents: [], blockerIntents: [], clarificationIntents: [], extensionRequestIntents: [], executionHistoryIntents: [], submissionIntents: [], reviewDecisionIntents: [], completionIntents: [] });
+const aggregate = (patch: Partial<CoreTaskAggregate> = {}): CoreTaskAggregate => ({ id: "task-1", creatorId: "creator", assignedById: "manager", primaryAssigneeId: "assignee", projectId: "project", confidentiality: "NORMAL", requiresIndependentReviewer: true, reviewerId: "reviewer", approverId: "approver", participants: [], state: state(), deadlineAt: new Date("2026-07-20"), progressPercent: 100, version: 3, activeBlockerId: null, submissions: [], reviewDecisions: [], currentSubmissionId: null, currentSubmissionSequence: 0, completedById: null, completedAt: null, completionSubmissionId: null, ...patch, assignmentHistory: patch.assignmentHistory ?? [] });
+const emptyEffects = (): CoreTaskEffects => ({ domainEvents: [], activities: [], audits: [], notifications: [], assignmentIntents: [], deadlineHistoryIntents: [], blockerIntents: [], clarificationIntents: [], extensionRequestIntents: [], executionHistoryIntents: [], submissionIntents: [], reviewDecisionIntents: [], completionIntents: [], reopenIntents: [], cancellationIntents: [], archiveIntents: [], restoreIntents: [], handoverRequestIntents: [], handoverDecisionIntents: [], handoverExecutionIntents: [] });
 
 class Idempotency {
   inspection: IdempotencyInspection = { status: "PROCEED" }; replay: StableCoreTaskExecutionResult | null = null; requests: IdempotencyRequest[] = []; completions: IdempotencyRequest[] = []; begins = 0; aborts = 0;
@@ -29,7 +29,7 @@ class Uow implements CoreTaskUnitOfWork {
   async run<T>(operation: (transaction: CoreTaskTransactionContext) => Promise<T>): Promise<T> {
     const taskSnapshot = structuredClone([...this.tasks.entries()]); const effectsSnapshot = structuredClone(this.effects); const completionCount = this.idempotency.completions.length;
     try {
-      const result = await operation({ tasks: { create: async (value) => { if (this.tasks.has(value.id)) return false; this.tasks.set(value.id, structuredClone(value)); return true; }, compareAndSave: async (id, version, value) => { const old = this.tasks.get(id); if (!old || old.version !== version) return false; this.tasks.set(id, structuredClone(value)); return true; } }, effects: { stage: async (effects) => { if (this.failStage) throw new WorkManagementDomainError("TASK_CONCURRENCY_CONFLICT"); this.effects.push(structuredClone(effects)); } }, idempotency: this.idempotency });
+      const result = await operation({ tasks: { create: async (value) => { if (this.tasks.has(value.id)) return false; this.tasks.set(value.id, structuredClone(value)); return true; }, compareAndSave: async (id, version, value) => { const old = this.tasks.get(id); if (!old || old.version !== version) return false; this.tasks.set(id, structuredClone(value)); return true; } }, effects: { stage: async (effects) => { if (this.failStage) throw new WorkManagementDomainError("TASK_CONCURRENCY_CONFLICT"); this.effects.push(structuredClone(effects)); } }, outbox: { stage: async () => {} }, idempotency: this.idempotency });
       this.commits += 1; return result;
     } catch (error) { this.tasks.clear(); for (const [id, value] of taskSnapshot) this.tasks.set(id, value); this.effects = effectsSnapshot; this.idempotency.completions.splice(completionCount); this.rollbacks += 1; throw error; }
   }
@@ -48,31 +48,31 @@ const submitted = (): CoreTaskAggregate => aggregate({ state: state({ lifecycle:
 const approved = (): CoreTaskAggregate => aggregate({ ...submitted(), state: state({ lifecycle: "SUBMITTED", review: "RESULT_APPROVED" }), reviewDecisions: [{ id: "review-1", submissionId: "submission-1", decision: "RESULT_APPROVED", reason: null, decidedById: "approver", decidedAt: now }] });
 
 test("SUBMIT appends immutable submission and does not approve or complete", async () => {
-  const run = fixture(aggregate(), { relations: ["PRIMARY_ASSIGNEE"], scopes: ["ASSIGNED_SCOPE"] });
+  const current = aggregate(); const run = fixture(current, { relations: ["PRIMARY_ASSIGNEE"], scopes: ["ASSIGNED_SCOPE"] });
   const result = await run.executor.execute({ action: "SUBMIT", rawCommand: { taskId: "task-1", summary: "First result", expectedVersion: 3 }, actor: actor("assignee"), idempotencyKey: "submit" });
   assert.equal(result.task.state.lifecycle, "SUBMITTED"); assert.equal(result.task.state.review, "PENDING"); assert.equal(result.task.currentSubmissionSequence, 1); assert.equal(result.task.completedAt, null);
-  assert.equal(result.effects.submissionIntents[0]?.sequence, 1); assert.equal(result.effects.domainEvents[0]?.type, "TaskSubmitted"); assert.equal(result.effects.notifications.length, 1);
+  assert.equal(result.effects.submissionIntents[0]?.sequence, 1); assert.equal(result.effects.domainEvents[0]?.type, "TaskSubmitted"); assert.equal(result.effects.notifications.length, 1); assert.deepEqual(result.task.assignmentHistory, current.assignmentHistory);
   const resubmit = fixture(aggregate({ state: state({ review: "CHANGES_REQUESTED" }), submissions: [{ id: "old", taskId: "task-1", sequence: 1, previousSubmissionId: null, submittedById: "assignee", submittedAt: now, summary: "Old", note: null }], currentSubmissionId: "old", currentSubmissionSequence: 1 }), { relations: ["PRIMARY_ASSIGNEE"], scopes: ["ASSIGNED_SCOPE"] });
   const newer = await resubmit.executor.execute({ action: "SUBMIT", rawCommand: { taskId: "task-1", summary: "New", expectedVersion: 3 }, actor: actor("assignee"), idempotencyKey: "resubmit" });
   assert.equal(newer.task.submissions?.length, 2); assert.equal(newer.task.submissions?.[0]?.summary, "Old"); assert.equal(newer.task.currentSubmissionSequence, 2);
 });
 
 test("REQUEST_CHANGES records append-only review decision and preserves submission", async () => {
-  const run = fixture(submitted(), { relations: ["REVIEWER"] });
+  const current = submitted(); const run = fixture(current, { relations: ["REVIEWER"] });
   const result = await run.executor.execute({ action: "REQUEST_CHANGES", rawCommand: { taskId: "task-1", submissionId: "submission-1", reason: "Add evidence", expectedVersion: 3 }, actor: actor("reviewer"), idempotencyKey: "changes" });
-  assert.equal(result.task.state.lifecycle, "IN_PROGRESS"); assert.equal(result.task.state.review, "CHANGES_REQUESTED"); assert.equal(result.task.submissions?.[0]?.summary, "Result"); assert.equal(result.effects.reviewDecisionIntents[0]?.decision, "CHANGES_REQUESTED");
+  assert.equal(result.task.state.lifecycle, "IN_PROGRESS"); assert.equal(result.task.state.review, "CHANGES_REQUESTED"); assert.equal(result.task.submissions?.[0]?.summary, "Result"); assert.equal(result.effects.reviewDecisionIntents[0]?.decision, "CHANGES_REQUESTED"); assert.deepEqual(result.task.assignmentHistory, current.assignmentHistory);
 });
 
 test("APPROVE_RESULT records approval without completion", async () => {
-  const run = fixture(submitted(), { relations: ["APPROVER"] });
+  const current = submitted(); const run = fixture(current, { relations: ["APPROVER"] });
   const result = await run.executor.execute({ action: "APPROVE_RESULT", rawCommand: { taskId: "task-1", submissionId: "submission-1", expectedVersion: 3 }, actor: actor("approver"), idempotencyKey: "approve" });
-  assert.equal(result.task.state.lifecycle, "SUBMITTED"); assert.equal(result.task.state.review, "RESULT_APPROVED"); assert.equal(result.task.completedAt, null); assert.equal(result.effects.completionIntents.length, 0); assert.equal(result.effects.reviewDecisionIntents[0]?.decision, "RESULT_APPROVED");
+  assert.equal(result.task.state.lifecycle, "SUBMITTED"); assert.equal(result.task.state.review, "RESULT_APPROVED"); assert.equal(result.task.completedAt, null); assert.equal(result.effects.completionIntents.length, 0); assert.equal(result.effects.reviewDecisionIntents[0]?.decision, "RESULT_APPROVED"); assert.deepEqual(result.task.assignmentHistory, current.assignmentHistory);
 });
 
 test("CONFIRM_COMPLETION completes only current approved submission with readiness", async () => {
-  const run = fixture(approved(), { relations: ["APPROVER"] });
+  const current = approved(); const run = fixture(current, { relations: ["APPROVER"] });
   const result = await run.executor.execute({ action: "CONFIRM_COMPLETION", rawCommand: { taskId: "task-1", expectedVersion: 3 }, actor: actor("approver"), idempotencyKey: "complete" });
-  assert.equal(result.task.state.lifecycle, "COMPLETED"); assert.equal(result.task.state.review, "RESULT_APPROVED"); assert.equal(result.task.completionSubmissionId, "submission-1"); assert.equal(result.effects.completionIntents[0]?.submissionId, "submission-1");
+  assert.equal(result.task.state.lifecycle, "COMPLETED"); assert.equal(result.task.state.review, "RESULT_APPROVED"); assert.equal(result.task.completionSubmissionId, "submission-1"); assert.equal(result.effects.completionIntents[0]?.submissionId, "submission-1"); assert.deepEqual(result.task.assignmentHistory, current.assignmentHistory);
 });
 
 test("result-review guards use exact errors and do not mutate", async () => {

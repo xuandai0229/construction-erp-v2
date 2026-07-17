@@ -56,7 +56,7 @@ export function DeleteProjectButton({ id, projectName, className }: { id: string
         title="Xóa công trình?"
         description={
           <>
-            Bạn có chắc chắn muốn xóa công trình <strong className="text-slate-900">{projectName}</strong>?
+            Bạn có chắc chắn muốn xóa công trình <strong className="text-[var(--foreground)]">{projectName}</strong>?
             <div className="mt-3 p-3 bg-red-50 text-red-800 text-sm rounded-lg border border-red-100">
               Dữ liệu sẽ được ẩn khỏi danh sách nhưng vẫn được lưu trong hệ thống để truy vết.
             </div>

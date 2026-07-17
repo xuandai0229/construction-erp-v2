@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
@@ -136,6 +137,25 @@ enum FieldProgressItemType {
   NOTE
 }
 
+enum FieldProgressItemAssignmentRole {
+  RESPONSIBLE
+  COORDINATOR
+}
+
+enum ProjectLocationNodeType {
+  PROJECT
+  ZONE
+  BLOCK
+  BUILDING
+  BASEMENT
+  FLOOR
+  AREA
+  ROOM
+  AXIS
+  ELEVATION
+  OTHER
+}
+
 enum FieldProgressItemStatus {
   PLANNED
   IN_PROGRESS
@@ -178,6 +198,14 @@ enum DocumentStatus {
   SUPERSEDED
 }
 
+// Work Management Phase 1 keeps the read projection queryable while the
+// canonical CoreTask aggregate and append-only action payloads are retained
+// as JSON snapshots. This is additive to the existing ERP schema.
+enum WorkTaskIdempotencyState {
+  IN_PROGRESS
+  COMPLETED
+}
+
 // MODELS
 
 model User {
@@ -212,6 +240,14 @@ model User {
   fieldMaterialRequests  FieldMaterialRequest[]  @relation("FieldMaterialRequester")
   updatedSettings        SystemSetting[]         @relation("SettingUpdater")
   notifications          Notification[]
+  createdWorkTasks       WorkTask[]             @relation("WorkTaskCreator")
+  assignedWorkTasks      WorkTask[]             @relation("WorkTaskPrimaryAssignee")
+  reviewedWorkTasks      WorkTask[]             @relation("WorkTaskReviewer")
+  approvedWorkTasks      WorkTask[]             @relation("WorkTaskApprover")
+  workTaskActions        WorkTaskAction[]       @relation("WorkTaskActionActor")
+  createdLocationNodes   ProjectLocationNode[]  @relation("ProjectLocationNodeCreator")
+  updatedLocationNodes   ProjectLocationNode[]  @relation("ProjectLocationNodeUpdater")
+  fieldProgressItemAssignments FieldProgressItemAssignment[] @relation("FieldProgressItemAssignmentActor")
 
   @@index([email])
   @@index([username])
@@ -249,10 +285,107 @@ model Project {
   materialItems          MaterialItem[]
   approvalRequests       ApprovalRequest[]
   notifications          Notification[]
+  workTasks              WorkTask[]
+  locationNodes          ProjectLocationNode[]
+  fieldProgressItemAssignments FieldProgressItemAssignment[]
+  fieldProgressItemLocations FieldProgressItemLocation[]
 
   @@index([code])
   @@index([status])
   @@index([createdAt])
+}
+
+model WorkTask {
+  id                       String   @id
+  projectId                String
+  creatorId                String
+  primaryAssigneeId        String?
+  reviewerId               String?
+  approverId               String?
+  title                    String
+  description              String?
+  priority                 String   @default("NORMAL")
+  confidentiality          String   @default("NORMAL")
+  lifecycle                String
+  acceptance               String
+  execution                String
+  review                   String
+  handover                 String
+  waitingReason            String?
+  deadlineAt               DateTime?
+  progressPercent          Int      @default(0)
+  version                  Int      @default(1)
+  snapshot                 Json
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  project          Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creator          User                @relation("WorkTaskCreator", fields: [creatorId], references: [id])
+  primaryAssignee  User?               @relation("WorkTaskPrimaryAssignee", fields: [primaryAssigneeId], references: [id])
+  reviewer         User?               @relation("WorkTaskReviewer", fields: [reviewerId], references: [id])
+  approver         User?               @relation("WorkTaskApprover", fields: [approverId], references: [id])
+  actions          WorkTaskAction[]
+  outboxMessages   WorkTaskOutboxMessage[]
+  idempotencyRows  WorkTaskIdempotency[]
+
+  @@index([projectId, updatedAt])
+  @@index([primaryAssigneeId, updatedAt])
+  @@index([creatorId, updatedAt])
+  @@index([lifecycle, updatedAt])
+}
+
+model WorkTaskAction {
+  id         String   @id @default(cuid())
+  taskId     String
+  action     String
+  actorId    String
+  version    Int
+  occurredAt DateTime
+  effects    Json
+  createdAt  DateTime @default(now())
+
+  task  WorkTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  actor User     @relation("WorkTaskActionActor", fields: [actorId], references: [id])
+
+  @@index([taskId, occurredAt])
+  @@index([actorId, occurredAt])
+}
+
+model WorkTaskOutboxMessage {
+  id             String   @id
+  taskId         String
+  action         String
+  aggregateVersion Int
+  idempotencyKey String
+  message        Json
+  occurredAt     DateTime
+  createdAt      DateTime @default(now())
+
+  task WorkTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId, aggregateVersion])
+  @@index([idempotencyKey])
+}
+
+model WorkTaskIdempotency {
+  id          String                    @id @default(cuid())
+  key         String
+  scopeKey    String
+  action      String
+  actorId     String
+  projectId   String?
+  taskId      String?
+  fingerprint String
+  state       WorkTaskIdempotencyState
+  result      Json?
+  createdAt   DateTime                  @default(now())
+  completedAt DateTime?
+
+  task WorkTask? @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@index([taskId])
+  @@index([actorId, projectId])
+  @@unique([key, scopeKey])
 }
 
 model ProjectMember {
@@ -272,6 +405,7 @@ model ProjectMember {
   project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   assignedBy User?   @relation("ProjectMemberAssigner", fields: [assignedById], references: [id])
+  fieldProgressItemAssignments FieldProgressItemAssignment[]
 
   @@unique([projectId, userId])
   @@index([projectId])
@@ -348,6 +482,8 @@ model Document {
   reviewedById   String?
   reviewedAt     DateTime?
   rejectedReason String?
+  fieldProgressItemId String?
+  locationNodeId      String?
   version        Int            @default(1)
   deletedAt      DateTime?
   createdAt      DateTime       @default(now())
@@ -356,6 +492,8 @@ model Document {
   project    Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
   folder     DocumentFolder @relation(fields: [folderId], references: [id], onDelete: Cascade)
   uploadedBy User           @relation(fields: [uploadedById], references: [id])
+  fieldProgressItem FieldProgressItem? @relation(fields: [fieldProgressItemId], references: [id])
+  locationNode      ProjectLocationNode? @relation(fields: [locationNodeId], references: [id])
 
   @@index([projectId])
   @@index([folderId])
@@ -364,11 +502,13 @@ model Document {
   @@index([documentType])
   @@index([fileHash])
   @@index([folderId, status])
+  @@index([fieldProgressItemId])
+  @@index([locationNodeId])
 }
 
 model SiteReport {
   id                 String            @id @default(cuid())
-  reportNo           String            @unique @default(dbgenerated("gen_random_uuid()::text"))
+  reportNo           String            @unique @default(dbgenerated("(gen_random_uuid())::text"))
   type               SiteReportType    @default(DAILY)
   projectId          String
   title              String?
@@ -456,6 +596,7 @@ model SiteReportLine {
   projectId           String
   wbsItemId           String?
   fieldProgressItemId String?
+  locationNodeId      String?
   workName            String?
   workContent         String
   area                String?
@@ -478,11 +619,13 @@ model SiteReportLine {
   project           Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
   wbsItem           WBSItem?           @relation(fields: [wbsItemId], references: [id])
   fieldProgressItem FieldProgressItem? @relation(fields: [fieldProgressItemId], references: [id])
+  locationNode      ProjectLocationNode? @relation(fields: [locationNodeId], references: [id])
 
   @@index([siteReportId])
   @@index([projectId])
   @@index([wbsItemId])
   @@index([fieldProgressItemId])
+  @@index([locationNodeId])
 }
 
 model MaterialRequest {
@@ -531,15 +674,18 @@ model MaterialRequestItem {
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
   deletedAt            DateTime?
+  locationNodeId       String?
 
   materialRequest   MaterialRequest    @relation(fields: [materialRequestId], references: [id], onDelete: Cascade)
   wbsItem           WBSItem?           @relation(fields: [wbsItemId], references: [id])
   fieldProgressItem FieldProgressItem? @relation(fields: [fieldProgressItemId], references: [id])
   movements         MaterialMovement[]
+  locationNode      ProjectLocationNode? @relation(fields: [locationNodeId], references: [id])
 
   @@index([materialRequestId])
   @@index([wbsItemId])
   @@index([fieldProgressItemId])
+  @@index([locationNodeId])
 }
 
 model MaterialItem {
@@ -748,11 +894,87 @@ model FieldProgressItem {
   materialRequests     FieldMaterialRequest[]
   materialRequestItems MaterialRequestItem[]
   siteReportLines      SiteReportLine[]
+  documents            Document[]
+  assignments          FieldProgressItemAssignment[]
+  locations            FieldProgressItemLocation[]
 
   @@index([projectId])
   @@index([templateId])
   @@index([parentId])
   @@index([sortOrder])
+}
+
+model ProjectLocationNode {
+  id          String                  @id @default(cuid())
+  projectId   String
+  parentId    String?
+  code        String
+  name        String
+  nodeType    ProjectLocationNodeType
+  description String?
+  level       Int                     @default(0)
+  sortOrder   Int                     @default(0)
+  createdById String
+  updatedById String?
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+  deletedAt   DateTime?
+
+  project                    Project                      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parent                     ProjectLocationNode?         @relation("ProjectLocationNodeHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children                   ProjectLocationNode[]        @relation("ProjectLocationNodeHierarchy")
+  createdBy                  User                         @relation("ProjectLocationNodeCreator", fields: [createdById], references: [id])
+  updatedBy                  User?                        @relation("ProjectLocationNodeUpdater", fields: [updatedById], references: [id])
+  documents                  Document[]
+  fieldProgressEntries       FieldProgressEntry[]
+  fieldProgressItemLocations FieldProgressItemLocation[]
+  materialRequestItems       MaterialRequestItem[]
+  siteReportLines            SiteReportLine[]
+
+  @@unique([projectId, parentId, code])
+  @@index([parentId])
+  @@index([projectId, deletedAt])
+  @@index([projectId, parentId, sortOrder])
+}
+
+model FieldProgressItemAssignment {
+  id                  String                          @id @default(cuid())
+  projectId           String
+  fieldProgressItemId String
+  projectMemberId     String
+  role                FieldProgressItemAssignmentRole @default(RESPONSIBLE)
+  note                String?
+  assignedById        String
+  createdAt           DateTime                        @default(now())
+  updatedAt           DateTime                        @updatedAt
+  deletedAt           DateTime?
+
+  project             Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fieldProgressItem   FieldProgressItem @relation(fields: [fieldProgressItemId], references: [id], onDelete: Cascade)
+  projectMember       ProjectMember     @relation(fields: [projectMemberId], references: [id])
+  assignedBy          User              @relation("FieldProgressItemAssignmentActor", fields: [assignedById], references: [id])
+
+  @@unique([fieldProgressItemId, projectMemberId, role])
+  @@index([fieldProgressItemId, deletedAt])
+  @@index([projectId, deletedAt])
+  @@index([projectMemberId, deletedAt])
+}
+
+model FieldProgressItemLocation {
+  id                  String              @id @default(cuid())
+  projectId           String
+  fieldProgressItemId String
+  locationNodeId      String
+  createdById         String
+  createdAt           DateTime            @default(now())
+
+  project             Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fieldProgressItem   FieldProgressItem   @relation(fields: [fieldProgressItemId], references: [id], onDelete: Cascade)
+  locationNode        ProjectLocationNode @relation(fields: [locationNodeId], references: [id])
+
+  @@unique([fieldProgressItemId, locationNodeId])
+  @@index([projectId, fieldProgressItemId])
+  @@index([projectId, locationNodeId])
 }
 
 model FieldProgressEntry {
@@ -781,6 +1003,7 @@ model FieldProgressEntry {
   sourceReportId   String?
   sourceMeta       Json?
   adjustmentReason String?
+  locationNodeId   String?
 
   project          Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
   template         FieldProgressTemplate  @relation(fields: [templateId], references: [id], onDelete: Cascade)
@@ -788,6 +1011,7 @@ model FieldProgressEntry {
   createdBy        User                   @relation("FieldEntryCreator", fields: [createdById], references: [id])
   approvedBy       User?                  @relation("FieldEntryApprover", fields: [approvedById], references: [id])
   materialRequests FieldMaterialRequest[]
+  locationNode     ProjectLocationNode?  @relation(fields: [locationNodeId], references: [id])
 
   @@index([projectId])
   @@index([templateId])
@@ -795,6 +1019,8 @@ model FieldProgressEntry {
   @@index([entryDate])
   @@index([sourceType, sourceId])
   @@index([sourceReportId])
+  @@index([locationNodeId])
+  @@unique([sourceReportId, sourceLineId], map: "field_progress_entry_source_report_line_uidx", where: raw("((\"deletedAt\" IS NULL) AND (\"sourceType\" = 'SITE_REPORT'::text))"))
 }
 
 model FieldMaterialRequest {

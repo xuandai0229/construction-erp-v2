@@ -71,7 +71,7 @@ export default async function UsersPage() {
         description="Tạo và quản lý tài khoản người dùng trong hệ thống"
       />
 
-      <p className="text-xs text-slate-500">KPI tính trên toàn hệ thống, không đổi theo bộ lọc bảng. “Tài khoản hiện hành”, “GĐ / Phó GĐ” và “Chỉ huy trưởng” loại tài khoản ngừng sử dụng; “Đang hoạt động” chỉ đếm `isActive=true`.</p>
+      <p className="text-xs text-[var(--muted-foreground)]">KPI tính trên toàn hệ thống, không đổi theo bộ lọc bảng. “Tài khoản hiện hành”, “GĐ / Phó GĐ” và “Chỉ huy trưởng” loại tài khoản ngừng sử dụng; “Đang hoạt động” chỉ đếm `isActive=true`.</p>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

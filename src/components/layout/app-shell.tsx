@@ -19,11 +19,11 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
   const globalContext = serializePrisma(await getGlobalProjectContext(session));
 
   return (
-    <div className="flex min-h-dvh w-full bg-slate-50 text-slate-900">
+    <div className="flex min-h-dvh w-full bg-background text-foreground">
       <div className="hidden lg:block sticky top-0 h-dvh shrink-0">
         <Sidebar userRole={session.role} />
       </div>
-      <div className="flex min-w-0 flex-1 flex-col bg-slate-50">
+      <div className="flex min-w-0 flex-1 flex-col bg-background">
         <Header 
           userName={session.name} 
           userRole={roleDisplayName} 
@@ -31,7 +31,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
           globalContext={globalContext}
         />
         <MobileProjectContextBar globalContext={globalContext} />
-        <main className="min-w-0 flex-1 bg-slate-50">
+        <main className="min-w-0 flex-1 bg-background">
           <div className="app-page-container p-3 pb-[calc(72px+env(safe-area-inset-bottom))] sm:p-5 lg:p-6 lg:pb-6">
             {children}
           </div>

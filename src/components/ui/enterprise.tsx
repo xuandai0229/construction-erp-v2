@@ -21,7 +21,7 @@ export function PageHeader({ className, ...props }: React.HTMLAttributes<HTMLEle
   return (
     <section
       className={cn(
-        "rounded-[14px] border border-slate-200 bg-white p-4 shadow-sm shadow-slate-950/[0.03] sm:p-5 lg:rounded-2xl",
+        "rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-card)] sm:p-5 lg:rounded-2xl",
         className,
       )}
       {...props}
@@ -57,7 +57,7 @@ export function ContentCard({ className, ...props }: React.HTMLAttributes<HTMLDi
   return (
     <div
       className={cn(
-        "rounded-[14px] border border-slate-200 bg-white shadow-sm shadow-slate-950/[0.03] lg:rounded-2xl",
+        "rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-card)] lg:rounded-2xl",
         className,
       )}
       {...props}
@@ -70,7 +70,7 @@ export function FilterBar({ className, ...props }: React.HTMLAttributes<HTMLDivE
   return (
     <div
       className={cn(
-        "rounded-[14px] border border-slate-200 bg-white p-3 shadow-sm shadow-slate-950/[0.03] sm:p-4",
+        "rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow-card)] sm:p-4",
         className,
       )}
       {...props}
@@ -93,8 +93,8 @@ export function SectionHeader({
   return (
     <div className={cn("flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between", className)}>
       <div className="min-w-0">
-        <h2 className="text-base font-bold tracking-tight text-slate-950">{title}</h2>
-        {description ? <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p> : null}
+        <h2 className="text-base font-bold tracking-tight text-[var(--foreground)]">{title}</h2>
+        {description ? <p className="mt-1 text-sm leading-6 text-[var(--muted-foreground)]">{description}</p> : null}
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}
     </div>
@@ -124,15 +124,15 @@ export function KpiCard({
       )}
     >
       <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0 text-sm font-semibold text-slate-600 whitespace-nowrap">{label}</div>
+        <div className="min-w-0 text-sm font-semibold text-[var(--muted-foreground)] whitespace-nowrap">{label}</div>
         {icon ? (
           <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-colors group-hover:bg-blue-100 group-hover:border-blue-200 group-hover:text-blue-700", toneClasses[tone])}>
             {icon}
           </div>
         ) : null}
       </div>
-      <div className="mt-3 text-2xl font-bold tracking-tight text-slate-950">{value}</div>
-      {helper ? <div className="mt-1 text-xs leading-5 text-slate-500">{helper}</div> : null}
+      <div className="mt-3 text-2xl font-bold tracking-tight text-[var(--foreground)]">{value}</div>
+      {helper ? <div className="mt-1 text-xs leading-5 text-[var(--muted-foreground)]">{helper}</div> : null}
       
     </ContentCard>
   );

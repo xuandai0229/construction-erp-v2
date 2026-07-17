@@ -11,12 +11,12 @@ export function DashboardEmptyState({
   className?: string;
 }) {
   return (
-    <div className={cn("flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-4 py-8 text-center", className)}>
-      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500">
+    <div className={cn("flex flex-col items-center justify-center rounded-[var(--radius-lg)] border border-dashed border-[var(--border)] bg-[var(--surface)]/50 px-4 py-8 text-center", className)}>
+      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--muted-foreground)]">
         <Inbox className="h-5 w-5" />
       </div>
-      <p className="text-sm font-semibold text-slate-900">{title}</p>
-      {description && <p className="mt-1 max-w-sm text-sm leading-6 text-slate-600">{description}</p>}
+      <p className="text-sm font-semibold text-[var(--foreground)]">{title}</p>
+      {description && <p className="mt-1 max-w-sm text-sm leading-6 text-[var(--muted-foreground)]">{description}</p>}
     </div>
   );
 }

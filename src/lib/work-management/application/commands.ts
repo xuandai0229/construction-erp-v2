@@ -20,7 +20,8 @@ export type ConfirmTaskCompletionCommand = TaskCommand;
 export type ReopenTaskCommand = TaskCommand & { reason: string };
 export type CancelTaskCommand = TaskCommand & { reason: string };
 export type ArchiveTaskCommand = TaskCommand;
-export type RequestTaskHandoverCommand = TaskCommand & { toUserId: string; effectiveAt: Date; reason: string };
+/** `receiverId` is a candidate only; sender, generation, and effective state are server-derived. */
+export type RequestTaskHandoverCommand = TaskCommand & { receiverId: string; reason: string };
 export type AcceptTaskHandoverCommand = TaskCommand & { handoverId: string };
 export type RejectTaskHandoverCommand = TaskCommand & { handoverId: string; reason: string };
 export type ApproveTaskHandoverCommand = TaskCommand & { handoverId: string };

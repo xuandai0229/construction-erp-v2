@@ -26,7 +26,7 @@ export function StockStatusBadge({ stock, minStockLevel, compact = false }: Stoc
 
   if (status === "out") {
     return (
-      <StatusBadge variant="neutral" size="sm" className="gap-1.5 bg-slate-100 text-slate-600 border-slate-200" title="Đã hết hoàn toàn trong kho">
+      <StatusBadge variant="neutral" size="sm" className="gap-1.5 bg-[var(--border)] text-[var(--muted-foreground)] border-[var(--border)]" title="Đã hết hoàn toàn trong kho">
         <PackageX className="h-3.5 w-3.5" />
         {label}
       </StatusBadge>

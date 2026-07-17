@@ -25,12 +25,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <Comp
         ref={ref}
         className={cn(
-          "inline-flex shrink-0 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-[color,background-color,border-color,box-shadow,transform] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:translate-y-px disabled:pointer-events-none disabled:opacity-55 disabled:active:translate-y-0",
+          "inline-flex shrink-0 items-center justify-center gap-2 rounded-[var(--radius-sm)] text-sm font-semibold transition-[color,background-color,border-color,box-shadow,transform] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:translate-y-px disabled:pointer-events-none disabled:opacity-50 disabled:active:translate-y-0",
           {
             'bg-blue-600 text-white shadow-sm shadow-blue-950/10 hover:bg-blue-700': variant === 'default' || variant === 'primary',
-            'bg-slate-100 text-slate-900 shadow-sm shadow-slate-950/5 hover:bg-slate-200': variant === 'secondary',
-            'border border-slate-300 bg-white text-slate-700 shadow-sm shadow-slate-950/5 hover:border-slate-400 hover:bg-slate-50 hover:text-slate-950': variant === 'outline',
-            'text-slate-600 hover:bg-slate-100 hover:text-slate-950': variant === 'ghost',
+            'bg-[var(--border-light)] text-[var(--foreground)] shadow-sm hover:bg-slate-200': variant === 'secondary',
+            'border border-[var(--input-border)] bg-[var(--surface)] text-[var(--muted-foreground)] shadow-sm hover:border-slate-400 hover:bg-[var(--surface-subtle)] hover:text-[var(--foreground)]': variant === 'outline',
+            'text-[var(--muted-foreground)] hover:bg-[var(--surface-subtle)] hover:text-[var(--foreground)]': variant === 'ghost',
             'bg-rose-600 text-white shadow-sm shadow-rose-950/10 hover:bg-rose-700': variant === 'destructive',
             'bg-emerald-600 text-white shadow-sm shadow-emerald-950/10 hover:bg-emerald-700': variant === 'success',
             'bg-amber-500 text-white shadow-sm shadow-amber-950/10 hover:bg-amber-600': variant === 'warning',

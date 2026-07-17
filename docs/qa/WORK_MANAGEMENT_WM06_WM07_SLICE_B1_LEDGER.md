@@ -27,5 +27,5 @@
 | B1-23 | Scoped lint | DONE | changed files | npx eslint | Exit 0. | None |
 | B1-24 | Scoped TypeScript | DONE | WM scope | npx tsc -p | Exit 0. | None |
 | B1-25 | Global TypeScript | DONE | repository | npx tsc --noEmit | Exit 0. | None |
-| B1-26 | Final audit | DONE | code/tests | closure, Slice A, registry, all-WM, lint, tsc | Closure 26/26; Slice A 50/50; registry 614/614; all WM 752/752; lint and TypeScript exit 0. | None |
-| B1-27 | Final report | DONE | closure report/frozen baseline/B2 handoff | report review | Closure evidence, frozen hashes, and B2 handoff produced. | None |
+| B1-26 | Final audit | DONE | code/tests/reconciliation/final-readiness reports | B1, Slice A, workflow, registry, all-WM, lint, tsc | Commit provenance recorded. Frozen baseline corrected to 15 application/test files; `domain/types.ts` and `workflow.test.ts` included. Application/test hashes unchanged and all final readiness regressions pass. | None |
+| B1-27 | Final report | DONE | closure report/frozen baseline/B2 handoff/reconciliation/final-readiness reports | report review | B2 handoff synchronized with 15-file baseline and workflow regression. Governance gate DONE; B2 readiness READY — FINAL. | None |

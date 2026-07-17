@@ -8,6 +8,7 @@ import {
   FolderOpen,
   ClipboardCheck,
   Package,
+  ListTodo,
   CheckSquare,
   Settings,
   UserCog,
@@ -43,6 +44,10 @@ const navigationSections = [
       { name: "Tài khoản", href: "/users", icon: UserCog },
       { name: "Cài đặt", href: "/settings", icon: Settings },
     ],
+  },
+  {
+    label: "CÔNG VIỆC",
+    items: [{ name: "Nhiệm vụ", href: "/tasks", icon: ListTodo }],
   },
 ];
 

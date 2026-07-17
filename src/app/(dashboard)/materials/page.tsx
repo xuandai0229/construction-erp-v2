@@ -106,8 +106,8 @@ export default async function MaterialsPage({
   if (projects.length === 0 || (projectIdToLoad && !permissions.canView)) {
     return (
       <div className="flex h-full flex-col items-center justify-center p-8 text-center">
-        <h1 className="text-xl font-bold text-slate-900 mb-2">Truy cập bị từ chối</h1>
-        <p className="text-slate-500">Bạn không có quyền xem phân hệ vật tư của công trình này.</p>
+        <h1 className="text-xl font-bold text-[var(--foreground)] mb-2">Truy cập bị từ chối</h1>
+        <p className="text-[var(--muted-foreground)]">Bạn không có quyền xem phân hệ vật tư của công trình này.</p>
       </div>
     );
   }

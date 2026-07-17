@@ -6,15 +6,17 @@ import type { NotificationPort } from "../ports/notifications";
 import type { TaskActivityRepository, TaskRepository } from "../ports/repositories";
 import type { TransactionManager } from "../ports/transaction";
 import type { TaskMutationCommand } from "./commands";
+import { resolveCurrentTaskAssignment } from "./assignment-source-of-truth";
 import type { ActorContext } from "./types";
 
 export type TaskApplicationDependencies = { transactions: TransactionManager; tasks: TaskRepository; activities: TaskActivityRepository; audit: AuditPort; notifications: NotificationPort };
 export type TaskMutationResult = { decision: TransitionDecision; version: number };
 
 function isScopeAllowed(actor: ActorContext, task: Parameters<typeof isTaskParticipant>[0]): boolean {
+  const currentAssignment = resolveCurrentTaskAssignment(task);
   if (actor.scopes.includes("COMPANY")) return true;
   if (task.projectId && actor.scopes.includes("PROJECT") && actor.projectMemberships.includes(task.projectId)) return true;
-  if (actor.scopes.includes("OWN") && (task.creatorId === actor.userId || task.primaryAssigneeId === actor.userId)) return true;
+  if (actor.scopes.includes("OWN") && (task.creatorId === actor.userId || currentAssignment.assigneeId === actor.userId)) return true;
   return actor.scopes.includes("PARTICIPATING") && isTaskParticipant(task, actor.userId);
 }
 

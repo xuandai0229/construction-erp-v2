@@ -287,12 +287,12 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
     <div className="space-y-4">
       {/* HEADER METADATA & CONTROL CENTER */}
       <div className="flex flex-wrap items-center gap-4 text-sm">
-        <div className="flex items-center gap-1.5 text-slate-600">
-          <span className="font-semibold text-slate-900">{filtered.length}</span> vật tư
+        <div className="flex items-center gap-1.5 text-[var(--muted-foreground)]">
+          <span className="font-semibold text-[var(--foreground)]">{filtered.length}</span> vật tư
         </div>
         <div className="w-1 h-1 rounded-full bg-slate-300"></div>
-        <div className="flex items-center gap-1.5 text-slate-600">
-          <span className="font-semibold text-slate-900">{counts.active}</span> đang sử dụng
+        <div className="flex items-center gap-1.5 text-[var(--muted-foreground)]">
+          <span className="font-semibold text-[var(--foreground)]">{counts.active}</span> đang sử dụng
         </div>
         {(counts.low > 0 || counts.out > 0 || counts.negative > 0) && (
           <>
@@ -313,7 +313,7 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
         {counts.archived > 0 && (
           <>
             <div className="w-1 h-1 rounded-full bg-slate-300"></div>
-            <div className="flex items-center gap-1.5 text-slate-500">
+            <div className="flex items-center gap-1.5 text-[var(--muted-foreground)]">
               <span className="font-semibold">{counts.archived}</span> đã lưu trữ
             </div>
           </>
@@ -323,7 +323,7 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
             <div className="w-1 h-1 rounded-full bg-slate-300"></div>
             <div className="flex items-center gap-2">
               <span className="text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded-full text-xs">Đang lọc kết quả</span>
-              <button onClick={clearFilters} className="text-xs font-semibold text-slate-500 hover:text-slate-900 flex items-center gap-1">
+              <button onClick={clearFilters} className="text-xs font-semibold text-[var(--muted-foreground)] hover:text-[var(--foreground)] flex items-center gap-1">
                 <X className="h-3.5 w-3.5" /> Xóa lọc
               </button>
             </div>
@@ -335,45 +335,45 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
         <div className="flex flex-col sm:flex-row flex-1 gap-3 max-w-4xl">
           <div className="relative min-w-0 flex-1">
             <label htmlFor="materials-stock-search" className="sr-only">Tìm vật tư tồn kho</label>
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted-foreground)] opacity-70" />
             <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
               id="materials-stock-search"
               type="text"
               placeholder="Tìm mã, tên hoặc nhóm vật tư..."
               value={search}
               onChange={(event) => handleSearchChange(event.target.value)}
-              className="h-10 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="h-10 w-full rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] pl-9 pr-3 text-sm text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted-foreground)] opacity-70 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </div>
 
           <div className="relative min-w-0 sm:w-44 shrink-0">
-            <Filter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Filter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted-foreground)] opacity-70" />
             <select
               value={statusFilter}
               onChange={(e) => handleStatusChange(e.target.value)}
-              className="h-10 w-full appearance-none rounded-lg border border-slate-300 bg-white pl-9 pr-8 text-sm font-medium text-slate-900 outline-none transition hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="h-10 w-full appearance-none rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] pl-9 pr-8 text-sm font-medium text-[var(--foreground)] outline-none transition hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >
               {statusOptions.map(opt => <option key={opt.id} value={opt.id}>{opt.label}</option>)}
             </select>
           </div>
 
           <div className="relative min-w-0 sm:w-48 shrink-0">
-            <Filter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Filter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted-foreground)] opacity-70" />
             <select
               value={sourceFilter}
               onChange={(e) => handleSourceChange(e.target.value)}
-              className="h-10 w-full appearance-none rounded-lg border border-slate-300 bg-white pl-9 pr-8 text-sm font-medium text-slate-900 outline-none transition hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="h-10 w-full appearance-none rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] pl-9 pr-8 text-sm font-medium text-[var(--foreground)] outline-none transition hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >
               {sourceOptions.map(opt => <option key={opt.id} value={opt.id}>{opt.label}</option>)}
             </select>
           </div>
 
           <div className="relative min-w-0 sm:w-40 shrink-0">
-            <Filter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Filter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted-foreground)] opacity-70" />
             <select
               value={archiveFilter}
               onChange={(e) => handleArchiveChange(e.target.value)}
-              className="h-10 w-full appearance-none rounded-lg border border-slate-300 bg-white pl-9 pr-8 text-sm font-medium text-slate-900 outline-none transition hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="h-10 w-full appearance-none rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] pl-9 pr-8 text-sm font-medium text-[var(--foreground)] outline-none transition hover:border-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             >
               <option value="active">Đang sử dụng</option>
               <option value="archived">Đã lưu trữ</option>
@@ -384,26 +384,26 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
 
       <EnterpriseTable className="hidden md:block" data-density="compact">
         <table className="w-full min-w-[920px] text-left text-sm relative">
-          <thead className="sticky top-0 z-10 bg-slate-50/95 backdrop-blur shadow-sm text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <thead className="sticky top-0 z-10 bg-[var(--surface-subtle)] backdrop-blur shadow-[var(--shadow-card)] text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
             <tr>
-              <th className="px-3 py-2.5 border-b border-slate-200 whitespace-nowrap">Mã vật tư</th>
-              <th className="px-3 py-2.5 border-b border-slate-200 w-[25%] whitespace-nowrap">Tên vật tư</th>
-              <th className="px-3 py-2.5 border-b border-slate-200 whitespace-nowrap">Nhóm</th>
-              <th className="px-3 py-2.5 border-b border-slate-200 text-right whitespace-nowrap">Tồn kho</th>
-              <th className="px-3 py-2.5 border-b border-slate-200 text-right whitespace-nowrap">Ngưỡng cảnh báo</th>
-              <th className="px-3 py-2.5 border-b border-slate-200 text-center whitespace-nowrap">Trạng thái</th>
-              <th className="px-3 py-2.5 border-b border-slate-200 whitespace-nowrap">Cập nhật</th>
-              {hasActions && <th className="px-3 py-2.5 border-b border-slate-200 text-right w-[80px] whitespace-nowrap">Thao tác</th>}
+              <th className="px-3 py-2.5 border-b border-[var(--border)] whitespace-nowrap">Mã vật tư</th>
+              <th className="px-3 py-2.5 border-b border-[var(--border)] w-[25%] whitespace-nowrap">Tên vật tư</th>
+              <th className="px-3 py-2.5 border-b border-[var(--border)] whitespace-nowrap">Nhóm</th>
+              <th className="px-3 py-2.5 border-b border-[var(--border)] text-right whitespace-nowrap">Tồn kho</th>
+              <th className="px-3 py-2.5 border-b border-[var(--border)] text-right whitespace-nowrap">Ngưỡng cảnh báo</th>
+              <th className="px-3 py-2.5 border-b border-[var(--border)] text-center whitespace-nowrap">Trạng thái</th>
+              <th className="px-3 py-2.5 border-b border-[var(--border)] whitespace-nowrap">Cập nhật</th>
+              {hasActions && <th className="px-3 py-2.5 border-b border-[var(--border)] text-right w-[80px] whitespace-nowrap">Thao tác</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filtered.map((stock) => (
               <tr 
                 key={stock.id} 
-                className="transition hover:bg-slate-50 cursor-pointer group active:bg-slate-100 h-12"
+                className="transition hover:bg-[var(--surface-subtle)] cursor-pointer group active:bg-[var(--border)] h-12"
                 onClick={() => handleRowClick(stock.id)}
               >
-                <td className="px-3 py-2 font-mono text-xs font-semibold text-slate-500 whitespace-nowrap">{stock.materialItem.code}</td>
+                <td className="px-3 py-2 font-mono text-xs font-semibold text-[var(--muted-foreground)] whitespace-nowrap">{stock.materialItem.code}</td>
                 <td className="px-3 py-2 font-semibold text-slate-950 max-w-0">
                   <div className="flex min-w-0 items-center gap-2">
                     <SafeText className="group-hover:text-blue-700 transition-colors line-clamp-1">{stock.materialItem.name}</SafeText>
@@ -418,13 +418,13 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
                       </span>
                     )}
                     {!stock.materialItem.isActive && (
-                      <span className="shrink-0 rounded-sm border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600" title="Vật tư đã ngừng sử dụng, chỉ hiển thị để giữ lịch sử">
+                      <span className="shrink-0 rounded-sm border border-[var(--border)] bg-[var(--border)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--muted-foreground)]" title="Vật tư đã ngừng sử dụng, chỉ hiển thị để giữ lịch sử">
                         Đã lưu trữ
                       </span>
                     )}
                   </div>
                 </td>
-                <td className="px-3 py-2 text-slate-600 truncate max-w-[120px]">{stock.materialItem.group || "—"}</td>
+                <td className="px-3 py-2 text-[var(--muted-foreground)] truncate max-w-[120px]">{stock.materialItem.group || "—"}</td>
                 <td className="px-3 py-2">
                   <QuantityCell value={stock.stock} unit={stock.materialItem.unit} />
                 </td>
@@ -442,7 +442,7 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={hasActions ? 8 : 7} className="px-3 py-12 text-center text-sm text-slate-500">
+                <td colSpan={hasActions ? 8 : 7} className="px-3 py-12 text-center text-sm text-[var(--muted-foreground)]">
                   <div className="flex flex-col items-center justify-center space-y-3">
                     {statusFilter === "low" && <p>Không có vật tư sắp hết. Kho đang an toàn.</p>}
                     {statusFilter === "out" && <p>Không có vật tư hết hàng.</p>}
@@ -478,39 +478,39 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
                     </span>
                   )}
                   {!stock.materialItem.isActive && (
-                    <span className="inline-flex rounded-sm border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600" title="Vật tư đã ngừng sử dụng, chỉ hiển thị để giữ lịch sử">
+                    <span className="inline-flex rounded-sm border border-[var(--border)] bg-[var(--border)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--muted-foreground)]" title="Vật tư đã ngừng sử dụng, chỉ hiển thị để giữ lịch sử">
                       Đã lưu trữ
                     </span>
                   )}
                 </div>
-                <div className="mt-1 font-mono text-xs font-semibold text-slate-500">{stock.materialItem.code}</div>
+                <div className="mt-1 font-mono text-xs font-semibold text-[var(--muted-foreground)]">{stock.materialItem.code}</div>
               </div>
               <div className="shrink-0">
                 <StockStatusBadge stock={stock.stock} minStockLevel={stock.minStockLevel} compact />
               </div>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-2">
-              <div className="rounded-lg bg-slate-50 p-2.5 sm:p-3">
-                <div className="text-xs font-semibold text-slate-500">Tồn kho</div>
+              <div className="rounded-[var(--radius-lg)] bg-[var(--surface-subtle)] p-2.5 sm:p-3">
+                <div className="text-xs font-semibold text-[var(--muted-foreground)]">Tồn kho</div>
                 <div className="mt-1">
                   <QuantityCell value={stock.stock} unit={stock.materialItem.unit} />
                 </div>
               </div>
-              <div className="rounded-lg bg-slate-50 p-2.5 sm:p-3 text-right">
-                <div className="text-xs font-semibold text-slate-500">Ngưỡng cảnh báo</div>
+              <div className="rounded-[var(--radius-lg)] bg-[var(--surface-subtle)] p-2.5 sm:p-3 text-right">
+                <div className="text-xs font-semibold text-[var(--muted-foreground)]">Ngưỡng cảnh báo</div>
                 <div className="mt-1">
                   <QuantityCell value={stock.minStockLevel} unit={stock.materialItem.unit} />
                 </div>
               </div>
             </div>
-            <div className="mt-3 flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
-              <span className="text-xs font-medium text-slate-500">Cập nhật: {formatDate(stock.lastUpdated)}</span>
+            <div className="mt-3 flex items-center justify-between gap-2 border-t border-[var(--border)] pt-3">
+              <span className="text-xs font-medium text-[var(--muted-foreground)]">Cập nhật: {formatDate(stock.lastUpdated)}</span>
               {hasActions && actionButtons(stock)}
             </div>
           </ContentCard>
         ))}
         {filtered.length === 0 && (
-          <div className="rounded-[14px] lg:rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">
+          <div className="rounded-[var(--radius-md)] lg:rounded-[var(--radius-xl)] border border-dashed border-[var(--border)] bg-[var(--surface)] p-8 text-center text-sm text-[var(--muted-foreground)]">
             {statusFilter === "low" && <p>Không có vật tư sắp hết. Kho đang an toàn.</p>}
             {statusFilter === "out" && <p>Không có vật tư hết hàng.</p>}
             {statusFilter === "negative" && <p>Không có tồn kho âm.</p>}

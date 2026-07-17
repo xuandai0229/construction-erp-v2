@@ -128,8 +128,8 @@ export function MaterialFormDialog({ isOpen, onClose, onSubmit, isSubmitting, in
 
   return (
     <div className="fixed inset-0 z-[90] flex items-end justify-center bg-slate-950/45 p-0 backdrop-blur-sm sm:items-center sm:p-4">
-      <div className="flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl shadow-slate-950/20 sm:rounded-2xl">
-        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+      <div className="flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl bg-[var(--surface)] shadow-2xl shadow-slate-950/20 sm:rounded-[var(--radius-xl)]">
+        <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
           <div>
             <h2 className="text-lg font-bold text-slate-950">{initialData ? "Sửa vật tư" : "Thêm vật tư"}</h2>
           </div>
@@ -138,15 +138,15 @@ export function MaterialFormDialog({ isOpen, onClose, onSubmit, isSubmitting, in
 
         <form onSubmit={handleSubmit} className="overflow-y-auto p-4">
           {error && (
-            <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+            <div className="mb-4 rounded-[var(--radius-lg)] border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
               {error}
             </div>
           )}
 
           <div className="grid gap-4">
             <div>
-              <label htmlFor="material-code" className="mb-1.5 block text-sm font-semibold text-slate-700">
-                Mã vật tư <span className="font-normal text-slate-400">(tùy chọn)</span>
+              <label htmlFor="material-code" className="mb-1.5 block text-sm font-semibold text-[var(--foreground)]">
+                Mã vật tư <span className="font-normal text-[var(--muted-foreground)] opacity-70">(tùy chọn)</span>
               </label>
               <input
                 id="material-code"
@@ -159,12 +159,12 @@ export function MaterialFormDialog({ isOpen, onClose, onSubmit, isSubmitting, in
                 spellCheck={false}
                 data-1p-ignore="true"
                 data-lpignore="true"
-                className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="h-10 w-full rounded-[var(--radius-lg)] border border-[var(--border)] px-3 text-sm text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted-foreground)] opacity-70 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </div>
 
             <div>
-              <label htmlFor="material-name" className="mb-1.5 block text-sm font-semibold text-slate-700">
+              <label htmlFor="material-name" className="mb-1.5 block text-sm font-semibold text-[var(--foreground)]">
                 Tên vật tư <span className="text-rose-600">*</span>
               </label>
               <input
@@ -178,14 +178,14 @@ export function MaterialFormDialog({ isOpen, onClose, onSubmit, isSubmitting, in
                 spellCheck={false}
                 data-1p-ignore="true"
                 data-lpignore="true"
-                className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="h-10 w-full rounded-[var(--radius-lg)] border border-[var(--border)] px-3 text-sm text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted-foreground)] opacity-70 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 required
               />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor="material-unit" className="mb-1.5 block text-sm font-semibold text-slate-700">
+                <label htmlFor="material-unit" className="mb-1.5 block text-sm font-semibold text-[var(--foreground)]">
                   Đơn vị tính <span className="text-rose-600">*</span>
                 </label>
                   <input
@@ -199,12 +199,12 @@ export function MaterialFormDialog({ isOpen, onClose, onSubmit, isSubmitting, in
                     spellCheck={false}
                     data-1p-ignore="true"
                     data-lpignore="true"
-                    className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    className="h-10 w-full rounded-[var(--radius-lg)] border border-[var(--border)] px-3 text-sm text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted-foreground)] opacity-70 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                     required
                   />
               </div>
               <div>
-                <label htmlFor="material-group" className="mb-1.5 block text-sm font-semibold text-slate-700">Nhóm vật tư</label>
+                <label htmlFor="material-group" className="mb-1.5 block text-sm font-semibold text-[var(--foreground)]">Nhóm vật tư</label>
                 <EditableCombobox
                   id="material-group"
                   value={formData.group}
@@ -214,24 +214,24 @@ export function MaterialFormDialog({ isOpen, onClose, onSubmit, isSubmitting, in
                   customOptionLabel={(query) => `Dùng nhóm mới: "${query}"`}
                   emptyMessage="Chưa có nhóm nào."
                 />
-                <p className="mt-1 text-xs text-slate-500">Có thể chọn nhóm đã có hoặc nhập nhóm mới.</p>
+                <p className="mt-1 text-xs text-[var(--muted-foreground)]">Có thể chọn nhóm đã có hoặc nhập nhóm mới.</p>
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
-              <label htmlFor="material-min-stock" className="mb-1 block text-sm font-semibold text-slate-700">Ngưỡng cảnh báo tồn tối thiểu</label>
-              <p className="mb-2 text-xs text-slate-500">Số này chỉ dùng để cảnh báo khi tồn kho thấp, không phải tồn ban đầu.</p>
+            <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface-subtle)] p-4">
+              <label htmlFor="material-min-stock" className="mb-1 block text-sm font-semibold text-[var(--foreground)]">Ngưỡng cảnh báo tồn tối thiểu</label>
+              <p className="mb-2 text-xs text-[var(--muted-foreground)]">Số này chỉ dùng để cảnh báo khi tồn kho thấp, không phải tồn ban đầu.</p>
               <NumericInput
                 id="material-min-stock"
                 value={formData.minStockLevel}
                 onChange={(value) => updateField("minStockLevel", value)}
                 placeholder="VD: 100"
-                className="h-10 w-full rounded-lg border border-slate-300 px-3 text-right text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="h-10 w-full rounded-[var(--radius-lg)] border border-[var(--border)] px-3 text-right text-sm text-[var(--foreground)] outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </div>
 
             <div>
-              <label htmlFor="material-description" className="mb-1.5 block text-sm font-semibold text-slate-700">Ghi chú</label>
+              <label htmlFor="material-description" className="mb-1.5 block text-sm font-semibold text-[var(--foreground)]">Ghi chú</label>
               <textarea
                 id="material-description"
                 value={formData.description}
@@ -243,21 +243,21 @@ export function MaterialFormDialog({ isOpen, onClose, onSubmit, isSubmitting, in
                 spellCheck={false}
                 data-1p-ignore="true"
                 data-lpignore="true"
-                className="min-h-24 w-full resize-none rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="min-h-24 w-full resize-none rounded-[var(--radius-lg)] border border-[var(--border)] px-3 py-2 text-sm text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted-foreground)] opacity-70 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
             </div>
 
             {!initialData && (
-              <div className="rounded-xl border border-blue-100 bg-blue-50/30 p-4">
+              <div className="rounded-[var(--radius-xl)] border border-blue-100 bg-blue-50/30 p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <input
                     type="checkbox"
                     id="has-initial-stock"
                     checked={formData.hasInitialStock}
                     onChange={(e) => setFormData(prev => ({ ...prev, hasInitialStock: e.target.checked }))}
-                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    className="h-4 w-4 rounded border-[var(--border)] text-blue-600 focus:ring-blue-500"
                   />
-                  <label htmlFor="has-initial-stock" className="text-sm font-semibold text-slate-800 cursor-pointer">
+                  <label htmlFor="has-initial-stock" className="text-sm font-semibold text-[var(--foreground)] cursor-pointer">
                     Nhập số tồn kho thực tế ban đầu (Tồn kho thật)
                   </label>
                 </div>
@@ -265,29 +265,29 @@ export function MaterialFormDialog({ isOpen, onClose, onSubmit, isSubmitting, in
                 {formData.hasInitialStock && (
                   <div className="grid gap-4 sm:grid-cols-2 mt-2 pt-3 border-t border-blue-100">
                     <div>
-                      <label className="mb-1.5 block text-sm font-medium text-slate-700">Số lượng tồn ban đầu <span className="text-rose-500">*</span></label>
+                      <label className="mb-1.5 block text-sm font-medium text-[var(--foreground)]">Số lượng tồn ban đầu <span className="text-rose-500">*</span></label>
                       <NumericInput
                         value={formData.initialStock}
                         onChange={(val) => updateField("initialStock", val)}
                         placeholder="0.00"
-                        className="h-10 w-full rounded-lg border border-slate-300 px-3 text-right text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        className="h-10 w-full rounded-[var(--radius-lg)] border border-[var(--border)] px-3 text-right text-sm text-[var(--foreground)] outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                       />
                     </div>
                     <div>
-                      <label className="mb-1.5 block text-sm font-medium text-slate-700">Ngày nhập <span className="text-rose-500">*</span></label>
+                      <label className="mb-1.5 block text-sm font-medium text-[var(--foreground)]">Ngày nhập <span className="text-rose-500">*</span></label>
                       <DateTimeFieldVN 
                         value={formData.initialStockDate} 
                         onChange={val => updateField("initialStockDate", val)}
                       />
                     </div>
                     <div className="sm:col-span-2">
-                      <label className="mb-1.5 block text-sm font-medium text-slate-700">Ghi chú nhập kho ban đầu</label>
+                      <label className="mb-1.5 block text-sm font-medium text-[var(--foreground)]">Ghi chú nhập kho ban đầu</label>
                       <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                         type="text"
                         value={formData.initialStockNotes}
                         onChange={(e) => updateField("initialStockNotes", e.target.value)}
                         placeholder="Ví dụ: Kiểm kê đầu kỳ..."
-                        className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        className="h-10 w-full rounded-[var(--radius-lg)] border border-[var(--border)] px-3 text-sm text-[var(--foreground)] outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                       />
                     </div>
                   </div>

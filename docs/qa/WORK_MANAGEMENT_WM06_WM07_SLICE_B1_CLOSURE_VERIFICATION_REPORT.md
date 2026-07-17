@@ -99,7 +99,7 @@ Named subtests `SUBMIT immutability`, `REQUEST_CHANGES immutability`, `APPROVE_R
 
 ## 24. Test counts
 
-Slice B1: 26 top-level tests, 12 named Node subtests, 38 semantic cases; 38 pass, 0 fail, 0 skipped.
+Runner-reported Slice B1 result: 26 tests, 0 suites, 26 pass, 0 fail, 0 cancelled, 0 skipped, 0 todo. The file has 14 top-level `test()` declarations and 12 named Node `t.test()` subtests; Node reports both once, so the runner total is 26. The previous phrase “38 semantic cases” was a documentation-only double count of 26 runner-reported tests plus the same 12 subtests, not a Node runner result.
 
 ## 25. Slice A regression
 

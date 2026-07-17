@@ -21,7 +21,7 @@ export default async function AuditPage() {
       <EmptyState 
         title="Chưa có nhật ký hoạt động" 
         description="Mọi thao tác thay đổi dữ liệu quan trọng sẽ được lưu vết tại đây." 
-        icon={<History className="h-6 w-6 text-slate-500" />}
+        icon={<History className="h-6 w-6 text-[var(--muted-foreground)]" />}
       />
     </div>
   );

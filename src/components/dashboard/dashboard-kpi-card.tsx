@@ -31,18 +31,18 @@ function KpiIcon({ id, className }: { id: string; className?: string }) {
 export function DashboardKpiCard({ kpi }: { kpi: DashboardKpi }) {
   const tone = toneClasses[kpi.tone];
   const content = (
-    <div className={cn("flex flex-col justify-between rounded-[16px] sm:rounded-2xl border border-slate-200/60 p-3.5 sm:p-5 shadow-[0_2px_10px_rgba(15,23,42,0.02)] transition-colors relative overflow-hidden bg-white hover:border-slate-300 hover:shadow-md")}>
+    <div className={cn("flex flex-col justify-between rounded-[var(--radius-lg)] border border-[var(--border)] p-3.5 sm:p-5 shadow-[var(--shadow-card)] transition-colors relative overflow-hidden bg-[var(--surface)] hover:border-slate-300 hover:shadow-[var(--shadow-elevated)]")}>
       <div className={cn("absolute -right-4 -top-4 opacity-[0.03] pointer-events-none transition-transform group-hover:scale-110", tone.icon)}>
          <KpiIcon id={kpi.id} className="h-24 w-24" />
       </div>
       <div className="flex items-start justify-between gap-3 relative z-10">
         <div className="flex flex-col min-w-0">
-          <p className="text-[12px] sm:text-[13px] font-bold text-slate-500 mb-1 sm:mb-1.5 uppercase tracking-wide truncate pr-2">{kpi.label}</p>
+          <p className="text-[12px] sm:text-[13px] font-bold text-[var(--muted-foreground)] mb-1 sm:mb-1.5 uppercase tracking-wide truncate pr-2">{kpi.label}</p>
           <div className="flex items-baseline gap-2">
              <span className={cn("text-[24px] sm:text-[32px] font-black leading-none tracking-tight", tone.value)}>{kpi.value}</span>
           </div>
         </div>
-        <div className={cn("flex h-9 w-9 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-[10px] sm:rounded-xl shadow-sm", tone.bg, tone.icon)}>
+        <div className={cn("flex h-9 w-9 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-[var(--radius-sm)] shadow-sm", tone.bg, tone.icon)}>
           <KpiIcon id={kpi.id} className="h-4 w-4 sm:h-5 sm:w-5" />
         </div>
       </div>
@@ -51,7 +51,7 @@ export function DashboardKpiCard({ kpi }: { kpi: DashboardKpi }) {
            <span className={cn("px-1.5 py-0.5 rounded-[4px] text-[10px] sm:text-[11px] font-bold", tone.bg, tone.icon)}>
              Chi tiết
            </span>
-           <span className="text-[11px] sm:text-[12px] text-slate-500 truncate">{kpi.description}</span>
+           <span className="text-[11px] sm:text-[12px] text-[var(--muted-foreground)] truncate">{kpi.description}</span>
         </div>
       )}
     </div>

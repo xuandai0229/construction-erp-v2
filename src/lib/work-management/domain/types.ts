@@ -21,6 +21,9 @@ export type TaskState = {
   waitingReason: WaitingReason | null;
 };
 
+/** Server-owned state captured when a task is archived. It is never accepted from a command. */
+export type ArchivedTaskStateSnapshot = Readonly<TaskState>;
+
 export const TASK_ACTIONS = [
   "CREATE_DRAFT", "ASSIGN", "ACCEPT", "REQUEST_CLARIFICATION", "START", "UPDATE_PROGRESS", "REQUEST_EXTENSION", "CHANGE_DEADLINE",
   "PAUSE", "RESUME", "BLOCK", "UNBLOCK", "SUBMIT", "REQUEST_CHANGES", "APPROVE_RESULT", "CONFIRM_COMPLETION",

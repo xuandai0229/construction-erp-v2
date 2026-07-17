@@ -1,3 +1,4 @@
+import { resolveCurrentTaskAssignment } from "../application/assignment-source-of-truth";
 import type { ParticipantRole, TaskSnapshot } from "../domain/types";
 import type { WorkManagementPermission, WorkManagementScope } from "./contract";
 
@@ -7,7 +8,9 @@ export type TaskAccessContext = { actorId: string; task: TaskSnapshot; activePro
 export function hasParticipantRole(task: TaskSnapshot, userId: string, role: ParticipantRole): boolean { return task.participants.some((participant) => participant.userId === userId && participant.role === role && participant.active !== false); }
 export function isCreator(task: TaskSnapshot, userId: string): boolean { return task.creatorId === userId; }
 export function isAssignedBy(task: TaskSnapshot, userId: string): boolean { return task.assignedById === userId; }
-export function isPrimaryAssignee(task: TaskSnapshot, userId: string): boolean { return task.primaryAssigneeId === userId || hasParticipantRole(task, userId, "PRIMARY_ASSIGNEE"); }
+export function isPrimaryAssignee(task: TaskSnapshot, userId: string): boolean {
+  return resolveCurrentTaskAssignment(task).assigneeId === userId;
+}
 export function isCollaborator(task: TaskSnapshot, userId: string): boolean { return hasParticipantRole(task, userId, "COLLABORATOR"); }
 export function isReviewer(task: TaskSnapshot, userId: string): boolean { return task.reviewerId === userId || hasParticipantRole(task, userId, "REVIEWER"); }
 export function isApprover(task: TaskSnapshot, userId: string): boolean { return task.approverId === userId || hasParticipantRole(task, userId, "APPROVER"); }

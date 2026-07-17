@@ -244,7 +244,7 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
     return (
       <div className="select-none">
         <div
-          className={`flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-slate-100 rounded-md transition-colors ${isSelected ? "bg-blue-50 text-blue-700" : "text-slate-700"}`}
+          className={`flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-[var(--border)] rounded-[var(--radius-md)] transition-colors ${isSelected ? "bg-blue-50 text-blue-700" : "text-[var(--foreground)]"}`}
           style={{ paddingLeft: `${level * 16 + 12}px` }}
           onClick={() => {
             setSelectedFolderId(folder.id);
@@ -270,27 +270,27 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
                     return next;
                   });
                 }}
-                className="rounded p-0.5 text-slate-400 hover:bg-white hover:text-slate-700"
+                className="rounded p-0.5 text-[var(--muted-foreground)] opacity-70 hover:bg-[var(--surface)] hover:text-[var(--foreground)]"
                 aria-label={isExpanded ? "Đóng nhánh thư mục" : "Mở nhánh thư mục"}
               >
                 <ChevronRight className={`h-3 w-3 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
               </button>
             )}
-            {isSelected ? <FolderOpen className="h-4 w-4 shrink-0 text-blue-500" /> : <Folder className="h-4 w-4 shrink-0 text-slate-400" />}
+            {isSelected ? <FolderOpen className="h-4 w-4 shrink-0 text-blue-500" /> : <Folder className="h-4 w-4 shrink-0 text-[var(--muted-foreground)] opacity-70" />}
             <span className="text-sm font-medium truncate" title={folder.name}>{formatFolderName(folder.name)}</span>
           </div>
           {canEdit && isSelected && (
-            <div className="flex gap-1 bg-white shadow-sm rounded-md border border-slate-200 px-1">
+            <div className="flex gap-1 bg-[var(--surface)] shadow-[var(--shadow-card)] rounded-[var(--radius-md)] border border-[var(--border)] px-1">
               <button
                 onClick={(e) => { e.stopPropagation(); setRenameModal({ isOpen: true, id: folder.id, newName: folder.name }); }}
-                className="text-slate-400 hover:text-blue-600 transition-colors p-1"
+                className="text-[var(--muted-foreground)] opacity-70 hover:text-blue-600 transition-colors p-1"
                 title="Đổi tên thư mục"
               >
                 <Pencil className="h-3 w-3" />
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); setDeleteConfirm({ isOpen: true, type: 'folder', id: folder.id }); }}
-                className="text-slate-400 hover:text-red-500 transition-colors p-1"
+                className="text-[var(--muted-foreground)] opacity-70 hover:text-red-500 transition-colors p-1"
                 title="Xóa thư mục"
               >
                 <Trash2 className="h-3 w-3" />
@@ -311,19 +311,19 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
     if (mime.includes("word") || ext.includes("doc")) return <FileText className="h-8 w-8 text-blue-600" />;
     if (mime.includes("excel") || mime.includes("spreadsheet") || ext.includes("xls")) return <FileText className="h-8 w-8 text-green-500" />;
     if (ext.includes("dwg") || ext.includes("dxf")) return <FileCode className="h-8 w-8 text-purple-500" />;
-    return <FileIcon className="h-8 w-8 text-slate-400" />;
+    return <FileIcon className="h-8 w-8 text-[var(--muted-foreground)] opacity-70" />;
   };
 
   return (
-    <div className="flex flex-col md:flex-row flex-1 bg-white border border-slate-200 rounded-xl overflow-hidden min-h-0">
+    <div className="flex flex-col md:flex-row flex-1 bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-xl)] overflow-hidden min-h-0">
       {/* Folder Tree Sidebar */}
-      <div className="w-full md:w-72 border-r border-slate-200 flex flex-col bg-slate-50 shrink-0 max-h-[200px] md:max-h-none md:h-auto overflow-y-auto">
-        <div className="p-4 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-slate-50 z-10">
-          <h2 className="font-semibold text-slate-800">Thư mục</h2>
+      <div className="w-full md:w-72 border-r border-[var(--border)] flex flex-col bg-[var(--surface-subtle)] shrink-0 max-h-[200px] md:max-h-none md:h-auto overflow-y-auto">
+        <div className="p-4 border-b border-[var(--border)] flex items-center justify-between sticky top-0 bg-[var(--surface-subtle)] z-10">
+          <h2 className="font-semibold text-[var(--foreground)]">Thư mục</h2>
           {canEdit && (
             <button
               onClick={() => setShowNewFolder(!showNewFolder)}
-              className="p-1.5 hover:bg-slate-200 rounded-md text-slate-600 transition-colors"
+              className="p-1.5 hover:bg-slate-200 rounded-[var(--radius-md)] text-[var(--muted-foreground)] transition-colors"
               title="Tạo thư mục"
             >
               <Plus className="h-4 w-4" />
@@ -332,10 +332,10 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
         </div>
 
         {showNewFolder && (
-          <div className="p-3 bg-white border-b border-slate-200">
+          <div className="p-3 bg-[var(--surface)] border-b border-[var(--border)]">
             <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
               type="text"
-              className="w-full bg-white px-2 py-1.5 text-sm border border-slate-300 rounded-md focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-slate-900 font-medium placeholder:text-slate-400"
+              className="w-full bg-[var(--surface)] px-2 py-1.5 text-sm border border-[var(--border)] rounded-[var(--radius-md)] focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-[var(--foreground)] font-medium placeholder:text-[var(--muted-foreground)] opacity-70"
               placeholder="Tên thư mục mới..."
               value={newFolderName}
               onChange={e => setNewFolderName(e.target.value)}
@@ -354,7 +354,7 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
             <FolderNode key={folder.id} folder={folder} />
           ))}
           {rootFolders.length === 0 && (
-            <p className="text-sm text-slate-500 text-center py-4">Chưa có thư mục</p>
+            <p className="text-sm text-[var(--muted-foreground)] text-center py-4">Chưa có thư mục</p>
           )}
         </div>
       </div>
@@ -364,24 +364,24 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
         {selectedFolderId ? (
           <>
             {selectedFolderRule && (
-              <div className="bg-white border-b border-slate-200">
+              <div className="bg-[var(--surface)] border-b border-[var(--border)]">
                 <div className="p-4 flex flex-col gap-3">
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <h2 className="text-lg font-bold text-slate-900">{selectedFolderRule.title}</h2>
-                        <span className="px-2 py-0.5 text-xs font-medium bg-slate-100 text-slate-600 rounded-full border border-slate-200" title={selectedFolderRule.allowedExtensions.join(", ").toUpperCase()}>
+                        <h2 className="text-lg font-bold text-[var(--foreground)]">{selectedFolderRule.title}</h2>
+                        <span className="px-2 py-0.5 text-xs font-medium bg-[var(--border)] text-[var(--muted-foreground)] rounded-full border border-[var(--border)]" title={selectedFolderRule.allowedExtensions.join(", ").toUpperCase()}>
                           Loại file nhận: {selectedFolderRule.friendlyAllowedTypes || selectedFolderRule.allowedExtensions.join(", ").toUpperCase()}
                         </span>
                       </div>
-                      <p className="text-sm text-slate-600">{selectedFolderRule.description}</p>
+                      <p className="text-sm text-[var(--muted-foreground)]">{selectedFolderRule.description}</p>
                       {selectedFolderRule.warning && (
                         <p className="text-xs text-amber-600 mt-1 font-medium">{selectedFolderRule.warning}</p>
                       )}
-                      <div className="text-xs text-slate-500 mt-1 flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2">
-                        <span>Gợi ý đặt tên: <span className="font-mono text-slate-700 bg-slate-50 px-1 py-0.5 rounded border border-slate-200">{selectedFolderRule.namingHint}</span></span>
+                      <div className="text-xs text-[var(--muted-foreground)] mt-1 flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2">
+                        <span>Gợi ý đặt tên: <span className="font-mono text-[var(--foreground)] bg-[var(--surface-subtle)] px-1 py-0.5 rounded border border-[var(--border)]">{selectedFolderRule.namingHint}</span></span>
                         {selectedFolderRule.namingExample && (
-                          <span className="italic text-slate-400">{selectedFolderRule.namingExample}</span>
+                          <span className="italic text-[var(--muted-foreground)] opacity-70">{selectedFolderRule.namingExample}</span>
                         )}
                       </div>
                     </div>
@@ -411,22 +411,22 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
               </div>
             )}
 
-              <div className="px-4 py-3 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="px-4 py-3 bg-[var(--surface-subtle)] border-t border-[var(--border)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center flex-1 gap-2 min-w-0">
                   <div className="relative flex-1 max-w-sm">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--muted-foreground)] opacity-70" />
                     <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                       type="text"
                       placeholder="Tìm tên tệp..."
                       value={searchQuery}
                       onChange={e => setSearchQuery(e.target.value)}
-                      className="w-full pl-8 pr-3 py-1.5 text-sm bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-900 font-medium placeholder:text-slate-400"
+                      className="w-full pl-8 pr-3 py-1.5 text-sm bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] focus:outline-none focus:ring-1 focus:ring-blue-500 text-[var(--foreground)] font-medium placeholder:text-[var(--muted-foreground)] opacity-70"
                     />
                   </div>
                   <select
                     value={filterType}
                     onChange={e => setFilterType(e.target.value)}
-                    className="px-3 py-1.5 text-sm bg-white border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-900 font-medium"
+                    className="px-3 py-1.5 text-sm bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-md)] focus:outline-none focus:ring-1 focus:ring-blue-500 text-[var(--foreground)] font-medium"
                   >
                     <option value="ALL">Tất cả</option>
                     <option value="IMAGE">Ảnh</option>
@@ -441,18 +441,18 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 bg-slate-50">
+              <div className="flex-1 overflow-y-auto p-4 bg-[var(--surface-subtle)]">
                 {displayDocs.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {displayDocs.map((doc: any) => (
-                      <div key={doc.id} className="bg-white border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow group flex flex-col">
+                      <div key={doc.id} className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] p-4 hover:shadow-[var(--shadow-elevated)] transition-shadow group flex flex-col">
                         <div className="flex items-start justify-between mb-3">
                           {getFileIcon(doc.mimeType, doc.extension)}
                           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <a
                               href={`/api/documents/${doc.id}/download?preview=true`}
                               target="_blank"
-                              className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                              className="p-1.5 text-[var(--muted-foreground)] opacity-70 hover:text-blue-600 hover:bg-blue-50 rounded-[var(--radius-md)] transition-colors"
                               title="Xem trước"
                             >
                               <Eye className="h-4 w-4" />
@@ -460,7 +460,7 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
                             <a
                               href={`/api/documents/${doc.id}/download`}
                               download
-                              className="p-1.5 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors"
+                              className="p-1.5 text-[var(--muted-foreground)] opacity-70 hover:text-green-600 hover:bg-green-50 rounded-[var(--radius-md)] transition-colors"
                               title="Tải xuống"
                             >
                               <Download className="h-4 w-4" />
@@ -468,7 +468,7 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
                             {canEdit && (
                               <button
                                 onClick={() => setDeleteConfirm({ isOpen: true, type: 'doc', id: doc.id })}
-                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                                className="p-1.5 text-[var(--muted-foreground)] opacity-70 hover:text-red-600 hover:bg-red-50 rounded-[var(--radius-md)] transition-colors"
                                 title="Xóa"
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -477,10 +477,10 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
                           </div>
                         </div>
                         <div className="flex-1 min-h-0">
-                          <p className="font-medium text-slate-900 text-sm line-clamp-2" title={doc.originalName}>{doc.originalName}</p>
-                          <p className="text-xs text-slate-500 mt-1">{formatBytes(doc.size)} • {doc.extension.toUpperCase()}</p>
+                          <p className="font-medium text-[var(--foreground)] text-sm line-clamp-2" title={doc.originalName}>{doc.originalName}</p>
+                          <p className="text-xs text-[var(--muted-foreground)] mt-1">{formatBytes(doc.size)} • {doc.extension.toUpperCase()}</p>
                         </div>
-                        <div className="mt-3 pt-3 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
+                        <div className="mt-3 pt-3 border-t border-[var(--border)] flex justify-between items-center text-xs text-[var(--muted-foreground)]">
                           <span>{format(new Date(doc.createdAt), "dd/MM/yyyy HH:mm")}</span>
                           <span className="truncate ml-2 max-w-[100px] text-right" title={doc.uploadedBy?.name}>{doc.uploadedBy?.name || "Người dùng"}</span>
                         </div>
@@ -488,13 +488,13 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
                     ))}
                   </div>
                 ) : (
-                  <div className="h-full flex flex-col items-center justify-center text-slate-500 space-y-3">
-                    <div className="h-16 w-16 bg-white border border-slate-200 rounded-full flex items-center justify-center">
+                  <div className="h-full flex flex-col items-center justify-center text-[var(--muted-foreground)] space-y-3">
+                    <div className="h-16 w-16 bg-[var(--surface)] border border-[var(--border)] rounded-full flex items-center justify-center">
                       <FileType className="h-8 w-8 text-slate-300" />
                     </div>
                     {selectedFolderRule && (
                       <div className="text-center flex flex-col items-center">
-                        <p className="font-medium text-slate-700">{selectedFolderRule.emptyStateText || "Chưa có tài liệu nào trong thư mục này"}</p>
+                        <p className="font-medium text-[var(--foreground)]">{selectedFolderRule.emptyStateText || "Chưa có tài liệu nào trong thư mục này"}</p>
                         <p className="text-sm mt-1 mb-4">Hãy tải tài liệu hợp lệ theo đúng định dạng được gợi ý.</p>
                         {canEdit && (
                           <Button 
@@ -513,9 +513,9 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
               </div>
             </>
             ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-slate-500 bg-slate-50 p-8 text-center">
+            <div className="flex-1 flex flex-col items-center justify-center text-[var(--muted-foreground)] bg-[var(--surface-subtle)] p-8 text-center">
               <FolderOpen className="h-16 w-16 text-slate-300 mb-4" />
-              <h3 className="text-lg font-medium text-slate-900 mb-1">Chọn thư mục</h3>
+              <h3 className="text-lg font-medium text-[var(--foreground)] mb-1">Chọn thư mục</h3>
               <p className="text-sm">Vui lòng chọn một thư mục bên trái để xem và tải lên tài liệu.</p>
             </div>
         )}
@@ -533,9 +533,9 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
 
         {renameModal.isOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-xl shadow-lg max-w-sm w-full overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
-              <div className="px-5 py-4 border-b border-slate-100">
-                <h3 className="text-lg font-bold text-slate-900">Đổi tên thư mục</h3>
+            <div className="bg-[var(--surface)] rounded-[var(--radius-xl)] shadow-[var(--shadow-elevated)] max-w-sm w-full overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+              <div className="px-5 py-4 border-b border-[var(--border)]">
+                <h3 className="text-lg font-bold text-[var(--foreground)]">Đổi tên thư mục</h3>
               </div>
               <div className="px-5 py-4">
                 <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
@@ -543,21 +543,21 @@ export function DocumentManager({ projectId, folders, documents, canEdit }: any)
                   value={renameModal.newName}
                   onChange={e => setRenameModal(prev => ({ ...prev, newName: e.target.value }))}
                   onKeyDown={e => e.key === "Enter" && handleRenameFolder()}
-                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-900 placeholder:text-slate-400"
+                  className="w-full px-3 py-2 bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] opacity-70"
                   placeholder="Nhập tên mới..."
                   autoFocus
                 />
               </div>
-              <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2">
+              <div className="px-5 py-3 bg-[var(--surface-subtle)] border-t border-[var(--border)] flex items-center justify-end gap-2">
                 <button
                   onClick={() => setRenameModal({ isOpen: false, id: "", newName: "" })}
-                  className="px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                  className="px-4 py-2 text-sm font-semibold text-[var(--foreground)] bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] hover:bg-[var(--surface-subtle)] transition-colors"
                 >
                   Hủy
                 </button>
                 <button
                   onClick={handleRenameFolder}
-                  className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 border border-blue-600 rounded-lg hover:bg-blue-700 flex items-center gap-1.5 transition-colors shadow-sm"
+                  className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 border border-blue-600 rounded-[var(--radius-lg)] hover:bg-blue-700 flex items-center gap-1.5 transition-colors shadow-[var(--shadow-card)]"
                 >
                   Lưu
                 </button>

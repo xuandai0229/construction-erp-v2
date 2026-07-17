@@ -1,15 +1,24 @@
 import { WorkManagementDomainError } from "../errors/codes";
 import type { TransitionPolicyDecision } from "../domain/transition-policies";
-import type { ConfidentialityLevel, TaskSnapshot, TaskState } from "../domain/types";
+import type { ArchivedTaskStateSnapshot, ConfidentialityLevel, TaskLifecycle, TaskSnapshot, TaskState } from "../domain/types";
 import type { WorkManagementPermission, WorkManagementScope } from "../permissions/contract";
 import { evaluateActorPolicy, type WorkManagementActorRelation } from "./actor-policy";
 import { getWorkManagementActionDefinition } from "./action-registry";
 import { assertCompletionReadiness, assertReviewSeparation, type CompletionReadinessDecision } from "./result-review-invariants";
+import { requireCurrentTaskAssignee, resolveCurrentTaskAssignment } from "./assignment-source-of-truth";
+import {
+  appendAssignmentHistoryRecord,
+  getNextAssignmentGeneration,
+  validateAssignmentHistory,
+  type TaskAssignmentHistoryRecord,
+} from "./assignment-history";
 import type { CoreTaskEffects } from "./core-task-effects";
 import { emptyCoreTaskEffects } from "./core-task-effects";
+import { mapCoreTaskEffectsToOutbox, type WorkManagementOutboxMessage } from "./core-task-outbox";
 import type { CoreTaskReadRepository, CoreTaskTransitionPolicyResolver, CoreTaskUnitOfWork } from "./core-task-ports";
 import {
   canonicalIdempotencyFingerprint,
+  sameIdempotencyIdentity,
   type IdempotencyIntegrationPort,
   type IdempotencyRequest,
   type StableCoreTaskExecutionResult,
@@ -20,10 +29,12 @@ export const CORE_TASK_ACTIONS = [
   "REQUEST_EXTENSION", "CHANGE_DEADLINE", "PAUSE", "RESUME", "BLOCK", "UNBLOCK",
 ] as const;
 export const RESULT_REVIEW_ACTIONS = ["SUBMIT", "REQUEST_CHANGES", "APPROVE_RESULT", "CONFIRM_COMPLETION"] as const;
-export type CoreTaskAction = (typeof CORE_TASK_ACTIONS)[number] | (typeof RESULT_REVIEW_ACTIONS)[number];
+export const CLOSURE_LIFECYCLE_ACTIONS = ["REOPEN", "CANCEL", "ARCHIVE", "RESTORE"] as const;
+export const HANDOVER_ACTIONS = ["REQUEST_HANDOVER", "ACCEPT_HANDOVER", "REJECT_HANDOVER", "APPROVE_HANDOVER", "EXECUTE_HANDOVER"] as const;
+export type CoreTaskAction = (typeof CORE_TASK_ACTIONS)[number] | (typeof RESULT_REVIEW_ACTIONS)[number] | (typeof CLOSURE_LIFECYCLE_ACTIONS)[number] | (typeof HANDOVER_ACTIONS)[number];
 
 export type WorkManagementActorContext = {
-  actorType: "USER";
+  actorType: "USER" | "SYSTEM";
   actorId: string;
   companyId: string | null;
   permissionSet: ReadonlySet<WorkManagementPermission>;
@@ -48,9 +59,39 @@ export type CoreTaskAggregate = TaskSnapshot & {
   completedById?: string | null;
   completedAt?: Date | null;
   completionSubmissionId?: string | null;
+  completionHistory?: readonly CoreTaskCompletionRecord[];
+  reopenedById?: string | null;
+  reopenedAt?: Date | null;
+  reopenReason?: string | null;
+  cancelledById?: string | null;
+  cancelledAt?: Date | null;
+  cancellationReason?: string | null;
+  activeArchiveId?: string | null;
+  archiveGeneration?: number;
+  preArchiveStateSnapshot?: ArchivedTaskStateSnapshot | null;
+  archiveHistory?: readonly CoreTaskArchiveRecord[];
+  restoreHistory?: readonly CoreTaskRestoreRecord[];
+  reopenHistory?: readonly CoreTaskReopenRecord[];
+  cancellationHistory?: readonly CoreTaskCancellationRecord[];
+  handoverGeneration?: number;
+  activeHandoverId?: string | null;
+  activeHandoverReceiverId?: string | null;
+  handoverRequests?: readonly CoreTaskHandoverRequestRecord[];
+  handoverDecisions?: readonly CoreTaskHandoverDecisionRecord[];
+  handoverExecutions?: readonly CoreTaskHandoverExecutionRecord[];
+  assignmentHistory: readonly TaskAssignmentHistoryRecord[];
 };
 export type CoreTaskSubmission = { id: string; taskId: string; sequence: number; previousSubmissionId: string | null; submittedById: string; submittedAt: Date; summary: string; note: string | null };
 export type CoreTaskReviewDecision = { id: string; submissionId: string; decision: "CHANGES_REQUESTED" | "RESULT_APPROVED"; reason: string | null; decidedById: string; decidedAt: Date };
+export type CoreTaskCompletionRecord = { id: string; taskId: string; submissionId: string; completedById: string; completedAt: Date; lifecycleBeforeCompletion: TaskLifecycle; lifecycleAfterCompletion: "COMPLETED"; aggregateVersion: number };
+export type CoreTaskArchiveRecord = { id: string; taskId: string; generation: number; archivedById: string; archivedAt: Date; reason: string | null; preArchiveState: ArchivedTaskStateSnapshot };
+export type CoreTaskRestoreRecord = { id: string; taskId: string; archiveId: string; archiveGeneration: number; restoredById: string; restoredAt: Date; reason: string | null; previousArchivedLifecycle: "ARCHIVED"; restoredState: ArchivedTaskStateSnapshot; aggregateVersion: number };
+export type CoreTaskReopenRecord = { id: string; taskId: string; reopenedById: string; reopenedAt: Date; reason: string; previousLifecycle: TaskLifecycle; newLifecycle: TaskLifecycle };
+export type CoreTaskCancellationRecord = { id: string; taskId: string; cancelledById: string; cancelledAt: Date; reason: string; previousLifecycle: TaskLifecycle };
+export type HandoverScope = "HANDOVER_SCOPE";
+export type CoreTaskHandoverRequestRecord = { id: string; taskId: string; generation: number; fromAssigneeId: string; toAssigneeId: string; requestedById: string; requestedAt: Date; reason: string; scope: HandoverScope; aggregateVersion: number };
+export type CoreTaskHandoverDecisionRecord = { id: string; taskId: string; handoverId: string; generation: number; decision: "ACCEPTED" | "REJECTED" | "APPROVED"; reason: string | null; decidedById: string; decidedAt: Date; aggregateVersion: number };
+export type CoreTaskHandoverExecutionRecord = { id: string; taskId: string; handoverId: string; generation: number; previousAssigneeId: string; newAssigneeId: string; executedById: string; executedAt: Date; aggregateVersion: number };
 export type { CoreTaskEffects } from "./core-task-effects";
 
 export type AssigneeEligibilityDecision =
@@ -113,10 +154,47 @@ function eligibilityError(reason: Exclude<AssigneeEligibilityDecision, { eligibl
   if (reason === "APPROVER_CONFLICT") return new WorkManagementDomainError("TASK_APPROVER_CONFLICT");
   return new WorkManagementDomainError("TASK_ASSIGNEE_NOT_ASSIGNABLE");
 }
-function sameIdempotencyIdentity(left: IdempotencyRequest, right: IdempotencyRequest): boolean {
-  return left.key === right.key && left.action === right.action && left.actorId === right.actorId
-    && left.companyId === right.companyId && left.taskId === right.taskId
-    && left.projectId === right.projectId && left.fingerprint === right.fingerprint;
+function archiveSnapshot(state: TaskState): ArchivedTaskStateSnapshot { return cloneState(state); }
+export function validArchiveSnapshot(value: ArchivedTaskStateSnapshot | null | undefined): value is ArchivedTaskStateSnapshot {
+  if (!value) return false;
+  const valid = ["DRAFT", "ASSIGNED", "IN_PROGRESS", "SUBMITTED", "COMPLETED", "CANCELLED"].includes(value.lifecycle)
+    && ["NOT_REQUIRED", "PENDING", "ACCEPTED", "CLARIFICATION_REQUESTED", "DISPUTED"].includes(value.acceptance)
+    && ["ACTIVE", "PAUSED", "BLOCKED"].includes(value.execution)
+    && ["NOT_SUBMITTED", "PENDING", "CHANGES_REQUESTED", "RESULT_APPROVED", "REJECTED"].includes(value.review)
+    && ["NONE", "DRAFT", "PENDING_FROM_USER", "PENDING_TO_USER", "PENDING_APPROVAL", "APPROVED", "EFFECTIVE", "REJECTED", "CANCELLED", "EXPIRED", "COMPLETED"].includes(value.handover)
+    && (value.waitingReason === null || ["WAITING_FOR_DATA", "WAITING_FOR_APPROVAL", "WAITING_FOR_COLLABORATION", "WAITING_FOR_EXTERNAL_PARTY", "OTHER"].includes(value.waitingReason));
+  if (!valid || value.lifecycle === "ARCHIVED") return false;
+  if (value.lifecycle === "COMPLETED" && value.review !== "RESULT_APPROVED") return false;
+  if (value.lifecycle === "SUBMITTED" && !["PENDING", "RESULT_APPROVED"].includes(value.review)) return false;
+  if (value.lifecycle === "CANCELLED" && value.execution === "BLOCKED") return false;
+  return true;
+}
+export function resolveCurrentArchiveRecord(task: CoreTaskAggregate): CoreTaskArchiveRecord {
+  if (!task.activeArchiveId) throw new WorkManagementDomainError("TASK_ARCHIVE_REQUIRED");
+  const matches = (task.archiveHistory ?? []).filter((record) => record.id === task.activeArchiveId);
+  if (matches.length === 0) throw new WorkManagementDomainError("TASK_ARCHIVE_RECORD_NOT_FOUND");
+  if (matches.length !== 1) throw new WorkManagementDomainError("TASK_ARCHIVE_NOT_CURRENT");
+  const record = matches[0];
+  if (record.taskId !== task.id || record.generation !== task.archiveGeneration) throw new WorkManagementDomainError("TASK_ARCHIVE_NOT_CURRENT");
+  if (!validArchiveSnapshot(record.preArchiveState)) throw new WorkManagementDomainError("TASK_ARCHIVE_SNAPSHOT_INVALID");
+  if (!task.preArchiveStateSnapshot) throw new WorkManagementDomainError("TASK_ARCHIVE_SNAPSHOT_MISSING");
+  if (JSON.stringify(task.preArchiveStateSnapshot) !== JSON.stringify(record.preArchiveState)) throw new WorkManagementDomainError("TASK_ARCHIVE_SNAPSHOT_MISMATCH");
+  return record;
+}
+
+export function resolveActiveHandover(task: CoreTaskAggregate): CoreTaskHandoverRequestRecord {
+  if (!task.activeHandoverId) throw new WorkManagementDomainError("TASK_HANDOVER_REQUIRED");
+  const records = (task.handoverRequests ?? []).filter((record) => record.id === task.activeHandoverId);
+  if (records.length === 0) throw new WorkManagementDomainError("TASK_HANDOVER_RECORD_NOT_FOUND");
+  if (records.length !== 1) throw new WorkManagementDomainError("TASK_HANDOVER_NOT_CURRENT");
+  const request = records[0];
+  if (request.taskId !== task.id || request.generation !== task.handoverGeneration) throw new WorkManagementDomainError("TASK_HANDOVER_NOT_CURRENT");
+  if (task.activeHandoverReceiverId !== request.toAssigneeId) throw new WorkManagementDomainError("TASK_HANDOVER_RECEIVER_INVALID");
+  if (requireCurrentTaskAssignee(task) !== request.fromAssigneeId) throw new WorkManagementDomainError("TASK_HANDOVER_SOURCE_CHANGED");
+  const decisions = (task.handoverDecisions ?? []).filter((record) => record.handoverId === request.id);
+  if (decisions.some((record) => record.taskId !== task.id || record.generation !== request.generation)) throw new WorkManagementDomainError("TASK_HANDOVER_NOT_CURRENT");
+  if (decisions.some((record) => record.decision === "REJECTED")) throw new WorkManagementDomainError("TASK_HANDOVER_NOT_CURRENT");
+  return request;
 }
 
 export class CoreTaskExecutor {
@@ -153,17 +231,103 @@ export class CoreTaskExecutor {
     assertPermission(input.actor, definition.requiredPermission);
     const current = await this.dependencies.tasks.findById(taskId);
     if (!current) throw new WorkManagementDomainError("TASK_NOT_FOUND");
+    validateAssignmentHistory(current);
     const scope = await this.dependencies.scopes.resolve(current, input.actor);
-    assertScope(scope.scopes, definition.allowedScopes);
+    const systemScopeBypass = input.actor.actorType === "SYSTEM" && definition.actorPolicy.mode === "SYSTEM_OR_PRIVILEGED_SCOPE";
+    if (!systemScopeBypass) assertScope(scope.scopes, definition.allowedScopes);
     if (!evaluateActorPolicy(definition.actorPolicy, { actorType: input.actor.actorType, actorRelations: scope.relations, resolvedScopes: scope.scopes })) throw new WorkManagementDomainError("TASK_ACCESS_DENIED");
     if (current.confidentiality !== "NORMAL" && !scope.confidentialAllowed) throw new WorkManagementDomainError("TASK_CONFIDENTIAL_ACCESS_DENIED");
     if (definition.concurrencyPolicy === "EXPECTED_VERSION_REQUIRED" && (typeof command.expectedVersion !== "number" || current.version !== command.expectedVersion)) throw new WorkManagementDomainError("TASK_CONCURRENCY_CONFLICT");
     const policy = this.dependencies.transitionPolicies.resolve(definition.transitionPolicyKey);
+    const transition = policy.evaluate({ action: input.action, currentState: current.state, command, taskId: current.id, now });
+    const policyState = input.action === "RESTORE"
+      ? current.state
+      : assertDecision(definition.eventType, transition);
+    if (this.isClosureLifecycleAction(input.action)) {
+      if (!transition.allowed || !transition.intents.some((intent) => intent.type === definition.eventType)) throw new WorkManagementDomainError(transition.errorCode ?? "TASK_INVALID_TRANSITION");
+      this.validateClosureAction(input.action, current, command);
+      return this.persistDeferred(current, request, async () => {
+        const next = cloneState(current);
+        next.state = policyState;
+        if (input.action === "RESTORE") {
+          if (!policy.restoresPreviousLifecycle || transition.target?.strategy !== "RESTORE_ACTIVE_ARCHIVE") throw new WorkManagementDomainError("TASK_ARCHIVE_SNAPSHOT_INVALID");
+          next.state = archiveSnapshot(resolveCurrentArchiveRecord(current).preArchiveState);
+        }
+        next.version = current.version + 1;
+        return { next, effects: await this.applyAction(input.action, next, current, command, input.actor, now) };
+      });
+    }
+    if (this.isHandoverAction(input.action)) {
+      if (!transition.allowed || !transition.intents.some((intent) => intent.type === definition.eventType)) {
+        throw new WorkManagementDomainError(transition.errorCode ?? "TASK_INVALID_TRANSITION");
+      }
+      await this.validateHandoverAction(input.action, current, command, input.actor);
+      return this.persistDeferred(current, request, async () => {
+        const next = cloneState(current);
+        next.state = assertDecision(definition.eventType, transition);
+        next.version = current.version + 1;
+        return { next, effects: await this.applyAction(input.action, next, current, command, input.actor, now) };
+      });
+    }
     const next = cloneState(current);
-    next.state = assertDecision(definition.eventType, policy.evaluate({ action: input.action, currentState: current.state, command, taskId: current.id, now }));
+    next.state = policyState;
     next.version = current.version + 1;
     const effects = await this.applyAction(input.action, next, current, command, input.actor, now);
     return this.persist(current, next, effects, request);
+  }
+
+  private isClosureLifecycleAction(action: CoreTaskAction): action is (typeof CLOSURE_LIFECYCLE_ACTIONS)[number] {
+    return (CLOSURE_LIFECYCLE_ACTIONS as readonly string[]).includes(action);
+  }
+
+  private isHandoverAction(action: CoreTaskAction): action is (typeof HANDOVER_ACTIONS)[number] {
+    return (HANDOVER_ACTIONS as readonly string[]).includes(action);
+  }
+
+  private async validateHandoverAction(action: (typeof HANDOVER_ACTIONS)[number], current: CoreTaskAggregate, command: Readonly<Record<string, unknown>>, actor: WorkManagementActorContext): Promise<void> {
+    if (action === "REQUEST_HANDOVER") {
+      const currentAssigneeId = requireCurrentTaskAssignee(current);
+      if (current.activeHandoverId) throw new WorkManagementDomainError("TASK_HANDOVER_ALREADY_ACTIVE");
+      const receiverId = command.receiverId;
+      if (typeof receiverId !== "string") throw new WorkManagementDomainError("TASK_HANDOVER_RECEIVER_REQUIRED");
+      if (receiverId === currentAssigneeId) throw new WorkManagementDomainError("TASK_HANDOVER_RECEIVER_CONFLICT");
+      const eligibility = await this.dependencies.users.evaluateAssignee({ userId: receiverId, task: current });
+      if (!eligibility.eligible) {
+        if (eligibility.reason === "INACTIVE") throw new WorkManagementDomainError("TASK_HANDOVER_RECEIVER_INACTIVE");
+        if (eligibility.reason === "NO_PROJECT_ACCESS") throw new WorkManagementDomainError("TASK_HANDOVER_RECEIVER_PROJECT_ACCESS");
+        throw new WorkManagementDomainError("TASK_HANDOVER_RECEIVER_INVALID");
+      }
+      if (!this.reason(command)) throw new WorkManagementDomainError("TASK_HANDOVER_REASON_REQUIRED");
+      return;
+    }
+
+    const active = resolveActiveHandover(current);
+    if (command.handoverId !== active.id) throw new WorkManagementDomainError("TASK_HANDOVER_NOT_CURRENT");
+    if (action === "APPROVE_HANDOVER" && current.requiresIndependentReviewer && (actor.actorId === active.fromAssigneeId || actor.actorId === active.toAssigneeId)) {
+      throw new WorkManagementDomainError("TASK_HANDOVER_DECISION_CONFLICT");
+    }
+    if (action === "EXECUTE_HANDOVER") {
+      const eligibility = await this.dependencies.users.evaluateAssignee({ userId: active.toAssigneeId, task: current });
+      if (!eligibility.eligible) {
+        if (eligibility.reason === "INACTIVE") throw new WorkManagementDomainError("TASK_HANDOVER_RECEIVER_INACTIVE");
+        if (eligibility.reason === "NO_PROJECT_ACCESS") throw new WorkManagementDomainError("TASK_HANDOVER_RECEIVER_PROJECT_ACCESS");
+        throw new WorkManagementDomainError("TASK_HANDOVER_RECEIVER_INVALID");
+      }
+    }
+  }
+
+  private validateClosureAction(action: (typeof CLOSURE_LIFECYCLE_ACTIONS)[number], current: CoreTaskAggregate, command: Readonly<Record<string, unknown>>): void {
+    if (action === "REOPEN" && (!this.reason(command) || current.state.lifecycle !== "COMPLETED")) {
+      if (!this.reason(command)) throw new WorkManagementDomainError("TASK_REOPEN_REASON_REQUIRED");
+      throw new WorkManagementDomainError("TASK_INVALID_TRANSITION");
+    }
+    if (action === "CANCEL" && !this.reason(command)) throw new WorkManagementDomainError("TASK_CANCEL_REASON_REQUIRED");
+    if (action === "ARCHIVE" && current.activeArchiveId) throw new WorkManagementDomainError("TASK_ALREADY_ARCHIVED");
+    if (action === "RESTORE") resolveCurrentArchiveRecord(current);
+  }
+
+  private reason(command: Readonly<Record<string, unknown>>): string {
+    return typeof command.reason === "string" ? command.reason.trim() : "";
   }
 
   private async createDraft(input: { action: CoreTaskAction; actor: WorkManagementActorContext }, command: Record<string, unknown>, request: IdempotencyRequest, now: Date): Promise<StableCoreTaskExecutionResult> {
@@ -179,10 +343,13 @@ export class CoreTaskExecutor {
     const policy = this.dependencies.transitionPolicies.resolve(definition.transitionPolicyKey);
     const task: CoreTaskAggregate = {
       id: this.dependencies.idGenerator.next(), creatorId: input.actor.actorId, assignedById: null, primaryAssigneeId: null,
-      projectId, confidentiality, requiresIndependentReviewer: false, reviewerId: null, approverId: null, participants: [],
+      // Product composition initializes the creator as the trusted reviewer and
+      // approver projection. The client never supplies these server-owned IDs.
+      projectId, confidentiality, requiresIndependentReviewer: false, reviewerId: input.actor.actorId, approverId: input.actor.actorId, participants: [],
       state: stateForDraft(), deadlineAt: command.currentDueAt instanceof Date ? command.currentDueAt : null, progressPercent: 0,
       version: 1, title: String(command.title), description: typeof command.description === "string" ? command.description : null,
       priority: command.priority === "LOW" || command.priority === "HIGH" || command.priority === "URGENT" ? command.priority : "NORMAL", activeBlockerId: null,
+      activeArchiveId: null, archiveGeneration: 0, preArchiveStateSnapshot: null, archiveHistory: [], restoreHistory: [], reopenHistory: [], cancellationHistory: [], completionHistory: [], assignmentHistory: [],
     };
     task.state = assertDecision(definition.eventType, policy.evaluate({ action: "CREATE_DRAFT", currentState: task.state, command, taskId: task.id, now }));
     const effects = this.effectsFor("CREATE_DRAFT", task, null, command, input.actor, now, emptyCoreTaskEffects());
@@ -194,14 +361,28 @@ export class CoreTaskExecutor {
     if (action === "ASSIGN") {
       const assigneeId = command.primaryAssigneeId;
       if (typeof assigneeId !== "string") throw new WorkManagementDomainError("TASK_ASSIGNEE_REQUIRED");
-      if (assigneeId === current.primaryAssigneeId) throw new WorkManagementDomainError("TASK_PRIMARY_ASSIGNEE_CONFLICT");
+      const currentAssignment = resolveCurrentTaskAssignment(current);
+      if (assigneeId === currentAssignment.assigneeId) throw new WorkManagementDomainError("TASK_PRIMARY_ASSIGNEE_CONFLICT");
       if (current.requiresIndependentReviewer && assigneeId === current.reviewerId) throw new WorkManagementDomainError("TASK_REVIEWER_CONFLICT");
       if (current.approverId && assigneeId === current.approverId) throw new WorkManagementDomainError("TASK_APPROVER_CONFLICT");
       const eligibility = await this.dependencies.users.evaluateAssignee({ userId: assigneeId, task: current });
       if (!eligibility.eligible) throw eligibilityError(eligibility.reason);
+      const history: TaskAssignmentHistoryRecord = {
+        id: `assignment:${this.dependencies.idGenerator.next()}`,
+        taskId: next.id,
+        generation: getNextAssignmentGeneration(current),
+        previousAssigneeId: currentAssignment.assigneeId,
+        newAssigneeId: assigneeId,
+        assignedById: actor.actorId,
+        sourceAction: "ASSIGN",
+        sourceHandoverId: null,
+        reason: typeof command.reason === "string" ? command.reason || null : null,
+        effectiveAt: now,
+      };
       next.primaryAssigneeId = assigneeId;
       next.assignedById = actor.actorId;
-      intents = { ...intents, assignmentIntents: [{ taskId: next.id, previousAssigneeId: current.primaryAssigneeId, newAssigneeId: assigneeId, assignedById: actor.actorId, reason: typeof command.reason === "string" ? command.reason || null : null, effectiveAt: now, occurredAt: now }] };
+      next.assignmentHistory = appendAssignmentHistoryRecord(current, history);
+      intents = { ...intents, assignmentIntents: [{ taskId: next.id, previousAssigneeId: currentAssignment.assigneeId, newAssigneeId: assigneeId, assignedById: actor.actorId, reason: typeof command.reason === "string" ? command.reason || null : null, effectiveAt: now, occurredAt: now }] };
     }
     if (action === "UPDATE_PROGRESS") {
       const progress = command.progressPercent;
@@ -250,7 +431,7 @@ export class CoreTaskExecutor {
       if (!submission) throw new WorkManagementDomainError("TASK_SUBMISSION_REQUIRED");
       if (submission.taskId !== current.id || submissionId !== current.currentSubmissionId) throw new WorkManagementDomainError("TASK_SUBMISSION_NOT_CURRENT");
       if (current.state.review === "RESULT_APPROVED") throw new WorkManagementDomainError("TASK_SUBMISSION_ALREADY_APPROVED");
-      assertReviewSeparation({ actorId: actor.actorId, primaryAssigneeId: current.primaryAssigneeId, submissionAuthorId: submission.submittedById, requiresIndependentReviewer: current.requiresIndependentReviewer });
+      assertReviewSeparation({ actorId: actor.actorId, primaryAssigneeId: resolveCurrentTaskAssignment(current).assigneeId, submissionAuthorId: submission.submittedById, requiresIndependentReviewer: current.requiresIndependentReviewer });
       const decision = action === "REQUEST_CHANGES" ? "CHANGES_REQUESTED" : "RESULT_APPROVED";
       const record = { id: `review:${this.dependencies.idGenerator.next()}`, submissionId, decision, reason: action === "REQUEST_CHANGES" ? String(command.reason) : null, decidedById: actor.actorId, decidedAt: now } as const;
       next.reviewDecisions = [...(current.reviewDecisions ?? []), record];
@@ -262,8 +443,106 @@ export class CoreTaskExecutor {
       if (!(current.reviewDecisions ?? []).some((decision) => decision.submissionId === current.currentSubmissionId && decision.decision === "RESULT_APPROVED")) throw new WorkManagementDomainError("TASK_REVIEW_NOT_APPROVED");
       if (current.state.lifecycle === "COMPLETED") throw new WorkManagementDomainError("TASK_ALREADY_COMPLETED");
       await this.assertCompletion(current);
+      const completion: CoreTaskCompletionRecord = { id: `completion:${this.dependencies.idGenerator.next()}`, taskId: next.id, submissionId: current.currentSubmissionId, completedById: actor.actorId, completedAt: now, lifecycleBeforeCompletion: current.state.lifecycle, lifecycleAfterCompletion: "COMPLETED", aggregateVersion: next.version };
+      next.completionHistory = [...(current.completionHistory ?? []), completion];
       next.completedById = actor.actorId; next.completedAt = now; next.completionSubmissionId = current.currentSubmissionId;
       intents = { ...intents, completionIntents: [{ taskId: next.id, submissionId: current.currentSubmissionId, completedById: actor.actorId, completedAt: now, previousLifecycle: "SUBMITTED", newLifecycle: "COMPLETED", aggregateVersion: next.version }] };
+    }
+    if (action === "REOPEN") {
+      const reason = typeof command.reason === "string" ? command.reason.trim() : "";
+      if (!reason) throw new WorkManagementDomainError("TASK_REOPEN_REASON_REQUIRED");
+      const record: CoreTaskReopenRecord = { id: `reopen:${this.dependencies.idGenerator.next()}`, taskId: next.id, reopenedById: actor.actorId, reopenedAt: now, reason, previousLifecycle: current.state.lifecycle, newLifecycle: next.state.lifecycle };
+      next.reopenedById = actor.actorId; next.reopenedAt = now; next.reopenReason = reason;
+      next.completedById = null; next.completedAt = null; next.completionSubmissionId = null;
+      next.reopenHistory = [...(current.reopenHistory ?? []), record];
+      intents = { ...intents, reopenIntents: [{ reopenId: record.id, taskId: next.id, reason, reopenedById: actor.actorId, reopenedAt: now, previousLifecycle: "COMPLETED", newLifecycle: "IN_PROGRESS", aggregateVersion: next.version }] };
+    }
+    if (action === "CANCEL") {
+      const reason = typeof command.reason === "string" ? command.reason.trim() : "";
+      if (!reason) throw new WorkManagementDomainError("TASK_CANCEL_REASON_REQUIRED");
+      const record: CoreTaskCancellationRecord = { id: `cancellation:${this.dependencies.idGenerator.next()}`, taskId: next.id, cancelledById: actor.actorId, cancelledAt: now, reason, previousLifecycle: current.state.lifecycle };
+      next.cancelledById = actor.actorId; next.cancelledAt = now; next.cancellationReason = reason;
+      next.cancellationHistory = [...(current.cancellationHistory ?? []), record];
+      intents = { ...intents, cancellationIntents: [{ cancellationId: record.id, taskId: next.id, reason, cancelledById: actor.actorId, cancelledAt: now, previousLifecycle: current.state.lifecycle, newLifecycle: "CANCELLED", aggregateVersion: next.version }] };
+    }
+    if (action === "ARCHIVE") {
+      if (current.activeArchiveId) throw new WorkManagementDomainError("TASK_ALREADY_ARCHIVED");
+      const generation = (current.archiveGeneration ?? 0) + 1;
+      const archiveId = `archive:${this.dependencies.idGenerator.next()}`;
+      const reason = typeof command.reason === "string" ? command.reason.trim() || null : null;
+      const snapshot = archiveSnapshot(current.state);
+      const record: CoreTaskArchiveRecord = { id: archiveId, taskId: next.id, generation, archivedById: actor.actorId, archivedAt: now, reason, preArchiveState: snapshot };
+      next.activeArchiveId = archiveId; next.archiveGeneration = generation; next.preArchiveStateSnapshot = snapshot;
+      next.archiveHistory = [...(current.archiveHistory ?? []), record];
+      intents = { ...intents, archiveIntents: [{ archiveId, taskId: next.id, generation, reason, archivedById: actor.actorId, archivedAt: now, preArchiveState: snapshot, aggregateVersion: next.version }] };
+    }
+    if (action === "RESTORE") {
+      if (current.state.lifecycle !== "ARCHIVED") throw new WorkManagementDomainError("TASK_ARCHIVE_REQUIRED");
+      const active = resolveCurrentArchiveRecord(current);
+      const archiveId = active.id;
+      const snapshot = active.preArchiveState;
+      const reason = typeof command.reason === "string" ? command.reason.trim() || null : null;
+      const restoreId = `restore:${this.dependencies.idGenerator.next()}`;
+      const restore: CoreTaskRestoreRecord = { id: restoreId, taskId: next.id, archiveId, archiveGeneration: active.generation, restoredById: actor.actorId, restoredAt: now, reason, previousArchivedLifecycle: current.state.lifecycle, restoredState: archiveSnapshot(snapshot), aggregateVersion: next.version };
+      next.activeArchiveId = null; next.preArchiveStateSnapshot = null;
+      next.restoreHistory = [...(current.restoreHistory ?? []), restore];
+      intents = { ...intents, restoreIntents: [{ restoreId, taskId: next.id, archiveId, generation: active.generation, reason, restoredById: actor.actorId, restoredAt: now, previousLifecycle: current.state.lifecycle, newLifecycle: next.state.lifecycle, restoredState: archiveSnapshot(snapshot), aggregateVersion: next.version }] };
+    }
+    if (action === "REQUEST_HANDOVER") {
+      const currentAssigneeId = requireCurrentTaskAssignee(current);
+      const receiverId = String(command.receiverId);
+      const handoverId = `handover:${this.dependencies.idGenerator.next()}`;
+      const generation = (current.handoverGeneration ?? 0) + 1;
+      const request: CoreTaskHandoverRequestRecord = {
+        id: handoverId, taskId: next.id, generation, fromAssigneeId: currentAssigneeId, toAssigneeId: receiverId,
+        requestedById: actor.actorId, requestedAt: now, reason: this.reason(command), scope: "HANDOVER_SCOPE", aggregateVersion: next.version,
+      };
+      next.handoverGeneration = generation;
+      next.activeHandoverId = handoverId;
+      next.activeHandoverReceiverId = receiverId;
+      next.handoverRequests = [...(current.handoverRequests ?? []), request];
+      intents = { ...intents, handoverRequestIntents: [{ handoverId, taskId: next.id, generation, fromAssigneeId: request.fromAssigneeId, toAssigneeId: receiverId, requestedById: actor.actorId, requestedAt: now, reason: request.reason, aggregateVersion: next.version }] };
+    }
+    if (action === "ACCEPT_HANDOVER" || action === "REJECT_HANDOVER" || action === "APPROVE_HANDOVER") {
+      const active = resolveActiveHandover(current);
+      const decision = action === "ACCEPT_HANDOVER" ? "ACCEPTED" : action === "REJECT_HANDOVER" ? "REJECTED" : "APPROVED";
+      const decisionId = `handover-decision:${this.dependencies.idGenerator.next()}`;
+      const reason = action === "REJECT_HANDOVER" ? this.reason(command) : null;
+      const record: CoreTaskHandoverDecisionRecord = { id: decisionId, taskId: next.id, handoverId: active.id, generation: active.generation, decision, reason, decidedById: actor.actorId, decidedAt: now, aggregateVersion: next.version };
+      next.handoverDecisions = [...(current.handoverDecisions ?? []), record];
+      if (decision === "REJECTED") {
+        next.activeHandoverId = null;
+        next.activeHandoverReceiverId = null;
+      }
+      intents = { ...intents, handoverDecisionIntents: [{ decisionId, handoverId: active.id, taskId: next.id, generation: active.generation, decision, reason, decidedById: actor.actorId, decidedAt: now, aggregateVersion: next.version }] };
+    }
+    if (action === "EXECUTE_HANDOVER") {
+      const active = resolveActiveHandover(current);
+      const executionId = `handover-execution:${this.dependencies.idGenerator.next()}`;
+      const record: CoreTaskHandoverExecutionRecord = { id: executionId, taskId: next.id, handoverId: active.id, generation: active.generation, previousAssigneeId: active.fromAssigneeId, newAssigneeId: active.toAssigneeId, executedById: actor.actorId, executedAt: now, aggregateVersion: next.version };
+      next.primaryAssigneeId = active.toAssigneeId;
+      next.assignedById = actor.actorId;
+      const history: TaskAssignmentHistoryRecord = {
+        id: `assignment:${this.dependencies.idGenerator.next()}`,
+        taskId: next.id,
+        generation: getNextAssignmentGeneration(current),
+        previousAssigneeId: active.fromAssigneeId,
+        newAssigneeId: active.toAssigneeId,
+        assignedById: actor.actorId,
+        sourceAction: "EXECUTE_HANDOVER",
+        sourceHandoverId: active.id,
+        reason: `handover:${active.id}`,
+        effectiveAt: now,
+      };
+      next.assignmentHistory = appendAssignmentHistoryRecord(current, history);
+      next.activeHandoverId = null;
+      next.activeHandoverReceiverId = null;
+      next.handoverExecutions = [...(current.handoverExecutions ?? []), record];
+      intents = {
+        ...intents,
+        assignmentIntents: [{ taskId: next.id, previousAssigneeId: active.fromAssigneeId, newAssigneeId: active.toAssigneeId, assignedById: actor.actorId, reason: `handover:${active.id}`, effectiveAt: now, occurredAt: now }],
+        handoverExecutionIntents: [{ executionId, handoverId: active.id, taskId: next.id, generation: active.generation, previousAssigneeId: active.fromAssigneeId, newAssigneeId: active.toAssigneeId, executedById: actor.actorId, executedAt: now, aggregateVersion: next.version }],
+      };
     }
     return this.effectsFor(action, next, current, command, actor, now, intents);
   }
@@ -292,8 +571,22 @@ export class CoreTaskExecutor {
     const base = { action, taskId: next.id };
     if (action === "CREATE_DRAFT") return { ...base, title: next.title ?? "", projectId: next.projectId, confidentiality: next.confidentiality };
     if (!current) return base;
-    if (action === "ASSIGN") return { ...base, previousAssigneeId: current.primaryAssigneeId, newAssigneeId: next.primaryAssigneeId, assignedById: actor.actorId };
-    if (action === "ACCEPT") return { ...base, assigneeId: current.primaryAssigneeId, previousAcceptance: current.state.acceptance, newAcceptance: next.state.acceptance };
+    if (action === "ASSIGN") {
+      return {
+        ...base,
+        previousAssigneeId: resolveCurrentTaskAssignment(current).assigneeId,
+        newAssigneeId: next.primaryAssigneeId,
+        assignedById: actor.actorId,
+      };
+    }
+    if (action === "ACCEPT") {
+      return {
+        ...base,
+        assigneeId: requireCurrentTaskAssignee(current),
+        previousAcceptance: current.state.acceptance,
+        newAcceptance: next.state.acceptance,
+      };
+    }
     if (action === "REQUEST_CLARIFICATION") return { ...base, reason: command.reason };
     if (action === "START") return { ...base, previousLifecycle: current.state.lifecycle, newLifecycle: next.state.lifecycle, previousExecution: current.state.execution, newExecution: next.state.execution };
     if (action === "UPDATE_PROGRESS") return { ...base, oldProgressPercent: current.progressPercent, newProgressPercent: next.progressPercent };
@@ -305,6 +598,32 @@ export class CoreTaskExecutor {
     if (action === "REQUEST_CHANGES") return { ...base, decisionId: next.reviewDecisions?.at(-1)?.id, submissionId: command.submissionId, reason: command.reason, decidedById: actor.actorId, previousReviewState: current.state.review, newReviewState: next.state.review };
     if (action === "APPROVE_RESULT") return { ...base, decisionId: next.reviewDecisions?.at(-1)?.id, submissionId: command.submissionId, approvedById: actor.actorId, previousReviewState: current.state.review, newReviewState: next.state.review };
     if (action === "CONFIRM_COMPLETION") return { ...base, submissionId: next.completionSubmissionId, completedById: next.completedById, completedAt: next.completedAt, previousLifecycle: current.state.lifecycle, newLifecycle: next.state.lifecycle, reviewState: next.state.review, progressPercent: next.progressPercent };
+    if (action === "REOPEN") return { ...base, reopenId: next.reopenHistory?.at(-1)?.id, reason: next.reopenReason, reopenedById: next.reopenedById, reopenedAt: next.reopenedAt, previousLifecycle: current.state.lifecycle, newLifecycle: next.state.lifecycle, previousCompletionSubmissionId: current.completionSubmissionId ?? null, completionHistoryLength: next.completionHistory?.length ?? 0 };
+    if (action === "CANCEL") return { ...base, cancellationId: next.cancellationHistory?.at(-1)?.id, reason: next.cancellationReason, cancelledById: next.cancelledById, cancelledAt: next.cancelledAt, previousLifecycle: current.state.lifecycle, newLifecycle: next.state.lifecycle };
+    if (action === "ARCHIVE") return { ...base, archiveId: next.activeArchiveId, generation: next.archiveGeneration, reason: next.archiveHistory?.at(-1)?.reason ?? null, archivedById: actor.actorId, archivedAt: next.archiveHistory?.at(-1)?.archivedAt, previousLifecycle: current.state.lifecycle, newLifecycle: next.state.lifecycle, preArchiveState: current.state };
+    if (action === "RESTORE") return { ...base, restoreId: next.restoreHistory?.at(-1)?.id, archiveId: current.activeArchiveId, generation: current.archiveGeneration, reason: next.restoreHistory?.at(-1)?.reason ?? null, restoredById: actor.actorId, restoredAt: next.restoreHistory?.at(-1)?.restoredAt, previousLifecycle: current.state.lifecycle, newLifecycle: next.state.lifecycle, restoredState: next.state };
+    if (action === "REQUEST_HANDOVER") {
+      return {
+        ...base,
+        handoverId: next.activeHandoverId,
+        generation: next.handoverGeneration,
+        fromAssigneeId: requireCurrentTaskAssignee(current),
+        toAssigneeId: next.activeHandoverReceiverId,
+        requestedById: actor.actorId,
+        requestedAt: next.handoverRequests?.at(-1)?.requestedAt,
+        reason: next.handoverRequests?.at(-1)?.reason,
+        previousHandoverState: current.state.handover,
+        newHandoverState: next.state.handover,
+      };
+    }
+    if (action === "ACCEPT_HANDOVER" || action === "REJECT_HANDOVER" || action === "APPROVE_HANDOVER") {
+      const decision = next.handoverDecisions?.at(-1);
+      return { ...base, decisionId: decision?.id, handoverId: decision?.handoverId, generation: decision?.generation, decision: decision?.decision, reason: decision?.reason, decidedById: actor.actorId, decidedAt: decision?.decidedAt, previousHandoverState: current.state.handover, newHandoverState: next.state.handover };
+    }
+    if (action === "EXECUTE_HANDOVER") {
+      const execution = next.handoverExecutions?.at(-1);
+      return { ...base, executionId: execution?.id, handoverId: execution?.handoverId, generation: execution?.generation, previousAssigneeId: execution?.previousAssigneeId, newAssigneeId: execution?.newAssigneeId, executedById: actor.actorId, executedAt: execution?.executedAt, previousHandoverState: current.state.handover, newHandoverState: next.state.handover };
+    }
     return { ...base, blockerId: current.activeBlockerId, resolution: command.resolution, previousExecution: current.state.execution, newExecution: next.state.execution };
   }
 
@@ -316,6 +635,7 @@ export class CoreTaskExecutor {
       return await this.dependencies.unitOfWork.run(async (transaction) => {
         if (!(await transaction.tasks.compareAndSave(current.id, current.version, next))) throw new WorkManagementDomainError("TASK_CONCURRENCY_CONFLICT");
         await transaction.effects.stage(effects);
+        await transaction.outbox.stage(this.mapOutboxMessages(next, effects, request));
         const result = { task: next, effects };
         await transaction.idempotency.complete(request, result);
         return result;
@@ -323,6 +643,28 @@ export class CoreTaskExecutor {
     } catch (error) {
       if (started) {
         try { await this.dependencies.idempotency.abort(request, error instanceof Error ? error.message : "TASK_TRANSACTION_FAILED"); } catch { /* Preserve the transaction error; abort diagnostics belong to the adapter. */ }
+      }
+      throw error;
+    }
+  }
+
+  private async persistDeferred(current: CoreTaskAggregate, request: IdempotencyRequest, mutation: () => Promise<{ next: CoreTaskAggregate; effects: CoreTaskEffects }>): Promise<StableCoreTaskExecutionResult> {
+    let started = false;
+    try {
+      await this.dependencies.idempotency.begin(request);
+      started = true;
+      return await this.dependencies.unitOfWork.run(async (transaction) => {
+        const { next, effects } = await mutation();
+        if (!(await transaction.tasks.compareAndSave(current.id, current.version, next))) throw new WorkManagementDomainError("TASK_CONCURRENCY_CONFLICT");
+        await transaction.effects.stage(effects);
+        await transaction.outbox.stage(this.mapOutboxMessages(next, effects, request));
+        const result = { task: next, effects };
+        await transaction.idempotency.complete(request, result);
+        return result;
+      });
+    } catch (error) {
+      if (started) {
+        try { await this.dependencies.idempotency.abort(request, error instanceof Error ? error.message : "TASK_TRANSACTION_FAILED"); } catch { /* Preserve the transaction error. */ }
       }
       throw error;
     }
@@ -336,6 +678,7 @@ export class CoreTaskExecutor {
       return await this.dependencies.unitOfWork.run(async (transaction) => {
         if (!(await transaction.tasks.create(task))) throw new WorkManagementDomainError("TASK_CONCURRENCY_CONFLICT");
         await transaction.effects.stage(effects);
+        await transaction.outbox.stage(this.mapOutboxMessages(task, effects, request));
         const result = { task, effects };
         await transaction.idempotency.complete(request, result);
         return result;
@@ -346,5 +689,29 @@ export class CoreTaskExecutor {
       }
       throw error;
     }
+  }
+
+  private mapOutboxMessages(
+    task: CoreTaskAggregate,
+    effects: CoreTaskEffects,
+    request: IdempotencyRequest,
+  ): readonly WorkManagementOutboxMessage[] {
+    const event = effects.domainEvents[0];
+    if (!event) throw new WorkManagementDomainError("TASK_OUTBOX_MESSAGE_INVALID");
+    let sequence = 0;
+    return mapCoreTaskEffectsToOutbox(effects, {
+      action: request.action,
+      aggregateId: task.id,
+      aggregateVersion: task.version,
+      actorId: event.actorId,
+      companyId: request.companyId,
+      projectId: task.projectId,
+      occurredAt: event.occurredAt,
+      correlationId: event.correlationId,
+      causationId: event.causationId,
+      idempotencyKey: request.key,
+    }, {
+      next: () => `outbox:${request.fingerprint}:${++sequence}`,
+    });
   }
 }

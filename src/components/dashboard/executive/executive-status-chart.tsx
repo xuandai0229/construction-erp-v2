@@ -35,10 +35,10 @@ export function ExecutiveStatusChart({
   const delayedOffset = atRiskOffset - atRiskStroke;
 
   return (
-    <div className="flex flex-col xl:flex-row gap-4 h-full rounded-[20px] border border-slate-200/70 bg-white p-5 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+    <div className="flex flex-col xl:flex-row gap-4 h-full rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-elevated)] transition-shadow overflow-hidden">
       
-      <div className="flex-1 flex flex-col justify-center border-b xl:border-b-0 xl:border-r border-slate-100 pb-3 xl:pb-0 xl:pr-3">
-        <h4 className="text-[12px] font-bold text-slate-900 mb-3">Phân bổ trạng thái công trình</h4>
+      <div className="flex-1 flex flex-col justify-center border-b xl:border-b-0 xl:border-r border-[var(--border)] pb-3 xl:pb-0 xl:pr-3">
+        <h4 className="text-[12px] font-bold text-[var(--foreground)] mb-3 tracking-tight">Phân bổ trạng thái công trình</h4>
         <div className="flex items-center gap-3">
           <div className="relative h-16 w-16 shrink-0 flex items-center justify-center">
             <svg className="h-full w-full -rotate-90 transform" viewBox="0 0 100 100">
@@ -53,28 +53,28 @@ export function ExecutiveStatusChart({
                 <circle cx="50" cy="50" r={radius} className="fill-none stroke-rose-500" strokeWidth="14" strokeDasharray={`${delayedStroke} ${circumference}`} strokeDashoffset={delayedOffset} strokeLinecap="round" />
               )}
             </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-[16px] font-bold text-slate-900 leading-none">{total}</span>
+            <div className="flex items-center justify-center absolute inset-0">
+              <span className="text-[16px] font-bold text-[var(--foreground)] leading-none">{total}</span>
             </div>
           </div>
           
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-1.5">
               <div className="h-2 w-2 rounded-full bg-emerald-500" />
-              <span className="text-[11px] font-medium text-slate-600">
-                Đúng tiến độ: <span className="font-bold text-slate-900">{onTrackCount}</span> <span className="text-slate-400">({Math.round(onTrackPct)}%)</span>
+              <span className="text-[11px] font-medium text-[var(--muted-foreground)]">
+                Đúng tiến độ: <span className="font-bold text-[var(--foreground)]">{onTrackCount}</span> <span className="opacity-70">({Math.round(onTrackPct)}%)</span>
               </span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="h-2 w-2 rounded-full bg-amber-500" />
-              <span className="text-[11px] font-medium text-slate-600">
-                Cần chú ý: <span className="font-bold text-slate-900">{atRiskCount}</span> <span className="text-slate-400">({Math.round(atRiskPct)}%)</span>
+              <span className="text-[11px] font-medium text-[var(--muted-foreground)]">
+                Cần chú ý: <span className="font-bold text-[var(--foreground)]">{atRiskCount}</span> <span className="opacity-70">({Math.round(atRiskPct)}%)</span>
               </span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="h-2 w-2 rounded-full bg-rose-500" />
-              <span className="text-[11px] font-medium text-slate-600">
-                Rủi ro: <span className="font-bold text-slate-900">{delayedCount}</span> <span className="text-slate-400">({Math.round(delayedPct)}%)</span>
+              <span className="text-[11px] font-medium text-[var(--muted-foreground)]">
+                Rủi ro: <span className="font-bold text-[var(--foreground)]">{delayedCount}</span> <span className="opacity-70">({Math.round(delayedPct)}%)</span>
               </span>
             </div>
           </div>
@@ -82,9 +82,9 @@ export function ExecutiveStatusChart({
       </div>
 
       <div className="flex-1 flex flex-col justify-center sm:pl-2">
-        <h4 className="text-[12px] font-bold text-slate-900 mb-1">Tiến độ trung bình theo thời gian</h4>
+        <h4 className="text-[12px] font-bold text-[var(--foreground)] mb-1 tracking-tight">Tiến độ trung bình theo thời gian</h4>
         <div className="flex items-end gap-2.5 mt-0.5">
-          <span className="text-[28px] font-bold text-slate-900 leading-none">{Math.round(avgProgress)}%</span>
+          <span className="text-[28px] font-black text-[var(--foreground)] leading-none tracking-tight">{Math.round(avgProgress)}%</span>
           <div className="flex items-center gap-1 text-emerald-600 mb-0.5">
             <ArrowUp className="h-3 w-3" />
             <span className="text-[11px] font-bold">8% vs tháng trước</span>

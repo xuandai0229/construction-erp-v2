@@ -102,28 +102,28 @@ export function ReportsTable({
       <div className="overflow-x-auto min-h-[300px]">
         <table className="w-full text-sm table-auto">
           <thead className="sticky top-0 z-20">
-            <tr className="border-b border-slate-100 bg-slate-50/95 shadow-sm backdrop-blur">
-              <th className="text-left py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wider whitespace-nowrap w-[15%]">
+            <tr className="border-b border-[var(--border)] bg-[var(--surface-subtle)] shadow-[var(--shadow-card)] backdrop-blur">
+              <th className="text-left py-3 px-4 font-semibold text-[var(--muted-foreground)] text-xs uppercase tracking-wider whitespace-nowrap w-[15%]">
                 Mã báo cáo
               </th>
               {showProjectColumn && (
-                <th className="text-left py-3 px-3 font-semibold text-slate-600 text-xs uppercase tracking-wider min-w-[150px]">
+                <th className="text-left py-3 px-3 font-semibold text-[var(--muted-foreground)] text-xs uppercase tracking-wider min-w-[150px]">
                   Công trình
                 </th>
               )}
-              <th className="text-left py-3 px-3 font-semibold text-slate-600 text-xs uppercase tracking-wider min-w-[140px]">
+              <th className="text-left py-3 px-3 font-semibold text-[var(--muted-foreground)] text-xs uppercase tracking-wider min-w-[140px]">
                 Người tạo
               </th>
-              <th className="text-left py-3 px-3 font-semibold text-slate-600 text-xs uppercase tracking-wider whitespace-nowrap">
+              <th className="text-left py-3 px-3 font-semibold text-[var(--muted-foreground)] text-xs uppercase tracking-wider whitespace-nowrap">
                 Thời gian
               </th>
-              <th className="text-left py-3 px-3 font-semibold text-slate-600 text-xs uppercase tracking-wider whitespace-nowrap w-[10%]">
+              <th className="text-left py-3 px-3 font-semibold text-[var(--muted-foreground)] text-xs uppercase tracking-wider whitespace-nowrap w-[10%]">
                 Trạng thái
               </th>
-              <th className="text-center py-3 px-3 font-semibold text-slate-600 text-xs uppercase tracking-wider w-[10%]">
+              <th className="text-center py-3 px-3 font-semibold text-[var(--muted-foreground)] text-xs uppercase tracking-wider w-[10%]">
                 Hình ảnh
               </th>
-              <th className="text-right py-3 px-4 font-semibold text-slate-600 text-xs uppercase tracking-wider w-[80px]">
+              <th className="text-right py-3 px-4 font-semibold text-[var(--muted-foreground)] text-xs uppercase tracking-wider w-[80px]">
                 Tác vụ
               </th>
             </tr>
@@ -131,7 +131,7 @@ export function ReportsTable({
           <tbody className="divide-y divide-slate-100">
             {reports.length === 0 ? (
               <tr>
-                <td colSpan={8} className="py-12 text-center text-slate-500">
+                <td colSpan={8} className="py-12 text-center text-[var(--muted-foreground)]">
                   Không tìm thấy báo cáo phù hợp
                 </td>
               </tr>
@@ -146,22 +146,22 @@ export function ReportsTable({
                 return (
                   <Fragment key={`week-${group.startDate}_${group.endDate}`}>
                     {/* Group Header */}
-                    <tr className="bg-slate-100/80 border-t border-slate-200">
+                    <tr className="bg-[var(--border)]/80 border-t border-[var(--border)]">
                       <td colSpan={showProjectColumn ? 7 : 6} className="py-2.5 px-4">
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-                          <span className="font-semibold text-slate-800">
+                          <span className="font-semibold text-[var(--foreground)]">
                             Tuần {group.weekNumber} · {formatDateVN(group.startDate)} - {formatDateVN(group.endDate)}
                           </span>
-                          <span className="text-slate-400 hidden sm:inline">·</span>
-                          <span className="text-slate-600">{group.reports.length} báo cáo</span>
+                          <span className="text-[var(--muted-foreground)] opacity-70 hidden sm:inline">·</span>
+                          <span className="text-[var(--muted-foreground)]">{group.reports.length} báo cáo</span>
                           {(approvedCount > 0 || pendingCount > 0 || rejectedCount > 0 || revisionCount > 0 || draftCount > 0) && (
                             <>
-                              <span className="text-slate-400 hidden sm:inline">·</span>
+                              <span className="text-[var(--muted-foreground)] opacity-70 hidden sm:inline">·</span>
                               <div className="flex items-center gap-2 text-xs">
                                 {approvedCount > 0 && <span className="text-emerald-600 font-medium">{approvedCount} duyệt</span>}
                                 {pendingCount > 0 && <span className="text-amber-600 font-medium">{pendingCount} chờ</span>}
                                 {rejectedCount > 0 && <span className="text-red-600 font-medium">{rejectedCount} từ chối</span>}
-                                {draftCount > 0 && <span className="text-slate-500 font-medium">{draftCount} nháp</span>}
+                                {draftCount > 0 && <span className="text-[var(--muted-foreground)] font-medium">{draftCount} nháp</span>}
                               </div>
                             </>
                           )}
@@ -176,7 +176,7 @@ export function ReportsTable({
                       return (
                         <tr
                           key={report.id}
-                          className={`hover:bg-slate-50/80 transition-colors cursor-pointer group ${isWeekly ? 'bg-indigo-50/30' : ''}`}
+                          className={`hover:bg-[var(--surface-subtle)] transition-colors cursor-pointer group ${isWeekly ? 'bg-indigo-50/30' : ''}`}
                           onClick={() => onViewDetail(report)}
                         >
                           <td className="py-2.5 px-4 whitespace-nowrap">
@@ -185,7 +185,7 @@ export function ReportsTable({
                                 {formatReportCode(report.code, report.date, report.type)}
                               </span>
                               <div className="flex items-center gap-2 mt-0.5">
-                                <span className="text-[11px] text-slate-400">
+                                <span className="text-[11px] text-[var(--muted-foreground)] opacity-70">
                                   {isWeekly ? 'Tuần' : 'Ngày'}
                                 </span>
                                 {report.isSevereIssue ? (
@@ -202,13 +202,13 @@ export function ReportsTable({
                           </td>
                           {showProjectColumn && (
                             <td className="py-2.5 px-3">
-                              <span className="text-slate-900 font-medium text-[13px] line-clamp-1">{report.projectName}</span>
+                              <span className="text-[var(--foreground)] font-medium text-[13px] line-clamp-1">{report.projectName}</span>
                             </td>
                           )}
                           <td className="py-2.5 px-3">
                             <div className="flex flex-col">
-                              <span className="text-slate-900 font-medium text-[13px] line-clamp-1">{report.creatorName}</span>
-                              <span className="text-slate-400 text-[11px] truncate">
+                              <span className="text-[var(--foreground)] font-medium text-[13px] line-clamp-1">{report.creatorName}</span>
+                              <span className="text-[var(--muted-foreground)] opacity-70 text-[11px] truncate">
                                 {report.creatorRole === 'CHIEF_COMMANDER' ? 'Chỉ huy trưởng' : 
                                  report.creatorRole === 'PROJECT_MANAGER' ? 'Quản lý dự án' :
                                  report.creatorRole === 'ENGINEER' ? 'Kỹ sư' :
@@ -218,12 +218,12 @@ export function ReportsTable({
                           </td>
                           <td className="py-2.5 px-3 whitespace-nowrap">
                             <div className="flex flex-col">
-                              <span className="text-slate-700 text-[13px] font-medium">
+                              <span className="text-[var(--foreground)] text-[13px] font-medium">
                                 {isWeekly 
                                   ? `${formatDateVN(report.weekStartDate)} - ${formatDateVN(report.weekEndDate)}`
                                   : formatDateVN(report.date)}
                               </span>
-                              {report.type === 'DAILY' && <span className="text-slate-400 text-[11px]">{formatTimeVN(`1970-01-01T${report.time || "00:00"}`)}</span>}
+                              {report.type === 'DAILY' && <span className="text-[var(--muted-foreground)] opacity-70 text-[11px]">{formatTimeVN(`1970-01-01T${report.time || "00:00"}`)}</span>}
                             </div>
                           </td>
                           <td className="py-2.5 px-3 whitespace-nowrap">
@@ -237,12 +237,12 @@ export function ReportsTable({
                           <td className="py-2.5 px-3 text-center whitespace-nowrap">
                             <div className="flex flex-wrap justify-center items-center gap-1.5" onClick={(e) => { e.stopPropagation(); onViewGallery?.(report); }}>
                               {report.photos.length > 0 && (
-                                <span className="text-[11px] text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded font-medium hover:bg-slate-200 transition-colors">
+                                <span className="text-[11px] text-[var(--muted-foreground)] bg-[var(--border)] px-1.5 py-0.5 rounded font-medium hover:bg-slate-200 transition-colors">
                                   {report.photos.length} ảnh
                                 </span>
                               )}
                               {report.attachments.length > 0 && (
-                                <span className="text-[11px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded font-medium">
+                                <span className="text-[11px] text-[var(--muted-foreground)] bg-[var(--border)] px-1.5 py-0.5 rounded font-medium">
                                   +{report.attachments.length} file
                                 </span>
                               )}
@@ -252,7 +252,7 @@ export function ReportsTable({
                                 </StatusBadge>
                               )}
                               {report.photos.length === 0 && report.attachments.length === 0 && (
-                                <span className="text-[11px] text-slate-400">Chưa có ảnh</span>
+                                <span className="text-[11px] text-[var(--muted-foreground)] opacity-70">Chưa có ảnh</span>
                               )}
                             </div>
                           </td>
@@ -265,7 +265,7 @@ export function ReportsTable({
                                    (report.createdById === currentUser.id || currentUserHasCompanyScope) && (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); onEdit?.(report); }}
-                                      className="icon-button h-9 w-9 text-slate-500 hover:text-blue-700"
+                                      className="icon-button h-9 w-9 text-[var(--muted-foreground)] hover:text-blue-700"
                                       title="Sửa báo cáo"
                                       aria-label="Sửa báo cáo"
                                     >
@@ -277,7 +277,7 @@ export function ReportsTable({
                                    currentUserHasCompanyScope && (
                                     <button
                                       onClick={(e) => { e.stopPropagation(); onDelete?.(report); }}
-                                      className="icon-button h-9 w-9 text-slate-500 hover:bg-rose-50 hover:text-rose-700"
+                                      className="icon-button h-9 w-9 text-[var(--muted-foreground)] hover:bg-rose-50 hover:text-rose-700"
                                       title="Xóa báo cáo"
                                       aria-label="Xóa báo cáo"
                                     >
@@ -317,16 +317,16 @@ export function ReportsTable({
       </div>
 
       {/* Pagination */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-slate-100 bg-slate-50/50 mt-auto shrink-0">
-        <p className="text-xs sm:text-sm text-slate-500">
-          Hiển thị {start}–{end} trong tổng số <span className="font-semibold text-slate-700">{totalReports}</span> báo cáo
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-[var(--border)] bg-[var(--surface-subtle)] mt-auto shrink-0">
+        <p className="text-xs sm:text-sm text-[var(--muted-foreground)]">
+          Hiển thị {start}–{end} trong tổng số <span className="font-semibold text-[var(--foreground)]">{totalReports}</span> báo cáo
         </p>
 
         <div className="flex items-center gap-1">
           <button
             disabled={page <= 1}
             onClick={() => onPageChange(page - 1)}
-            className="p-1.5 rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="p-1.5 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] text-[var(--muted-foreground)] hover:bg-[var(--surface-subtle)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             aria-label="Trang trước"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -334,15 +334,15 @@ export function ReportsTable({
 
           {getPageNumbers().map((p, idx) =>
             p === '...' ? (
-              <span key={`ellipsis-${idx}`} className="px-2 text-slate-400 text-sm">…</span>
+              <span key={`ellipsis-${idx}`} className="px-2 text-[var(--muted-foreground)] opacity-70 text-sm">…</span>
             ) : (
               <button
                 key={p}
                 onClick={() => onPageChange(p as number)}
-                className={`min-w-[32px] h-8 rounded-md text-sm font-medium transition-colors ${
+                className={`min-w-[32px] h-8 rounded-[var(--radius-md)] text-sm font-medium transition-colors ${
                   p === page
-                    ? 'bg-blue-600 text-white shadow-sm border border-blue-600'
-                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                    ? 'bg-blue-600 text-white shadow-[var(--shadow-card)] border border-blue-600'
+                    : 'bg-[var(--surface)] border border-[var(--border)] text-[var(--muted-foreground)] hover:bg-[var(--surface-subtle)]'
                 }`}
               >
                 {p}
@@ -353,7 +353,7 @@ export function ReportsTable({
           <button
             disabled={page >= totalPages}
             onClick={() => onPageChange(page + 1)}
-            className="p-1.5 rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="p-1.5 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] text-[var(--muted-foreground)] hover:bg-[var(--surface-subtle)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             aria-label="Trang sau"
           >
             <ChevronRight className="w-4 h-4" />

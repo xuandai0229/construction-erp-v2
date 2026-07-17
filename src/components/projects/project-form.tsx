@@ -28,7 +28,7 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
     
   const [state, formAction, isPending] = useActionState(action, null);
 
-  const inputClass = "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 read-only:bg-slate-50 read-only:text-slate-500 read-only:cursor-not-allowed transition-colors";
+  const inputClass = "w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] opacity-70 focus:opacity-100 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 read-only:bg-[var(--surface-subtle)] read-only:text-[var(--muted-foreground)] read-only:cursor-not-allowed transition-colors";
 
   return (
     <form action={formAction} className="flex flex-col xl:flex-row gap-6">
@@ -41,10 +41,10 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
 
         {/* Group 1: Thông tin cơ bản */}
         <div>
-          <h3 className="text-sm font-bold text-slate-900 mb-4 uppercase tracking-wide">Thông tin cơ bản</h3>
+          <h3 className="text-sm font-bold text-[var(--foreground)] mb-4 uppercase tracking-wide">Thông tin cơ bản</h3>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <label htmlFor="code" className="text-sm font-semibold text-slate-700">Mã công trình <span className="text-red-500">*</span></label>
+              <label htmlFor="code" className="text-sm font-semibold text-[var(--foreground)]">Mã công trình <span className="text-red-500">*</span></label>
               <input
                 id="code"
                 name="code"
@@ -60,7 +60,7 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
             </div>
 
             <div className="space-y-1.5">
-              <label htmlFor="name" className="text-sm font-semibold text-slate-700">Tên công trình <span className="text-red-500">*</span></label>
+              <label htmlFor="name" className="text-sm font-semibold text-[var(--foreground)]">Tên công trình <span className="text-red-500">*</span></label>
               <input
                 id="name"
                 name="name"
@@ -74,7 +74,7 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
             </div>
 
             <div className="space-y-1.5">
-              <label htmlFor="investor" className="text-sm font-semibold text-slate-700">Chủ đầu tư</label>
+              <label htmlFor="investor" className="text-sm font-semibold text-[var(--foreground)]">Chủ đầu tư</label>
               <input
                 id="investor"
                 name="investor"
@@ -87,7 +87,7 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
             </div>
 
             <div className="space-y-1.5">
-              <label htmlFor="location" className="text-sm font-semibold text-slate-700">Địa điểm</label>
+              <label htmlFor="location" className="text-sm font-semibold text-[var(--foreground)]">Địa điểm</label>
               <input
                 id="location"
                 name="location"
@@ -101,14 +101,14 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
           </div>
         </div>
 
-        <div className="h-px bg-slate-100" />
+        <div className="h-px bg-[var(--border)]" />
 
         {/* Group 2: Trạng thái & thời gian */}
         <div>
-          <h3 className="text-sm font-bold text-slate-900 mb-4 uppercase tracking-wide">Trạng thái & thời gian</h3>
+          <h3 className="text-sm font-bold text-[var(--foreground)] mb-4 uppercase tracking-wide">Trạng thái & thời gian</h3>
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
             <div className="space-y-1.5">
-              <label htmlFor="status" className="text-sm font-semibold text-slate-700">Trạng thái</label>
+              <label htmlFor="status" className="text-sm font-semibold text-[var(--foreground)]">Trạng thái</label>
               <select
                 id="status"
                 name="status"
@@ -124,7 +124,7 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
             </div>
 
             <div className="space-y-1.5">
-              <label htmlFor="startDate" className="text-sm font-semibold text-slate-700">Ngày bắt đầu</label>
+              <label htmlFor="startDate" className="text-sm font-semibold text-[var(--foreground)]">Ngày bắt đầu</label>
               <input
                 id="startDate"
                 name="startDate"
@@ -136,7 +136,7 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
             </div>
 
             <div className="space-y-1.5">
-              <label htmlFor="endDate" className="text-sm font-semibold text-slate-700">Ngày dự kiến hoàn thành</label>
+              <label htmlFor="endDate" className="text-sm font-semibold text-[var(--foreground)]">Ngày dự kiến hoàn thành</label>
               <input
                 id="endDate"
                 name="endDate"
@@ -149,11 +149,11 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
           </div>
         </div>
 
-        <div className="h-px bg-slate-100" />
+        <div className="h-px bg-[var(--border)]" />
 
         {/* Group 3: Mô tả / Ghi chú */}
         <div>
-          <h3 className="text-sm font-bold text-slate-900 mb-4 uppercase tracking-wide">Mô tả / Ghi chú</h3>
+          <h3 className="text-sm font-bold text-[var(--foreground)] mb-4 uppercase tracking-wide">Mô tả / Ghi chú</h3>
           <div className="space-y-1.5">
             <textarea autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
               id="description"
@@ -166,11 +166,11 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
           </div>
         </div>
 
-        <div className="mt-8 border-t border-slate-100 pt-6 pb-12 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
-          <Link href="/projects" className="w-full sm:w-auto inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 h-10 px-4 py-2">
+        <div className="mt-8 border-t border-[var(--border)] pt-6 pb-12 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+          <Link href="/projects" className="w-full sm:w-auto inline-flex items-center justify-center rounded-[var(--radius-md)] text-sm font-medium transition-colors border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-subtle)] text-[var(--foreground)] h-10 px-4 py-2">
             Hủy
           </Link>
-          <Button type="submit" disabled={isPending} className="w-full sm:w-auto h-10 px-6 bg-blue-600 hover:bg-blue-700 text-white font-medium">
+          <Button type="submit" disabled={isPending} className="w-full sm:w-auto h-10 px-6 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-[var(--radius-md)] shadow-sm">
             {isPending ? "Đang xử lý..." : initialData ? "Lưu thay đổi" : "Tạo công trình"}
           </Button>
         </div>

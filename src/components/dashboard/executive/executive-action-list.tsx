@@ -32,8 +32,8 @@ function getStatusBadge(status: string) {
   const isPending = label.includes('Chờ') || label.includes('Cần') || status.includes('PENDING');
   return (
     <span className={cn(
-      "rounded-md px-2 py-1 text-[11px] font-semibold shrink-0 whitespace-nowrap",
-      isPending ? "bg-amber-50 text-amber-600" : "bg-slate-100 text-slate-600"
+      "rounded-[var(--radius-sm)] px-2 py-1 text-[11px] font-semibold shrink-0 whitespace-nowrap border",
+      isPending ? "bg-amber-50 text-amber-700 border-amber-200/50" : "bg-[var(--surface)] text-[var(--muted-foreground)] border-[var(--border)]"
     )}>
       {label}
     </span>
@@ -68,10 +68,10 @@ export function ExecutiveActionList({
   count?: number
 }) {
   return (
-    <section id="action-items" className="flex flex-col h-full rounded-[20px] border border-slate-200/70 bg-white shadow-sm hover:shadow-md transition-shadow overflow-hidden scroll-mt-24">
-      <div className="flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4 shrink-0">
+    <section id="action-items" className="flex flex-col h-full rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-elevated)] transition-shadow overflow-hidden scroll-mt-24">
+      <div className="flex items-center justify-between border-b border-[var(--border)] bg-[var(--surface)] px-5 py-4 shrink-0">
         <div className="flex items-center gap-3">
-          <h3 className="font-bold text-slate-900">{title}</h3>
+          <h3 className="font-bold text-[var(--foreground)] tracking-tight">{title}</h3>
           {count !== undefined && (
             <span className="flex items-center justify-center rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-bold text-rose-600">
               {count} việc
@@ -83,9 +83,9 @@ export function ExecutiveActionList({
         </Link>
       </div>
 
-      <div className="flex flex-col divide-y divide-slate-100 flex-1">
+      <div className="flex flex-col divide-y divide-[var(--border)] flex-1">
         {items.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center min-h-[200px] px-5 py-8 text-center text-sm text-slate-500">
+          <div className="flex-1 flex items-center justify-center min-h-[200px] px-5 py-8 text-center text-sm text-[var(--muted-foreground)]">
             Không có dữ liệu
           </div>
         ) : (
@@ -93,15 +93,15 @@ export function ExecutiveActionList({
             <Link 
               key={item.id} 
               href={item.href}
-              className="group flex items-center gap-4 px-5 py-3 transition-colors duration-150 ease-out hover:bg-slate-50"
+              className="group flex items-center gap-4 px-5 py-3 transition-colors duration-150 ease-out hover:bg-[var(--surface)] hover:shadow-sm"
             >
               {getIcon(item.type, item.priority)}
               
               <div className="flex min-w-0 flex-1 flex-col">
-                <span className="text-sm font-bold text-slate-900 group-hover:text-blue-700 transition-colors line-clamp-2">
+                <span className="text-sm font-bold text-[var(--foreground)] group-hover:text-blue-700 transition-colors line-clamp-2">
                   {item.title}
                 </span>
-                <span className="text-[12px] font-medium text-slate-500 mt-0.5 line-clamp-1">
+                <span className="text-[12px] font-medium text-[var(--muted-foreground)] mt-0.5 line-clamp-1">
                   {item.projectName}
                 </span>
               </div>
@@ -112,12 +112,12 @@ export function ExecutiveActionList({
               </div>
 
               <div className="shrink-0 text-right w-[75px] hidden sm:block">
-                <span className="text-[12px] font-medium text-slate-500">
+                <span className="text-[12px] font-medium text-[var(--muted-foreground)]">
                   {item.createdAt ? format(new Date(item.createdAt), 'dd/MM/yyyy') : ''}
                 </span>
               </div>
 
-              <div className="shrink-0 text-slate-300 transition-colors duration-150 group-hover:text-blue-500">
+              <div className="shrink-0 text-[var(--muted-foreground)] opacity-50 transition-colors duration-150 group-hover:text-blue-600 group-hover:opacity-100">
                 <ChevronRight className="h-4 w-4 transition-transform duration-150 ease-out group-hover:translate-x-0.5" />
               </div>
             </Link>

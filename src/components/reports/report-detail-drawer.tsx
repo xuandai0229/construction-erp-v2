@@ -69,12 +69,12 @@ function WeatherIcon({ weather }: { weather: WeatherCondition }) {
     case 'HEAVY_RAIN':
       return <CloudRain className="w-4 h-4 text-blue-500" strokeWidth={1.8} />;
     case 'WINDY':
-      return <Wind className="w-4 h-4 text-slate-500" strokeWidth={1.8} />;
+      return <Wind className="w-4 h-4 text-[var(--muted-foreground)]" strokeWidth={1.8} />;
     case 'STORM':
       return <CloudLightning className="w-4 h-4 text-purple-600" strokeWidth={1.8} />;
     case 'CLOUDY':
     case 'OVERCAST':
-      return <Cloud className="w-4 h-4 text-slate-400" strokeWidth={1.8} />;
+      return <Cloud className="w-4 h-4 text-[var(--muted-foreground)] opacity-70" strokeWidth={1.8} />;
     case 'SUNNY':
     default:
       return <Sun className="w-4 h-4 text-amber-400" strokeWidth={1.8} />;
@@ -201,13 +201,13 @@ function DetailSection({ title, icon, children, empty }: DetailSectionProps) {
   if (empty) return null;
   return (
     <ContentCard className="overflow-hidden p-0 sm:p-0 mb-4">
-      <div className="bg-slate-50/80 px-5 py-3.5 border-b border-slate-200 flex items-center gap-2.5">
-        <div className="p-1.5 rounded-lg border border-slate-200 bg-white shadow-sm flex items-center justify-center">
+      <div className="bg-[var(--surface-subtle)] px-5 py-3.5 border-b border-[var(--border)] flex items-center gap-2.5">
+        <div className="p-1.5 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-card)] flex items-center justify-center">
           {icon}
         </div>
-        <h3 className="font-bold text-slate-800 text-[15px]">{title}</h3>
+        <h3 className="font-bold text-[var(--foreground)] text-[15px]">{title}</h3>
       </div>
-      <div className="p-5 text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+      <div className="p-5 text-sm text-[var(--muted-foreground)] leading-relaxed whitespace-pre-line">
         {children}
       </div>
     </ContentCard>
@@ -259,14 +259,14 @@ function ApprovalTimeline({ history }: { history: ApprovalHistoryEntry[] }) {
           </div>
           <div className="pb-3 min-w-0 flex-1">
             <div className="flex items-baseline gap-2 flex-wrap">
-              <span className="text-sm font-semibold text-slate-800">{getActionLabel(entry.action)}</span>
-              <span className="text-xs text-slate-400">{entry.timestamp}</span>
+              <span className="text-sm font-semibold text-[var(--foreground)]">{getActionLabel(entry.action)}</span>
+              <span className="text-xs text-[var(--muted-foreground)] opacity-70">{entry.timestamp}</span>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-[var(--muted-foreground)] mt-0.5">
               {entry.actor} · {entry.role}
             </p>
               {entry.detail && (
-                <p className="text-xs text-slate-600 mt-1 bg-slate-50 rounded-md px-2.5 py-1.5 border border-slate-100 italic">
+                <p className="text-xs text-[var(--muted-foreground)] mt-1 bg-[var(--surface-subtle)] rounded-[var(--radius-md)] px-2.5 py-1.5 border border-[var(--border)] italic">
                   &ldquo;{entry.detail}&rdquo;
                 </p>
               )}
@@ -282,10 +282,10 @@ function ImageWithFallback({ src, caption }: { src: string; caption?: string }) 
   
   if (error) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 border border-slate-200 rounded-lg p-2 text-center">
+      <div className="w-full h-full flex flex-col items-center justify-center bg-[var(--surface-subtle)] border border-[var(--border)] rounded-[var(--radius-lg)] p-2 text-center">
         <Camera className="w-5 h-5 text-slate-300 mb-1" />
-        <span className="text-[11px] text-slate-500 font-medium">Ảnh không khả dụng</span>
-        <span className="text-[9px] text-slate-400 mt-0.5">File gốc không còn trong storage</span>
+        <span className="text-[11px] text-[var(--muted-foreground)] font-medium">Ảnh không khả dụng</span>
+        <span className="text-[9px] text-[var(--muted-foreground)] opacity-70 mt-0.5">File gốc không còn trong storage</span>
       </div>
     );
   }
@@ -434,11 +434,11 @@ export function ReportDetailDrawer({
     >
       <div
         aria-label="Chi tiết báo cáo hiện trường"
-        className="flex min-h-0 flex-1 flex-col bg-white"
+        className="flex min-h-0 flex-1 flex-col bg-[var(--surface)]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ─── Sticky Header ─── */}
-        <div className="sticky top-0 z-20 flex items-start justify-between gap-4 border-b border-slate-200 bg-white/95 px-4 py-4 shadow-[0_1px_3px_rgba(15,23,42,0.06)] backdrop-blur-sm sm:px-6 sm:rounded-t-2xl">
+        <div className="sticky top-0 z-20 flex items-start justify-between gap-4 border-b border-[var(--border)] bg-[var(--surface)]/95 px-4 py-4 shadow-[0_1px_3px_rgba(15,23,42,0.06)] backdrop-blur-sm sm:px-6 sm:rounded-t-2xl">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-lg font-bold text-slate-950 truncate sm:text-xl" title={report.reportNo}>{report.code}</h2>
@@ -452,9 +452,9 @@ export function ReportDetailDrawer({
                 {projectStatusMeta.label}
               </StatusBadge>
             </div>
-            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-slate-500">
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-[var(--muted-foreground)]">
               <span className="inline-flex items-center gap-1">
-                <MapPin className="w-3 h-3 text-slate-400" />
+                <MapPin className="w-3 h-3 text-[var(--muted-foreground)] opacity-70" />
                 {report.projectName}
               </span>
               <span className="text-slate-300">·</span>
@@ -462,7 +462,7 @@ export function ReportDetailDrawer({
               <span className="text-slate-300">·</span>
               <span>{report.type === 'WEEKLY' ? `${formatDateVN(report.weekStartDate)} — ${formatDateVN(report.weekEndDate)}` : `${formatDateVN(report.date)} ${formatTimeVN('1970-01-01T' + (report.time || '00:00'))}`}</span>
               {report.type === 'DAILY' && report.weatherCondition && (
-                <span className="inline-flex items-center gap-1 ml-1 rounded-md bg-slate-100 px-1.5 py-0.5">
+                <span className="inline-flex items-center gap-1 ml-1 rounded-[var(--radius-md)] bg-[var(--border)] px-1.5 py-0.5">
                   <WeatherIcon weather={report.weatherCondition} />
                   <span className="text-[11px]">{WEATHER_OPTIONS.find(o => o.value === report.weatherCondition)?.label}</span>
                 </span>
@@ -473,15 +473,15 @@ export function ReportDetailDrawer({
         </div>
 
         {/* ─── Scrollable Body ─── */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/40 px-4 py-5 pb-6 sm:px-6 lg:px-8 space-y-6">
+        <div className="flex-1 overflow-y-auto custom-scrollbar bg-[var(--surface-subtle)] px-4 py-5 pb-6 sm:px-6 lg:px-8 space-y-6">
           {/* We removed the redundant 4 info cards since header already contains them.
               But we keep GPS location if available. */}
           {report.gpsLocation && (
-            <div className="bg-slate-50 rounded-lg px-3 py-2.5 flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-slate-400" />
+            <div className="bg-[var(--surface-subtle)] rounded-[var(--radius-lg)] px-3 py-2.5 flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-[var(--muted-foreground)] opacity-70" />
               <div>
-                <p className="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Vị trí GPS</p>
-                <p className="text-sm font-semibold text-slate-800">{report.gpsLocation}</p>
+                <p className="text-[11px] text-[var(--muted-foreground)] opacity-70 font-medium uppercase tracking-wider">Vị trí GPS</p>
+                <p className="text-sm font-semibold text-[var(--foreground)]">{report.gpsLocation}</p>
               </div>
             </div>
           )}
@@ -498,11 +498,11 @@ export function ReportDetailDrawer({
           {/* Work Lines Table or Content */}
           {displayWorkLines.length > 0 ? (
             <ContentCard className="overflow-hidden p-0 sm:p-0 mb-4">
-              <div className="bg-slate-50/80 px-5 py-3.5 border-b border-slate-200 flex items-center gap-2.5">
-                <div className="p-1.5 rounded-lg border border-slate-200 bg-white shadow-sm flex items-center justify-center">
+              <div className="bg-[var(--surface-subtle)] px-5 py-3.5 border-b border-[var(--border)] flex items-center gap-2.5">
+                <div className="p-1.5 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-card)] flex items-center justify-center">
                   <TrendingUp className="w-4 h-4 text-emerald-600" />
                 </div>
-                <h3 className="font-bold text-slate-800 text-[15px]">
+                <h3 className="font-bold text-[var(--foreground)] text-[15px]">
                   {report.type === 'WEEKLY' ? 'Tổng theo công việc' : 'Nội dung công việc'} ({displayWorkLines.length})
                 </h3>
               </div>
@@ -511,32 +511,32 @@ export function ReportDetailDrawer({
                   {displayWorkLines.map((line, idx) => (
                     <article
                       key={line.id || idx}
-                      className="rounded-[14px] border border-slate-200 bg-white p-3 shadow-sm"
+                      className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow-card)]"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-1.5">
                             {line.code && (
-                              <span className="rounded-md bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-slate-600">
+                              <span className="rounded-[var(--radius-md)] bg-[var(--border)] px-1.5 py-0.5 font-mono text-[11px] font-semibold text-[var(--muted-foreground)]">
                                 {line.code}
                               </span>
                             )}
                             {!getDisplayProgressLine(line, report.type).hasDesignQuantity && (
-                              <span className="rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-700 ring-1 ring-amber-200">
+                              <span className="rounded-[var(--radius-md)] bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-700 ring-1 ring-amber-200">
                                 Chưa có TK
                               </span>
                             )}
                             {report.type === "WEEKLY" && line.count > 1 && (
-                              <span className="rounded-md bg-blue-50 px-1.5 py-0.5 text-[11px] font-semibold text-blue-700">
+                              <span className="rounded-[var(--radius-md)] bg-blue-50 px-1.5 py-0.5 text-[11px] font-semibold text-blue-700">
                                 {line.count} lần phát sinh
                               </span>
                             )}
                           </div>
-                          <h5 className="mt-1.5 text-sm font-semibold leading-snug text-slate-900">
+                          <h5 className="mt-1.5 text-sm font-semibold leading-snug text-[var(--foreground)]">
                             {line.workContent}
                           </h5>
                           {report.type === "WEEKLY" && report.weekStartDate && report.weekEndDate && (
-                            <p className="mt-1 text-xs font-medium text-slate-500">
+                            <p className="mt-1 text-xs font-medium text-[var(--muted-foreground)]">
                               {report.weekStartDate} - {report.weekEndDate}
                             </p>
                           )}
@@ -545,12 +545,12 @@ export function ReportDetailDrawer({
                           <p className="text-base font-bold text-blue-700">
                             {formatProgressQuantityDisplay(getDisplayProgressLine(line, report.type).quantityToday)}
                           </p>
-                          <p className="text-xs font-semibold text-slate-500">
+                          <p className="text-xs font-semibold text-[var(--muted-foreground)]">
                             {line.unit || "-"}
                           </p>
                         </div>
                       </div>
-                      <div className="mt-3 grid grid-cols-2 gap-2 rounded-lg bg-slate-50 p-2 text-[11px] text-slate-600">
+                      <div className="mt-3 grid grid-cols-2 gap-2 rounded-[var(--radius-lg)] bg-[var(--surface-subtle)] p-2 text-[11px] text-[var(--muted-foreground)]">
                         <span>TK: <strong>{formatProgressQuantityDisplay(getDisplayProgressLine(line, report.type).designQuantity)}</strong></span>
                         <span>Trước: <strong>{formatProgressQuantityDisplay(getDisplayProgressLine(line, report.type).quantityBefore)}</strong></span>
                         <span>Lũy kế: <strong>{formatProgressQuantityDisplay(getDisplayProgressLine(line, report.type).quantityCumulative)}</strong></span>
@@ -558,7 +558,7 @@ export function ReportDetailDrawer({
                         <span className="col-span-2">% HT: <strong>{formatProgressPercentDisplay(getDisplayProgressLine(line, report.type).progressPercent)}</strong></span>
                       </div>
                       {line.notes.length > 0 && (
-                        <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-600">
+                        <div className="mt-3 rounded-[var(--radius-lg)] bg-[var(--surface-subtle)] px-3 py-2 text-xs leading-relaxed text-[var(--muted-foreground)]">
                           {line.notes.slice(0, 2).map((note) => (
                             <p key={note}>{note}</p>
                           ))}
@@ -568,30 +568,30 @@ export function ReportDetailDrawer({
                   ))}
                 </div>
 
-                <div className="hidden overflow-x-auto border-t border-slate-200 md:block custom-scrollbar">
+                <div className="hidden overflow-x-auto border-t border-[var(--border)] md:block custom-scrollbar">
                   <table className="min-w-[980px] w-full text-sm">
-                    <thead className="sticky top-0 z-10 bg-slate-100">
+                    <thead className="sticky top-0 z-10 bg-[var(--border)]">
                       <tr>
-                        <th className="sticky left-0 z-[2] border-b bg-slate-100 px-3 py-2 text-left font-semibold text-slate-700 shadow-[1px_0_0_0_rgba(226,232,240,1)]">Hạng mục / Công việc</th>
-                        <th className="w-[82px] border-b px-2 py-2 text-right font-semibold text-slate-600">TK</th>
-                        <th className="w-[82px] border-b px-2 py-2 text-right font-semibold text-slate-600">Trước</th>
-                        <th className="w-[88px] border-b px-2 py-2 text-right font-semibold text-slate-600">{report.type === "WEEKLY" ? "Tuần này" : "Hôm nay"}</th>
-                        <th className="w-[88px] border-b px-2 py-2 text-right font-semibold text-slate-600">Lũy kế</th>
-                        <th className="w-[82px] border-b px-2 py-2 text-right font-semibold text-slate-600">Còn lại</th>
-                        <th className="w-[64px] border-b px-2 py-2 text-right font-semibold text-slate-600">%</th>
-                        <th className="w-[68px] border-b px-3 py-2 text-center font-semibold text-slate-600">Đ.vị</th>
+                        <th className="sticky left-0 z-[2] border-b bg-[var(--border)] px-3 py-2 text-left font-semibold text-[var(--foreground)] shadow-[1px_0_0_0_rgba(226,232,240,1)]">Hạng mục / Công việc</th>
+                        <th className="w-[82px] border-b px-2 py-2 text-right font-semibold text-[var(--muted-foreground)]">TK</th>
+                        <th className="w-[82px] border-b px-2 py-2 text-right font-semibold text-[var(--muted-foreground)]">Trước</th>
+                        <th className="w-[88px] border-b px-2 py-2 text-right font-semibold text-[var(--muted-foreground)]">{report.type === "WEEKLY" ? "Tuần này" : "Hôm nay"}</th>
+                        <th className="w-[88px] border-b px-2 py-2 text-right font-semibold text-[var(--muted-foreground)]">Lũy kế</th>
+                        <th className="w-[82px] border-b px-2 py-2 text-right font-semibold text-[var(--muted-foreground)]">Còn lại</th>
+                        <th className="w-[64px] border-b px-2 py-2 text-right font-semibold text-[var(--muted-foreground)]">%</th>
+                        <th className="w-[68px] border-b px-3 py-2 text-center font-semibold text-[var(--muted-foreground)]">Đ.vị</th>
                         {report.type === "WEEKLY" && (
-                          <th className="w-[92px] border-b px-3 py-2 text-center font-semibold text-slate-600">Phát sinh</th>
+                          <th className="w-[92px] border-b px-3 py-2 text-center font-semibold text-[var(--muted-foreground)]">Phát sinh</th>
                         )}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {displayWorkLines.map((line, idx) => (
                         <tr key={line.id || idx}>
-                          <td className="sticky left-0 z-[1] bg-white px-3 py-2 shadow-[1px_0_0_0_rgba(226,232,240,1)]">
+                          <td className="sticky left-0 z-[1] bg-[var(--surface)] px-3 py-2 shadow-[1px_0_0_0_rgba(226,232,240,1)]">
                             <div className="flex flex-wrap items-center gap-1.5">
                               {line.code && (
-                                <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] font-semibold text-slate-500">
+                                <span className="rounded bg-[var(--border)] px-1.5 py-0.5 font-mono text-[11px] font-semibold text-[var(--muted-foreground)]">
                                   {line.code}
                                 </span>
                               )}
@@ -600,21 +600,21 @@ export function ReportDetailDrawer({
                                   Chưa có TK
                                 </span>
                               )}
-                              <span className="font-medium text-slate-800">{line.workContent}</span>
+                              <span className="font-medium text-[var(--foreground)]">{line.workContent}</span>
                             </div>
                             {line.notes.map((note) => (
-                              <p key={note} className="mt-0.5 text-xs text-slate-500">{note}</p>
+                              <p key={note} className="mt-0.5 text-xs text-[var(--muted-foreground)]">{note}</p>
                             ))}
                           </td>
-                          <td className="px-2 py-2 text-right font-medium text-slate-600">{formatProgressQuantityDisplay(getDisplayProgressLine(line, report.type).designQuantity)}</td>
-                          <td className="px-2 py-2 text-right font-medium text-slate-600">{formatProgressQuantityDisplay(getDisplayProgressLine(line, report.type).quantityBefore)}</td>
+                          <td className="px-2 py-2 text-right font-medium text-[var(--muted-foreground)]">{formatProgressQuantityDisplay(getDisplayProgressLine(line, report.type).designQuantity)}</td>
+                          <td className="px-2 py-2 text-right font-medium text-[var(--muted-foreground)]">{formatProgressQuantityDisplay(getDisplayProgressLine(line, report.type).quantityBefore)}</td>
                           <td className="px-2 py-2 text-right font-semibold text-blue-600">{formatProgressQuantityDisplay(getDisplayProgressLine(line, report.type).quantityToday)}</td>
                           <td className="px-2 py-2 text-right font-semibold text-emerald-700">{formatProgressQuantityDisplay(getDisplayProgressLine(line, report.type).quantityCumulative)}</td>
-                          <td className="px-2 py-2 text-right font-medium text-slate-700">{formatProgressQuantityDisplay(getDisplayProgressLine(line, report.type).remainingQuantity)}</td>
-                          <td className="px-2 py-2 text-right text-xs font-semibold text-slate-600">{formatProgressPercentDisplay(getDisplayProgressLine(line, report.type).progressPercent)}</td>
-                          <td className="px-3 py-2 text-center text-slate-500">{line.unit || "-"}</td>
+                          <td className="px-2 py-2 text-right font-medium text-[var(--foreground)]">{formatProgressQuantityDisplay(getDisplayProgressLine(line, report.type).remainingQuantity)}</td>
+                          <td className="px-2 py-2 text-right text-xs font-semibold text-[var(--muted-foreground)]">{formatProgressPercentDisplay(getDisplayProgressLine(line, report.type).progressPercent)}</td>
+                          <td className="px-3 py-2 text-center text-[var(--muted-foreground)]">{line.unit || "-"}</td>
                           {report.type === "WEEKLY" && (
-                            <td className="px-3 py-2 text-center text-xs font-semibold text-slate-500">
+                            <td className="px-3 py-2 text-center text-xs font-semibold text-[var(--muted-foreground)]">
                               {line.count} lần
                             </td>
                           )}
@@ -637,44 +637,44 @@ export function ReportDetailDrawer({
 
           {report.type === 'WEEKLY' && report.weeklyNote?.nextWeekPlan && report.weeklyNote.nextWeekPlan.length > 0 && (
             <ContentCard className="overflow-hidden p-0 sm:p-0 mb-4">
-              <div className="bg-slate-50/80 px-5 py-3.5 border-b border-slate-200 flex items-center gap-2.5">
-                <div className="p-1.5 rounded-lg border border-slate-200 bg-white shadow-sm flex items-center justify-center">
+              <div className="bg-[var(--surface-subtle)] px-5 py-3.5 border-b border-[var(--border)] flex items-center gap-2.5">
+                <div className="p-1.5 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-card)] flex items-center justify-center">
                   <TrendingUp className="w-4 h-4 text-blue-600" />
                 </div>
-                <h3 className="font-bold text-slate-800 text-[15px]">
+                <h3 className="font-bold text-[var(--foreground)] text-[15px]">
                   Kế hoạch thực hiện tuần sau
                 </h3>
               </div>
               
               <div className="overflow-x-auto custom-scrollbar">
                 <table className="w-full text-sm min-w-[900px]">
-                    <thead className="bg-slate-50 border-b border-slate-200">
+                    <thead className="bg-[var(--surface-subtle)] border-b border-[var(--border)]">
                       <tr>
-                        <th className="px-3 py-2 text-left font-semibold text-slate-600">Công việc</th>
-                        <th className="px-3 py-2 text-center font-semibold text-slate-600 w-16">Đơn vị</th>
-                        <th className="px-3 py-2 text-right font-semibold text-slate-600 w-24">Còn lại</th>
-                        <th className="px-3 py-2 text-right font-semibold text-slate-600 w-28 text-blue-700">Tuần tới</th>
-                        <th className="px-3 py-2 text-left font-semibold text-slate-600 w-24">Từ ngày</th>
-                        <th className="px-3 py-2 text-left font-semibold text-slate-600 w-24">Đến ngày</th>
-                        <th className="px-3 py-2 text-left font-semibold text-slate-600">Phụ trách</th>
-                        <th className="px-3 py-2 text-left font-semibold text-slate-600">Vật tư</th>
-                        <th className="px-3 py-2 text-left font-semibold text-slate-600">Thiết bị</th>
-                        <th className="px-3 py-2 text-left font-semibold text-slate-600">Ghi chú / Rủi ro</th>
+                        <th className="px-3 py-2 text-left font-semibold text-[var(--muted-foreground)]">Công việc</th>
+                        <th className="px-3 py-2 text-center font-semibold text-[var(--muted-foreground)] w-16">Đơn vị</th>
+                        <th className="px-3 py-2 text-right font-semibold text-[var(--muted-foreground)] w-24">Còn lại</th>
+                        <th className="px-3 py-2 text-right font-semibold text-[var(--muted-foreground)] w-28 text-blue-700">Tuần tới</th>
+                        <th className="px-3 py-2 text-left font-semibold text-[var(--muted-foreground)] w-24">Từ ngày</th>
+                        <th className="px-3 py-2 text-left font-semibold text-[var(--muted-foreground)] w-24">Đến ngày</th>
+                        <th className="px-3 py-2 text-left font-semibold text-[var(--muted-foreground)]">Phụ trách</th>
+                        <th className="px-3 py-2 text-left font-semibold text-[var(--muted-foreground)]">Vật tư</th>
+                        <th className="px-3 py-2 text-left font-semibold text-[var(--muted-foreground)]">Thiết bị</th>
+                        <th className="px-3 py-2 text-left font-semibold text-[var(--muted-foreground)]">Ghi chú / Rủi ro</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 bg-white">
+                    <tbody className="divide-y divide-slate-100 bg-[var(--surface)]">
                       {report.weeklyNote.nextWeekPlan.map((item: any, iIdx: number) => (
-                        <tr key={iIdx} className="hover:bg-slate-50/50">
-                          <td className="px-3 py-2.5 font-medium text-slate-800">{item.workContent}</td>
-                          <td className="px-3 py-2.5 text-center text-slate-600">{item.unit || "-"}</td>
-                          <td className="px-3 py-2.5 text-right font-medium text-slate-600">{item.remainingQuantity ? formatNumberSafe(item.remainingQuantity) : "-"}</td>
+                        <tr key={iIdx} className="hover:bg-[var(--surface-subtle)]">
+                          <td className="px-3 py-2.5 font-medium text-[var(--foreground)]">{item.workContent}</td>
+                          <td className="px-3 py-2.5 text-center text-[var(--muted-foreground)]">{item.unit || "-"}</td>
+                          <td className="px-3 py-2.5 text-right font-medium text-[var(--muted-foreground)]">{item.remainingQuantity ? formatNumberSafe(item.remainingQuantity) : "-"}</td>
                           <td className="px-3 py-2.5 text-right font-bold text-blue-700">{item.plannedQuantityNextWeek ? formatNumberSafe(item.plannedQuantityNextWeek) : "-"}</td>
-                          <td className="px-3 py-2.5 text-slate-600">{item.plannedStartDate ? item.plannedStartDate.split("-").reverse().join("/") : "-"}</td>
-                          <td className="px-3 py-2.5 text-slate-600">{item.plannedEndDate ? item.plannedEndDate.split("-").reverse().join("/") : "-"}</td>
-                          <td className="px-3 py-2.5 text-slate-600">{item.constructionCrew || "-"}</td>
-                          <td className="px-3 py-2.5 text-slate-600">{item.materialNeeds || "-"}</td>
-                          <td className="px-3 py-2.5 text-slate-600">{item.equipmentNeeds || "-"}</td>
-                          <td className="px-3 py-2.5 text-slate-600 text-[12px]">{item.riskNote || "-"}</td>
+                          <td className="px-3 py-2.5 text-[var(--muted-foreground)]">{item.plannedStartDate ? item.plannedStartDate.split("-").reverse().join("/") : "-"}</td>
+                          <td className="px-3 py-2.5 text-[var(--muted-foreground)]">{item.plannedEndDate ? item.plannedEndDate.split("-").reverse().join("/") : "-"}</td>
+                          <td className="px-3 py-2.5 text-[var(--muted-foreground)]">{item.constructionCrew || "-"}</td>
+                          <td className="px-3 py-2.5 text-[var(--muted-foreground)]">{item.materialNeeds || "-"}</td>
+                          <td className="px-3 py-2.5 text-[var(--muted-foreground)]">{item.equipmentNeeds || "-"}</td>
+                          <td className="px-3 py-2.5 text-[var(--muted-foreground)] text-[12px]">{item.riskNote || "-"}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -692,9 +692,9 @@ export function ReportDetailDrawer({
                 icon={<Package className="w-4 h-4 text-amber-600" />}
                 empty={!report.materials && !report.labor && !report.quality}
               >
-                {report.materials && <><span className="font-semibold text-slate-700">Vật tư:</span> {report.materials}{'\n'}</>}
-                {report.labor && <><span className="font-semibold text-slate-700">Nhân công/Máy móc:</span> {report.labor}{'\n'}</>}
-                {report.quality && <><span className="font-semibold text-slate-700">Chất lượng/An toàn:</span> {report.quality}</>}
+                {report.materials && <><span className="font-semibold text-[var(--foreground)]">Vật tư:</span> {report.materials}{'\n'}</>}
+                {report.labor && <><span className="font-semibold text-[var(--foreground)]">Nhân công/Máy móc:</span> {report.labor}{'\n'}</>}
+                {report.quality && <><span className="font-semibold text-[var(--foreground)]">Chất lượng/An toàn:</span> {report.quality}</>}
               </DetailSection>
             </>
           )}
@@ -722,11 +722,11 @@ export function ReportDetailDrawer({
           {/* Photo gallery */}
           {report.photos && report.photos.length > 0 && (
             <ContentCard className="overflow-hidden p-0 sm:p-0 mb-4">
-              <div className="bg-slate-50/80 px-5 py-3.5 border-b border-slate-200 flex items-center gap-2.5">
-                <div className="p-1.5 rounded-lg border border-slate-200 bg-white shadow-sm flex items-center justify-center">
+              <div className="bg-[var(--surface-subtle)] px-5 py-3.5 border-b border-[var(--border)] flex items-center gap-2.5">
+                <div className="p-1.5 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-card)] flex items-center justify-center">
                   <Camera className="w-4 h-4 text-sky-600" />
                 </div>
-                <h3 className="font-bold text-slate-800 text-[15px]">
+                <h3 className="font-bold text-[var(--foreground)] text-[15px]">
                   {report.type === 'WEEKLY' ? 'Ảnh tiêu biểu' : 'Hình ảnh hiện trường'} ({report.photos.length})
                 </h3>
               </div>
@@ -736,20 +736,20 @@ export function ReportDetailDrawer({
                   {report.photos.map((photo, index) => (
                   <div
                     key={photo.id}
-                    className="aspect-square bg-slate-100 rounded-lg flex items-center justify-center border border-slate-200 overflow-hidden hover:border-blue-300 transition-colors cursor-pointer relative group"
+                    className="aspect-square bg-[var(--border)] rounded-[var(--radius-lg)] flex items-center justify-center border border-[var(--border)] overflow-hidden hover:border-blue-300 transition-colors cursor-pointer relative group"
                     onClick={() => { if(!photo.isMissing) onViewGallery?.(report, index); }}
                   >
                     {photo.isMissing ? (
-                      <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 border border-slate-200">
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-[var(--surface-subtle)] border border-[var(--border)]">
                         <Camera className="w-5 h-5 text-slate-300 mx-auto" />
-                        <span className="text-[10px] text-slate-500 font-medium mt-1">Ảnh lỗi</span>
+                        <span className="text-[10px] text-[var(--muted-foreground)] font-medium mt-1">Ảnh lỗi</span>
                       </div>
                     ) : photo.url ? (
                       <ImageWithFallback src={photo.url} caption={photo.caption} />
                     ) : (
                       <div className="text-center">
                         <Camera className="w-5 h-5 text-slate-300 mx-auto" />
-                        <p className="text-[9px] text-slate-400 mt-1 px-1 truncate">{photo.caption}</p>
+                        <p className="text-[9px] text-[var(--muted-foreground)] opacity-70 mt-1 px-1 truncate">{photo.caption}</p>
                       </div>
                     )}
                     {photo.url && photo.caption && (
@@ -767,11 +767,11 @@ export function ReportDetailDrawer({
           {/* Attachments */}
           {report.attachments && report.attachments.length > 0 && (
             <ContentCard className="overflow-hidden p-0 sm:p-0 mb-4">
-              <div className="bg-slate-50/80 px-5 py-3.5 border-b border-slate-200 flex items-center gap-2.5">
-                <div className="p-1.5 rounded-lg border border-slate-200 bg-white shadow-sm flex items-center justify-center">
-                  <Paperclip className="w-4 h-4 text-slate-500" />
+              <div className="bg-[var(--surface-subtle)] px-5 py-3.5 border-b border-[var(--border)] flex items-center gap-2.5">
+                <div className="p-1.5 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-card)] flex items-center justify-center">
+                  <Paperclip className="w-4 h-4 text-[var(--muted-foreground)]" />
                 </div>
-                <h3 className="font-bold text-slate-800 text-[15px]">
+                <h3 className="font-bold text-[var(--foreground)] text-[15px]">
                   File đính kèm ({report.attachments.length})
                 </h3>
               </div>
@@ -781,16 +781,16 @@ export function ReportDetailDrawer({
                   {report.attachments.map((att) => (
                     <div
                       key={att.id}
-                      className={`flex items-center gap-3 p-2.5 rounded-lg border transition-colors ${att.isMissing ? 'bg-slate-50/50 border-slate-200 cursor-not-allowed opacity-80' : 'bg-slate-50 border-slate-100 hover:border-blue-200 cursor-pointer group'}`}
+                      className={`flex items-center gap-3 p-2.5 rounded-[var(--radius-lg)] border transition-colors ${att.isMissing ? 'bg-[var(--surface-subtle)] border-[var(--border)] cursor-not-allowed opacity-80' : 'bg-[var(--surface-subtle)] border-[var(--border)] hover:border-blue-200 cursor-pointer group'}`}
                       onClick={() => { if(!att.isMissing && att.url) window.open(att.url, '_blank') }}
                     >
-                      <div className={`flex items-center justify-center w-8 h-8 rounded-md shrink-0 border border-slate-200 bg-white group-hover:border-blue-200 transition-colors ${att.isMissing ? 'text-slate-400' : 'text-blue-500'}`}>
+                      <div className={`flex items-center justify-center w-8 h-8 rounded-[var(--radius-md)] shrink-0 border border-[var(--border)] bg-[var(--surface)] group-hover:border-blue-200 transition-colors ${att.isMissing ? 'text-[var(--muted-foreground)] opacity-70' : 'text-blue-500'}`}>
                         <FileText className="w-4 h-4" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className={`text-sm font-medium truncate transition-colors ${att.isMissing ? 'text-slate-500 line-through' : 'text-slate-700 group-hover:text-blue-700'}`}>{att.name}</p>
+                        <p className={`text-sm font-medium truncate transition-colors ${att.isMissing ? 'text-[var(--muted-foreground)] line-through' : 'text-[var(--foreground)] group-hover:text-blue-700'}`}>{att.name}</p>
                         <div className="flex items-center gap-2">
-                          <p className="text-xs text-slate-400">{att.size}</p>
+                          <p className="text-xs text-[var(--muted-foreground)] opacity-70">{att.size}</p>
                           {att.isMissing && (
                             <span className="text-[10px] font-medium text-amber-600 bg-amber-50 border border-amber-100 px-1.5 rounded-sm" title="File gốc không còn trong storage">File thiếu</span>
                           )}
@@ -808,18 +808,18 @@ export function ReportDetailDrawer({
           <div className="space-y-3">
             <button 
               onClick={() => setShowHistory(!showHistory)}
-              className="flex items-center gap-2 text-sm font-semibold text-slate-800 hover:text-blue-600 transition-colors w-full text-left"
+              className="flex items-center gap-2 text-sm font-semibold text-[var(--foreground)] hover:text-blue-600 transition-colors w-full text-left"
             >
-              <History className="w-4 h-4 text-slate-500" />
+              <History className="w-4 h-4 text-[var(--muted-foreground)]" />
               Lịch sử duyệt
-              <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full ml-1 font-medium">{history.length || 0}</span>
+              <span className="text-[10px] bg-[var(--border)] text-[var(--muted-foreground)] px-1.5 py-0.5 rounded-full ml-1 font-medium">{history.length || 0}</span>
             </button>
             {showHistory && (
               <div className="pt-2 animate-in fade-in slide-in-from-top-2 duration-200">
                 {isLoadingHistory ? (
-                  <div className="flex justify-center p-4"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>
+                  <div className="flex justify-center p-4"><Loader2 className="w-5 h-5 animate-spin text-[var(--muted-foreground)] opacity-70" /></div>
                 ) : !history || history.length === 0 ? (
-                  <p className="text-sm text-slate-500 italic pl-0 sm:pl-6">Chưa có lịch sử trạng thái</p>
+                  <p className="text-sm text-[var(--muted-foreground)] italic pl-0 sm:pl-6">Chưa có lịch sử trạng thái</p>
                 ) : (
                   <div className="pl-0 sm:pl-6">
                     <ApprovalTimeline history={history} />
@@ -838,7 +838,7 @@ export function ReportDetailDrawer({
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
                 placeholder="Nhập lý do từ chối (bắt buộc)..."
-                className="w-full min-h-[80px] p-3 text-sm border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none resize-none"
+                className="w-full min-h-[80px] p-3 text-sm border border-[var(--border)] rounded-[var(--radius-xl)] focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none resize-none"
               />
               <div className="flex flex-col-reverse gap-2 md:flex-row md:items-center md:justify-end">
                 <Button variant="outline" onClick={() => setRejectMode(false)} disabled={isProcessing} className="h-11 w-full md:h-10 md:w-auto">

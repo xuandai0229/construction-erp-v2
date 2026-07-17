@@ -9,7 +9,7 @@ export function PageError({
   title = "Đã xảy ra lỗi khi tải dữ liệu",
   message = "Hệ thống đang gặp sự cố khi xử lý trang này. Vui lòng thử lại sau hoặc quay về trang chủ.",
 }: {
-  error: Error & { digest?: string };
+  error?: Error & { digest?: string };
   reset?: () => void;
   title?: string;
   message?: string;
@@ -18,12 +18,12 @@ export function PageError({
 
   return (
     <div className="mx-auto flex min-h-[420px] w-full items-center justify-center p-4">
-      <div className="w-full max-w-[540px] rounded-2xl border border-rose-100 bg-white p-6 sm:p-8 text-center shadow-lg shadow-rose-950/[0.02]">
-        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 ring-8 ring-rose-50/50">
+      <div className="w-full max-w-[540px] rounded-[var(--radius-lg)] border border-rose-100 bg-[var(--surface)] p-6 sm:p-8 text-center shadow-[var(--shadow-overlay)]">
+        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-[var(--radius-lg)] bg-rose-50 text-rose-600 ring-8 ring-rose-50/50">
           <AlertCircle className="h-8 w-8" />
         </div>
-        <h1 className="text-xl font-bold text-slate-900">{title}</h1>
-        <p className="mx-auto mt-2 text-sm leading-relaxed text-slate-600">
+        <h1 className="text-xl font-bold text-[var(--foreground)]">{title}</h1>
+        <p className="mx-auto mt-2 text-sm leading-relaxed text-[var(--muted-foreground)]">
           {message}
         </p>
         <p className="mt-3 text-xs text-slate-400">Mã tham chiếu: ERR-PAGE-UNAVAILABLE</p>
@@ -33,7 +33,7 @@ export function PageError({
             <button
               type="button"
               onClick={() => reset()}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-sm font-semibold text-white transition-all hover:bg-blue-700 active:scale-95 shadow-sm shadow-blue-600/20"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-blue-600 px-5 text-sm font-semibold text-white transition-all hover:bg-blue-700 active:scale-95 shadow-sm shadow-blue-600/20"
             >
               <RefreshCw className="h-4 w-4" />
               Thử lại
@@ -42,13 +42,13 @@ export function PageError({
           <button
             type="button"
             onClick={() => router.back()}
-            className="inline-flex h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-50 hover:text-slate-900 active:scale-95 shadow-sm"
+            className="inline-flex h-10 items-center justify-center rounded-[var(--radius-sm)] border border-[var(--input-border)] bg-[var(--surface)] px-5 text-sm font-semibold text-[var(--muted-foreground)] transition-all hover:bg-[var(--surface-subtle)] hover:text-[var(--foreground)] active:scale-95 shadow-sm"
           >
             Quay lại
           </button>
           <Link
             href="/dashboard"
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-50 hover:text-slate-900 active:scale-95 shadow-sm"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[var(--input-border)] bg-[var(--surface)] px-5 text-sm font-semibold text-[var(--muted-foreground)] transition-all hover:bg-[var(--surface-subtle)] hover:text-[var(--foreground)] active:scale-95 shadow-sm"
           >
             <Home className="h-4 w-4" />
             Về trang chủ

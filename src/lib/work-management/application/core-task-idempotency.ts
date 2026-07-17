@@ -18,6 +18,20 @@ export interface IdempotencyIntegrationPort {
   abort(request: IdempotencyRequest, reason: string): Promise<void>;
 }
 
+/** The one canonical equality model for a reserved idempotency key. */
+export function sameIdempotencyIdentity(
+  left: IdempotencyRequest,
+  right: IdempotencyRequest,
+): boolean {
+  return left.key === right.key
+    && left.action === right.action
+    && left.actorId === right.actorId
+    && left.companyId === right.companyId
+    && left.taskId === right.taskId
+    && left.projectId === right.projectId
+    && left.fingerprint === right.fingerprint;
+}
+
 function canonical(value: unknown): string {
   if (value === null) return "null";
   if (value instanceof Date) return JSON.stringify(value.toISOString());

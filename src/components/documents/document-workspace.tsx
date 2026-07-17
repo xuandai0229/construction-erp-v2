@@ -167,7 +167,7 @@ function FileIconForDocument({
   if ([".dwg", ".dxf", ".xml"].includes(ext)) {
     return <FileCode className={`${className} text-violet-600`} />;
   }
-  return <FileIcon className={`${className} text-slate-400`} />;
+  return <FileIcon className={`${className} text-[var(--muted-foreground)] opacity-70`} />;
 }
 
 export function DocumentWorkspace({
@@ -1254,7 +1254,7 @@ const handleEditMetadata = async () => {
     return (
       <div className="select-none">
         <div
-          className={`group flex min-h-10 cursor-pointer items-center justify-between rounded-lg px-2.5 py-2 transition-colors hover:bg-slate-100 ${isSelected ? "bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-100" : "text-slate-700"
+          className={`group flex min-h-10 cursor-pointer items-center justify-between rounded-[var(--radius-lg)] px-2.5 py-2 transition-colors hover:bg-[var(--border)] ${isSelected ? "bg-blue-50 text-blue-700 shadow-[var(--shadow-card)] ring-1 ring-blue-100" : "text-[var(--foreground)]"
             }`}
           style={{ paddingLeft: `${level * 18 + 8}px` }}
           onClick={() => selectFolder(folder)}
@@ -1278,7 +1278,7 @@ const handleEditMetadata = async () => {
                   event.stopPropagation();
                   toggleFolderExpanded(folder.id);
                 }}
-                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-slate-400 hover:bg-white hover:text-slate-700"
+                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[var(--radius-md)] text-[var(--muted-foreground)] opacity-70 hover:bg-[var(--surface)] hover:text-[var(--foreground)]"
                 aria-label={isExpanded ? "Đóng nhánh thư mục" : "Mở nhánh thư mục"}
               >
                 <ChevronRight
@@ -1291,7 +1291,7 @@ const handleEditMetadata = async () => {
             {isSelected ? (
               <FolderOpen className="h-4 w-4 shrink-0 text-blue-600" />
             ) : (
-              <Folder className="h-4 w-4 shrink-0 text-slate-400" />
+              <Folder className="h-4 w-4 shrink-0 text-[var(--muted-foreground)] opacity-70" />
             )}
             {editingFolderId === folder.id ? (
               <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
@@ -1310,7 +1310,7 @@ const handleEditMetadata = async () => {
                 }}
                 onBlur={commitFolderRename}
                 onClick={(e) => e.stopPropagation()}
-                className="h-6 w-[140px] rounded-md border border-blue-400 bg-white px-1.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                className="h-6 w-[140px] rounded-[var(--radius-md)] border border-blue-400 bg-[var(--surface)] px-1.5 text-sm text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-blue-500/30"
               />
             ) : (
               <span className="truncate text-sm font-medium" title={displayName} onDoubleClick={(e) => { e.stopPropagation(); startFolderRename(folder.id); }}>
@@ -1318,14 +1318,14 @@ const handleEditMetadata = async () => {
               </span>
             )}
             {!editingFolderId && folder._count.documents > 0 && (
-              <span className={`rounded-full px-1.5 py-0.5 text-[10px] ${isSelected ? "bg-blue-100 text-blue-700" : "bg-white text-slate-500"}`}>
+              <span className={`rounded-full px-1.5 py-0.5 text-[10px] ${isSelected ? "bg-blue-100 text-blue-700" : "bg-[var(--surface)] text-[var(--muted-foreground)]"}`}>
                 {folder._count.documents}
               </span>
             )}
           </div>
           {isSelected && !editingFolderId &&
             (canRenameCurrentFolder || canDeleteCurrentFolder) && (
-              <div className="flex shrink-0 gap-1 rounded-md border border-slate-200 bg-white px-1 shadow-sm opacity-100 md:opacity-0 md:transition-opacity md:group-hover:opacity-100">
+              <div className="flex shrink-0 gap-1 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-1 shadow-[var(--shadow-card)] opacity-100 md:opacity-0 md:transition-opacity md:group-hover:opacity-100">
                 {canRenameCurrentFolder && (
                   <button
                     type="button"
@@ -1333,7 +1333,7 @@ const handleEditMetadata = async () => {
                       event.stopPropagation();
                       startFolderRename(folder.id);
                     }}
-                    className="p-1 text-slate-400 hover:text-blue-600"
+                    className="p-1 text-[var(--muted-foreground)] opacity-70 hover:text-blue-600"
                     title="Đổi tên thư mục"
                   >
                     <Pencil className="h-3 w-3" />
@@ -1346,7 +1346,7 @@ const handleEditMetadata = async () => {
                       event.stopPropagation();
                       executeSoftDelete("folder", folder.id);
                     }}
-                    className="p-1 text-slate-400 hover:text-red-500"
+                    className="p-1 text-[var(--muted-foreground)] opacity-70 hover:text-red-500"
                     title="Xóa thư mục"
                   >
                     <Trash2 className="h-3 w-3" />
@@ -1356,7 +1356,7 @@ const handleEditMetadata = async () => {
           )}
         </div>
         {isExpanded && children.length > 0 && (
-          <div className="ml-3 border-l border-slate-200/80 pl-1">
+          <div className="ml-3 border-l border-[var(--border)] pl-1">
             {children.map((child) => (
               <FolderNode key={child.id} folder={child} level={level + 1} />
             ))}
@@ -1367,12 +1367,12 @@ const handleEditMetadata = async () => {
   };
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[22px] border border-slate-200/70 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.08)] md:flex-row">
-      <aside className="hidden max-h-[240px] w-full shrink-0 flex-col overflow-y-auto border-r border-slate-200/80 bg-slate-50/70 md:flex md:h-auto md:max-h-none md:w-[330px]">
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200/80 bg-slate-50/95 p-4 backdrop-blur">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[22px] border border-[var(--border)] bg-[var(--surface)] shadow-[0_18px_50px_rgba(15,23,42,0.08)] md:flex-row">
+      <aside className="hidden max-h-[240px] w-full shrink-0 flex-col overflow-y-auto border-r border-[var(--border)] bg-[var(--surface-subtle)] md:flex md:h-auto md:max-h-none md:w-[330px]">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--border)] bg-[var(--surface-subtle)] p-4 backdrop-blur">
           <div className="flex flex-col">
-            <h2 className="font-semibold text-slate-900">Thư mục</h2>
-            <span className="mt-0.5 text-xs font-medium text-slate-500">
+            <h2 className="font-semibold text-[var(--foreground)]">Thư mục</h2>
+            <span className="mt-0.5 text-xs font-medium text-[var(--muted-foreground)]">
               Chọn vị trí lưu hồ sơ
             </span>
           </div>
@@ -1380,7 +1380,7 @@ const handleEditMetadata = async () => {
             <button
               type="button"
               onClick={() => setShowNewFolder((value) => !value)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
+              className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] text-[var(--muted-foreground)] shadow-[var(--shadow-card)] transition-colors hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
               title={selectedFolderId ? "Tạo thư mục con" : "Tạo thư mục gốc"}
             >
               <Plus className="h-4 w-4" />
@@ -1389,13 +1389,13 @@ const handleEditMetadata = async () => {
         </div>
 
         {showNewFolder && (
-          <div className="border-b border-slate-200 bg-white p-3">
-            <div className="mb-2 text-[11px] font-semibold text-slate-500 uppercase">
+          <div className="border-b border-[var(--border)] bg-[var(--surface)] p-3">
+            <div className="mb-2 text-[11px] font-semibold text-[var(--muted-foreground)] uppercase">
               {selectedFolderId ? `Tạo thư mục con trong: ${selectedFolderDisplayName}` : "Tạo thư mục gốc"}
             </div>
             <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
               type="text"
-              className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-2 py-1.5 text-sm font-medium text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] opacity-70 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               placeholder="Tên thư mục mới..."
               value={newFolderName}
               onChange={(event) => setNewFolderName(event.target.value)}
@@ -1427,21 +1427,21 @@ const handleEditMetadata = async () => {
             <FolderNode key={folder.id} folder={folder} />
           ))}
           {rootFolders.length === 0 && (
-            <p className="py-4 text-center text-sm text-slate-500">
+            <p className="py-4 text-center text-sm text-[var(--muted-foreground)]">
               Chưa có thư mục
             </p>
           )}
         </div>
         
-        <div className="border-t border-slate-200 p-2">
+        <div className="border-t border-[var(--border)] p-2">
           <div
-            className={`group flex min-h-10 cursor-pointer items-center gap-2 rounded-lg px-2.5 py-2 transition-colors hover:bg-red-50 ${isTrashView ? "bg-red-50 text-red-700 shadow-sm ring-1 ring-red-100" : "text-slate-700"
+            className={`group flex min-h-10 cursor-pointer items-center gap-2 rounded-[var(--radius-lg)] px-2.5 py-2 transition-colors hover:bg-red-50 ${isTrashView ? "bg-red-50 text-red-700 shadow-[var(--shadow-card)] ring-1 ring-red-100" : "text-[var(--foreground)]"
               }`}
             onClick={() => {
               setTrashState(true, null);
             }}
           >
-            <Trash2 className={`h-4 w-4 shrink-0 ${isTrashView ? "text-red-600" : "text-slate-400"}`} />
+            <Trash2 className={`h-4 w-4 shrink-0 ${isTrashView ? "text-red-600" : "text-[var(--muted-foreground)] opacity-70"}`} />
             <span className="truncate text-sm font-medium">
               Thùng rác
             </span>
@@ -1450,7 +1450,7 @@ const handleEditMetadata = async () => {
       </aside>
 
         <main 
-          className="flex min-w-0 flex-1 flex-col overflow-hidden bg-white"
+          className="flex min-w-0 flex-1 flex-col overflow-hidden bg-[var(--surface)]"
           onContextMenu={(e) => {
             if (e.target === e.currentTarget || (e.target as HTMLElement).tagName === "MAIN" || (e.target as HTMLElement).closest(".empty-workspace")) {
               e.preventDefault();
@@ -1463,10 +1463,10 @@ const handleEditMetadata = async () => {
             }
           }}
         >
-          <div className="border-b border-slate-200/80 bg-white p-4 sm:p-5">
+          <div className="border-b border-[var(--border)] bg-[var(--surface)] p-4 sm:p-5">
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
               <div className="min-w-0">
-                <nav className="mb-3 flex min-w-0 flex-wrap items-center gap-1.5 text-xs font-medium text-slate-500">
+                <nav className="mb-3 flex min-w-0 flex-wrap items-center gap-1.5 text-xs font-medium text-[var(--muted-foreground)]">
                   {/* Back Button */}
                   {isTrashView ? (
                     selectedTrashFolderId ? (
@@ -1475,7 +1475,7 @@ const handleEditMetadata = async () => {
                         aria-label="Quay lại"
                         title="Quay lại"
                         onClick={() => setTrashState(true, selectedTrashFolderData?.parentId || null)}
-                        className="mr-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-600 shadow-sm transition-all duration-200 hover:-translate-x-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 hover:shadow-md focus:outline-none"
+                        className="mr-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-white/90 text-[var(--muted-foreground)] shadow-[var(--shadow-card)] transition-all duration-200 hover:-translate-x-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 hover:shadow-[var(--shadow-elevated)] focus:outline-none"
                       >
                         <ArrowLeft className="h-3 w-3" />
                       </button>
@@ -1496,7 +1496,7 @@ const handleEditMetadata = async () => {
                           window.history.pushState({}, "", url.toString());
                           setSelectedFolderId(selectedFolderData?.parentId || null);
                         }}
-                        className="mr-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-600 shadow-sm transition-all duration-200 hover:-translate-x-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 hover:shadow-md focus:outline-none"
+                        className="mr-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-white/90 text-[var(--muted-foreground)] shadow-[var(--shadow-card)] transition-all duration-200 hover:-translate-x-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 hover:shadow-[var(--shadow-elevated)] focus:outline-none"
                       >
                         <ArrowLeft className="h-3 w-3" />
                       </button>
@@ -1514,7 +1514,7 @@ const handleEditMetadata = async () => {
                           type="button"
                           onClick={() => setTrashState(true, null)}
                           className={`max-w-[180px] truncate text-left transition-colors ${
-                            !selectedTrashFolderId ? "font-semibold text-slate-900" : "hover:text-blue-600 hover:underline"
+                            !selectedTrashFolderId ? "font-semibold text-[var(--foreground)]" : "hover:text-blue-600 hover:underline"
                           }`}
                         >
                           Thùng rác
@@ -1530,7 +1530,7 @@ const handleEditMetadata = async () => {
                               onClick={() => !isCurrent && setTrashState(true, folder.id)}
                               className={`max-w-[180px] truncate text-left transition-colors ${
                                 isCurrent
-                                  ? "font-semibold text-slate-900"
+                                  ? "font-semibold text-[var(--foreground)]"
                                   : "hover:text-blue-600 hover:underline"
                               }`}
                               title={formatDocumentFolderName(folder.name)}
@@ -1553,7 +1553,7 @@ const handleEditMetadata = async () => {
                             onClick={() => !isCurrent && setSelectedFolderId(folder.id)}
                             className={`max-w-[180px] truncate text-left transition-colors ${
                               isCurrent
-                                ? "font-semibold text-slate-900"
+                                ? "font-semibold text-[var(--foreground)]"
                                 : "hover:text-blue-600"
                             }`}
                             title={folderName}
@@ -1567,7 +1567,7 @@ const handleEditMetadata = async () => {
                 </nav>
 
                 <div className="flex min-w-0 items-start gap-3">
-                  <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${isTrashView ? "border-red-100 bg-red-50 text-red-600" : "border-blue-100 bg-blue-50 text-blue-600"}`}>
+                  <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-lg)] border ${isTrashView ? "border-red-100 bg-red-50 text-red-600" : "border-blue-100 bg-blue-50 text-blue-600"}`}>
                     {isTrashView ? (
                       <Trash2 className="h-5 w-5" />
                     ) : selectedFolderId ? (
@@ -1585,11 +1585,11 @@ const handleEditMetadata = async () => {
                         : "Tất cả tài liệu"}
                     </h2>
                     {isTrashView && selectedTrashFolderData && (selectedTrashFolderData as any).deletedAt && (
-                      <p className="mt-1 text-sm text-slate-500">
+                      <p className="mt-1 text-sm text-[var(--muted-foreground)]">
                         Đã xóa lúc: {format(new Date((selectedTrashFolderData as any).deletedAt), "dd/MM/yyyy HH:mm")}
                       </p>
                     )}
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-[var(--muted-foreground)]">
                       {isTrashView
                         ? selectedTrashFolderId 
                           ? "Xem nội dung đã xóa bên trong thư mục này." 
@@ -1609,24 +1609,24 @@ const handleEditMetadata = async () => {
                   <div className="group relative hidden sm:block">
                     <button
                       type="button"
-                      className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 shadow-sm hover:bg-slate-50"
+                      className="h-10 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] px-3 text-sm font-semibold text-[var(--muted-foreground)] shadow-[var(--shadow-card)] hover:bg-[var(--surface-subtle)]"
                     >
                       Quy định tải lên
                     </button>
-                    <div className="pointer-events-none absolute right-0 top-full z-50 mt-2 w-80 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-xl opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100">
-                      <h4 className="mb-1 text-sm font-bold text-slate-900">
+                    <div className="pointer-events-none absolute right-0 top-full z-50 mt-2 w-80 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-4 text-left shadow-xl opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100">
+                      <h4 className="mb-1 text-sm font-bold text-[var(--foreground)]">
                         {selectedFolderRule.title}
                       </h4>
-                      <p className="mb-3 text-xs leading-5 text-slate-600">
+                      <p className="mb-3 text-xs leading-5 text-[var(--muted-foreground)]">
                         {selectedFolderRule.description}
                       </p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-[var(--muted-foreground)]">
                         Định dạng:{" "}
-                        <span className="font-semibold text-slate-700">
+                        <span className="font-semibold text-[var(--foreground)]">
                           {selectedFolderRule.friendlyAllowedTypes}
                         </span>
                       </p>
-                      <p className="mt-1 text-xs text-slate-500">
+                      <p className="mt-1 text-xs text-[var(--muted-foreground)]">
                         Gợi ý đặt tên:{" "}
                         <code className="rounded bg-blue-50 px-1 py-0.5 font-mono text-blue-700">
                           {selectedFolderRule.namingHint}
@@ -1654,7 +1654,7 @@ const handleEditMetadata = async () => {
                       <Button
                         variant="outline"
                         onClick={() => setShowNewFolder(true)}
-                        className="h-10 w-full rounded-lg sm:w-auto border-slate-200 text-slate-700 bg-white hover:bg-slate-50 md:hidden"
+                        className="h-10 w-full rounded-[var(--radius-lg)] sm:w-auto border-[var(--border)] text-[var(--foreground)] bg-[var(--surface)] hover:bg-[var(--surface-subtle)] md:hidden"
                       >
                         <FolderPlus className="mr-2 h-4 w-4" />
                         Tạo thư mục
@@ -1663,7 +1663,7 @@ const handleEditMetadata = async () => {
                         <Button
                           variant="outline"
                           onClick={() => setShowNewFolder(true)}
-                          className="hidden md:inline-flex h-10 w-full rounded-lg sm:w-auto border-slate-200 text-slate-700 bg-white hover:bg-slate-50"
+                          className="hidden md:inline-flex h-10 w-full rounded-[var(--radius-lg)] sm:w-auto border-[var(--border)] text-[var(--foreground)] bg-[var(--surface)] hover:bg-[var(--surface-subtle)]"
                         >
                           <FolderPlus className="mr-2 h-4 w-4" />
                           Tạo mục bên trong
@@ -1673,7 +1673,7 @@ const handleEditMetadata = async () => {
                       <Button
                         onClick={() => fileInputRef.current?.click()}
                         disabled={isUploading || !selectedFolderId}
-                        className={`h-10 w-full rounded-lg shadow-sm sm:w-auto ${!selectedFolderId ? 'opacity-70 cursor-not-allowed' : 'shadow-blue-600/20'}`}
+                        className={`h-10 w-full rounded-[var(--radius-lg)] shadow-[var(--shadow-card)] sm:w-auto ${!selectedFolderId ? 'opacity-70 cursor-not-allowed' : 'shadow-blue-600/20'}`}
                         title={!selectedFolderId ? "Hãy chọn hoặc mở một thư mục để tải tài liệu lên" : undefined}
                       >
                         <UploadCloud className="mr-2 h-4 w-4" />
@@ -1686,7 +1686,7 @@ const handleEditMetadata = async () => {
                     <Button
                       variant="outline"
                       onClick={() => setShowNewFolder(true)}
-                      className="h-10 w-full rounded-lg sm:w-auto border-slate-200 text-slate-700 bg-white hover:bg-slate-50"
+                      className="h-10 w-full rounded-[var(--radius-lg)] sm:w-auto border-[var(--border)] text-[var(--foreground)] bg-[var(--surface)] hover:bg-[var(--surface-subtle)]"
                     >
                       <FolderPlus className="mr-2 h-4 w-4" />
                       Tạo thư mục
@@ -1701,28 +1701,28 @@ const handleEditMetadata = async () => {
               return (
                 <>
                   {smartSuggestions.length > 0 && (
-                    <div className="px-4 py-1.5 border-b border-slate-100 bg-slate-50 flex items-center gap-2 text-[11px] text-slate-500 font-medium">
+                    <div className="px-4 py-1.5 border-b border-[var(--border)] bg-[var(--surface-subtle)] flex items-center gap-2 text-[11px] text-[var(--muted-foreground)] font-medium">
                       <AlertTriangle className="h-3 w-3 text-amber-500 shrink-0" />
                       <span className="truncate">{smartSuggestions.join(" · ")}</span>
                     </div>
                   )}
 
                   {/* Advanced filters can be reintroduced as a polished popover later. */}
-                  <div className="flex items-center gap-3 border-t border-slate-100 bg-white px-4 py-3">
+                  <div className="flex items-center gap-3 border-t border-[var(--border)] bg-[var(--surface)] px-4 py-3">
                     <div className="relative min-w-0 flex-1">
-                      <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted-foreground)] opacity-70" />
                       <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                         type="text"
                         placeholder="Tìm tài liệu..."
                         value={searchQuery}
                         onChange={(event) => setSearchQuery(event.target.value)}
-                        className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/60 pl-10 pr-4 text-sm font-medium text-slate-900 placeholder:text-slate-400 outline-none transition-all focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+                        className="h-10 w-full rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface-subtle)] pl-10 pr-4 text-sm font-medium text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] opacity-70 outline-none transition-all focus:border-blue-400 focus:bg-[var(--surface)] focus:ring-4 focus:ring-blue-500/10"
                       />
                     </div>
                     <button
                       type="button"
                       onClick={() => setIsMobileNavOpen(true)}
-                      className="flex md:hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+                      className="flex md:hidden h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] text-[var(--muted-foreground)] shadow-[var(--shadow-card)] transition-colors hover:bg-[var(--surface-subtle)]"
                       title="Duyệt cây thư mục"
                     >
                       <FolderOpen className="h-5 w-5" />
@@ -1731,12 +1731,12 @@ const handleEditMetadata = async () => {
                     <select
                       value={sortBy}
                       onChange={(event) => setSortBy(event.target.value as SortOption)}
-                      className="h-10 w-[150px] shrink-0 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 shadow-sm outline-none transition-all hover:bg-slate-50 focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
+                      className="h-10 w-[150px] shrink-0 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] px-3 text-sm font-semibold text-[var(--foreground)] shadow-[var(--shadow-card)] outline-none transition-all hover:bg-[var(--surface-subtle)] focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10"
                     >
-                      <option className="bg-white text-slate-900" value="NEWEST">Mới nhất</option>
-                      <option className="bg-white text-slate-900" value="OLDEST">Cũ nhất</option>
-                      <option className="bg-white text-slate-900" value="NAME">Tên A-Z</option>
-                      <option className="bg-white text-slate-900" value="SIZE">Kích thước</option>
+                      <option className="bg-[var(--surface)] text-[var(--foreground)]" value="NEWEST">Mới nhất</option>
+                      <option className="bg-[var(--surface)] text-[var(--foreground)]" value="OLDEST">Cũ nhất</option>
+                      <option className="bg-[var(--surface)] text-[var(--foreground)]" value="NAME">Tên A-Z</option>
+                      <option className="bg-[var(--surface)] text-[var(--foreground)]" value="SIZE">Kích thước</option>
                     </select>
                   </div>
 
@@ -1745,7 +1745,7 @@ const handleEditMetadata = async () => {
             })()}
 
             <div
-              className="flex-1 overflow-y-auto bg-slate-50 p-4"
+              className="flex-1 overflow-y-auto bg-[var(--surface-subtle)] p-4"
               onContextMenu={(event) => {
                 const target = event.target as HTMLElement;
                 if (
@@ -1776,7 +1776,7 @@ const handleEditMetadata = async () => {
                   {displayFolders.length > 0 && (
                     <div>
                       <div className="mb-3 flex items-center gap-2">
-                        <h3 className="text-sm font-bold text-slate-700">
+                        <h3 className="text-sm font-bold text-[var(--foreground)]">
                           {isTrashView
                             ? selectedTrashFolderData
                               ? `Thư mục trong ${selectedTrashFolderData.name}`
@@ -1785,7 +1785,7 @@ const handleEditMetadata = async () => {
                               ? "Thư mục con" 
                               : "Thư mục gốc"}
                         </h3>
-                        <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-600">
+                        <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold text-[var(--muted-foreground)]">
                           {displayFolders.length} mục
                         </span>
                       </div>
@@ -1795,10 +1795,10 @@ const handleEditMetadata = async () => {
                             return (
                               <article
                                 key={folder.id}
-                                className={`group relative flex cursor-pointer transition-all hover:shadow-md ${
+                                className={`group relative flex cursor-pointer transition-all hover:shadow-[var(--shadow-elevated)] ${
                                   density === 'list' 
-                                    ? 'flex-row items-center gap-4 rounded-lg border border-slate-200 bg-white px-4 py-3' 
-                                    : 'flex-col rounded-lg border border-slate-200 bg-white p-3 sm:p-4 hover:-translate-y-0.5'
+                                    ? 'flex-row items-center gap-4 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] px-4 py-3' 
+                                    : 'flex-col rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-3 sm:p-4 hover:-translate-y-0.5'
                                 } ${isTrashView ? 'hover:border-red-300' : 'hover:border-blue-300'}`}
                                 onClick={() => {
                                   if (isTrashView) {
@@ -1831,21 +1831,21 @@ const handleEditMetadata = async () => {
                                         y: event.clientY,
                                       });
                                     }}
-                                    className="flex h-10 w-10 sm:h-8 sm:w-8 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                                    className="flex h-10 w-10 sm:h-8 sm:w-8 items-center justify-center rounded-[var(--radius-md)] text-[var(--muted-foreground)] opacity-70 hover:bg-[var(--border)] hover:text-[var(--foreground)] transition-colors"
                                     title="Thêm thao tác"
                                   >
                                     <MoreVertical className="h-4 w-4" />
                                   </button>
                                 </div>
-                                <div className={`flex items-center justify-center rounded-lg ${density === 'list' ? 'h-9 w-9 sm:h-10 sm:w-10 shrink-0 bg-blue-50/50' : 'mb-2 sm:mb-3 h-10 w-10 sm:h-12 sm:w-12 bg-blue-50/50'}`}>
+                                <div className={`flex items-center justify-center rounded-[var(--radius-lg)] ${density === 'list' ? 'h-9 w-9 sm:h-10 sm:w-10 shrink-0 bg-blue-50/50' : 'mb-2 sm:mb-3 h-10 w-10 sm:h-12 sm:w-12 bg-blue-50/50'}`}>
                                   <Folder className={`${isTrashView ? 'text-red-400' : 'text-blue-500'} ${density === 'list' ? 'h-4 w-4 sm:h-5 sm:w-5' : 'h-5 w-5 sm:h-6 sm:w-6'}`} />
                                 </div>
                                 <div className="min-w-0 flex-1 pr-6">
-                                  <p className={`truncate font-semibold text-slate-900 ${density === 'compact' ? 'text-xs sm:text-sm' : 'text-sm'}`}>
+                                  <p className={`truncate font-semibold text-[var(--foreground)] ${density === 'compact' ? 'text-xs sm:text-sm' : 'text-sm'}`}>
                                     {formatDocumentFolderName(folder.name)}
                                   </p>
                                   {density !== 'compact' && (
-                                    <p className="mt-1 text-xs text-slate-500">
+                                    <p className="mt-1 text-xs text-[var(--muted-foreground)]">
                                       {isDeleted 
                                         ? `Đã xóa lúc: ${format(new Date((folder as any).deletedAt), "dd/MM/yyyy HH:mm")}`
                                         : `Thư mục hồ sơ`}
@@ -1866,7 +1866,7 @@ const handleEditMetadata = async () => {
                             type="button"
                             onClick={isTrashView ? loadMoreTrashFolders : loadMoreFolders}
                             disabled={isTrashView ? isLoadingMoreTrashFolders : isLoadingMoreFolders}
-                            className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:border-blue-200 disabled:opacity-50"
+                            className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--foreground)] shadow-[var(--shadow-card)] transition-colors hover:bg-[var(--surface-subtle)] hover:border-blue-200 disabled:opacity-50"
                           >
                             {isLoadingMoreFolders ? "Đang tải..." : `Tải thêm thư mục (${isTrashView ? (pagination?.totalDeletedFolders ?? 0) - displayFolders.length : (pagination?.totalFolders ?? 0) - displayFolders.length} còn lại)`}
                           </button>
@@ -1875,14 +1875,14 @@ const handleEditMetadata = async () => {
                     </div>
                   )}
                   <div className="mb-3 flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-slate-700">
+                    <h3 className="text-sm font-bold text-[var(--foreground)]">
                       {isTrashView
                         ? selectedTrashFolderData
                           ? `Tài liệu trong ${selectedTrashFolderData.name}`
                           : "Tài liệu đã xóa"
                         : "Tài liệu trong thư mục"}
                     </h3>
-                    <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-600">
+                    <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold text-[var(--muted-foreground)]">
                       {displayDocs.length} file
                     </span>
                   </div>
@@ -1900,7 +1900,7 @@ const handleEditMetadata = async () => {
                             <article
                               key={document.id}
                               tabIndex={0}
-                              className="group relative flex cursor-pointer flex-col rounded-lg border border-slate-200 bg-white p-3 sm:p-4 transition-all hover:border-blue-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="group relative flex cursor-pointer flex-col rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-3 sm:p-4 transition-all hover:border-blue-300 hover:shadow-[var(--shadow-elevated)] focus:outline-none focus:ring-2 focus:ring-blue-500"
                               onClick={() => openDocument(document)}
                               onKeyDown={(event) => {
                                 if (event.key === "Enter" || event.key === " ") {
@@ -1944,7 +1944,7 @@ const handleEditMetadata = async () => {
                                       event.stopPropagation();
                                       openDocument(document);
                                     }}
-                                    className="rounded-md p-1.5 text-slate-500 hover:bg-blue-50 hover:text-blue-600"
+                                    className="rounded-[var(--radius-md)] p-1.5 text-[var(--muted-foreground)] hover:bg-blue-50 hover:text-blue-600"
                                     title="Xem tài liệu"
                                   >
                                     <Eye className="h-4 w-4" />
@@ -1952,7 +1952,7 @@ const handleEditMetadata = async () => {
                                   <a
                                     href={`/api/documents/${document.id}/download`}
                                     onClick={(event) => event.stopPropagation()}
-                                    className="rounded-md p-1.5 text-slate-500 hover:bg-emerald-50 hover:text-emerald-600"
+                                    className="rounded-[var(--radius-md)] p-1.5 text-[var(--muted-foreground)] hover:bg-emerald-50 hover:text-emerald-600"
                                     title="Tải xuống"
                                   >
                                     <Download className="h-4 w-4" />
@@ -1969,7 +1969,7 @@ const handleEditMetadata = async () => {
                                         y: event.clientY,
                                       });
                                     }}
-                                    className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                                    className="rounded-[var(--radius-md)] p-1.5 text-[var(--muted-foreground)] hover:bg-[var(--border)] hover:text-[var(--foreground)] transition-colors"
                                     title="Thêm thao tác"
                                   >
                                     <MoreVertical className="h-4 w-4" />
@@ -1978,7 +1978,7 @@ const handleEditMetadata = async () => {
                               </div>
 
                               {!matchesRule && (
-                                <div className="mb-2 flex items-center gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-2 py-1.5 text-[11px] font-medium text-amber-800">
+                                <div className="mb-2 flex items-center gap-1.5 rounded-[var(--radius-md)] border border-amber-200 bg-amber-50 px-2 py-1.5 text-[11px] font-medium text-amber-800">
                                   <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                                   Dữ liệu cũ không đúng định dạng folder
                                 </div>
@@ -1986,18 +1986,18 @@ const handleEditMetadata = async () => {
 
                               <div className="min-h-0 flex-1">
                                 <p
-                                  className="line-clamp-2 text-sm font-medium text-slate-900"
+                                  className="line-clamp-2 text-sm font-medium text-[var(--foreground)]"
                                   title={document.displayName || document.originalName}
                                 >
                                   {document.displayName || document.originalName}
                                 </p>
-                                <p className="mt-1 flex items-center gap-2 text-xs text-slate-500">
+                                <p className="mt-1 flex items-center gap-2 text-xs text-[var(--muted-foreground)]">
 
                                   <span>{formatBytes(document.size)} · {getFileTypeLabel(document.mimeType, document.extension)}</span>
                                 </p>
                               </div>
 
-                              <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 text-xs text-slate-500">
+                              <div className="mt-3 flex items-center justify-between border-t border-[var(--border)] pt-3 text-xs text-[var(--muted-foreground)]">
                                 <span>
                                   {isTrashView && (document as any).deletedAt 
                                     ? `Xóa lúc: ${format(new Date((document as any).deletedAt), "dd/MM/yyyy HH:mm")}`
@@ -2023,7 +2023,7 @@ const handleEditMetadata = async () => {
                         type="button"
                         onClick={isTrashView ? loadMoreTrashFiles : loadMoreFiles}
                         disabled={isTrashView ? isLoadingMoreTrashFiles : isLoadingMoreFiles}
-                        className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:border-blue-200 disabled:opacity-50"
+                        className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--foreground)] shadow-[var(--shadow-card)] transition-colors hover:bg-[var(--surface-subtle)] hover:border-blue-200 disabled:opacity-50"
                       >
                         {isLoadingMoreFiles ? "Đang tải..." : `Tải thêm tài liệu (${isTrashView ? (pagination?.totalDeletedFiles ?? 0) - displayDocs.length : (pagination?.totalFiles ?? 0) - displayDocs.length} còn lại)`}
                       </button>
@@ -2031,11 +2031,11 @@ const handleEditMetadata = async () => {
                   )}
                 </div>
               ) : (
-                <div className="flex flex-1 flex-col items-center justify-center p-8 text-center bg-slate-50/30">
-                  <div className="mb-4 rounded-full bg-slate-100 p-4 ring-8 ring-slate-50/50">
+                <div className="flex flex-1 flex-col items-center justify-center p-8 text-center bg-[var(--surface-subtle)]">
+                  <div className="mb-4 rounded-full bg-[var(--border)] p-4 ring-8 ring-slate-50/50">
                     <FileIcon className="h-10 w-10 text-slate-300" strokeWidth={1.5} />
                   </div>
-                  <h3 className="mb-1 text-base font-bold text-slate-900">
+                  <h3 className="mb-1 text-base font-bold text-[var(--foreground)]">
                     {searchQuery
                       ? "Không tìm thấy tài liệu phù hợp"
                       : isTrashView
@@ -2046,7 +2046,7 @@ const handleEditMetadata = async () => {
                           ? "Chưa có tài liệu nào"
                           : `Chưa có tài liệu trong thư mục ${selectedFolderDisplayName}`}
                   </h3>
-                  <p className="mb-6 max-w-[300px] text-sm text-slate-500">
+                  <p className="mb-6 max-w-[300px] text-sm text-[var(--muted-foreground)]">
                     {searchQuery
                       ? "Hãy thử thay đổi từ khóa tìm kiếm."
                       : isTrashView
@@ -2067,7 +2067,7 @@ const handleEditMetadata = async () => {
                       Xóa tìm kiếm
                     </Button>
                   ) : canUpload ? (
-                    <Button onClick={() => fileInputRef.current?.click()} className="shadow-sm shadow-blue-600/20">
+                    <Button onClick={() => fileInputRef.current?.click()} className="shadow-[var(--shadow-card)] shadow-blue-600/20">
                       <UploadCloud className="mr-2 h-4 w-4" />
                       Tải tài liệu lên thư mục này
                     </Button>
@@ -2140,16 +2140,16 @@ const handleEditMetadata = async () => {
             if (event.currentTarget === event.target) closeUploadDialog();
           }}
         >
-          <div className="w-full max-w-lg overflow-hidden rounded-xl bg-white shadow-2xl">
-            <div className="flex items-start justify-between border-b border-slate-200 px-5 py-4">
+          <div className="w-full max-w-lg overflow-hidden rounded-[var(--radius-xl)] bg-[var(--surface)] shadow-2xl">
+            <div className="flex items-start justify-between border-b border-[var(--border)] px-5 py-4">
               <div>
                 <h3
                   id="upload-dialog-title"
-                  className="text-lg font-bold text-slate-900"
+                  className="text-lg font-bold text-[var(--foreground)]"
                 >
                   Kiểm tra trước khi tải lên
                 </h3>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm text-[var(--muted-foreground)]">
                   Xác nhận đúng file, tên và thư mục đích.
                 </p>
               </div>
@@ -2157,7 +2157,7 @@ const handleEditMetadata = async () => {
                 type="button"
                 onClick={closeUploadDialog}
                 disabled={isUploading}
-                className="rounded-md p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50"
+                className="rounded-[var(--radius-md)] p-2 text-[var(--muted-foreground)] opacity-70 hover:bg-[var(--border)] hover:text-[var(--foreground)] disabled:opacity-50"
                 aria-label="Đóng hộp thoại upload"
               >
                 <X className="h-5 w-5" />
@@ -2165,17 +2165,17 @@ const handleEditMetadata = async () => {
             </div>
 
             <div className="space-y-4 px-5 py-5">
-              <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <div className="flex items-center gap-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-subtle)] p-3">
                 <FileIconForDocument
                   mime={pendingUpload.file.type}
                   extension={`.${pendingUpload.file.name.split(".").pop() || ""}`}
                   className="h-10 w-10"
                 />
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-slate-900">
+                  <p className="truncate text-sm font-semibold text-[var(--foreground)]">
                     {pendingUpload.file.name}
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-[var(--muted-foreground)]">
                     {formatBytes(pendingUpload.file.size)} ·{" "}
                     {pendingUpload.file.type || "Không rõ MIME"}
                   </p>
@@ -2183,12 +2183,12 @@ const handleEditMetadata = async () => {
               </div>
 
               {(isUploading || uploadProgress > 0 || uploadError) && (
-                <div className="rounded-lg border border-slate-200 bg-white p-3">
-                  <div className="mb-2 flex items-center justify-between gap-3 text-xs font-semibold text-slate-600">
+                <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-3">
+                  <div className="mb-2 flex items-center justify-between gap-3 text-xs font-semibold text-[var(--muted-foreground)]">
                     <span>{uploadError ? "Upload cần xử lý" : "Đang truyền dữ liệu"}</span>
                     <span>{uploadProgress}%</span>
                   </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-2 overflow-hidden rounded-full bg-[var(--border)]">
                     <div
                       className={`h-full rounded-full transition-all ${uploadError ? "bg-amber-500" : "bg-blue-600"}`}
                       style={{ width: `${Math.max(uploadProgress, uploadError ? 100 : 0)}%` }}
@@ -2203,7 +2203,7 @@ const handleEditMetadata = async () => {
               <div>
                 <label
                   htmlFor="document-display-name"
-                  className="mb-1.5 block text-sm font-semibold text-slate-700"
+                  className="mb-1.5 block text-sm font-semibold text-[var(--foreground)]"
                 >
                   Tên hiển thị
                 </label>
@@ -2217,35 +2217,35 @@ const handleEditMetadata = async () => {
                         : current,
                     )
                   }
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   autoFocus
                 />
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-[var(--muted-foreground)]">
                   Phần mở rộng file được giữ nguyên để tránh sai định dạng.
                 </p>
               </div>
 
               <div>
-                <label className="mb-1.5 block text-sm font-semibold text-slate-700">Ghi chú</label>
+                <label className="mb-1.5 block text-sm font-semibold text-[var(--foreground)]">Ghi chú</label>
                 <textarea autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                   value={pendingUpload.note}
                   onChange={(e) => setPendingUpload(c => c ? { ...c, note: e.target.value } : c)}
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   rows={2}
                 />
               </div>
 
-              <div className="mt-4 space-y-1 border-t border-slate-100 pt-3 text-xs text-slate-500">
+              <div className="mt-4 space-y-1 border-t border-[var(--border)] pt-3 text-xs text-[var(--muted-foreground)]">
                 <p>
                   Lưu vào:{" "}
-                  <span className="font-semibold text-slate-800">
+                  <span className="font-semibold text-[var(--foreground)]">
                     {formatDocumentFolderName(selectedFolderData.name)}
                   </span>
                 </p>
                 {selectedParentFolder && (
                   <p>
                     Trong:{" "}
-                    <span className="font-medium text-slate-700">
+                    <span className="font-medium text-[var(--foreground)]">
                       {formatDocumentFolderName(selectedParentFolder.name)}
                     </span>
                   </p>
@@ -2253,7 +2253,7 @@ const handleEditMetadata = async () => {
               </div>
             </div>
 
-            <div className="flex flex-col-reverse gap-2 border-t border-slate-200 bg-slate-50 px-5 py-4 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-2 border-t border-[var(--border)] bg-[var(--surface-subtle)] px-5 py-4 sm:flex-row sm:justify-end">
               <Button
                 variant="outline"
                 onClick={isUploading ? cancelUpload : closeUploadDialog}
@@ -2302,31 +2302,31 @@ const handleEditMetadata = async () => {
 
       {editMetadataModal.isOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
-          <div className="w-full max-w-md rounded-xl bg-white shadow-2xl">
-            <div className="border-b border-slate-200 px-5 py-4">
-              <h3 className="text-lg font-bold text-slate-900">Đổi tên / Ghi chú</h3>
+          <div className="w-full max-w-md rounded-[var(--radius-xl)] bg-[var(--surface)] shadow-2xl">
+            <div className="border-b border-[var(--border)] px-5 py-4">
+              <h3 className="text-lg font-bold text-[var(--foreground)]">Đổi tên / Ghi chú</h3>
             </div>
             <div className="space-y-4 p-5">
               <div>
-                <label className="mb-1 block text-sm font-semibold text-slate-700">Tên hiển thị</label>
+                <label className="mb-1 block text-sm font-semibold text-[var(--foreground)]">Tên hiển thị</label>
                 <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                   value={editMetadataModal.displayName}
                   onChange={(e) => setEditMetadataModal(c => ({ ...c, displayName: e.target.value }))}
-                  className="w-full rounded-md border border-slate-200 bg-white text-slate-900 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-semibold text-slate-700">Ghi chú</label>
+                <label className="mb-1 block text-sm font-semibold text-[var(--foreground)]">Ghi chú</label>
                 <textarea autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
                   value={editMetadataModal.note}
                   onChange={(e) => setEditMetadataModal(c => ({ ...c, note: e.target.value }))}
-                  className="w-full rounded-md border border-slate-200 bg-white text-slate-900 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] text-[var(--foreground)] px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   rows={3}
                 />
               </div>
             </div>
-            <div className="flex justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-4 rounded-b-xl">
+            <div className="flex justify-end gap-2 border-t border-[var(--border)] bg-[var(--surface-subtle)] px-5 py-4 rounded-b-xl">
               <Button variant="outline" onClick={() => setEditMetadataModal(c => ({ ...c, isOpen: false }))}>Hủy</Button>
               <Button onClick={handleEditMetadata}>Lưu thay đổi</Button>
             </div>
@@ -2478,22 +2478,22 @@ const handleEditMetadata = async () => {
             <FolderNode key={folder.id} folder={folder} />
           ))}
           {rootFolders.length === 0 && (
-            <p className="py-4 text-center text-sm text-slate-500">
+            <p className="py-4 text-center text-sm text-[var(--muted-foreground)]">
               Chưa có thư mục
             </p>
           )}
         </div>
         
-        <div className="border-t border-slate-200 p-2 mt-auto shrink-0">
+        <div className="border-t border-[var(--border)] p-2 mt-auto shrink-0">
           <div
-            className={`group flex min-h-12 cursor-pointer items-center gap-3 rounded-xl px-4 py-3 transition-colors hover:bg-red-50 ${isTrashView ? "bg-red-50 text-red-700 shadow-sm ring-1 ring-red-100" : "text-slate-700"
+            className={`group flex min-h-12 cursor-pointer items-center gap-3 rounded-[var(--radius-xl)] px-4 py-3 transition-colors hover:bg-red-50 ${isTrashView ? "bg-red-50 text-red-700 shadow-[var(--shadow-card)] ring-1 ring-red-100" : "text-[var(--foreground)]"
               }`}
             onClick={() => {
               setTrashState(true, null);
               setIsMobileNavOpen(false);
             }}
           >
-            <Trash2 className={`h-5 w-5 shrink-0 ${isTrashView ? "text-red-600" : "text-slate-400"}`} />
+            <Trash2 className={`h-5 w-5 shrink-0 ${isTrashView ? "text-red-600" : "text-[var(--muted-foreground)] opacity-70"}`} />
             <span className="truncate text-[15px] font-medium">
               Thùng rác
             </span>
@@ -2529,9 +2529,9 @@ function RenameDialog({
         if (event.currentTarget === event.target) onClose();
       }}
     >
-      <div className="w-full max-w-sm overflow-hidden rounded-xl bg-white shadow-xl">
-        <div className="border-b border-slate-100 px-5 py-4">
-          <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+      <div className="w-full max-w-sm overflow-hidden rounded-[var(--radius-xl)] bg-[var(--surface)] shadow-xl">
+        <div className="border-b border-[var(--border)] px-5 py-4">
+          <h3 className="text-lg font-bold text-[var(--foreground)]">{title}</h3>
         </div>
         <div className="px-5 py-4">
           <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
@@ -2539,14 +2539,14 @@ function RenameDialog({
             value={value}
             onChange={(event) => onChange(event.target.value)}
             onKeyDown={(event) => event.key === "Enter" && onSave()}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="w-full rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--foreground)] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             autoFocus
           />
           {helperText && (
-            <p className="mt-2 text-xs leading-5 text-slate-500">{helperText}</p>
+            <p className="mt-2 text-xs leading-5 text-[var(--muted-foreground)]">{helperText}</p>
           )}
         </div>
-        <div className="flex justify-end gap-2 border-t border-slate-100 bg-slate-50 px-5 py-3">
+        <div className="flex justify-end gap-2 border-t border-[var(--border)] bg-[var(--surface-subtle)] px-5 py-3">
           <Button variant="outline" onClick={onClose}>
             Hủy
           </Button>
@@ -2670,10 +2670,10 @@ export function DocumentContextMenu({
   const contentUI = (
     <div className={`flex flex-col gap-1 ${isMobile ? "w-full overflow-y-auto max-h-[70vh] p-4 pb-8" : ""}`}>
       {isMobile && (
-        <div className="mb-4 flex items-center justify-between pb-2 border-b border-slate-100">
-          <h4 className="font-bold text-slate-800 text-base">Tùy chọn</h4>
-          <button onClick={onClose} className="p-2 rounded-full bg-slate-100 hover:bg-slate-200">
-            <X className="h-5 w-5 text-slate-600" />
+        <div className="mb-4 flex items-center justify-between pb-2 border-b border-[var(--border)]">
+          <h4 className="font-bold text-[var(--foreground)] text-base">Tùy chọn</h4>
+          <button onClick={onClose} className="p-2 rounded-full bg-[var(--border)] hover:bg-slate-200">
+            <X className="h-5 w-5 text-[var(--muted-foreground)]" />
           </button>
         </div>
       )}
@@ -2684,40 +2684,40 @@ export function DocumentContextMenu({
             <>
               {contextMenu.targetId && (
                 <>
-                  <button onClick={() => { onBack(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+                  <button onClick={() => { onBack(); onClose(); }} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
                     <ArrowLeft className="h-4 w-4" />
                     Quay lại
                   </button>
-                  <button onClick={() => { onRestore?.(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+                  <button onClick={() => { onRestore?.(); onClose(); }} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
                     <FolderOpen className="h-4 w-4" />
                     Khôi phục thư mục hiện tại
                   </button>
-                  <button onClick={() => { onPermanentDelete?.(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-red-50 text-red-600">
+                  <button onClick={() => { onPermanentDelete?.(); onClose(); }} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-red-50 text-red-600">
                     <Trash2 className="h-4 w-4" />
                     Xóa vĩnh viễn thư mục hiện tại
                   </button>
-                  <div className="my-1 h-px bg-slate-100"></div>
+                  <div className="my-1 h-px bg-[var(--border)]"></div>
                 </>
               )}
-              <button onClick={() => { onRefresh(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+              <button onClick={() => { onRefresh(); onClose(); }} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
                 Làm mới
               </button>
             </>
           )}
           {contextMenu.type === "folder" && (
-            <button onClick={() => { onOpen(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+            <button onClick={() => { onOpen(); onClose(); }} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
               <FolderOpen className="h-4 w-4" />
               Mở / Xem nội dung
             </button>
           )}
           {contextMenu.type === "file" && (
             <>
-              <button onClick={() => { onOpen(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+              <button onClick={() => { onOpen(); onClose(); }} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
                 <Eye className="h-4 w-4" />
                 Xem chi tiết
               </button>
-              <button onClick={() => { onDownload(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+              <button onClick={() => { onDownload(); onClose(); }} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
                 <Download className="h-4 w-4" />
                 Tải xuống
               </button>
@@ -2725,12 +2725,12 @@ export function DocumentContextMenu({
           )}
           {contextMenu.type !== "workspace" && (
             <>
-              <div className="my-1 h-px bg-slate-100"></div>
-              <button onClick={() => { onRestore?.(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+              <div className="my-1 h-px bg-[var(--border)]"></div>
+              <button onClick={() => { onRestore?.(); onClose(); }} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                 Khôi phục
               </button>
-              <button onClick={() => { onPermanentDelete?.(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-red-50 text-red-600">
+              <button onClick={() => { onPermanentDelete?.(); onClose(); }} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-red-50 text-red-600">
                 <Trash2 className="h-4 w-4" />
                 Xóa vĩnh viễn
               </button>
@@ -2740,26 +2740,26 @@ export function DocumentContextMenu({
       ) : contextMenu.type === "workspace" ? (
         <>
           {contextMenu.targetId && (
-            <button onClick={() => { onCopyLink(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+            <button onClick={() => { onCopyLink(); onClose(); }} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
               <Copy className="h-4 w-4" />
               Sao chép đường dẫn thư mục
             </button>
           )}
-          <button onClick={() => { onUpload(); onClose(); }} disabled={!canUpload} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 disabled:opacity-50 disabled:hover:bg-transparent text-slate-700">
+          <button onClick={() => { onUpload(); onClose(); }} disabled={!canUpload} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] disabled:opacity-50 disabled:hover:bg-transparent text-[var(--foreground)]">
             <UploadCloud className="h-4 w-4" />
             Tải tài liệu lên
           </button>
-          <button onClick={() => { onCreateFolder(); onClose(); }} disabled={!canCreateFolder} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 disabled:opacity-50 disabled:hover:bg-transparent text-slate-700">
+          <button onClick={() => { onCreateFolder(); onClose(); }} disabled={!canCreateFolder} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] disabled:opacity-50 disabled:hover:bg-transparent text-[var(--foreground)]">
             <FolderPlus className="h-4 w-4" />
             Tạo mục bên trong
           </button>
-          <div className="my-1 h-px bg-slate-100"></div>
-          <button onClick={() => { onRefresh(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+          <div className="my-1 h-px bg-[var(--border)]"></div>
+          <button onClick={() => { onRefresh(); onClose(); }} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
             Làm mới
           </button>
           {contextMenu.targetId && (
-            <button onClick={() => { onDeselect(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+            <button onClick={() => { onDeselect(); onClose(); }} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
               <X className="h-4 w-4" />
               Bỏ chọn thư mục
             </button>
@@ -2767,62 +2767,62 @@ export function DocumentContextMenu({
         </>
       ) : contextMenu.type === "folder" ? (
         <>
-          <button onClick={() => { onUpload(); onClose(); }} disabled={!canUpload} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 disabled:opacity-50 disabled:hover:bg-transparent text-slate-700">
+          <button onClick={() => { onUpload(); onClose(); }} disabled={!canUpload} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] disabled:opacity-50 disabled:hover:bg-transparent text-[var(--foreground)]">
             <UploadCloud className="h-4 w-4" />
             Tải tài liệu lên đây
           </button>
-          <button onClick={() => { onCreateFolder(); onClose(); }} disabled={!canCreateFolder} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 disabled:opacity-50 disabled:hover:bg-transparent text-slate-700">
+          <button onClick={() => { onCreateFolder(); onClose(); }} disabled={!canCreateFolder} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] disabled:opacity-50 disabled:hover:bg-transparent text-[var(--foreground)]">
             <FolderPlus className="h-4 w-4" />
             Tạo mục bên trong
           </button>
-          <div className="my-1 h-px bg-slate-100"></div>
-          <button onClick={() => { onOpen(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+          <div className="my-1 h-px bg-[var(--border)]"></div>
+          <button onClick={() => { onOpen(); onClose(); }} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
             <FolderOpen className="h-4 w-4" />
             Mở thư mục
           </button>
-          <button onClick={() => { onRename(); onClose(); }} disabled={!canRename} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 disabled:opacity-50 disabled:hover:bg-transparent text-slate-700">
+          <button onClick={() => { onRename(); onClose(); }} disabled={!canRename} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] disabled:opacity-50 disabled:hover:bg-transparent text-[var(--foreground)]">
             <Pencil className="h-4 w-4" />
             Đổi tên
           </button>
-          <button onClick={() => { onCopyLink(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+          <button onClick={() => { onCopyLink(); onClose(); }} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
             <Copy className="h-4 w-4" />
             Sao chép đường dẫn
           </button>
-          <div className="my-1 h-px bg-slate-100"></div>
-          <button onClick={() => { onDelete(); onClose(); }} disabled={!canDelete} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-red-50 disabled:opacity-50 disabled:hover:bg-transparent text-red-600">
+          <div className="my-1 h-px bg-[var(--border)]"></div>
+          <button onClick={() => { onDelete(); onClose(); }} disabled={!canDelete} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-red-50 disabled:opacity-50 disabled:hover:bg-transparent text-red-600">
             <Trash2 className="h-4 w-4" />
             Chuyển vào thùng rác
           </button>
         </>
       ) : (
         <>
-          <button onClick={() => { onOpen(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+          <button onClick={() => { onOpen(); onClose(); }} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
             <Eye className="h-4 w-4" />
             Xem chi tiết
           </button>
-          <button onClick={() => { onOpenInNewTab(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+          <button onClick={() => { onOpenInNewTab(); onClose(); }} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
             <ExternalLink className="h-4 w-4" />
             Mở thẻ mới
           </button>
-          <button onClick={() => { onDownload(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+          <button onClick={() => { onDownload(); onClose(); }} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
             <Download className="h-4 w-4" />
             Tải xuống
           </button>
-          <div className="my-1 h-px bg-slate-100"></div>
-          <button onClick={() => { onEditMetadata(); onClose(); }} disabled={!canRename} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 disabled:opacity-50 disabled:hover:bg-transparent text-slate-700">
+          <div className="my-1 h-px bg-[var(--border)]"></div>
+          <button onClick={() => { onEditMetadata(); onClose(); }} disabled={!canRename} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] disabled:opacity-50 disabled:hover:bg-transparent text-[var(--foreground)]">
             <Pencil className="h-4 w-4" />
             Chỉnh sửa metadata
           </button>
-          <button onClick={() => { onRename(); onClose(); }} disabled={!canRename} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 disabled:opacity-50 disabled:hover:bg-transparent text-slate-700">
+          <button onClick={() => { onRename(); onClose(); }} disabled={!canRename} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] disabled:opacity-50 disabled:hover:bg-transparent text-[var(--foreground)]">
             <Pencil className="h-4 w-4" />
             Đổi tên file
           </button>
-          <button onClick={() => { onCopyLink(); onClose(); }} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+          <button onClick={() => { onCopyLink(); onClose(); }} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
             <Copy className="h-4 w-4" />
             Sao chép liên kết
           </button>
-          <div className="my-1 h-px bg-slate-100"></div>
-          <button onClick={() => { onDelete(); onClose(); }} disabled={!canDelete} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-red-50 disabled:opacity-50 disabled:hover:bg-transparent text-red-600">
+          <div className="my-1 h-px bg-[var(--border)]"></div>
+          <button onClick={() => { onDelete(); onClose(); }} disabled={!canDelete} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-red-50 disabled:opacity-50 disabled:hover:bg-transparent text-red-600">
             <Trash2 className="h-4 w-4" />
             Chuyển vào thùng rác
           </button>
@@ -2841,7 +2841,7 @@ export function DocumentContextMenu({
       >
         <div 
           ref={menuRef}
-          className="w-full max-h-[85vh] rounded-t-2xl bg-white shadow-2xl transition-transform"
+          className="w-full max-h-[85vh] rounded-t-2xl bg-[var(--surface)] shadow-2xl transition-transform"
           onClick={(e) => e.stopPropagation()}
         >
           {contentUI}
@@ -2850,7 +2850,7 @@ export function DocumentContextMenu({
     ) : (
       <div
         ref={menuRef}
-        className="fixed z-[9999] min-w-[220px] max-w-[calc(100vw-24px)] rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xl overflow-hidden hidden sm:block"
+        className="fixed z-[9999] min-w-[220px] max-w-[calc(100vw-24px)] rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-1.5 shadow-2xl overflow-hidden hidden sm:block"
         style={{ top: position.y !== null ? position.y : contextMenu.y, left: position.x !== null ? position.x : contextMenu.x, opacity: position.x !== null ? 1 : 0 }}
         onClick={(e) => e.stopPropagation()}
         onContextMenu={(e) => e.preventDefault()}

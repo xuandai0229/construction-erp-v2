@@ -475,16 +475,16 @@ export function ReportsWorkspace({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900">Báo cáo hiện trường</h1>
-            <p className="hidden sm:block text-sm text-slate-500 mt-0.5">
+            <h1 className="text-xl sm:text-2xl font-bold text-[var(--foreground)]">Báo cáo hiện trường</h1>
+            <p className="hidden sm:block text-sm text-[var(--muted-foreground)] mt-0.5">
               Quản lý báo cáo ngày, báo cáo tuần và phát sinh tại công trường
               {globalContext?.selectedProjectId && (
-                <span className="ml-2 inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-200">
+                <span className="ml-2 inline-flex items-center rounded-[var(--radius-md)] bg-[var(--border)] px-2 py-0.5 text-xs font-medium text-[var(--muted-foreground)] ring-1 ring-inset ring-slate-200">
                   {activeProjects.find(p => p.id === globalContext.selectedProjectId)?.name || 'Công trình đang chọn'}
                 </span>
               )}
               {searchParams.get("reportId") && (
-                <span className="ml-2 inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                <span className="ml-2 inline-flex items-center rounded-[var(--radius-md)] bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
                   Đang lọc 1 báo cáo
                 </span>
               )}
@@ -521,89 +521,89 @@ export function ReportsWorkspace({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-2">
         <div 
           onClick={() => handleQuickFilter('')}
-          className={`rounded-xl p-3 border flex items-center justify-between cursor-pointer transition-colors shadow-sm ${
+          className={`rounded-[var(--radius-xl)] p-3 border flex items-center justify-between cursor-pointer transition-colors shadow-[var(--shadow-card)] ${
             !statusFilter && tab === 'all'
               ? 'bg-blue-50/50 border-blue-400 ring-1 ring-blue-400' 
-              : 'bg-white border-slate-200 hover:bg-slate-50'
+              : 'bg-[var(--surface)] border-[var(--border)] hover:bg-[var(--surface-subtle)]'
           }`}
         >
           <div className="flex items-center gap-2.5">
-            <div className="p-1.5 rounded-lg bg-blue-50 text-blue-600">
+            <div className="p-1.5 rounded-[var(--radius-lg)] bg-blue-50 text-blue-600">
               <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h3 className="font-semibold text-[13px] sm:text-sm text-slate-700">Tổng báo cáo</h3>
+              <h3 className="font-semibold text-[13px] sm:text-sm text-[var(--foreground)]">Tổng báo cáo</h3>
             </div>
           </div>
-          <span className="text-lg sm:text-xl font-bold text-slate-800">{stats.total}</span>
+          <span className="text-lg sm:text-xl font-bold text-[var(--foreground)]">{stats.total}</span>
         </div>
 
         <div 
           onClick={() => handleQuickFilter('SUBMITTED')}
-          className={`rounded-xl p-3 border flex items-center justify-between cursor-pointer transition-colors shadow-sm ${
+          className={`rounded-[var(--radius-xl)] p-3 border flex items-center justify-between cursor-pointer transition-colors shadow-[var(--shadow-card)] ${
             statusFilter === 'SUBMITTED'
               ? 'bg-amber-50 border-amber-400 ring-1 ring-amber-400' 
               : stats.pending === 0 
-                ? 'bg-slate-50 border-slate-200 opacity-80 hover:opacity-100' 
+                ? 'bg-[var(--surface-subtle)] border-[var(--border)] opacity-80 hover:opacity-100' 
                 : 'bg-amber-50 border-amber-200 hover:bg-amber-100'
           }`}
         >
           <div className="flex items-center gap-2.5">
-            <div className={`p-1.5 rounded-lg ${stats.pending === 0 ? 'bg-slate-200 text-slate-500' : 'bg-amber-100 text-amber-600'}`}>
+            <div className={`p-1.5 rounded-[var(--radius-lg)] ${stats.pending === 0 ? 'bg-slate-200 text-[var(--muted-foreground)]' : 'bg-amber-100 text-amber-600'}`}>
               <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h3 className={`font-semibold text-[13px] sm:text-sm ${stats.pending === 0 ? 'text-slate-600' : 'text-amber-900'}`}>Chờ duyệt</h3>
+              <h3 className={`font-semibold text-[13px] sm:text-sm ${stats.pending === 0 ? 'text-[var(--muted-foreground)]' : 'text-amber-900'}`}>Chờ duyệt</h3>
             </div>
           </div>
-          <span className={`text-lg sm:text-xl font-bold ${stats.pending === 0 ? 'text-slate-500' : 'text-amber-700'}`}>{stats.pending}</span>
+          <span className={`text-lg sm:text-xl font-bold ${stats.pending === 0 ? 'text-[var(--muted-foreground)]' : 'text-amber-700'}`}>{stats.pending}</span>
         </div>
         
         <div 
           onClick={() => handleQuickFilter('APPROVED')}
-          className={`rounded-xl p-3 border flex items-center justify-between cursor-pointer transition-colors shadow-sm ${
+          className={`rounded-[var(--radius-xl)] p-3 border flex items-center justify-between cursor-pointer transition-colors shadow-[var(--shadow-card)] ${
             statusFilter === 'APPROVED'
               ? 'bg-emerald-50 border-emerald-400 ring-1 ring-emerald-400' 
               : stats.approved === 0 
-                ? 'bg-slate-50 border-slate-200 opacity-80 hover:opacity-100' 
+                ? 'bg-[var(--surface-subtle)] border-[var(--border)] opacity-80 hover:opacity-100' 
                 : 'bg-emerald-50 border-emerald-200 hover:bg-emerald-100'
           }`}
         >
           <div className="flex items-center gap-2.5">
-            <div className={`p-1.5 rounded-lg ${stats.approved === 0 ? 'bg-slate-200 text-slate-500' : 'bg-emerald-100 text-emerald-600'}`}>
+            <div className={`p-1.5 rounded-[var(--radius-lg)] ${stats.approved === 0 ? 'bg-slate-200 text-[var(--muted-foreground)]' : 'bg-emerald-100 text-emerald-600'}`}>
               <CheckSquare className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h3 className={`font-semibold text-[13px] sm:text-sm ${stats.approved === 0 ? 'text-slate-600' : 'text-emerald-900'}`}>Đã duyệt</h3>
+              <h3 className={`font-semibold text-[13px] sm:text-sm ${stats.approved === 0 ? 'text-[var(--muted-foreground)]' : 'text-emerald-900'}`}>Đã duyệt</h3>
             </div>
           </div>
-          <span className={`text-lg sm:text-xl font-bold ${stats.approved === 0 ? 'text-slate-500' : 'text-emerald-700'}`}>{stats.approved}</span>
+          <span className={`text-lg sm:text-xl font-bold ${stats.approved === 0 ? 'text-[var(--muted-foreground)]' : 'text-emerald-700'}`}>{stats.approved}</span>
         </div>
         
         <div 
           onClick={() => handleQuickFilter('REJECTED')}
-          className={`rounded-xl p-3 border flex items-center justify-between cursor-pointer transition-colors shadow-sm ${
+          className={`rounded-[var(--radius-xl)] p-3 border flex items-center justify-between cursor-pointer transition-colors shadow-[var(--shadow-card)] ${
             statusFilter === 'REJECTED'
               ? 'bg-red-50 border-red-400 ring-1 ring-red-400' 
               : stats.rejected === 0 
-                ? 'bg-slate-50 border-slate-200 opacity-80 hover:opacity-100' 
+                ? 'bg-[var(--surface-subtle)] border-[var(--border)] opacity-80 hover:opacity-100' 
                 : 'bg-red-50 border-red-200 hover:bg-red-100'
           }`}
         >
           <div className="flex items-center gap-2.5">
-            <div className={`p-1.5 rounded-lg ${stats.rejected === 0 ? 'bg-slate-200 text-slate-500' : 'bg-red-100 text-red-600'}`}>
+            <div className={`p-1.5 rounded-[var(--radius-lg)] ${stats.rejected === 0 ? 'bg-slate-200 text-[var(--muted-foreground)]' : 'bg-red-100 text-red-600'}`}>
               <XCircle className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h3 className={`font-semibold text-[13px] sm:text-sm ${stats.rejected === 0 ? 'text-slate-600' : 'text-red-900'}`}>Từ chối</h3>
+              <h3 className={`font-semibold text-[13px] sm:text-sm ${stats.rejected === 0 ? 'text-[var(--muted-foreground)]' : 'text-red-900'}`}>Từ chối</h3>
             </div>
           </div>
-          <span className={`text-lg sm:text-xl font-bold ${stats.rejected === 0 ? 'text-slate-500' : 'text-red-700'}`}>{stats.rejected}</span>
+          <span className={`text-lg sm:text-xl font-bold ${stats.rejected === 0 ? 'text-[var(--muted-foreground)]' : 'text-red-700'}`}>{stats.rejected}</span>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center justify-between overflow-x-auto pb-1 scrollbar-hide border-b border-slate-200 gap-4">
+      <div className="flex items-center justify-between overflow-x-auto pb-1 scrollbar-hide border-b border-[var(--border)] gap-4">
         <div className="flex gap-2">
           {[
             { id: 'all', label: 'Tất cả' },
@@ -616,22 +616,22 @@ export function ReportsWorkspace({
               className={`whitespace-nowrap px-3 py-1.5 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === t.id
                   ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                  : 'border-transparent text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:border-[var(--border)]'
               }`}
             >
               {t.label}
             </button>
           ))}
         </div>
-        <div className="hidden sm:flex text-[11px] text-slate-500 gap-3 whitespace-nowrap">
-          <span className="font-semibold text-slate-700">Tổng: {stats.total}</span>
+        <div className="hidden sm:flex text-[11px] text-[var(--muted-foreground)] gap-3 whitespace-nowrap">
+          <span className="font-semibold text-[var(--foreground)]">Tổng: {stats.total}</span>
           <span>Duyệt: <span className="text-emerald-600 font-medium">{stats.approved}</span></span>
           <span>Từ chối: <span className="text-red-600 font-medium">{stats.rejected}</span></span>
         </div>
       </div>
 
       {/* Toolbar */}
-      <div className={`${isMobileFilterOpen ? 'block' : 'hidden'} sm:block sticky top-16 z-30 -mx-1 px-1 py-2 bg-slate-50/95 backdrop-blur supports-[backdrop-filter]:bg-slate-50/80`}>
+      <div className={`${isMobileFilterOpen ? 'block' : 'hidden'} sm:block sticky top-16 z-30 -mx-1 px-1 py-2 bg-[var(--surface-subtle)] backdrop-blur supports-[backdrop-filter]:bg-[var(--surface-subtle)]`}>
         <ReportsToolbar
           search={search}
           onSearchChange={handleSearchChange}
@@ -729,7 +729,7 @@ export function ReportsWorkspace({
         title="Xóa báo cáo?"
         description={
           <>
-            Báo cáo <strong className="text-slate-900">{deleteReport?.reportNo}</strong> sẽ
+            Báo cáo <strong className="text-[var(--foreground)]">{deleteReport?.reportNo}</strong> sẽ
             được ẩn khỏi danh sách. Dữ liệu vẫn được lưu trong hệ thống để truy vết.
           </>
         }

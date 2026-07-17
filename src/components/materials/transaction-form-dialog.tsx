@@ -96,9 +96,9 @@ export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting,
 
   return (
     <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/40 p-0 backdrop-blur-sm sm:items-center sm:p-4">
-      <div className="flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl sm:rounded-xl">
-        <div className="flex justify-between items-center p-4 border-b border-slate-100">
-          <h2 className="text-lg font-bold text-slate-800">
+      <div className="flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl bg-[var(--surface)] shadow-xl sm:rounded-[var(--radius-xl)]">
+        <div className="flex justify-between items-center p-4 border-b border-[var(--border)]">
+          <h2 className="text-lg font-bold text-[var(--foreground)]">
             {isImport ? "Nhập kho" : "Xuất kho"}
           </h2>
           <CloseButton onClick={onClose} tone="neutral" />
@@ -106,13 +106,13 @@ export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting,
         
         <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto p-4 pb-[calc(96px+env(safe-area-inset-bottom))]">
           {error && (
-            <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-100">
+            <div className="p-3 bg-red-50 text-red-600 text-sm rounded-[var(--radius-lg)] border border-red-100">
               {error}
             </div>
           )}
 
           <div>
-            <label htmlFor="transaction-material" className="block text-sm font-medium text-slate-700 mb-1">Vật tư <span className="text-red-500">*</span></label>
+            <label htmlFor="transaction-material" className="block text-sm font-medium text-[var(--foreground)] mb-1">Vật tư <span className="text-red-500">*</span></label>
             <EnterpriseCombobox
               id="transaction-material"
               value={formData.materialItemId} 
@@ -123,18 +123,18 @@ export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting,
               emptyMessage="Không tìm thấy vật tư phù hợp."
             />
             {formData.materialItemId && selectedMaterial && (
-              <div className="mt-2 grid grid-cols-3 gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs">
+              <div className="mt-2 grid grid-cols-3 gap-2 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface-subtle)] p-2 text-xs">
                 <div>
-                  <div className="text-slate-500">Tồn hiện tại</div>
-                  <div className="font-semibold text-slate-900">{formatQuantity(currentStock)} {selectedMaterial.unit}</div>
+                  <div className="text-[var(--muted-foreground)]">Tồn hiện tại</div>
+                  <div className="font-semibold text-[var(--foreground)]">{formatQuantity(currentStock)} {selectedMaterial.unit}</div>
                 </div>
                 <div>
-                  <div className="text-slate-500">Đơn vị</div>
-                  <div className="font-semibold text-slate-900">{selectedMaterial.unit}</div>
+                  <div className="text-[var(--muted-foreground)]">Đơn vị</div>
+                  <div className="font-semibold text-[var(--foreground)]">{selectedMaterial.unit}</div>
                 </div>
                 <div>
-                  <div className="text-slate-500">Tồn sau</div>
-                  <div className={`font-semibold ${isOverStock ? "text-rose-700" : "text-slate-900"}`}>
+                  <div className="text-[var(--muted-foreground)]">Tồn sau</div>
+                  <div className={`font-semibold ${isOverStock ? "text-rose-700" : "text-[var(--foreground)]"}`}>
                     {stockAfter === null ? "—" : `${formatQuantity(stockAfter)} ${selectedMaterial.unit}`}
                   </div>
                 </div>
@@ -144,23 +144,23 @@ export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting,
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="transaction-quantity" className="block text-sm font-medium text-slate-700 mb-1">Số lượng {isImport ? 'nhập kho thật' : 'xuất kho thật'} <span className="text-red-500">*</span></label>
+              <label htmlFor="transaction-quantity" className="block text-sm font-medium text-[var(--foreground)] mb-1">Số lượng {isImport ? 'nhập kho thật' : 'xuất kho thật'} <span className="text-red-500">*</span></label>
               <div className="relative">
                 <NumericInput 
                   id="transaction-quantity"
                   value={formData.quantity} 
                   onChange={val => setFormData({ ...formData, quantity: val })}
                   placeholder="0.00"
-                  className="w-full h-10 pl-3 pr-10 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-right"
+                  className="w-full h-10 pl-3 pr-10 text-sm rounded-[var(--radius-lg)] border border-[var(--border)] focus:outline-none focus:ring-2 focus:ring-blue-500 text-right"
                   required
                 />
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-500 text-sm">
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-[var(--muted-foreground)] text-sm">
                   {selectedMaterial?.unit || ""}
                 </div>
               </div>
             </div>
             <div>
-              <label htmlFor="transaction-date" className="block text-sm font-medium text-slate-700 mb-1">Ngày giao dịch <span className="text-red-500">*</span></label>
+              <label htmlFor="transaction-date" className="block text-sm font-medium text-[var(--foreground)] mb-1">Ngày giao dịch <span className="text-red-500">*</span></label>
               <DateTimeFieldVN 
                 id="transaction-date"
                 value={formData.movementDate} 
@@ -176,13 +176,13 @@ export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting,
           </div>
 
           <div>
-            <label htmlFor="transaction-notes" className="block text-sm font-medium text-slate-700 mb-1">Ghi chú</label>
+            <label htmlFor="transaction-notes" className="block text-sm font-medium text-[var(--foreground)] mb-1">Ghi chú</label>
             <textarea autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" 
               id="transaction-notes"
               value={formData.notes} 
               onChange={e => setFormData({ ...formData, notes: e.target.value })}
               placeholder={isImport ? "Biển số xe, người giao..." : "Người nhận, hạng mục thi công..."}
-              className="w-full p-3 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none h-20"
+              className="w-full p-3 text-sm rounded-[var(--radius-lg)] border border-[var(--border)] focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none h-20"
             />
           </div>
 

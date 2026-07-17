@@ -1,5 +1,5 @@
 import { WorkManagementDomainError, type WorkManagementErrorCode } from "../errors/codes";
-import { evaluateTaskTransition, type DomainEvent } from "./workflow";
+import { evaluateTaskTransition, type DomainEvent, type TransitionTarget } from "./workflow";
 import type { TaskAction, TaskState } from "./types";
 
 export type WorkManagementTransitionPolicyKey =
@@ -25,6 +25,7 @@ export type TransitionPolicyDecision = {
   nextState: TaskState | null;
   errorCode: WorkManagementErrorCode | null;
   intents: readonly DomainEvent[];
+  target?: TransitionTarget | null;
 };
 
 export type WorkManagementTransitionPolicy = {
@@ -53,7 +54,7 @@ function policy(
     ...overrides,
     evaluate(input) {
       if (input.action !== action) {
-        return { allowed: false, nextState: null, errorCode: "TASK_INVALID_TRANSITION", intents: [] };
+        return { allowed: false, nextState: null, errorCode: "TASK_INVALID_TRANSITION", intents: [], target: null };
       }
       const result = evaluateTaskTransition({
         currentState: input.currentState,
@@ -67,6 +68,7 @@ function policy(
         nextState: result.nextState ?? null,
         errorCode: result.errorCode ?? null,
         intents: result.requiredEvents,
+        target: result.target ?? null,
       };
     },
   };

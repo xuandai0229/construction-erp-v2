@@ -221,17 +221,17 @@ export function MaterialsWorkspace({
       <PageHeader className="flex flex-col gap-2.5 sm:gap-3 py-3 sm:py-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-950">Quản lý vật tư</h1>
-          <p className="mt-1 text-sm text-slate-600">
+          <p className="mt-1 text-sm text-[var(--muted-foreground)]">
             Theo dõi danh mục, tồn kho, yêu cầu và nhập/xuất vật tư.
           </p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-full px-3 py-1.5 w-max">
+        <div className="flex items-center gap-2 text-sm text-[var(--muted-foreground)] bg-[var(--surface-subtle)] border border-[var(--border)] rounded-full px-3 py-1.5 w-max">
           <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-          Đang xem: <span className="font-semibold text-slate-900">{projects.find(p => p.id === projectId)?.name || "—"}</span>
+          Đang xem: <span className="font-semibold text-[var(--foreground)]">{projects.find(p => p.id === projectId)?.name || "—"}</span>
         </div>
       </PageHeader>
 
-      <nav className="sticky top-0 z-30 -mx-3 px-3 sm:mx-0 sm:px-0 bg-slate-50/90 backdrop-blur-md overflow-x-auto border-b border-slate-200" aria-label="Tabs quản lý vật tư">
+      <nav className="sticky top-0 z-30 -mx-3 px-3 sm:mx-0 sm:px-0 bg-[var(--surface-subtle)] backdrop-blur-md overflow-x-auto border-b border-[var(--border)]" aria-label="Tabs quản lý vật tư">
         <div className="flex min-w-max gap-1">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -243,10 +243,10 @@ export function MaterialsWorkspace({
                 className={`flex items-center gap-2 rounded-t-lg border-b-2 px-4 py-3 text-sm font-semibold whitespace-nowrap transition-colors ${
                   isActive
                     ? "border-blue-600 bg-blue-50/50 text-blue-700"
-                    : "border-transparent text-slate-500 hover:bg-slate-100/50 hover:text-slate-800"
+                    : "border-transparent text-[var(--muted-foreground)] hover:bg-[var(--border)]/50 hover:text-[var(--foreground)]"
                 }`}
               >
-                <Icon className={`h-4 w-4 ${isActive ? "text-blue-600" : "text-slate-400"}`} />
+                <Icon className={`h-4 w-4 ${isActive ? "text-blue-600" : "text-[var(--muted-foreground)] opacity-70"}`} />
                 {tab.label}
               </button>
             );
@@ -258,7 +258,7 @@ export function MaterialsWorkspace({
         <EmptyState
           title="Chưa chọn công trình"
           description="Bạn cần chọn một công trình để xem dữ liệu vật tư."
-          icon={<Factory className="h-8 w-8 text-slate-400" />}
+          icon={<Factory className="h-8 w-8 text-[var(--muted-foreground)] opacity-70" />}
         />
       ) : (
         <section className="min-h-[420px]">

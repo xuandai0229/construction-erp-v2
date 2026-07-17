@@ -13,9 +13,13 @@ export default defineConfig({
   workers: 1,
   reporter: 'list',
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:3000',
     trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
+    storageState: 'playwright/.auth/admin.json',
   },
+  globalSetup: require.resolve('./scripts/qa/global-setup.ts'),
   projects: [
     {
       name: 'chromium',

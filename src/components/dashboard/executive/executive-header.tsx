@@ -9,7 +9,7 @@ export function ExecutiveHeader({ data }: { data: DashboardData }) {
   const pendingApprovals = data.pendingApprovals.length;
 
   return (
-    <section className="relative overflow-hidden rounded-[24px] border border-slate-200/70 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.07)] min-h-[160px] md:min-h-[210px] xl:min-h-[240px] flex flex-col justify-center">
+    <section className="relative overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-elevated)] min-h-[160px] md:min-h-[210px] xl:min-h-[240px] flex flex-col justify-center">
       {/* Background Image Layer */}
       <div
         className="absolute inset-0 z-0 bg-no-repeat bg-cover bg-[center_right]"
@@ -41,7 +41,7 @@ export function ExecutiveHeader({ data }: { data: DashboardData }) {
             <h1 className="text-2xl sm:text-[28px] font-extrabold tracking-tight bg-gradient-to-br from-slate-950 via-slate-800 to-slate-600 bg-clip-text text-transparent drop-shadow-sm leading-tight">
               Tổng quan điều hành hôm nay
             </h1>
-            <div className="text-[13.5px] font-medium text-slate-500 flex flex-wrap items-center gap-3 pt-1">
+            <div className="text-[13.5px] font-medium text-[var(--muted-foreground)] flex flex-wrap items-center gap-3 pt-1">
               <ExecutiveLiveClock />
               <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-100 bg-white/80 px-2 py-0.5 shadow-sm backdrop-blur-md">
                 <span className="relative flex h-1.5 w-1.5">
@@ -60,7 +60,7 @@ export function ExecutiveHeader({ data }: { data: DashboardData }) {
                 "group relative flex items-center gap-2 sm:gap-2.5 rounded-full border px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-[13px] font-bold transition-all duration-300 ease-out overflow-hidden",
                 pendingActions > 0
                   ? "border-amber-200/60 bg-gradient-to-b from-amber-50/90 to-amber-100/50 text-amber-800 shadow-[0_4px_16px_rgba(251,191,36,0.15)] hover:shadow-[0_6px_20px_rgba(251,191,36,0.25)] hover:-translate-y-0.5"
-                  : "border-slate-200/60 bg-white/60 backdrop-blur-md text-slate-600 shadow-[0_2px_10px_rgba(15,23,42,0.03)] hover:bg-white/90 hover:shadow-[0_4px_16px_rgba(15,23,42,0.06)] hover:-translate-y-0.5"
+                  : "border-[var(--border)] bg-[var(--surface)]/60 backdrop-blur-md text-[var(--muted-foreground)] shadow-[var(--shadow-card)] hover:bg-white/90 hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5"
               )}
             >
               <div className="absolute inset-0 bg-gradient-to-b from-white/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -74,7 +74,7 @@ export function ExecutiveHeader({ data }: { data: DashboardData }) {
                 "group relative flex items-center gap-2 sm:gap-2.5 rounded-full border px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-[13px] font-bold transition-all duration-300 ease-out overflow-hidden",
                 atRiskProjects > 0
                   ? "border-rose-200/60 bg-gradient-to-b from-rose-50/90 to-rose-100/50 text-rose-800 shadow-[0_4px_16px_rgba(244,63,94,0.15)] hover:shadow-[0_6px_20px_rgba(244,63,94,0.25)] hover:-translate-y-0.5"
-                  : "border-slate-200/60 bg-white/60 backdrop-blur-md text-slate-600 shadow-[0_2px_10px_rgba(15,23,42,0.03)] hover:bg-white/90 hover:shadow-[0_4px_16px_rgba(15,23,42,0.06)] hover:-translate-y-0.5"
+                  : "border-[var(--border)] bg-[var(--surface)]/60 backdrop-blur-md text-[var(--muted-foreground)] shadow-[var(--shadow-card)] hover:bg-white/90 hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5"
               )}
             >
               <div className="absolute inset-0 bg-gradient-to-b from-white/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -88,7 +88,7 @@ export function ExecutiveHeader({ data }: { data: DashboardData }) {
                 "group relative flex items-center gap-2 sm:gap-2.5 rounded-full border px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-[13px] font-bold transition-all duration-300 ease-out overflow-hidden",
                 pendingApprovals > 0
                   ? "border-blue-200/60 bg-gradient-to-b from-blue-50/90 to-blue-100/50 text-blue-800 shadow-[0_4px_16px_rgba(59,130,246,0.15)] hover:shadow-[0_6px_20px_rgba(59,130,246,0.25)] hover:-translate-y-0.5"
-                  : "border-slate-200/60 bg-white/60 backdrop-blur-md text-slate-600 shadow-[0_2px_10px_rgba(15,23,42,0.03)] hover:bg-white/90 hover:shadow-[0_4px_16px_rgba(15,23,42,0.06)] hover:-translate-y-0.5"
+                  : "border-[var(--border)] bg-[var(--surface)]/60 backdrop-blur-md text-[var(--muted-foreground)] shadow-[var(--shadow-card)] hover:bg-white/90 hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5"
               )}
             >
               <div className="absolute inset-0 bg-gradient-to-b from-white/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />

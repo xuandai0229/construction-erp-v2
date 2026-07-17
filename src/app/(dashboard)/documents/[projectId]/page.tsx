@@ -262,13 +262,13 @@ export default async function ProjectDocumentsPage({
   return (
     <div className="app-page flex min-h-[calc(100dvh-7rem)] flex-col lg:h-[calc(100dvh-7rem)]">
       <div className="mb-3 sm:mb-4">
-        <nav className="flex items-center text-sm font-medium text-slate-500 mb-1 sm:mb-2">
+        <nav className="flex items-center text-sm font-medium text-[var(--muted-foreground)] mb-1 sm:mb-2">
           <Link href="/documents" className="flex items-center hover:text-blue-600 transition-colors">
             <ArrowLeft className="h-4 w-4 mr-1" />
             Tất cả dự án
           </Link>
           <span className="mx-2">/</span>
-          <span className="text-slate-900">Tài liệu</span>
+          <span className="text-[var(--foreground)]">Tài liệu</span>
         </nav>
         <div className="flex items-center justify-between">
           <div className="min-w-0">

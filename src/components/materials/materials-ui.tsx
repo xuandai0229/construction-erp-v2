@@ -97,8 +97,8 @@ export function MaterialDrawerSection({
   return (
     <section className={cn("space-y-3", className)}>
       <div>
-        <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
-        {description ? <p className="mt-0.5 text-xs text-slate-500">{description}</p> : null}
+        <h3 className="text-sm font-semibold text-[var(--foreground)]">{title}</h3>
+        {description ? <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">{description}</p> : null}
       </div>
       {children}
     </section>
@@ -118,9 +118,9 @@ export function MaterialEmptyState({
 }) {
   return (
     <ContentCard className={cn("p-8 text-center", className)}>
-      {icon ? <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-400">{icon}</div> : null}
-      <div className="font-semibold text-slate-800">{title}</div>
-      {description ? <p className="mt-1 text-sm text-slate-500">{description}</p> : null}
+      {icon ? <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-[var(--radius-xl)] bg-[var(--surface-subtle)] text-[var(--muted-foreground)] opacity-70">{icon}</div> : null}
+      <div className="font-semibold text-[var(--foreground)]">{title}</div>
+      {description ? <p className="mt-1 text-sm text-[var(--muted-foreground)]">{description}</p> : null}
     </ContentCard>
   );
 }
@@ -195,7 +195,7 @@ export function MaterialRowActionMenu({
     <div
       ref={panelRef}
       style={panelStyle || undefined}
-      className="max-h-[min(320px,calc(100dvh-24px))] overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg ring-1 ring-black/5 focus:outline-none"
+      className="max-h-[min(320px,calc(100dvh-24px))] overflow-y-auto rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-1.5 shadow-[var(--shadow-elevated)] ring-1 ring-black/5 focus:outline-none"
       role="menu"
     >
       {actions.map((action, idx) => (
@@ -211,12 +211,12 @@ export function MaterialRowActionMenu({
             }}
             disabled={action.disabled}
             className={cn(
-              "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm font-medium transition-colors",
+              "flex w-full items-center gap-2.5 rounded-[var(--radius-lg)] px-2.5 py-2 text-left text-sm font-medium transition-colors",
               action.disabled
-                ? "cursor-not-allowed opacity-50 text-slate-400"
+                ? "cursor-not-allowed opacity-50 text-[var(--muted-foreground)] opacity-70"
                 : action.danger
                 ? "text-rose-600 hover:bg-rose-50"
-                : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                : "text-[var(--foreground)] hover:bg-[var(--border)] hover:text-[var(--foreground)]"
             )}
             role="menuitem"
           >
@@ -237,8 +237,8 @@ export function MaterialRowActionMenu({
           e.stopPropagation();
           setIsOpen(!isOpen);
         }}
-        className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors focus:outline-none ${
-          isOpen ? "border-slate-300 bg-slate-100 text-slate-900 shadow-sm" : "border-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+        className={`flex h-8 w-8 items-center justify-center rounded-[var(--radius-lg)] border transition-colors focus:outline-none ${
+          isOpen ? "border-[var(--border)] bg-[var(--border)] text-[var(--foreground)] shadow-[var(--shadow-card)]" : "border-transparent text-[var(--muted-foreground)] hover:bg-[var(--border)] hover:text-[var(--foreground)]"
         }`}
         aria-haspopup="menu"
         aria-expanded={isOpen}

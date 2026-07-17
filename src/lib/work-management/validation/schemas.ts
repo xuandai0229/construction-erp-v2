@@ -26,9 +26,9 @@ export const archiveTaskSchema = z.object({ taskId: id, expectedVersion: z.numbe
 export const restoreTaskSchema = versionedTaskCommandBase.extend({ reason: optionalText }).strict();
 export const subtaskSchema = createTaskSchema.extend({ parentTaskId: id }).strict();
 export const dependencySchema = z.object({ predecessorTaskId: id, successorTaskId: id, expectedVersion: z.number().int().nonnegative() }).strict().refine((value) => value.predecessorTaskId !== value.successorTaskId, { message: "TASK_DEPENDENCY_CYCLE" });
-export const handoverRequestSchema = z.object({ taskId: id, fromUserId: id, toUserId: id, effectiveAt: date, reason: text.max(5_000), expectedVersion: z.number().int().nonnegative() }).strict().refine((value) => value.fromUserId !== value.toUserId, { message: "TASK_HANDOVER_SELF_TRANSFER" });
-export const acceptHandoverSchema = z.object({ handoverId: id, comment: optionalText, expectedVersion: z.number().int().nonnegative() }).strict();
-export const rejectHandoverSchema = z.object({ handoverId: id, reason: text.max(5_000), expectedVersion: z.number().int().nonnegative() }).strict();
+export const handoverRequestSchema = z.object({ taskId: id, receiverId: id, reason: text.max(5_000), expectedVersion: z.number().int().nonnegative() }).strict();
+export const acceptHandoverSchema = z.object({ taskId: id, handoverId: id, expectedVersion: z.number().int().nonnegative() }).strict();
+export const rejectHandoverSchema = z.object({ taskId: id, handoverId: id, reason: text.max(5_000), expectedVersion: z.number().int().nonnegative() }).strict();
 export const approveHandoverSchema = acceptHandoverSchema;
 export const handoverDecisionSchema = acceptHandoverSchema;
 export const executeHandoverSchema = versionedTaskCommandBase.extend({ handoverId: id }).strict();

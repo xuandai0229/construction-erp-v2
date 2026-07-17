@@ -105,8 +105,8 @@ export default async function ProjectsPage({
     <div className="app-page space-y-4 sm:space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-1 sm:px-0">
         <div className="min-w-0">
-          <h1 className="text-[22px] sm:text-[24px] font-black text-slate-900 tracking-tight">{pageTitle}</h1>
-          <p className="text-[13px] sm:text-[14px] text-slate-500 mt-1">Theo dõi danh sách, trạng thái và lịch thi công</p>
+          <h1 className="text-[22px] sm:text-[24px] font-black text-[var(--foreground)] tracking-tight">{pageTitle}</h1>
+          <p className="text-[13px] sm:text-[14px] text-[var(--muted-foreground)] mt-1">Theo dõi danh sách, trạng thái và lịch thi công</p>
         </div>
         {canManage && (
           <Link href="/projects/new" className="shrink-0">
@@ -127,11 +127,11 @@ export default async function ProjectsPage({
       />
 
       {/* Filter Toolbar */}
-      <div className="rounded-[16px] bg-white border border-slate-200/60 p-3 shadow-sm">
+      <div className="rounded-[var(--radius-xl)] bg-[var(--surface)] border border-[var(--border)] p-3 shadow-[var(--shadow-card)]">
         <form className="flex flex-col gap-3" method="GET" action="/projects">
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--muted-foreground)] opacity-70" />
               <input 
                 type="text" 
                 name="q"
@@ -139,7 +139,7 @@ export default async function ProjectsPage({
                 autoComplete="off"
                 defaultValue={q}
                 placeholder="Tìm mã, tên công trình..." 
-                className="w-full h-11 pl-10 pr-4 rounded-[12px] bg-slate-50 border-slate-200 outline-none focus:border-blue-400 focus:bg-white text-[14px]"
+                className="w-full h-11 pl-10 pr-4 rounded-[var(--radius-md)] bg-[var(--surface-subtle)] border-[var(--border)] outline-none focus:border-blue-400 focus:bg-[var(--surface)] text-[14px] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)]"
               />
             </div>
             {/* Desktop native select, mobile native select via full width block */}
@@ -148,7 +148,7 @@ export default async function ProjectsPage({
                 name="status"
                 id="project-status-filter"
                 defaultValue={statusFilter}
-                className="h-11 w-[180px] rounded-[12px] bg-slate-50 border-slate-200 px-4 text-[14px] outline-none focus:border-blue-400"
+                className="h-11 w-[180px] rounded-[var(--radius-md)] bg-[var(--surface-subtle)] border-[var(--border)] px-4 text-[14px] text-[var(--foreground)] outline-none focus:border-blue-400"
               >
                 <option value="">Tất cả trạng thái</option>
                 <option value="PLANNING">Chuẩn bị</option>
@@ -164,7 +164,7 @@ export default async function ProjectsPage({
             <select 
               name="status"
               defaultValue={statusFilter}
-              className="flex-1 h-11 rounded-[12px] bg-slate-50 border-slate-200 px-3 text-[14px] outline-none"
+              className="flex-1 h-11 rounded-[var(--radius-md)] bg-[var(--surface-subtle)] border-[var(--border)] px-3 text-[14px] text-[var(--foreground)] outline-none focus:border-blue-400"
             >
               <option value="">Tất cả trạng thái</option>
               <option value="PLANNING">Chuẩn bị</option>
@@ -173,19 +173,19 @@ export default async function ProjectsPage({
               <option value="COMPLETED">Hoàn thành</option>
               <option value="CANCELLED">Hủy</option>
             </select>
-            <Button type="submit" variant="primary" className="h-11 px-6 rounded-[12px]">Lọc</Button>
+            <Button type="submit" variant="primary" className="h-11 px-6 rounded-[var(--radius-md)]">Lọc</Button>
             {(q || statusFilter) && (
-              <Link href="/projects" className="h-11 px-4 flex items-center justify-center border border-slate-200 rounded-[12px] text-slate-600 bg-white active:bg-slate-50">
+              <Link href="/projects" className="h-11 px-4 flex items-center justify-center border border-[var(--border)] rounded-[var(--radius-md)] text-[var(--muted-foreground)] bg-[var(--surface)] active:bg-[var(--surface-subtle)]">
                 Xóa
               </Link>
             )}
           </div>
           
           <div className="hidden sm:flex items-center gap-2">
-            <Button type="submit" variant="primary" className="h-11 px-6 rounded-[12px]">Lọc dữ liệu</Button>
+            <Button type="submit" variant="primary" className="h-11 px-6 rounded-[var(--radius-md)]">Lọc dữ liệu</Button>
             {(q || statusFilter) && (
               <Link href="/projects">
-                <Button variant="outline" className="h-11 rounded-[12px]">Xóa lọc</Button>
+                <Button variant="outline" className="h-11 rounded-[var(--radius-md)]">Xóa lọc</Button>
               </Link>
             )}
           </div>
@@ -193,12 +193,12 @@ export default async function ProjectsPage({
       </div>
 
       {/* Table Card */}
-      <div className="bg-transparent sm:bg-white sm:border sm:border-slate-200/60 sm:rounded-[16px] sm:shadow-sm sm:overflow-hidden">
+      <div className="bg-transparent sm:bg-[var(--surface)] sm:border sm:border-[var(--border)] sm:rounded-[var(--radius-lg)] sm:shadow-[var(--shadow-card)] sm:overflow-hidden">
         {projects.length > 0 ? (
           <>
             <ProjectsListClient projects={projectRows} canManage={canManage} />
 
-            <div className="bg-white rounded-[16px] border border-slate-200/60 mt-3 sm:mt-0 sm:rounded-none sm:border-0 sm:border-t p-2">
+            <div className="bg-[var(--surface)] rounded-[var(--radius-lg)] border border-[var(--border)] mt-3 sm:mt-0 sm:rounded-none sm:border-0 sm:border-t p-2">
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
@@ -209,11 +209,11 @@ export default async function ProjectsPage({
             </div>
           </>
         ) : (
-          <div className="p-12 bg-white rounded-[16px] border border-slate-200/60 shadow-sm mt-3 sm:mt-0 sm:rounded-none sm:border-0 sm:shadow-none">
+          <div className="p-12 bg-[var(--surface)] rounded-[var(--radius-lg)] border border-[var(--border)] shadow-[var(--shadow-card)] mt-3 sm:mt-0 sm:rounded-none sm:border-0 sm:shadow-none">
             <EmptyState 
               title={isCommander ? "Chưa được giao công trình" : "Không tìm thấy công trình"}
               description={isCommander ? "Bạn chưa được giao công trình nào. Vui lòng liên hệ Giám đốc hoặc Phó giám đốc." : (q || statusFilter ? "Không có dữ liệu phù hợp với bộ lọc hiện tại." : "Bắt đầu tạo công trình mới để quản lý.")}
-              icon={<Building2 className="h-8 w-8 text-slate-400" />}
+              icon={<Building2 className="h-8 w-8 text-[var(--muted-foreground)] opacity-50" />}
             />
           </div>
         )}

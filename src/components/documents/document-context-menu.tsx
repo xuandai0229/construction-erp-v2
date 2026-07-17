@@ -135,13 +135,13 @@ export function DocumentContextMenu({
   const contentUI = (
     <div className={`flex flex-col gap-1 ${isMobile ? "w-full overflow-y-auto p-4 pb-[max(16px,env(safe-area-inset-bottom))]" : ""}`}>
       {isMobile && (
-        <div className="mb-4 flex items-center justify-between pb-3 border-b border-slate-100">
-          <h4 className="font-bold text-slate-800 text-base flex-1 min-w-0 truncate pr-4">
+        <div className="mb-4 flex items-center justify-between pb-3 border-b border-[var(--border)]">
+          <h4 className="font-bold text-[var(--foreground)] text-base flex-1 min-w-0 truncate pr-4">
             {contextMenu.type === "folder" ? "Tùy chọn thư mục" : contextMenu.type === "file" ? "Tùy chọn tài liệu" : "Tùy chọn"}
           </h4>
           <button 
             onClick={onClose} 
-            className="p-2 -mr-2 rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+            className="p-2 -mr-2 rounded-full text-[var(--muted-foreground)] opacity-70 hover:bg-[var(--border)] hover:text-[var(--muted-foreground)] transition-colors"
             aria-label="Đóng menu"
           >
             <X className="h-5 w-5" />
@@ -154,40 +154,40 @@ export function DocumentContextMenu({
             <>
               {contextMenu.targetId && (
                 <>
-                  <button onClick={() => { onBack(); onClose(); }} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+                  <button onClick={() => { onBack(); onClose(); }} className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
                     <ArrowLeft className="h-4 w-4 shrink-0" />
                     Quay lại
                   </button>
-                  <button onClick={() => { onRestore?.(); onClose(); }} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+                  <button onClick={() => { onRestore?.(); onClose(); }} className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
                     <FolderOpen className="h-4 w-4 shrink-0" />
                     Khôi phục thư mục hiện tại
                   </button>
-                  <button onClick={() => { onPermanentDelete?.(); onClose(); }} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-red-50 text-red-600">
+                  <button onClick={() => { onPermanentDelete?.(); onClose(); }} className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-red-50 text-red-600">
                     <Trash2 className="h-4 w-4 shrink-0" />
                     Xóa vĩnh viễn thư mục hiện tại
                   </button>
-                  <div className="my-1 h-px bg-slate-100"></div>
+                  <div className="my-1 h-px bg-[var(--border)]"></div>
                 </>
               )}
-              <button onClick={() => { onRefresh(); onClose(); }} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+              <button onClick={() => { onRefresh(); onClose(); }} className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
                 <svg className="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
                 Làm mới
               </button>
             </>
           )}
           {contextMenu.type === "folder" && (
-            <button onClick={() => { onOpen(); onClose(); }} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+            <button onClick={() => { onOpen(); onClose(); }} className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
               <FolderOpen className="h-4 w-4 shrink-0" />
               Mở / Xem nội dung
             </button>
           )}
           {contextMenu.type === "file" && (
             <>
-              <button onClick={() => { onOpen(); onClose(); }} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+              <button onClick={() => { onOpen(); onClose(); }} className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
                 <Eye className="h-4 w-4 shrink-0" />
                 Xem chi tiết
               </button>
-              <button onClick={() => { onDownload(); onClose(); }} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+              <button onClick={() => { onDownload(); onClose(); }} className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
                 <Download className="h-4 w-4 shrink-0" />
                 Tải xuống
               </button>
@@ -195,12 +195,12 @@ export function DocumentContextMenu({
           )}
           {contextMenu.type !== "workspace" && (
             <>
-              <div className="my-1 h-px bg-slate-100"></div>
-              <button onClick={() => { onRestore?.(); onClose(); }} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+              <div className="my-1 h-px bg-[var(--border)]"></div>
+              <button onClick={() => { onRestore?.(); onClose(); }} className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
                 <svg className="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
                 Khôi phục
               </button>
-              <button onClick={() => { onPermanentDelete?.(); onClose(); }} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-red-50 text-red-600">
+              <button onClick={() => { onPermanentDelete?.(); onClose(); }} className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-red-50 text-red-600">
                 <Trash2 className="h-4 w-4 shrink-0" />
                 Xóa vĩnh viễn
               </button>
@@ -210,26 +210,26 @@ export function DocumentContextMenu({
       ) : contextMenu.type === "workspace" ? (
         <>
           {contextMenu.targetId && (
-            <button onClick={() => { onCopyLink(); onClose(); }} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+            <button onClick={() => { onCopyLink(); onClose(); }} className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
               <Copy className="h-4 w-4 shrink-0" />
               Sao chép đường dẫn thư mục
             </button>
           )}
-          <button onClick={() => { onUpload(); onClose(); }} disabled={!canUpload} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-slate-100 disabled:opacity-50 disabled:hover:bg-transparent text-slate-700">
+          <button onClick={() => { onUpload(); onClose(); }} disabled={!canUpload} className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-[var(--border)] disabled:opacity-50 disabled:hover:bg-transparent text-[var(--foreground)]">
             <UploadCloud className="h-4 w-4 shrink-0" />
             Tải tài liệu lên
           </button>
-          <button onClick={() => { onCreateFolder(); onClose(); }} disabled={!canCreateFolder} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-slate-100 disabled:opacity-50 disabled:hover:bg-transparent text-slate-700">
+          <button onClick={() => { onCreateFolder(); onClose(); }} disabled={!canCreateFolder} className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-[var(--border)] disabled:opacity-50 disabled:hover:bg-transparent text-[var(--foreground)]">
             <FolderPlus className="h-4 w-4 shrink-0" />
             Tạo mục bên trong
           </button>
-          <div className="my-1 h-px bg-slate-100"></div>
-          <button onClick={() => { onRefresh(); onClose(); }} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+          <div className="my-1 h-px bg-[var(--border)]"></div>
+          <button onClick={() => { onRefresh(); onClose(); }} className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
             <svg className="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
             Làm mới
           </button>
           {contextMenu.targetId && (
-            <button onClick={() => { onDeselect(); onClose(); }} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+            <button onClick={() => { onDeselect(); onClose(); }} className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
               <X className="h-4 w-4 shrink-0" />
               Bỏ chọn thư mục
             </button>
@@ -237,62 +237,62 @@ export function DocumentContextMenu({
         </>
       ) : contextMenu.type === "folder" ? (
         <>
-          <button onClick={() => { onUpload(); onClose(); }} disabled={!canUpload} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-slate-100 disabled:opacity-50 disabled:hover:bg-transparent text-slate-700">
+          <button onClick={() => { onUpload(); onClose(); }} disabled={!canUpload} className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-[var(--border)] disabled:opacity-50 disabled:hover:bg-transparent text-[var(--foreground)]">
             <UploadCloud className="h-4 w-4 shrink-0" />
             Tải tài liệu lên đây
           </button>
-          <button onClick={() => { onCreateFolder(); onClose(); }} disabled={!canCreateFolder} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-slate-100 disabled:opacity-50 disabled:hover:bg-transparent text-slate-700">
+          <button onClick={() => { onCreateFolder(); onClose(); }} disabled={!canCreateFolder} className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-[var(--border)] disabled:opacity-50 disabled:hover:bg-transparent text-[var(--foreground)]">
             <FolderPlus className="h-4 w-4 shrink-0" />
             Tạo mục bên trong
           </button>
-          <div className="my-1 h-px bg-slate-100"></div>
-          <button onClick={() => { onOpen(); onClose(); }} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+          <div className="my-1 h-px bg-[var(--border)]"></div>
+          <button onClick={() => { onOpen(); onClose(); }} className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
             <FolderOpen className="h-4 w-4 shrink-0" />
             Mở thư mục
           </button>
-          <button onClick={() => { onRename(); onClose(); }} disabled={!canRename} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-slate-100 disabled:opacity-50 disabled:hover:bg-transparent text-slate-700">
+          <button onClick={() => { onRename(); onClose(); }} disabled={!canRename} className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-[var(--border)] disabled:opacity-50 disabled:hover:bg-transparent text-[var(--foreground)]">
             <Pencil className="h-4 w-4 shrink-0" />
             Đổi tên
           </button>
-          <button onClick={() => { onCopyLink(); onClose(); }} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+          <button onClick={() => { onCopyLink(); onClose(); }} className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
             <Copy className="h-4 w-4 shrink-0" />
             Sao chép đường dẫn
           </button>
-          <div className="my-1 h-px bg-slate-100"></div>
-          <button onClick={() => { onDelete(); onClose(); }} disabled={!canDelete} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-red-50 disabled:opacity-50 disabled:hover:bg-transparent text-red-600">
+          <div className="my-1 h-px bg-[var(--border)]"></div>
+          <button onClick={() => { onDelete(); onClose(); }} disabled={!canDelete} className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-red-50 disabled:opacity-50 disabled:hover:bg-transparent text-red-600">
             <Trash2 className="h-4 w-4 shrink-0" />
             Chuyển vào thùng rác
           </button>
         </>
       ) : (
         <>
-          <button onClick={() => { onOpen(); onClose(); }} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+          <button onClick={() => { onOpen(); onClose(); }} className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
             <Eye className="h-4 w-4 shrink-0" />
             Xem chi tiết
           </button>
-          <button onClick={() => { onOpenInNewTab(); onClose(); }} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+          <button onClick={() => { onOpenInNewTab(); onClose(); }} className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
             <ExternalLink className="h-4 w-4 shrink-0" />
             Mở thẻ mới
           </button>
-          <button onClick={() => { onDownload(); onClose(); }} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+          <button onClick={() => { onDownload(); onClose(); }} className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
             <Download className="h-4 w-4 shrink-0" />
             Tải xuống
           </button>
-          <div className="my-1 h-px bg-slate-100"></div>
-          <button onClick={() => { onEditMetadata(); onClose(); }} disabled={!canRename} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-slate-100 disabled:opacity-50 disabled:hover:bg-transparent text-slate-700">
+          <div className="my-1 h-px bg-[var(--border)]"></div>
+          <button onClick={() => { onEditMetadata(); onClose(); }} disabled={!canRename} className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-[var(--border)] disabled:opacity-50 disabled:hover:bg-transparent text-[var(--foreground)]">
             <Pencil className="h-4 w-4 shrink-0" />
             Chỉnh sửa metadata
           </button>
-          <button onClick={() => { onRename(); onClose(); }} disabled={!canRename} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-slate-100 disabled:opacity-50 disabled:hover:bg-transparent text-slate-700">
+          <button onClick={() => { onRename(); onClose(); }} disabled={!canRename} className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-[var(--border)] disabled:opacity-50 disabled:hover:bg-transparent text-[var(--foreground)]">
             <Pencil className="h-4 w-4 shrink-0" />
             Đổi tên file
           </button>
-          <button onClick={() => { onCopyLink(); onClose(); }} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-slate-100 text-slate-700">
+          <button onClick={() => { onCopyLink(); onClose(); }} className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
             <Copy className="h-4 w-4 shrink-0" />
             Sao chép liên kết
           </button>
-          <div className="my-1 h-px bg-slate-100"></div>
-          <button onClick={() => { onDelete(); onClose(); }} disabled={!canDelete} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-red-50 disabled:opacity-50 disabled:hover:bg-transparent text-red-600">
+          <div className="my-1 h-px bg-[var(--border)]"></div>
+          <button onClick={() => { onDelete(); onClose(); }} disabled={!canDelete} className="flex w-full items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 sm:px-2 sm:py-1.5 text-sm hover:bg-red-50 disabled:opacity-50 disabled:hover:bg-transparent text-red-600">
             <Trash2 className="h-4 w-4 shrink-0" />
             Chuyển vào thùng rác
           </button>
@@ -310,7 +310,7 @@ export function DocumentContextMenu({
       >
         <div 
           ref={menuRef}
-          className="w-full max-h-[85vh] rounded-t-2xl bg-white shadow-2xl transition-transform"
+          className="w-full max-h-[85vh] rounded-t-2xl bg-[var(--surface)] shadow-2xl transition-transform"
           onClick={(e) => e.stopPropagation()}
         >
           {contentUI}
@@ -319,7 +319,7 @@ export function DocumentContextMenu({
     ) : (
       <div
         ref={menuRef}
-        className="fixed z-[9999] min-w-[220px] max-w-[calc(100vw-24px)] rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xl overflow-hidden"
+        className="fixed z-[9999] min-w-[220px] max-w-[calc(100vw-24px)] rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-1.5 shadow-2xl overflow-hidden"
         style={{ top: position.y !== null ? position.y : contextMenu.y, left: position.x !== null ? position.x : contextMenu.x, opacity: position.x !== null ? 1 : 0 }}
         onClick={(e) => e.stopPropagation()}
         onContextMenu={(e) => e.preventDefault()}

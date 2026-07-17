@@ -29,7 +29,7 @@ export default async function SettingsPage() {
       <EmptyState 
         title="Cấu hình hệ thống" 
         description="Quản lý phân quyền, danh mục và thiết lập chung của ERP." 
-        icon={<Settings className="h-6 w-6 text-slate-500" />}
+        icon={<Settings className="h-6 w-6 text-[var(--muted-foreground)]" />}
       />
     </div>
   );

@@ -1,0 +1,967 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["partialIndexes"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model ApprovalRequest {
+  id                                     String                @id
+  requesterId                            String
+  createdAt                              DateTime              @default(now())
+  updatedAt                              DateTime
+  code                                   String                @unique
+  decidedAt                              DateTime?
+  decidedById                            String?
+  decisionNote                           String?
+  deletedAt                              DateTime?
+  description                            String?
+  dueDate                                DateTime?
+  priority                               ApprovalPriority      @default(NORMAL)
+  projectId                              String
+  sourceId                               String?
+  sourceType                             String?
+  title                                  String
+  type                                   ApprovalRequestType   @default(OTHER)
+  status                                 ApprovalRequestStatus @default(PENDING)
+  User_ApprovalRequest_decidedByIdToUser User?                 @relation("ApprovalRequest_decidedByIdToUser", fields: [decidedById], references: [id])
+  Project                                Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  User_ApprovalRequest_requesterIdToUser User                  @relation("ApprovalRequest_requesterIdToUser", fields: [requesterId], references: [id])
+
+  @@index([decidedById])
+  @@index([priority])
+  @@index([projectId])
+  @@index([requesterId])
+  @@index([sourceType, sourceId])
+  @@index([status])
+  @@index([type])
+}
+
+model AuditLog {
+  id         String   @id
+  userId     String?
+  projectId  String?
+  action     String
+  entityType String
+  entityId   String
+  beforeData String?
+  afterData  String?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  User       User?    @relation(fields: [userId], references: [id])
+
+  @@index([createdAt])
+  @@index([entityType, entityId])
+  @@index([projectId])
+  @@index([userId])
+}
+
+model ChatMessage {
+  id        String   @id
+  senderId  String
+  content   String
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([senderId])
+}
+
+model Document {
+  id                  String               @id
+  folderId            String
+  mimeType            String
+  size                Int
+  version             Int                  @default(1)
+  deletedAt           DateTime?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime
+  extension           String
+  originalName        String
+  projectId           String
+  storagePath         String
+  storedName          String
+  uploadedById        String
+  displayName         String?
+  documentType        String?
+  fileHash            String?
+  metadata            Json?
+  rejectedReason      String?
+  reviewedAt          DateTime?
+  reviewedById        String?
+  status              DocumentStatus       @default(SUBMITTED)
+  fieldProgressItemId String?
+  locationNodeId      String?
+  FieldProgressItem   FieldProgressItem?   @relation(fields: [fieldProgressItemId], references: [id])
+  DocumentFolder      DocumentFolder       @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  ProjectLocationNode ProjectLocationNode? @relation(fields: [locationNodeId], references: [id])
+  Project             Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  User                User                 @relation(fields: [uploadedById], references: [id])
+
+  @@index([documentType])
+  @@index([fieldProgressItemId])
+  @@index([fileHash])
+  @@index([folderId])
+  @@index([folderId, status])
+  @@index([locationNodeId])
+  @@index([projectId])
+  @@index([status])
+  @@index([uploadedById])
+}
+
+model DocumentFolder {
+  id                   String           @id
+  projectId            String
+  parentId             String?
+  name                 String
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime
+  deletedAt            DateTime?
+  Document             Document[]
+  DocumentFolder       DocumentFolder?  @relation("DocumentFolderToDocumentFolder", fields: [parentId], references: [id])
+  other_DocumentFolder DocumentFolder[] @relation("DocumentFolderToDocumentFolder")
+  Project              Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([parentId])
+  @@index([projectId])
+}
+
+model FieldMaterialRequest {
+  id                       String                     @id
+  projectId                String
+  templateId               String
+  itemId                   String
+  entryId                  String?
+  requestDate              DateTime
+  neededDate               DateTime?
+  requestedById            String
+  status                   FieldMaterialRequestStatus @default(DRAFT)
+  priority                 FieldMaterialPriority      @default(MEDIUM)
+  note                     String?
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime
+  deletedAt                DateTime?
+  FieldProgressEntry       FieldProgressEntry?        @relation(fields: [entryId], references: [id])
+  FieldProgressItem        FieldProgressItem          @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  Project                  Project                    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  User                     User                       @relation(fields: [requestedById], references: [id])
+  FieldProgressTemplate    FieldProgressTemplate      @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  FieldMaterialRequestItem FieldMaterialRequestItem[]
+
+  @@index([entryId])
+  @@index([itemId])
+  @@index([projectId])
+  @@index([templateId])
+}
+
+model FieldMaterialRequestItem {
+  id                   String               @id
+  requestId            String
+  materialName         String
+  unit                 String
+  requestedQuantity    Decimal              @db.Decimal(19, 4)
+  reason               String?
+  note                 String?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime
+  deletedAt            DateTime?
+  FieldMaterialRequest FieldMaterialRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@index([requestId])
+}
+
+model FieldProgressEntry {
+  id                                         String                   @id
+  projectId                                  String
+  templateId                                 String
+  itemId                                     String
+  entryDate                                  DateTime
+  quantity                                   Decimal                  @db.Decimal(19, 4)
+  issueNote                                  String?
+  proposalNote                               String?
+  note                                       String?
+  status                                     FieldProgressEntryStatus @default(DRAFT)
+  createdById                                String
+  submittedAt                                DateTime?
+  approvedById                               String?
+  approvedAt                                 DateTime?
+  rejectedReason                             String?
+  createdAt                                  DateTime                 @default(now())
+  updatedAt                                  DateTime
+  deletedAt                                  DateTime?
+  adjustmentReason                           String?
+  sourceId                                   String?
+  sourceLineId                               String?
+  sourceMeta                                 Json?
+  sourceReportId                             String?
+  sourceType                                 String?
+  locationNodeId                             String?
+  FieldMaterialRequest                       FieldMaterialRequest[]
+  User_FieldProgressEntry_approvedByIdToUser User?                    @relation("FieldProgressEntry_approvedByIdToUser", fields: [approvedById], references: [id])
+  User_FieldProgressEntry_createdByIdToUser  User                     @relation("FieldProgressEntry_createdByIdToUser", fields: [createdById], references: [id])
+  FieldProgressItem                          FieldProgressItem        @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  ProjectLocationNode                        ProjectLocationNode?     @relation(fields: [locationNodeId], references: [id])
+  Project                                    Project                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  FieldProgressTemplate                      FieldProgressTemplate    @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceReportId, sourceLineId], map: "field_progress_entry_source_report_line_uidx", where: raw("((\"deletedAt\" IS NULL) AND (\"sourceType\" = 'SITE_REPORT'::text))"))
+  @@index([entryDate])
+  @@index([itemId])
+  @@index([locationNodeId])
+  @@index([projectId])
+  @@index([sourceReportId])
+  @@index([sourceType, sourceId])
+  @@index([templateId])
+}
+
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model FieldProgressItem {
+  id                          String                        @id
+  projectId                   String
+  templateId                  String
+  parentId                    String?
+  sortOrder                   Int                           @default(0)
+  level                       Int                           @default(0)
+  itemType                    FieldProgressItemType         @default(WORK)
+  code                        String?
+  categoryName                String?
+  workContent                 String?
+  constructionCrew            String?
+  designQuantity              Decimal?                      @db.Decimal(19, 4)
+  unit                        String?
+  status                      FieldProgressItemStatus       @default(PLANNED)
+  isLocked                    Boolean                       @default(false)
+  note                        String?
+  createdById                 String
+  createdAt                   DateTime                      @default(now())
+  updatedAt                   DateTime
+  deletedAt                   DateTime?
+  Document                    Document[]
+  FieldMaterialRequest        FieldMaterialRequest[]
+  FieldProgressEntry          FieldProgressEntry[]
+  User                        User                          @relation(fields: [createdById], references: [id])
+  FieldProgressItem           FieldProgressItem?            @relation("FieldProgressItemToFieldProgressItem", fields: [parentId], references: [id])
+  other_FieldProgressItem     FieldProgressItem[]           @relation("FieldProgressItemToFieldProgressItem")
+  Project                     Project                       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  FieldProgressTemplate       FieldProgressTemplate         @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  FieldProgressItemAssignment FieldProgressItemAssignment[]
+  FieldProgressItemLocation   FieldProgressItemLocation[]
+  MaterialRequestItem         MaterialRequestItem[]
+  SiteReportLine              SiteReportLine[]
+
+  @@index([parentId])
+  @@index([projectId])
+  @@index([sortOrder])
+  @@index([templateId])
+}
+
+model FieldProgressItemAssignment {
+  id                  String                          @id
+  projectId           String
+  fieldProgressItemId String
+  projectMemberId     String
+  role                FieldProgressItemAssignmentRole @default(RESPONSIBLE)
+  note                String?
+  assignedById        String
+  createdAt           DateTime                        @default(now())
+  updatedAt           DateTime
+  deletedAt           DateTime?
+  User                User                            @relation(fields: [assignedById], references: [id])
+  FieldProgressItem   FieldProgressItem               @relation(fields: [fieldProgressItemId], references: [id], onDelete: Cascade)
+  Project             Project                         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  ProjectMember       ProjectMember                   @relation(fields: [projectMemberId], references: [id])
+
+  @@unique([fieldProgressItemId, projectMemberId, role])
+  @@index([fieldProgressItemId, deletedAt])
+  @@index([projectId, deletedAt])
+  @@index([projectMemberId, deletedAt])
+}
+
+model FieldProgressItemLocation {
+  id                  String              @id
+  projectId           String
+  fieldProgressItemId String
+  locationNodeId      String
+  createdById         String
+  createdAt           DateTime            @default(now())
+  FieldProgressItem   FieldProgressItem   @relation(fields: [fieldProgressItemId], references: [id], onDelete: Cascade)
+  ProjectLocationNode ProjectLocationNode @relation(fields: [locationNodeId], references: [id])
+  Project             Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([fieldProgressItemId, locationNodeId])
+  @@index([projectId, fieldProgressItemId])
+  @@index([projectId, locationNodeId])
+}
+
+model FieldProgressTemplate {
+  id                   String                 @id
+  projectId            String
+  name                 String
+  description          String?
+  status               String                 @default("ACTIVE")
+  createdById          String
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime
+  deletedAt            DateTime?
+  FieldMaterialRequest FieldMaterialRequest[]
+  FieldProgressEntry   FieldProgressEntry[]
+  FieldProgressItem    FieldProgressItem[]
+  User                 User                   @relation(fields: [createdById], references: [id])
+  Project              Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model MaterialItem {
+  id                   String                 @id
+  code                 String
+  name                 String
+  unit                 String
+  description          String?
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime
+  group                String?
+  projectId            String
+  isActive             Boolean                @default(true)
+  Project              Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  MaterialMovement     MaterialMovement[]
+  ProjectMaterialStock ProjectMaterialStock[]
+
+  @@unique([projectId, code])
+  @@index([projectId])
+}
+
+model MaterialMovement {
+  id                    String               @id
+  projectId             String
+  materialItemId        String
+  type                  MaterialMovementType
+  quantity              Decimal              @db.Decimal(19, 4)
+  unitPrice             Decimal?             @db.Decimal(19, 4)
+  movementDate          DateTime
+  notes                 String?
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime
+  materialRequestId     String?
+  materialRequestItemId String?
+  materialCodeSnapshot  String?
+  materialNameSnapshot  String?
+  unitSnapshot          String?
+  MaterialItem          MaterialItem         @relation(fields: [materialItemId], references: [id])
+  MaterialRequest       MaterialRequest?     @relation(fields: [materialRequestId], references: [id])
+  MaterialRequestItem   MaterialRequestItem? @relation(fields: [materialRequestItemId], references: [id])
+  Project               Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([materialItemId])
+  @@index([materialRequestId])
+  @@index([materialRequestItemId])
+  @@index([movementDate])
+  @@index([projectId])
+  @@index([projectId, materialItemId])
+  @@index([projectId, movementDate])
+}
+
+model MaterialRequest {
+  id                  String                  @id
+  projectId           String
+  requestNo           String                  @unique
+  siteReportId        String?
+  requestedById       String
+  requestDate         DateTime
+  neededDate          DateTime?
+  status              MaterialRequestStatus   @default(DRAFT)
+  priority            MaterialRequestPriority @default(MEDIUM)
+  note                String?
+  cancelReason        String?
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime
+  deletedAt           DateTime?
+  MaterialMovement    MaterialMovement[]
+  Project             Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  User                User                    @relation(fields: [requestedById], references: [id])
+  SiteReport          SiteReport?             @relation(fields: [siteReportId], references: [id])
+  MaterialRequestItem MaterialRequestItem[]
+
+  @@index([projectId])
+  @@index([requestNo])
+  @@index([requestedById])
+  @@index([siteReportId])
+}
+
+model MaterialRequestItem {
+  id                   String               @id
+  materialRequestId    String
+  wbsItemId            String?
+  fieldProgressItemId  String?
+  workItemNameSnapshot String?
+  materialCode         String?
+  materialName         String
+  unit                 String
+  requestedQuantity    Decimal              @db.Decimal(19, 4)
+  issuedQuantity       Decimal              @default(0) @db.Decimal(19, 4)
+  receivedQuantity     Decimal              @default(0) @db.Decimal(19, 4)
+  remainingQuantity    Decimal              @default(0) @db.Decimal(19, 4)
+  reason               String?
+  note                 String?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime
+  deletedAt            DateTime?
+  locationNodeId       String?
+  MaterialMovement     MaterialMovement[]
+  FieldProgressItem    FieldProgressItem?   @relation(fields: [fieldProgressItemId], references: [id])
+  ProjectLocationNode  ProjectLocationNode? @relation(fields: [locationNodeId], references: [id])
+  MaterialRequest      MaterialRequest      @relation(fields: [materialRequestId], references: [id], onDelete: Cascade)
+  WBSItem              WBSItem?             @relation(fields: [wbsItemId], references: [id])
+
+  @@index([fieldProgressItemId])
+  @@index([locationNodeId])
+  @@index([materialRequestId])
+  @@index([wbsItemId])
+}
+
+model Notification {
+  id        String    @id
+  userId    String?
+  projectId String?
+  type      String
+  severity  String    @default("INFO")
+  title     String
+  message   String?
+  href      String?
+  isRead    Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+  Project   Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  User      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
+  @@index([userId, isRead])
+}
+
+model Project {
+  id                          String                        @id
+  code                        String                        @unique
+  name                        String
+  description                 String?
+  status                      ProjectStatus                 @default(PLANNING)
+  startDate                   DateTime?
+  endDate                     DateTime?
+  budget                      Decimal?                      @db.Decimal(19, 4)
+  deletedAt                   DateTime?
+  createdAt                   DateTime                      @default(now())
+  updatedAt                   DateTime
+  location                    String?
+  investor                    String?
+  ApprovalRequest             ApprovalRequest[]
+  Document                    Document[]
+  DocumentFolder              DocumentFolder[]
+  FieldMaterialRequest        FieldMaterialRequest[]
+  FieldProgressEntry          FieldProgressEntry[]
+  FieldProgressItem           FieldProgressItem[]
+  FieldProgressItemAssignment FieldProgressItemAssignment[]
+  FieldProgressItemLocation   FieldProgressItemLocation[]
+  FieldProgressTemplate       FieldProgressTemplate[]
+  MaterialItem                MaterialItem[]
+  MaterialMovement            MaterialMovement[]
+  MaterialRequest             MaterialRequest[]
+  Notification                Notification[]
+  ProjectLocationNode         ProjectLocationNode[]
+  ProjectMaterialStock        ProjectMaterialStock[]
+  ProjectMember               ProjectMember[]
+  SiteReport                  SiteReport[]
+  SiteReportLine              SiteReportLine[]
+  WBSItem                     WBSItem[]
+
+  @@index([code])
+  @@index([createdAt])
+  @@index([status])
+}
+
+model ProjectLocationNode {
+  id                                         String                      @id
+  projectId                                  String
+  parentId                                   String?
+  code                                       String
+  name                                       String
+  nodeType                                   ProjectLocationNodeType
+  description                                String?
+  level                                      Int                         @default(0)
+  sortOrder                                  Int                         @default(0)
+  createdById                                String
+  updatedById                                String?
+  createdAt                                  DateTime                    @default(now())
+  updatedAt                                  DateTime
+  deletedAt                                  DateTime?
+  Document                                   Document[]
+  FieldProgressEntry                         FieldProgressEntry[]
+  FieldProgressItemLocation                  FieldProgressItemLocation[]
+  MaterialRequestItem                        MaterialRequestItem[]
+  User_ProjectLocationNode_createdByIdToUser User                        @relation("ProjectLocationNode_createdByIdToUser", fields: [createdById], references: [id])
+  ProjectLocationNode                        ProjectLocationNode?        @relation("ProjectLocationNodeToProjectLocationNode", fields: [parentId], references: [id], onDelete: Restrict)
+  other_ProjectLocationNode                  ProjectLocationNode[]       @relation("ProjectLocationNodeToProjectLocationNode")
+  Project                                    Project                     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  User_ProjectLocationNode_updatedByIdToUser User?                       @relation("ProjectLocationNode_updatedByIdToUser", fields: [updatedById], references: [id])
+  SiteReportLine                             SiteReportLine[]
+
+  @@unique([projectId, parentId, code])
+  @@index([parentId])
+  @@index([projectId, deletedAt])
+  @@index([projectId, parentId, sortOrder])
+}
+
+model ProjectMaterialStock {
+  id             String       @id
+  projectId      String
+  materialItemId String
+  stock          Decimal      @default(0) @db.Decimal(19, 4)
+  minStockLevel  Decimal      @default(0) @db.Decimal(19, 4)
+  lastUpdated    DateTime     @default(now())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime
+  MaterialItem   MaterialItem @relation(fields: [materialItemId], references: [id], onDelete: Cascade)
+  Project        Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, materialItemId])
+  @@index([materialItemId])
+  @@index([projectId])
+}
+
+model ProjectMember {
+  id                                    String                        @id
+  projectId                             String
+  userId                                String
+  role                                  ProjectRole
+  joinedAt                              DateTime                      @default(now())
+  leftAt                                DateTime?
+  assignedById                          String?
+  createdAt                             DateTime                      @default(now())
+  deletedAt                             DateTime?
+  isActive                              Boolean                       @default(true)
+  note                                  String?
+  updatedAt                             DateTime
+  FieldProgressItemAssignment           FieldProgressItemAssignment[]
+  User_ProjectMember_assignedByIdToUser User?                         @relation("ProjectMember_assignedByIdToUser", fields: [assignedById], references: [id])
+  Project                               Project                       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  User_ProjectMember_userIdToUser       User                          @relation("ProjectMember_userIdToUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([assignedById])
+  @@index([projectId])
+  @@index([userId])
+}
+
+model SiteReport {
+  id                                 String                 @id
+  projectId                          String
+  reportDate                         DateTime
+  weather                            String?
+  status                             SiteReportStatus       @default(DRAFT)
+  createdAt                          DateTime               @default(now())
+  updatedAt                          DateTime
+  approvedAt                         DateTime?
+  approvedById                       String?
+  createdById                        String
+  deletedAt                          DateTime?
+  equipmentNote                      String?
+  generalNote                        String?
+  manpowerCount                      Int?
+  rejectedReason                     String?
+  submittedAt                        DateTime?
+  title                              String?
+  equipment                          String?
+  gpsLat                             Float?
+  gpsLng                             Float?
+  issues                             String?
+  labor                              String?
+  materials                          String?
+  quality                            String?
+  recommendations                    String?
+  reportNo                           String                 @unique @default(dbgenerated("(gen_random_uuid())::text"))
+  reporterName                       String?
+  summary                            String?
+  type                               SiteReportType         @default(DAILY)
+  weatherCondition                   WeatherCondition?
+  weatherNote                        String?
+  weatherTemperature                 Float?
+  weekEndDate                        DateTime?
+  weekStartDate                      DateTime?
+  MaterialRequest                    MaterialRequest[]
+  User_SiteReport_approvedByIdToUser User?                  @relation("SiteReport_approvedByIdToUser", fields: [approvedById], references: [id])
+  User_SiteReport_createdByIdToUser  User                   @relation("SiteReport_createdByIdToUser", fields: [createdById], references: [id])
+  Project                            Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  SiteReportAttachment               SiteReportAttachment[]
+  SiteReportLine                     SiteReportLine[]
+  SiteReportPhoto                    SiteReportPhoto[]
+
+  @@index([createdById])
+  @@index([projectId])
+  @@index([reportDate])
+}
+
+model SiteReportAttachment {
+  id           String                   @id
+  reportId     String
+  kind         SiteReportAttachmentKind @default(FILE)
+  fileName     String
+  originalName String?
+  mimeType     String
+  sizeBytes    Int
+  storagePath  String
+  publicUrl    String?
+  caption      String?
+  createdAt    DateTime                 @default(now())
+  SiteReport   SiteReport               @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+}
+
+model SiteReportLine {
+  id                  String               @id
+  siteReportId        String
+  projectId           String
+  wbsItemId           String?
+  workContent         String
+  constructionCrew    String?
+  unit                String?
+  designQuantity      Decimal?             @db.Decimal(19, 4)
+  quantityToday       Decimal              @db.Decimal(19, 4)
+  quantityBefore      Decimal              @default(0) @db.Decimal(19, 4)
+  quantityCumulative  Decimal              @default(0) @db.Decimal(19, 4)
+  progressPercent     Decimal              @default(0) @db.Decimal(5, 2)
+  note                String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime
+  deletedAt           DateTime?
+  issueNote           String?
+  proposalNote        String?
+  area                String?
+  fieldProgressItemId String?
+  sortOrder           Int                  @default(0)
+  workName            String?
+  locationNodeId      String?
+  FieldProgressItem   FieldProgressItem?   @relation(fields: [fieldProgressItemId], references: [id])
+  ProjectLocationNode ProjectLocationNode? @relation(fields: [locationNodeId], references: [id])
+  Project             Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  SiteReport          SiteReport           @relation(fields: [siteReportId], references: [id], onDelete: Cascade)
+  WBSItem             WBSItem?             @relation(fields: [wbsItemId], references: [id])
+
+  @@index([fieldProgressItemId])
+  @@index([locationNodeId])
+  @@index([projectId])
+  @@index([siteReportId])
+  @@index([wbsItemId])
+}
+
+model SiteReportPhoto {
+  id          String     @id
+  reportId    String
+  storageKey  String
+  description String?
+  createdAt   DateTime   @default(now())
+  SiteReport  SiteReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([reportId])
+}
+
+model SystemSetting {
+  id                        String   @id
+  updatedById               String?
+  updatedAt                 DateTime
+  createdAt                 DateTime @default(now())
+  allowedExtensions         String   @default("pdf, docx, xlsx, dwg, jpg, png, heic")
+  allowedIpMode             String   @default("restricted")
+  approvalEscalation        Boolean  @default(true)
+  auditSensitiveActions     Boolean  @default(true)
+  autoVersioning            Boolean  @default(true)
+  automaticBackup           Boolean  @default(true)
+  backupFrequency           String   @default("daily")
+  companyName               String
+  currency                  String
+  documentRetentionYears    Int      @default(10)
+  emailDailyDigest          Boolean  @default(false)
+  enforceNamingConvention   Boolean  @default(true)
+  escalationHours           Int      @default(24)
+  exportRequiresApproval    Boolean  @default(true)
+  fieldReportReminder       Boolean  @default(true)
+  hotline                   String
+  maintenanceWindow         String   @default("22:00 - 23:00")
+  materialRequestApproval   Boolean  @default(true)
+  maxUploadSizeMb           Int      @default(50)
+  passwordRotationDays      Int      @default(90)
+  reminderTime              String   @default("17:30")
+  reportLockAfterApproval   Boolean  @default(true)
+  requireTwoFactorForAdmins Boolean  @default(true)
+  retentionYears            Int      @default(7)
+  sessionTimeoutMinutes     Int      @default(60)
+  taxCode                   String
+  timezone                  String
+  trustedDeviceReviewDays   Int      @default(30)
+  version                   Int      @default(1)
+  User                      User?    @relation(fields: [updatedById], references: [id])
+
+  @@index([updatedById])
+}
+
+model User {
+  id                                                        String                        @id
+  email                                                     String                        @unique
+  password                                                  String
+  name                                                      String
+  role                                                      UserRole                      @default(STAFF)
+  phone                                                     String?
+  avatar                                                    String?
+  isActive                                                  Boolean                       @default(true)
+  deletedAt                                                 DateTime?
+  createdAt                                                 DateTime                      @default(now())
+  updatedAt                                                 DateTime
+  username                                                  String?                       @unique
+  ApprovalRequest_ApprovalRequest_decidedByIdToUser         ApprovalRequest[]             @relation("ApprovalRequest_decidedByIdToUser")
+  ApprovalRequest_ApprovalRequest_requesterIdToUser         ApprovalRequest[]             @relation("ApprovalRequest_requesterIdToUser")
+  AuditLog                                                  AuditLog[]
+  ChatMessage                                               ChatMessage[]
+  Document                                                  Document[]
+  FieldMaterialRequest                                      FieldMaterialRequest[]
+  FieldProgressEntry_FieldProgressEntry_approvedByIdToUser  FieldProgressEntry[]          @relation("FieldProgressEntry_approvedByIdToUser")
+  FieldProgressEntry_FieldProgressEntry_createdByIdToUser   FieldProgressEntry[]          @relation("FieldProgressEntry_createdByIdToUser")
+  FieldProgressItem                                         FieldProgressItem[]
+  FieldProgressItemAssignment                               FieldProgressItemAssignment[]
+  FieldProgressTemplate                                     FieldProgressTemplate[]
+  MaterialRequest                                           MaterialRequest[]
+  Notification                                              Notification[]
+  ProjectLocationNode_ProjectLocationNode_createdByIdToUser ProjectLocationNode[]         @relation("ProjectLocationNode_createdByIdToUser")
+  ProjectLocationNode_ProjectLocationNode_updatedByIdToUser ProjectLocationNode[]         @relation("ProjectLocationNode_updatedByIdToUser")
+  ProjectMember_ProjectMember_assignedByIdToUser            ProjectMember[]               @relation("ProjectMember_assignedByIdToUser")
+  ProjectMember_ProjectMember_userIdToUser                  ProjectMember[]               @relation("ProjectMember_userIdToUser")
+  SiteReport_SiteReport_approvedByIdToUser                  SiteReport[]                  @relation("SiteReport_approvedByIdToUser")
+  SiteReport_SiteReport_createdByIdToUser                   SiteReport[]                  @relation("SiteReport_createdByIdToUser")
+  SystemSetting                                             SystemSetting[]
+  WBSItem                                                   WBSItem[]
+
+  @@index([createdAt])
+  @@index([email])
+  @@index([username])
+}
+
+model WBSItem {
+  id                  String                @id
+  projectId           String
+  parentId            String?
+  code                String
+  name                String
+  description         String?
+  progress            Decimal               @default(0) @db.Decimal(5, 2)
+  budget              Decimal?              @db.Decimal(19, 4)
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime
+  createdById         String?
+  deletedAt           DateTime?
+  designQuantity      Decimal?              @db.Decimal(19, 4)
+  note                String?
+  plannedEndDate      DateTime?
+  plannedStartDate    DateTime?
+  status              WBSItemStatus         @default(PLANNED)
+  unit                String                @default("Lần")
+  MaterialRequestItem MaterialRequestItem[]
+  SiteReportLine      SiteReportLine[]
+  User                User?                 @relation(fields: [createdById], references: [id])
+  WBSItem             WBSItem?              @relation("WBSItemToWBSItem", fields: [parentId], references: [id])
+  other_WBSItem       WBSItem[]             @relation("WBSItemToWBSItem")
+  Project             Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, code])
+  @@index([parentId])
+  @@index([projectId])
+}
+
+enum ApprovalPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum ApprovalRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum ApprovalRequestType {
+  MATERIAL
+  REPORT
+  VOLUME
+  INSPECTION
+  PLAN
+  DRAWING
+  METHOD_STATEMENT
+  SAFETY
+  QUALITY
+  SITE_ISSUE
+  CHANGE_ORDER
+  OTHER
+}
+
+enum DocumentStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  ARCHIVED
+  SUPERSEDED
+}
+
+enum FieldMaterialPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum FieldMaterialRequestStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  ISSUED
+  RECEIVED
+  CANCELLED
+}
+
+enum FieldProgressEntryStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REVISION_REQUESTED
+  CANCELLED
+}
+
+enum FieldProgressItemAssignmentRole {
+  RESPONSIBLE
+  COORDINATOR
+}
+
+enum FieldProgressItemStatus {
+  PLANNED
+  IN_PROGRESS
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum FieldProgressItemType {
+  GROUP
+  WORK
+  NOTE
+}
+
+enum MaterialMovementType {
+  IMPORT
+  EXPORT
+  TRANSFER
+  RETURN
+}
+
+enum MaterialRequestPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum MaterialRequestStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  ISSUED
+  RECEIVED
+  CANCELLED
+  REQUESTED
+  PROCESSING
+}
+
+enum ProjectLocationNodeType {
+  PROJECT
+  ZONE
+  BLOCK
+  BUILDING
+  BASEMENT
+  FLOOR
+  AREA
+  ROOM
+  AXIS
+  ELEVATION
+  OTHER
+}
+
+enum ProjectRole {
+  PROJECT_MANAGER
+  SITE_COMMANDER
+  QA_QC
+  HSE
+  SUPERVISOR
+  CHIEF_COMMANDER
+  ASSISTANT_COMMANDER
+  VIEWER
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum SiteReportAttachmentKind {
+  PHOTO
+  FILE
+}
+
+enum SiteReportStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  REVISION_REQUESTED
+  LOCKED
+  CANCELLED
+}
+
+enum SiteReportType {
+  DAILY
+  WEEKLY
+}
+
+enum UserRole {
+  ADMIN
+  DIRECTOR
+  DEPUTY_DIRECTOR
+  CHIEF_COMMANDER
+  MANAGER
+  ENGINEER
+  STAFF
+}
+
+enum WBSItemStatus {
+  PLANNED
+  IN_PROGRESS
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum WeatherCondition {
+  SUNNY
+  CLOUDY
+  OVERCAST
+  LIGHT_RAIN
+  HEAVY_RAIN
+  WINDY
+  STORM
+  OTHER
+}

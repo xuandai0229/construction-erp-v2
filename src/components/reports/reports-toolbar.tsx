@@ -71,13 +71,13 @@ export function ReportsToolbar({
       <div className="flex items-center gap-3">
         {/* Search input */}
         <div className="relative flex-1 min-w-0">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted-foreground)] opacity-70 pointer-events-none" />
           <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
             type="text"
             placeholder="Tìm mã báo cáo, công trình, người tạo..."
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full h-10 pl-9 pr-3 text-sm text-slate-900 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder:text-slate-500"
+            className="w-full h-10 pl-9 pr-3 text-sm text-[var(--foreground)] bg-[var(--surface-subtle)] border border-[var(--border)] rounded-[var(--radius-lg)] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder:text-[var(--muted-foreground)]"
           />
         </div>
 
@@ -96,7 +96,7 @@ export function ReportsToolbar({
         </Button>
         
         {hasActiveFilters && (
-          <Button variant="ghost" className="h-10 px-3 text-slate-500 hover:text-slate-900" onClick={onResetFilters}>
+          <Button variant="ghost" className="h-10 px-3 text-[var(--muted-foreground)] hover:text-[var(--foreground)]" onClick={onResetFilters}>
             <X className="w-4 h-4 sm:mr-1.5" /> <span className="hidden sm:inline">Đặt lại</span>
           </Button>
         )}
@@ -104,15 +104,15 @@ export function ReportsToolbar({
 
       
       {isOpen && (
-        <div className="mt-3 pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="mt-3 pt-3 border-t border-[var(--border)] grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           <select
             value={typeFilter}
             onChange={(e) => onTypeFilterChange(e.target.value)}
             disabled={isTypeDisabled}
-            className={`h-10 px-3 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+            className={`h-10 px-3 text-sm rounded-[var(--radius-lg)] focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
               isTypeDisabled 
-                ? 'bg-slate-100 text-slate-500 border border-slate-200 cursor-not-allowed' 
-                : typeFilter ? 'bg-blue-50/50 text-blue-900 border border-blue-200' : 'bg-slate-50 text-slate-900 border border-slate-200'
+                ? 'bg-[var(--border)] text-[var(--muted-foreground)] border border-[var(--border)] cursor-not-allowed' 
+                : typeFilter ? 'bg-blue-50/50 text-blue-900 border border-blue-200' : 'bg-[var(--surface-subtle)] text-[var(--foreground)] border border-[var(--border)]'
             }`}
           >
             {TYPE_OPTIONS.map((opt) => (
@@ -123,8 +123,8 @@ export function ReportsToolbar({
           <select
             value={projectFilter}
             onChange={(e) => onProjectFilterChange(e.target.value)}
-            className={`h-10 px-3 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
-              projectFilter ? 'bg-blue-50/50 text-blue-900 border border-blue-200' : 'bg-slate-50 text-slate-900 border border-slate-200'
+            className={`h-10 px-3 text-sm rounded-[var(--radius-lg)] focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+              projectFilter ? 'bg-blue-50/50 text-blue-900 border border-blue-200' : 'bg-[var(--surface-subtle)] text-[var(--foreground)] border border-[var(--border)]'
             }`}
           >
             <option value="">Tất cả công trình</option>
@@ -134,12 +134,12 @@ export function ReportsToolbar({
           </select>
 
           <div className="relative">
-            <Calendar className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${dateRange ? 'text-blue-500' : 'text-slate-400'}`} />
+            <Calendar className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${dateRange ? 'text-blue-500' : 'text-[var(--muted-foreground)] opacity-70'}`} />
             <select
               value={dateRange}
               onChange={(e) => onDateRangeChange(e.target.value)}
-              className={`w-full h-10 pl-9 pr-3 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors appearance-none cursor-pointer ${
-                dateRange ? 'bg-blue-50/50 text-blue-900 border border-blue-200' : 'bg-slate-50 text-slate-900 border border-slate-200'
+              className={`w-full h-10 pl-9 pr-3 text-sm rounded-[var(--radius-lg)] focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors appearance-none cursor-pointer ${
+                dateRange ? 'bg-blue-50/50 text-blue-900 border border-blue-200' : 'bg-[var(--surface-subtle)] text-[var(--foreground)] border border-[var(--border)]'
               }`}
             >
               <option value="">Mọi thời điểm</option>
@@ -153,10 +153,10 @@ export function ReportsToolbar({
             value={statusFilter}
             onChange={(e) => onStatusFilterChange(e.target.value)}
             disabled={isStatusDisabled}
-            className={`h-10 px-3 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+            className={`h-10 px-3 text-sm rounded-[var(--radius-lg)] focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
               isStatusDisabled 
-                ? 'bg-slate-100 text-slate-500 border border-slate-200 cursor-not-allowed' 
-                : statusFilter ? 'bg-blue-50/50 text-blue-900 border border-blue-200' : 'bg-slate-50 text-slate-900 border border-slate-200'
+                ? 'bg-[var(--border)] text-[var(--muted-foreground)] border border-[var(--border)] cursor-not-allowed' 
+                : statusFilter ? 'bg-blue-50/50 text-blue-900 border border-blue-200' : 'bg-[var(--surface-subtle)] text-[var(--foreground)] border border-[var(--border)]'
             }`}
           >
             {STATUS_OPTIONS.map((opt) => (
@@ -167,8 +167,8 @@ export function ReportsToolbar({
       )}
 
       {hasActiveFilters && (
-        <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-slate-100">
-          <span className="text-xs text-slate-500 mr-1">Đang lọc:</span>
+        <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-[var(--border)]">
+          <span className="text-xs text-[var(--muted-foreground)] mr-1">Đang lọc:</span>
           {typeFilter && !isTypeDisabled && (
             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-[12px] font-medium">
               Loại: {TYPE_OPTIONS.find(o => o.value === typeFilter)?.label}
@@ -193,7 +193,7 @@ export function ReportsToolbar({
               <button onClick={() => onDateRangeChange('')} className="hover:text-emerald-900 ml-0.5"><X className="w-3 h-3" /></button>
             </span>
           )}
-          <button onClick={onResetFilters} className="text-[12px] text-slate-500 hover:text-slate-800 font-medium ml-1 underline underline-offset-2">Xóa tất cả</button>
+          <button onClick={onResetFilters} className="text-[12px] text-[var(--muted-foreground)] hover:text-[var(--foreground)] font-medium ml-1 underline underline-offset-2">Xóa tất cả</button>
         </div>
       )}
 

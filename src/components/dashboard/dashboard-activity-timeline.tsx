@@ -25,9 +25,9 @@ function TimelineIcon({ tone }: { tone: DashboardActivityItem["tone"] }) {
 export function DashboardActivityTimeline({ activities }: { activities: DashboardActivityItem[] }) {
   return (
     <ContentCard className="flex flex-col">
-      <div className="flex items-center justify-between border-b border-slate-100 p-4 sm:p-5">
-        <h2 className="text-base font-bold text-slate-950">Hoạt động gần đây</h2>
-        <Clock className="h-4 w-4 text-slate-500" />
+      <div className="flex items-center justify-between border-b border-[var(--border)] p-4 sm:p-5">
+        <h2 className="text-base font-bold text-[var(--foreground)] tracking-tight">Hoạt động gần đây</h2>
+        <Clock className="h-4 w-4 text-[var(--muted-foreground)]" />
       </div>
       <div className="p-3 sm:p-4">
         {activities.length === 0 ? (
@@ -35,16 +35,16 @@ export function DashboardActivityTimeline({ activities }: { activities: Dashboar
         ) : (
           <div className="space-y-2.5 sm:space-y-3">
             {activities.map((activity) => (
-              <Link key={activity.id} href={activity.href} className="group flex gap-2.5 sm:gap-3 rounded-xl p-2 hover:bg-slate-50 transition-colors">
+              <Link key={activity.id} href={activity.href} className="group flex gap-2.5 sm:gap-3 rounded-xl p-2 hover:bg-[var(--surface)] hover:shadow-sm transition-all border border-transparent hover:border-[var(--border)]">
                 <span className={cn("mt-0.5 flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full", toneClasses[activity.tone])}>
                   <TimelineIcon tone={activity.tone} />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="line-clamp-1 text-[13px] sm:text-sm font-bold text-slate-950">{activity.title}</span>
-                  <span className="mt-0.5 sm:mt-1 line-clamp-1 text-[11px] sm:text-xs font-medium text-slate-600">{activity.actorName} · {activity.projectName}</span>
-                  <span className="mt-0.5 sm:mt-1 block text-[11px] sm:text-xs text-slate-500">{formatDateTimeVN(activity.createdAt)}</span>
+                  <span className="line-clamp-1 text-[13px] sm:text-sm font-bold text-[var(--foreground)]">{activity.title}</span>
+                  <span className="mt-0.5 sm:mt-1 line-clamp-1 text-[11px] sm:text-xs font-medium text-[var(--muted-foreground)]">{activity.actorName} · {activity.projectName}</span>
+                  <span className="mt-0.5 sm:mt-1 block text-[11px] sm:text-xs text-[var(--muted-foreground)] opacity-80">{formatDateTimeVN(activity.createdAt)}</span>
                 </span>
-                <ArrowRight className="mt-1 sm:mt-2 h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-slate-300 sm:text-slate-400 group-hover:text-blue-700" />
+                <ArrowRight className="mt-1 sm:mt-2 h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-[var(--muted-foreground)] opacity-50 group-hover:text-blue-700 group-hover:opacity-100 transition-all" />
               </Link>
             ))}
           </div>
