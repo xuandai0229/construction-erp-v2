@@ -92,17 +92,12 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
 
   return (
     <>
-      <header className="sticky top-0 z-50 flex h-[52px] lg:h-16 shrink-0 items-center justify-between border-b border-[var(--border)] bg-white/90 px-3 shadow-[var(--shadow-card)] backdrop-blur-md md:px-6">
-        <div className="flex items-center">
-          {/* Logo */}
-          <Link href="/dashboard" className="flex items-center gap-2" aria-label="Trang chủ">
-            <div className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-sm)] bg-blue-600 text-white shadow-sm">
-              <Building2 className="h-4 w-4" />
-            </div>
-            <span className="hidden sm:inline-flex text-[17px] font-black text-[var(--foreground)] tracking-tight">CT2</span>
+      <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center justify-between border-b border-[var(--border)] bg-white/95 px-3 backdrop-blur-md lg:h-16 md:px-6">
+        <div className="flex min-w-0 flex-1 items-center">
+          <Link href="/dashboard" className="mr-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-blue-600 text-white shadow-sm lg:hidden" aria-label="Trang chủ">
+            <Building2 className="h-4 w-4" />
           </Link>
-        </div>
-        
+
         {/* Mobile Page Title (Middle) */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 lg:hidden pointer-events-none">
           <span className="text-[15px] font-bold text-slate-900">
@@ -118,7 +113,7 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
         </div>
         
         {/* Desktop Project Switcher */}
-        <div className="hidden lg:flex flex-1 justify-start pl-6">
+        <div className="hidden min-w-0 flex-1 lg:flex">
           {globalContext && (
             <GlobalProjectContextSwitcher 
               projects={globalContext.accessibleProjects} 
@@ -126,6 +121,7 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
               overviewData={globalContext.overviewData}
             />
           )}
+        </div>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
@@ -224,8 +220,7 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
                   </svg>
                 </div>
                 <div>
-                  <span className={styles.drawerBrandName}>CT2 Hà Nội</span>
-                  <span className={styles.drawerBrandSub}>ERP CÔNG TRÌNH</span>
+                  <span className={styles.drawerBrandName}>ERP Công trình</span>
                 </div>
               </div>
               <button

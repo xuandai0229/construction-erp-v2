@@ -70,8 +70,8 @@ export default async function DocumentsOverviewPage({
 
       <ContentCard className="overflow-hidden">
         <div className="border-b border-[var(--border)] bg-[var(--surface)] p-4 sm:p-5">
-          <form className="flex max-w-2xl flex-col gap-3 sm:flex-row" method="GET" action="/documents">
-            <div className="relative flex-1">
+          <form className="flex max-w-2xl items-center gap-2 overflow-x-auto pb-1 sm:overflow-visible sm:pb-0" method="GET" action="/documents">
+            <div className="relative min-w-[220px] flex-1">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-[var(--muted-foreground)] opacity-70" />
               <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" 
                 type="text" 
@@ -81,7 +81,7 @@ export default async function DocumentsOverviewPage({
                 className="form-control h-11 pl-10 pr-4 rounded-[var(--radius-xl)]"
               />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               <Button type="submit" variant="primary" className="h-11 px-6">
                 Lọc dữ liệu
               </Button>

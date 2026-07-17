@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Building2, ClipboardCheck, Package, Menu, X, FolderOpen, CheckSquare, Settings, UserCog, LogOut } from "lucide-react";
+import { LayoutDashboard, Building2, ClipboardCheck, Package, Menu, X, FolderOpen, CheckSquare, Settings, UserCog, LogOut, ScanSearch } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import type { UserRole } from "@prisma/client";
@@ -23,6 +23,7 @@ export function MobileBottomNav({ userRole }: { userRole: UserRole }) {
 
   const moreItems = [
     { name: 'Tài liệu', href: '/documents', icon: FolderOpen },
+    { name: 'Giám sát tuần', href: '/supervision', icon: ScanSearch },
     { name: 'Phê duyệt', href: '/approvals', icon: CheckSquare },
     { name: 'Tài khoản', href: '/users', icon: UserCog },
     { name: 'Cài đặt', href: '/settings', icon: Settings },

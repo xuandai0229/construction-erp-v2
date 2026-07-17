@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { writeAuditLog } from "@/lib/audit";
 import { storageProvider } from "@/lib/storage";
-import { subDays } from "date-fns";
+import { subYears } from "date-fns";
+
+const DEFAULT_DOCUMENT_RETENTION_YEARS = 10;
 
 export async function GET(request: Request) {
   // Simple auth check via header or query params for cron tasks
@@ -15,7 +17,12 @@ export async function GET(request: Request) {
   }
 
   try {
-    const cutoffDate = subDays(new Date(), 7);
+    const setting = await prisma.systemSetting.findFirst({
+      select: { documentRetentionYears: true },
+      orderBy: { createdAt: "asc" },
+    });
+    const retentionYears = setting?.documentRetentionYears ?? DEFAULT_DOCUMENT_RETENTION_YEARS;
+    const cutoffDate = subYears(new Date(), retentionYears);
 
     // Xóa vĩnh viễn tài liệu quá hạn
     const expiredDocuments = await prisma.document.findMany({

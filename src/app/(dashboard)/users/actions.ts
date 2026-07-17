@@ -9,7 +9,7 @@ import { ProjectRole, UserRole } from "@prisma/client";
 import { assertPermission } from "@/lib/permissions/permission-resolver";
 
 const VALID_ROLES: UserRole[] = [
-  "ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR", "CHIEF_COMMANDER",
+  "ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR", "SUPERVISION_HEAD", "CHIEF_COMMANDER",
   "MANAGER", "ENGINEER", "STAFF",
 ];
 const VALID_PROJECT_ROLES: ProjectRole[] = [
@@ -87,6 +87,8 @@ interface CreateUserInput {
   projectIds?: string[];
   projectRoles?: Record<string, ProjectRole>;
   note?: string;
+  supervisionScopeType?: "ALL_PROJECTS" | "SELECTED_PROJECTS";
+  supervisionProjectIds?: string[];
 }
 
 export async function createUser(input: CreateUserInput) {
@@ -153,6 +155,26 @@ export async function createUser(input: CreateUserInput) {
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Vai trò tại công trình không hợp lệ." };
   }
+
+  // Supervision scope validation
+  if (input.role === "SUPERVISION_HEAD") {
+    if (!input.supervisionScopeType) {
+      return { error: "Vui lòng chọn phạm vi giám sát." };
+    }
+    if (input.supervisionScopeType === "SELECTED_PROJECTS") {
+      if (!input.supervisionProjectIds || input.supervisionProjectIds.length === 0) {
+        return { error: "Vui lòng chọn ít nhất một công trình cho phạm vi giám sát." };
+      }
+      // Note: we can just check length since uniqueness is handled in assertValidProjectIds
+      const validScopeProjects = await assertValidProjectIds(input.supervisionProjectIds);
+      // We update the input.supervisionProjectIds to the deduplicated/valid ones
+      input.supervisionProjectIds = validScopeProjects;
+    } else if (input.supervisionScopeType === "ALL_PROJECTS") {
+      // Clear selected projects if ALL_PROJECTS
+      input.supervisionProjectIds = [];
+    }
+  }
+
   const hashedPassword = await bcrypt.hash(input.password, 10);
 
   try {
@@ -187,6 +209,19 @@ export async function createUser(input: CreateUserInput) {
         );
       }
 
+      if (input.role === "SUPERVISION_HEAD" && input.supervisionScopeType) {
+        await tx.supervisionScope.create({
+          data: {
+            userId: newUser.id,
+            scopeType: input.supervisionScopeType,
+            createdById: session.id,
+            projects: input.supervisionScopeType === "SELECTED_PROJECTS" && input.supervisionProjectIds?.length 
+              ? { create: input.supervisionProjectIds.map(id => ({ projectId: id })) } 
+              : undefined,
+          }
+        });
+      }
+
       return newUser;
     });
 
@@ -217,6 +252,8 @@ interface UpdateUserInput {
   projectIds?: string[];
   projectRoles?: Record<string, ProjectRole>;
   note?: string;
+  supervisionScopeType?: "ALL_PROJECTS" | "SELECTED_PROJECTS";
+  supervisionProjectIds?: string[];
 }
 
 export async function updateUser(userId: string, input: UpdateUserInput) {
@@ -290,6 +327,18 @@ export async function updateUser(userId: string, input: UpdateUserInput) {
 
   const projectIds = input.projectIds === undefined ? undefined : await assertValidProjectIds(input.projectIds);
 
+  const currentRole = input.role || existing.role;
+  if (currentRole === "SUPERVISION_HEAD") {
+    if (input.supervisionScopeType === "SELECTED_PROJECTS") {
+      if (!input.supervisionProjectIds || input.supervisionProjectIds.length === 0) {
+        return { error: "Vui lòng chọn ít nhất một công trình cho phạm vi giám sát." };
+      }
+      const validScopeProjects = await assertValidProjectIds(input.supervisionProjectIds);
+      input.supervisionProjectIds = validScopeProjects;
+    } else if (input.supervisionScopeType === "ALL_PROJECTS") {
+      input.supervisionProjectIds = [];
+    }
+  }
   try {
     const updated = await prisma.$transaction(async (tx) => {
       const updatedUser = await tx.user.update({
@@ -369,6 +418,36 @@ export async function updateUser(userId: string, input: UpdateUserInput) {
                 },
               });
             }
+          }
+        }
+      }
+
+      const currentRole = input.role || existing.role;
+      if (currentRole === "SUPERVISION_HEAD") {
+        if (input.supervisionScopeType) {
+          const existingScope = await tx.supervisionScope.findUnique({ where: { userId } });
+          if (existingScope) {
+            await tx.supervisionScope.update({
+              where: { userId },
+              data: { scopeType: input.supervisionScopeType },
+            });
+            await tx.supervisionScopeProject.deleteMany({ where: { scopeId: existingScope.id } });
+            if (input.supervisionScopeType === "SELECTED_PROJECTS" && input.supervisionProjectIds?.length) {
+              await tx.supervisionScopeProject.createMany({
+                data: input.supervisionProjectIds.map(id => ({ scopeId: existingScope.id, projectId: id }))
+              });
+            }
+          } else {
+            await tx.supervisionScope.create({
+              data: {
+                userId,
+                scopeType: input.supervisionScopeType,
+                createdById: session.id,
+                projects: input.supervisionScopeType === "SELECTED_PROJECTS" && input.supervisionProjectIds?.length 
+                  ? { create: input.supervisionProjectIds.map(id => ({ projectId: id })) } 
+                  : undefined,
+              }
+            });
           }
         }
       }

@@ -1,0 +1,51 @@
+# Database V2 Cutover Schema Drift Matrix
+
+## ApprovalRequest
+Source rows: 2
+Mapping Strategy: DIRECT_RENAME_MAPPING_PROVEN
+
+### Source Schema
+- id (text, null: false)
+- requesterId (text, null: false)
+- approverId (text, null: true)
+- entityType (text, null: false)
+- entityId (text, null: false)
+- status (USER-DEFINED, null: false)
+- notes (text, null: true)
+- createdAt (timestamp without time zone, null: false)
+- updatedAt (timestamp without time zone, null: false)
+- code (text, null: false)
+- projectId (text, null: false)
+- title (text, null: false)
+- description (text, null: true)
+- type (USER-DEFINED, null: false)
+- priority (USER-DEFINED, null: false)
+- dueDate (timestamp without time zone, null: true)
+- decidedById (text, null: true)
+- decidedAt (timestamp without time zone, null: true)
+- decisionNote (text, null: true)
+- sourceType (text, null: true)
+- sourceId (text, null: true)
+- deletedAt (timestamp without time zone, null: true)
+
+### Target Schema
+- id (text, null: false)
+- requesterId (text, null: false)
+- createdAt (timestamp without time zone, null: false)
+- updatedAt (timestamp without time zone, null: false)
+- code (text, null: false)
+- decidedAt (timestamp without time zone, null: true)
+- decidedById (text, null: true)
+- decisionNote (text, null: true)
+- deletedAt (timestamp without time zone, null: true)
+- description (text, null: true)
+- dueDate (timestamp without time zone, null: true)
+- priority (USER-DEFINED, null: false)
+- projectId (text, null: false)
+- sourceId (text, null: true)
+- sourceType (text, null: true)
+- title (text, null: false)
+- type (USER-DEFINED, null: false)
+- status (USER-DEFINED, null: false)
+- entityType (text, null: false)
+- entityId (text, null: false)

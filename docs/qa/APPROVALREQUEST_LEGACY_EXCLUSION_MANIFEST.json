@@ -1,0 +1,29 @@
+{
+  "approvedDecision": "BUSINESS_APPROVED_EXCLUSION_AND_ARCHIVE",
+  "timestamp": "1784260188923",
+  "archiveChecksum": "464b0b6c479d590c200a5c5cf70efbf7267b3c1cc3afd5ba98be5abe59d4f23e",
+  "archiveSize": 1668,
+  "rowCount": 2,
+  "rowHashes": [
+    "90a6a9b4851aaf155be826e5a98537d4574de24c663aa0f8f1ac194f599a7140",
+    "60aa354cf689fbda2d46ba64f0d2322300c1800384c2d3ff055dc38f27ab9198"
+  ],
+  "identities": [
+    {
+      "idPrefix": "cmrobr48***",
+      "type": "METHOD_STATEMENT",
+      "status": "APPROVED",
+      "hasSourceType": false,
+      "hasSourceId": false
+    },
+    {
+      "idPrefix": "cmrobr48***",
+      "type": "QUALITY",
+      "status": "PENDING",
+      "hasSourceType": false,
+      "hasSourceId": false
+    }
+  ],
+  "approvalReason": "Orphaned legacy rows. No entityType/entityId present. Impossible to map securely. Excluded and archived.",
+  "approvedBy": "BUSINESS_OWNER"
+}

@@ -3,6 +3,7 @@ import prisma from "./prisma";
 import { getSession } from "./auth";
 import { redirect } from "next/navigation";
 import { SYSTEM_ROLE_DISPLAY_NAMES, SYSTEM_ROLE_REGISTRY } from "./roles/role-registry";
+import { canAccessSupervisionProject, getSupervisionProjectWhere } from "./supervision/access";
 
 // ─── Role Constants ───────────────────────────────────────────
 export const SYSTEM_ADMIN_ROLES: UserRole[] = ["ADMIN"];
@@ -158,6 +159,9 @@ export async function canAccessProject(
   projectId: string
 ): Promise<boolean> {
   if (HIGH_LEVEL_ROLES.includes(user.role)) return true;
+  if (user.role === "SUPERVISION_HEAD") {
+    return canAccessSupervisionProject(user, projectId);
+  }
 
   const member = await prisma.projectMember.findUnique({
     where: {
@@ -248,6 +252,12 @@ export async function getAccessibleProjectIds(
   user: { id: string; role: UserRole }
 ): Promise<string[] | null> {
   if (HIGH_LEVEL_ROLES.includes(user.role)) return null; // null = all projects
+
+  if (user.role === "SUPERVISION_HEAD") {
+    const scopeWhere = await getSupervisionProjectWhere(user);
+    if (!scopeWhere.id) return null; // ALL_PROJECTS
+    return scopeWhere.id.in || [];
+  }
 
   const members = await prisma.projectMember.findMany({
     where: {

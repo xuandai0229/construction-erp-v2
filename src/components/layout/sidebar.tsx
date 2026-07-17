@@ -7,6 +7,7 @@ import {
   Building2,
   FolderOpen,
   ClipboardCheck,
+  ScanSearch,
   Package,
   ListTodo,
   CheckSquare,
@@ -22,6 +23,15 @@ const navigationSections = [
   {
     label: null,
     items: [{ name: "Tổng quan", href: "/dashboard", icon: LayoutDashboard }],
+  },
+  {
+    label: "GIÁM SÁT",
+    items: [
+      { name: "Tổng quan giám sát", href: "/supervision", icon: ScanSearch },
+      { name: "Nhật ký giám sát", href: "/supervision/journal", icon: ClipboardCheck },
+      { name: "Tồn tại và khắc phục", href: "/supervision/findings", icon: CheckSquare },
+      { name: "Báo cáo kết quả tuần", href: "/supervision/weekly-reports", icon: FolderOpen },
+    ],
   },
   {
     label: "QUẢN LÝ",
@@ -77,10 +87,7 @@ export function Sidebar({ userRole }: { userRole: UserRole }) {
               <path d="M20 10H24V32H20V10Z" fill="#ffffff" />
             </svg>
           </div>
-          <div className="flex flex-col">
-            <span className={styles.brandName}>CT2 Hà Nội</span>
-            <span className={styles.brandSub}>ERP CÔNG TRÌNH</span>
-          </div>
+          <span className={styles.brandName}>ERP Công trình</span>
         </Link>
       </div>
 
@@ -114,9 +121,6 @@ export function Sidebar({ userRole }: { userRole: UserRole }) {
         </nav>
       </div>
 
-      <div className={styles.footer}>
-        <div className={styles.footerBadge}>v2.0 Nội bộ</div>
-      </div>
     </div>
   );
 }

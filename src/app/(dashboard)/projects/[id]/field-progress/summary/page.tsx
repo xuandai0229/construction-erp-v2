@@ -135,9 +135,9 @@ export default async function FieldProgressSummaryPage({
       </div>
 
       <div className="bg-white border border-slate-200 rounded-[14px] p-2.5 shadow-sm">
-        <form className="flex flex-col md:flex-row md:flex-wrap items-end gap-3" method="GET">
-          <div className="flex flex-1 flex-wrap sm:flex-nowrap gap-3">
-            <div className="flex-1 min-w-[120px]">
+        <form className="flex items-end gap-3 overflow-x-auto pb-1 md:overflow-visible md:pb-0" method="GET">
+          <div className="flex min-w-max flex-1 gap-3">
+            <div className="min-w-[150px] flex-1">
               <label htmlFor="filter-from" className="block text-[11px] font-bold text-slate-700 mb-1">Từ ngày</label>
               <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" 
                 id="filter-from"
@@ -147,7 +147,7 @@ export default async function FieldProgressSummaryPage({
                 className="w-full h-9 px-2 border border-slate-300 bg-white text-slate-900 rounded-[8px] text-[13px] font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none" 
               />
             </div>
-            <div className="flex-1 min-w-[120px]">
+            <div className="min-w-[150px] flex-1">
               <label htmlFor="filter-to" className="block text-[11px] font-bold text-slate-700 mb-1">Đến ngày</label>
               <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" 
                 id="filter-to"
@@ -157,7 +157,7 @@ export default async function FieldProgressSummaryPage({
                 className="w-full h-9 px-2 border border-slate-300 bg-white text-slate-900 rounded-[8px] text-[13px] font-medium focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all outline-none" 
               />
             </div>
-            <div className="flex-1 min-w-[120px]">
+            <div className="min-w-[150px] flex-1">
               <label htmlFor="filter-mode" className="block text-[11px] font-bold text-slate-700 mb-1">Hiển thị</label>
               <select 
                 id="filter-mode"
@@ -169,7 +169,7 @@ export default async function FieldProgressSummaryPage({
                 <option value="ALL_DAYS">Tất cả</option>
               </select>
             </div>
-            <div className="flex-1 min-w-[120px]">
+            <div className="min-w-[150px] flex-1">
               <label htmlFor="filter-status" className="block text-[11px] font-bold text-slate-700 mb-1">Phạm vi</label>
               <select 
                 id="filter-status"
@@ -185,7 +185,7 @@ export default async function FieldProgressSummaryPage({
           <button 
             type="submit" 
             aria-label="Lọc dữ liệu tổng hợp"
-            className="h-9 w-full md:w-auto px-5 bg-blue-600 text-white rounded-[8px] text-[13px] font-bold hover:bg-blue-700 flex items-center justify-center gap-1.5 shadow-sm transition-all whitespace-nowrap shrink-0"
+            className="h-9 shrink-0 px-5 bg-blue-600 text-white rounded-[8px] text-[13px] font-bold hover:bg-blue-700 flex items-center justify-center gap-1.5 shadow-sm transition-all whitespace-nowrap"
           >
             <Filter className="w-3.5 h-3.5" /> Lọc
           </button>

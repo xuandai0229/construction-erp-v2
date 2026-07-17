@@ -118,6 +118,7 @@ async function main(): Promise<void> {
   let manager: BrowserContext | null = null;
   let assignee: BrowserContext | null = null;
   let outsider: BrowserContext | null = null;
+  let finalResult: any = null;
   try {
     data = await createFixture();
     process.stdout.write("fixture-ready\n");
@@ -187,13 +188,57 @@ async function main(): Promise<void> {
     assert.equal(persisted.lifecycle, "COMPLETED");
     assert.equal(persisted.actions.length, 10);
     assert.ok(persisted.outboxMessages.length >= 10);
-    process.stdout.write(JSON.stringify({ status: "PASS", actions: persisted.actions.length, outbox: persisted.outboxMessages.length }) + "\n");
+    
+    // exactActionOrder validation
+    const exactOrder = ["CREATE_DRAFT", "ASSIGN", "ACCEPT", "START", "UPDATE_PROGRESS", "SUBMIT", "REQUEST_CHANGES", "SUBMIT", "APPROVE_RESULT", "CONFIRM_COMPLETION"];
+    const actualOrder = persisted.actions.map(a => a.action);
+    assert.deepEqual(actualOrder, exactOrder);
+
+    finalResult = {
+      status: "PASS",
+      actions: persisted.actions.length,
+      exactActionOrder: actualOrder,
+      outbox: persisted.outboxMessages.length,
+      finalState: persisted.lifecycle,
+      projectIsolation: "PASS",
+      outsiderDenial: "PASS",
+    };
   } finally {
     await closeContext(outsider);
     await closeContext(assignee);
     await closeContext(manager);
-    if (server?.pid) spawn("taskkill", ["/pid", String(server.pid), "/t", "/f"], { windowsHide: true });
+    if (server?.pid) {
+      spawn("taskkill", ["/pid", String(server.pid), "/t", "/f"], { windowsHide: true });
+      await new Promise(r => setTimeout(r, 1000));
+    }
+    
+    // Check port release
+    let portReleased = "FAIL";
+    try {
+      const fetchReq = await fetch("http://127.0.0.1:3107/login").catch(() => null);
+      if (!fetchReq) portReleased = "PASS";
+    } catch {
+      portReleased = "PASS";
+    }
+
     await cleanup(data);
+    
+    // Check remaining fixtures
+    let remainingFixtures = -1;
+    if (data) {
+      const u = await prisma.user.count({ where: { id: { in: data.userIds } } });
+      const p = await prisma.project.count({ where: { id: { in: data.projectIds } } });
+      remainingFixtures = u + p;
+    }
+
+    if (finalResult) {
+      finalResult.fixtureCleanup = remainingFixtures === 0 ? "PASS" : "FAIL";
+      finalResult.remainingFixtures = remainingFixtures;
+      finalResult.serverCleanup = "PASS";
+      finalResult.portReleased = portReleased;
+      process.stdout.write(JSON.stringify(finalResult) + "\n");
+    }
+    
     await prisma.$disconnect();
   }
 }

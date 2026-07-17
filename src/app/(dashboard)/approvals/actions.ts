@@ -218,11 +218,15 @@ export async function createApprovalRequest(data: CreateApprovalRequestInput) {
   }
 
   const code = await generateApprovalCode();
+  const sourceType = normalizeOptionalText(data.sourceType);
+  const sourceId = normalizeOptionalText(data.sourceId);
 
   await prisma.approvalRequest.create({
     data: {
       code,
       projectId,
+      entityType: sourceType || type,
+      entityId: sourceId || code,
       title,
       description: normalizeOptionalText(data.description),
       type,
@@ -230,8 +234,8 @@ export async function createApprovalRequest(data: CreateApprovalRequestInput) {
       dueDate: parsedDueDate,
       requesterId: session.id,
       status: "PENDING",
-      sourceType: normalizeOptionalText(data.sourceType),
-      sourceId: normalizeOptionalText(data.sourceId),
+      sourceType,
+      sourceId,
     },
   });
 

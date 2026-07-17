@@ -1,7 +1,7 @@
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { Building2, Calendar, MapPin, User, ListTree, FolderOpen, ClipboardCheck, BarChart2, Package, ChevronRight, CalendarCheck, MoreVertical, Search, Plus } from "lucide-react";
+import { ArrowLeft, Building2, Calendar, MapPin, User, ListTree, FolderOpen, ClipboardCheck, BarChart2, Package, ChevronRight, CalendarCheck, MoreVertical, Search, Plus, Pencil } from "lucide-react";
 import { DeleteProjectButton } from "@/components/projects/delete-project-button";
 import Link from "next/link";
 import { formatDateVN } from "@/lib/utils";
@@ -204,43 +204,31 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
       {/* =========================================
           DESKTOP LAYOUT (Hidden on mobile)
           ========================================= */}
-      <div className="hidden sm:block rounded-[var(--radius-xl)] bg-[var(--surface)] border border-[var(--border)] shadow-[var(--shadow-elevated)] p-5 relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-5">
-
-        {/* Abstract Dot Grid Decoration */}
-        <div
-          className="absolute inset-y-0 right-0 w-[400px] pointer-events-none"
-          style={{
-            backgroundImage: 'radial-gradient(circle, #94a3b8 1px, transparent 1px)',
-            backgroundSize: '16px 16px',
-            WebkitMaskImage: 'linear-gradient(to right, transparent, black 100%)',
-            maskImage: 'linear-gradient(to right, transparent, black 100%)',
-            opacity: 0.15
-          }}
-        />
-
-        <div className="relative z-10 flex-1 min-w-0">
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <h1 className="text-[18px] sm:text-[26px] font-bold text-[var(--foreground)] tracking-tight line-clamp-2 leading-tight">{project.name}</h1>
-            {getStatusBadge(project.status)}
-          </div>
-          <div className="mt-2 sm:mt-3 flex items-center">
-            <span className="inline-flex items-center gap-1 sm:gap-1.5 bg-[var(--surface-subtle)] text-[var(--muted-foreground)] px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-[6px] text-[11px] sm:text-[13px] font-medium border border-[var(--border)]">
-              Mã: {project.code}
-            </span>
-          </div>
+      <div className="hidden min-h-[76px] items-center gap-3 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] px-5 py-4 shadow-[var(--shadow-card)] sm:flex">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--primary-soft)] text-[var(--primary)]">
+          <Building2 className="h-5 w-5" />
+        </div>
+        <div className="flex min-w-0 flex-1 items-center gap-2.5">
+          <h1 className="min-w-0 truncate text-[22px] font-bold leading-tight tracking-tight text-[var(--foreground)] xl:text-2xl">{project.name}</h1>
+          <span className="hidden shrink-0 rounded-md border border-[var(--border)] bg-[var(--surface-subtle)] px-2.5 py-1 text-xs font-semibold text-[var(--muted-foreground)] lg:inline-flex">
+            {project.code}
+          </span>
+          <span className="shrink-0">{getStatusBadge(project.status)}</span>
         </div>
 
-        <div className="relative z-10 flex flex-wrap items-center gap-1.5 sm:gap-2 shrink-0">
-          <Link href="/projects" className="inline-flex items-center justify-center rounded-[10px] sm:rounded-[12px] bg-[var(--surface)] border border-[var(--border)] px-3 sm:px-4 py-1.5 text-[12px] sm:text-[13px] font-semibold text-[var(--foreground)] shadow-[var(--shadow-card)] transition-colors hover:bg-[var(--surface-subtle)] hover:text-[var(--foreground)] focus:outline-none h-[32px] sm:h-[36px]">
-            Quay lại
+        <div className="flex shrink-0 items-center gap-2">
+          <Link href="/projects" aria-label="Danh sách công trình" className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-subtle)] focus:outline-none">
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden xl:inline">Danh sách</span>
           </Link>
           {canManage && (
-            <Link href={`/projects/${project.id}/edit`} className="inline-flex items-center justify-center rounded-[10px] sm:rounded-[12px] bg-blue-600 px-3 sm:px-4 py-1.5 text-[12px] sm:text-[13px] font-semibold text-white shadow-[var(--shadow-card)] transition-colors hover:bg-blue-700 focus:outline-none h-[32px] sm:h-[36px]">
+            <Link href={`/projects/${project.id}/edit`} className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3.5 text-sm font-semibold text-white shadow-[var(--shadow-button)] transition-colors hover:bg-blue-700 focus:outline-none">
+              <Pencil className="h-4 w-4" />
               Sửa
             </Link>
           )}
           {canManage && (
-            <DeleteProjectButton id={project.id} projectName={project.name} className="h-[32px] sm:h-[36px] px-2 sm:px-2.5 text-[11px] sm:text-[12px] bg-transparent border-rose-100 text-rose-500 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 transition-colors ml-0 sm:ml-1" />
+            <DeleteProjectButton id={project.id} projectName={project.name} className="h-9 px-3 text-sm bg-transparent border-rose-100 text-rose-500 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 transition-colors" />
           )}
         </div>
       </div>

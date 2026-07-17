@@ -20,6 +20,8 @@ interface UserData {
   deletedAt: string | null;
   createdAt: string;
   assignedProjects: { id: string; code: string; name: string; role: string; roleDisplay: string }[];
+  supervisionScopeType?: "ALL_PROJECTS" | "SELECTED_PROJECTS" | null;
+  supervisionProjectIds?: string[];
 }
 
 interface ProjectData {
@@ -110,6 +112,8 @@ export function UserManagementClient({ initialUsers, projects, currentUserId, cu
   const [formProjectIds, setFormProjectIds] = useState<string[]>([]);
   const [formProjectRoles, setFormProjectRoles] = useState<Record<string, string>>({});
   const [formNote, setFormNote] = useState("");
+  const [formSupervisionScope, setFormSupervisionScope] = useState<"ALL_PROJECTS" | "SELECTED_PROJECTS">("SELECTED_PROJECTS");
+  const [formSupervisionProjectIds, setFormSupervisionProjectIds] = useState<string[]>([]);
 
   // Assign project state
   const [assignUserId, setAssignUserId] = useState<string | null>(null);
@@ -195,10 +199,12 @@ export function UserManagementClient({ initialUsers, projects, currentUserId, cu
         username: formUsername || undefined,
         phone: formPhone || undefined,
         password: formPassword,
-        role: formRole as "ADMIN" | "DIRECTOR" | "DEPUTY_DIRECTOR" | "CHIEF_COMMANDER" | "MANAGER" | "ENGINEER" | "STAFF",
+        role: formRole as "ADMIN" | "DIRECTOR" | "DEPUTY_DIRECTOR" | "CHIEF_COMMANDER" | "MANAGER" | "ENGINEER" | "STAFF" | "SUPERVISION_HEAD",
         projectIds: formProjectIds.length > 0 ? formProjectIds : undefined,
         projectRoles: formProjectRoles as Record<string, "PROJECT_MANAGER" | "SITE_COMMANDER" | "CHIEF_COMMANDER" | "ASSISTANT_COMMANDER" | "QA_QC" | "HSE" | "SUPERVISOR" | "VIEWER">,
         note: formNote || undefined,
+        supervisionScopeType: formRole === "SUPERVISION_HEAD" ? formSupervisionScope : undefined,
+        supervisionProjectIds: formRole === "SUPERVISION_HEAD" && formSupervisionScope === "SELECTED_PROJECTS" ? formSupervisionProjectIds : undefined,
       });
       if (result.error) { setError(result.error); return; }
       setShowCreate(false);
@@ -215,8 +221,9 @@ export function UserManagementClient({ initialUsers, projects, currentUserId, cu
 
   const resetForm = () => {
     setFormName(""); setFormEmail(""); setFormUsername(""); setFormPhone("");
-    setFormPassword(""); setFormRole("CHIEF_COMMANDER");
+    setFormPassword(""); setFormRole(allowedRoles.length > 0 ? allowedRoles[0].role : "STAFF");
     setFormProjectIds([]); setFormProjectRoles({}); setFormNote(""); setError("");
+    setFormSupervisionScope("SELECTED_PROJECTS"); setFormSupervisionProjectIds([]);
   };
 
   const handleToggleActive = async (userId: string, isActive: boolean) => {
@@ -297,10 +304,12 @@ export function UserManagementClient({ initialUsers, projects, currentUserId, cu
       email: formEmail,
       username: formUsername,
       phone: formPhone,
-      role: formRole as "ADMIN" | "DIRECTOR" | "DEPUTY_DIRECTOR" | "CHIEF_COMMANDER" | "MANAGER" | "ENGINEER" | "STAFF",
+      role: formRole as "ADMIN" | "DIRECTOR" | "DEPUTY_DIRECTOR" | "CHIEF_COMMANDER" | "MANAGER" | "ENGINEER" | "STAFF" | "SUPERVISION_HEAD",
       projectIds: formProjectIds,
       projectRoles: formProjectRoles as Record<string, "PROJECT_MANAGER" | "SITE_COMMANDER" | "CHIEF_COMMANDER" | "ASSISTANT_COMMANDER" | "QA_QC" | "HSE" | "SUPERVISOR" | "VIEWER">,
       note: formNote || undefined,
+      supervisionScopeType: formRole === "SUPERVISION_HEAD" ? formSupervisionScope : undefined,
+      supervisionProjectIds: formRole === "SUPERVISION_HEAD" && formSupervisionScope === "SELECTED_PROJECTS" ? formSupervisionProjectIds : undefined,
     }));
       if (!result) return;
       if (result.error) { setError(result.error); return; }
@@ -322,7 +331,9 @@ export function UserManagementClient({ initialUsers, projects, currentUserId, cu
     setFormRole(user.role);
     setFormProjectIds(user.assignedProjects.map(p => p.id));
     setFormProjectRoles(Object.fromEntries(user.assignedProjects.map((project) => [project.id, project.role])));
-    setFormNote(""); // We don't have the note in UserData directly, but we can leave it empty
+    setFormNote(""); 
+    setFormSupervisionScope(user.supervisionScopeType || "SELECTED_PROJECTS");
+    setFormSupervisionProjectIds(user.supervisionProjectIds || []);
     setError("");
   };
 
@@ -397,7 +408,6 @@ export function UserManagementClient({ initialUsers, projects, currentUserId, cu
     <div className="space-y-4">
       {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-lg">{error}</div>}
 
-      {/* Filters + Create Button */}
       <div className="surface-panel flex flex-col gap-3 p-3 sm:flex-row">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
@@ -424,7 +434,6 @@ export function UserManagementClient({ initialUsers, projects, currentUserId, cu
 
       <p className="text-xs text-slate-500" aria-live="polite">Hiển thị {sortedUsers.length} tài khoản phù hợp.</p>
 
-      {/* Desktop Table */}
       <div className="hidden lg:block rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-50 border-b border-slate-200">
@@ -489,7 +498,6 @@ export function UserManagementClient({ initialUsers, projects, currentUserId, cu
         {paginatedUsers.length === 0 && <div className="p-8 text-center text-sm text-slate-500">Không tìm thấy tài khoản phù hợp với bộ lọc hiện tại.</div>}
       </div>
 
-      {/* Mobile Cards */}
       <div className="space-y-3 lg:hidden">
         {paginatedUsers.map(user => {
           const status = getAccountStatus(user);
@@ -601,6 +609,37 @@ export function UserManagementClient({ initialUsers, projects, currentUserId, cu
                   ))}
                 </select>
               </div>
+
+              {formRole === "SUPERVISION_HEAD" ? (
+                <div className="bg-blue-50 border border-blue-200 rounded-md p-4 space-y-4">
+                  <h4 className="font-semibold text-blue-900 text-sm">Cấu hình Trưởng ban giám sát</h4>
+                  <div>
+                    <label className="block text-sm font-medium text-blue-800 mb-1">Phạm vi giám sát</label>
+                    <select aria-label="Phạm vi giám sát" value={formSupervisionScope} onChange={e => setFormSupervisionScope(e.target.value as any)} className="w-full px-3 py-2 border border-blue-300 rounded-md text-sm bg-white text-slate-900 focus:ring-2 focus:ring-blue-500">
+                      <option value="SELECTED_PROJECTS">Chỉ giám sát công trình được chọn</option>
+                      <option value="ALL_PROJECTS">Giám sát toàn bộ công trình công ty</option>
+                    </select>
+                  </div>
+                  {formSupervisionScope === "SELECTED_PROJECTS" && (
+                    <div>
+                      <label className="block text-sm font-medium text-blue-800 mb-1">Công trình giám sát</label>
+                      <div className="border border-blue-300 bg-white rounded-md max-h-40 overflow-y-auto p-2 space-y-1">
+                        {projects.map(p => (
+                          <label key={p.id} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-slate-50">
+                            <input type="checkbox" checked={formSupervisionProjectIds.includes(p.id)} onChange={e => {
+                              if (e.target.checked) setFormSupervisionProjectIds([...formSupervisionProjectIds, p.id]);
+                              else setFormSupervisionProjectIds(formSupervisionProjectIds.filter(id => id !== p.id));
+                            }} className="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                            <span className="text-sm text-slate-700"><span className="font-semibold">{p.code}</span> - {p.name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <p className="text-[11px] text-blue-700">Lưu ý: Không cần gán thêm &quot;Công trình được giao&quot; ở bên dưới trừ khi họ cũng tham gia thi công.</p>
+                </div>
+              ) : null}
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Công trình được giao và vai trò tại công trình</label>
                 <div className="border border-slate-300 rounded-md max-h-40 overflow-y-auto p-2 space-y-1">

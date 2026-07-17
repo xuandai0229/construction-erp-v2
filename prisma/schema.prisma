@@ -1122,3 +1122,360 @@ model SystemSetting {
 
   @@index([updatedById])
 }
+
+
+enum SupervisionFindingStatus {
+  OPEN
+  IN_PROGRESS
+  OVERDUE
+  PENDING_VERIFICATION
+  REMEDIATION_FAILED
+  RESOLVED
+}
+
+enum SupervisionPackageStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  REVISION_REQUIRED
+  RESUBMITTED
+  CONFIRMED
+  LOCKED
+  CANCELLED
+}
+
+enum SupervisionPlanSource {
+  SUPERVISION_HEAD
+  SITE_COMMANDER
+  BOARD_OF_DIRECTORS
+  PREVIOUS_FINDING
+  CONSTRUCTION_TRANSITION
+  INCIDENT
+  OTHER
+}
+
+enum SupervisionRecommendationGroup {
+  STAFFING
+  EQUIPMENT
+  WEAK_TEAM_REPLACEMENT
+  PROGRESS_DIRECTION
+  QUALITY_ISSUE
+  TECHNICAL_VARIATION
+  MATERIAL_VARIATION
+  OTHER
+}
+
+enum SupervisionRemediationResult {
+  NOT_CHECKED
+  PASSED
+  FAILED
+  REWORK_REQUIRED
+}
+
+enum SupervisionScopeType {
+  ALL_PROJECTS
+  SELECTED_PROJECTS
+}
+
+enum SupervisionSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum SupervisionShift {
+  MORNING
+  AFTERNOON
+  EVENING
+}
+
+model SupervisionAttachment {
+  id                       String                   @id
+  packageId                String
+  documentId               String
+  projectId                String
+  evidenceType             String
+  createdById              String
+  createdAt                DateTime                 @default(now())
+  SupervisionWeeklyPackage SupervisionWeeklyPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+}
+
+model SupervisionFinding {
+  id                       String                       @id
+  packageId                String?
+  projectId                String
+  code                     String                       @unique
+  workItem                 String?
+  category                 String
+  description              String
+  severity                 SupervisionSeverity          @default(MEDIUM)
+  responsibleParty         String?
+  detectedAt               DateTime
+  dueDate                  DateTime?
+  status                   SupervisionFindingStatus     @default(OPEN)
+  remediationResponse      String?
+  remediationResult        SupervisionRemediationResult @default(NOT_CHECKED)
+  verifiedAt               DateTime?
+  verifiedById             String?
+  verificationNote         String?
+  createdById              String
+  createdAt                DateTime                     @default(now())
+  updatedAt                DateTime
+  User                     User                         @relation(fields: [createdById], references: [id])
+  SupervisionWeeklyPackage SupervisionWeeklyPackage?    @relation(fields: [packageId], references: [id])
+  Project                  Project                      @relation(fields: [projectId], references: [id])
+
+  @@index([projectId, status])
+}
+
+model SupervisionPlanItem {
+  id                       String                   @id
+  packageId                String
+  projectId                String?
+  plannedDate              DateTime
+  shift                    SupervisionShift
+  plannedTime              String?
+  workItem                 String?
+  inspectionContent        String
+  objective                String?
+  source                   SupervisionPlanSource    @default(SUPERVISION_HEAD)
+  proposer                 String?
+  collaborators            String?
+  priority                 SupervisionSeverity      @default(MEDIUM)
+  expectedResult           String?
+  note                     String?
+  findingId                String?
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime
+  SupervisionWeeklyPackage SupervisionWeeklyPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  Project                  Project?                 @relation(fields: [projectId], references: [id], onDelete: Restrict)
+
+  @@index([packageId, plannedDate])
+}
+
+model SupervisionProgressAssessment {
+  id                       String                   @id
+  packageId                String
+  projectId                String
+  workItem                 String?
+  plannedProgress          Decimal?                 @db.Decimal(5, 2)
+  actualProgress           Decimal?                 @db.Decimal(5, 2)
+  variancePercent          Decimal?                 @db.Decimal(9, 4)
+  delayedDays              Int?                     @default(0)
+  delayReason              String?
+  impactLevel              SupervisionSeverity      @default(MEDIUM)
+  proposedMeasure          String?
+  responsibleParty         String?
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime
+  SupervisionWeeklyPackage SupervisionWeeklyPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  Project                  Project                  @relation(fields: [projectId], references: [id])
+
+  @@index([packageId])
+}
+
+model SupervisionQuantityVerification {
+  id                       String                   @id
+  packageId                String
+  projectId                String
+  workItem                 String
+  unit                     String
+  reportedQuantity         Decimal                  @db.Decimal(19, 4)
+  verifiedQuantity         Decimal                  @db.Decimal(19, 4)
+  varianceQuantity         Decimal                  @db.Decimal(19, 4)
+  variancePercent          Decimal?                 @db.Decimal(9, 4)
+  sourceType               String?
+  sourceId                 String?
+  sourceRecordedAt         DateTime?
+  checkedAt                DateTime
+  conclusion               String
+  note                     String?
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime
+  SupervisionWeeklyPackage SupervisionWeeklyPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  Project                  Project                  @relation(fields: [projectId], references: [id])
+
+  @@index([packageId])
+  @@index([projectId, checkedAt])
+}
+
+model SupervisionRecommendation {
+  id                       String                         @id
+  packageId                String
+  projectId                String?
+  workItem                 String?
+  group                    SupervisionRecommendationGroup
+  content                  String
+  priority                 SupervisionSeverity            @default(MEDIUM)
+  decisionMaker            String?
+  desiredDueDate           DateTime?
+  boardComment             String?
+  status                   String                         @default("PENDING")
+  createdAt                DateTime                       @default(now())
+  updatedAt                DateTime
+  SupervisionWeeklyPackage SupervisionWeeklyPackage       @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  Project                  Project?                       @relation(fields: [projectId], references: [id], onDelete: Restrict)
+
+  @@index([packageId])
+}
+
+model SupervisionScope {
+  id                      String                    @id
+  userId                  String                    @unique
+  scopeType               SupervisionScopeType      @default(SELECTED_PROJECTS)
+  createdById             String?
+  createdAt               DateTime                  @default(now())
+  updatedAt               DateTime
+  User                    User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  SupervisionScopeProject SupervisionScopeProject[]
+}
+
+model SupervisionScopeProject {
+  id               String           @id
+  scopeId          String
+  projectId        String
+  createdAt        DateTime         @default(now())
+  Project          Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  SupervisionScope SupervisionScope @relation(fields: [scopeId], references: [id], onDelete: Cascade)
+
+  @@unique([scopeId, projectId])
+  @@index([projectId])
+}
+
+model SupervisionTransitionCheck {
+  id                       String                   @id
+  packageId                String
+  projectId                String
+  workItem                 String
+  currentStep              String
+  proposedStep             String
+  reportedQuantity         Decimal?                 @db.Decimal(19, 4)
+  verifiedQuantity         Decimal?                 @db.Decimal(19, 4)
+  varianceQuantity         Decimal?                 @db.Decimal(19, 4)
+  unit                     String?
+  plannedProgress          String?
+  conclusion               String
+  reason                   String?
+  requiredAction           String?
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime
+  SupervisionWeeklyPackage SupervisionWeeklyPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  Project                  Project                  @relation(fields: [projectId], references: [id])
+
+  @@index([packageId])
+}
+
+model SupervisionVisit {
+  SupervisionInspectionSchedule SupervisionInspectionSchedule[]
+  id                       String                   @id
+  packageId                String
+  projectId                String
+  visitDate                DateTime
+  shift                    SupervisionShift
+  startedAt                DateTime?
+  endedAt                  DateTime?
+  workItem                 String?
+  inspectionContent        String
+  result                   String
+  collaborators            String?
+  note                     String?
+  createdById              String
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime
+  User                     User                     @relation(fields: [createdById], references: [id])
+  SupervisionWeeklyPackage SupervisionWeeklyPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  Project                  Project                  @relation(fields: [projectId], references: [id])
+
+  @@index([packageId, visitDate])
+  @@index([projectId, visitDate])
+}
+
+model SupervisionWeeklyPackage {
+  id                                               String                            @id
+  reportNumber                                     String?
+  weekStart                                        DateTime
+  weekEnd                                          DateTime
+  issuedAt                                         DateTime                          @default(now())
+  place                                            String?                           @default("Hà Nội")
+  recipientName                                    String?
+  recipientTitle                                   String?
+  status                                           SupervisionPackageStatus          @default(DRAFT)
+  version                                          Int                               @default(1)
+  revisionReason                                   String?
+  submittedAt                                      DateTime?
+  confirmedAt                                      DateTime?
+  lockedAt                                         DateTime?
+  createdById                                      String
+  reviewedById                                     String?
+  createdAt                                        DateTime                          @default(now())
+  updatedAt                                        DateTime
+  deletedAt                                        DateTime?
+  SupervisionAttachment                            SupervisionAttachment[]
+  SupervisionFinding                               SupervisionFinding[]
+  SupervisionPlanItem                              SupervisionPlanItem[]
+  SupervisionProgressAssessment                    SupervisionProgressAssessment[]
+  SupervisionQuantityVerification                  SupervisionQuantityVerification[]
+  SupervisionRecommendation                        SupervisionRecommendation[]
+  SupervisionTransitionCheck                       SupervisionTransitionCheck[]
+  SupervisionVisit                                 SupervisionVisit[]
+  User_SupervisionWeeklyPackage_createdByIdToUser  User                              @relation("SupervisionWeeklyPackage_createdByIdToUser", fields: [createdById], references: [id])
+  User_SupervisionWeeklyPackage_reviewedByIdToUser User?                             @relation("SupervisionWeeklyPackage_reviewedByIdToUser", fields: [reviewedById], references: [id])
+  SupervisionWorkflowHistory                       SupervisionWorkflowHistory[]
+
+  @@unique([createdById, weekStart])
+  @@index([status, weekStart])
+}
+
+model SupervisionWorkflowHistory {
+  id                       String                    @id
+  packageId                String
+  actorId                  String
+  action                   String
+  previousStatus           SupervisionPackageStatus?
+  nextStatus               SupervisionPackageStatus
+  reason                   String?
+  version                  Int
+  idempotencyKey           String?
+  createdAt                DateTime                  @default(now())
+  User                     User                      @relation(fields: [actorId], references: [id])
+  SupervisionWeeklyPackage SupervisionWeeklyPackage  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  @@unique([packageId, idempotencyKey])
+  @@index([packageId, createdAt])
+}
+
+model SupervisionInspectionSchedule {
+  id                String                      @id @default(cuid())
+  projectId         String
+  supervisorId      String
+  workItemId        String?
+  workItemText      String?
+  plannedDate       DateTime
+  shift             SupervisionShift
+  startTime         String?
+  endTime           String?
+  inspectionContent String
+  status            SupervisionInspectionStatus @default(PLANNED)
+  linkedVisitId     String?
+  createdAt         DateTime                    @default(now())
+  updatedAt         DateTime                    @updatedAt
+  deletedAt         DateTime?
+
+  project           Project                     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  supervisor        User                        @relation(fields: [supervisorId], references: [id], onDelete: Cascade)
+  linkedVisit       SupervisionVisit?           @relation(fields: [linkedVisitId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([supervisorId])
+  @@index([plannedDate])
+}
+
+enum SupervisionInspectionStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}

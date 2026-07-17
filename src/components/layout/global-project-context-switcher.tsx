@@ -133,18 +133,18 @@
       }
 
       return (
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           <div className="relative">
             <button
               onClick={() => setIsOpen(!isOpen)}
               className={cn(
-                "flex items-center justify-between gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl border border-slate-200 px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm transition-colors hover:bg-slate-50",
+                "flex h-10 max-w-[400px] items-center justify-between gap-2 rounded-lg border border-slate-200 bg-[var(--surface-subtle)] px-3 text-sm transition-colors hover:bg-slate-50",
                 displayProjectId
                   ? "bg-blue-50/50 text-blue-900 border-blue-200"
                   : "bg-white text-slate-700"
               )}
             >
-              <div className="flex items-center gap-1.5 sm:gap-2 truncate max-w-[100px] sm:max-w-[200px]">
+              <div className="flex min-w-0 items-center gap-2 truncate max-w-[340px]">
                 {displayProjectId ? (
                   <Building2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-blue-600" />
                 ) : (

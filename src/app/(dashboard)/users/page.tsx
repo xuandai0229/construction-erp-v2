@@ -20,6 +20,9 @@ export default async function UsersPage() {
           project: { select: { id: true, code: true, name: true } },
         },
       },
+      supervisionScope: {
+        include: { projects: true }
+      },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -55,6 +58,8 @@ export default async function UsersPage() {
       role: pm.role,
       roleDisplay: PROJECT_ROLE_DISPLAY_NAMES[pm.role],
     })),
+    supervisionScopeType: u.supervisionScope?.scopeType || null,
+    supervisionProjectIds: u.supervisionScope?.projects.map(p => p.projectId) || [],
   }))));
 
   // Compute allowed roles for this actor

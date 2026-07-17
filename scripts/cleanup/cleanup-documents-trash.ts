@@ -1,6 +1,6 @@
 /**
  * This script is a local utility to clean up permanently deleted documents and folders
- * that have been in the trash for more than 7 days.
+ * that have been in the trash longer than the configured document-retention period.
  * 
  * Usage:
  * 1. Install ts-node if you haven't: npm install -g ts-node
@@ -17,7 +17,7 @@
  */
 
 import { PrismaClient } from "@prisma/client";
-import { subDays } from "date-fns";
+import { subYears } from "date-fns";
 import fs from "fs";
 import path from "path";
 
@@ -27,7 +27,12 @@ async function runCleanup() {
   console.log("Starting trash cleanup...");
   
   try {
-    const cutoffDate = subDays(new Date(), 7);
+    const setting = await prisma.systemSetting.findFirst({
+      select: { documentRetentionYears: true },
+      orderBy: { createdAt: "asc" },
+    });
+    const retentionYears = setting?.documentRetentionYears ?? 10;
+    const cutoffDate = subYears(new Date(), retentionYears);
 
     // 1. Cleanup Documents
     const expiredDocuments = await prisma.document.findMany({

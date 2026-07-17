@@ -144,6 +144,8 @@ export async function createMaterialRequest(data: any) {
         priority: rest.priority === "URGENT" || rest.priority === "HIGH" ? "HIGH" : "NORMAL",
         dueDate: null,
         requesterId: session.id,
+        entityType: "MATERIAL_REQUEST",
+        entityId: request.id,
         sourceType: "MATERIAL_REQUEST",
         sourceId: request.id,
       }
@@ -227,6 +229,8 @@ export async function updateMaterialRequest(id: string, data: any) {
           priority: rest.priority === "URGENT" || rest.priority === "HIGH" ? "HIGH" : "NORMAL",
           dueDate: null,
           requesterId: session.id,
+          entityType: "MATERIAL_REQUEST",
+          entityId: id,
           sourceType: "MATERIAL_REQUEST",
           sourceId: id,
         }

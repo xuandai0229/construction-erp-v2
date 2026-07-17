@@ -128,67 +128,39 @@ export default async function ProjectsPage({
 
       {/* Filter Toolbar */}
       <div className="rounded-[var(--radius-xl)] bg-[var(--surface)] border border-[var(--border)] p-3 shadow-[var(--shadow-card)]">
-        <form className="flex flex-col gap-3" method="GET" action="/projects">
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--muted-foreground)] opacity-70" />
-              <input 
-                type="text" 
-                name="q"
-                id="project-search"
-                autoComplete="off"
-                defaultValue={q}
-                placeholder="Tìm mã, tên công trình..." 
-                className="w-full h-11 pl-10 pr-4 rounded-[var(--radius-md)] bg-[var(--surface-subtle)] border-[var(--border)] outline-none focus:border-blue-400 focus:bg-[var(--surface)] text-[14px] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)]"
-              />
-            </div>
-            {/* Desktop native select, mobile native select via full width block */}
-            <div className="hidden sm:block">
-              <select 
-                name="status"
-                id="project-status-filter"
-                defaultValue={statusFilter}
-                className="h-11 w-[180px] rounded-[var(--radius-md)] bg-[var(--surface-subtle)] border-[var(--border)] px-4 text-[14px] text-[var(--foreground)] outline-none focus:border-blue-400"
-              >
-                <option value="">Tất cả trạng thái</option>
-                <option value="PLANNING">Chuẩn bị</option>
-                <option value="ACTIVE">Đang thi công</option>
-                <option value="ON_HOLD">Tạm dừng</option>
-                <option value="COMPLETED">Hoàn thành</option>
-                <option value="CANCELLED">Hủy</option>
-              </select>
-            </div>
+        <form className="flex items-center gap-2 overflow-x-auto pb-1 sm:overflow-visible sm:pb-0" method="GET" action="/projects">
+          <div className="relative min-w-[220px] flex-1">
+            <label htmlFor="project-search" className="sr-only">Tìm công trình</label>
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-[var(--muted-foreground)] opacity-70" />
+            <input
+              type="text"
+              name="q"
+              id="project-search"
+              autoComplete="off"
+              defaultValue={q}
+              placeholder="Tìm mã, tên công trình..."
+              className="w-full h-11 pl-10 pr-4 rounded-[var(--radius-md)] bg-[var(--surface-subtle)] border-[var(--border)] outline-none focus:border-blue-400 focus:bg-[var(--surface)] text-[14px] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)]"
+            />
           </div>
-          
-          <div className="flex items-center gap-2 sm:hidden">
-            <select 
-              name="status"
-              defaultValue={statusFilter}
-              className="flex-1 h-11 rounded-[var(--radius-md)] bg-[var(--surface-subtle)] border-[var(--border)] px-3 text-[14px] text-[var(--foreground)] outline-none focus:border-blue-400"
-            >
-              <option value="">Tất cả trạng thái</option>
-              <option value="PLANNING">Chuẩn bị</option>
-              <option value="ACTIVE">Đang thi công</option>
-              <option value="ON_HOLD">Tạm dừng</option>
-              <option value="COMPLETED">Hoàn thành</option>
-              <option value="CANCELLED">Hủy</option>
-            </select>
-            <Button type="submit" variant="primary" className="h-11 px-6 rounded-[var(--radius-md)]">Lọc</Button>
-            {(q || statusFilter) && (
-              <Link href="/projects" className="h-11 px-4 flex items-center justify-center border border-[var(--border)] rounded-[var(--radius-md)] text-[var(--muted-foreground)] bg-[var(--surface)] active:bg-[var(--surface-subtle)]">
-                Xóa
-              </Link>
-            )}
-          </div>
-          
-          <div className="hidden sm:flex items-center gap-2">
-            <Button type="submit" variant="primary" className="h-11 px-6 rounded-[var(--radius-md)]">Lọc dữ liệu</Button>
-            {(q || statusFilter) && (
-              <Link href="/projects">
-                <Button variant="outline" className="h-11 rounded-[var(--radius-md)]">Xóa lọc</Button>
-              </Link>
-            )}
-          </div>
+          <select
+            name="status"
+            id="project-status-filter"
+            defaultValue={statusFilter}
+            className="h-11 w-[180px] shrink-0 rounded-[var(--radius-md)] bg-[var(--surface-subtle)] border-[var(--border)] px-4 text-[14px] text-[var(--foreground)] outline-none focus:border-blue-400"
+          >
+            <option value="">Tất cả trạng thái</option>
+            <option value="PLANNING">Chuẩn bị</option>
+            <option value="ACTIVE">Đang thi công</option>
+            <option value="ON_HOLD">Tạm dừng</option>
+            <option value="COMPLETED">Hoàn thành</option>
+            <option value="CANCELLED">Hủy</option>
+          </select>
+          <Button type="submit" variant="primary" className="h-11 shrink-0 px-5 rounded-[var(--radius-md)]">Lọc</Button>
+          {(q || statusFilter) && (
+            <Link href="/projects" className="shrink-0">
+              <Button variant="outline" className="h-11 rounded-[var(--radius-md)]">Xóa lọc</Button>
+            </Link>
+          )}
         </form>
       </div>
 

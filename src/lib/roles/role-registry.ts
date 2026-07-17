@@ -49,6 +49,14 @@ export const SYSTEM_ROLE_REGISTRY: Record<UserRole, SystemRoleDefinition> = {
     sensitive: true,
     defaultScope: "GLOBAL",
   },
+  SUPERVISION_HEAD: {
+    category: "SYSTEM",
+    label: "Trưởng ban giám sát",
+    description: "Giám sát độc lập theo phạm vi công trình do Quản trị viên chỉ định.",
+    level: 60,
+    sensitive: true,
+    defaultScope: "ASSIGNED_PROJECTS",
+  },
   CHIEF_COMMANDER: {
     category: "SYSTEM",
     label: "Chỉ huy trưởng",
