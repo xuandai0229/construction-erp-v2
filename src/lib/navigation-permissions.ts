@@ -12,7 +12,7 @@ const PROJECT_BUSINESS_ROLES: UserRole[] = [
 export function canViewNavigationItem(role: UserRole, href: string) {
   if (href === "/dashboard" || href === "/projects") return true;
 
-  if (href.startsWith("/supervision")) return COMPANY_WIDE.includes(role) || role === "SUPERVISION_HEAD";
+
 
   if (["/documents", "/reports", "/materials"].includes(href)) {
     return COMPANY_WIDE.includes(role) || PROJECT_BUSINESS_ROLES.includes(role);

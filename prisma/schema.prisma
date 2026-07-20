@@ -16,6 +16,7 @@ enum UserRole {
   MANAGER
   ENGINEER
   STAFF
+  SUPERVISION_HEAD
 }
 
 enum ProjectRole {
@@ -222,32 +223,40 @@ model User {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  projectMembers         ProjectMember[]
-  assignedProjectMembers ProjectMember[]         @relation("ProjectMemberAssigner")
-  auditLogs              AuditLog[]
-  messages               ChatMessage[]
-  createdSiteReports     SiteReport[]            @relation("ReportCreator")
-  approvedSiteReports    SiteReport[]            @relation("ReportApprover")
-  createdWBSItems        WBSItem[]
-  materialRequests       MaterialRequest[]
-  approvalRequests       ApprovalRequest[]       @relation("Requester")
-  approvals              ApprovalRequest[]       @relation("Approver")
-  documents              Document[]
-  createdFieldTemplates  FieldProgressTemplate[] @relation("FieldTemplateCreator")
-  createdFieldItems      FieldProgressItem[]     @relation("FieldItemCreator")
-  createdFieldEntries    FieldProgressEntry[]    @relation("FieldEntryCreator")
-  approvedFieldEntries   FieldProgressEntry[]    @relation("FieldEntryApprover")
-  fieldMaterialRequests  FieldMaterialRequest[]  @relation("FieldMaterialRequester")
-  updatedSettings        SystemSetting[]         @relation("SettingUpdater")
-  notifications          Notification[]
-  createdWorkTasks       WorkTask[]             @relation("WorkTaskCreator")
-  assignedWorkTasks      WorkTask[]             @relation("WorkTaskPrimaryAssignee")
-  reviewedWorkTasks      WorkTask[]             @relation("WorkTaskReviewer")
-  approvedWorkTasks      WorkTask[]             @relation("WorkTaskApprover")
-  workTaskActions        WorkTaskAction[]       @relation("WorkTaskActionActor")
-  createdLocationNodes   ProjectLocationNode[]  @relation("ProjectLocationNodeCreator")
-  updatedLocationNodes   ProjectLocationNode[]  @relation("ProjectLocationNodeUpdater")
+  projectMembers               ProjectMember[]
+  assignedProjectMembers       ProjectMember[]               @relation("ProjectMemberAssigner")
+  auditLogs                    AuditLog[]
+  messages                     ChatMessage[]
+  createdSiteReports           SiteReport[]                  @relation("ReportCreator")
+  approvedSiteReports          SiteReport[]                  @relation("ReportApprover")
+  createdWBSItems              WBSItem[]
+  materialRequests             MaterialRequest[]
+  approvalRequests             ApprovalRequest[]             @relation("Requester")
+  approvals                    ApprovalRequest[]             @relation("Approver")
+  documents                    Document[]
+  createdFieldTemplates        FieldProgressTemplate[]       @relation("FieldTemplateCreator")
+  createdFieldItems            FieldProgressItem[]           @relation("FieldItemCreator")
+  createdFieldEntries          FieldProgressEntry[]          @relation("FieldEntryCreator")
+  approvedFieldEntries         FieldProgressEntry[]          @relation("FieldEntryApprover")
+  fieldMaterialRequests        FieldMaterialRequest[]        @relation("FieldMaterialRequester")
+  updatedSettings              SystemSetting[]               @relation("SettingUpdater")
+  notifications                Notification[]
+  createdWorkTasks             WorkTask[]                    @relation("WorkTaskCreator")
+  assignedWorkTasks            WorkTask[]                    @relation("WorkTaskPrimaryAssignee")
+  reviewedWorkTasks            WorkTask[]                    @relation("WorkTaskReviewer")
+  approvedWorkTasks            WorkTask[]                    @relation("WorkTaskApprover")
+  workTaskActions              WorkTaskAction[]              @relation("WorkTaskActionActor")
+  createdLocationNodes         ProjectLocationNode[]         @relation("ProjectLocationNodeCreator")
+  updatedLocationNodes         ProjectLocationNode[]         @relation("ProjectLocationNodeUpdater")
   fieldProgressItemAssignments FieldProgressItemAssignment[] @relation("FieldProgressItemAssignmentActor")
+
+  supervisionWeeklyPackagesCreated  SupervisionWeeklyPackage[]      @relation("SupervisionWeeklyPackage_createdByIdToUser")
+  supervisionWeeklyPackagesReviewed SupervisionWeeklyPackage[]      @relation("SupervisionWeeklyPackage_reviewedByIdToUser")
+  supervisionFindingsCreated        SupervisionFinding[]
+  supervisionScope                  SupervisionScope?
+  supervisionVisitsCreated          SupervisionVisit[]
+  supervisionWorkflowHistories      SupervisionWorkflowHistory[]
+  supervisionInspectionSchedules    SupervisionInspectionSchedule[]
 
   @@index([email])
   @@index([username])
@@ -269,26 +278,36 @@ model Project {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
-  members                ProjectMember[]
-  wbsItems               WBSItem[]
-  documentFolders        DocumentFolder[]
-  siteReports            SiteReport[]
-  siteReportLines        SiteReportLine[]
-  materialMovements      MaterialMovement[]
-  materialRequests       MaterialRequest[]
-  documents              Document[]
-  fieldProgressTemplates FieldProgressTemplate[]
-  fieldProgressItems     FieldProgressItem[]
-  fieldProgressEntries   FieldProgressEntry[]
-  fieldMaterialRequests  FieldMaterialRequest[]
-  projectMaterialStocks  ProjectMaterialStock[]
-  materialItems          MaterialItem[]
-  approvalRequests       ApprovalRequest[]
-  notifications          Notification[]
-  workTasks              WorkTask[]
-  locationNodes          ProjectLocationNode[]
+  members                      ProjectMember[]
+  wbsItems                     WBSItem[]
+  documentFolders              DocumentFolder[]
+  siteReports                  SiteReport[]
+  siteReportLines              SiteReportLine[]
+  materialMovements            MaterialMovement[]
+  materialRequests             MaterialRequest[]
+  documents                    Document[]
+  fieldProgressTemplates       FieldProgressTemplate[]
+  fieldProgressItems           FieldProgressItem[]
+  fieldProgressEntries         FieldProgressEntry[]
+  fieldMaterialRequests        FieldMaterialRequest[]
+  projectMaterialStocks        ProjectMaterialStock[]
+  materialItems                MaterialItem[]
+  approvalRequests             ApprovalRequest[]
+  notifications                Notification[]
+  workTasks                    WorkTask[]
+  locationNodes                ProjectLocationNode[]
   fieldProgressItemAssignments FieldProgressItemAssignment[]
-  fieldProgressItemLocations FieldProgressItemLocation[]
+  fieldProgressItemLocations   FieldProgressItemLocation[]
+
+  supervisionFindings              SupervisionFinding[]
+  supervisionPlanItems             SupervisionPlanItem[]
+  supervisionProgressAssessments   SupervisionProgressAssessment[]
+  supervisionQuantityVerifications SupervisionQuantityVerification[]
+  supervisionRecommendations       SupervisionRecommendation[]
+  supervisionScopeProjects         SupervisionScopeProject[]
+  supervisionTransitionChecks      SupervisionTransitionCheck[]
+  supervisionVisits                SupervisionVisit[]
+  supervisionInspectionSchedules   SupervisionInspectionSchedule[]
 
   @@index([code])
   @@index([status])
@@ -296,37 +315,37 @@ model Project {
 }
 
 model WorkTask {
-  id                       String   @id
-  projectId                String
-  creatorId                String
-  primaryAssigneeId        String?
-  reviewerId               String?
-  approverId               String?
-  title                    String
-  description              String?
-  priority                 String   @default("NORMAL")
-  confidentiality          String   @default("NORMAL")
-  lifecycle                String
-  acceptance               String
-  execution                String
-  review                   String
-  handover                 String
-  waitingReason            String?
-  deadlineAt               DateTime?
-  progressPercent          Int      @default(0)
-  version                  Int      @default(1)
-  snapshot                 Json
-  createdAt                DateTime @default(now())
-  updatedAt                DateTime @updatedAt
+  id                String    @id @default(cuid())
+  projectId         String
+  creatorId         String
+  primaryAssigneeId String?
+  reviewerId        String?
+  approverId        String?
+  title             String
+  description       String?
+  priority          String    @default("NORMAL")
+  confidentiality   String    @default("NORMAL")
+  lifecycle         String
+  acceptance        String
+  execution         String
+  review            String
+  handover          String
+  waitingReason     String?
+  deadlineAt        DateTime?
+  progressPercent   Int       @default(0)
+  version           Int       @default(1)
+  snapshot          Json
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
-  project          Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  creator          User                @relation("WorkTaskCreator", fields: [creatorId], references: [id])
-  primaryAssignee  User?               @relation("WorkTaskPrimaryAssignee", fields: [primaryAssigneeId], references: [id])
-  reviewer         User?               @relation("WorkTaskReviewer", fields: [reviewerId], references: [id])
-  approver         User?               @relation("WorkTaskApprover", fields: [approverId], references: [id])
-  actions          WorkTaskAction[]
-  outboxMessages   WorkTaskOutboxMessage[]
-  idempotencyRows  WorkTaskIdempotency[]
+  project         Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  creator         User                    @relation("WorkTaskCreator", fields: [creatorId], references: [id])
+  primaryAssignee User?                   @relation("WorkTaskPrimaryAssignee", fields: [primaryAssigneeId], references: [id])
+  reviewer        User?                   @relation("WorkTaskReviewer", fields: [reviewerId], references: [id])
+  approver        User?                   @relation("WorkTaskApprover", fields: [approverId], references: [id])
+  actions         WorkTaskAction[]
+  outboxMessages  WorkTaskOutboxMessage[]
+  idempotencyRows WorkTaskIdempotency[]
 
   @@index([projectId, updatedAt])
   @@index([primaryAssigneeId, updatedAt])
@@ -352,14 +371,14 @@ model WorkTaskAction {
 }
 
 model WorkTaskOutboxMessage {
-  id             String   @id
-  taskId         String
-  action         String
+  id               String   @id @default(cuid())
+  taskId           String
+  action           String
   aggregateVersion Int
-  idempotencyKey String
-  message        Json
-  occurredAt     DateTime
-  createdAt      DateTime @default(now())
+  idempotencyKey   String
+  message          Json
+  occurredAt       DateTime
+  createdAt        DateTime @default(now())
 
   task WorkTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
@@ -368,7 +387,7 @@ model WorkTaskOutboxMessage {
 }
 
 model WorkTaskIdempotency {
-  id          String                    @id @default(cuid())
+  id          String                   @id @default(cuid())
   key         String
   scopeKey    String
   action      String
@@ -378,14 +397,14 @@ model WorkTaskIdempotency {
   fingerprint String
   state       WorkTaskIdempotencyState
   result      Json?
-  createdAt   DateTime                  @default(now())
+  createdAt   DateTime                 @default(now())
   completedAt DateTime?
 
   task WorkTask? @relation(fields: [taskId], references: [id], onDelete: SetNull)
 
+  @@unique([key, scopeKey])
   @@index([taskId])
   @@index([actorId, projectId])
-  @@unique([key, scopeKey])
 }
 
 model ProjectMember {
@@ -402,9 +421,9 @@ model ProjectMember {
   updatedAt    DateTime    @updatedAt
   deletedAt    DateTime?
 
-  project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  assignedBy User?   @relation("ProjectMemberAssigner", fields: [assignedById], references: [id])
+  project                      Project                       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user                         User                          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignedBy                   User?                         @relation("ProjectMemberAssigner", fields: [assignedById], references: [id])
   fieldProgressItemAssignments FieldProgressItemAssignment[]
 
   @@unique([projectId, userId])
@@ -464,35 +483,35 @@ model DocumentFolder {
 }
 
 model Document {
-  id             String         @id @default(cuid())
-  projectId      String
-  folderId       String
-  originalName   String
-  storedName     String
-  mimeType       String
-  extension      String
-  size           Int
-  storagePath    String
-  uploadedById   String
-  displayName    String?
-  documentType   String?
-  status         DocumentStatus @default(SUBMITTED)
-  metadata       Json?
-  fileHash       String?
-  reviewedById   String?
-  reviewedAt     DateTime?
-  rejectedReason String?
+  id                  String         @id @default(cuid())
+  projectId           String
+  folderId            String
+  originalName        String
+  storedName          String
+  mimeType            String
+  extension           String
+  size                Int
+  storagePath         String
+  uploadedById        String
+  displayName         String?
+  documentType        String?
+  status              DocumentStatus @default(SUBMITTED)
+  metadata            Json?
+  fileHash            String?
+  reviewedById        String?
+  reviewedAt          DateTime?
+  rejectedReason      String?
   fieldProgressItemId String?
   locationNodeId      String?
-  version        Int            @default(1)
-  deletedAt      DateTime?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  version             Int            @default(1)
+  deletedAt           DateTime?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
 
-  project    Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  folder     DocumentFolder @relation(fields: [folderId], references: [id], onDelete: Cascade)
-  uploadedBy User           @relation(fields: [uploadedById], references: [id])
-  fieldProgressItem FieldProgressItem? @relation(fields: [fieldProgressItemId], references: [id])
+  project           Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  folder            DocumentFolder       @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  uploadedBy        User                 @relation(fields: [uploadedById], references: [id])
+  fieldProgressItem FieldProgressItem?   @relation(fields: [fieldProgressItemId], references: [id])
   locationNode      ProjectLocationNode? @relation(fields: [locationNodeId], references: [id])
 
   @@index([projectId])
@@ -615,10 +634,10 @@ model SiteReportLine {
   updatedAt           DateTime  @updatedAt
   deletedAt           DateTime?
 
-  siteReport        SiteReport         @relation(fields: [siteReportId], references: [id], onDelete: Cascade)
-  project           Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  wbsItem           WBSItem?           @relation(fields: [wbsItemId], references: [id])
-  fieldProgressItem FieldProgressItem? @relation(fields: [fieldProgressItemId], references: [id])
+  siteReport        SiteReport           @relation(fields: [siteReportId], references: [id], onDelete: Cascade)
+  project           Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  wbsItem           WBSItem?             @relation(fields: [wbsItemId], references: [id])
+  fieldProgressItem FieldProgressItem?   @relation(fields: [fieldProgressItemId], references: [id])
   locationNode      ProjectLocationNode? @relation(fields: [locationNodeId], references: [id])
 
   @@index([siteReportId])
@@ -676,9 +695,9 @@ model MaterialRequestItem {
   deletedAt            DateTime?
   locationNodeId       String?
 
-  materialRequest   MaterialRequest    @relation(fields: [materialRequestId], references: [id], onDelete: Cascade)
-  wbsItem           WBSItem?           @relation(fields: [wbsItemId], references: [id])
-  fieldProgressItem FieldProgressItem? @relation(fields: [fieldProgressItemId], references: [id])
+  materialRequest   MaterialRequest      @relation(fields: [materialRequestId], references: [id], onDelete: Cascade)
+  wbsItem           WBSItem?             @relation(fields: [wbsItemId], references: [id])
+  fieldProgressItem FieldProgressItem?   @relation(fields: [fieldProgressItemId], references: [id])
   movements         MaterialMovement[]
   locationNode      ProjectLocationNode? @relation(fields: [locationNodeId], references: [id])
 
@@ -773,6 +792,8 @@ model ApprovalRequest {
   decisionNote String?
   sourceType   String?
   sourceId     String?
+  entityType   String
+  entityId     String
   deletedAt    DateTime?
   createdAt    DateTime              @default(now())
   updatedAt    DateTime              @updatedAt
@@ -885,11 +906,11 @@ model FieldProgressItem {
   updatedAt        DateTime                @updatedAt
   deletedAt        DateTime?
 
-  project              Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  template             FieldProgressTemplate  @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  parent               FieldProgressItem?     @relation("FieldItemHierarchy", fields: [parentId], references: [id])
-  children             FieldProgressItem[]    @relation("FieldItemHierarchy")
-  createdBy            User                   @relation("FieldItemCreator", fields: [createdById], references: [id])
+  project              Project                       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  template             FieldProgressTemplate         @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  parent               FieldProgressItem?            @relation("FieldItemHierarchy", fields: [parentId], references: [id])
+  children             FieldProgressItem[]           @relation("FieldItemHierarchy")
+  createdBy            User                          @relation("FieldItemCreator", fields: [createdById], references: [id])
   entries              FieldProgressEntry[]
   materialRequests     FieldMaterialRequest[]
   materialRequestItems MaterialRequestItem[]
@@ -920,11 +941,11 @@ model ProjectLocationNode {
   updatedAt   DateTime                @updatedAt
   deletedAt   DateTime?
 
-  project                    Project                      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  parent                     ProjectLocationNode?         @relation("ProjectLocationNodeHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
-  children                   ProjectLocationNode[]        @relation("ProjectLocationNodeHierarchy")
-  createdBy                  User                         @relation("ProjectLocationNodeCreator", fields: [createdById], references: [id])
-  updatedBy                  User?                        @relation("ProjectLocationNodeUpdater", fields: [updatedById], references: [id])
+  project                    Project                     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parent                     ProjectLocationNode?        @relation("ProjectLocationNodeHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children                   ProjectLocationNode[]       @relation("ProjectLocationNodeHierarchy")
+  createdBy                  User                        @relation("ProjectLocationNodeCreator", fields: [createdById], references: [id])
+  updatedBy                  User?                       @relation("ProjectLocationNodeUpdater", fields: [updatedById], references: [id])
   documents                  Document[]
   fieldProgressEntries       FieldProgressEntry[]
   fieldProgressItemLocations FieldProgressItemLocation[]
@@ -949,10 +970,10 @@ model FieldProgressItemAssignment {
   updatedAt           DateTime                        @updatedAt
   deletedAt           DateTime?
 
-  project             Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  fieldProgressItem   FieldProgressItem @relation(fields: [fieldProgressItemId], references: [id], onDelete: Cascade)
-  projectMember       ProjectMember     @relation(fields: [projectMemberId], references: [id])
-  assignedBy          User              @relation("FieldProgressItemAssignmentActor", fields: [assignedById], references: [id])
+  project           Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fieldProgressItem FieldProgressItem @relation(fields: [fieldProgressItemId], references: [id], onDelete: Cascade)
+  projectMember     ProjectMember     @relation(fields: [projectMemberId], references: [id])
+  assignedBy        User              @relation("FieldProgressItemAssignmentActor", fields: [assignedById], references: [id])
 
   @@unique([fieldProgressItemId, projectMemberId, role])
   @@index([fieldProgressItemId, deletedAt])
@@ -961,16 +982,16 @@ model FieldProgressItemAssignment {
 }
 
 model FieldProgressItemLocation {
-  id                  String              @id @default(cuid())
+  id                  String   @id @default(cuid())
   projectId           String
   fieldProgressItemId String
   locationNodeId      String
   createdById         String
-  createdAt           DateTime            @default(now())
+  createdAt           DateTime @default(now())
 
-  project             Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  fieldProgressItem   FieldProgressItem   @relation(fields: [fieldProgressItemId], references: [id], onDelete: Cascade)
-  locationNode        ProjectLocationNode @relation(fields: [locationNodeId], references: [id])
+  project           Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fieldProgressItem FieldProgressItem   @relation(fields: [fieldProgressItemId], references: [id], onDelete: Cascade)
+  locationNode      ProjectLocationNode @relation(fields: [locationNodeId], references: [id])
 
   @@unique([fieldProgressItemId, locationNodeId])
   @@index([projectId, fieldProgressItemId])
@@ -1011,8 +1032,9 @@ model FieldProgressEntry {
   createdBy        User                   @relation("FieldEntryCreator", fields: [createdById], references: [id])
   approvedBy       User?                  @relation("FieldEntryApprover", fields: [approvedById], references: [id])
   materialRequests FieldMaterialRequest[]
-  locationNode     ProjectLocationNode?  @relation(fields: [locationNodeId], references: [id])
+  locationNode     ProjectLocationNode?   @relation(fields: [locationNodeId], references: [id])
 
+  @@unique([sourceReportId, sourceLineId], map: "field_progress_entry_source_report_line_uidx", where: raw("((\"deletedAt\" IS NULL) AND (\"sourceType\" = 'SITE_REPORT'::text))"))
   @@index([projectId])
   @@index([templateId])
   @@index([itemId])
@@ -1020,7 +1042,6 @@ model FieldProgressEntry {
   @@index([sourceType, sourceId])
   @@index([sourceReportId])
   @@index([locationNodeId])
-  @@unique([sourceReportId, sourceLineId], map: "field_progress_entry_source_report_line_uidx", where: raw("((\"deletedAt\" IS NULL) AND (\"sourceType\" = 'SITE_REPORT'::text))"))
 }
 
 model FieldMaterialRequest {
@@ -1123,7 +1144,6 @@ model SystemSetting {
   @@index([updatedById])
 }
 
-
 enum SupervisionFindingStatus {
   OPEN
   IN_PROGRESS
@@ -1190,8 +1210,11 @@ enum SupervisionShift {
   EVENING
 }
 
+// LEGACY — phân hệ Giám sát cũ đã bị gỡ khỏi runtime.
+// Không sử dụng cho triển khai mới.
+// Chờ kế hoạch migration và chuyển đổi dữ liệu riêng.
 model SupervisionAttachment {
-  id                       String                   @id
+  id                       String                   @id @default(cuid())
   packageId                String
   documentId               String
   projectId                String
@@ -1203,8 +1226,11 @@ model SupervisionAttachment {
   @@index([documentId])
 }
 
+// LEGACY — phân hệ Giám sát cũ đã bị gỡ khỏi runtime.
+// Không sử dụng cho triển khai mới.
+// Chờ kế hoạch migration và chuyển đổi dữ liệu riêng.
 model SupervisionFinding {
-  id                       String                       @id
+  id                       String                       @id @default(cuid())
   packageId                String?
   projectId                String
   code                     String                       @unique
@@ -1223,16 +1249,19 @@ model SupervisionFinding {
   verificationNote         String?
   createdById              String
   createdAt                DateTime                     @default(now())
-  updatedAt                DateTime
-  User                     User                         @relation(fields: [createdById], references: [id])
+  updatedAt                DateTime                     @updatedAt
+  user                     User                         @relation(fields: [createdById], references: [id])
   SupervisionWeeklyPackage SupervisionWeeklyPackage?    @relation(fields: [packageId], references: [id])
-  Project                  Project                      @relation(fields: [projectId], references: [id])
+  project                  Project                      @relation(fields: [projectId], references: [id])
 
   @@index([projectId, status])
 }
 
+// LEGACY — phân hệ Giám sát cũ đã bị gỡ khỏi runtime.
+// Không sử dụng cho triển khai mới.
+// Chờ kế hoạch migration và chuyển đổi dữ liệu riêng.
 model SupervisionPlanItem {
-  id                       String                   @id
+  id                       String                   @id @default(cuid())
   packageId                String
   projectId                String?
   plannedDate              DateTime
@@ -1249,15 +1278,18 @@ model SupervisionPlanItem {
   note                     String?
   findingId                String?
   createdAt                DateTime                 @default(now())
-  updatedAt                DateTime
+  updatedAt                DateTime                 @updatedAt
   SupervisionWeeklyPackage SupervisionWeeklyPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  Project                  Project?                 @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  project                  Project?                 @relation(fields: [projectId], references: [id], onDelete: Restrict)
 
   @@index([packageId, plannedDate])
 }
 
+// LEGACY — phân hệ Giám sát cũ đã bị gỡ khỏi runtime.
+// Không sử dụng cho triển khai mới.
+// Chờ kế hoạch migration và chuyển đổi dữ liệu riêng.
 model SupervisionProgressAssessment {
-  id                       String                   @id
+  id                       String                   @id @default(cuid())
   packageId                String
   projectId                String
   workItem                 String?
@@ -1270,15 +1302,18 @@ model SupervisionProgressAssessment {
   proposedMeasure          String?
   responsibleParty         String?
   createdAt                DateTime                 @default(now())
-  updatedAt                DateTime
+  updatedAt                DateTime                 @updatedAt
   SupervisionWeeklyPackage SupervisionWeeklyPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  Project                  Project                  @relation(fields: [projectId], references: [id])
+  project                  Project                  @relation(fields: [projectId], references: [id])
 
   @@index([packageId])
 }
 
+// LEGACY — phân hệ Giám sát cũ đã bị gỡ khỏi runtime.
+// Không sử dụng cho triển khai mới.
+// Chờ kế hoạch migration và chuyển đổi dữ liệu riêng.
 model SupervisionQuantityVerification {
-  id                       String                   @id
+  id                       String                   @id @default(cuid())
   packageId                String
   projectId                String
   workItem                 String
@@ -1294,16 +1329,19 @@ model SupervisionQuantityVerification {
   conclusion               String
   note                     String?
   createdAt                DateTime                 @default(now())
-  updatedAt                DateTime
+  updatedAt                DateTime                 @updatedAt
   SupervisionWeeklyPackage SupervisionWeeklyPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  Project                  Project                  @relation(fields: [projectId], references: [id])
+  project                  Project                  @relation(fields: [projectId], references: [id])
 
   @@index([packageId])
   @@index([projectId, checkedAt])
 }
 
+// LEGACY — phân hệ Giám sát cũ đã bị gỡ khỏi runtime.
+// Không sử dụng cho triển khai mới.
+// Chờ kế hoạch migration và chuyển đổi dữ liệu riêng.
 model SupervisionRecommendation {
-  id                       String                         @id
+  id                       String                         @id @default(cuid())
   packageId                String
   projectId                String?
   workItem                 String?
@@ -1315,38 +1353,41 @@ model SupervisionRecommendation {
   boardComment             String?
   status                   String                         @default("PENDING")
   createdAt                DateTime                       @default(now())
-  updatedAt                DateTime
+  updatedAt                DateTime                       @updatedAt
   SupervisionWeeklyPackage SupervisionWeeklyPackage       @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  Project                  Project?                       @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  project                  Project?                       @relation(fields: [projectId], references: [id], onDelete: Restrict)
 
   @@index([packageId])
 }
 
 model SupervisionScope {
-  id                      String                    @id
-  userId                  String                    @unique
-  scopeType               SupervisionScopeType      @default(SELECTED_PROJECTS)
-  createdById             String?
-  createdAt               DateTime                  @default(now())
-  updatedAt               DateTime
-  User                    User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  SupervisionScopeProject SupervisionScopeProject[]
+  id          String                    @id @default(cuid())
+  userId      String                    @unique
+  scopeType   SupervisionScopeType      @default(SELECTED_PROJECTS)
+  createdById String?
+  createdAt   DateTime                  @default(now())
+  updatedAt   DateTime                  @updatedAt
+  user        User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projects    SupervisionScopeProject[]
 }
 
 model SupervisionScopeProject {
-  id               String           @id
+  id               String           @id @default(cuid())
   scopeId          String
   projectId        String
   createdAt        DateTime         @default(now())
-  Project          Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project          Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
   SupervisionScope SupervisionScope @relation(fields: [scopeId], references: [id], onDelete: Cascade)
 
   @@unique([scopeId, projectId])
   @@index([projectId])
 }
 
+// LEGACY — phân hệ Giám sát cũ đã bị gỡ khỏi runtime.
+// Không sử dụng cho triển khai mới.
+// Chờ kế hoạch migration và chuyển đổi dữ liệu riêng.
 model SupervisionTransitionCheck {
-  id                       String                   @id
+  id                       String                   @id @default(cuid())
   packageId                String
   projectId                String
   workItem                 String
@@ -1361,76 +1402,85 @@ model SupervisionTransitionCheck {
   reason                   String?
   requiredAction           String?
   createdAt                DateTime                 @default(now())
-  updatedAt                DateTime
+  updatedAt                DateTime                 @updatedAt
   SupervisionWeeklyPackage SupervisionWeeklyPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  Project                  Project                  @relation(fields: [projectId], references: [id])
+  project                  Project                  @relation(fields: [projectId], references: [id])
 
   @@index([packageId])
 }
 
+// LEGACY — phân hệ Giám sát cũ đã bị gỡ khỏi runtime.
+// Không sử dụng cho triển khai mới.
+// Chờ kế hoạch migration và chuyển đổi dữ liệu riêng.
 model SupervisionVisit {
   SupervisionInspectionSchedule SupervisionInspectionSchedule[]
-  id                       String                   @id
-  packageId                String
-  projectId                String
-  visitDate                DateTime
-  shift                    SupervisionShift
-  startedAt                DateTime?
-  endedAt                  DateTime?
-  workItem                 String?
-  inspectionContent        String
-  result                   String
-  collaborators            String?
-  note                     String?
-  createdById              String
-  createdAt                DateTime                 @default(now())
-  updatedAt                DateTime
-  User                     User                     @relation(fields: [createdById], references: [id])
-  SupervisionWeeklyPackage SupervisionWeeklyPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  Project                  Project                  @relation(fields: [projectId], references: [id])
+  id                            String                          @id @default(cuid())
+  packageId                     String
+  projectId                     String
+  visitDate                     DateTime
+  shift                         SupervisionShift
+  startedAt                     DateTime?
+  endedAt                       DateTime?
+  workItem                      String?
+  inspectionContent             String
+  result                        String
+  collaborators                 String?
+  note                          String?
+  createdById                   String
+  createdAt                     DateTime                        @default(now())
+  updatedAt                     DateTime                        @updatedAt
+  user                          User                            @relation(fields: [createdById], references: [id])
+  SupervisionWeeklyPackage      SupervisionWeeklyPackage        @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  project                       Project                         @relation(fields: [projectId], references: [id])
 
   @@index([packageId, visitDate])
   @@index([projectId, visitDate])
 }
 
+// LEGACY — phân hệ Giám sát cũ đã bị gỡ khỏi runtime.
+// Không sử dụng cho triển khai mới.
+// Chờ kế hoạch migration và chuyển đổi dữ liệu riêng.
 model SupervisionWeeklyPackage {
-  id                                               String                            @id
-  reportNumber                                     String?
-  weekStart                                        DateTime
-  weekEnd                                          DateTime
-  issuedAt                                         DateTime                          @default(now())
-  place                                            String?                           @default("Hà Nội")
-  recipientName                                    String?
-  recipientTitle                                   String?
-  status                                           SupervisionPackageStatus          @default(DRAFT)
-  version                                          Int                               @default(1)
-  revisionReason                                   String?
-  submittedAt                                      DateTime?
-  confirmedAt                                      DateTime?
-  lockedAt                                         DateTime?
-  createdById                                      String
-  reviewedById                                     String?
-  createdAt                                        DateTime                          @default(now())
-  updatedAt                                        DateTime
-  deletedAt                                        DateTime?
-  SupervisionAttachment                            SupervisionAttachment[]
-  SupervisionFinding                               SupervisionFinding[]
-  SupervisionPlanItem                              SupervisionPlanItem[]
-  SupervisionProgressAssessment                    SupervisionProgressAssessment[]
-  SupervisionQuantityVerification                  SupervisionQuantityVerification[]
-  SupervisionRecommendation                        SupervisionRecommendation[]
-  SupervisionTransitionCheck                       SupervisionTransitionCheck[]
-  SupervisionVisit                                 SupervisionVisit[]
-  User_SupervisionWeeklyPackage_createdByIdToUser  User                              @relation("SupervisionWeeklyPackage_createdByIdToUser", fields: [createdById], references: [id])
-  User_SupervisionWeeklyPackage_reviewedByIdToUser User?                             @relation("SupervisionWeeklyPackage_reviewedByIdToUser", fields: [reviewedById], references: [id])
-  SupervisionWorkflowHistory                       SupervisionWorkflowHistory[]
+  id                  String                            @id @default(cuid())
+  reportNumber        String?
+  weekStart           DateTime
+  weekEnd             DateTime
+  issuedAt            DateTime                          @default(now())
+  place               String?                           @default("Hà Nội")
+  recipientName       String?
+  recipientTitle      String?
+  status              SupervisionPackageStatus          @default(DRAFT)
+  version             Int                               @default(1)
+  revisionReason      String?
+  submittedAt         DateTime?
+  confirmedAt         DateTime?
+  lockedAt            DateTime?
+  createdById         String
+  reviewedById        String?
+  createdAt           DateTime                          @default(now())
+  updatedAt           DateTime                          @updatedAt
+  deletedAt           DateTime?
+  attachments         SupervisionAttachment[]
+  findings            SupervisionFinding[]
+  planItems           SupervisionPlanItem[]
+  progressAssessments SupervisionProgressAssessment[]
+  quantities          SupervisionQuantityVerification[]
+  recommendations     SupervisionRecommendation[]
+  transitions         SupervisionTransitionCheck[]
+  visits              SupervisionVisit[]
+  createdBy           User                              @relation("SupervisionWeeklyPackage_createdByIdToUser", fields: [createdById], references: [id])
+  reviewedBy          User?                             @relation("SupervisionWeeklyPackage_reviewedByIdToUser", fields: [reviewedById], references: [id])
+  workflowHistory     SupervisionWorkflowHistory[]
 
   @@unique([createdById, weekStart])
   @@index([status, weekStart])
 }
 
+// LEGACY — phân hệ Giám sát cũ đã bị gỡ khỏi runtime.
+// Không sử dụng cho triển khai mới.
+// Chờ kế hoạch migration và chuyển đổi dữ liệu riêng.
 model SupervisionWorkflowHistory {
-  id                       String                    @id
+  id                       String                    @id @default(cuid())
   packageId                String
   actorId                  String
   action                   String
@@ -1440,13 +1490,16 @@ model SupervisionWorkflowHistory {
   version                  Int
   idempotencyKey           String?
   createdAt                DateTime                  @default(now())
-  User                     User                      @relation(fields: [actorId], references: [id])
+  actor                    User                      @relation(fields: [actorId], references: [id])
   SupervisionWeeklyPackage SupervisionWeeklyPackage  @relation(fields: [packageId], references: [id], onDelete: Cascade)
 
   @@unique([packageId, idempotencyKey])
   @@index([packageId, createdAt])
 }
 
+// LEGACY — phân hệ Giám sát cũ đã bị gỡ khỏi runtime.
+// Không sử dụng cho triển khai mới.
+// Chờ kế hoạch migration và chuyển đổi dữ liệu riêng.
 model SupervisionInspectionSchedule {
   id                String                      @id @default(cuid())
   projectId         String
@@ -1464,9 +1517,9 @@ model SupervisionInspectionSchedule {
   updatedAt         DateTime                    @updatedAt
   deletedAt         DateTime?
 
-  project           Project                     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  supervisor        User                        @relation(fields: [supervisorId], references: [id], onDelete: Cascade)
-  linkedVisit       SupervisionVisit?           @relation(fields: [linkedVisitId], references: [id], onDelete: SetNull)
+  project     Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  supervisor  User              @relation(fields: [supervisorId], references: [id], onDelete: Cascade)
+  linkedVisit SupervisionVisit? @relation(fields: [linkedVisitId], references: [id], onDelete: SetNull)
 
   @@index([projectId])
   @@index([supervisorId])

@@ -363,7 +363,10 @@ export async function approveMaterialRequest(id: string) {
 
     // 3. Update ApprovalRequest if exists
     await tx.approvalRequest.updateMany({
-      where: { sourceType: "MATERIAL_REQUEST", sourceId: id, status: "PENDING" },
+      where: { entityType: "MATERIAL_REQUEST",
+          entityId: id,
+          sourceType: "MATERIAL_REQUEST",
+          sourceId: id, status: "PENDING" },
       data: { 
         status: "APPROVED",
         decidedById: session.id,
@@ -416,7 +419,10 @@ export async function rejectMaterialRequest(id: string, reason: string) {
     });
 
     await tx.approvalRequest.updateMany({
-      where: { sourceType: "MATERIAL_REQUEST", sourceId: id, status: "PENDING" },
+      where: { entityType: "MATERIAL_REQUEST",
+          entityId: id,
+          sourceType: "MATERIAL_REQUEST",
+          sourceId: id, status: "PENDING" },
       data: { 
         status: "REJECTED",
         decidedById: session.id,
@@ -574,7 +580,10 @@ export async function cancelMaterialRequest(id: string, reason?: string) {
       data: { status: "CANCELLED", cancelReason: reason || "Người dùng hủy phiếu" }
     }),
     prisma.approvalRequest.updateMany({
-      where: { sourceType: "MATERIAL_REQUEST", sourceId: id, status: "PENDING" },
+      where: { entityType: "MATERIAL_REQUEST",
+          entityId: id,
+          sourceType: "MATERIAL_REQUEST",
+          sourceId: id, status: "PENDING" },
       data: { status: "CANCELLED", decisionNote: reason || "Người yêu cầu đã hủy" }
     })
   ]);

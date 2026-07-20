@@ -3,7 +3,7 @@ import prisma from "./prisma";
 import { getSession } from "./auth";
 import { redirect } from "next/navigation";
 import { SYSTEM_ROLE_DISPLAY_NAMES, SYSTEM_ROLE_REGISTRY } from "./roles/role-registry";
-import { canAccessSupervisionProject, getSupervisionProjectWhere } from "./supervision/access";
+
 
 // ─── Role Constants ───────────────────────────────────────────
 export const SYSTEM_ADMIN_ROLES: UserRole[] = ["ADMIN"];
@@ -241,6 +241,21 @@ export async function requireManagementAccessOrRedirect() {
     redirect("/projects");
   }
   return session;
+}
+
+export async function canAccessSupervisionProject(actor: { id: string; role: UserRole }, projectId: string) {
+  if (COMPANY_WIDE_ROLES.includes(actor.role)) return true;
+  if (actor.role !== "SUPERVISION_HEAD") return false;
+  const scope = await prisma.supervisionScope.findUnique({ where: { userId: actor.id }, include: { projects: { where: { projectId } } } });
+  return Boolean(scope && (scope.scopeType === "ALL_PROJECTS" || scope.projects.length > 0));
+}
+
+export async function getSupervisionProjectWhere(actor: { id: string; role: UserRole }) {
+  if (COMPANY_WIDE_ROLES.includes(actor.role)) return {};
+  if (actor.role !== "SUPERVISION_HEAD") return { id: { in: [] as string[] } };
+  const scope = await prisma.supervisionScope.findUnique({ where: { userId: actor.id }, include: { projects: { select: { projectId: true } } } });
+  if (!scope) return { id: { in: [] as string[] } };
+  return scope.scopeType === "ALL_PROJECTS" ? {} : { id: { in: scope.projects.map((item) => item.projectId) } };
 }
 
 /**

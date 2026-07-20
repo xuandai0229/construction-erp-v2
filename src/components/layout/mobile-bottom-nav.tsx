@@ -23,7 +23,7 @@ export function MobileBottomNav({ userRole }: { userRole: UserRole }) {
 
   const moreItems = [
     { name: 'Tài liệu', href: '/documents', icon: FolderOpen },
-    { name: 'Giám sát tuần', href: '/supervision', icon: ScanSearch },
+
     { name: 'Phê duyệt', href: '/approvals', icon: CheckSquare },
     { name: 'Tài khoản', href: '/users', icon: UserCog },
     { name: 'Cài đặt', href: '/settings', icon: Settings },

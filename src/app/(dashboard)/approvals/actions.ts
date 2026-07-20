@@ -227,15 +227,15 @@ export async function createApprovalRequest(data: CreateApprovalRequestInput) {
       projectId,
       entityType: sourceType || type,
       entityId: sourceId || code,
+      sourceType: sourceType,
+      sourceId: sourceId,
       title,
       description: normalizeOptionalText(data.description),
       type,
       priority,
       dueDate: parsedDueDate,
       requesterId: session.id,
-      status: "PENDING",
-      sourceType,
-      sourceId,
+      status: "PENDING"
     },
   });
 

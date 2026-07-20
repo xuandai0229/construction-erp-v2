@@ -24,15 +24,7 @@ const navigationSections = [
     label: null,
     items: [{ name: "Tổng quan", href: "/dashboard", icon: LayoutDashboard }],
   },
-  {
-    label: "GIÁM SÁT",
-    items: [
-      { name: "Tổng quan giám sát", href: "/supervision", icon: ScanSearch },
-      { name: "Nhật ký giám sát", href: "/supervision/journal", icon: ClipboardCheck },
-      { name: "Tồn tại và khắc phục", href: "/supervision/findings", icon: CheckSquare },
-      { name: "Báo cáo kết quả tuần", href: "/supervision/weekly-reports", icon: FolderOpen },
-    ],
-  },
+
   {
     label: "QUẢN LÝ",
     items: [
