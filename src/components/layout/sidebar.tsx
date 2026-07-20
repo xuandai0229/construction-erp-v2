@@ -31,6 +31,7 @@ const navigationSections = [
       { name: "Công trình", href: "/projects", icon: Building2 },
       { name: "Tài liệu", href: "/documents", icon: FolderOpen },
       { name: "Báo cáo hiện trường", href: "/reports", icon: ClipboardCheck },
+      { name: "Giám sát tuần", href: "/supervision/weekly", icon: ScanSearch },
       { name: "Vật tư", href: "/materials", icon: Package },
     ],
   },

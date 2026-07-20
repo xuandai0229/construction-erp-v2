@@ -18,6 +18,10 @@ export function canViewNavigationItem(role: UserRole, href: string) {
     return COMPANY_WIDE.includes(role) || PROJECT_BUSINESS_ROLES.includes(role);
   }
 
+  if (href === "/supervision/weekly") {
+    return COMPANY_WIDE.includes(role) || role === "SUPERVISION_HEAD";
+  }
+
   if (href === "/approvals") {
     return COMPANY_WIDE.includes(role) || ["CHIEF_COMMANDER", "MANAGER"].includes(role);
   }

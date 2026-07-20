@@ -257,6 +257,9 @@ model User {
   supervisionVisitsCreated          SupervisionVisit[]
   supervisionWorkflowHistories      SupervisionWorkflowHistory[]
   supervisionInspectionSchedules    SupervisionInspectionSchedule[]
+  supervisionWeeklyDossiersCreated  SupervisionWeeklyDossier[]      @relation("SupervisionWeeklyDossierCreator")
+  supervisionWeeklyDossiersReviewed SupervisionWeeklyDossier[]      @relation("SupervisionWeeklyDossierReviewer")
+  supervisionWeeklyRevisionActors   SupervisionWeeklyRevision[]     @relation("SupervisionWeeklyRevisionActor")
 
   @@index([email])
   @@index([username])
@@ -308,6 +311,11 @@ model Project {
   supervisionTransitionChecks      SupervisionTransitionCheck[]
   supervisionVisits                SupervisionVisit[]
   supervisionInspectionSchedules   SupervisionInspectionSchedule[]
+  supervisionWeeklyEntries         SupervisionWeeklyEntry[]
+  supervisionWeeklyQuantities      SupervisionWeeklyQuantity[]
+  supervisionWeeklyTransitions     SupervisionWeeklyTransition[]
+  supervisionWeeklyProgressRows    SupervisionWeeklyProgress[]
+  supervisionWeeklyObservations    SupervisionWeeklyObservation[]
 
   @@index([code])
   @@index([status])
@@ -1531,4 +1539,310 @@ enum SupervisionInspectionStatus {
   IN_PROGRESS
   COMPLETED
   CANCELLED
+}
+
+// New isolated weekly-supervision aggregate. Legacy Supervision* models above
+// remain untouched so existing records and migration history stay intact.
+enum SupervisionWeeklyStatus {
+  DRAFT
+  SUBMITTED
+  REVISION_REQUIRED
+  APPROVED
+  LOCKED
+}
+
+enum SupervisionWeeklyDocumentType {
+  RESULT
+  NEXT_WEEK_PLAN
+}
+
+enum SupervisionWeeklyInputMode {
+  PROJECT_WORK_ITEM
+  PROJECT_MANUAL_ITEM
+  MANUAL_TEXT
+}
+
+enum SupervisionWeeklyShift {
+  MORNING
+  AFTERNOON
+  EVENING
+}
+
+enum SupervisionWeeklyDelayType {
+  DAY
+  PERCENT
+}
+
+model SupervisionWeeklyDossier {
+  id                  String                  @id @default(cuid())
+  reportNumber        String?
+  weekStart           DateTime
+  weekEnd             DateTime
+  nextWeekStart       DateTime
+  nextWeekEnd         DateTime
+  place               String?                 @default("Hà Nội")
+  recipientName       String?
+  recipientTitle      String?
+  companyNameSnapshot String?
+  templateVersion     String                  @default("weekly-supervision-v1")
+  status              SupervisionWeeklyStatus @default(DRAFT)
+  version             Int                     @default(1)
+  lockVersion         Int                     @default(1)
+  submittedAt         DateTime?
+  reviewedAt          DateTime?
+  lockedAt            DateTime?
+  createdById         String
+  reviewedById        String?
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+  deletedAt           DateTime?
+
+  createdBy       User                              @relation("SupervisionWeeklyDossierCreator", fields: [createdById], references: [id])
+  reviewedBy      User?                             @relation("SupervisionWeeklyDossierReviewer", fields: [reviewedById], references: [id])
+  entries         SupervisionWeeklyEntry[]
+  shiftSelections SupervisionWeeklyShiftSelection[]
+  quantities      SupervisionWeeklyQuantity[]
+  transitions     SupervisionWeeklyTransition[]
+  progressRows    SupervisionWeeklyProgress[]
+  observations    SupervisionWeeklyObservation[]
+  attachments     SupervisionWeeklyAttachment[]
+  revisions       SupervisionWeeklyRevision[]
+
+  @@unique([createdById, weekStart, version])
+  @@index([status, weekStart])
+  @@index([createdById, weekStart])
+}
+
+model SupervisionWeeklyShiftSelection {
+  id           String                        @id @default(cuid())
+  dossierId    String
+  documentType SupervisionWeeklyDocumentType
+  entryDate    DateTime
+  shift        SupervisionWeeklyShift
+  createdAt    DateTime                      @default(now())
+  updatedAt    DateTime                      @updatedAt
+
+  dossier SupervisionWeeklyDossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+
+  @@unique([dossierId, documentType, entryDate, shift])
+  @@index([dossierId, documentType, entryDate])
+}
+
+model SupervisionWeeklyEntry {
+  id                   String                        @id @default(cuid())
+  dossierId            String
+  documentType         SupervisionWeeklyDocumentType
+  entryDate            DateTime
+  shift                SupervisionWeeklyShift
+  sortOrder            Int
+  inputMode            SupervisionWeeklyInputMode
+  projectId            String?
+  projectNameSnapshot  String?
+  locationId           String?
+  locationNameSnapshot String?
+  workItemId           String?
+  workItemNameSnapshot String?
+  manualText           String?
+  manualLocation       String?
+  manualProjectName    String?
+  manualWorkItemName   String?
+  categoryItemId       String?
+  categoryNameSnapshot String?
+  manualCategoryName   String?
+  inspectionWorkItemId String?
+  inspectionWorkNameSnapshot String?
+  displayText          String
+  inspectionContent    String?
+  result               String?
+  commanderProposal    String?
+  createdAt            DateTime                      @default(now())
+  updatedAt            DateTime                      @updatedAt
+
+  dossier SupervisionWeeklyDossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  project Project?                 @relation(fields: [projectId], references: [id], onDelete: Restrict)
+
+  @@index([dossierId, documentType, entryDate, shift, sortOrder])
+  @@index([projectId])
+}
+
+model SupervisionWeeklyQuantity {
+  id                   String   @id @default(cuid())
+  dossierId            String
+  sortOrder            Int
+  projectId            String?
+  projectNameSnapshot  String?
+  locationId           String?
+  locationNameSnapshot String?
+  workItemId           String?
+  workItemNameSnapshot String?
+  manualText           String?
+  manualLocation       String?
+  manualProjectName    String?
+  manualWorkItemName   String?
+  categoryItemId       String?
+  categoryNameSnapshot String?
+  manualCategoryName   String?
+  displayText          String
+  unit                 String?
+  unitCode             String?
+  reportedRaw          String?
+  reportedText         String?
+  reportedUnit         String?
+  reportedUnitCode     String?
+  reportedQuantity     Decimal? @db.Decimal(19, 4)
+  verifiedRaw          String?
+  verifiedText         String?
+  verifiedUnit         String?
+  verifiedUnitCode     String?
+  verifiedQuantity     Decimal? @db.Decimal(19, 4)
+  verificationMode     String?
+  varianceQuantity     Decimal? @db.Decimal(19, 4)
+  varianceReason       String?
+  plannedProgress      String?
+  conclusion           String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  dossier SupervisionWeeklyDossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  project Project?                 @relation(fields: [projectId], references: [id], onDelete: Restrict)
+
+  @@index([dossierId, sortOrder])
+}
+
+model SupervisionWeeklyTransition {
+  id                   String   @id @default(cuid())
+  dossierId            String
+  sortOrder            Int
+  projectId            String?
+  projectNameSnapshot  String?
+  locationId           String?
+  locationNameSnapshot String?
+  workItemId           String?
+  workItemNameSnapshot String?
+  manualText           String?
+  manualLocation       String?
+  manualProjectName    String?
+  manualWorkItemName   String?
+  categoryItemId       String?
+  categoryNameSnapshot String?
+  manualCategoryName   String?
+  displayText          String
+  reportedQuantity     Decimal? @db.Decimal(19, 4)
+  reportedText         String?
+  reportedRaw          String?
+  reportedUnit         String?
+  reportedUnitCode     String?
+  verifiedQuantity     Decimal? @db.Decimal(19, 4)
+  verifiedText         String?
+  verifiedRaw          String?
+  verifiedUnit         String?
+  verifiedUnitCode     String?
+  verificationMode     String?
+  varianceQuantity     Decimal? @db.Decimal(19, 4)
+  varianceReason       String?
+  plannedProgress      String?
+  currentStep          String?
+  proposedStep         String?
+  conclusion           String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  dossier SupervisionWeeklyDossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  project Project?                 @relation(fields: [projectId], references: [id], onDelete: Restrict)
+
+  @@index([dossierId, sortOrder])
+}
+
+model SupervisionWeeklyProgress {
+  id                   String                      @id @default(cuid())
+  dossierId            String
+  sortOrder            Int
+  projectId            String?
+  projectNameSnapshot  String?
+  locationId           String?
+  locationNameSnapshot String?
+  workItemId           String?
+  workItemNameSnapshot String?
+  manualText           String?
+  manualLocation       String?
+  manualProjectName    String?
+  manualWorkItemName   String?
+  categoryItemId       String?
+  categoryNameSnapshot String?
+  manualCategoryName   String?
+  displayText          String
+  plannedProgress      String?
+  actualProgress       String?
+  delayValue           Decimal?                    @db.Decimal(19, 4)
+  delayType            SupervisionWeeklyDelayType?
+  delayReason          String?
+  createdAt            DateTime                    @default(now())
+  updatedAt            DateTime                    @updatedAt
+
+  dossier SupervisionWeeklyDossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  project Project?                 @relation(fields: [projectId], references: [id], onDelete: Restrict)
+
+  @@index([dossierId, sortOrder])
+}
+
+model SupervisionWeeklyObservation {
+  id                   String                        @id @default(cuid())
+  dossierId            String
+  documentType         SupervisionWeeklyDocumentType
+  category             String
+  sortOrder            Int
+  projectId            String?
+  projectNameSnapshot  String?
+  locationId           String?
+  locationNameSnapshot String?
+  workItemId           String?
+  workItemNameSnapshot String?
+  manualText           String?
+  manualLocation       String?
+  manualProjectName    String?
+  manualWorkItemName   String?
+  categoryItemId       String?
+  categoryNameSnapshot String?
+  manualCategoryName   String?
+  displayText          String?
+  content              String
+  createdAt            DateTime                      @default(now())
+  updatedAt            DateTime                      @updatedAt
+
+  dossier SupervisionWeeklyDossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  project Project?                 @relation(fields: [projectId], references: [id], onDelete: Restrict)
+
+  @@index([dossierId, documentType, category, sortOrder])
+}
+
+model SupervisionWeeklyAttachment {
+  id          String   @id @default(cuid())
+  dossierId   String
+  documentId  String
+  entryId     String?
+  createdById String
+  createdAt   DateTime @default(now())
+
+  dossier SupervisionWeeklyDossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+
+  @@index([dossierId])
+  @@index([documentId])
+}
+
+model SupervisionWeeklyRevision {
+  id            String                   @id @default(cuid())
+  dossierId     String
+  actorId       String
+  action        String
+  fromStatus    SupervisionWeeklyStatus?
+  toStatus      SupervisionWeeklyStatus
+  version       Int
+  changedFields String?
+  reason        String?
+  createdAt     DateTime                 @default(now())
+
+  dossier SupervisionWeeklyDossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
+  actor   User                     @relation("SupervisionWeeklyRevisionActor", fields: [actorId], references: [id])
+
+  @@index([dossierId, createdAt])
 }

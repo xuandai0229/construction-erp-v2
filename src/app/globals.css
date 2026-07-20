@@ -37,6 +37,19 @@
   --radius-xl: 1rem;      /* 16px */
   --radius-2xl: 1.25rem;  /* 20px */
 
+  /* ---- App layout tokens ---- */
+  --app-header-h: 3.5rem; /* 56px mobile */
+  --app-header-h-lg: 4rem; /* 64px desktop */
+
+  /* ---- Z-index scale ---- */
+  --z-base: 1;
+  --z-sticky-table: 10;
+  --z-app-header: 40;
+  --z-dropdown: 50;
+  --z-dialog-overlay: 60;
+  --z-dialog: 70;
+  --z-toast: 80;
+
   /* ---- Premium Shadow tokens ---- */
   --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
   --shadow-elevated: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
@@ -80,6 +93,12 @@
     color: var(--foreground);
     font-family: var(--font-sans), Arial, Helvetica, sans-serif;
     text-rendering: optimizeLegibility;
+  }
+
+  @media (min-width: 1024px) {
+    :root {
+      --app-header-h: var(--app-header-h-lg);
+    }
   }
 
   input, textarea, select {

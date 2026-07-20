@@ -92,7 +92,7 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
 
   return (
     <>
-      <header className="sticky top-0 z-50 flex h-14 shrink-0 items-center justify-between border-b border-[var(--border)] bg-white/95 px-3 backdrop-blur-md lg:h-16 md:px-6">
+      <header data-app-header className="sticky top-0 z-[var(--z-app-header)] flex h-[var(--app-header-h)] shrink-0 items-center justify-between border-b border-[var(--border)] bg-white/95 px-3 backdrop-blur-md md:px-6">
         <div className="flex min-w-0 flex-1 items-center">
           <Link href="/dashboard" className="mr-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-blue-600 text-white shadow-sm lg:hidden" aria-label="Trang chủ">
             <Building2 className="h-4 w-4" />

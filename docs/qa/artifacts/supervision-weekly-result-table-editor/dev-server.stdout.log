@@ -1,0 +1,141 @@
+▲ Next.js 16.2.7 (webpack)
+- Local:         http://localhost:3002
+- Network:       http://192.168.1.16:3002
+- Environments: .env
+✓ Ready in 1039ms
+- Experiments (use with caution):
+  · proxyClientMaxBodySize: "100mb"
+
+○ Compiling /login ...
+ GET /login 200 in 46ms (next.js: 4ms, proxy.ts: 9ms, application-code: 33ms)
+ GET /supervision/weekly 200 in 2.1s (next.js: 1505ms, proxy.ts: 8ms, application-code: 556ms)
+ GET /supervision/weekly 200 in 91ms (next.js: 4ms, proxy.ts: 9ms, application-code: 78ms)
+ GET /dashboard 200 in 1493ms (next.js: 990ms, proxy.ts: 4ms, application-code: 499ms)
+ GET /supervision/weekly 200 in 214ms (next.js: 23ms, proxy.ts: 6ms, application-code: 185ms)
+ POST /supervision/weekly 200 in 165ms (next.js: 4ms, proxy.ts: 8ms, application-code: 153ms)
+  └─ ƒ createSupervisionWeeklyDossier("2026-07-20") in 52ms ..//src/app/(dashboard)/supervision/weekly/actions.ts
+ GET /supervision/weekly/cmrsuunxk0000m0wkxn26vfh9/edit 200 in 1912ms (next.js: 1772ms, proxy.ts: 20ms, application-code: 121ms)
+ POST /supervision/weekly/cmrsuunxk0000m0wkxn26vfh9/edit 200 in 187ms (next.js: 12ms, proxy.ts: 6ms, application-code: 169ms)
+  └─ ƒ saveSupervisionWeeklyDossier("cmrsuunxk0000m0wkxn26vfh9", {"entries":[],"expectedLockVersion":1,"observations":[],"...":"8 items not stringified"}) in 68ms ..//src/app/(dashboard)/supervision/weekly/actions.ts
+ GET /supervision/weekly 200 in 522ms (next.js: 27ms, proxy.ts: 20ms, application-code: 475ms)
+ GET /supervision/weekly 200 in 138ms (next.js: 7ms, proxy.ts: 8ms, application-code: 123ms)
+ GET /dashboard 200 in 408ms (next.js: 24ms, proxy.ts: 6ms, application-code: 377ms)
+ POST /supervision/weekly 200 in 134ms (next.js: 4ms, proxy.ts: 7ms, application-code: 124ms)
+  └─ ƒ createSupervisionWeeklyDossier("2099-01-05") in 16ms ..//src/app/(dashboard)/supervision/weekly/actions.ts
+ GET /supervision/weekly/cmrsuxn420003m0wkg0f5oday/edit 200 in 77ms (next.js: 15ms, proxy.ts: 11ms, application-code: 51ms)
+ GET /supervision/weekly/cmrsuxn420003m0wkg0f5oday/edit 200 in 82ms (next.js: 7ms, proxy.ts: 9ms, application-code: 67ms)
+ POST /supervision/weekly/cmrsuxn420003m0wkg0f5oday/edit 200 in 29ms (next.js: 9ms, proxy.ts: 5ms, application-code: 16ms)
+  └─ ƒ getSupervisionWeeklyWorkItems("cmrobkwot00079owkfb1xzzkd") in 8ms ..//src/app/(dashboard)/supervision/weekly/actions.ts
+ POST /supervision/weekly/cmrsuxn420003m0wkg0f5oday/edit 200 in 32ms (next.js: 7ms, proxy.ts: 5ms, application-code: 20ms)
+  └─ ƒ getSupervisionWeeklyWorkItems("cmrsqudqb0000i0wk1ts3n838") in 14ms ..//src/app/(dashboard)/supervision/weekly/actions.ts
+ POST /supervision/weekly/cmrsuxn420003m0wkg0f5oday/edit 200 in 32ms (next.js: 6ms, proxy.ts: 6ms, application-code: 20ms)
+  └─ ƒ getSupervisionWeeklyWorkItems("cmrobkwot00079owkfb1xzzkd") in 11ms ..//src/app/(dashboard)/supervision/weekly/actions.ts
+ POST /supervision/weekly/cmrsuxn420003m0wkg0f5oday/edit 200 in 29ms (next.js: 5ms, proxy.ts: 6ms, application-code: 18ms)
+  └─ ƒ getSupervisionWeeklyWorkItems("cmrsqudqb0000i0wk1ts3n838") in 10ms ..//src/app/(dashboard)/supervision/weekly/actions.ts
+ POST /supervision/weekly/cmrsuxn420003m0wkg0f5oday/edit 200 in 29ms (next.js: 11ms, proxy.ts: 5ms, application-code: 13ms)
+  └─ ƒ getSupervisionWeeklyWorkItems("cmrsqudqd0001i0wkxnyhq73l") in 6ms ..//src/app/(dashboard)/supervision/weekly/actions.ts
+ POST /supervision/weekly/cmrsuxn420003m0wkg0f5oday/edit 200 in 177ms (next.js: 9ms, proxy.ts: 5ms, application-code: 163ms)
+  └─ ƒ saveSupervisionWeeklyDossier("cmrsuxn420003m0wkg0f5oday", {"entries":["[Object]","[Object]","[Object]","... 8 items not stringified"],"expectedLockVersion":1,"observations":[],"...":"8 items not stringified"}) in 98ms ..//src/app/(dashboard)/supervision/weekly/actions.ts
+ GET /supervision/weekly/cmrsuxn420003m0wkg0f5oday/edit 200 in 155ms (next.js: 9ms, proxy.ts: 5ms, application-code: 141ms)
+ GET /supervision/weekly/cmrsuxn420003m0wkg0f5oday/edit 200 in 185ms (next.js: 11ms, proxy.ts: 9ms, application-code: 164ms)
+ GET /supervision/weekly/cmrsuxn420003m0wkg0f5oday/preview 200 in 1553ms (next.js: 1258ms, proxy.ts: 4ms, application-code: 291ms)
+ GET /supervision/weekly/cmrsuxn420003m0wkg0f5oday/edit 200 in 434ms (next.js: 45ms, proxy.ts: 8ms, application-code: 381ms)
+ POST /supervision/weekly/cmrsuxn420003m0wkg0f5oday/edit 200 in 236ms (next.js: 17ms, proxy.ts: 14ms, application-code: 205ms)
+  └─ ƒ transitionSupervisionWeeklyDossier("cmrsuxn420003m0wkg0f5oday", "SUBMIT") in 22ms ..//src/app/(dashboard)/supervision/weekly/actions.ts
+○ Compiling /materials ...
+ GET /reports 200 in 12.8s (next.js: 11.0s, proxy.ts: 17ms, application-code: 1812ms)
+ GET /dashboard 200 in 12.8s (next.js: 11.0s, proxy.ts: 16ms, application-code: 1818ms)
+ GET /materials 200 in 12.8s (next.js: 11.0s, proxy.ts: 18ms, application-code: 1822ms)
+ GET /documents 200 in 12.8s (next.js: 11.0s, proxy.ts: 18ms, application-code: 1826ms)
+ GET /projects 200 in 12.8s (next.js: 11.0s, proxy.ts: 17ms, application-code: 1828ms)
+ GET / 307 in 728ms (next.js: 615ms, proxy.ts: 11ms, application-code: 103ms)
+ GET /dashboard 200 in 556ms (next.js: 21ms, proxy.ts: 5ms, application-code: 530ms)
+ GET /supervision/weekly 200 in 82ms (next.js: 15ms, proxy.ts: 4ms, application-code: 63ms)
+ POST /api/auth/logout 200 in 551ms (next.js: 529ms, proxy.ts: 5ms, application-code: 17ms)
+ GET /login 200 in 353ms (next.js: 316ms, proxy.ts: 5ms, application-code: 32ms)
+ GET /login 200 in 23ms (next.js: 3ms, proxy.ts: 4ms, application-code: 16ms)
+ POST /api/auth/login 200 in 830ms (next.js: 524ms, proxy.ts: 6ms, application-code: 299ms)
+ GET /dashboard 200 in 468ms (next.js: 8ms, proxy.ts: 14ms, application-code: 446ms)
+ GET /dashboard 200 in 619ms (next.js: 50ms, proxy.ts: 7ms, application-code: 562ms)
+ GET /reports 200 in 1147ms (next.js: 912ms, proxy.ts: 6ms, application-code: 229ms)
+ POST /reports 200 in 112ms (next.js: 6ms, proxy.ts: 59ms, application-code: 46ms)
+  └─ ƒ getProjectWorkItems("cmrobkwot00079owkfb1xzzkd", "2026-07-20") in 34ms ..//src/app/(dashboard)/reports/actions.ts
+ POST /reports 200 in 27ms (next.js: 5ms, proxy.ts: 6ms, application-code: 16ms)
+  └─ ƒ getProjectWorkItems("cmrobkwot00079owkfb1xzzkd", "2026-07-20") in 6ms ..//src/app/(dashboard)/reports/actions.ts
+ GET /reports 200 in 112ms (next.js: 4ms, proxy.ts: 6ms, application-code: 102ms)
+ GET /supervision/weekly 200 in 112ms (next.js: 22ms, proxy.ts: 5ms, application-code: 85ms)
+ GET /supervision/weekly/cmrsmuc5l0000r4wk7fhqp8gn/edit 200 in 95ms (next.js: 25ms, proxy.ts: 5ms, application-code: 65ms)
+ GET /supervision/weekly 200 in 152ms (next.js: 3ms, proxy.ts: 4ms, application-code: 145ms)
+ GET /supervision/weekly/cmrsmuc5l0000r4wk7fhqp8gn/edit 200 in 163ms (next.js: 12ms, proxy.ts: 5ms, application-code: 145ms)
+ GET /supervision/weekly 200 in 93ms (next.js: 4ms, proxy.ts: 4ms, application-code: 85ms)
+ GET /dashboard 200 in 234ms (next.js: 14ms, proxy.ts: 6ms, application-code: 214ms)
+ POST /supervision/weekly 200 in 115ms (next.js: 3ms, proxy.ts: 5ms, application-code: 107ms)
+  └─ ƒ createSupervisionWeeklyDossier("2099-01-05") in 21ms ..//src/app/(dashboard)/supervision/weekly/actions.ts
+ GET /supervision/weekly/cmrsv00jh0011m0wkd24pyqoy/edit 200 in 69ms (next.js: 15ms, proxy.ts: 11ms, application-code: 43ms)
+ POST /supervision/weekly/cmrsv00jh0011m0wkd24pyqoy/edit 200 in 38ms (next.js: 9ms, proxy.ts: 6ms, application-code: 23ms)
+  └─ ƒ getSupervisionWeeklyWorkItems("cmrobkwot00079owkfb1xzzkd") in 15ms ..//src/app/(dashboard)/supervision/weekly/actions.ts
+ POST /supervision/weekly/cmrsv00jh0011m0wkd24pyqoy/edit 200 in 34ms (next.js: 5ms, proxy.ts: 4ms, application-code: 24ms)
+  └─ ƒ getSupervisionWeeklyWorkItems("cmrsqudqb0000i0wk1ts3n838") in 16ms ..//src/app/(dashboard)/supervision/weekly/actions.ts
+ POST /supervision/weekly/cmrsv00jh0011m0wkd24pyqoy/edit 200 in 27ms (next.js: 6ms, proxy.ts: 4ms, application-code: 17ms)
+  └─ ƒ getSupervisionWeeklyWorkItems("cmrobkwot00079owkfb1xzzkd") in 10ms ..//src/app/(dashboard)/supervision/weekly/actions.ts
+ POST /supervision/weekly/cmrsv00jh0011m0wkd24pyqoy/edit 200 in 28ms (next.js: 5ms, proxy.ts: 4ms, application-code: 18ms)
+  └─ ƒ getSupervisionWeeklyWorkItems("cmrsqudqb0000i0wk1ts3n838") in 12ms ..//src/app/(dashboard)/supervision/weekly/actions.ts
+ POST /supervision/weekly/cmrsv00jh0011m0wkd24pyqoy/edit 200 in 24ms (next.js: 5ms, proxy.ts: 5ms, application-code: 14ms)
+  └─ ƒ getSupervisionWeeklyWorkItems("cmrsqudqd0001i0wkxnyhq73l") in 8ms ..//src/app/(dashboard)/supervision/weekly/actions.ts
+ POST /supervision/weekly/cmrsv00jh0011m0wkd24pyqoy/edit 200 in 251ms (next.js: 12ms, proxy.ts: 7ms, application-code: 232ms)
+  └─ ƒ saveSupervisionWeeklyDossier("cmrsv00jh0011m0wkd24pyqoy", {"entries":["[Object]","[Object]","[Object]","... 8 items not stringified"],"expectedLockVersion":1,"observations":[],"...":"8 items not stringified"}) in 93ms ..//src/app/(dashboard)/supervision/weekly/actions.ts
+ GET /supervision/weekly/cmrsv00jh0011m0wkd24pyqoy/edit 200 in 157ms (next.js: 11ms, proxy.ts: 5ms, application-code: 141ms)
+ GET /supervision/weekly/cmrsv00jh0011m0wkd24pyqoy/edit 200 in 149ms (next.js: 9ms, proxy.ts: 5ms, application-code: 136ms)
+ GET /supervision/weekly/cmrsv00jh0011m0wkd24pyqoy/edit 200 in 291ms (next.js: 99ms, proxy.ts: 21ms, application-code: 171ms)
+ GET /supervision/weekly/cmrsmuc5l0000r4wk7fhqp8gn/edit 200 in 318ms (next.js: 128ms, proxy.ts: 21ms, application-code: 169ms)
+ GET /supervision/weekly/cmrsv00jh0011m0wkd24pyqoy/preview 200 in 1018ms (next.js: 580ms, proxy.ts: 5ms, application-code: 433ms)
+ GET /supervision/weekly/cmrsv00jh0011m0wkd24pyqoy/edit 200 in 202ms (next.js: 11ms, proxy.ts: 7ms, application-code: 183ms)
+ POST /supervision/weekly/cmrsv00jh0011m0wkd24pyqoy/edit 200 in 135ms (next.js: 10ms, proxy.ts: 8ms, application-code: 117ms)
+  └─ ƒ transitionSupervisionWeeklyDossier("cmrsv00jh0011m0wkd24pyqoy", "SUBMIT") in 25ms ..//src/app/(dashboard)/supervision/weekly/actions.ts
+ GET /dashboard 200 in 1674ms (next.js: 20ms, proxy.ts: 8ms, application-code: 1645ms)
+ GET /materials 200 in 3.0s (next.js: 2.4s, proxy.ts: 9ms, application-code: 589ms)
+ GET /documents 200 in 3.0s (next.js: 2.4s, proxy.ts: 9ms, application-code: 590ms)
+ GET /projects 200 in 3.0s (next.js: 2.4s, proxy.ts: 8ms, application-code: 593ms)
+ GET /reports 200 in 3.0s (next.js: 2.4s, proxy.ts: 9ms, application-code: 592ms)
+ GET /supervision/weekly/cmrsmuc5l0000r4wk7fhqp8gn/edit 200 in 1366ms (next.js: 464ms, proxy.ts: 12ms, application-code: 890ms)
+ GET /supervision/weekly/cmrsmuc5l0000r4wk7fhqp8gn/edit 200 in 1476ms (next.js: 399ms, proxy.ts: 50ms, application-code: 1027ms)
+ GET /supervision/weekly 200 in 403ms (next.js: 41ms, proxy.ts: 9ms, application-code: 354ms)
+ GET /supervision/weekly/cmrsmuc5l0000r4wk7fhqp8gn/edit 200 in 336ms (next.js: 16ms, proxy.ts: 7ms, application-code: 314ms)
+ GET /supervision/weekly 200 in 202ms (next.js: 7ms, proxy.ts: 10ms, application-code: 186ms)
+ GET /dashboard 200 in 715ms (next.js: 66ms, proxy.ts: 7ms, application-code: 642ms)
+ POST /supervision/weekly 200 in 191ms (next.js: 5ms, proxy.ts: 7ms, application-code: 179ms)
+  └─ ƒ createSupervisionWeeklyDossier("2099-01-05") in 41ms ..//src/app/(dashboard)/supervision/weekly/actions.ts
+ GET /supervision/weekly/cmrsv2jro001zm0wkee61mus8/edit 200 in 147ms (next.js: 26ms, proxy.ts: 30ms, application-code: 91ms)
+ GET /supervision/weekly 200 in 63ms (next.js: 5ms, proxy.ts: 7ms, application-code: 50ms)
+ POST /supervision/weekly/cmrsv2jro001zm0wkee61mus8/edit 200 in 61ms (next.js: 17ms, proxy.ts: 8ms, application-code: 37ms)
+  └─ ƒ getSupervisionWeeklyWorkItems("cmrobkwot00079owkfb1xzzkd") in 24ms ..//src/app/(dashboard)/supervision/weekly/actions.ts
+ POST /supervision/weekly/cmrsv2jro001zm0wkee61mus8/edit 200 in 76ms (next.js: 16ms, proxy.ts: 32ms, application-code: 28ms)
+  └─ ƒ getSupervisionWeeklyWorkItems("cmrsqudqb0000i0wk1ts3n838") in 7ms ..//src/app/(dashboard)/supervision/weekly/actions.ts
+ POST /supervision/weekly/cmrsv2jro001zm0wkee61mus8/edit 200 in 51ms (next.js: 12ms, proxy.ts: 8ms, application-code: 31ms)
+  └─ ƒ getSupervisionWeeklyWorkItems("cmrobkwot00079owkfb1xzzkd") in 13ms ..//src/app/(dashboard)/supervision/weekly/actions.ts
+ POST /supervision/weekly/cmrsv2jro001zm0wkee61mus8/edit 200 in 57ms (next.js: 8ms, proxy.ts: 14ms, application-code: 35ms)
+  └─ ƒ getSupervisionWeeklyWorkItems("cmrsqudqb0000i0wk1ts3n838") in 21ms ..//src/app/(dashboard)/supervision/weekly/actions.ts
+ POST /supervision/weekly/cmrsv2jro001zm0wkee61mus8/edit 200 in 48ms (next.js: 9ms, proxy.ts: 7ms, application-code: 31ms)
+  └─ ƒ getSupervisionWeeklyWorkItems("cmrsqudqd0001i0wkxnyhq73l") in 14ms ..//src/app/(dashboard)/supervision/weekly/actions.ts
+ POST /supervision/weekly/cmrsv2jro001zm0wkee61mus8/edit 200 in 275ms (next.js: 15ms, proxy.ts: 8ms, application-code: 252ms)
+  └─ ƒ saveSupervisionWeeklyDossier("cmrsv2jro001zm0wkee61mus8", {"entries":["[Object]","[Object]","[Object]","... 8 items not stringified"],"expectedLockVersion":1,"observations":[],"...":"8 items not stringified"}) in 98ms ..//src/app/(dashboard)/supervision/weekly/actions.ts
+ GET /supervision/weekly/cmrsv2jro001zm0wkee61mus8/edit 200 in 149ms (next.js: 27ms, proxy.ts: 22ms, application-code: 100ms)
+ GET /supervision/weekly/cmrsv2jro001zm0wkee61mus8/edit 200 in 375ms (next.js: 17ms, proxy.ts: 9ms, application-code: 348ms)
+ GET /supervision/weekly/cmrsv2jro001zm0wkee61mus8/edit 200 in 373ms (next.js: 10ms, proxy.ts: 6ms, application-code: 357ms)
+ GET /supervision/weekly/cmrsv2jro001zm0wkee61mus8/edit 200 in 975ms (next.js: 557ms, proxy.ts: 79ms, application-code: 340ms)
+ GET /supervision/weekly/cmrsv2jro001zm0wkee61mus8/edit 200 in 1083ms (next.js: 610ms, proxy.ts: 80ms, application-code: 394ms)
+ GET /supervision/weekly/cmrsv2jro001zm0wkee61mus8/preview 200 in 2.6s (next.js: 1217ms, proxy.ts: 10ms, application-code: 1388ms)
+ GET /supervision/weekly/cmrsv2jro001zm0wkee61mus8/edit 200 in 425ms (next.js: 21ms, proxy.ts: 9ms, application-code: 395ms)
+ POST /supervision/weekly/cmrsv2jro001zm0wkee61mus8/edit 500 in 742ms (next.js: 9ms, proxy.ts: 10ms, application-code: 723ms)
+  └─ ƒ saveSupervisionWeeklyDossier("cmrsv2jro001zm0wkee61mus8", {"entries":["[Object]","[Object]","[Object]","... 8 items not stringified"],"expectedLockVersion":2,"observations":[],"...":"8 items not stringified"}) in 17ms ..//src/app/(dashboard)/supervision/weekly/actions.ts
+ POST /supervision/weekly/cmrsv2jro001zm0wkee61mus8/edit 200 in 506ms (next.js: 26ms, proxy.ts: 20ms, application-code: 459ms)
+  └─ ƒ transitionSupervisionWeeklyDossier("cmrsv2jro001zm0wkee61mus8", "SUBMIT") in 25ms ..//src/app/(dashboard)/supervision/weekly/actions.ts
+○ Compiling /documents ...
+ GET /dashboard 200 in 6.0s (next.js: 46ms, proxy.ts: 67ms, application-code: 5.9s)
+ GET /documents 200 in 13.3s (next.js: 9.5s, proxy.ts: 70ms, application-code: 3.7s)
+ GET /reports 200 in 13.3s (next.js: 9.5s, proxy.ts: 69ms, application-code: 3.7s)
+ GET /materials 200 in 13.3s (next.js: 9.5s, proxy.ts: 69ms, application-code: 3.7s)
+ GET /projects 200 in 13.3s (next.js: 9.5s, proxy.ts: 68ms, application-code: 3.7s)
+ POST /supervision/weekly/cmrsv2jro001zm0wkee61mus8/edit 500 in 4.4s (next.js: 1074ms, proxy.ts: 1768ms, application-code: 1550ms)
+  └─ ƒ saveSupervisionWeeklyDossier("cmrsv2jro001zm0wkee61mus8", {"entries":["[Object]","[Object]","[Object]","... 8 items not stringified"],"expectedLockVersion":2,"observations":[],"...":"8 items not stringified"}) in 396ms ..//src/app/(dashboard)/supervision/weekly/actions.ts
+ GET /supervision/weekly/cmrsv2jro001zm0wkee61mus8/preview 200 in 394ms (next.js: 33ms, proxy.ts: 9ms, application-code: 351ms)

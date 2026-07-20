@@ -34,10 +34,25 @@ interface EnterpriseComboboxProps {
   density?: "default" | "compact";
   maxPanelHeight?: number;
   commitOnBlur?: boolean;
+  testId?: string;
+  autoFocusToken?: number;
+}
+
+function normalizeSearch(value: string) {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/gi, "d").toLocaleLowerCase("vi-VN");
 }
 
 function optionSearchText(option: EnterpriseComboboxOption) {
-  return [option.code, option.name, option.label, option.description].filter(Boolean).join(" ").toLowerCase();
+  return normalizeSearch([option.code, option.name, option.label, option.description].filter(Boolean).join(" "));
+}
+
+function HighlightedText({ text, query }: { text: string; query: string }) {
+  const normalizedQuery = normalizeSearch(query.trim());
+  const normalizedText = normalizeSearch(text);
+  const start = normalizedQuery ? normalizedText.indexOf(normalizedQuery) : -1;
+  if (start < 0) return text;
+  const characters = Array.from(text);
+  return <>{characters.slice(0, start).join("")}<mark className="rounded bg-amber-100 px-0.5 text-inherit">{characters.slice(start, start + normalizedQuery.length).join("")}</mark>{characters.slice(start + normalizedQuery.length).join("")}</>;
 }
 
 export function EnterpriseCombobox({
@@ -60,11 +75,14 @@ export function EnterpriseCombobox({
   density = "default",
   maxPanelHeight,
   commitOnBlur = false,
+  testId,
+  autoFocusToken,
 }: EnterpriseComboboxProps) {
   const generatedId = useId();
   const buttonId = id || generatedId;
   const listboxId = `${buttonId}-listbox`;
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -76,7 +94,7 @@ export function EnterpriseCombobox({
 
   const selectedOption = options.find((option) => option.value === value) || (allowCustom && value ? { value, label: value } as EnterpriseComboboxOption : undefined);
   const filteredOptions = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
+    const normalized = normalizeSearch(query.trim());
     if (!normalized) return options;
     return options.filter((option) => optionSearchText(option).includes(normalized));
   }, [options, query]);
@@ -85,8 +103,8 @@ export function EnterpriseCombobox({
   const showCreateOption = allowCustom && trimmedQuery.length > 0 && !hasExactMatch;
 
   const updatePanelPosition = () => {
-    if (!rootRef.current) return;
-    const triggerRect = rootRef.current.getBoundingClientRect();
+    if (!triggerRef.current) return;
+    const triggerRect = triggerRef.current.getBoundingClientRect();
     const safePadding = 12;
     const mobile = typeof window !== 'undefined' ? window.matchMedia("(max-width: 639px)").matches : false;
     setIsMobile(mobile);
@@ -124,12 +142,14 @@ export function EnterpriseCombobox({
     const calculatedMaxHeight = Math.min(desiredMaxHeight, availableSpace);
 
     setPanelMaxHeight(calculatedMaxHeight);
+    const width = Math.min(Math.max(triggerRect.width, 280), window.innerWidth - safePadding * 2);
+    const left = Math.min(Math.max(safePadding, triggerRect.left), window.innerWidth - width - safePadding);
     setPanelStyle({
       position: "fixed",
-      left: triggerRect.left,
+      left,
       top: openUp ? undefined : triggerRect.bottom + 6,
       bottom: openUp ? viewportHeight - triggerRect.top + 6 : undefined,
-      width: triggerRect.width,
+      width,
       zIndex: 105,
     });
   };
@@ -182,6 +202,12 @@ export function EnterpriseCombobox({
     const timer = window.setTimeout(() => searchRef.current?.focus(), 0);
     return () => window.clearTimeout(timer);
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!autoFocusToken || disabled) return;
+    triggerRef.current?.focus();
+    setIsOpen(true);
+  }, [autoFocusToken, disabled]);
 
   useEffect(() => {
     setActiveIndex(0);
@@ -257,6 +283,8 @@ export function EnterpriseCombobox({
             spellCheck={false}
             data-1p-ignore="true"
             data-lpignore="true"
+            data-testid={testId ? `${testId}-search` : undefined}
+            onKeyDown={handleKeyDown}
             className={cn(
               "w-full rounded-lg border border-slate-200 bg-slate-50 pl-8 pr-3 text-sm outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/20",
               density === "compact" ? "h-8" : "h-9"
@@ -270,6 +298,7 @@ export function EnterpriseCombobox({
         aria-labelledby={buttonId}
         className="custom-scrollbar overflow-y-auto p-1"
         style={{ maxHeight: isMobile ? panelMaxHeight : panelMaxHeight }}
+        data-testid={testId ? `${testId}-list` : undefined}
       >
         {filteredOptions.length === 0 && !showCreateOption ? (
           <div className="px-3 py-6 text-center text-sm text-slate-500">{emptyMessage}</div>
@@ -296,8 +325,8 @@ export function EnterpriseCombobox({
                   )}
                 >
                   <span className="min-w-0 flex-1">
-                    <span className={cn("block truncate font-medium", density === "compact" ? "text-[13px]" : "text-sm")}>{option.label}</span>
-                    {option.description ? <span className={cn("mt-0.5 block truncate text-slate-500", density === "compact" ? "text-[11px]" : "text-xs")}>{option.description}</span> : null}
+                    <span className={cn("block truncate font-medium", density === "compact" ? "text-[13px]" : "text-sm")}><HighlightedText text={option.label} query={query} /></span>
+                    {option.code || option.description ? <span className={cn("mt-0.5 block truncate text-slate-500", density === "compact" ? "text-[11px]" : "text-xs")}><HighlightedText text={[option.code, option.description].filter(Boolean).join(" · ")} query={query} /></span> : null}
                   </span>
                   {selected ? <Check className="h-4 w-4 shrink-0 text-blue-600" /> : null}
                 </button>
@@ -329,6 +358,7 @@ export function EnterpriseCombobox({
   return (
     <div ref={rootRef} className={cn("relative min-w-0", className)} onKeyDown={handleKeyDown}>
       <button
+        ref={triggerRef}
         id={buttonId}
         type="button"
         aria-haspopup="listbox"
@@ -337,33 +367,32 @@ export function EnterpriseCombobox({
         aria-label={ariaLabel}
         disabled={disabled}
         onClick={() => setIsOpen((open) => !open)}
+        data-testid={testId}
         className={cn(
-          "flex h-10 w-full min-w-0 items-center justify-between gap-2 rounded-lg border border-slate-300 bg-white px-3 text-left text-sm text-slate-900 outline-none transition focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500",
+          "flex h-10 w-full min-w-0 items-center justify-between gap-2 overflow-hidden rounded-lg border border-slate-300 bg-white px-3 pr-10 text-left text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/25 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500",
           buttonClassName,
         )}
       >
         <span className={cn("min-w-0 flex-1 truncate", !selectedOption && !selectedLabel && "text-slate-400")} title={selectedOption?.label || selectedLabel}>
           {selectedOption?.label || selectedLabel || placeholder}
         </span>
-        <span className="flex shrink-0 items-center gap-1">
-          {clearable && value && !disabled ? (
-            <span
-              role="button"
-              tabIndex={-1}
-              aria-label="Xóa lựa chọn"
-              onClick={(event) => {
-                event.stopPropagation();
-                onChange("");
-                setQuery("");
-              }}
-              className="rounded p-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-            >
-              <X className="h-3.5 w-3.5" />
-            </span>
-          ) : null}
-          <ChevronDown className={cn("h-4 w-4 text-slate-400 transition", isOpen && "rotate-180")} />
-        </span>
+        <ChevronDown className={cn("h-4 w-4 shrink-0 text-slate-400 transition", isOpen && "rotate-180")} />
       </button>
+
+      {clearable && (value || selectedLabel) && !disabled ? (
+        <button
+          type="button"
+          aria-label="Xóa lựa chọn"
+          data-testid={testId ? `${testId}-clear` : undefined}
+          onClick={() => {
+            onChange("");
+            setQuery("");
+          }}
+          className="absolute right-8 top-1/2 z-[1] inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      ) : null}
 
       {panel ? createPortal(panel, document.body) : null}
     </div>

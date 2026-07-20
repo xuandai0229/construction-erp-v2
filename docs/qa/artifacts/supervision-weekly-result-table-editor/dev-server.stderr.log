@@ -1,0 +1,44 @@
+⨯ Error: Chỉ người lập mới được sửa bản nháp hoặc bản bị yêu cầu chỉnh sửa.
+    at saveSupervisionWeeklyDossier (src\app\(dashboard)\supervision\weekly\actions.ts:128:11)
+  126 |   const dossier = await getDossierForActor(id, actor);
+  127 |   if (dossier.createdById !== actor.id || !["DRAFT", "REVISION_REQUIRED"].includes(dossie...
+> 128 |     throw new Error("Chỉ người lập mới được sửa bản nháp hoặc bản bị yêu cầu chỉnh sửa.");
+      |           ^
+  129 |   }
+  130 |   validateEntryDates(input, dossier);
+  131 |   await Promise.all(input.entries.map((entry) => assertSupervisionProjectScope(actor, ent... {
+  digest: '511017214'
+}
+⨯ Error: Chỉ người lập mới được sửa bản nháp hoặc bản bị yêu cầu chỉnh sửa.
+    at saveSupervisionWeeklyDossier (src\app\(dashboard)\supervision\weekly\actions.ts:128:11)
+  126 |   const dossier = await getDossierForActor(id, actor);
+  127 |   if (dossier.createdById !== actor.id || !["DRAFT", "REVISION_REQUIRED"].includes(dossie...
+> 128 |     throw new Error("Chỉ người lập mới được sửa bản nháp hoặc bản bị yêu cầu chỉnh sửa.");
+      |           ^
+  129 |   }
+  130 |   validateEntryDates(input, dossier);
+  131 |   await Promise.all(input.entries.map((entry) => assertSupervisionProjectScope(actor, ent... {
+  digest: '511017214'
+}
+⨯ Error: Bạn không có quyền xem hồ sơ này.
+    at getDossierForActor (src\app\(dashboard)\supervision\weekly\actions.ts:38:11)
+    at async SupervisionWeeklyPreviewPage (src\app\(dashboard)\supervision\weekly\[id]\preview\page.tsx:12:19)
+  36 |   });
+  37 |   if (!dossier || (!canReviewSupervisionWeekly(actor.role) && dossier.createdById !== acto...
+> 38 |     throw new Error("Bạn không có quyền xem hồ sơ này.");
+     |           ^
+  39 |   }
+  40 |   return dossier;
+  41 | } {
+  digest: '952886844'
+}
+[browser] Uncaught Error: Bạn không có quyền xem hồ sơ này.
+    at getDossierForActor (src\app\(dashboard)\supervision\weekly\actions.ts:38:11)
+    at  SupervisionWeeklyPreviewPage (src\app\(dashboard)\supervision\weekly\[id]\preview\page.tsx:12:19)
+  36 |   });
+  37 |   if (!dossier || (!canReviewSupervisionWeekly(actor.role) && dossier.createdById !== acto...
+> 38 |     throw new Error("Bạn không có quyền xem hồ sơ này.");
+     |           ^
+  39 |   }
+  40 |   return dossier;
+  41 | }
