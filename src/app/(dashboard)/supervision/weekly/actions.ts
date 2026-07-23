@@ -4,8 +4,9 @@ import { Prisma, SupervisionWeeklyStatus, UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { addDays, startOfMonday, isWithinInclusive } from "@/lib/supervision-weekly/date";
+import { addDays, startOfMonday, isWithinInclusive, isoDate } from "@/lib/supervision-weekly/date";
 import { assertSupervisionProjectScope, canReviewSupervisionWeekly, canUseSupervisionWeekly } from "@/lib/supervision-weekly/permissions";
+import type { SupervisionWeeklyPrintDto } from "@/lib/supervision-weekly/print-types";
 import { supervisionDossierSaveSchema, type SupervisionDossierSaveInput } from "@/lib/supervision-weekly/types";
 import { assertSupervisionDatabaseReady } from "@/lib/supervision-weekly/database-readiness";
 import { formatSupervisionInspectionSource, hasMeaningfulSupervisionProject } from "@/lib/supervision-weekly/source-formatter";
@@ -373,6 +374,58 @@ export async function getSupervisionWeeklySourceOptions(projectId: string) {
       code: item.code,
       name: item.categoryName || item.workContent || "Hạng mục chưa đặt tên",
       groupName: null,
+    })),
+  };
+}
+
+export async function getSupervisionWeeklyPrintData(id: string): Promise<SupervisionWeeklyPrintDto> {
+  const actor = await getActor();
+  const dossier = await getDossierForActor(id, actor);
+  const creatorName = dossier.createdBy?.name || dossier.revisions?.[dossier.revisions.length - 1]?.actor?.name || "—";
+  return {
+    id: dossier.id,
+    reportNumber: dossier.reportNumber,
+    weekStart: isoDate(dossier.weekStart),
+    weekEnd: isoDate(dossier.weekEnd),
+    nextWeekStart: isoDate(dossier.nextWeekStart),
+    nextWeekEnd: isoDate(dossier.nextWeekEnd),
+    place: dossier.place,
+    recipientName: dossier.recipientName,
+    recipientTitle: dossier.recipientTitle,
+    creator: {
+      id: dossier.createdById,
+      name: creatorName,
+    },
+    entries: dossier.entries.map((e) => ({
+      id: e.id, documentType: e.documentType, entryDate: isoDate(e.entryDate), shift: e.shift, sortOrder: e.sortOrder,
+      inspectionContent: e.inspectionContent, result: e.result, commanderProposal: e.commanderProposal,
+      projectNameSnapshot: e.projectNameSnapshot, locationNameSnapshot: e.locationNameSnapshot, workItemNameSnapshot: e.workItemNameSnapshot,
+      manualText: e.manualText, manualLocation: e.manualLocation, manualProjectName: e.manualProjectName, manualWorkItemName: e.manualWorkItemName,
+      categoryNameSnapshot: e.categoryNameSnapshot, manualCategoryName: e.manualCategoryName,
+    })),
+    observations: dossier.observations.map(o => ({
+      id: o.id, documentType: o.documentType, category: o.category, sortOrder: o.sortOrder,
+      projectId: o.projectId, projectNameSnapshot: o.projectNameSnapshot, locationId: o.locationId, locationNameSnapshot: o.locationNameSnapshot,
+      workItemId: o.workItemId, workItemNameSnapshot: o.workItemNameSnapshot, manualText: o.manualText, manualLocation: o.manualLocation, manualProjectName: o.manualProjectName, manualWorkItemName: o.manualWorkItemName, categoryItemId: o.categoryItemId, categoryNameSnapshot: o.categoryNameSnapshot, manualCategoryName: o.manualCategoryName, displayText: o.displayText, content: o.content
+    })),
+    transitions: dossier.transitions.map((row) => ({
+      id: row.id, sortOrder: row.sortOrder, projectId: row.projectId, projectNameSnapshot: row.projectNameSnapshot, locationId: row.locationId, locationNameSnapshot: row.locationNameSnapshot, workItemId: row.workItemId,
+      workItemNameSnapshot: row.workItemNameSnapshot, manualText: row.manualText, manualLocation: row.manualLocation, manualProjectName: row.manualProjectName, manualWorkItemName: row.manualWorkItemName, categoryItemId: row.categoryItemId, categoryNameSnapshot: row.categoryNameSnapshot, manualCategoryName: row.manualCategoryName, displayText: row.displayText,
+      reportedQuantity: row.reportedQuantity === null ? null : Number(row.reportedQuantity), reportedText: row.reportedText, reportedRaw: row.reportedRaw, reportedUnit: row.reportedUnit, reportedUnitCode: row.reportedUnitCode,
+      verifiedQuantity: row.verifiedQuantity === null ? null : Number(row.verifiedQuantity), verifiedText: row.verifiedText, verifiedRaw: row.verifiedRaw, verifiedUnit: row.verifiedUnit, verifiedUnitCode: row.verifiedUnitCode,
+      verificationMode: row.verificationMode, varianceReason: row.varianceReason, plannedProgress: row.plannedProgress, currentStep: row.currentStep, proposedStep: row.proposedStep, conclusion: row.conclusion,
+    })),
+    quantities: dossier.quantities.map((row) => ({
+      id: row.id, sortOrder: row.sortOrder, projectId: row.projectId, projectNameSnapshot: row.projectNameSnapshot, locationId: row.locationId, locationNameSnapshot: row.locationNameSnapshot, workItemId: row.workItemId,
+      workItemNameSnapshot: row.workItemNameSnapshot, manualText: row.manualText, manualLocation: row.manualLocation, manualProjectName: row.manualProjectName, manualWorkItemName: row.manualWorkItemName, categoryItemId: row.categoryItemId, categoryNameSnapshot: row.categoryNameSnapshot, manualCategoryName: row.manualCategoryName, displayText: row.displayText, unit: row.unit, unitCode: row.unitCode,
+      reportedRaw: row.reportedRaw, reportedText: row.reportedText, reportedUnit: row.reportedUnit, reportedUnitCode: row.reportedUnitCode, reportedQuantity: row.reportedQuantity === null ? null : Number(row.reportedQuantity),
+      verifiedRaw: row.verifiedRaw, verifiedText: row.verifiedText, verifiedUnit: row.verifiedUnit, verifiedUnitCode: row.verifiedUnitCode, verifiedQuantity: row.verifiedQuantity === null ? null : Number(row.verifiedQuantity),
+      verificationMode: row.verificationMode, varianceReason: row.varianceReason, plannedProgress: row.plannedProgress, conclusion: row.conclusion,
+    })),
+    progressRows: dossier.progressRows.map((row) => ({
+      id: row.id, sortOrder: row.sortOrder, projectId: row.projectId, projectNameSnapshot: row.projectNameSnapshot, locationId: row.locationId, locationNameSnapshot: row.locationNameSnapshot, workItemId: row.workItemId,
+      workItemNameSnapshot: row.workItemNameSnapshot, manualText: row.manualText, manualLocation: row.manualLocation, manualProjectName: row.manualProjectName, manualWorkItemName: row.manualWorkItemName, categoryItemId: row.categoryItemId, categoryNameSnapshot: row.categoryNameSnapshot, manualCategoryName: row.manualCategoryName, displayText: row.displayText,
+      plannedProgress: row.plannedProgress, actualProgress: row.actualProgress, delayValue: row.delayValue === null ? null : Number(row.delayValue), delayType: row.delayType, delayReason: row.delayReason,
     })),
   };
 }

@@ -104,3 +104,71 @@ export function calculateSupervisionVariance(
   if (reported.value == null || verified.value == null || !reported.unitCode || reported.unitCode !== verified.unitCode) return null;
   return verified.value - reported.value;
 }
+
+export type SupervisionVarianceStatus = "UNCHECKED" | "MATCH" | "SHORTAGE" | "EXCESS";
+
+export type SupervisionQuantityVarianceResult = {
+  status: SupervisionVarianceStatus;
+  reportedNumber: number | null;
+  verifiedNumber: number | null;
+  absoluteDifference: number | null;
+  percentageDifference: number | null;
+  unit: string;
+  displayText: string;
+};
+
+export function calculateSupervisionQuantityVariance(
+  reportedValue: number | null | undefined,
+  verifiedValue: number | null | undefined,
+  reportedText: string | null | undefined,
+  verifiedText: string | null | undefined,
+  unitCode: string | null | undefined,
+  unitLabel: string | null | undefined,
+  varianceReason: string | null | undefined
+): SupervisionQuantityVarianceResult {
+  const isUnchecked = verifiedValue == null && !verifiedText?.trim() && !verifiedText?.trim().match(/[\d.,]+/); // Check if verified doesn't have number
+  // Actually, wait, the standard check is:
+  const isUncheckedCheck = verifiedValue == null && !verifiedText?.trim();
+  
+  const reportedQuantity = reportedValue ?? null;
+  const verifiedQuantity = verifiedValue ?? null;
+  
+  const variance = isUncheckedCheck ? null : (reportedQuantity != null && verifiedQuantity != null ? verifiedQuantity - reportedQuantity : null);
+  const percentage = variance != null && reportedQuantity ? (variance / reportedQuantity) * 100 : null;
+  
+  let status: SupervisionVarianceStatus = "UNCHECKED";
+  if (!isUncheckedCheck) {
+    if (variance === 0) status = "MATCH";
+    else if (variance != null && variance < 0) status = "SHORTAGE";
+    else if (variance != null && variance > 0) status = "EXCESS";
+    else if (reportedQuantity === verifiedQuantity && reportedQuantity != null) status = "MATCH";
+  }
+
+  const percentageText = reportedQuantity === 0 ? "—" : (percentage != null ? new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2, signDisplay: "always" }).format(percentage) + "%" : "");
+  const unitStr = unitLabel || "";
+
+  let displayText = "";
+  if (status === "UNCHECKED") {
+    displayText = "Chưa có khối lượng kiểm tra";
+  } else if (status === "MATCH") {
+    displayText = `Khớp báo cáo\n0 ${unitStr} · 0%`;
+  } else if (status === "SHORTAGE") {
+    displayText = `Thiếu ${formatSupervisionQuantity(Math.abs(variance!), null, null)} ${unitStr} so với báo cáo\n${percentageText}`;
+  } else if (status === "EXCESS") {
+    displayText = `Vượt ${formatSupervisionQuantity(Math.abs(variance!), null, null)} ${unitStr} so với báo cáo\n${percentageText}`;
+  }
+
+  if (varianceReason && status !== "MATCH" && status !== "UNCHECKED") {
+    displayText += `\nLý do: ${varianceReason}`;
+  }
+
+  return {
+    status,
+    reportedNumber: reportedQuantity,
+    verifiedNumber: verifiedQuantity,
+    absoluteDifference: variance != null ? Math.abs(variance) : null,
+    percentageDifference: percentage,
+    unit: unitStr,
+    displayText
+  };
+}

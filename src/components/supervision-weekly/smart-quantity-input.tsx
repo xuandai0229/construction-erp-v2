@@ -23,10 +23,11 @@ function displayRaw(value: SmartQuantityValue) {
   return formatSupervisionQuantity(value.quantity, value.text, null);
 }
 
-export function SmartQuantityInput({ value, editable, testId, onChange }: {
+export function SmartQuantityInput({ value, editable, testId, readOnlyUnit, onChange }: {
   value: SmartQuantityValue;
   editable: boolean;
   testId: string;
+  readOnlyUnit?: boolean;
   onChange: (value: SmartQuantityValue) => void;
 }) {
   const listId = useId();
@@ -54,15 +55,28 @@ export function SmartQuantityInput({ value, editable, testId, onChange }: {
     onChange({ ...value, raw, unit: unit?.label || unitInput || null, unitCode: unit?.code || null });
   };
 
-  return <div className="space-y-2 relative group" data-testid={testId}>
-    {textMode ? <div className="relative"><AutoTextarea disabled={!editable} value={value.text || ""} onChange={(text) => onChange({ raw: text || null, quantity: null, text: text || null, unit: null, unitCode: null })} placeholder="Nhập nội dung khối lượng..." testId={`${testId}-text`} className="pr-8 min-h-10" />{editable && <button type="button" onClick={() => onChange({ raw: "", quantity: null, text: "", unit: null, unitCode: null })} className="absolute top-1.5 right-1.5 p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 rounded transition-colors" title="Quay lại nhập số" data-testid={`${testId}-toggle-number`}><MoreHorizontal className="h-4 w-4" /></button>}</div> : <div className="flex gap-2">
-      <div className="relative flex-1 min-w-0">
-        <input disabled={!editable} inputMode="decimal" value={raw} onChange={(event) => updateRaw(event.target.value)} onBlur={normalizeOnBlur} placeholder="Nhập khối lượng..." data-testid={`${testId}-raw`} className="h-10 w-full min-w-0 rounded-md border border-slate-300 px-2.5 pr-8 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
-        {editable && <button type="button" onClick={() => onChange({ raw: null, quantity: null, text: null, unit: null, unitCode: null })} className="absolute top-1.5 right-1.5 p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 rounded transition-colors opacity-0 group-hover:opacity-100 focus-within:opacity-100" title="Nhập nội dung thay cho số" data-testid={`${testId}-toggle-text`}><MoreHorizontal className="h-4 w-4" /></button>}
+  return <div className="space-y-1 relative group" data-testid={testId}>
+    {textMode ? (
+      <div className="relative">
+        <AutoTextarea disabled={!editable} value={value.text || ""} onChange={(text) => onChange({ raw: text || null, quantity: null, text: text || null, unit: readOnlyUnit ? value.unit : null, unitCode: readOnlyUnit ? value.unitCode : null })} placeholder="Nhập nội dung khối lượng..." testId={`${testId}-text`} className="pr-8 min-h-10 text-sm" />
+        {editable && <button type="button" onClick={() => onChange({ raw: "", quantity: null, text: "", unit: readOnlyUnit ? value.unit : null, unitCode: readOnlyUnit ? value.unitCode : null })} className="absolute top-1.5 right-1.5 p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 rounded transition-colors" title="Quay lại nhập số" data-testid={`${testId}-toggle-number`}><MoreHorizontal className="h-4 w-4" /></button>}
       </div>
-      <div className="w-[30%] min-w-0">
+    ) : readOnlyUnit ? (
+      <div>
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 items-center">
+          <input disabled={!editable} inputMode="decimal" value={raw} onChange={(event) => updateRaw(event.target.value)} onBlur={normalizeOnBlur} placeholder="Nhập khối lượng kiểm tra..." data-testid={`${testId}-raw`} className="h-10 w-full min-w-0 rounded-md border border-slate-300 px-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
+          <span className="text-sm font-medium text-slate-500 whitespace-nowrap w-8" data-testid={`${testId}-unit-suffix`}>{value.unit || "—"}</span>
+        </div>
+        {!value.unit && <div className="mt-1 text-[11px] text-slate-400">Chọn đơn vị ở Khối lượng báo cáo trước.</div>}
+      </div>
+    ) : (
+      <div className="grid grid-cols-[minmax(0,1fr)_84px] gap-2">
+        <div className="relative">
+          <input disabled={!editable} inputMode="decimal" value={raw} onChange={(event) => updateRaw(event.target.value)} onBlur={normalizeOnBlur} placeholder="Nhập khối lượng..." data-testid={`${testId}-raw`} className="h-10 w-full min-w-0 rounded-md border border-slate-300 px-2.5 pr-8 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20" />
+          {editable && <button type="button" onClick={() => onChange({ raw: null, quantity: null, text: null, unit: value.unit, unitCode: value.unitCode })} className="absolute top-1.5 right-1.5 p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 rounded transition-colors opacity-0 group-hover:opacity-100 focus-within:opacity-100" title="Nhập nội dung thay cho số" data-testid={`${testId}-toggle-text`}><MoreHorizontal className="h-4 w-4" /></button>}
+        </div>
         <SupervisionUnitCombobox disabled={!editable} value={value.unit || ""} onChange={updateUnit} testId={`${testId}-unit`} />
       </div>
-    </div>}
+    )}
   </div>;
 }

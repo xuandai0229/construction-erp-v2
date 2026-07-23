@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { EnterpriseCombobox, type EnterpriseComboboxOption } from "@/components/ui/enterprise-combobox";
 import { getSupervisionWeeklyInspectionWorks, getSupervisionWeeklySourceOptions } from "@/app/(dashboard)/supervision/weekly/actions";
+import { formatSupervisionSourceLines } from "@/lib/supervision-weekly/source-formatter";
 import type { WeeklyEntry, WeeklyInputMode, WeeklyProject, WeeklySource } from "@/lib/supervision-weekly/editor-types";
 
 type CategoryItem = {
@@ -141,6 +142,14 @@ export function SourceSelector({ value, projects, editable, testId, autoFocusTok
     });
   };
 
+  if (!editable) {
+    const lines = formatSupervisionSourceLines(value);
+    return <div className="space-y-1 text-sm text-slate-800" data-testid={`${testId}-readonly`}>
+      {lines.projectLine !== "..." ? <div><span className="font-semibold">Công trình:</span> {lines.projectLine}</div> : null}
+      {lines.categoryLine ? <div><span className="font-semibold">Hạng mục:</span> {lines.categoryLine}</div> : null}
+    </div>;
+  }
+
   return <div data-testid={testId} className="grid min-w-0 gap-2">
     <div className="grid min-w-0 gap-1.5">
       <label className="text-xs font-semibold text-slate-600">Công trình</label>
@@ -177,7 +186,7 @@ export function SourceSelector({ value, projects, editable, testId, autoFocusTok
         placeholder="Hoặc nhập công trình khác"
         aria-label="Hoặc nhập công trình khác"
         data-testid={`${testId}-project-manual`}
-        className="h-10 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:bg-slate-100"
+        className="font-normal h-10 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:bg-slate-100"
       />
     </div>
 
@@ -214,7 +223,7 @@ export function SourceSelector({ value, projects, editable, testId, autoFocusTok
         placeholder="Hoặc nhập hạng mục khác"
         aria-label="Hoặc nhập hạng mục khác"
         data-testid={`${testId}-category-manual`}
-        className="h-10 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:bg-slate-100"
+        className="font-normal h-10 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:bg-slate-100"
       />
     </div>
   </div>;
@@ -233,10 +242,12 @@ export function AutoTextarea({ value, onChange, placeholder, disabled, testId, c
     const element = ref.current;
     if (!element) return;
     element.style.height = "auto";
-    element.style.height = `${Math.max(element.scrollHeight, 40)}px`;
+    const minHeight = className.includes("min-h-10") ? 40 : 72;
+    element.style.height = `${Math.max(element.scrollHeight, minHeight)}px`;
   };
   useLayoutEffect(resize, [value]);
-  return <textarea ref={ref} rows={1} disabled={disabled} value={value} onInput={resize} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} data-testid={testId} className={`min-h-10 w-full min-w-0 max-w-full resize-none overflow-hidden rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm leading-5 outline-none [field-sizing:content] [overflow-wrap:anywhere] focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:bg-slate-50 ${className}`} />;
+  const defaultMinHeight = className.includes("min-h-") ? "" : "min-h-[72px]";
+  return <textarea ref={ref} rows={1} disabled={disabled} value={value} onInput={resize} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} data-testid={testId} className={`${defaultMinHeight} font-normal w-full min-w-0 max-w-full resize-none overflow-hidden rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm leading-5 outline-none [field-sizing:content] [overflow-wrap:anywhere] focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:bg-slate-50 ${className}`} />;
 }
 
 export function InspectionWorkSelector({ value, editable, testId, onChange }: {

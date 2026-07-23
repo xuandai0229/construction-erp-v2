@@ -22,7 +22,7 @@ export function RowActionMenu({ canMoveUp, canMoveDown, onMoveUp, onMoveDown, on
     if (!open || !triggerRef.current) return;
     const update = () => {
       const rect = triggerRef.current!.getBoundingClientRect();
-      const width = 208;
+      const width = 160;
       const left = Math.min(Math.max(12, rect.right - width), window.innerWidth - width - 12);
       const openUp = window.innerHeight - rect.bottom < 220 && rect.top > 220;
       setStyle({ position: "fixed", left, top: openUp ? undefined : rect.bottom + 6, bottom: openUp ? window.innerHeight - rect.top + 6 : undefined, width, zIndex: 105 });
@@ -47,10 +47,10 @@ export function RowActionMenu({ canMoveUp, canMoveDown, onMoveUp, onMoveDown, on
     action();
   };
 
-  const itemClass = "flex min-h-10 w-full items-center gap-2 rounded-md px-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40";
+  const itemClass = "flex min-h-9 w-full items-center gap-2 rounded-md px-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50";
   const menu = open ? <div ref={menuRef} role="menu" style={style} data-testid={testId ? `${testId}-menu` : undefined} className="rounded-lg border border-slate-200 bg-white p-1 shadow-xl shadow-slate-950/15">
-    <button type="button" role="menuitem" disabled={!canMoveUp} onClick={() => invoke(onMoveUp)} className={itemClass}><ArrowUp className="h-4 w-4" />Di chuyển lên</button>
-    <button type="button" role="menuitem" disabled={!canMoveDown} onClick={() => invoke(onMoveDown)} className={itemClass}><ArrowDown className="h-4 w-4" />Di chuyển xuống</button>
+    {canMoveUp && <button type="button" role="menuitem" onClick={() => invoke(onMoveUp)} className={itemClass}><ArrowUp className="h-4 w-4" />Di chuyển lên</button>}
+    {canMoveDown && <button type="button" role="menuitem" onClick={() => invoke(onMoveDown)} className={itemClass}><ArrowDown className="h-4 w-4" />Di chuyển xuống</button>}
     <button type="button" role="menuitem" onClick={() => invoke(onDuplicate)} className={itemClass}><Copy className="h-4 w-4" />Nhân bản</button>
     <button type="button" role="menuitem" onClick={() => invoke(onDelete)} className={`${itemClass} text-rose-700 hover:bg-rose-50`}><Trash2 className="h-4 w-4" />Xóa</button>
   </div> : null;
@@ -68,9 +68,9 @@ export function RowActionMenu({ canMoveUp, canMoveDown, onMoveUp, onMoveDown, on
         if (event.key === "Escape") setOpen(false);
       }}
       data-testid={testId}
-      className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-800 outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
     >
-      <MoreVertical className="h-5 w-5" />
+      <MoreVertical className="h-4 w-4" />
     </button>
     {menu ? createPortal(menu, document.body) : null}
   </>;

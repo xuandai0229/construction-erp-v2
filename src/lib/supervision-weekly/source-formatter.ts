@@ -20,9 +20,10 @@ function clean(value: string | null | undefined) {
 }
 
 export function formatSupervisionProjectAndWorkItem(
-  source: SupervisionInspectionSource,
+  source?: SupervisionInspectionSource | null,
   separator = " - ",
 ) {
+  if (!source) return "";
   const project = clean(source.projectNameSnapshot) || clean(source.manualProjectName);
   const workItems = [
     clean(source.categoryNameSnapshot),
@@ -40,6 +41,29 @@ export function formatSupervisionProjectAndWorkItem(
 
 export const formatSupervisionInspectionSource = formatSupervisionProjectAndWorkItem;
 
+export function formatSupervisionSourceLines(source?: SupervisionInspectionSource | null): { projectLine: string | null; categoryLine: string | null } {
+  if (!source) return { projectLine: null, categoryLine: null };
+  const project = clean(source.projectNameSnapshot) || clean(source.manualProjectName);
+  const workItems = Array.from(new Set([
+    clean(source.categoryNameSnapshot),
+    clean(source.manualCategoryName),
+    clean(source.locationNameSnapshot),
+    clean(source.workItemNameSnapshot),
+    clean(source.manualWorkItemName),
+    clean(source.manualLocation),
+  ].filter(Boolean))).join(" - ");
+
+  const fallback = clean(source.manualText) || clean(source.displayText);
+
+  if (!project && !workItems && fallback) {
+    return { projectLine: fallback, categoryLine: null };
+  }
+
+  return {
+    projectLine: project || null,
+    categoryLine: workItems || null,
+  };
+}
 export function hasMeaningfulSupervisionSource(source: SupervisionInspectionSource) {
   return Boolean(formatSupervisionProjectAndWorkItem(source));
 }
