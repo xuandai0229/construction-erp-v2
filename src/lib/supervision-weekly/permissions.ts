@@ -1,5 +1,4 @@
-import { UserRole } from "@prisma/client";
-import { canAccessSupervisionProject, isCompanyWideUser } from "@/lib/rbac";
+export type UserRole = string;
 
 export type SupervisionWeeklyPermission =
   | "supervision.weekly.view"
@@ -19,16 +18,17 @@ export const SUPERVISION_WEEKLY_PERMISSIONS: Record<SupervisionWeeklyPermission,
 };
 
 export function canUseSupervisionWeekly(role: UserRole) {
-  return role === "SUPERVISION_HEAD" || isCompanyWideUser({ role });
+  return role === "SUPERVISION_HEAD" || role === "ADMIN" || role === "DIRECTOR" || role === "DEPUTY_DIRECTOR";
 }
 
 export function canReviewSupervisionWeekly(role: UserRole) {
-  return isCompanyWideUser({ role });
+  return role === "ADMIN" || role === "DIRECTOR" || role === "DEPUTY_DIRECTOR";
 }
 
 export async function assertSupervisionProjectScope(actor: { id: string; role: UserRole }, projectId: string | null | undefined) {
-  if (!projectId || isCompanyWideUser(actor)) return;
-  if (!await canAccessSupervisionProject(actor, projectId)) {
+  if (!projectId || actor.role === "ADMIN" || actor.role === "DIRECTOR" || actor.role === "DEPUTY_DIRECTOR") return;
+  const { canAccessSupervisionProject } = await import("@/lib/rbac");
+  if (!await canAccessSupervisionProject(actor as any, projectId)) {
     throw new Error("Bạn không có quyền sử dụng công trình này trong phạm vi giám sát.");
   }
 }

@@ -17,14 +17,12 @@ export function MobileBottomNav({ userRole }: { userRole: UserRole }) {
   const navItems = [
     { name: "Tổng quan", href: "/dashboard", icon: LayoutDashboard },
     { name: "Công trình", href: "/projects", icon: Building2 },
-    { name: "Báo cáo", href: "/reports", icon: ClipboardCheck },
+    { name: "Báo cáo công trình", href: "/reports", icon: ClipboardCheck },
     { name: "Vật tư", href: "/materials", icon: Package },
   ];
 
   const moreItems = [
-    { name: "Giám sát tuần", href: "/supervision/weekly", icon: ScanSearch },
     { name: 'Tài liệu', href: '/documents', icon: FolderOpen },
-
     { name: 'Phê duyệt', href: '/approvals', icon: CheckSquare },
     { name: 'Tài khoản', href: '/users', icon: UserCog },
     { name: 'Cài đặt', href: '/settings', icon: Settings },
@@ -45,7 +43,9 @@ export function MobileBottomNav({ userRole }: { userRole: UserRole }) {
     <>
       <nav data-app-bottom-nav className="fixed bottom-0 left-0 right-0 z-50 flex h-[calc(56px+env(safe-area-inset-bottom))] items-start justify-between border-t border-slate-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md px-2 lg:hidden">
         {navItems.map((item) => {
-          const isActive = pathname.startsWith(item.href);
+          const isActive = item.href === "/reports"
+            ? pathname.startsWith("/reports") || pathname.startsWith("/supervision/weekly")
+            : pathname.startsWith(item.href);
           return (
             <Link
               key={item.href}

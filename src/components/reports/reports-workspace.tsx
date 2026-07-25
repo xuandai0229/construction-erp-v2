@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { Plus, AlertCircle, Clock, XCircle, FileEdit, CheckSquare, Filter, X, FileText } from "lucide-react";
+import Link from "next/link";
+import { Plus, AlertCircle, Clock, XCircle, FileEdit, CheckSquare, Filter, X, FileText, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast-context";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -40,6 +41,7 @@ interface ReportsWorkspaceProps {
   initialProjects: { id: string; name: string }[];
   currentUser: { id: string; name: string; role?: string };
   globalContext?: { selectedProjectId: string | null };
+  hideHeader?: boolean;
 }
 
 export function ReportsWorkspace({
@@ -50,6 +52,7 @@ export function ReportsWorkspace({
   initialProjects,
   currentUser,
   globalContext,
+  hideHeader = false,
 }: ReportsWorkspaceProps) {
   const toast = useToast();
   const router = useRouter();
@@ -470,51 +473,75 @@ export function ReportsWorkspace({
   }, [deleteReport, router, toast]);
 
   return (
-    <div className="app-page max-w-[1400px] space-y-5 sm:space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       {/* Page header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-[var(--foreground)]">Báo cáo hiện trường</h1>
-            <p className="hidden sm:block text-sm text-[var(--muted-foreground)] mt-0.5">
-              Quản lý báo cáo ngày, báo cáo tuần và phát sinh tại công trường
-              {globalContext?.selectedProjectId && (
-                <span className="ml-2 inline-flex items-center rounded-[var(--radius-md)] bg-[var(--border)] px-2 py-0.5 text-xs font-medium text-[var(--muted-foreground)] ring-1 ring-inset ring-slate-200">
-                  {activeProjects.find(p => p.id === globalContext.selectedProjectId)?.name || 'Công trình đang chọn'}
-                </span>
-              )}
-              {searchParams.get("reportId") && (
-                <span className="ml-2 inline-flex items-center rounded-[var(--radius-md)] bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                  Đang lọc 1 báo cáo
-                </span>
-              )}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 sm:hidden">
-            <Button
-              variant="outline"
-              onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
-              className="h-9 px-3 gap-1.5 text-xs"
-            >
-              <Filter className="w-4 h-4" />
-              Bộ lọc
-            </Button>
+      {!hideHeader ? (
+        <div className="space-y-3">
+          <Link
+            href="/reports"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-600 transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>Báo cáo công trình</span>
+          </Link>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto">
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold text-[var(--foreground)]">Báo cáo hiện trường</h1>
+                <p className="hidden sm:block text-sm text-[var(--muted-foreground)] mt-0.5">
+                  Quản lý nhật ký ngày, tổng hợp hiện trường tuần, phát sinh và sự cố tại công trường
+                  {globalContext?.selectedProjectId && (
+                    <span className="ml-2 inline-flex items-center rounded-[var(--radius-md)] bg-[var(--border)] px-2 py-0.5 text-xs font-medium text-[var(--muted-foreground)] ring-1 ring-inset ring-slate-200">
+                      {activeProjects.find(p => p.id === globalContext.selectedProjectId)?.name || 'Công trình đang chọn'}
+                    </span>
+                  )}
+                  {searchParams.get("reportId") && (
+                    <span className="ml-2 inline-flex items-center rounded-[var(--radius-md)] bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                      Đang lọc 1 báo cáo
+                    </span>
+                  )}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 sm:hidden">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
+                  className="h-9 px-3 gap-1.5 text-xs"
+                >
+                  <Filter className="w-4 h-4" />
+                  Bộ lọc
+                </Button>
+                <Button
+                  onClick={() => { setDialogMode("create"); setEditReportData(null); setIsCreateOpen(true); }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white h-9 px-3 text-sm shrink-0"
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
             <Button
               onClick={() => { setDialogMode("create"); setEditReportData(null); setIsCreateOpen(true); }}
-              className="bg-blue-600 hover:bg-blue-700 text-white h-9 px-3 text-sm shrink-0"
+              className="hidden sm:flex gap-1.5 bg-blue-600 hover:bg-blue-700 text-white h-10 px-5 text-sm shrink-0 self-start sm:self-auto"
             >
               <Plus className="w-4 h-4" />
+              Tạo báo cáo mới
             </Button>
           </div>
         </div>
-        <Button
-          onClick={() => { setDialogMode("create"); setEditReportData(null); setIsCreateOpen(true); }}
-          className="hidden sm:flex gap-1.5 bg-blue-600 hover:bg-blue-700 text-white h-10 px-5 text-sm shrink-0 self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          Tạo báo cáo mới
-        </Button>
-      </div>
+      ) : (
+        <div className="flex items-center justify-between pb-2">
+          <div className="text-xs font-medium text-slate-500">
+            Nhật ký ngày, tổng hợp hiện trường tuần, phát sinh và sự cố công trình
+          </div>
+          <Button
+            onClick={() => { setDialogMode("create"); setEditReportData(null); setIsCreateOpen(true); }}
+            className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white h-10 px-4 text-sm shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Tạo báo cáo mới</span>
+          </Button>
+        </div>
+      )}
 
       {/* Dashboard / Action Center */}
       
@@ -607,15 +634,15 @@ export function ReportsWorkspace({
         <div className="flex gap-2">
           {[
             { id: 'all', label: 'Tất cả' },
-            { id: 'daily', label: 'Báo cáo ngày' },
-            { id: 'weekly', label: 'Báo cáo tuần' },
+            { id: 'daily', label: 'Nhật ký ngày' },
+            { id: 'weekly', label: 'Tổng hợp hiện trường tuần' },
           ].map(t => (
             <button
               key={t.id}
               onClick={() => handleTabChange(t.id)}
               className={`whitespace-nowrap px-3 py-1.5 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === t.id
-                  ? 'border-blue-600 text-blue-600'
+                  ? 'border-blue-600 text-blue-600 font-semibold'
                   : 'border-transparent text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:border-[var(--border)]'
               }`}
             >

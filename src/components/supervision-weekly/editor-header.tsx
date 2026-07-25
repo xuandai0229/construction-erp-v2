@@ -336,17 +336,17 @@ export function EditorHeader(props: EditorHeaderProps) {
       <div ref={headerRef} className="space-y-0 print:hidden">
         {/* Row A: Breadcrumb */}
         <nav className="flex items-center gap-2 px-1 py-2 text-sm" aria-label="Breadcrumb">
-          <Link href="/supervision/weekly"
+          <Link href="/reports/weekly-inspection"
             onClick={() => { if (onBackToList) onBackToList(); }}
             className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors"
-            aria-label="Quay lại danh sách báo cáo tuần">
+            aria-label="Quay lại Trung tâm Báo cáo">
             <ArrowLeft className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Danh sách</span>
           </Link>
           <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
-          <span className="text-slate-500 hidden sm:inline">Giám sát</span>
+          <span className="text-slate-500 hidden sm:inline">Báo cáo công trình</span>
           <ChevronRight className="h-3.5 w-3.5 text-slate-300 hidden sm:inline" />
-          <span className="text-slate-500 hidden sm:inline">Báo cáo tuần</span>
+          <span className="text-slate-500 hidden sm:inline">Kiểm tra & kế hoạch tuần</span>
           <ChevronRight className="h-3.5 w-3.5 text-slate-300 hidden sm:inline" />
           <span className="font-semibold text-slate-800">Soạn báo cáo</span>
         </nav>

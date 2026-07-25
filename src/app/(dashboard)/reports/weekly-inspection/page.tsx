@@ -1,0 +1,51 @@
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/auth";
+import { canUseSupervisionWeekly } from "@/lib/supervision-weekly/permissions";
+import { getSupervisionWeeklyDossiers, getSupervisionWeeklyProjects } from "@/app/(dashboard)/supervision/weekly/actions";
+import { WeeklyListClient } from "@/components/supervision-weekly/weekly-list-client";
+import { getSupervisionDatabaseReadiness } from "@/lib/supervision-weekly/database-readiness";
+
+export const metadata = {
+  title: "Kiểm tra & kế hoạch tuần | Báo cáo công trình | ERP Công trình",
+  description: "Quản lý Báo cáo kết quả kiểm tra tuần & Kế hoạch tuần tiếp theo theo công trình",
+};
+
+export default async function WeeklyInspectionPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }> | { [key: string]: string | string[] | undefined };
+}) {
+  const session = await getSession();
+  if (!session) redirect("/login?reason=session_expired");
+  if (!canUseSupervisionWeekly(session.role)) redirect("/reports");
+
+  const readiness = await getSupervisionDatabaseReadiness();
+  if (!readiness.ready) {
+    return <WeeklyListClient rows={[]} projects={[]} readiness={readiness} hidePageHeader={true} />;
+  }
+
+  const resolvedParams = searchParams ? await Promise.resolve(searchParams) : {};
+  const initialSearch = typeof resolvedParams.q === "string" ? resolvedParams.q : "";
+  const initialStatus = typeof resolvedParams.status === "string" ? resolvedParams.status : "ALL";
+  const initialProjectId = typeof resolvedParams.projectId === "string" ? resolvedParams.projectId : "ALL";
+  const initialSort = typeof resolvedParams.sort === "string" ? (resolvedParams.sort as any) : "updated_desc";
+
+  const [rows, projects] = await Promise.all([
+    getSupervisionWeeklyDossiers(),
+    getSupervisionWeeklyProjects(),
+  ]);
+
+  return (
+    <WeeklyListClient
+      rows={rows}
+      projects={projects}
+      currentUserId={session.id}
+      currentUserRole={session.role}
+      initialSearch={initialSearch}
+      initialStatus={initialStatus}
+      initialProjectId={initialProjectId}
+      initialSort={initialSort}
+      hidePageHeader={false}
+    />
+  );
+}

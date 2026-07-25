@@ -30,7 +30,7 @@ const mobileNavSections = [
     items: [
       { name: 'Công trình', href: '/projects', icon: Building2 },
       { name: 'Tài liệu', href: '/documents', icon: FolderOpen },
-      { name: 'Báo cáo hiện trường', href: '/reports', icon: ClipboardCheck },
+      { name: 'Báo cáo công trình', href: '/reports', icon: ClipboardCheck },
       { name: 'Vật tư', href: '/materials', icon: Package },
     ],
   },
@@ -241,7 +241,9 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
                       <div className={styles.mobileSectionLabel}>{section.label}</div>
                     )}
                     {section.items.map((item) => {
-                      const isActive = pathname.startsWith(item.href);
+                      const isActive = item.href === "/reports"
+                        ? pathname.startsWith("/reports") || pathname.startsWith("/supervision/weekly")
+                        : pathname.startsWith(item.href);
                       return (
                         <Link
                           key={item.name}

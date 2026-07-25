@@ -1,0 +1,1392 @@
+[
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\actions.ts",
+    "line": 238,
+    "snippet": "status: \"PENDING\""
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\actions.ts",
+    "line": 340,
+    "snippet": "decision: \"APPROVED\" | \"REJECTED\","
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\actions.ts",
+    "line": 353,
+    "snippet": "if (![\"DRAFT\", \"REQUESTED\", \"SUBMITTED\"].includes(matReq.status)) {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\actions.ts",
+    "line": 358,
+    "snippet": "data: decision === \"APPROVED\" ? {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\actions.ts",
+    "line": 359,
+    "snippet": "status: \"APPROVED\","
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\actions.ts",
+    "line": 361,
+    "snippet": "status: \"REJECTED\","
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\actions.ts",
+    "line": 373,
+    "snippet": "if (![\"DRAFT\", \"SUBMITTED\"].includes(report.status)) throw new Error(`Trạng thái báo cáo hiện tại (${report.status}) không cho phép phê duyệt.`);"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\actions.ts",
+    "line": 376,
+    "snippet": "data: decision === \"APPROVED\" ? {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\actions.ts",
+    "line": 377,
+    "snippet": "status: \"APPROVED\","
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\actions.ts",
+    "line": 379,
+    "snippet": "status: \"REJECTED\","
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\actions.ts",
+    "line": 416,
+    "snippet": "where: { id, deletedAt: null, status: \"PENDING\" },"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\actions.ts",
+    "line": 418,
+    "snippet": "status: \"APPROVED\","
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\actions.ts",
+    "line": 428,
+    "snippet": "await syncSourceOnApprovalTx(tx, approval, \"APPROVED\", decisionNote);"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\actions.ts",
+    "line": 438,
+    "snippet": "afterData: JSON.stringify({ status: \"APPROVED\", decisionNote }),"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\actions.ts",
+    "line": 464,
+    "snippet": "where: { id, deletedAt: null, status: \"PENDING\" },"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\actions.ts",
+    "line": 466,
+    "snippet": "status: \"REJECTED\","
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\actions.ts",
+    "line": 476,
+    "snippet": "await syncSourceOnApprovalTx(tx, approval, \"REJECTED\", normalizedReason);"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\actions.ts",
+    "line": 486,
+    "snippet": "afterData: JSON.stringify({ status: \"REJECTED\", reason: normalizedReason }),"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\actions.ts",
+    "line": 508,
+    "snippet": "where: { id, deletedAt: null, status: \"PENDING\" },"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\components\\approval-center-client.tsx",
+    "line": 36,
+    "snippet": "} from \"../actions\";"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\components\\approval-center-client.tsx",
+    "line": 247,
+    "snippet": "<option key={project.id} value={project.id}>{project.code} - {project.name}</option>"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\components\\approval-center-client.tsx",
+    "line": 469,
+    "snippet": "const canDecide = approval.status === \"PENDING\" && approval.permissions?.canApprove;"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\components\\approval-center-client.tsx",
+    "line": 470,
+    "snippet": "const canCancel = approval.status === \"PENDING\" && approval.permissions?.canCancel;"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\components\\approval-center-client.tsx",
+    "line": 471,
+    "snippet": "const canEdit = approval.status === \"PENDING\" && approval.permissions?.canEdit;"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\components\\approval-center-client.tsx",
+    "line": 497,
+    "snippet": "{approval.status === \"PENDING\" && ("
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\components\\approval-center-client.tsx",
+    "line": 578,
+    "snippet": "{approval.status !== \"PENDING\" && ("
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\components\\approval-center-client.tsx",
+    "line": 652,
+    "snippet": "const [activeTab, setActiveTab] = useState<\"PENDING\" | \"RESOLVED\" | \"ALL\">(\"PENDING\");"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\components\\approval-center-client.tsx",
+    "line": 723,
+    "snippet": "setActiveTab(matchedApproval.status === \"PENDING\" ? \"PENDING\" : \"RESOLVED\");"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\components\\approval-center-client.tsx",
+    "line": 760,
+    "snippet": "if (activeTab === \"PENDING\" && approval.status !== \"PENDING\") return false;"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\components\\approval-center-client.tsx",
+    "line": 761,
+    "snippet": "if (activeTab === \"RESOLVED\" && approval.status === \"PENDING\") return false;"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\components\\approval-center-client.tsx",
+    "line": 781,
+    "snippet": "const pending = filteredApprovals.filter((approval) => approval.status === \"PENDING\");"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\components\\approval-center-client.tsx",
+    "line": 786,
+    "snippet": "approvedCount: filteredApprovals.filter((approval) => approval.status === \"APPROVED\").length,"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\components\\approval-center-client.tsx",
+    "line": 787,
+    "snippet": "rejectedCount: filteredApprovals.filter((approval) => approval.status === \"REJECTED\").length,"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\components\\approval-center-client.tsx",
+    "line": 860,
+    "snippet": "<SummaryCard label=\"Đã hủy\" value={filteredApprovals.filter((approval) => approval.status === \"CANCELLED\").length} helper=\"Yêu cầu đã đóng quy trình\" icon={ShieldCheck} tone=\"slate\" />"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\components\\approval-center-client.tsx",
+    "line": 899,
+    "snippet": "<option key={project.id} value={project.id}>{project.code}</option>"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\components\\approval-center-client.tsx",
+    "line": 915,
+    "snippet": "title={activeTab === \"PENDING\" ? \"Hiện không có yêu cầu nào chờ duyệt\" : \"Không tìm thấy yêu cầu phù hợp\"}"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\components\\approval-center-client.tsx",
+    "line": 916,
+    "snippet": "description={activeTab === \"PENDING\" ? \"Bạn đã xử lý xong mọi việc. Các đề xuất mới sẽ hiển thị tại đây.\" : \"Thử thay đổi bộ lọc hoặc tìm kiếm với từ khóa khác.\"}"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\components\\approval-center-client.tsx",
+    "line": 936,
+    "snippet": "const canDecide = approval.status === \"PENDING\" && approval.permissions?.canApprove;"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\components\\approval-center-client.tsx",
+    "line": 937,
+    "snippet": "const canEdit = approval.status === \"PENDING\" && approval.permissions?.canEdit;"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\components\\approval-center-client.tsx",
+    "line": 1013,
+    "snippet": "const canDecide = approval.status === \"PENDING\" && approval.permissions?.canApprove;"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\approvals\\components\\approval-center-client.tsx",
+    "line": 1014,
+    "snippet": "const canEdit = approval.status === \"PENDING\" && approval.permissions?.canEdit;"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\documents\\actions.ts",
+    "line": 195,
+    "snippet": "status: { in: [\"DRAFT\", \"SUBMITTED\", \"REJECTED\"] },"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\documents\\actions.ts",
+    "line": 258,
+    "snippet": "status: { in: [\"DRAFT\", \"SUBMITTED\", \"REJECTED\"] },"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\documents\\actions.ts",
+    "line": 329,
+    "snippet": "status: { in: [\"DRAFT\", \"SUBMITTED\", \"REJECTED\"] },"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\documents\\actions.ts",
+    "line": 386,
+    "snippet": "if (newStatus === \"REJECTED\" && !rejectedReason?.trim()) {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\documents\\actions.ts",
+    "line": 400,
+    "snippet": "reviewedById: newStatus === \"APPROVED\" || newStatus === \"REJECTED\" ? session.id : existing.reviewedById,"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\documents\\actions.ts",
+    "line": 401,
+    "snippet": "reviewedAt: newStatus === \"APPROVED\" || newStatus === \"REJECTED\" ? new Date() : existing.reviewedAt,"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\documents\\actions.ts",
+    "line": 402,
+    "snippet": "rejectedReason: newStatus === \"REJECTED\" ? rejectedReason?.trim() : null,"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\materials\\actions.ts",
+    "line": 296,
+    "snippet": "status: \"APPROVED\""
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\materials\\actions.ts",
+    "line": 309,
+    "snippet": "status: { in: [\"SUBMITTED\", \"REQUESTED\", \"DRAFT\"] }"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\projects\\page.tsx",
+    "line": 147,
+    "snippet": "id=\"project-status-filter\""
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\projects\\[id]\\field-progress\\actions.ts",
+    "line": 163,
+    "snippet": "if (entries.some(e => e.status === \"APPROVED\" || e.status === \"SUBMITTED\")) {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\projects\\[id]\\field-progress\\daily\\actions.ts",
+    "line": 23,
+    "snippet": "const status = _submit ? (isApprover ? \"APPROVED\" : \"SUBMITTED\") : \"DRAFT\";"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\projects\\[id]\\field-progress\\daily\\actions.ts",
+    "line": 60,
+    "snippet": "status: \"APPROVED\","
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\projects\\[id]\\field-progress\\daily\\actions.ts",
+    "line": 148,
+    "snippet": "approvedAt: status === \"APPROVED\" ? new Date() : null,"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\projects\\[id]\\field-progress\\daily\\actions.ts",
+    "line": 180,
+    "snippet": "approvedAt: status === \"APPROVED\" ? new Date() : null,"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\projects\\[id]\\field-progress\\daily\\page.tsx",
+    "line": 70,
+    "snippet": "const entriesStatusMap: Record<string, \"APPROVED\" | \"SUBMITTED\" | \"DRAFT\" | \"EMPTY\"> = {};"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\projects\\[id]\\field-progress\\daily\\page.tsx",
+    "line": 78,
+    "snippet": "entry.status === \"DRAFT\" ||"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\projects\\[id]\\field-progress\\daily\\page.tsx",
+    "line": 79,
+    "snippet": "(entry.status === \"SUBMITTED\" && currentStatus !== \"DRAFT\") ||"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\projects\\[id]\\field-progress\\daily\\page.tsx",
+    "line": 80,
+    "snippet": "(entry.status === \"APPROVED\" && ![\"DRAFT\", \"SUBMITTED\"].includes(currentStatus))) {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\projects\\[id]\\field-progress\\daily\\page.tsx",
+    "line": 81,
+    "snippet": "entriesStatusMap[dateStr] = entry.status as \"APPROVED\" | \"SUBMITTED\" | \"DRAFT\";"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\projects\\[id]\\field-progress\\daily\\page.tsx",
+    "line": 105,
+    "snippet": "} else if (entry.status === \"APPROVED\") {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\projects\\[id]\\field-progress\\page.tsx",
+    "line": 60,
+    "snippet": "if (entry.status === \"DRAFT\") draftQty += Number(entry.quantity || 0);"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\projects\\[id]\\field-progress\\summary\\page.tsx",
+    "line": 58,
+    "snippet": "const statusCondition: any = statusFilter === 'APPROVED_ONLY' ? ['APPROVED'] : ['APPROVED', 'DRAFT', 'SUBMITTED', 'REVISION_REQUESTED'];"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\projects\\[id]\\field-progress\\summary\\page.tsx",
+    "line": 80,
+    "snippet": "status: 'APPROVED',"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\projects\\[id]\\field-progress\\summary\\page.tsx",
+    "line": 143,
+    "snippet": "id=\"filter-from\""
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\projects\\[id]\\field-progress\\summary\\page.tsx",
+    "line": 153,
+    "snippet": "id=\"filter-to\""
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\projects\\[id]\\field-progress\\summary\\page.tsx",
+    "line": 163,
+    "snippet": "id=\"filter-mode\""
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\projects\\[id]\\field-progress\\summary\\page.tsx",
+    "line": 175,
+    "snippet": "id=\"filter-status\""
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\reports\\actions.ts",
+    "line": 317,
+    "snippet": "const status = isDraft ? \"DRAFT\" : \"SUBMITTED\";"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\reports\\actions.ts",
+    "line": 413,
+    "snippet": "if (['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'REVISION_REQUESTED', 'LOCKED', 'CANCELLED'].includes(filters.status as string)) {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\reports\\actions.ts",
+    "line": 446,
+    "snippet": "\"DRAFT\","
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\reports\\actions.ts",
+    "line": 448,
+    "snippet": "\"APPROVED\","
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\reports\\actions.ts",
+    "line": 449,
+    "snippet": "\"REJECTED\","
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\reports\\actions.ts",
+    "line": 530,
+    "snippet": "if (filters.tab === \"pending\") where.status = \"SUBMITTED\";"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\reports\\actions.ts",
+    "line": 531,
+    "snippet": "if (filters.tab === \"rejected\") where.status = \"REJECTED\";"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\reports\\actions.ts",
+    "line": 603,
+    "snippet": "if (filters.tab === \"pending\") where.status = \"SUBMITTED\";"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\reports\\actions.ts",
+    "line": 604,
+    "snippet": "if (filters.tab === \"rejected\") where.status = \"REJECTED\";"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\reports\\actions.ts",
+    "line": 666,
+    "snippet": "} else if ([\"DRAFT\", \"SUBMITTED\", \"APPROVED\", \"REJECTED\", \"REVISION_REQUESTED\", \"LOCKED\", \"CANCELLED\"].includes(filters.status)) {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\reports\\actions.ts",
+    "line": 921,
+    "snippet": "const statuses = [\"APPROVED\"];"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\reports\\actions.ts",
+    "line": 923,
+    "snippet": "if (options?.includeDraft) statuses.push(\"DRAFT\");"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\reports\\actions.ts",
+    "line": 948,
+    "snippet": "approvedCount: dayReps.filter(r => r.status === \"APPROVED\").length,"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\reports\\actions.ts",
+    "line": 950,
+    "snippet": "draftCount: dayReps.filter(r => r.status === \"DRAFT\").length,"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\reports\\actions.ts",
+    "line": 951,
+    "snippet": "rejectedCount: dayReps.filter(r => r.status === \"REJECTED\").length,"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\reports\\actions.ts",
+    "line": 958,
+    "snippet": "const approvedReports = reports.filter(r => r.status === \"APPROVED\");"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\reports\\actions.ts",
+    "line": 970,
+    "snippet": "rejectedReports: reports.filter(r => r.status === \"REJECTED\").length,"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\reports\\actions.ts",
+    "line": 1087,
+    "snippet": "const status = input.isDraft ? \"DRAFT\" : \"SUBMITTED\";"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\reports\\actions.ts",
+    "line": 1197,
+    "snippet": "if (report.status !== \"DRAFT\" && report.status !== \"REJECTED\") {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\reports\\actions.ts",
+    "line": 1340,
+    "snippet": "if (report.status === \"APPROVED\" || report.status === \"LOCKED\" || report.status === \"CANCELLED\") {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\reports\\field\\page.tsx",
+    "line": 90,
+    "snippet": "photos: ((r.attachments as Record<string, unknown>[]) || []).filter((a: Record<string, unknown>) => a.kind === 'PHOTO').map((a: Record<string, unknown>) => {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\reports\\field\\page.tsx",
+    "line": 92,
+    "snippet": "const physicalPath = storagePath ? path.join(process.cwd(), storagePath.startsWith('storage') ? '' : 'storage', storagePath) : \"\";"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\reports\\field\\page.tsx",
+    "line": 102,
+    "snippet": "attachments: ((r.attachments as Record<string, unknown>[]) || []).filter((a: Record<string, unknown>) => a.kind === 'FILE').map((a: Record<string, unknown>) => {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\reports\\field\\page.tsx",
+    "line": 104,
+    "snippet": "const physicalPath = storagePath ? path.join(process.cwd(), storagePath.startsWith('storage') ? '' : 'storage', storagePath) : \"\";"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\supervision\\weekly\\actions.ts",
+    "line": 227,
+    "snippet": "data: { dossierId: created.id, actorId: actor.id, action: \"CREATE\", toStatus: \"DRAFT\", version, changedFields: \"Khởi tạo hồ sơ tuần\" },"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\supervision\\weekly\\actions.ts",
+    "line": 229,
+    "snippet": "return { id: created.id, isExisting: false, status: \"DRAFT\" };"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\supervision\\weekly\\actions.ts",
+    "line": 244,
+    "snippet": "if (![\"DRAFT\", \"REVISION_REQUIRED\"].includes(dossier.status)) {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\supervision\\weekly\\actions.ts",
+    "line": 263,
+    "snippet": "if (dossier.createdById !== actor.id || ![\"DRAFT\", \"REVISION_REQUIRED\"].includes(dossier.status)) {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\supervision\\weekly\\actions.ts",
+    "line": 300,
+    "snippet": "where: { id, lockVersion: input.expectedLockVersion, status: { in: [\"DRAFT\", \"REVISION_REQUIRED\"] } },"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\(dashboard)\\supervision\\weekly\\actions.ts",
+    "line": 385,
+    "snippet": "const ownDraftAction = action === \"SUBMIT\" && dossier.createdById === actor.id && [\"DRAFT\", \"REVISION_REQUIRED\"].includes(dossier.status);"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\actions\\global-search.ts",
+    "line": 43,
+    "snippet": "status: \"PENDING\","
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\actions\\global-search.ts",
+    "line": 92,
+    "snippet": "status: \"PENDING\","
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\actions\\material-request.ts",
+    "line": 143,
+    "snippet": "status: \"PENDING\","
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\actions\\material-request.ts",
+    "line": 181,
+    "snippet": "if (![\"DRAFT\", \"SUBMITTED\", \"REQUESTED\"].includes(existing.status)) {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\actions\\material-request.ts",
+    "line": 228,
+    "snippet": "status: \"PENDING\","
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\actions\\material-request.ts",
+    "line": 238,
+    "snippet": "} else if (existingApproval.status === \"REJECTED\" || existingApproval.status === \"CANCELLED\") {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\actions\\material-request.ts",
+    "line": 243,
+    "snippet": "status: \"PENDING\","
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\actions\\material-request.ts",
+    "line": 272,
+    "snippet": "if (existing.status !== \"SUBMITTED\" && existing.status !== \"DRAFT\" && existing.status !== \"REQUESTED\") {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\actions\\material-request.ts",
+    "line": 281,
+    "snippet": "data: { status: \"APPROVED\" }"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\actions\\material-request.ts",
+    "line": 369,
+    "snippet": "sourceId: id, status: \"PENDING\" },"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\actions\\material-request.ts",
+    "line": 371,
+    "snippet": "status: \"APPROVED\","
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\actions\\material-request.ts",
+    "line": 386,
+    "snippet": "afterData: JSON.stringify({ status: \"APPROVED\" })"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\actions\\material-request.ts",
+    "line": 408,
+    "snippet": "if (existing.status !== \"SUBMITTED\" && existing.status !== \"DRAFT\" && existing.status !== \"REQUESTED\") {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\actions\\material-request.ts",
+    "line": 416,
+    "snippet": "status: \"REJECTED\","
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\actions\\material-request.ts",
+    "line": 425,
+    "snippet": "sourceId: id, status: \"PENDING\" },"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\actions\\material-request.ts",
+    "line": 427,
+    "snippet": "status: \"REJECTED\","
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\actions\\material-request.ts",
+    "line": 441,
+    "snippet": "afterData: JSON.stringify({ status: \"REJECTED\", reason })"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\actions\\material-request.ts",
+    "line": 452,
+    "snippet": "const validStatuses = [\"DRAFT\", \"REQUESTED\", \"SUBMITTED\", \"APPROVED\", \"REJECTED\", \"PROCESSING\", \"ISSUED\", \"RECEIVED\", \"CANCELLED\"];"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\actions\\material-request.ts",
+    "line": 460,
+    "snippet": "if (status === \"APPROVED\" || status === \"REJECTED\") {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\actions\\material-request.ts",
+    "line": 497,
+    "snippet": "if (![\"APPROVED\", \"PROCESSING\", \"ISSUED\"].includes(existing.status)) {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\actions\\material-request.ts",
+    "line": 537,
+    "snippet": "if ([\"APPROVED\", \"PROCESSING\", \"ISSUED\", \"RECEIVED\"].includes(existing.status)) {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\actions\\material-request.ts",
+    "line": 586,
+    "snippet": "sourceId: id, status: \"PENDING\" },"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\actions\\material-request.ts",
+    "line": 610,
+    "snippet": "status: \"APPROVED\""
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\api\\documents\\upload\\route.ts",
+    "line": 138,
+    "snippet": "const permission = await resolvePermission(session, \"documents.upload\", { projectId: upload.projectId });"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\api\\documents\\upload\\route.ts",
+    "line": 151,
+    "snippet": "return json({ error: \"Không có quyền upload vào thư mục này.\" }, { status: 403 });"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\api\\documents\\upload\\route.ts",
+    "line": 174,
+    "snippet": "return json({ error: \"Thiếu nội dung file upload\" }, { status: 400 });"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\api\\documents\\upload\\route.ts",
+    "line": 182,
+    "snippet": "{ error: error instanceof Error ? error.message : \"File upload không hợp lệ\" },"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\api\\documents\\upload\\route.ts",
+    "line": 204,
+    "snippet": "return json({ error: `Size mismatch: received ${storedFile.size}, expected ${upload.size}` }, { status: 400 });"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\api\\documents\\[documentId]\\download\\route.ts",
+    "line": 31,
+    "snippet": "const permission = await resolvePermission(session, \"documents.download\", { projectId: document.projectId });"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\api\\reports\\attachments\\[attachmentId]\\route.ts",
+    "line": 69,
+    "snippet": ": attachment.storagePath.startsWith('storage')"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\api\\reports\\[reportId]\\attachments\\route.ts",
+    "line": 180,
+    "snippet": "const baseStorageDir = path.join(process.cwd(), \"storage\", \"site-reports\", reportId);"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\api\\reports\\[reportId]\\attachments\\route.ts",
+    "line": 200,
+    "snippet": "const relativeStoragePath = path.join(\"storage\", \"site-reports\", reportId, safeFileName);"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\api\\reports\\[reportId]\\attachments\\route.ts",
+    "line": 286,
+    "snippet": "return NextResponse.json({ error: \"Lỗi hệ thống khi upload\" }, { status: 500 });"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\print\\reports\\[reportId]\\page.tsx",
+    "line": 109,
+    "snippet": "const physicalPath = a.storagePath ? path.join(process.cwd(), a.storagePath.startsWith('storage') ? '' : 'storage', a.storagePath) : \"\";"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\app\\print\\reports\\[reportId]\\page.tsx",
+    "line": 120,
+    "snippet": "const physicalPath = a.storagePath ? path.join(process.cwd(), a.storagePath.startsWith('storage') ? '' : 'storage', a.storagePath) : \"\";"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\dashboard\\executive\\executive-action-list.tsx",
+    "line": 32,
+    "snippet": "const isPending = label.includes('Chờ') || label.includes('Cần') || status.includes('PENDING');"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\dashboard\\executive\\executive-activity-feed.tsx",
+    "line": 14,
+    "snippet": "else if (t.includes('tài liệu') || t.includes('upload')) { icon = UploadCloud; derivedTone = 'blue'; }"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\dashboard\\executive\\executive-dashboard.tsx",
+    "line": 26,
+    "snippet": "viewAllHref=\"/dashboard/actions\""
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\dashboard\\executive\\executive-header.tsx",
+    "line": 86,
+    "snippet": "href={data.selectedProjectId ? `/approvals?projectId=${data.selectedProjectId}&status=PENDING` : `/approvals?status=PENDING`}"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\dashboard\\executive\\executive-site-report-highlights.tsx",
+    "line": 15,
+    "snippet": "if (status === 'Đã duyệt' || status.toUpperCase().includes('APPROVED')) {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\dashboard\\executive\\executive-site-report-highlights.tsx",
+    "line": 18,
+    "snippet": "if (status === 'Chờ duyệt' || status.toUpperCase().includes('SUBMITTED') || status.toUpperCase().includes('PENDING')) {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\dashboard\\executive\\executive-site-report-highlights.tsx",
+    "line": 35,
+    "snippet": "if (status === 'Đã duyệt' || status.toUpperCase().includes('APPROVED')) return 'emerald';"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\dashboard\\executive\\project-time-progress-drawer.tsx",
+    "line": 160,
+    "snippet": "{project.progressPercent >= 0 && project.progressPercent <= 100 && ("
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\dashboard\\executive\\project-time-progress-drawer.tsx",
+    "line": 169,
+    "snippet": "<span>{project.startDate ? format(new Date(project.startDate), 'dd/MM/yyyy') : '--'}</span>"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\dashboard\\executive\\project-time-progress-drawer.tsx",
+    "line": 171,
+    "snippet": "<span>{project.endDate ? format(new Date(project.endDate), 'dd/MM/yyyy') : '--'}</span>"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\documents\\document-context-menu.tsx",
+    "line": 20,
+    "snippet": "contextMenu: { type: \"folder\" | \"file\" | \"workspace\"; targetId?: string; x: number; y: number } | null;"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\documents\\document-workspace.tsx",
+    "line": 47,
+    "snippet": "} from \"@/app/(dashboard)/documents/actions\";"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\documents\\document-workspace.tsx",
+    "line": 438,
+    "snippet": "type: \"folder\" | \"file\" | \"workspace\";"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\documents\\document-workspace.tsx",
+    "line": 866,
+    "snippet": "reject(new Error(data?.error || `Upload thất bại (${xhr.status})`));"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\documents\\document-workspace.tsx",
+    "line": 868,
+    "snippet": "xhr.onerror = () => reject(new Error(\"Lỗi mạng khi upload\"));"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\documents\\document-workspace.tsx",
+    "line": 923,
+    "snippet": "setUploadError(\"Đã hủy upload. Bạn có thể bấm Tải lại để thử lại.\");"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\documents\\document-workspace.tsx",
+    "line": 924,
+    "snippet": "toast.error(\"Đã hủy upload. Bạn có thể bấm Tải lại để thử lại.\");"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\documents\\document-workspace.tsx",
+    "line": 929,
+    "snippet": "\"Lỗi upload: \" +"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\documents\\document-workspace.tsx",
+    "line": 1455,
+    "snippet": "if (e.target === e.currentTarget || (e.target as HTMLElement).tagName === \"MAIN\" || (e.target as HTMLElement).closest(\".empty-workspace\")) {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\documents\\document-workspace.tsx",
+    "line": 1458,
+    "snippet": "type: \"workspace\","
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\documents\\document-workspace.tsx",
+    "line": 1760,
+    "snippet": "type: \"workspace\","
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\documents\\document-workspace.tsx",
+    "line": 2138,
+    "snippet": "aria-labelledby=\"upload-dialog-title\""
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\documents\\document-workspace.tsx",
+    "line": 2147,
+    "snippet": "id=\"upload-dialog-title\""
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\documents\\document-workspace.tsx",
+    "line": 2161,
+    "snippet": "aria-label=\"Đóng hộp thoại upload\""
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\documents\\document-workspace.tsx",
+    "line": 2188,
+    "snippet": "<span>{uploadError ? \"Upload cần xử lý\" : \"Đang truyền dữ liệu\"}</span>"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\documents\\document-workspace.tsx",
+    "line": 2584,
+    "snippet": "contextMenu: { type: \"folder\" | \"file\" | \"workspace\"; targetId?: string; x: number; y: number } | null;"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\field-progress\\daily-entry-table.tsx",
+    "line": 236,
+    "snippet": "status: (item.status as \"DRAFT\" | \"SUBMITTED\" | \"APPROVED\") || \"DRAFT\","
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\field-progress\\daily-status-calendar.tsx",
+    "line": 44,
+    "snippet": "case \"APPROVED\":"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\field-progress\\daily-status-calendar.tsx",
+    "line": 46,
+    "snippet": "case \"DRAFT\":"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\layout\\global-project-context-switcher.tsx",
+    "line": 275,
+    "snippet": "<span>{project.code}</span>"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-detail.tsx",
+    "line": 84,
+    "snippet": "const isEditable = [\"DRAFT\", \"SUBMITTED\", \"REQUESTED\", \"PENDING\"].includes(request.status) && (isOwner || isManager);"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-detail.tsx",
+    "line": 85,
+    "snippet": "const isDeletable = [\"DRAFT\", \"REJECTED\", \"SUBMITTED\", \"REQUESTED\", \"PENDING\"].includes(request.status) && (isOwner || isManager);"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-detail.tsx",
+    "line": 86,
+    "snippet": "const canUpdateProgress = [\"APPROVED\", \"PROCESSING\", \"ISSUED\"].includes(request.status);"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-detail.tsx",
+    "line": 222,
+    "snippet": "{(request.status === \"REJECTED\" || request.status === \"CANCELLED\") && request.cancelReason && ("
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-detail.tsx",
+    "line": 244,
+    "snippet": "{request.status === \"APPROVED\" && \"Phiếu đã được phê duyệt hợp lệ.\"}"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-detail.tsx",
+    "line": 245,
+    "snippet": "{request.status === \"REJECTED\" && \"Phiếu đã bị từ chối.\"}"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-detail.tsx",
+    "line": 247,
+    "snippet": "{request.status === \"DRAFT\" && \"Phiếu nháp. Chưa gửi phê duyệt.\"}"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-detail.tsx",
+    "line": 251,
+    "snippet": "{[\"SUBMITTED\", \"APPROVED\", \"REJECTED\"].includes(request.status) && ("
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-detail.tsx",
+    "line": 342,
+    "snippet": "{request.status === \"REJECTED\" && \"Đề xuất đã bị từ chối.\"}"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-form.tsx",
+    "line": 86,
+    "snippet": "const [loadingAction, setLoadingAction] = useState<\"DRAFT\" | \"SUBMITTED\" | null>(null);"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-form.tsx",
+    "line": 107,
+    "snippet": "status: initialData?.status || \"DRAFT\""
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-form.tsx",
+    "line": 308,
+    "snippet": "setLoadingAction(status as \"DRAFT\" | \"SUBMITTED\");"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-form.tsx",
+    "line": 352,
+    "snippet": "setLoadingAction(status as \"DRAFT\" | \"SUBMITTED\");"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-form.tsx",
+    "line": 629,
+    "snippet": "{initialData && [\"SUBMITTED\", \"REQUESTED\", \"PENDING\"].includes(initialData.status) ? ("
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-form.tsx",
+    "line": 643,
+    "snippet": "onClick={() => handleSubmit(\"DRAFT\")}"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-form.tsx",
+    "line": 648,
+    "snippet": "{loadingAction === \"DRAFT\" ? \"Đang lưu...\" : \"Lưu nháp\"}"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-list.tsx",
+    "line": 63,
+    "snippet": "return [\"RECEIVED\", \"CANCELLED\", \"REJECTED\"].includes(status);"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-list.tsx",
+    "line": 238,
+    "snippet": "const normalizedStatus = [\"PROCESSING\", \"ISSUED\", \"RECEIVED\"].includes(req.status) ? \"APPROVED\" : (req.status === \"REQUESTED\" ? \"SUBMITTED\" : (req.status === \"CANCELLED\" ? \"REJECTED\" : req.status));"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-list.tsx",
+    "line": 242,
+    "snippet": "(activeFlag === \"pending\" && normalizedStatus === \"SUBMITTED\") ||"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-list.tsx",
+    "line": 243,
+    "snippet": "(activeFlag === \"approved\" && normalizedStatus === \"APPROVED\") ||"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-list.tsx",
+    "line": 244,
+    "snippet": "(activeFlag === \"rejected\" && normalizedStatus === \"REJECTED\");"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-list.tsx",
+    "line": 251,
+    "snippet": "const approvedRequests = requests.filter(r => [\"APPROVED\", \"PROCESSING\", \"ISSUED\", \"RECEIVED\"].includes(r.status)).length;"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-list.tsx",
+    "line": 252,
+    "snippet": "const rejectedRequests = requests.filter(r => [\"REJECTED\", \"CANCELLED\"].includes(r.status)).length;"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-list.tsx",
+    "line": 265,
+    "snippet": "key: \"pending\","
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-list.tsx",
+    "line": 275,
+    "snippet": "key: \"approved\","
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-list.tsx",
+    "line": 281,
+    "snippet": "active: statusFilter === \"APPROVED\","
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-list.tsx",
+    "line": 282,
+    "snippet": "onClick: () => updateUrl({ requestFlag: null, requestStatus: \"APPROVED\" }),"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-list.tsx",
+    "line": 285,
+    "snippet": "key: \"rejected\","
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-list.tsx",
+    "line": 291,
+    "snippet": "active: statusFilter === \"REJECTED\","
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-list.tsx",
+    "line": 292,
+    "snippet": "onClick: () => updateUrl({ requestFlag: null, requestStatus: \"REJECTED\" }),"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-list.tsx",
+    "line": 341,
+    "snippet": "id=\"filter-status\""
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-list.tsx",
+    "line": 342,
+    "snippet": "name=\"filter-status\""
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-list.tsx",
+    "line": 349,
+    "snippet": "<option value=\"APPROVED\">Đã duyệt</option>"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-list.tsx",
+    "line": 350,
+    "snippet": "<option value=\"REJECTED\">Từ chối</option>"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-list.tsx",
+    "line": 403,
+    "snippet": "const isEditable = [\"DRAFT\", \"SUBMITTED\", \"REQUESTED\", \"PENDING\"].includes(req.status) && (isOwner || isManager);"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-list.tsx",
+    "line": 404,
+    "snippet": "const isDeletable = [\"DRAFT\", \"REJECTED\", \"SUBMITTED\", \"REQUESTED\", \"PENDING\"].includes(req.status) && (isOwner || isManager);"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-list.tsx",
+    "line": 438,
+    "snippet": "if ([\"APPROVED\", \"PROCESSING\", \"ISSUED\", \"RECEIVED\"].includes(req.status)) {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-list.tsx",
+    "line": 499,
+    "snippet": "...(req.status === \"REJECTED\" ? ["
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\material-request\\material-request-list.tsx",
+    "line": 558,
+    "snippet": "if ([\"APPROVED\", \"PROCESSING\", \"ISSUED\", \"RECEIVED\"].includes(req.status)) {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\materials\\materials-overview.tsx",
+    "line": 42,
+    "snippet": "const pendingRequests = requests.filter(r => r.status === \"SUBMITTED\" || r.status === \"APPROVED\").length;"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\materials\\materials-overview.tsx",
+    "line": 206,
+    "snippet": "{requests.filter(r => r.status === \"SUBMITTED\" || r.status === \"REQUESTED\" || r.status === \"PENDING\").slice(0, 5).map((req: any) => ("
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\materials\\materials-overview.tsx",
+    "line": 233,
+    "snippet": "{requests.filter(r => r.status === \"SUBMITTED\" || r.status === \"REQUESTED\" || r.status === \"PENDING\").length === 0 && ("
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\create-dialog\\weekly-report-form.tsx",
+    "line": 277,
+    "snippet": "<StatBadge label=\"Tổng báo cáo ngày\" value={preview.dayStatuses.filter(d => d.hasReport).length} color=\"blue\" />"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\create-report-dialog.tsx",
+    "line": 257,
+    "snippet": "const submitAction = async (action: \"DRAFT\" | \"SUBMIT\") => {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\create-report-dialog.tsx",
+    "line": 258,
+    "snippet": "const isDraft = action === \"DRAFT\";"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\create-report-dialog.tsx",
+    "line": 633,
+    "snippet": "onClick={() => submitAction(\"DRAFT\")}"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\create-report-dialog.tsx",
+    "line": 682,
+    "snippet": "onClick={() => { setShowConfirmClose(false); submitAction(\"DRAFT\"); }}"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\report-detail-drawer.tsx",
+    "line": 231,
+    "snippet": "case \"APPROVED\": return \"Đã duyệt\";"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\report-detail-drawer.tsx",
+    "line": 233,
+    "snippet": "case \"REJECTED\": return \"Từ chối\";"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\report-detail-drawer.tsx",
+    "line": 241,
+    "snippet": "case \"APPROVED\": return \"bg-emerald-100 border-emerald-200\";"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\report-detail-drawer.tsx",
+    "line": 243,
+    "snippet": "case \"REJECTED\": return \"bg-red-100 border-red-200\";"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\report-detail-drawer.tsx",
+    "line": 320,
+    "snippet": "const [history, setHistory] = useState<{ id: string; action: \"SUBMITTED\" | \"APPROVED\" | \"REJECTED\" | \"RETURNED\" | \"REVISION_REQUESTED\"; actor: string; role: string; timestamp: string; detail?: string }[]>([]);"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\report-detail-drawer.tsx",
+    "line": 405,
+    "snippet": "(report.status === \"DRAFT\" ||"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\report-detail-drawer.tsx",
+    "line": 406,
+    "snippet": "report.status === \"REJECTED\" ||"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\report-detail-drawer.tsx",
+    "line": 412,
+    "snippet": "(report.status === \"DRAFT\" ||"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\report-detail-drawer.tsx",
+    "line": 413,
+    "snippet": "report.status === \"REJECTED\" ||"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\report-detail-drawer.tsx",
+    "line": 418,
+    "snippet": "(report.status === \"DRAFT\" ||"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\report-detail-drawer.tsx",
+    "line": 419,
+    "snippet": "report.status === \"REJECTED\" ||"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\report-workspace-picker.tsx",
+    "line": 32,
+    "snippet": "aria-label=\"Vào workspace Báo cáo hiện trường\""
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\report-workspace-picker.tsx",
+    "line": 53,
+    "snippet": "<span>Truy cập workspace</span>"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\report-workspace-picker.tsx",
+    "line": 65,
+    "snippet": "aria-label=\"Vào workspace Kiểm tra và kế hoạch tuần\""
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\report-workspace-picker.tsx",
+    "line": 86,
+    "snippet": "<span>Truy cập workspace</span>"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\reports-mobile-cards.tsx",
+    "line": 87,
+    "snippet": "{(report.status === \"DRAFT\" || report.status === \"REJECTED\" || report.status === \"REVISION_REQUESTED\" || report.status === \"SUBMITTED\") &&"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\reports-mobile-cards.tsx",
+    "line": 98,
+    "snippet": "{(report.status === \"DRAFT\" || report.status === \"REJECTED\" || report.status === \"REVISION_REQUESTED\") &&"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\reports-table.tsx",
+    "line": 140,
+    "snippet": "const approvedCount = group.reports.filter(r => r.status === 'APPROVED').length;"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\reports-table.tsx",
+    "line": 142,
+    "snippet": "const rejectedCount = group.reports.filter(r => r.status === 'REJECTED').length;"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\reports-table.tsx",
+    "line": 144,
+    "snippet": "const draftCount = group.reports.filter(r => r.status === 'DRAFT').length;"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\reports-table.tsx",
+    "line": 264,
+    "snippet": "{(report.status === \"DRAFT\" || report.status === \"REJECTED\" || report.status === \"REVISION_REQUESTED\") &&"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\reports-table.tsx",
+    "line": 276,
+    "snippet": "{(report.status === \"DRAFT\" || report.status === \"REJECTED\" || report.status === \"REVISION_REQUESTED\" || report.status === \"SUBMITTED\") &&"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\reports-toolbar.tsx",
+    "line": 28,
+    "snippet": "{ value: 'APPROVED', label: getStatusLabel('APPROVED') },"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\reports-toolbar.tsx",
+    "line": 30,
+    "snippet": "{ value: 'REJECTED', label: getStatusLabel('REJECTED') },"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\reports-toolbar.tsx",
+    "line": 32,
+    "snippet": "{ value: 'DRAFT', label: getStatusLabel('DRAFT') },"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\reports-toolbar.tsx",
+    "line": 60,
+    "snippet": "const isStatusDisabled = tab === 'pending' || tab === 'rejected' || tab === 'revision';"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\reports-workspace.tsx",
+    "line": 32,
+    "snippet": "} from \"@/app/(dashboard)/reports/actions\";"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\reports-workspace.tsx",
+    "line": 590,
+    "snippet": "onClick={() => handleQuickFilter('APPROVED')}"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\reports-workspace.tsx",
+    "line": 592,
+    "snippet": "statusFilter === 'APPROVED'"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\reports-workspace.tsx",
+    "line": 611,
+    "snippet": "onClick={() => handleQuickFilter('REJECTED')}"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\reports-workspace.tsx",
+    "line": 613,
+    "snippet": "statusFilter === 'REJECTED'"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\reports-workspace.tsx",
+    "line": 667,
+    "snippet": "statusFilter={tab === 'pending' ? 'SUBMITTED' : tab === 'rejected' ? 'REJECTED' : tab === 'revision' ? 'REVISION_REQUESTED' : statusFilter}"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\types.ts",
+    "line": 87,
+    "snippet": "action: 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'RETURNED' | 'REVISION_REQUESTED';"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\types.ts",
+    "line": 199,
+    "snippet": "case 'APPROVED': return 'Đã duyệt';"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\types.ts",
+    "line": 202,
+    "snippet": "case 'REJECTED': return 'Từ chối';"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\types.ts",
+    "line": 203,
+    "snippet": "case 'DRAFT': return 'Nháp';"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\types.ts",
+    "line": 204,
+    "snippet": "case 'APPROVED': return 'Đã duyệt';"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\types.ts",
+    "line": 207,
+    "snippet": "case 'REJECTED': return 'Từ chối';"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\types.ts",
+    "line": 208,
+    "snippet": "case 'DRAFT': return 'Nháp';"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\types.ts",
+    "line": 217,
+    "snippet": "case 'APPROVED': return 'success';"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\types.ts",
+    "line": 220,
+    "snippet": "case 'REJECTED': return 'danger';"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\reports\\types.ts",
+    "line": 222,
+    "snippet": "case 'DRAFT': return 'neutral';"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\supervision-weekly\\editor-header.tsx",
+    "line": 168,
+    "snippet": "const hasItems = (canReview && status === \"SUBMITTED\") || (canReview && status === \"APPROVED\");"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\supervision-weekly\\editor-header.tsx",
+    "line": 191,
+    "snippet": "{canReview && status === \"APPROVED\" && ("
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\supervision-weekly\\weekly-editor.tsx",
+    "line": 18,
+    "snippet": "const editableStates = new Set([\"DRAFT\", \"REVISION_REQUIRED\"]);"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\supervision-weekly\\weekly-editor.tsx",
+    "line": 184,
+    "snippet": "const status = action === \"SUBMIT\" ? \"SUBMITTED\" : action === \"REQUEST_REVISION\" ? \"REVISION_REQUIRED\" : action === \"APPROVE\" ? \"APPROVED\" : \"LOCKED\";"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\supervision-weekly\\weekly-editor.tsx",
+    "line": 246,
+    "snippet": "{ id: \"I\", label: \"I. Kết quả thực hiện\", shortLabel: \"Mục I\", status: dossier.entries.filter(e => e.documentType === \"RESULT\").length > 0 ? \"complete\" : \"empty\" },"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\supervision-weekly\\weekly-editor.tsx",
+    "line": 253,
+    "snippet": "{ id: \"I\", label: \"I. Công việc dự kiến\", shortLabel: \"Mục I\", status: dossier.entries.filter(e => e.documentType === \"NEXT_WEEK_PLAN\").length > 0 ? \"complete\" : \"empty\" },"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\supervision-weekly\\weekly-list-client.tsx",
+    "line": 40,
+    "snippet": "} from \"@/app/(dashboard)/supervision/weekly/actions\";"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\supervision-weekly\\weekly-list-client.tsx",
+    "line": 266,
+    "snippet": "const draft = rows.filter((r) => r.status === \"DRAFT\").length;"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\supervision-weekly\\weekly-list-client.tsx",
+    "line": 269,
+    "snippet": "const approved = rows.filter((r) => r.status === \"APPROVED\" || r.status === \"LOCKED\").length;"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\supervision-weekly\\weekly-list-client.tsx",
+    "line": 283,
+    "snippet": "if (statusFilter === \"APPROVED\") {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\supervision-weekly\\weekly-list-client.tsx",
+    "line": 284,
+    "snippet": "if (row.status !== \"APPROVED\" && row.status !== \"LOCKED\") return false;"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\supervision-weekly\\weekly-list-client.tsx",
+    "line": 381,
+    "snippet": "if ([\"DRAFT\", \"REVISION_REQUIRED\"].includes(result.status)) {"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\supervision-weekly\\weekly-list-client.tsx",
+    "line": 471,
+    "snippet": "{ key: \"DRAFT\", label: \"Bản nháp\", count: counts.draft, color: \"border-slate-200 bg-slate-50 text-slate-700\" },"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\supervision-weekly\\weekly-list-client.tsx",
+    "line": 474,
+    "snippet": "{ key: \"APPROVED\", label: \"Đã duyệt\", count: counts.approved, color: \"border-emerald-200 bg-emerald-50/70 text-emerald-800\" },"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\supervision-weekly\\weekly-list-client.tsx",
+    "line": 564,
+    "snippet": "<option value=\"DRAFT\">Bản nháp</option>"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\supervision-weekly\\weekly-list-client.tsx",
+    "line": 567,
+    "snippet": "<option value=\"APPROVED\">Đã duyệt</option>"
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\supervision-weekly\\weekly-list-client.tsx",
+    "line": 771,
+    "snippet": "{[\"DRAFT\", \"REVISION_REQUIRED\"].includes(row.status) ? ("
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\supervision-weekly\\weekly-list-client.tsx",
+    "line": 815,
+    "snippet": "{[\"SUBMITTED\", \"APPROVED\", \"LOCKED\"].includes(row.status) && ("
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\supervision-weekly\\weekly-list-client.tsx",
+    "line": 841,
+    "snippet": "{[\"DRAFT\", \"REVISION_REQUIRED\"].includes(row.status) && ("
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\supervision-weekly\\weekly-list-client.tsx",
+    "line": 920,
+    "snippet": "{[\"DRAFT\", \"REVISION_REQUIRED\"].includes(row.status) && ("
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\supervision-weekly\\weekly-list-client.tsx",
+    "line": 1063,
+    "snippet": "{duplicateCheck.status === \"DRAFT\" && ("
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\supervision-weekly\\weekly-list-client.tsx",
+    "line": 1150,
+    "snippet": "{(duplicateCheck.status === \"APPROVED\" || duplicateCheck.status === \"LOCKED\") && ("
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\supervision-weekly\\weekly-list-client.tsx",
+    "line": 1179,
+    "snippet": "{duplicateCheck.status === \"REJECTED\" && ("
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\ui\\action-footer.tsx",
+    "line": 19,
+    "snippet": "\"shrink-0 border-t border-slate-200 bg-white/95 px-4 py-3 shadow-[0_-12px_30px_rgba(15,23,42,0.08)] backdrop-blur supports-[backdrop-filter]:bg-white/85 md:px-6 md:py-4\","
+  },
+  {
+    "filePath": "D:\\construction-erp-v2\\src\\components\\users\\user-management-client.tsx",
+    "line": 422,
+    "snippet": "{projects.map((project) => <option key={project.id} value={project.id}>{project.code} — {project.name}</option>)}"
+  }
+]

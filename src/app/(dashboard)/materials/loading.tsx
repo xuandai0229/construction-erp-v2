@@ -1,5 +1,5 @@
-import { PageSkeleton } from "@/components/ui/skeleton/page-skeleton";
+import { WorkspaceContentSkeleton } from "@/components/ui/skeleton/workspace-content-skeleton";
 
 export default function Loading() {
-  return <PageSkeleton />;
+  return <WorkspaceContentSkeleton />;
 }

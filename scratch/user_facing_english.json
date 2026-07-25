@@ -1,0 +1,44 @@
+[
+  {
+    "file": "D:\\construction-erp-v2\\src\\components\\documents\\document-viewer.tsx",
+    "line": 402,
+    "type": "jsx-text",
+    "text": "File Hash (SHA-256)"
+  },
+  {
+    "file": "D:\\construction-erp-v2\\src\\components\\documents\\document-workspace.tsx",
+    "line": 2161,
+    "type": "aria-label",
+    "text": "Đóng hộp thoại upload"
+  },
+  {
+    "file": "D:\\construction-erp-v2\\src\\components\\reports\\report-detail-drawer.tsx",
+    "line": 795,
+    "type": "title",
+    "text": "File gốc không còn trong storage"
+  },
+  {
+    "file": "D:\\construction-erp-v2\\src\\components\\reports\\report-workspace-picker.tsx",
+    "line": 32,
+    "type": "aria-label",
+    "text": "Vào workspace Báo cáo hiện trường"
+  },
+  {
+    "file": "D:\\construction-erp-v2\\src\\components\\reports\\report-workspace-picker.tsx",
+    "line": 65,
+    "type": "aria-label",
+    "text": "Vào workspace Kiểm tra và kế hoạch tuần"
+  },
+  {
+    "file": "D:\\construction-erp-v2\\src\\components\\users\\user-management-client.tsx",
+    "line": 584,
+    "type": "placeholder",
+    "text": "user@email.com"
+  },
+  {
+    "file": "D:\\construction-erp-v2\\src\\components\\users\\user-management-client.tsx",
+    "line": 812,
+    "type": "placeholder",
+    "text": "user@email.com"
+  }
+]

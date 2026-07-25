@@ -128,8 +128,6 @@
             router.push(query ? `${pathname}?${query}` : pathname);
           }
         }
-        
-        router.refresh();
       }
 
       return (

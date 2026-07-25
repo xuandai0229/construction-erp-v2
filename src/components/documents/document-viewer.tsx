@@ -399,7 +399,7 @@ export function DocumentViewer({
             <summary className="cursor-pointer text-[11px] font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)]">Thông tin kỹ thuật</summary>
             <div className="mt-2 grid grid-cols-2 gap-x-5 gap-y-2 sm:grid-cols-3 rounded-[var(--radius-md)] bg-[var(--surface-subtle)] p-2 text-[11px]">
               <div>
-                <p className="text-[var(--muted-foreground)] opacity-70">File Hash (SHA-256)</p>
+                <p className="text-[var(--muted-foreground)] opacity-70">Mã băm tệp (SHA-256)</p>
                 <p className="mt-0.5 font-mono text-[var(--muted-foreground)] truncate" title={document.fileHash || "-"}>{document.fileHash || "-"}</p>
               </div>
               <div>

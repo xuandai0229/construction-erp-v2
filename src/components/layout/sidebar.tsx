@@ -30,8 +30,7 @@ const navigationSections = [
     items: [
       { name: "Công trình", href: "/projects", icon: Building2 },
       { name: "Tài liệu", href: "/documents", icon: FolderOpen },
-      { name: "Báo cáo hiện trường", href: "/reports", icon: ClipboardCheck },
-      { name: "Giám sát tuần", href: "/supervision/weekly", icon: ScanSearch },
+      { name: "Báo cáo công trình", href: "/reports", icon: ClipboardCheck },
       { name: "Vật tư", href: "/materials", icon: Package },
     ],
   },
@@ -91,7 +90,9 @@ export function Sidebar({ userRole }: { userRole: UserRole }) {
               {section.label && <div className={styles.sectionLabel}>{section.label}</div>}
               <div className={styles.sectionItems}>
                 {section.items.map((item) => {
-                  const isActive = pathname.startsWith(item.href) || (pathname === "/" && item.href === "/dashboard");
+                  const isActive = item.href === "/reports"
+                    ? pathname.startsWith("/reports") || pathname.startsWith("/supervision/weekly")
+                    : (pathname.startsWith(item.href) || (pathname === "/" && item.href === "/dashboard"));
                   return (
                     <Link
                       key={item.name}

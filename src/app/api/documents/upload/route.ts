@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { storageProvider } from "@/lib/storage/index";
@@ -148,7 +148,7 @@ export async function POST(req: NextRequest) {
     const projectRole = await requireProjectScope(session, upload.projectId);
     const sessionUser = { id: session.id, role: session.role as any, projectRole };
     if (!canUploadToFolder(sessionUser, { id: folder.id, name: folder.name })) {
-      return json({ error: "Không có quyền upload vào thư mục này." }, { status: 403 });
+      return json({ error: "Không có quyền tải lên vào thư mục này." }, { status: 403 });
     }
 
     const originalName = upload.originalName;
@@ -157,7 +157,7 @@ export async function POST(req: NextRequest) {
     if (rule.allowedExtensions.length > 0 && !rule.allowedExtensions.includes(extension)) {
       return json(
         {
-          error: `File này không phù hợp với thư mục ${rule.title}. Chỉ cho phép: ${rule.allowedExtensions.join(", ").toUpperCase()}.`,
+          error: `Định dạng tệp không phù hợp với thư mục ${rule.title}. Chỉ cho phép: ${rule.allowedExtensions.join(", ").toUpperCase()}.`,
         },
         { status: 400 },
       );
@@ -171,7 +171,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!req.body) {
-      return json({ error: "Thiếu nội dung file upload" }, { status: 400 });
+      return json({ error: "Thiếu nội dung tệp tải lên" }, { status: 400 });
     }
 
     let stream: NodeJS.ReadableStream;
@@ -179,7 +179,7 @@ export async function POST(req: NextRequest) {
       stream = await createValidatedUploadStream(req.body, extension);
     } catch (error) {
       return json(
-        { error: error instanceof Error ? error.message : "File upload không hợp lệ" },
+        { error: error instanceof Error ? error.message : "Tệp tải lên không hợp lệ" },
         { status: 400 },
       );
     }
@@ -199,9 +199,9 @@ export async function POST(req: NextRequest) {
     }
 
     if (storedFile.size !== upload.size) {
-            console.error(`[Upload] Size mismatch: received=${storedFile.size}, expected=${upload.size}`);
-await storageProvider.deleteFile(storedFile.storagePath).catch(console.error);
-      return json({ error: `Size mismatch: received ${storedFile.size}, expected ${upload.size}` }, { status: 400 });
+      console.error(`[Upload] Size mismatch: received=${storedFile.size}, expected=${upload.size}`);
+      await storageProvider.deleteFile(storedFile.storagePath).catch(console.error);
+      return json({ error: `Kích thước tệp không khớp: nhận được ${storedFile.size}, kỳ vọng ${upload.size}` }, { status: 400 });
     }
 
     let version = 1;

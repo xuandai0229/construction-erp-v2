@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useTransition, useEffect, useRef } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   CalendarPlus,
@@ -17,6 +18,7 @@ import {
   Clock,
   Printer,
   CheckCircle2,
+  XCircle,
   RotateCcw,
   Layers,
   ChevronLeft,
@@ -25,6 +27,7 @@ import {
   Filter,
   Plus,
   ExternalLink,
+  ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader, PageHeading, ContentCard, FilterBar } from "@/components/ui/enterprise";
@@ -135,6 +138,7 @@ export function WeeklyListClient({
   initialStatus = "ALL",
   initialProjectId = "ALL",
   initialSort = "updated_desc",
+  hidePageHeader = false,
 }: {
   rows: DossierRow[];
   projects?: ProjectOption[];
@@ -145,6 +149,7 @@ export function WeeklyListClient({
   initialStatus?: string;
   initialProjectId?: string;
   initialSort?: "updated_desc" | "week_desc" | "week_asc" | "project_asc";
+  hidePageHeader?: boolean;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -168,7 +173,6 @@ export function WeeklyListClient({
   // Modals & Dialogs
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [anchorDate, setAnchorDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [duplicateCheck, setDuplicateCheck] = useState<{
     id: string;
     reportNumber: string | null;
@@ -176,8 +180,11 @@ export function WeeklyListClient({
     version: number;
     weekStart: string;
     weekEnd: string;
+    updatedAt: string;
+    createdByName: string;
   } | null>(null);
   const [checkingDuplicate, setCheckingDuplicate] = useState(false);
+  const [duplicateCheckError, setDuplicateCheckError] = useState(false);
 
   const [revisionModalDossier, setRevisionModalDossier] = useState<DossierRow | null>(null);
   const [deletingDossier, setDeletingDossier] = useState<DossierRow | null>(null);
@@ -192,7 +199,8 @@ export function WeeklyListClient({
     if (sortBy !== "updated_desc") params.set("sort", sortBy);
 
     const queryStr = params.toString();
-    const newUrl = queryStr ? `/supervision/weekly?${queryStr}` : "/supervision/weekly";
+    const basePath = typeof window !== "undefined" ? window.location.pathname : "/reports/weekly-inspection";
+    const newUrl = queryStr ? `${basePath}?${queryStr}` : basePath;
     window.history.replaceState(null, "", newUrl);
   }, [search, statusFilter, projectFilter, sortBy]);
 
@@ -200,10 +208,15 @@ export function WeeklyListClient({
   useEffect(() => {
     if (!createModalOpen || !anchorDate) {
       setDuplicateCheck(null);
+      setDuplicateCheckError(false);
+      setCheckingDuplicate(false);
       return;
     }
     let cancelled = false;
     setCheckingDuplicate(true);
+    setDuplicateCheckError(false);
+    setDuplicateCheck(null);
+
     checkSupervisionWeeklyDuplicate(anchorDate)
       .then((res) => {
         if (!cancelled) {
@@ -212,7 +225,10 @@ export function WeeklyListClient({
         }
       })
       .catch(() => {
-        if (!cancelled) setCheckingDuplicate(false);
+        if (!cancelled) {
+          setCheckingDuplicate(false);
+          setDuplicateCheckError(true);
+        }
       });
     return () => {
       cancelled = true;
@@ -327,9 +343,17 @@ export function WeeklyListClient({
       sunday.setDate(monday.getDate() + 6);
 
       const weekInfo = getWeekNumber(monday.toISOString());
+      const formatFullDateVN = (date: Date) =>
+        new Intl.DateTimeFormat("vi-VN", {
+          weekday: "long",
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        }).format(date);
+
       return {
-        startStr: formatDateVN(monday.toISOString()),
-        endStr: formatDateVN(sunday.toISOString()),
+        startStr: formatFullDateVN(monday),
+        endStr: formatFullDateVN(sunday),
         weekNum: weekInfo.week,
         year: monday.getFullYear(),
       };
@@ -338,7 +362,7 @@ export function WeeklyListClient({
     }
   }, [anchorDate]);
 
-  const handleCreateDossier = (forceNewVersion = false) => {
+  const handleCreateDossier = () => {
     if (!anchorDate) {
       toast.error("Vui lòng chọn ngày trong tuần báo cáo.");
       return;
@@ -351,16 +375,19 @@ export function WeeklyListClient({
 
     startTransition(async () => {
       try {
-        const result = await createSupervisionWeeklyDossier(anchorDate, selectedProjectId || undefined, {
-          forceNewVersion,
-        });
+        const result = await createSupervisionWeeklyDossier(anchorDate);
         if (result.isExisting) {
-          toast.info("Mở bản nháp hồ sơ hiện có cho tuần đã chọn.");
+          toast.info("Chuyển đến hồ sơ hiện có cho tuần đã chọn.");
+          if (["DRAFT", "REVISION_REQUIRED"].includes(result.status)) {
+            router.push(`/reports/weekly-inspection/${result.id}/edit`);
+          } else {
+            router.push(`/reports/weekly-inspection/${result.id}/preview`);
+          }
         } else {
-          toast.success("Khởi tạo hồ sơ báo cáo tuần thành công!");
+          toast.success("Tạo hồ sơ kiểm tra tuần thành công!");
+          router.push(`/reports/weekly-inspection/${result.id}/edit`);
         }
         setCreateModalOpen(false);
-        router.push(`/supervision/weekly/${result.id}/edit`);
       } catch (err: any) {
         toast.error(err?.message || "Không thể tạo hồ sơ tuần.");
       }
@@ -391,27 +418,51 @@ export function WeeklyListClient({
 
   return (
     <div className="space-y-6">
-      {/* 1. Page Header */}
-      <PageHeader>
-        <PageHeading
-          title={
-            <div className="flex items-center gap-2.5">
-              <FileText className="h-6 w-6 text-blue-600" />
-              <span>Báo cáo tuần Giám sát</span>
-            </div>
-          }
-          description="Quản lý Báo cáo kết quả tuần & Kế hoạch tuần tiếp theo theo công trình."
-          action={
-            <Button
-              onClick={() => setCreateModalOpen(true)}
-              className="gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm transition-all hover:shadow-md h-10 px-4"
-            >
-              <CalendarPlus className="h-4 w-4" />
-              <span>Tạo hồ sơ tuần mới</span>
-            </Button>
-          }
-        />
-      </PageHeader>
+      {/* 1. Action CTA Header when in Shared Shell or Standalone PageHeader */}
+      {!hidePageHeader ? (
+        <div className="space-y-3">
+          <Link
+            href="/reports"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-600 transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>Báo cáo công trình</span>
+          </Link>
+          <PageHeader>
+            <PageHeading
+              title={
+                <div className="flex items-center gap-2.5">
+                  <FileText className="h-6 w-6 text-blue-600" />
+                  <span>Kiểm tra & kế hoạch tuần</span>
+                </div>
+              }
+              description="Quản lý kết quả kiểm tra, yêu cầu chỉnh sửa và kế hoạch công tác theo tuần."
+              action={
+                <Button
+                  onClick={() => setCreateModalOpen(true)}
+                  className="gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm transition-all hover:shadow-md h-10 px-4"
+                >
+                  <CalendarPlus className="h-4 w-4" />
+                  <span>Tạo hồ sơ tuần mới</span>
+                </Button>
+              }
+            />
+          </PageHeader>
+        </div>
+      ) : (
+        <div className="flex items-center justify-between pb-2">
+          <div className="text-xs font-medium text-slate-500">
+            Hồ sơ kiểm tra kết quả tuần và đề xuất kế hoạch công tác tuần tiếp theo
+          </div>
+          <Button
+            onClick={() => setCreateModalOpen(true)}
+            className="gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm transition-all hover:shadow-md h-10 px-4 shrink-0"
+          >
+            <CalendarPlus className="h-4 w-4" />
+            <span>Tạo hồ sơ tuần mới</span>
+          </Button>
+        </div>
+      )}
 
       {/* 2. Compact Status Counter KPI Cards (Height reduced 20-30%) */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
@@ -720,7 +771,7 @@ export function WeeklyListClient({
                             {["DRAFT", "REVISION_REQUIRED"].includes(row.status) ? (
                               <Button
                                 size="sm"
-                                onClick={() => router.push(`/supervision/weekly/${row.id}/edit`)}
+                                onClick={() => router.push(`/reports/weekly-inspection/${row.id}/edit`)}
                                 className="h-8 text-xs gap-1 bg-blue-600 text-white hover:bg-blue-700"
                               >
                                 <Edit3 className="h-3.5 w-3.5" />
@@ -730,7 +781,7 @@ export function WeeklyListClient({
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => router.push(`/supervision/weekly/${row.id}/preview`)}
+                                onClick={() => router.push(`/reports/weekly-inspection/${row.id}/preview`)}
                                 className="h-8 text-xs gap-1 border-slate-200 text-slate-700 hover:bg-slate-100"
                               >
                                 <Eye className="h-3.5 w-3.5" />
@@ -753,7 +804,7 @@ export function WeeklyListClient({
                                   <button
                                     onClick={() => {
                                       setActiveMenuId(null);
-                                      router.push(`/supervision/weekly/${row.id}/preview`);
+                                      router.push(`/reports/weekly-inspection/${row.id}/preview`);
                                     }}
                                     className="w-full flex items-center gap-2 px-3 py-2 text-left rounded-lg text-slate-700 hover:bg-slate-100 font-medium"
                                   >
@@ -765,7 +816,7 @@ export function WeeklyListClient({
                                     <button
                                       onClick={() => {
                                         setActiveMenuId(null);
-                                        router.push(`/supervision/weekly/${row.id}/preview?print=1`);
+                                        router.push(`/reports/weekly-inspection/${row.id}/preview?print=1`);
                                       }}
                                       className="w-full flex items-center gap-2 px-3 py-2 text-left rounded-lg text-slate-700 hover:bg-slate-100 font-medium"
                                     >
@@ -869,7 +920,7 @@ export function WeeklyListClient({
                         {["DRAFT", "REVISION_REQUIRED"].includes(row.status) && (
                           <Button
                             size="sm"
-                            onClick={() => router.push(`/supervision/weekly/${row.id}/edit`)}
+                            onClick={() => router.push(`/reports/weekly-inspection/${row.id}/edit`)}
                             className="h-8 text-xs gap-1 bg-blue-600 text-white hover:bg-blue-700"
                           >
                             <Edit3 className="h-3.5 w-3.5" />
@@ -879,7 +930,7 @@ export function WeeklyListClient({
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => router.push(`/supervision/weekly/${row.id}/preview`)}
+                          onClick={() => router.push(`/reports/weekly-inspection/${row.id}/preview`)}
                           className="h-8 text-xs gap-1 border-slate-200"
                         >
                           <Eye className="h-3.5 w-3.5" />
@@ -930,9 +981,9 @@ export function WeeklyListClient({
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="text-lg font-bold text-slate-900">Tạo hồ sơ báo cáo tuần</h3>
-                <p className="text-xs text-slate-500 mt-1">
-                  Chọn công trình khởi tạo và một ngày thuộc tuần cần lập báo cáo.
+                <h3 className="text-lg font-bold text-slate-900">Tạo hồ sơ kiểm tra tuần</h3>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Chọn một ngày thuộc tuần cần lập hồ sơ. Công trình và hạng mục kiểm tra sẽ được bổ sung khi soạn báo cáo.
                 </p>
               </div>
               <button onClick={() => setCreateModalOpen(false)} className="text-slate-400 hover:text-slate-600">
@@ -941,30 +992,6 @@ export function WeeklyListClient({
             </div>
 
             <div className="space-y-4">
-              {/* Project Scope Selection */}
-              {projects.length > 0 && (
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Công trình khởi tạo (Tùy chọn)
-                  </label>
-                  <select
-                    value={selectedProjectId}
-                    onChange={(e) => setSelectedProjectId(e.target.value)}
-                    className="w-full h-10 rounded-xl border border-slate-300 px-3 text-sm focus:outline-none focus:border-blue-500"
-                  >
-                    <option value="">-- Chọn công trình --</option>
-                    {projects.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.code} - {p.name}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-[11px] text-slate-500 mt-1">
-                    Công trình này sẽ được gắn sẵn vào hồ sơ. Bạn có thể bổ sung hoặc thay đổi khi soạn.
-                  </p>
-                </div>
-              )}
-
               {/* Date Selection */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -980,55 +1007,203 @@ export function WeeklyListClient({
 
               {/* Week Range Preview */}
               {createWeekPreview && (
-                <div className="rounded-xl bg-blue-50 p-3.5 border border-blue-100 text-xs text-blue-900 space-y-1">
+                <div className="rounded-xl bg-blue-50/70 p-3.5 border border-blue-100 text-xs text-blue-900 space-y-1.5">
                   <div className="font-bold flex items-center gap-1.5 text-blue-800">
                     <Calendar className="h-4 w-4 text-blue-600" />
-                    <span>Phạm vi tuần báo cáo:</span>
+                    <span>Phạm vi tuần báo cáo</span>
                   </div>
-                  <div>
-                    Tuần <strong>{createWeekPreview.weekNum}</strong> / <strong>{createWeekPreview.year}</strong> (Thứ 2 <strong>{createWeekPreview.startStr}</strong> đến Chủ Nhật <strong>{createWeekPreview.endStr}</strong>)
+                  <div className="font-semibold text-sm text-blue-950">
+                    Tuần {createWeekPreview.weekNum}/{createWeekPreview.year}
+                  </div>
+                  <div className="text-slate-600 capitalize">
+                    Từ {createWeekPreview.startStr} đến {createWeekPreview.endStr}
                   </div>
                 </div>
               )}
 
-              {/* Real-time Duplicate Warning Banner */}
+              {/* Duplicate check states */}
               {checkingDuplicate && (
-                <div className="text-xs text-slate-500 italic flex items-center gap-1.5">
-                  <Clock className="h-3.5 w-3.5 animate-spin text-blue-500" />
-                  Đang kiểm tra trùng hồ sơ tuần...
+                <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-200 text-xs text-slate-500 italic flex items-center gap-2">
+                  <Clock className="h-4 w-4 animate-spin text-blue-500 shrink-0" />
+                  <span>Đang kiểm tra hồ sơ tuần...</span>
+                </div>
+              )}
+
+              {duplicateCheckError && (
+                <div className="rounded-xl bg-rose-50 p-3.5 border border-rose-200 text-xs text-rose-800 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0" />
+                    <span>Không thể kiểm tra hồ sơ của tuần này.</span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setCheckingDuplicate(true);
+                      setDuplicateCheckError(false);
+                      checkSupervisionWeeklyDuplicate(anchorDate)
+                        .then((res) => {
+                          setDuplicateCheck(res);
+                          setCheckingDuplicate(false);
+                        })
+                        .catch(() => {
+                          setCheckingDuplicate(false);
+                          setDuplicateCheckError(true);
+                        });
+                    }}
+                    className="h-7 text-xs border-rose-200 text-rose-700 hover:bg-rose-100"
+                  >
+                    Thử lại
+                  </Button>
                 </div>
               )}
 
               {duplicateCheck && !checkingDuplicate && (
-                <div className="rounded-xl bg-amber-50 p-3.5 border border-amber-200 text-xs text-amber-900 space-y-2">
-                  <div className="font-bold flex items-center gap-1.5 text-amber-800">
-                    <AlertTriangle className="h-4 w-4 text-amber-600" />
-                    <span>Đã tồn tại hồ sơ trong tuần này:</span>
-                  </div>
-                  <p>
-                    Hồ sơ: <strong>{duplicateCheck.reportNumber || `Tuần v${duplicateCheck.version}`}</strong> ({STATUS_CONFIG[duplicateCheck.status]?.label || duplicateCheck.status})
-                  </p>
-                  <div className="flex items-center gap-2 pt-1">
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setCreateModalOpen(false);
-                        router.push(`/supervision/weekly/${duplicateCheck.id}/edit`);
-                      }}
-                      className="h-8 text-xs bg-amber-600 text-white hover:bg-amber-700"
-                    >
-                      Mở hồ sơ hiện có
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleCreateDossier(true)}
-                      disabled={pending}
-                      className="h-8 text-xs border-amber-300 text-amber-800 hover:bg-amber-100"
-                    >
-                      Tạo phiên bản mới (v{duplicateCheck.version + 1})
-                    </Button>
-                  </div>
+                <div className="space-y-3">
+                  {duplicateCheck.status === "DRAFT" && (
+                    <div className="rounded-xl bg-amber-50 p-4 border border-amber-200 text-xs text-amber-900 space-y-3">
+                      <div className="font-bold flex items-center gap-1.5 text-amber-800 text-sm">
+                        <AlertTriangle className="h-4.5 w-4.5 text-amber-600 shrink-0" />
+                        <span>Tuần này đã có một hồ sơ đang soạn</span>
+                      </div>
+                      <p className="text-amber-800 leading-relaxed">
+                        Tuần này đã có một hồ sơ đang soạn. Bạn không cần tạo thêm hồ sơ mới.
+                      </p>
+                      <div className="p-2.5 bg-white/80 rounded-lg border border-amber-200 text-slate-700 space-y-1">
+                        <div>Mã/Số: <strong>{duplicateCheck.reportNumber || `Hồ sơ v${duplicateCheck.version}`}</strong></div>
+                        <div>Cập nhật gần nhất: <strong>{formatTimeAgo(duplicateCheck.updatedAt)}</strong> bởi <strong>{duplicateCheck.createdByName}</strong></div>
+                      </div>
+                      <div className="pt-1">
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            setCreateModalOpen(false);
+                            router.push(`/reports/weekly-inspection/${duplicateCheck.id}/edit`);
+                          }}
+                          className="w-full h-9 text-xs font-semibold bg-amber-600 text-white hover:bg-amber-700 gap-1.5"
+                        >
+                          <Edit3 className="h-3.5 w-3.5" />
+                          Tiếp tục soạn
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {duplicateCheck.status === "REVISION_REQUIRED" && (
+                    <div className="rounded-xl bg-rose-50 p-4 border border-rose-200 text-xs text-rose-900 space-y-3">
+                      <div className="font-bold flex items-center gap-1.5 text-rose-800 text-sm">
+                        <AlertTriangle className="h-4.5 w-4.5 text-rose-600 shrink-0" />
+                        <span>Hồ sơ tuần này đang được yêu cầu chỉnh sửa</span>
+                      </div>
+                      <p className="text-rose-800 leading-relaxed">
+                        Hồ sơ tuần này đang được yêu cầu chỉnh sửa. Hãy mở hồ sơ hiện có để cập nhật và gửi lại.
+                      </p>
+                      <div className="p-2.5 bg-white/80 rounded-lg border border-rose-200 text-slate-700 space-y-1">
+                        <div>Mã/Số: <strong>{duplicateCheck.reportNumber || `Hồ sơ v${duplicateCheck.version}`}</strong></div>
+                        <div>Cập nhật gần nhất: <strong>{formatTimeAgo(duplicateCheck.updatedAt)}</strong> bởi <strong>{duplicateCheck.createdByName}</strong></div>
+                      </div>
+                      <div className="pt-1">
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            setCreateModalOpen(false);
+                            router.push(`/reports/weekly-inspection/${duplicateCheck.id}/edit`);
+                          }}
+                          className="w-full h-9 text-xs font-semibold bg-rose-600 text-white hover:bg-rose-700 gap-1.5"
+                        >
+                          <Edit3 className="h-3.5 w-3.5" />
+                          Mở hồ sơ để chỉnh sửa
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {duplicateCheck.status === "SUBMITTED" && (
+                    <div className="rounded-xl bg-blue-50 p-4 border border-blue-200 text-xs text-blue-900 space-y-3">
+                      <div className="font-bold flex items-center gap-1.5 text-blue-800 text-sm">
+                        <Clock className="h-4.5 w-4.5 text-blue-600 shrink-0" />
+                        <span>Đang chờ duyệt</span>
+                      </div>
+                      <p className="text-blue-800 leading-relaxed">
+                        Hồ sơ tuần này đã được gửi và đang chờ duyệt.
+                      </p>
+                      <div className="p-2.5 bg-white/80 rounded-lg border border-blue-200 text-slate-700 space-y-1">
+                        <div>Mã/Số: <strong>{duplicateCheck.reportNumber || `Hồ sơ v${duplicateCheck.version}`}</strong></div>
+                        <div>Cập nhật gần nhất: <strong>{formatTimeAgo(duplicateCheck.updatedAt)}</strong> bởi <strong>{duplicateCheck.createdByName}</strong></div>
+                      </div>
+                      <div className="pt-1">
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            setCreateModalOpen(false);
+                            router.push(`/reports/weekly-inspection/${duplicateCheck.id}/preview`);
+                          }}
+                          className="w-full h-9 text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 gap-1.5"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          Xem hồ sơ
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {(duplicateCheck.status === "APPROVED" || duplicateCheck.status === "LOCKED") && (
+                    <div className="rounded-xl bg-emerald-50 p-4 border border-emerald-200 text-xs text-emerald-900 space-y-3">
+                      <div className="font-bold flex items-center gap-1.5 text-emerald-800 text-sm">
+                        <CheckCircle2 className="h-4.5 w-4.5 text-emerald-600 shrink-0" />
+                        <span>Đã phê duyệt</span>
+                      </div>
+                      <p className="text-emerald-800 leading-relaxed">
+                        Hồ sơ tuần này đã được phê duyệt.
+                      </p>
+                      <div className="p-2.5 bg-white/80 rounded-lg border border-emerald-200 text-slate-700 space-y-1">
+                        <div>Mã/Số: <strong>{duplicateCheck.reportNumber || `Hồ sơ v${duplicateCheck.version}`}</strong></div>
+                        <div>Cập nhật gần nhất: <strong>{formatTimeAgo(duplicateCheck.updatedAt)}</strong> bởi <strong>{duplicateCheck.createdByName}</strong></div>
+                      </div>
+                      <div className="pt-1">
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            setCreateModalOpen(false);
+                            router.push(`/reports/weekly-inspection/${duplicateCheck.id}/preview`);
+                          }}
+                          className="w-full h-9 text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 gap-1.5"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          Xem hồ sơ
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {duplicateCheck.status === "REJECTED" && (
+                    <div className="rounded-xl bg-rose-50 p-4 border border-rose-200 text-xs text-rose-900 space-y-3">
+                      <div className="font-bold flex items-center gap-1.5 text-rose-800 text-sm">
+                        <XCircle className="h-4.5 w-4.5 text-rose-600 shrink-0" />
+                        <span>Đã bị từ chối</span>
+                      </div>
+                      <p className="text-rose-800 leading-relaxed">
+                        Hồ sơ tuần này đã bị từ chối. Hãy mở hồ sơ để xem lý do và xử lý theo quy trình.
+                      </p>
+                      <div className="p-2.5 bg-white/80 rounded-lg border border-rose-200 text-slate-700 space-y-1">
+                        <div>Mã/Số: <strong>{duplicateCheck.reportNumber || `Hồ sơ v${duplicateCheck.version}`}</strong></div>
+                        <div>Cập nhật gần nhất: <strong>{formatTimeAgo(duplicateCheck.updatedAt)}</strong> bởi <strong>{duplicateCheck.createdByName}</strong></div>
+                      </div>
+                      <div className="pt-1">
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            setCreateModalOpen(false);
+                            router.push(`/reports/weekly-inspection/${duplicateCheck.id}/preview`);
+                          }}
+                          className="w-full h-9 text-xs font-semibold bg-rose-600 text-white hover:bg-rose-700 gap-1.5"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          Xem lý do và chỉnh sửa
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1038,7 +1213,11 @@ export function WeeklyListClient({
                 Hủy
               </Button>
               {!duplicateCheck && (
-                <Button onClick={() => handleCreateDossier(false)} disabled={pending} className="bg-blue-600 text-white hover:bg-blue-700 gap-1.5">
+                <Button
+                  onClick={handleCreateDossier}
+                  disabled={pending || checkingDuplicate || duplicateCheckError}
+                  className="bg-blue-600 text-white hover:bg-blue-700 gap-1.5"
+                >
                   <CalendarPlus className="h-4 w-4" />
                   {pending ? "Đang khởi tạo..." : "Tạo hồ sơ"}
                 </Button>
@@ -1080,7 +1259,7 @@ export function WeeklyListClient({
                 onClick={() => {
                   const id = revisionModalDossier.id;
                   setRevisionModalDossier(null);
-                  router.push(`/supervision/weekly/${id}/edit`);
+                  router.push(`/reports/weekly-inspection/${id}/edit`);
                 }}
                 className="bg-blue-600 text-white hover:bg-blue-700 gap-1.5"
               >

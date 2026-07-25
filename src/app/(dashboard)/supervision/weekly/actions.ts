@@ -149,7 +149,6 @@ export async function checkSupervisionWeeklyDuplicate(anchorDate: string) {
 
   const existing = await prisma.supervisionWeeklyDossier.findFirst({
     where: {
-      createdById: actor.id,
       weekStart,
       deletedAt: null,
     },
@@ -161,6 +160,8 @@ export async function checkSupervisionWeeklyDuplicate(anchorDate: string) {
       version: true,
       weekStart: true,
       weekEnd: true,
+      updatedAt: true,
+      createdBy: { select: { id: true, name: true } },
     },
   });
 
@@ -173,13 +174,13 @@ export async function checkSupervisionWeeklyDuplicate(anchorDate: string) {
     version: existing.version,
     weekStart: existing.weekStart.toISOString(),
     weekEnd: existing.weekEnd.toISOString(),
+    updatedAt: existing.updatedAt.toISOString(),
+    createdByName: existing.createdBy.name,
   };
 }
 
 export async function createSupervisionWeeklyDossier(
-  anchorDate: string,
-  selectedProjectId?: string,
-  options?: { forceNewVersion?: boolean }
+  anchorDate: string
 ) {
   const actor = await getActor();
   const anchor = toDateInput(anchorDate);
@@ -196,33 +197,42 @@ export async function createSupervisionWeeklyDossier(
   const nextWeekStart = addDays(weekStart, 7);
   const nextWeekEnd = addDays(weekStart, 13);
 
-  if (selectedProjectId) {
-    await assertSupervisionProjectScope(actor, selectedProjectId);
-  }
+  // Check if a non-deleted dossier already exists for this week
+  const existing = await prisma.supervisionWeeklyDossier.findFirst({
+    where: { weekStart, deletedAt: null },
+    orderBy: { version: "desc" },
+    select: { id: true, status: true },
+  });
 
-  if (!options?.forceNewVersion) {
-    const existing = await prisma.supervisionWeeklyDossier.findFirst({
-      where: { createdById: actor.id, weekStart, deletedAt: null, status: { in: ["DRAFT", "REVISION_REQUIRED"] } },
-      select: { id: true },
-    });
-    if (existing) return { id: existing.id, isExisting: true };
+  if (existing) {
+    return { id: existing.id, isExisting: true, status: existing.status };
   }
 
   const dossier = await prisma.$transaction(async (tx) => {
-    const latest = await tx.supervisionWeeklyDossier.findFirst({
-      where: { createdById: actor.id, weekStart }, orderBy: { version: "desc" }, select: { version: true },
+    // Re-check inside transaction to prevent race condition / double submit
+    const txExisting = await tx.supervisionWeeklyDossier.findFirst({
+      where: { weekStart, deletedAt: null },
+      orderBy: { version: "desc" },
+      select: { id: true, status: true },
     });
-    const version = (latest?.version ?? 0) + 1;
+    if (txExisting) {
+      return { id: txExisting.id, isExisting: true, status: txExisting.status };
+    }
+
+    const version = 1;
     const created = await tx.supervisionWeeklyDossier.create({
       data: { weekStart, weekEnd, nextWeekStart, nextWeekEnd, place: null, createdById: actor.id, version },
     });
     await tx.supervisionWeeklyRevision.create({
       data: { dossierId: created.id, actorId: actor.id, action: "CREATE", toStatus: "DRAFT", version, changedFields: "Khởi tạo hồ sơ tuần" },
     });
-    return created;
+    return { id: created.id, isExisting: false, status: "DRAFT" };
   });
+
   revalidatePath("/supervision/weekly");
-  return { id: dossier.id, isExisting: false };
+  revalidatePath("/reports/weekly-inspection");
+  revalidatePath("/reports");
+  return dossier;
 }
 
 export async function deleteSupervisionWeeklyDossier(id: string) {
@@ -241,6 +251,8 @@ export async function deleteSupervisionWeeklyDossier(id: string) {
   });
 
   revalidatePath("/supervision/weekly");
+  revalidatePath("/reports/weekly-inspection");
+  revalidatePath("/reports");
   return { success: true };
 }
 
@@ -362,6 +374,8 @@ export async function saveSupervisionWeeklyDossier(id: string, rawInput: Supervi
   });
   revalidatePath(`/supervision/weekly/${id}/edit`);
   revalidatePath("/supervision/weekly");
+  revalidatePath("/reports/weekly-inspection");
+  revalidatePath("/reports");
   return updated;
 }
 
@@ -398,6 +412,8 @@ export async function transitionSupervisionWeeklyDossier(id: string, action: Wee
   revalidatePath(`/supervision/weekly/${id}`);
   revalidatePath(`/supervision/weekly/${id}/edit`);
   revalidatePath("/supervision/weekly");
+  revalidatePath("/reports/weekly-inspection");
+  revalidatePath("/reports");
   return updated;
 }
 
