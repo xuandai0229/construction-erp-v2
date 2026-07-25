@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-07-23T10:29:17.841Z",
+  "capturedAt": "2026-07-25T04:13:34.330Z",
   "databaseFingerprint": {
     "database": "construction_erp_v2_qa_e2e_20260723",
     "host": "127.0.0.1",
@@ -9,23 +9,23 @@
     {
       "id": "ed9c81e9-2611-4380-9e81-8d20c4b31edd",
       "reportNumber": "QA-SUPERVISION-E2E-NEXT-WEEK",
-      "status": "DRAFT",
+      "status": "SUBMITTED",
       "version": 1,
-      "lockVersion": 5,
-      "submittedAt": null,
-      "reviewedAt": null,
+      "lockVersion": 12,
+      "submittedAt": "2026-07-25T04:12:27.586Z",
+      "reviewedAt": "2026-07-25T04:12:06.458Z",
       "lockedAt": null,
       "createdById": "80d1e31e-d1a6-493e-a0c1-056fe1397a5f",
-      "reviewedById": null,
+      "reviewedById": "d6f467a8-157c-40cb-94ee-60703ebe8ae4",
       "shiftSelections": [
         {
-          "id": "cmrxd5pwn0006eowkpyrjeqy4",
+          "id": "cmrzupp6h00085gwk64925fx6",
           "dossierId": "ed9c81e9-2611-4380-9e81-8d20c4b31edd",
           "documentType": "NEXT_WEEK_PLAN",
           "entryDate": "2026-08-09T17:00:00.000Z",
           "shift": "MORNING",
-          "createdAt": "2026-07-23T10:23:38.855Z",
-          "updatedAt": "2026-07-23T10:23:38.855Z"
+          "createdAt": "2026-07-25T04:10:36.857Z",
+          "updatedAt": "2026-07-25T04:10:36.857Z"
         }
       ],
       "entries": [
@@ -56,8 +56,8 @@
           "inspectionContent": "QA-NEXT-SCHEDULE-01",
           "result": null,
           "commanderProposal": "QA-NEXT-PROPOSAL-01",
-          "createdAt": "2026-07-23T10:23:38.851Z",
-          "updatedAt": "2026-07-23T10:23:38.851Z"
+          "createdAt": "2026-07-25T04:10:36.842Z",
+          "updatedAt": "2026-07-25T04:10:36.842Z"
         }
       ],
       "transitions": [],
@@ -85,8 +85,32 @@
           "manualCategoryName": null,
           "displayText": null,
           "content": "QA-NEXT-RECOMMENDATION-01",
-          "createdAt": "2026-07-23T10:23:38.856Z",
-          "updatedAt": "2026-07-23T10:23:38.856Z"
+          "createdAt": "2026-07-25T04:10:36.866Z",
+          "updatedAt": "2026-07-25T04:10:36.866Z"
+        },
+        {
+          "id": "d735d10c-86d1-4ce0-b85c-1dfe381ffb8e",
+          "dossierId": "ed9c81e9-2611-4380-9e81-8d20c4b31edd",
+          "documentType": "NEXT_WEEK_PLAN",
+          "category": "Chỉ đạo tiến độ các đội chưa đạt yêu cầu, chậm tiến độ, thi công chưa đạt chất lượng",
+          "sortOrder": 3,
+          "projectId": null,
+          "projectNameSnapshot": null,
+          "locationId": null,
+          "locationNameSnapshot": null,
+          "workItemId": null,
+          "workItemNameSnapshot": null,
+          "manualText": null,
+          "manualLocation": null,
+          "manualProjectName": null,
+          "manualWorkItemName": null,
+          "categoryItemId": null,
+          "categoryNameSnapshot": null,
+          "manualCategoryName": null,
+          "displayText": null,
+          "content": "QA-NEXT-RECOMMENDATION-02",
+          "createdAt": "2026-07-25T04:10:36.866Z",
+          "updatedAt": "2026-07-25T04:10:36.866Z"
         },
         {
           "id": "93e3552b-08a7-4cf1-bd17-00ceadf1340a",
@@ -109,8 +133,8 @@
           "manualCategoryName": null,
           "displayText": null,
           "content": "QA-NEXT-FOLLOWUP-02",
-          "createdAt": "2026-07-23T10:23:38.856Z",
-          "updatedAt": "2026-07-23T10:23:38.856Z"
+          "createdAt": "2026-07-25T04:10:36.866Z",
+          "updatedAt": "2026-07-25T04:10:36.866Z"
         },
         {
           "id": "a7a640e0-56d0-4bf4-ac8d-3a2aa0e4b181",
@@ -133,8 +157,56 @@
           "manualCategoryName": null,
           "displayText": null,
           "content": "QA-NEXT-FOLLOWUP-01",
-          "createdAt": "2026-07-23T10:23:38.856Z",
-          "updatedAt": "2026-07-23T10:23:38.856Z"
+          "createdAt": "2026-07-25T04:10:36.866Z",
+          "updatedAt": "2026-07-25T04:10:36.866Z"
+        },
+        {
+          "id": "67293899-c4c7-4a9c-9ee4-cd757bfaa233",
+          "dossierId": "ed9c81e9-2611-4380-9e81-8d20c4b31edd",
+          "documentType": "NEXT_WEEK_PLAN",
+          "category": "Xử lý phát sinh kỹ thuật, phát sinh vật liệu",
+          "sortOrder": 4,
+          "projectId": null,
+          "projectNameSnapshot": null,
+          "locationId": null,
+          "locationNameSnapshot": null,
+          "workItemId": null,
+          "workItemNameSnapshot": null,
+          "manualText": null,
+          "manualLocation": null,
+          "manualProjectName": null,
+          "manualWorkItemName": null,
+          "categoryItemId": null,
+          "categoryNameSnapshot": null,
+          "manualCategoryName": null,
+          "displayText": null,
+          "content": "QA-NEXT-RECOMMENDATION-03",
+          "createdAt": "2026-07-25T04:10:36.866Z",
+          "updatedAt": "2026-07-25T04:10:36.866Z"
+        },
+        {
+          "id": "28d12600-c4be-4ec1-8159-74caaf70aac4",
+          "dossierId": "ed9c81e9-2611-4380-9e81-8d20c4b31edd",
+          "documentType": "NEXT_WEEK_PLAN",
+          "category": "Ý kiến khác",
+          "sortOrder": 5,
+          "projectId": null,
+          "projectNameSnapshot": null,
+          "locationId": null,
+          "locationNameSnapshot": null,
+          "workItemId": null,
+          "workItemNameSnapshot": null,
+          "manualText": null,
+          "manualLocation": null,
+          "manualProjectName": null,
+          "manualWorkItemName": null,
+          "categoryItemId": null,
+          "categoryNameSnapshot": null,
+          "manualCategoryName": null,
+          "displayText": null,
+          "content": "QA-NEXT-RECOMMENDATION-04",
+          "createdAt": "2026-07-25T04:10:36.866Z",
+          "updatedAt": "2026-07-25T04:10:36.866Z"
         }
       ],
       "revisions": [
@@ -197,29 +269,113 @@
           "changedFields": "Thông tin chung; Mục I, II, III, IV; kế hoạch tuần tiếp theo",
           "reason": null,
           "createdAt": "2026-07-23T10:23:38.861Z"
+        },
+        {
+          "id": "cmrzuj0i300015gwkioni9h6d",
+          "dossierId": "ed9c81e9-2611-4380-9e81-8d20c4b31edd",
+          "actorId": "80d1e31e-d1a6-493e-a0c1-056fe1397a5f",
+          "action": "SAVE_DRAFT",
+          "fromStatus": null,
+          "toStatus": "DRAFT",
+          "version": 1,
+          "changedFields": "Thông tin chung; Mục I, II, III, IV; kế hoạch tuần tiếp theo",
+          "reason": null,
+          "createdAt": "2026-07-25T04:05:24.939Z"
+        },
+        {
+          "id": "cmrzup04n00055gwk2hzelk48",
+          "dossierId": "ed9c81e9-2611-4380-9e81-8d20c4b31edd",
+          "actorId": "80d1e31e-d1a6-493e-a0c1-056fe1397a5f",
+          "action": "SAVE_DRAFT",
+          "fromStatus": null,
+          "toStatus": "DRAFT",
+          "version": 1,
+          "changedFields": "Thông tin chung; Mục I, II, III, IV; kế hoạch tuần tiếp theo",
+          "reason": null,
+          "createdAt": "2026-07-25T04:10:04.391Z"
+        },
+        {
+          "id": "cmrzupdf500075gwkui96i8jc",
+          "dossierId": "ed9c81e9-2611-4380-9e81-8d20c4b31edd",
+          "actorId": "80d1e31e-d1a6-493e-a0c1-056fe1397a5f",
+          "action": "SAVE_DRAFT",
+          "fromStatus": null,
+          "toStatus": "DRAFT",
+          "version": 1,
+          "changedFields": "Thông tin chung; Mục I, II, III, IV; kế hoạch tuần tiếp theo",
+          "reason": null,
+          "createdAt": "2026-07-25T04:10:21.617Z"
+        },
+        {
+          "id": "cmrzupp7200095gwkyydgwp09",
+          "dossierId": "ed9c81e9-2611-4380-9e81-8d20c4b31edd",
+          "actorId": "80d1e31e-d1a6-493e-a0c1-056fe1397a5f",
+          "action": "SAVE_DRAFT",
+          "fromStatus": null,
+          "toStatus": "DRAFT",
+          "version": 1,
+          "changedFields": "Thông tin chung; Mục I, II, III, IV; kế hoạch tuần tiếp theo",
+          "reason": null,
+          "createdAt": "2026-07-25T04:10:36.878Z"
+        },
+        {
+          "id": "cmrzuppof000a5gwkjuc9trzw",
+          "dossierId": "ed9c81e9-2611-4380-9e81-8d20c4b31edd",
+          "actorId": "80d1e31e-d1a6-493e-a0c1-056fe1397a5f",
+          "action": "SUBMIT",
+          "fromStatus": "DRAFT",
+          "toStatus": "SUBMITTED",
+          "version": 1,
+          "changedFields": null,
+          "reason": null,
+          "createdAt": "2026-07-25T04:10:37.503Z"
+        },
+        {
+          "id": "cmrzurmbq000b5gwk130q00f7",
+          "dossierId": "ed9c81e9-2611-4380-9e81-8d20c4b31edd",
+          "actorId": "d6f467a8-157c-40cb-94ee-60703ebe8ae4",
+          "action": "REQUEST_REVISION",
+          "fromStatus": "SUBMITTED",
+          "toStatus": "REVISION_REQUIRED",
+          "version": 1,
+          "changedFields": null,
+          "reason": "QA-REVISION-REASON-01",
+          "createdAt": "2026-07-25T04:12:06.470Z"
+        },
+        {
+          "id": "cmrzus2mi000c5gwk98n6h7xz",
+          "dossierId": "ed9c81e9-2611-4380-9e81-8d20c4b31edd",
+          "actorId": "80d1e31e-d1a6-493e-a0c1-056fe1397a5f",
+          "action": "SUBMIT",
+          "fromStatus": "REVISION_REQUIRED",
+          "toStatus": "SUBMITTED",
+          "version": 1,
+          "changedFields": null,
+          "reason": null,
+          "createdAt": "2026-07-25T04:12:27.594Z"
         }
       ]
     },
     {
       "id": "fac16a22-2494-46c0-a67a-87943361266d",
       "reportNumber": "QA-SUPERVISION-E2E-RESULT",
-      "status": "DRAFT",
+      "status": "LOCKED",
       "version": 1,
-      "lockVersion": 14,
-      "submittedAt": null,
-      "reviewedAt": null,
-      "lockedAt": null,
+      "lockVersion": 18,
+      "submittedAt": "2026-07-25T04:12:46.343Z",
+      "reviewedAt": "2026-07-25T04:13:11.357Z",
+      "lockedAt": "2026-07-25T04:13:23.039Z",
       "createdById": "8d2c325f-a1cf-4168-8447-12b81a4d4702",
-      "reviewedById": null,
+      "reviewedById": "0226907c-f373-4f03-aaae-14fdd8ce7573",
       "shiftSelections": [
         {
-          "id": "cmrxdawgd000weowkc9iram6c",
+          "id": "cmrzump7800025gwkyqwcwif5",
           "dossierId": "fac16a22-2494-46c0-a67a-87943361266d",
           "documentType": "RESULT",
           "entryDate": "2026-07-19T17:00:00.000Z",
           "shift": "AFTERNOON",
-          "createdAt": "2026-07-23T10:27:40.621Z",
-          "updatedAt": "2026-07-23T10:27:40.621Z"
+          "createdAt": "2026-07-25T04:08:16.916Z",
+          "updatedAt": "2026-07-25T04:08:16.916Z"
         }
       ],
       "entries": [
@@ -250,8 +406,8 @@
           "inspectionContent": "QA-RESULT-SCHEDULE-01",
           "result": "QA-RESULT-OUTCOME-01",
           "commanderProposal": null,
-          "createdAt": "2026-07-23T10:27:40.618Z",
-          "updatedAt": "2026-07-23T10:27:40.618Z"
+          "createdAt": "2026-07-25T04:08:16.908Z",
+          "updatedAt": "2026-07-25T04:08:16.908Z"
         }
       ],
       "transitions": [
@@ -283,15 +439,15 @@
           "verifiedRaw": "115",
           "verifiedUnit": "m³",
           "verifiedUnitCode": "CUBIC_METER",
-          "verificationMode": null,
+          "verificationMode": "DIFFERENT",
           "varianceQuantity": "-5",
           "varianceReason": "QA-RESULT-TRANSITION-01",
           "plannedProgress": "QA-RESULT-TRANSITION-PROGRESS-01",
           "currentStep": null,
           "proposedStep": null,
           "conclusion": null,
-          "createdAt": "2026-07-23T10:27:40.623Z",
-          "updatedAt": "2026-07-23T10:27:40.623Z"
+          "createdAt": "2026-07-25T04:08:16.920Z",
+          "updatedAt": "2026-07-25T04:08:16.920Z"
         }
       ],
       "quantities": [
@@ -325,13 +481,13 @@
           "verifiedUnit": "m²",
           "verifiedUnitCode": "SQUARE_METER",
           "verifiedQuantity": "95",
-          "verificationMode": null,
+          "verificationMode": "DIFFERENT",
           "varianceQuantity": "-5",
           "varianceReason": "QA-RESULT-QUANTITY-01",
           "plannedProgress": null,
           "conclusion": null,
-          "createdAt": "2026-07-23T10:27:40.624Z",
-          "updatedAt": "2026-07-23T10:27:40.624Z"
+          "createdAt": "2026-07-25T04:08:16.926Z",
+          "updatedAt": "2026-07-25T04:08:16.926Z"
         }
       ],
       "progressRows": [
@@ -358,8 +514,8 @@
           "delayValue": "3",
           "delayType": "DAY",
           "delayReason": "QA-RESULT-PROGRESS-REASON-01",
-          "createdAt": "2026-07-23T10:27:40.626Z",
-          "updatedAt": "2026-07-23T10:27:40.626Z"
+          "createdAt": "2026-07-25T04:08:16.931Z",
+          "updatedAt": "2026-07-25T04:08:16.931Z"
         }
       ],
       "observations": [],
@@ -531,14 +687,62 @@
           "changedFields": "Thông tin chung; Mục I, II, III, IV; kế hoạch tuần tiếp theo",
           "reason": null,
           "createdAt": "2026-07-23T10:27:40.627Z"
+        },
+        {
+          "id": "cmrzump7u00035gwknan26fjn",
+          "dossierId": "fac16a22-2494-46c0-a67a-87943361266d",
+          "actorId": "8d2c325f-a1cf-4168-8447-12b81a4d4702",
+          "action": "SAVE_DRAFT",
+          "fromStatus": null,
+          "toStatus": "DRAFT",
+          "version": 1,
+          "changedFields": "Thông tin chung; Mục I, II, III, IV; kế hoạch tuần tiếp theo",
+          "reason": null,
+          "createdAt": "2026-07-25T04:08:16.938Z"
+        },
+        {
+          "id": "cmrzush3f000d5gwk2klarwed",
+          "dossierId": "fac16a22-2494-46c0-a67a-87943361266d",
+          "actorId": "8d2c325f-a1cf-4168-8447-12b81a4d4702",
+          "action": "SUBMIT",
+          "fromStatus": "DRAFT",
+          "toStatus": "SUBMITTED",
+          "version": 1,
+          "changedFields": null,
+          "reason": null,
+          "createdAt": "2026-07-25T04:12:46.347Z"
+        },
+        {
+          "id": "cmrzut0ef000e5gwkjb0xj7oa",
+          "dossierId": "fac16a22-2494-46c0-a67a-87943361266d",
+          "actorId": "0226907c-f373-4f03-aaae-14fdd8ce7573",
+          "action": "APPROVE",
+          "fromStatus": "SUBMITTED",
+          "toStatus": "APPROVED",
+          "version": 1,
+          "changedFields": null,
+          "reason": null,
+          "createdAt": "2026-07-25T04:13:11.367Z"
+        },
+        {
+          "id": "cmrzut9eu000f5gwka006ct7y",
+          "dossierId": "fac16a22-2494-46c0-a67a-87943361266d",
+          "actorId": "0226907c-f373-4f03-aaae-14fdd8ce7573",
+          "action": "LOCK",
+          "fromStatus": "APPROVED",
+          "toStatus": "LOCKED",
+          "version": 1,
+          "changedFields": null,
+          "reason": null,
+          "createdAt": "2026-07-25T04:13:23.047Z"
         }
       ]
     }
   ],
   "runtimeRows": {
     "shiftSelections": [
-      "cmrxd5pwn0006eowkpyrjeqy4",
-      "cmrxdawgd000weowkc9iram6c"
+      "cmrzupp6h00085gwk64925fx6",
+      "cmrzump7800025gwkyqwcwif5"
     ],
     "entries": [
       "3b8fd36b-59a2-4b87-84a7-1a233ec3fb30",
@@ -555,8 +759,11 @@
     ],
     "observations": [
       "2188047d-bc68-4825-b380-53364b133e06",
+      "d735d10c-86d1-4ce0-b85c-1dfe381ffb8e",
       "93e3552b-08a7-4cf1-bd17-00ceadf1340a",
-      "a7a640e0-56d0-4bf4-ac8d-3a2aa0e4b181"
+      "a7a640e0-56d0-4bf4-ac8d-3a2aa0e4b181",
+      "67293899-c4c7-4a9c-9ee4-cd757bfaa233",
+      "28d12600-c4be-4ec1-8159-74caaf70aac4"
     ],
     "revisions": [
       "253ec9c3-6498-4210-a5b9-fbe809e2fe46",
@@ -564,6 +771,13 @@
       "cmrxd512f0003eowkw5u0jpf0",
       "cmrxd5b760005eowks6ai1djf",
       "cmrxd5pwt0007eowkmt1bvl2e",
+      "cmrzuj0i300015gwkioni9h6d",
+      "cmrzup04n00055gwk2hzelk48",
+      "cmrzupdf500075gwkui96i8jc",
+      "cmrzupp7200095gwkyydgwp09",
+      "cmrzuppof000a5gwkjuc9trzw",
+      "cmrzurmbq000b5gwk130q00f7",
+      "cmrzus2mi000c5gwk98n6h7xz",
       "50bd5975-a21c-4dff-b45d-3ab55284c4ee",
       "cmrxd7xh70009eowkq28w6jtw",
       "cmrxd828i000beowkp0o2irn0",
@@ -577,7 +791,11 @@
       "cmrxd9w8n000reowkt8ejobs0",
       "cmrxdaerc000teowk4yg0jbj0",
       "cmrxdaj2w000veowk7sxoutji",
-      "cmrxdawgj000xeowk2tbmdg3t"
+      "cmrxdawgj000xeowk2tbmdg3t",
+      "cmrzump7u00035gwknan26fjn",
+      "cmrzush3f000d5gwk2klarwed",
+      "cmrzut0ef000e5gwkjb0xj7oa",
+      "cmrzut9eu000f5gwka006ct7y"
     ]
   }
 }

@@ -106,30 +106,56 @@ export function ResultScheduleTable({ documentType, startDate, entries, selectio
   const contentHeader = documentType === "RESULT" ? "Nội dung kiểm tra" : "Phát sinh do chỉ huy công trình đề xuất";
   const resultHeader = documentType === "RESULT" ? "Kết quả" : "Nội dung (có phụ lục kèm theo)";
 
+  const headerGridClass = editable
+    ? "hidden grid-cols-[17%_minmax(0,30fr)_minmax(0,30fr)_minmax(0,23fr)_44px] bg-slate-100 text-xs font-bold text-slate-700 md:grid"
+    : "hidden grid-cols-[17%_minmax(0,30fr)_minmax(0,30fr)_minmax(0,23fr)] bg-slate-100 text-xs font-bold text-slate-700 md:grid";
+
+  const entryGridClass = editable
+    ? "group relative grid grid-cols-1 border-t border-slate-100 md:grid-cols-[minmax(0,30fr)_minmax(0,30fr)_minmax(0,23fr)_44px]"
+    : "group relative grid grid-cols-1 border-t border-slate-100 md:grid-cols-[minmax(0,30fr)_minmax(0,30fr)_minmax(0,23fr)]";
+
   return <section data-section="I" data-testid={`schedule-${documentType.toLocaleLowerCase()}`}>
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-      <div className="hidden grid-cols-[17%_minmax(0,30fr)_minmax(0,30fr)_minmax(0,23fr)_44px] bg-slate-100 text-xs font-bold text-slate-700 md:grid"><div className="border-r border-slate-300 p-3">{documentType === "RESULT" ? "Thời gian kiểm tra" : "Ngày/thứ"}</div><div className="border-r border-slate-300 p-3 text-center">{documentType === "RESULT" ? "Công trình và hạng mục kiểm tra" : "Công trình"}</div><div className="border-r border-slate-300 p-3 text-center">{contentHeader}</div><div className="border-r border-slate-300 p-3 text-center">{resultHeader}</div><div className="shrink-0 w-[44px]"></div></div>
-      {dates.map((date) => <div key={date} data-testid={`day-${documentType}-${date}`} className="border-t border-slate-200 first:border-t-0 md:grid md:grid-cols-[17%_83%]">
-        <div className="bg-slate-50 p-3 md:border-r md:border-slate-200 md:bg-white"><div className="font-bold text-slate-900">{editorDateLabel(date)}</div><div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 md:block md:space-y-2">{shifts.map((shift) => <label key={shift} className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-700"><input type="checkbox" disabled={!editable} checked={isActive(date, shift)} onChange={(event) => event.target.checked ? activateShift(date, shift) : requestDeactivate(date, shift)} data-testid={`shift-${documentType}-${date}-${shift}`} className="h-4 w-4 rounded border-slate-300 text-blue-600" />{shiftLabels[shift]}</label>)}</div></div>
-        <div>{shifts.filter((shift) => isActive(date, shift)).length === 0 ? <p className="p-3 text-sm text-slate-400">Chưa phát sinh lịch kiểm tra.</p> : shifts.filter((shift) => isActive(date, shift)).map((shift) => {
-          const slotEntries = documentEntries.filter((entry) => entry.entryDate === date && entry.shift === shift).sort((a, b) => a.sortOrder - b.sortOrder);
-          return <div key={shift} className="border-b border-slate-200 last:border-b-0" data-testid={`slot-${documentType}-${date}-${shift}`}><div className="bg-blue-50/70 px-3 py-1.5 text-xs font-bold text-blue-800">{shiftLabels[shift]}</div>{slotEntries.map((entry, entryIndex) => {
-            const key = rowKey(entry);
-            return <div key={key} className="group relative grid grid-cols-1 border-t border-slate-100 md:grid-cols-[minmax(0,30fr)_minmax(0,30fr)_minmax(0,23fr)_44px]" data-testid={`entry-${documentType}-${date}-${shift}-${entryIndex}`}>
-              <div className="border-b border-slate-200 p-2 md:border-b-0 md:border-r"><SourceSelector value={entry} projects={projects} editable={editable} testId={`entry-source-${documentType}-${date}-${shift}-${entryIndex}`} autoFocusToken={focusKey === key ? focusToken : undefined} onChange={(patch) => updateEntry(entry, patch)} /></div>
-              <div className="border-b border-slate-200 p-2 md:border-b-0 md:border-r">
-                {documentType === "RESULT" ? (
-                  <InspectionWorkSelector value={entry} editable={editable} testId={`entry-content-${documentType}-${date}-${shift}-${entryIndex}`} onChange={(patch) => updateEntry(entry, patch)} />
-                ) : (
-                  <AutoTextarea disabled={!editable} value={entry.commanderProposal || ""} onChange={(value) => updateEntry(entry, { commanderProposal: value || null })} placeholder="Nhập nội dung đề xuất..." testId={`entry-content-${documentType}-${date}-${shift}-${entryIndex}`} />
-                )}
-              </div>
-              <div className="border-b border-slate-200 p-2 md:border-b-0 md:border-r"><AutoTextarea disabled={!editable} value={documentType === "RESULT" ? entry.result || "" : entry.inspectionContent || ""} onChange={(value) => updateEntry(entry, documentType === "RESULT" ? { result: value || null } : { inspectionContent: value || null })} placeholder={documentType === "RESULT" ? "Nhập kết quả..." : "Nhập nội dung kế hoạch..."} testId={`entry-result-${documentType}-${date}-${shift}-${entryIndex}`} /></div>
-              {editable ? <div className="p-1 align-top border-b md:border-b-0 border-slate-200"><div className="opacity-100 transition md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"><RowActionMenu canMoveUp={entryIndex > 0} canMoveDown={entryIndex < slotEntries.length - 1} onMoveUp={() => moveEntry(entry, -1)} onMoveDown={() => moveEntry(entry, 1)} onDuplicate={() => duplicateEntry(entry)} onDelete={() => deleteEntry(entry)} testId={`entry-actions-${documentType}-${date}-${shift}-${entryIndex}`} /></div></div> : null}
-            </div>;
-          })}{editable ? <div className="border-t border-dashed border-slate-200 p-2"><button type="button" onClick={() => addEntry(date, shift)} data-testid={`add-inspection-${documentType}-${date}-${shift}`} className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-bold text-blue-700 hover:bg-blue-50"><Plus className="h-4 w-4" />{documentType === "RESULT" ? "Thêm dòng kiểm tra" : "Thêm công việc kiểm tra"}</button></div> : null}</div>;
-        })}</div>
-      </div>)}
+      <div className={headerGridClass}>
+        <div className="border-r border-slate-300 p-3">{documentType === "RESULT" ? "Thời gian kiểm tra" : "Ngày/thứ"}</div>
+        <div className="border-r border-slate-300 p-3 text-center">{documentType === "RESULT" ? "Công trình và hạng mục kiểm tra" : "Công trình"}</div>
+        <div className="border-r border-slate-300 p-3 text-center">{contentHeader}</div>
+        <div className="border-r border-slate-300 p-3 text-center">{resultHeader}</div>
+        {editable ? <div className="shrink-0 w-[44px]"></div> : null}
+      </div>
+      {dates.map((date) => {
+        const activeShifts = shifts.filter((shift) => isActive(date, shift));
+        const isCompact = activeShifts.length === 0;
+
+        return <div key={date} data-testid={`day-${documentType}-${date}`} className="border-t border-slate-200 first:border-t-0 md:grid md:grid-cols-[17%_83%] md:items-start">
+          <div className={`bg-slate-50 md:border-r md:border-slate-200 md:bg-white ${isCompact ? "p-2.5 sm:p-3" : "p-3"}`}>
+            <div className="font-bold text-slate-900 text-sm">{editorDateLabel(date)}</div>
+            <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1.5 md:block md:space-y-1.5">
+              {shifts.map((shift) => <label key={shift} className="flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-slate-700"><input type="checkbox" disabled={!editable} checked={isActive(date, shift)} onChange={(event) => event.target.checked ? activateShift(date, shift) : requestDeactivate(date, shift)} data-testid={`shift-${documentType}-${date}-${shift}`} className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />{shiftLabels[shift]}</label>)}
+            </div>
+          </div>
+          <div className={isCompact ? "flex items-center p-3 text-xs text-slate-400 min-h-[44px]" : ""}>
+            {isCompact ? <p>Chưa phát sinh lịch kiểm tra trong ngày.</p> : activeShifts.map((shift) => {
+              const slotEntries = documentEntries.filter((entry) => entry.entryDate === date && entry.shift === shift).sort((a, b) => a.sortOrder - b.sortOrder);
+              return <div key={shift} className="border-b border-slate-200 last:border-b-0" data-testid={`slot-${documentType}-${date}-${shift}`}><div className="bg-blue-50/70 px-3 py-1.5 text-xs font-bold text-blue-800">{shiftLabels[shift]}</div>{slotEntries.map((entry, entryIndex) => {
+                const key = rowKey(entry);
+                return <div key={key} className={entryGridClass} data-testid={`entry-${documentType}-${date}-${shift}-${entryIndex}`}>
+                  <div className="border-b border-slate-200 p-2 md:border-b-0 md:border-r"><SourceSelector value={entry} projects={projects} editable={editable} testId={`entry-source-${documentType}-${date}-${shift}-${entryIndex}`} autoFocusToken={focusKey === key ? focusToken : undefined} onChange={(patch) => updateEntry(entry, patch)} /></div>
+                  <div className="border-b border-slate-200 p-2 md:border-b-0 md:border-r">
+                    {documentType === "RESULT" ? (
+                      <InspectionWorkSelector value={entry} editable={editable} testId={`entry-content-${documentType}-${date}-${shift}-${entryIndex}`} onChange={(patch) => updateEntry(entry, patch)} />
+                    ) : (
+                      <AutoTextarea disabled={!editable} value={entry.commanderProposal || ""} onChange={(value) => updateEntry(entry, { commanderProposal: value || null })} placeholder="Nhập nội dung đề xuất..." testId={`entry-content-${documentType}-${date}-${shift}-${entryIndex}`} />
+                    )}
+                  </div>
+                  <div className="border-b border-slate-200 p-2 md:border-b-0 md:border-r"><AutoTextarea disabled={!editable} value={documentType === "RESULT" ? entry.result || "" : entry.inspectionContent || ""} onChange={(value) => updateEntry(entry, documentType === "RESULT" ? { result: value || null } : { inspectionContent: value || null })} placeholder={documentType === "RESULT" ? "Nhập kết quả..." : "Nhập nội dung kế hoạch..."} testId={`entry-result-${documentType}-${date}-${shift}-${entryIndex}`} /></div>
+                  {editable ? <div className="p-1 align-top border-b md:border-b-0 border-slate-200"><div className="opacity-100 transition md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"><RowActionMenu canMoveUp={entryIndex > 0} canMoveDown={entryIndex < slotEntries.length - 1} onMoveUp={() => moveEntry(entry, -1)} onMoveDown={() => moveEntry(entry, 1)} onDuplicate={() => duplicateEntry(entry)} onDelete={() => deleteEntry(entry)} testId={`entry-actions-${documentType}-${date}-${shift}-${entryIndex}`} /></div></div> : null}
+                </div>;
+              })}{editable ? <div className="border-t border-dashed border-slate-200 p-2"><button type="button" onClick={() => addEntry(date, shift)} data-testid={`add-inspection-${documentType}-${date}-${shift}`} className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-xs font-bold text-blue-700 hover:bg-blue-50"><Plus className="h-4 w-4" />{documentType === "RESULT" ? "Thêm dòng kiểm tra" : "Thêm công việc kiểm tra"}</button></div> : null}</div>;
+            })}
+          </div>
+        </div>;
+      })}
     </div>
   </section>;
 }

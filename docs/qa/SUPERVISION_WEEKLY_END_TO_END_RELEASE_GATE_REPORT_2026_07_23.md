@@ -1,7 +1,7 @@
 # Supervision Weekly End-to-End Release Gate Report
 
-Date: 2026-07-23  
-Conclusion: **BLOCKED**
+Date: 2026-07-25
+Conclusion: **NO-GO**
 
 ## 1. Executive conclusion
 
@@ -363,3 +363,256 @@ one new additive migration for the four nullable weekly columns. After that:
 6. collect Word/PDF/print/RBAC/responsive evidence;
 7. clean only manifest-owned QA records;
 8. revise this report with the actual GO/NO-GO outcome.
+
+---
+
+# Final reconciliation and release-gate continuation — 2026-07-25
+
+This section is the authoritative final outcome. The historical P2022 blocker
+and schema-drift investigation above are intentionally retained.
+
+## A. Final conclusion
+
+**NO-GO**
+
+The additive migration is valid, deployed successfully to the isolated QA
+database, and eliminates P2022. Runtime save, workflow, Preview, PDF, and the
+tested concurrency protections work. The release cannot be marked GO because:
+
+1. the 390×844 document view has whole-page horizontal overflow and clips the
+   toolbar/content;
+2. the real RESULT DOCX opened in Microsoft Word has a third page that is
+   almost entirely blank, which violates the no-unreasonable-blank-page gate;
+3. the mandatory browser Print Preview 3–5-page evidence was not completed;
+4. the complete direct-API RBAC/export failure matrix was not evidenced.
+
+Consequently, the migration was **not** deployed to the application database.
+No application database mutation was performed, and no backup/snapshot was
+claimed.
+
+## B. Type audit and migration
+
+Migration:
+`20260723120000_supervision_weekly_verification_fields_reconcile`
+
+```sql
+ALTER TABLE "SupervisionWeeklyTransition"
+  ADD COLUMN IF NOT EXISTS "verificationMode" TEXT,
+  ADD COLUMN IF NOT EXISTS "varianceReason" TEXT;
+
+ALTER TABLE "SupervisionWeeklyQuantity"
+  ADD COLUMN IF NOT EXISTS "verificationMode" TEXT,
+  ADD COLUMN IF NOT EXISTS "varianceReason" TEXT;
+```
+
+| Model.field | Prisma type | Application DB type | Nullable | Default |
+| --- | --- | --- | ---: | --- |
+| `SupervisionWeeklyTransition.verificationMode` | `String?` | `text` | YES | none |
+| `SupervisionWeeklyTransition.varianceReason` | `String?` | `text` | YES | none |
+| `SupervisionWeeklyQuantity.verificationMode` | `String?` | `text` | YES | none |
+| `SupervisionWeeklyQuantity.varianceReason` | `String?` | `text` | YES | none |
+
+The migration contains exactly four additive `TEXT NULL` columns with no
+default or backfill. A forbidden-token scan found no `DROP`, `TRUNCATE`,
+`DELETE`, `UPDATE`, `RENAME`, `NOT NULL`, or `DEFAULT`.
+
+## C. QA migration deployment and metadata
+
+- Safety guard: PASS, `safe: true`.
+- Fingerprint: `construction_erp_v2_qa_e2e_20260723` on
+  `127.0.0.1:5432`.
+- `prisma migrate deploy`: PASS.
+- `_prisma_migrations`: the reconciliation migration is finished; the clean QA
+  history contains ten completed migrations.
+- Post-deploy metadata: all four columns are `text`, nullable `YES`, default
+  `null`.
+- Fixture manifest stayed unique and retained two dossiers until evidence
+  collection was complete.
+
+## D. Editor runtime and persistence
+
+| Gate | RESULT | NEXT_WEEK_PLAN |
+| --- | --- | --- |
+| HTTP/editor render | PASS; HTTP 200, no P2022 | PASS; HTTP 200, no P2022 |
+| Save/autosave/reload | PASS | PASS |
+| Reopen and DB comparison | PASS | PASS |
+| Dossier isolation | PASS | PASS |
+
+RESULT persisted:
+`QA-RESULT-SCHEDULE-01`, `QA-RESULT-TRANSITION-01`,
+`QA-RESULT-QUANTITY-01`, and `QA-RESULT-PROGRESS-01`.
+The migrated transition and quantity fields round-tripped as
+`verificationMode=DIFFERENT` with their respective variance reasons.
+
+NEXT_WEEK_PLAN persisted `QA-NEXT-SCHEDULE-01`,
+`QA-NEXT-FOLLOWUP-01..02`, and `QA-NEXT-RECOMMENDATION-01..04`.
+Database evidence showed stable sort order, correct row counts, no duplicate
+rows, and no persisted `temp-*` IDs.
+
+## E. Workflow and race conditions
+
+- RESULT: `DRAFT → SUBMITTED → APPROVED → LOCKED` PASS. Final
+  `lockVersion=18`; the locked editor was read-only.
+- NEXT_WEEK_PLAN:
+  `DRAFT → SUBMITTED → REVISION_REQUIRED → SUBMITTED` PASS. Revision reason
+  `QA-REVISION-REASON-01` persisted; final `lockVersion=12`.
+- Double submit: PASS; one effective transition/revision increment, with the
+  duplicate action suppressed/controlled.
+- Late autosave after submit: PASS; latest content persisted and status stayed
+  `SUBMITTED` after more than ten seconds.
+- Two stale tabs: PASS; the stale tab received a version conflict and did not
+  overwrite the first tab.
+- Cross-dossier row ID: fixed and exercised; the server rejects non-temporary
+  row IDs not owned by the current dossier without mutation.
+- Status badges survived reload; autosave did not downgrade workflow state.
+
+## F. Data parity
+
+| Trace/data group | Editor | Database | Canonical DTO | Preview | Word | PDF |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| RESULT schedule/transition/quantity/progress | PASS | PASS | PASS | PASS | Content present | PASS |
+| Migrated verification/variance fields | PASS | PASS | PASS | PASS | Present where applicable | PASS |
+| NEXT schedule/follow-up 1–2/recommendation 1–4 | PASS | PASS | PASS | PASS | Content present | PASS |
+| Cross-document isolation and row order/count | PASS | PASS | PASS | PASS | PASS | PASS |
+
+The trace values were compared individually rather than assigning a blanket
+parity result. RESULT traces did not appear in NEXT_WEEK_PLAN and vice versa.
+
+## G. Preview, Word, PDF, and browser print
+
+### Preview
+
+PASS for both document types. Preview flushes pending saves, displays only the
+selected document, preserves trace data, and does not show application shell
+content. Fresh first/middle/end evidence was collected through the rendered
+multi-page PDF artifacts as well as preview screenshots.
+
+### Word
+
+**FAIL.** Both downloads are valid DOCX ZIP packages. Structural inspection
+found Times New Roman, A4 portrait sections, 1.5 cm margins, expected tables,
+and the trace values. The RESULT file was also opened in the real Microsoft
+Word desktop application. Word reported three pages, and page 3 was almost
+entirely blank except for a small continuation fragment at the top. Therefore
+the DOCX gate is not satisfied. NEXT_WEEK_PLAN was not promoted to visual PASS
+after the first mandatory Word visual failure.
+
+### PDF
+
+PASS for the successful export path:
+
+- RESULT: valid four-page landscape A4 PDF;
+- NEXT_WEEK_PLAN: valid three-page landscape A4 PDF;
+- all seven pages were rasterized and visually inspected;
+- no application shell, browser toolbar, localhost URL, browser timestamp,
+  clipped right border, or missing signature was observed.
+
+The requested forced error branches for missing/invalid render origin and
+synthetic `page.goto`/`page.pdf` failures were not all re-executed in this
+continuation, so they are not used as GO evidence.
+
+### Browser print
+
+**NOT PASS.** The explicit browser Print Preview 3–5-page matrix was not
+completed. PDF pagination is not substituted for this mandatory gate.
+
+## H. RBAC and cross-project
+
+Observed server-side protections include:
+
+- a principal outside the dossier author scope could view but was refused a
+  save (`Chỉ người lập mới được sửa...`);
+- stale/cross-dossier row IDs were rejected without ownership reassignment;
+- locked dossiers rejected editing;
+- the authorized reviewer completed review transitions.
+
+The entire direct-route matrix (every Project A/B view/export permutation,
+ordinary-user approve, unauthorized lock, and every direct export API call)
+was not captured with independent request/DB evidence. This section therefore
+does not satisfy the full GO gate.
+
+## I. Responsive and regression
+
+Responsive screenshots were captured at 1440×900, 1280×800, 1024×768,
+768×1024, and 390×844. Desktop/tablet states were usable. The 390×844 state
+has horizontal page overflow and clipped document controls/content:
+**responsive FAIL**.
+
+Final regression results:
+
+| Check | Result |
+| --- | --- |
+| `npx prisma validate` | PASS |
+| `npx prisma generate` | PASS |
+| `npx tsc --noEmit` | PASS after restoring required editor imports |
+| Scoped Supervision Weekly ESLint | 0 errors, 18 warnings |
+| Node/tsx scoped tests | 6/6 PASS |
+| Vitest scoped tests | 17/17 PASS |
+| `npm run build` | PASS |
+
+Total correctly invoked scoped tests: 23/23 PASS. The build retained one
+Turbopack dynamic filesystem tracing warning. Route navigation smoke covered
+`/dashboard`, `/projects`, `/reports`, `/materials`, `/documents`,
+`/approvals`, `/settings`, `/tasks`, and `/supervision/weekly`; several title
+observations were timing-inconclusive and are not overstated as a full runtime
+PASS. No legacy files were mass-edited to improve lint totals.
+
+## J. Application database deployment
+
+**NOT DEPLOYED.** The application database was verified read-only during the
+type audit, but the full QA gate is NO-GO and a backup/snapshot was not
+confirmed. The application migration history therefore remains unsynchronized.
+This is the required safe outcome under the deployment rules.
+
+## K. Fixture cleanup
+
+Cleanup completed after evidence capture:
+
+- dry-run verified the exact manifest IDs and QA fingerprint;
+- apply ran in one transaction;
+- deleted exactly 2 dossiers, 5 field progress items, 2 templates, 4 scope
+  project links, 3 scopes, 4 project memberships, 2 projects, and 5 users;
+- post-transaction exact-ID counts are zero in every category;
+- the QA database itself was not deleted;
+- the application database was not mutated.
+
+## L. Defects found and changes made
+
+Fixed during this continuation:
+
+1. missing migration-history columns causing Prisma P2022;
+2. derived `verificationMode` persistence for transition/quantity values;
+3. acceptance of a row ID owned by another dossier;
+4. missing revision reason capture/validation;
+5. dedicated QA server build directory so port 3100 does not repoint the
+   existing port-3000 process.
+
+Open release blockers:
+
+1. mobile whole-page horizontal overflow/clipping at 390×844;
+2. unreasonable near-blank third page in RESULT DOCX;
+3. missing explicit Browser Print Preview evidence;
+4. incomplete full direct-API RBAC/export evidence.
+
+## M. Evidence index
+
+- Migration SQL:
+  `prisma/migrations/20260723120000_supervision_weekly_verification_fields_reconcile/migration.sql`
+- Schema metadata:
+  `artifacts/supervision-weekly-e2e/schema-reconcile-metadata-20260725.json`
+- Runtime DB state:
+  `artifacts/supervision-weekly-e2e/runtime-state.json`
+- Cleanup evidence:
+  `artifacts/supervision-weekly-e2e/cleanup-evidence-20260725.json`
+- Editors and previews:
+  `artifacts/supervision-weekly-e2e/screenshots/final-*-20260725.*`
+- Responsive:
+  `artifacts/supervision-weekly-e2e/screenshots/responsive/final-*-20260725.png`
+- DOCX/PDF:
+  `artifacts/supervision-weekly-e2e/exports/*-final-20260725.*`
+- Rendered PDF pages:
+  `artifacts/supervision-weekly-e2e/renders/final-pdf-*-20260725/`
+- QA server logs:
+  `artifacts/supervision-weekly-e2e/server/qa-server-final-run.*.log`
+
+The final release-gate conclusion is **NO-GO**.

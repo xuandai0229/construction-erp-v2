@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { calculateSupervisionVariance, parseLocalizedNumber, parseSupervisionQuantityInput } from "../../src/lib/supervision-weekly/quantity";
+import { calculateSupervisionVariance, deriveSupervisionVerificationMode, parseLocalizedNumber, parseSupervisionQuantityInput } from "../../src/lib/supervision-weekly/quantity";
 
 test("parses Vietnamese and international quantity formats without changing thousands into decimals", () => {
   assert.equal(parseLocalizedNumber("120"), 120);
@@ -29,4 +29,10 @@ test("calculates variance only for equal normalized unit codes", () => {
   assert.equal(calculateSupervisionVariance({ value: 120, unitCode: "CUBIC_METER" }, { value: 115, unitCode: "CUBIC_METER" }), -5);
   assert.equal(calculateSupervisionVariance({ value: 2, unitCode: "TON" }, { value: 1.5, unitCode: "TON" }), -0.5);
   assert.equal(calculateSupervisionVariance({ value: 50, unitCode: "SQUARE_METER" }, { value: 40000, unitCode: "KILOGRAM" }), null);
+});
+
+test("derives canonical verification modes from the smart quantity values", () => {
+  assert.equal(deriveSupervisionVerificationMode(100, 100, null, null, "SQUARE_METER", "m²"), "MATCH_REPORT");
+  assert.equal(deriveSupervisionVerificationMode(100, 95, null, null, "SQUARE_METER", "m²"), "DIFFERENT");
+  assert.equal(deriveSupervisionVerificationMode(100, null, null, null, "SQUARE_METER", "m²"), null);
 });

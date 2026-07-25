@@ -106,6 +106,7 @@ export function calculateSupervisionVariance(
 }
 
 export type SupervisionVarianceStatus = "UNCHECKED" | "MATCH" | "SHORTAGE" | "EXCESS";
+export type SupervisionVerificationMode = "MATCH_REPORT" | "DIFFERENT" | null;
 
 export type SupervisionQuantityVarianceResult = {
   status: SupervisionVarianceStatus;
@@ -171,4 +172,25 @@ export function calculateSupervisionQuantityVariance(
     unit: unitStr,
     displayText
   };
+}
+
+export function deriveSupervisionVerificationMode(
+  reportedValue: number | null | undefined,
+  verifiedValue: number | null | undefined,
+  reportedText: string | null | undefined,
+  verifiedText: string | null | undefined,
+  unitCode: string | null | undefined,
+  unitLabel: string | null | undefined,
+): SupervisionVerificationMode {
+  const status = calculateSupervisionQuantityVariance(
+    reportedValue,
+    verifiedValue,
+    reportedText,
+    verifiedText,
+    unitCode,
+    unitLabel,
+    null,
+  ).status;
+  if (status === "UNCHECKED") return null;
+  return status === "MATCH" ? "MATCH_REPORT" : "DIFFERENT";
 }

@@ -1,0 +1,32 @@
+{
+  "capturedAt": "2026-07-25",
+  "databaseFingerprint": {
+    "database": "construction_erp_v2_qa_e2e_20260723",
+    "host": "127.0.0.1",
+    "port": "5432"
+  },
+  "dryRunPassed": true,
+  "transactionApplied": true,
+  "deleted": {
+    "users": 5,
+    "projects": 2,
+    "projectMembers": 4,
+    "scopes": 3,
+    "scopeProjects": 4,
+    "templates": 2,
+    "fieldProgressItems": 5,
+    "dossiers": 2
+  },
+  "after": {
+    "users": 0,
+    "projects": 0,
+    "projectMembers": 0,
+    "scopes": 0,
+    "scopeProjects": 0,
+    "templates": 0,
+    "fieldProgressItems": 0,
+    "dossiers": 0
+  },
+  "qaDatabaseDeleted": false,
+  "applicationDatabaseMutated": false
+}

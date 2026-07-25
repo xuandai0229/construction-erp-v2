@@ -103,6 +103,12 @@ export type WeeklyProgress = WeeklySource & {
   delayReason: string | null;
 };
 
+export type WeeklyRevisionInfo = {
+  actorName: string;
+  reason: string | null;
+  createdAt: string;
+};
+
 export type WeeklyEditorDossier = {
   id: string;
   reportNumber: string | null;
@@ -117,6 +123,7 @@ export type WeeklyEditorDossier = {
   status: string;
   version: number;
   lockVersion: number;
+  latestRevision?: WeeklyRevisionInfo | null;
   entries: WeeklyEntry[];
   shiftSelections: WeeklyShiftSelection[];
   observations: WeeklyObservation[];

@@ -71,3 +71,5 @@ docs/qa/screenshots/
 # Storage
 /storage/
 /storage/**
+
+.next-qa/

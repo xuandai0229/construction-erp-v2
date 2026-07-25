@@ -14,8 +14,12 @@ export default async function SupervisionWeeklyEditPage({ params }: { params: Pr
   if (!canUseSupervisionWeekly(session.role)) redirect("/dashboard");
   const [dossier, projects] = await Promise.all([getSupervisionWeeklyDossier(id), getSupervisionWeeklyProjects()]);
   if (!dossier) notFound();
+  const revisionEntry = dossier.status === "REVISION_REQUIRED"
+    ? dossier.revisions.find((r) => r.action === "REQUEST_REVISION")
+    : null;
   return <WeeklyEditor canReview={canReviewSupervisionWeekly(session.role)} projects={projects} initial={{
       id: dossier.id, reportNumber: dossier.reportNumber, weekStart: isoDate(dossier.weekStart), weekEnd: isoDate(dossier.weekEnd), nextWeekStart: isoDate(dossier.nextWeekStart), nextWeekEnd: isoDate(dossier.nextWeekEnd), place: dossier.place, recipientName: dossier.recipientName, recipientTitle: dossier.recipientTitle, authorName: dossier.createdBy?.name ?? "", status: dossier.status, version: dossier.version, lockVersion: dossier.lockVersion,
+      latestRevision: revisionEntry ? { actorName: revisionEntry.actor?.name ?? "", reason: revisionEntry.reason, createdAt: revisionEntry.createdAt.toISOString() } : null,
       entries: dossier.entries.map((entry) => ({
         id: entry.id, documentType: entry.documentType, entryDate: isoDate(entry.entryDate), shift: entry.shift, sortOrder: entry.sortOrder, inputMode: entry.inputMode,
         projectId: entry.projectId, projectNameSnapshot: entry.projectNameSnapshot, locationId: entry.locationId, locationNameSnapshot: entry.locationNameSnapshot,

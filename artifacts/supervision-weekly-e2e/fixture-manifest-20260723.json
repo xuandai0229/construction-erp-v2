@@ -88,8 +88,8 @@
   "committedAt": "2026-07-23T09:53:46.411Z",
   "runtimeRows": {
     "shiftSelections": [
-      "cmrxd5pwn0006eowkpyrjeqy4",
-      "cmrxdawgd000weowkc9iram6c"
+      "cmrzupp6h00085gwk64925fx6",
+      "cmrzump7800025gwkyqwcwif5"
     ],
     "entries": [
       "3b8fd36b-59a2-4b87-84a7-1a233ec3fb30",
@@ -106,8 +106,11 @@
     ],
     "observations": [
       "2188047d-bc68-4825-b380-53364b133e06",
+      "d735d10c-86d1-4ce0-b85c-1dfe381ffb8e",
       "93e3552b-08a7-4cf1-bd17-00ceadf1340a",
-      "a7a640e0-56d0-4bf4-ac8d-3a2aa0e4b181"
+      "a7a640e0-56d0-4bf4-ac8d-3a2aa0e4b181",
+      "67293899-c4c7-4a9c-9ee4-cd757bfaa233",
+      "28d12600-c4be-4ec1-8159-74caaf70aac4"
     ],
     "revisions": [
       "253ec9c3-6498-4210-a5b9-fbe809e2fe46",
@@ -115,6 +118,13 @@
       "cmrxd512f0003eowkw5u0jpf0",
       "cmrxd5b760005eowks6ai1djf",
       "cmrxd5pwt0007eowkmt1bvl2e",
+      "cmrzuj0i300015gwkioni9h6d",
+      "cmrzup04n00055gwk2hzelk48",
+      "cmrzupdf500075gwkui96i8jc",
+      "cmrzupp7200095gwkyydgwp09",
+      "cmrzuppof000a5gwkjuc9trzw",
+      "cmrzurmbq000b5gwk130q00f7",
+      "cmrzus2mi000c5gwk98n6h7xz",
       "50bd5975-a21c-4dff-b45d-3ab55284c4ee",
       "cmrxd7xh70009eowkq28w6jtw",
       "cmrxd828i000beowkp0o2irn0",
@@ -128,8 +138,12 @@
       "cmrxd9w8n000reowkt8ejobs0",
       "cmrxdaerc000teowk4yg0jbj0",
       "cmrxdaj2w000veowk7sxoutji",
-      "cmrxdawgj000xeowk2tbmdg3t"
+      "cmrxdawgj000xeowk2tbmdg3t",
+      "cmrzump7u00035gwknan26fjn",
+      "cmrzush3f000d5gwk2klarwed",
+      "cmrzut0ef000e5gwkjb0xj7oa",
+      "cmrzut9eu000f5gwka006ct7y"
     ]
   },
-  "runtimeCapturedAt": "2026-07-23T10:29:17.841Z"
+  "runtimeCapturedAt": "2026-07-25T04:13:34.330Z"
 }

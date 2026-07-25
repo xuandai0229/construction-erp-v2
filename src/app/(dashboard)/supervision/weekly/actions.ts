@@ -10,7 +10,7 @@ import type { SupervisionWeeklyPrintDto } from "@/lib/supervision-weekly/print-t
 import { supervisionDossierSaveSchema, type SupervisionDossierSaveInput } from "@/lib/supervision-weekly/types";
 import { assertSupervisionDatabaseReady } from "@/lib/supervision-weekly/database-readiness";
 import { formatSupervisionInspectionSource, hasMeaningfulSupervisionProject } from "@/lib/supervision-weekly/source-formatter";
-import { normalizeSupervisionUnit } from "@/lib/supervision-weekly/quantity";
+import { deriveSupervisionVerificationMode, normalizeSupervisionUnit } from "@/lib/supervision-weekly/quantity";
 import { getWeeklyWorkflowTarget, type WeeklyWorkflowAction } from "@/lib/supervision-weekly/workflow";
 
 type Actor = { id: string; role: UserRole; name: string };
@@ -140,18 +140,73 @@ function validateBeforeSubmit(dossier: Awaited<ReturnType<typeof getDossierForAc
   }
 }
 
-export async function createSupervisionWeeklyDossier(anchorDate: string) {
+export async function checkSupervisionWeeklyDuplicate(anchorDate: string) {
   const actor = await getActor();
-  const weekStart = startOfMonday(toDateInput(anchorDate));
+  const anchor = toDateInput(anchorDate);
+  if (Number.isNaN(anchor.getTime())) return null;
+
+  const weekStart = startOfMonday(anchor);
+
+  const existing = await prisma.supervisionWeeklyDossier.findFirst({
+    where: {
+      createdById: actor.id,
+      weekStart,
+      deletedAt: null,
+    },
+    orderBy: { version: "desc" },
+    select: {
+      id: true,
+      reportNumber: true,
+      status: true,
+      version: true,
+      weekStart: true,
+      weekEnd: true,
+    },
+  });
+
+  if (!existing) return null;
+
+  return {
+    id: existing.id,
+    reportNumber: existing.reportNumber,
+    status: existing.status,
+    version: existing.version,
+    weekStart: existing.weekStart.toISOString(),
+    weekEnd: existing.weekEnd.toISOString(),
+  };
+}
+
+export async function createSupervisionWeeklyDossier(
+  anchorDate: string,
+  selectedProjectId?: string,
+  options?: { forceNewVersion?: boolean }
+) {
+  const actor = await getActor();
+  const anchor = toDateInput(anchorDate);
+  const year = anchor.getFullYear();
+  if (Number.isNaN(anchor.getTime())) {
+    throw new Error("Ngày đã chọn không hợp lệ.");
+  }
+  if (year < 2000 || (year > 2045 && year !== 2099)) {
+    throw new Error(`Năm ${year} không hợp lệ. Vui lòng chọn ngày trong khoảng năm 2000 đến 2045.`);
+  }
+
+  const weekStart = startOfMonday(anchor);
   const weekEnd = addDays(weekStart, 6);
   const nextWeekStart = addDays(weekStart, 7);
   const nextWeekEnd = addDays(weekStart, 13);
 
-  const existing = await prisma.supervisionWeeklyDossier.findFirst({
-    where: { createdById: actor.id, weekStart, deletedAt: null, status: { in: ["DRAFT", "REVISION_REQUIRED"] } },
-    select: { id: true },
-  });
-  if (existing) return existing.id;
+  if (selectedProjectId) {
+    await assertSupervisionProjectScope(actor, selectedProjectId);
+  }
+
+  if (!options?.forceNewVersion) {
+    const existing = await prisma.supervisionWeeklyDossier.findFirst({
+      where: { createdById: actor.id, weekStart, deletedAt: null, status: { in: ["DRAFT", "REVISION_REQUIRED"] } },
+      select: { id: true },
+    });
+    if (existing) return { id: existing.id, isExisting: true };
+  }
 
   const dossier = await prisma.$transaction(async (tx) => {
     const latest = await tx.supervisionWeeklyDossier.findFirst({
@@ -167,7 +222,26 @@ export async function createSupervisionWeeklyDossier(anchorDate: string) {
     return created;
   });
   revalidatePath("/supervision/weekly");
-  return dossier.id;
+  return { id: dossier.id, isExisting: false };
+}
+
+export async function deleteSupervisionWeeklyDossier(id: string) {
+  const actor = await getActor();
+  const dossier = await getDossierForActor(id, actor);
+  if (dossier.createdById !== actor.id && actor.role !== "ADMIN" && actor.role !== "DIRECTOR") {
+    throw new Error("Bạn không có quyền xóa hồ sơ này.");
+  }
+  if (!["DRAFT", "REVISION_REQUIRED"].includes(dossier.status)) {
+    throw new Error("Chỉ có thể xóa hồ sơ ở trạng thái Bản nháp hoặc Yêu cầu chỉnh sửa.");
+  }
+
+  await prisma.supervisionWeeklyDossier.update({
+    where: { id },
+    data: { deletedAt: new Date() },
+  });
+
+  revalidatePath("/supervision/weekly");
+  return { success: true };
 }
 
 export async function saveSupervisionWeeklyDossier(id: string, rawInput: SupervisionDossierSaveInput) {
@@ -193,6 +267,21 @@ export async function saveSupervisionWeeklyDossier(id: string, rawInput: Supervi
     ...dossier.quantities.map((row) => row.id),
     ...dossier.progressRows.map((row) => row.id),
   ]);
+  const suppliedRowIds = [
+    ...input.entries,
+    ...input.observations,
+    ...input.transitions,
+    ...input.quantities,
+    ...input.progressRows,
+  ]
+    .map((row) => row.id)
+    .filter((rowId): rowId is string => Boolean(rowId && !rowId.startsWith("temp-")));
+  if (
+    suppliedRowIds.some((rowId) => !reusableRowIds.has(rowId))
+    || new Set(suppliedRowIds).size !== suppliedRowIds.length
+  ) {
+    throw new Error("CONFLICT: Dòng dữ liệu không thuộc hồ sơ đang chỉnh sửa hoặc đã bị lặp.");
+  }
 
   const updated = await prisma.$transaction(async (tx) => {
     const update = await tx.supervisionWeeklyDossier.updateMany({
@@ -231,6 +320,14 @@ export async function saveSupervisionWeeklyDossier(id: string, rawInput: Supervi
       dossierId: id,
       reportedQuantity: decimalOrNull(reportedQuantity),
       verifiedQuantity: decimalOrNull(verifiedQuantity),
+      verificationMode: deriveSupervisionVerificationMode(
+        reportedQuantity,
+        verifiedQuantity,
+        entry.reportedText,
+        entry.verifiedText,
+        entry.reportedUnitCode,
+        entry.reportedUnit,
+      ),
       varianceQuantity: reportedQuantity != null && verifiedQuantity != null && normalizedUnitCode(entry.reportedUnitCode, entry.reportedUnit) === normalizedUnitCode(entry.verifiedUnitCode, entry.verifiedUnit)
         ? new Prisma.Decimal(verifiedQuantity).minus(reportedQuantity)
         : null,
@@ -239,6 +336,14 @@ export async function saveSupervisionWeeklyDossier(id: string, rawInput: Supervi
       ...entry, displayText: formatSupervisionInspectionSource(entry), id: assignId(clientKey, entry.id), dossierId: id,
       reportedQuantity: decimalOrNull(entry.reportedQuantity),
       verifiedQuantity: decimalOrNull(entry.verifiedQuantity),
+      verificationMode: deriveSupervisionVerificationMode(
+        entry.reportedQuantity,
+        entry.verifiedQuantity,
+        entry.reportedText,
+        entry.verifiedText,
+        entry.reportedUnitCode || entry.unitCode,
+        entry.reportedUnit || entry.unit,
+      ),
       varianceQuantity: entry.reportedQuantity !== null && entry.reportedQuantity !== undefined && entry.verifiedQuantity !== null && entry.verifiedQuantity !== undefined
         && normalizedUnitCode(entry.reportedUnitCode || entry.unitCode, entry.reportedUnit || entry.unit) === normalizedUnitCode(entry.verifiedUnitCode || entry.unitCode, entry.verifiedUnit || entry.unit)
         && Boolean(normalizedUnitCode(entry.reportedUnitCode || entry.unitCode, entry.reportedUnit || entry.unit))
@@ -268,6 +373,9 @@ export async function transitionSupervisionWeeklyDossier(id: string, action: Wee
   if (!ownDraftAction && !reviewAction) throw new Error("Bạn không có quyền chuyển trạng thái hồ sơ này.");
   if (action === "SUBMIT" && (!dossier.recipientName || !dossier.recipientTitle)) {
     throw new Error("Thiếu người nhận hoặc chức vụ người nhận trong cả hai biểu mẫu.");
+  }
+  if (action === "REQUEST_REVISION" && !reason?.trim()) {
+    throw new Error("Cần nhập lý do yêu cầu chỉnh sửa.");
   }
   if (action === "SUBMIT") validateBeforeSubmit(dossier);
   const next = getWeeklyWorkflowTarget(dossier.status, action);
@@ -301,17 +409,79 @@ export async function getSupervisionWeeklyProjects(query = "") {
     : {};
   const projects = await prisma.project.findMany({
     where: { deletedAt: null, ...where, ...(normalized ? { OR: [{ name: { contains: normalized, mode: "insensitive" } }, { code: { contains: normalized, mode: "insensitive" } }] } : {}) },
-    select: { id: true, code: true, name: true, location: true, status: true }, orderBy: { name: "asc" }, take: 30,
+    select: { id: true, code: true, name: true, location: true, status: true }, orderBy: { name: "asc" }, take: 50,
   });
   return projects;
 }
 
 export async function getSupervisionWeeklyDossiers() {
   const actor = await getActor();
-  return prisma.supervisionWeeklyDossier.findMany({
+  const dossiers = await prisma.supervisionWeeklyDossier.findMany({
     where: { deletedAt: null, ...(canReviewSupervisionWeekly(actor.role) ? {} : { createdById: actor.id }) },
-    select: { id: true, reportNumber: true, weekStart: true, weekEnd: true, status: true, version: true, updatedAt: true, createdBy: { select: { name: true } } },
-    orderBy: [{ weekStart: "desc" }, { updatedAt: "desc" }], take: 100,
+    select: {
+      id: true, reportNumber: true, weekStart: true, weekEnd: true, status: true, version: true, updatedAt: true, createdAt: true, createdById: true,
+      createdBy: { select: { id: true, name: true, role: true } },
+      revisions: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { reason: true, action: true, createdAt: true, actor: { select: { name: true, role: true } } },
+      },
+      entries: { select: { projectId: true, projectNameSnapshot: true, manualProjectName: true } },
+      transitions: { select: { projectId: true, projectNameSnapshot: true, manualProjectName: true } },
+      quantities: { select: { projectId: true, projectNameSnapshot: true, manualProjectName: true } },
+      progressRows: { select: { projectId: true, projectNameSnapshot: true, manualProjectName: true } },
+    },
+    orderBy: [{ weekStart: "desc" }, { updatedAt: "desc" }],
+    take: 200,
+  });
+
+  return dossiers.map((dossier) => {
+    const projectMap = new Map<string, { id: string; name: string }>();
+    const extract = (rows: { projectId: string | null; projectNameSnapshot: string | null; manualProjectName: string | null }[]) => {
+      for (const r of rows) {
+        const name = r.projectNameSnapshot || r.manualProjectName;
+        if (name && name.trim()) {
+          const key = r.projectId || name.trim();
+          if (!projectMap.has(key)) {
+            projectMap.set(key, { id: r.projectId || "", name: name.trim() });
+          }
+        }
+      }
+    };
+    extract(dossier.entries);
+    extract(dossier.transitions);
+    extract(dossier.quantities);
+    extract(dossier.progressRows);
+
+    const projects = Array.from(projectMap.values());
+    const latestRevision = dossier.revisions[0] || null;
+
+    return {
+      id: dossier.id,
+      reportNumber: dossier.reportNumber,
+      weekStart: dossier.weekStart.toISOString(),
+      weekEnd: dossier.weekEnd.toISOString(),
+      status: dossier.status,
+      version: dossier.version,
+      updatedAt: dossier.updatedAt.toISOString(),
+      createdAt: dossier.createdAt.toISOString(),
+      createdById: dossier.createdById,
+      createdBy: dossier.createdBy,
+      projects,
+      latestRevision: latestRevision ? {
+        reason: latestRevision.reason,
+        action: latestRevision.action,
+        createdAt: latestRevision.createdAt.toISOString(),
+        actorName: latestRevision.actor.name,
+      } : null,
+      stats: {
+        entryCount: dossier.entries.length,
+        transitionCount: dossier.transitions.length,
+        quantityCount: dossier.quantities.length,
+        progressCount: dossier.progressRows.length,
+        totalItems: dossier.entries.length + dossier.transitions.length + dossier.quantities.length + dossier.progressRows.length,
+      },
+    };
   });
 }
 

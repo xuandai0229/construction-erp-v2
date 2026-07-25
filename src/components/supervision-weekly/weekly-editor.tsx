@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import Link from "next/link";
-import { AlertTriangle, ArrowLeft, FileOutput, RefreshCw, Save, Send } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { saveSupervisionWeeklyDossier, transitionSupervisionWeeklyDossier, getSupervisionWeeklyPrintData } from "@/app/(dashboard)/supervision/weekly/actions";
 import { Button } from "@/components/ui/button";
 import { ContentCard, SectionHeader } from "@/components/ui/enterprise";
@@ -10,17 +9,19 @@ import { AutoTextarea } from "./source-selector";
 import { ResultScheduleTable } from "./result-schedule-table";
 import { ProgressTable, QuantityTable, TransitionTable } from "./result-data-tables";
 import { WeeklyPrintTemplate } from "./weekly-print-template";
+import { EditorHeader, type SaveState, type SectionNavItem } from "./editor-header";
 import type { WeeklyDocumentType, WeeklyEditorDossier, WeeklyObservation, WeeklyProject } from "@/lib/supervision-weekly/editor-types";
 import type { SupervisionWeeklyPrintDto } from "@/lib/supervision-weekly/print-types";
 import { NEXT_WEEK_PLAN_GROUP_2_CATEGORIES, NEXT_WEEK_PLAN_GROUP_3_CATEGORIES } from "@/lib/supervision-weekly/document-model";
 import { FileText, File, Printer } from "lucide-react";
 
-type SaveState = "saved" | "dirty" | "saving" | "error" | "conflict";
 const editableStates = new Set(["DRAFT", "REVISION_REQUIRED"]);
-const documentLabels: Record<WeeklyDocumentType, string> = { RESULT: "Báo cáo kết quả tuần", NEXT_WEEK_PLAN: "Kế hoạch tuần tiếp theo" };
 
-function dateText(value: string) {
-  return new Intl.DateTimeFormat("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" }).format(new Date(`${value}T00:00:00`));
+function dateText(value?: string | null) {
+  if (!value) return "—";
+  const d = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return value;
+  return new Intl.DateTimeFormat("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
 }
 
 function cleanActionError(error: unknown) {
@@ -44,6 +45,10 @@ export function WeeklyEditor({ initial, projects, canReview }: { initial: Weekly
   const editable = editableStates.has(dossier.status);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewData, setPreviewData] = useState<SupervisionWeeklyPrintDto | null>(null);
+  const [revisionDialogOpen, setRevisionDialogOpen] = useState(false);
+  const [revisionReason, setRevisionReason] = useState("");
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
 
   const markDirty = (updater: (current: WeeklyEditorDossier) => WeeklyEditorDossier) => {
     if (!editable) return;
@@ -101,6 +106,7 @@ export function WeeklyEditor({ initial, projects, canReview }: { initial: Weekly
         if (dirtyRef.current) setSaveState("dirty");
         else {
           setSaveState("saved");
+          setLastSavedAt(new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }));
           setMessage("Đã lưu");
         }
         return true;
@@ -164,7 +170,7 @@ export function WeeklyEditor({ initial, projects, canReview }: { initial: Weekly
     document.querySelector(`[data-section="${section}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const transition = (action: "SUBMIT" | "REQUEST_REVISION" | "APPROVE" | "LOCK") => {
+  const transition = (action: "SUBMIT" | "REQUEST_REVISION" | "APPROVE" | "LOCK", reason?: string) => {
     if (transitionInFlightRef.current) return;
     transitionInFlightRef.current = true;
     startWorkflow(async () => {
@@ -174,7 +180,7 @@ export function WeeklyEditor({ initial, projects, canReview }: { initial: Weekly
         return;
       }
       try {
-      const updated = await transitionSupervisionWeeklyDossier(dossier.id, action);
+      const updated = await transitionSupervisionWeeklyDossier(dossier.id, action, reason);
       const status = action === "SUBMIT" ? "SUBMITTED" : action === "REQUEST_REVISION" ? "REVISION_REQUIRED" : action === "APPROVE" ? "APPROVED" : "LOCKED";
       setDossier((current) => {
         const next = { ...current, status: updated.status || status, lockVersion: updated.lockVersion };
@@ -212,45 +218,95 @@ export function WeeklyEditor({ initial, projects, canReview }: { initial: Weekly
   });
 
   const legacyResultObservations = dossier.observations.filter((item) => item.documentType === "RESULT");
-  const statusText = saveState === "saving" ? "Đang lưu…" : saveState === "dirty" ? "Có thay đổi chưa lưu" : saveState === "error" ? "Lưu thất bại" : saveState === "conflict" ? "Xung đột phiên bản" : message || "Đã lưu";
-  const statusLabel = dossier.status === "DRAFT" ? "Bản nháp" : dossier.status === "REVISION_REQUIRED" ? "Yêu cầu chỉnh sửa" : dossier.status === "SUBMITTED" ? "Đã gửi" : dossier.status === "APPROVED" ? "Đã duyệt" : "Đã khóa";
 
-  return <div className="space-y-5 pb-20">
-    <ContentCard className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between lg:px-6 lg:py-4 print:hidden">
-      <div className="min-w-0">
-        <h1 className="text-lg font-bold tracking-tight text-slate-900">Soạn báo cáo tuần</h1>
-        <div className="mt-1 flex flex-wrap items-center gap-1.5 text-sm text-slate-600">
-          <span>{documentLabels[activeDocument]}</span>
-          <span className="text-slate-300">•</span>
-          <span>Phiên bản {dossier.version}</span>
-          <span className="text-slate-300">•</span>
-          <span className="font-semibold text-slate-700">[{statusLabel}]</span>
-          <span className={saveState === "error" || saveState === "conflict" ? "font-semibold text-rose-700" : saveState === "saving" ? "font-medium text-blue-600" : "text-slate-500"} data-testid="autosave-status">{statusText}</span>
-          {(saveState === "error" || saveState === "conflict") && <button type="button" onClick={retrySave} className="inline-flex items-center gap-1 font-bold text-blue-700"><RefreshCw className="h-3.5 w-3.5" />Thử lại</button>}
-        </div>
-      </div>
-      <div className="flex flex-wrap items-center gap-2 shrink-0">
-        <Link href="/supervision/weekly" className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"><ArrowLeft className="h-4 w-4" />Danh sách</Link>
-        <button type="button" onClick={async (e) => {
-          e.preventDefault();
-          const success = await flushSave();
-          if (!success) return;
-          try {
-            const freshDossier = await getSupervisionWeeklyPrintData(dossier.id);
-            setPreviewData(freshDossier);
-            setPreviewOpen(true);
-          } catch {
-            setMessage("Lỗi tải bản xem trước.");
-          }
-        }} className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"><FileOutput className="h-4 w-4" />Xem trước / In</button>
-        {editable && <Button variant="secondary" className="h-9" onClick={() => void persistOnce()} disabled={saveState === "saving"}><Save className="h-4 w-4 mr-1.5" />{saveState === "saving" ? "Đang lưu..." : "Lưu nháp"}</Button>}
-        {editable && <Button className="h-9 bg-blue-600 hover:bg-blue-700 text-white" onClick={() => transition("SUBMIT")} disabled={workflowPending || saveState === "error" || saveState === "conflict"}><Send className="h-4 w-4 mr-1.5" />{workflowPending ? "Đang gửi..." : "Gửi báo cáo"}</Button>}
-        {canReview && dossier.status === "SUBMITTED" && <><Button variant="outline" className="h-9" onClick={() => transition("REQUEST_REVISION")}>Yêu cầu chỉnh sửa</Button><Button className="h-9" onClick={() => transition("APPROVE")}>Duyệt</Button></>}
-        {canReview && dossier.status === "APPROVED" && <Button className="h-9" onClick={() => transition("LOCK")}>Khóa hồ sơ</Button>}
-      </div>
-    </ContentCard>
+  const weekNum = (() => {
+    if (!dossier?.weekStart) return 1;
+    const d = new Date(`${dossier.weekStart}T00:00:00`);
+    if (Number.isNaN(d.getTime())) return 1;
+    const oneJan = new Date(d.getFullYear(), 0, 1);
+    return Math.ceil(((d.getTime() - oneJan.getTime()) / 86400000 + oneJan.getDay() + 1) / 7);
+  })();
+  const weekLabel = `Tuần ${weekNum}`;
+  const dateRange = `${dateText(dossier.weekStart)} – ${dateText(dossier.weekEnd)}`;
 
-    <ContentCard className="p-4 sm:p-5">
+  const handlePreview = async () => {
+    const success = await flushSave();
+    if (!success) return;
+    try {
+      const freshDossier = await getSupervisionWeeklyPrintData(dossier.id);
+      setPreviewData(freshDossier);
+      setPreviewOpen(true);
+    } catch {
+      setMessage("Lỗi tải bản xem trước.");
+    }
+  };
+
+  const resultSections: SectionNavItem[] = [
+    { id: "general", label: "Thông tin chung", shortLabel: "Chung", status: (dossier.reportNumber || dossier.place) ? "complete" : "incomplete" },
+    { id: "I", label: "I. Kết quả thực hiện", shortLabel: "Mục I", status: dossier.entries.filter(e => e.documentType === "RESULT").length > 0 ? "complete" : "empty" },
+    { id: "II", label: "II. Chuyển bước thi công", shortLabel: "Mục II", status: dossier.transitions.length > 0 ? "complete" : "empty" },
+    { id: "III", label: "III. Khối lượng", shortLabel: "Mục III", status: dossier.quantities.length > 0 ? "complete" : "empty" },
+    { id: "IV", label: "IV. Tiến độ", shortLabel: "Mục IV", status: dossier.progressRows.length > 0 ? "complete" : "empty" },
+  ];
+  const planSections: SectionNavItem[] = [
+    { id: "general", label: "Thông tin chung", shortLabel: "Chung", status: (dossier.reportNumber || dossier.place) ? "complete" : "incomplete" },
+    { id: "I", label: "I. Công việc dự kiến", shortLabel: "Mục I", status: dossier.entries.filter(e => e.documentType === "NEXT_WEEK_PLAN").length > 0 ? "complete" : "empty" },
+    { id: "plan-II", label: "II. Đánh giá tồn tại", shortLabel: "Mục II", status: "empty" },
+    { id: "plan-III", label: "III. Kiến nghị", shortLabel: "Mục III", status: "empty" },
+  ];
+  const sections = activeDocument === "RESULT" ? resultSections : planSections;
+
+  const handleSectionClick = (id: string) => {
+    setActiveSectionId(id);
+    const el = document.querySelector(`[data-section="${id}"]`);
+    if (el) {
+      const appHeader = typeof document !== "undefined"
+        ? (document.querySelector<HTMLElement>("[data-app-header]") || document.querySelector("header"))
+        : null;
+      const headerH = appHeader?.getBoundingClientRect().height ?? 56;
+      const rect = el.getBoundingClientRect();
+      const targetTop = window.scrollY + rect.top - headerH - 16;
+      window.scrollTo({ top: Math.max(0, targetTop), behavior: "smooth" });
+    }
+  };
+
+  // Ctrl+S shortcut
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") { e.preventDefault(); void persistOnce(); }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  return <div className="space-y-5 pb-24 sm:pb-20">
+    <EditorHeader
+      title="Báo cáo tuần"
+      weekLabel={weekLabel}
+      dateRange={dateRange}
+      version={dossier.version}
+      status={dossier.status}
+      saveState={saveState}
+      lastSavedAt={lastSavedAt}
+      message={message}
+      editable={editable}
+      canReview={canReview}
+      workflowPending={workflowPending}
+      latestRevision={dossier.latestRevision}
+      onBackToList={() => {}}
+      onSaveDraft={() => void persistOnce()}
+      onSubmit={() => transition("SUBMIT")}
+      onPreview={handlePreview}
+      onRetrySave={retrySave}
+      onRequestRevision={() => setRevisionDialogOpen(true)}
+      onApprove={() => transition("APPROVE")}
+      onLock={() => transition("LOCK")}
+      sections={sections}
+      activeSectionId={activeSectionId}
+      onSectionClick={handleSectionClick}
+    />
+
+    <ContentCard className="p-4 sm:p-5" data-section="general">
       <SectionHeader title="Thông tin chung" description="Dùng chung cho Báo cáo kết quả tuần và Kế hoạch tuần tiếp theo." />
       <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <Field label="Số báo cáo" placeholder="……./………" value={dossier.reportNumber || ""} disabled={!editable} onChange={(value) => markDirty((current) => ({ ...current, reportNumber: value || null }))} testId="report-number" />
@@ -271,7 +327,7 @@ export function WeeklyEditor({ initial, projects, canReview }: { initial: Weekly
       {legacyResultObservations.length > 0 && <ContentCard className="border-amber-200 bg-amber-50 p-4"><div className="flex gap-2"><AlertTriangle className="mt-0.5 h-5 w-5 text-amber-700" /><div><h2 className="font-bold text-amber-900">Dữ liệu ghi chú cũ được giữ nguyên</h2><p className="mt-1 text-sm text-amber-800">Các nội dung từng nhập ở khối &quot;II, IV&quot; không thuộc bảng chuẩn mới. Hệ thống không xóa và hiển thị chỉ đọc bên dưới.</p>{legacyResultObservations.map((item) => <div key={item.id || item.category} className="mt-3"><div className="text-xs font-bold text-amber-900">{item.category}</div><p className="whitespace-pre-wrap text-sm text-amber-900">{item.content}</p></div>)}</div></div></ContentCard>}
     </div> : <div className="space-y-6">
       <section><h2 className="mb-3 text-base font-bold text-slate-900">I. Công việc kiểm tra kỹ thuật dự kiến tuần sau</h2><ResultScheduleTable documentType="NEXT_WEEK_PLAN" startDate={dossier.nextWeekStart} entries={dossier.entries} selections={dossier.shiftSelections} projects={projects} editable={editable} onChange={(entries, shiftSelections) => markDirty((current) => ({ ...current, entries, shiftSelections }))} /></section>
-      <ContentCard className="p-4 sm:p-6">
+      <ContentCard className="p-4 sm:p-6" data-section="plan-II">
         <h2 className="mb-3 text-base font-bold text-slate-900">II. Đánh giá kết quả, xử lý tồn tại của tuần trước</h2>
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
           {NEXT_WEEK_PLAN_GROUP_2_CATEGORIES.map((cat) => (
@@ -285,7 +341,7 @@ export function WeeklyEditor({ initial, projects, canReview }: { initial: Weekly
           ))}
         </div>
       </ContentCard>
-      <ContentCard className="p-4 sm:p-6">
+      <ContentCard className="p-4 sm:p-6" data-section="plan-III">
         <h2 className="mb-3 text-base font-bold text-slate-900">III. Kiến nghị, đề xuất Ban Giám đốc về kết quả tuần</h2>
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
           {NEXT_WEEK_PLAN_GROUP_3_CATEGORIES.map((cat) => (
@@ -305,6 +361,32 @@ export function WeeklyEditor({ initial, projects, canReview }: { initial: Weekly
       onClose={() => setPreviewOpen(false)} 
       dossier={previewData} 
     />
+    {revisionDialogOpen && <div className="fixed inset-0 z-[130] flex items-center justify-center bg-slate-900/60 p-4" role="dialog" aria-modal="true" aria-labelledby="revision-reason-title">
+      <div className="w-full max-w-lg rounded-xl bg-white p-5 shadow-xl">
+        <h2 id="revision-reason-title" className="text-base font-bold text-slate-900">Yêu cầu chỉnh sửa</h2>
+        <label className="mt-4 block text-sm font-semibold text-slate-700">
+          Lý do
+          <textarea
+            aria-label="Lý do yêu cầu chỉnh sửa"
+            value={revisionReason}
+            onChange={(event) => setRevisionReason(event.target.value)}
+            className="mt-2 min-h-28 w-full rounded-lg border border-slate-300 p-3 font-normal"
+          />
+        </label>
+        <div className="mt-4 flex justify-end gap-2">
+          <Button variant="outline" onClick={() => {
+            setRevisionDialogOpen(false);
+            setRevisionReason("");
+          }}>Hủy</Button>
+          <Button disabled={!revisionReason.trim()} onClick={() => {
+            const reason = revisionReason.trim();
+            setRevisionDialogOpen(false);
+            setRevisionReason("");
+            transition("REQUEST_REVISION", reason);
+          }}>Xác nhận</Button>
+        </div>
+      </div>
+    </div>}
   </div>;
 }
 
