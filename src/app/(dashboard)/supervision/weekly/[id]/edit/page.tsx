@@ -15,7 +15,7 @@ export default async function SupervisionWeeklyEditPage({ params }: { params: Pr
   const [dossier, projects] = await Promise.all([getSupervisionWeeklyDossier(id), getSupervisionWeeklyProjects()]);
   if (!dossier) notFound();
   return <WeeklyEditor canReview={canReviewSupervisionWeekly(session.role)} projects={projects} initial={{
-      id: dossier.id, reportNumber: dossier.reportNumber, weekStart: isoDate(dossier.weekStart), weekEnd: isoDate(dossier.weekEnd), nextWeekStart: isoDate(dossier.nextWeekStart), nextWeekEnd: isoDate(dossier.nextWeekEnd), place: dossier.place, recipientName: dossier.recipientName, recipientTitle: dossier.recipientTitle, authorName: dossier.createdBy.name, status: dossier.status, version: dossier.version, lockVersion: dossier.lockVersion,
+      id: dossier.id, reportNumber: dossier.reportNumber, weekStart: isoDate(dossier.weekStart), weekEnd: isoDate(dossier.weekEnd), nextWeekStart: isoDate(dossier.nextWeekStart), nextWeekEnd: isoDate(dossier.nextWeekEnd), place: dossier.place, recipientName: dossier.recipientName, recipientTitle: dossier.recipientTitle, authorName: dossier.createdBy?.name ?? "", status: dossier.status, version: dossier.version, lockVersion: dossier.lockVersion,
       entries: dossier.entries.map((entry) => ({
         id: entry.id, documentType: entry.documentType, entryDate: isoDate(entry.entryDate), shift: entry.shift, sortOrder: entry.sortOrder, inputMode: entry.inputMode,
         projectId: entry.projectId, projectNameSnapshot: entry.projectNameSnapshot, locationId: entry.locationId, locationNameSnapshot: entry.locationNameSnapshot,

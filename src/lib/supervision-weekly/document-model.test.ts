@@ -2,6 +2,72 @@ import { buildWeeklyDocumentModel } from "./document-model";
 import { describe, it, expect } from "vitest";
 
 describe("document-model", () => {
+  it("preserves blank metadata instead of inventing document values", () => {
+    const model = buildWeeklyDocumentModel({
+      id: "blank-metadata",
+      reportNumber: null,
+      weekStart: "2026-07-20",
+      weekEnd: "2026-07-26",
+      nextWeekStart: "2026-07-27",
+      nextWeekEnd: "2026-08-02",
+      place: null,
+      recipientName: null,
+      recipientTitle: null,
+      creator: null,
+      entries: [],
+      observations: [],
+      transitions: [],
+      quantities: [],
+      progressRows: [],
+    }, "RESULT");
+
+    expect(model.metadata.place).toBe("");
+    expect(model.metadata.recipientName).toBe("");
+    expect(model.metadata.recipientTitle).toBe("");
+    expect(model.metadata.creatorName).toBe("");
+  });
+
+  it("keeps a category-only legacy row in the canonical schedule", () => {
+    const model = buildWeeklyDocumentModel({
+      id: "category-only",
+      reportNumber: null,
+      weekStart: "2026-07-20",
+      weekEnd: "2026-07-26",
+      nextWeekStart: "2026-07-27",
+      nextWeekEnd: "2026-08-02",
+      place: null,
+      recipientName: null,
+      recipientTitle: null,
+      creator: null,
+      entries: [{
+        id: "entry-1",
+        documentType: "RESULT",
+        entryDate: "2026-07-20",
+        shift: "MORNING",
+        sortOrder: 0,
+        categoryItemId: "category-1",
+        categoryNameSnapshot: null,
+        manualCategoryName: null,
+        projectNameSnapshot: null,
+        locationNameSnapshot: null,
+        workItemNameSnapshot: null,
+        manualText: null,
+        manualLocation: null,
+        manualProjectName: null,
+        manualWorkItemName: null,
+        inspectionContent: null,
+        result: null,
+        commanderProposal: null,
+      }],
+      observations: [],
+      transitions: [],
+      quantities: [],
+      progressRows: [],
+    } as any, "RESULT");
+
+    expect(model.schedule[0].shifts.MORNING).toHaveLength(1);
+  });
+
   it("always returns 4 items for recommendations in NEXT_WEEK_PLAN", () => {
     const mockDossier: any = {
       id: "mock123",

@@ -5,13 +5,13 @@ import Link from "next/link";
 import { AlertTriangle, ArrowLeft, FileOutput, RefreshCw, Save, Send } from "lucide-react";
 import { saveSupervisionWeeklyDossier, transitionSupervisionWeeklyDossier, getSupervisionWeeklyPrintData } from "@/app/(dashboard)/supervision/weekly/actions";
 import { Button } from "@/components/ui/button";
-import { ContentCard, PageHeader, PageHeading, SectionHeader } from "@/components/ui/enterprise";
+import { ContentCard, SectionHeader } from "@/components/ui/enterprise";
 import { AutoTextarea } from "./source-selector";
 import { ResultScheduleTable } from "./result-schedule-table";
 import { ProgressTable, QuantityTable, TransitionTable } from "./result-data-tables";
 import { WeeklyPrintTemplate } from "./weekly-print-template";
 import type { WeeklyDocumentType, WeeklyEditorDossier, WeeklyObservation, WeeklyProject } from "@/lib/supervision-weekly/editor-types";
-import type { SupervisionWeeklyPrintDto, PrintEntryDto } from "@/lib/supervision-weekly/print-types";
+import type { SupervisionWeeklyPrintDto } from "@/lib/supervision-weekly/print-types";
 import { NEXT_WEEK_PLAN_GROUP_2_CATEGORIES, NEXT_WEEK_PLAN_GROUP_3_CATEGORIES } from "@/lib/supervision-weekly/document-model";
 import { FileText, File, Printer } from "lucide-react";
 
@@ -39,6 +39,7 @@ export function WeeklyEditor({ initial, projects, canReview }: { initial: Weekly
   const dirtyRef = useRef(false);
   const failedRef = useRef(false);
   const savePromiseRef = useRef<Promise<boolean> | null>(null);
+  const transitionInFlightRef = useRef(false);
   const persistFunctionRef = useRef<() => Promise<boolean>>(async () => true);
   const editable = editableStates.has(dossier.status);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -163,14 +164,20 @@ export function WeeklyEditor({ initial, projects, canReview }: { initial: Weekly
     document.querySelector(`[data-section="${section}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const transition = (action: "SUBMIT" | "REQUEST_REVISION" | "APPROVE" | "LOCK") => startWorkflow(async () => {
-    const saved = await flushSave();
-    if (!saved) return;
-    try {
-      await transitionSupervisionWeeklyDossier(dossier.id, action);
+  const transition = (action: "SUBMIT" | "REQUEST_REVISION" | "APPROVE" | "LOCK") => {
+    if (transitionInFlightRef.current) return;
+    transitionInFlightRef.current = true;
+    startWorkflow(async () => {
+      const saved = await flushSave();
+      if (!saved) {
+        transitionInFlightRef.current = false;
+        return;
+      }
+      try {
+      const updated = await transitionSupervisionWeeklyDossier(dossier.id, action);
       const status = action === "SUBMIT" ? "SUBMITTED" : action === "REQUEST_REVISION" ? "REVISION_REQUIRED" : action === "APPROVE" ? "APPROVED" : "LOCKED";
       setDossier((current) => {
-        const next = { ...current, status };
+        const next = { ...current, status: updated.status || status, lockVersion: updated.lockVersion };
         dossierRef.current = next;
         return next;
       });
@@ -179,8 +186,11 @@ export function WeeklyEditor({ initial, projects, canReview }: { initial: Weekly
       const errorMessage = cleanActionError(error);
       setMessage(errorMessage);
       focusError(errorMessage);
-    }
-  });
+      } finally {
+        transitionInFlightRef.current = false;
+      }
+    });
+  };
 
   useEffect(() => {
     if (initial.lockVersion > dossierRef.current.lockVersion || initial.status !== dossierRef.current.status) {
@@ -202,7 +212,6 @@ export function WeeklyEditor({ initial, projects, canReview }: { initial: Weekly
   });
 
   const legacyResultObservations = dossier.observations.filter((item) => item.documentType === "RESULT");
-  const unsaved = saveState === "dirty" || saveState === "saving" || saveState === "error" || saveState === "conflict";
   const statusText = saveState === "saving" ? "Đang lưu…" : saveState === "dirty" ? "Có thay đổi chưa lưu" : saveState === "error" ? "Lưu thất bại" : saveState === "conflict" ? "Xung đột phiên bản" : message || "Đã lưu";
   const statusLabel = dossier.status === "DRAFT" ? "Bản nháp" : dossier.status === "REVISION_REQUIRED" ? "Yêu cầu chỉnh sửa" : dossier.status === "SUBMITTED" ? "Đã gửi" : dossier.status === "APPROVED" ? "Đã duyệt" : "Đã khóa";
 
@@ -230,7 +239,7 @@ export function WeeklyEditor({ initial, projects, canReview }: { initial: Weekly
             const freshDossier = await getSupervisionWeeklyPrintData(dossier.id);
             setPreviewData(freshDossier);
             setPreviewOpen(true);
-          } catch (err) {
+          } catch {
             setMessage("Lỗi tải bản xem trước.");
           }
         }} className="inline-flex h-9 items-center gap-2 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"><FileOutput className="h-4 w-4" />Xem trước / In</button>

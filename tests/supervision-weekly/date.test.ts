@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { addDays, isWithinInclusive, startOfMonday } from "@/lib/supervision-weekly/date";
+import { addDays, isWithinInclusive, startOfMonday } from "../../src/lib/supervision-weekly/date";
 
 test("calculates the report week from Monday through Sunday", () => {
   const monday = startOfMonday(new Date("2026-07-22T09:00:00"));

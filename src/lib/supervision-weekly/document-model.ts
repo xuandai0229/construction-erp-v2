@@ -1,14 +1,14 @@
-import { addDays, format, parseISO } from "date-fns";
-import type { SupervisionWeeklyPrintDto, PrintEntryDto } from "./print-types";
+import { addDays, format } from "date-fns";
+import type { SupervisionWeeklyPrintDto } from "./print-types";
 import { formatSupervisionSourceLines } from "./source-formatter";
-import type { WeeklyObservation, WeeklyProgress, WeeklyQuantity, WeeklyTransition, WeeklyDocumentType, WeeklyShift } from "./editor-types";
+import type { WeeklyObservation, WeeklyDocumentType, WeeklyShift } from "./editor-types";
 import { calculateSupervisionQuantityVariance } from "./quantity";
 import { formatReportNumber } from "./report-number";
 
 export function isMeaningfulSupervisionRow(row: any) {
   if (row.projectId || row.projectNameSnapshot || row.manualProjectName) return true;
   if (row.workItemId || row.workItemNameSnapshot || row.manualWorkItemName) return true;
-  if (row.categoryId || row.categoryNameSnapshot || row.manualCategoryName) return true;
+  if (row.categoryItemId || row.categoryNameSnapshot || row.manualCategoryName) return true;
   if (row.locationId || row.locationNameSnapshot || row.manualLocation) return true;
   if (row.inspectionContent?.trim() || row.result?.trim() || row.commanderProposal?.trim()) return true;
   if (row.reportedQuantity != null || row.verifiedQuantity != null || row.reportedText?.trim() || row.verifiedText?.trim()) return true;
@@ -120,7 +120,7 @@ export function buildWeeklyDocumentModel(dossier: SupervisionWeeklyPrintDto, doc
   const isResult = documentType === "RESULT";
   
   // Safe extraction
-  const creatorName = dossier.creator?.name?.trim() || "........................";
+  const creatorName = dossier.creator?.name?.trim() || "";
   const start = isResult ? dossier.weekStart : dossier.nextWeekStart;
   const end = isResult ? dossier.weekEnd : dossier.nextWeekEnd;
   const parseLocalDate = (dateStr?: string) => {
@@ -137,12 +137,12 @@ export function buildWeeklyDocumentModel(dossier: SupervisionWeeklyPrintDto, doc
       nationalMottoLine1: "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM",
       nationalMottoLine2: "Độc lập - Tự do - Hạnh phúc",
       reportNumber: formatReportNumber(dossier.reportNumber),
-      place: dossier.place || "Hà Nội",
+      place: dossier.place?.trim() || "",
       issueDate: formatVietnameseDate(new Date().toISOString()),
       weekStart: formatVietnameseDate(start),
       weekEnd: formatVietnameseDate(end),
-      recipientName: dossier.recipientName || "Ban lãnh đạo công ty",
-      recipientTitle: dossier.recipientTitle || "Tổng Giám đốc",
+      recipientName: dossier.recipientName?.trim() || "",
+      recipientTitle: dossier.recipientTitle?.trim() || "",
       creatorName: creatorName,
       title: isResult ? "BÁO CÁO KẾT QUẢ TUẦN" : "KẾ HOẠCH TUẦN TIẾP THEO",
     },

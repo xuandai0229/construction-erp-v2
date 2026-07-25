@@ -4,15 +4,7 @@ import "dotenv/config";
 import { assertSafeQaDatabase } from "./assert-safe-qa-database";
 
 const localQaHosts = new Set(["127.0.0.1", "localhost", "::1"]);
-
-function approvedHosts(environment: NodeJS.ProcessEnv): ReadonlySet<string> {
-  return new Set(
-    (environment.QA_DATABASE_HOST_ALLOWLIST ?? "")
-      .split(",")
-      .map((host) => host.trim().toLowerCase())
-      .filter((host) => host.length > 0),
-  );
-}
+export const SUPERVISION_E2E_QA_DATABASE = "construction_erp_v2_qa_e2e_20260723";
 
 export function assertQaDatabaseCreationTarget(
   environment: NodeJS.ProcessEnv = process.env,
@@ -24,13 +16,12 @@ export function assertQaDatabaseCreationTarget(
 
   const qa = new URL(rawQaUrl);
   const host = qa.hostname.toLowerCase();
-  const allowed = approvedHosts(environment);
-  const local = localQaHosts.has(host);
-  if (!local && !allowed.has(host)) {
-    throw new Error("QA database creation is limited to a local host or QA_DATABASE_HOST_ALLOWLIST");
+  if (!localQaHosts.has(host)) {
+    throw new Error("QA database creation is limited to localhost, 127.0.0.1, or ::1");
   }
-  if (!local && environment.QA_DATABASE_REMOTE_APPROVED !== "true") {
-    throw new Error("remote QA database creation requires QA_DATABASE_REMOTE_APPROVED=true");
+  const database = decodeURIComponent(qa.pathname.replace(/^\//, "")).trim();
+  if (database !== SUPERVISION_E2E_QA_DATABASE) {
+    throw new Error(`QA database creation requires the fixed target ${SUPERVISION_E2E_QA_DATABASE}`);
   }
   return qa;
 }

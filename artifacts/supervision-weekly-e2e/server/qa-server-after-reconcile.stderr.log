@@ -1,0 +1,44 @@
+⨯ Error: Bạn không có quyền xem hồ sơ này.
+    at getDossierForActor (src\app\(dashboard)\supervision\weekly\actions.ts:42:11)
+    at async SupervisionWeeklyEditPage (src\app\(dashboard)\supervision\weekly\[id]\edit\page.tsx:15:31)
+  40 |   });
+  41 |   if (!dossier || (!canReviewSupervisionWeekly(actor.role) && dossier.createdById !== acto...
+> 42 |     throw new Error("Bạn không có quyền xem hồ sơ này.");
+     |           ^
+  43 |   }
+  44 |   return dossier;
+  45 | } {
+  digest: '2445201257'
+}
+[browser] Uncaught Error: Bạn không có quyền xem hồ sơ này.
+    at getDossierForActor (src\app\(dashboard)\supervision\weekly\actions.ts:42:11)
+    at  SupervisionWeeklyEditPage (src\app\(dashboard)\supervision\weekly\[id]\edit\page.tsx:15:31)
+  40 |   });
+  41 |   if (!dossier || (!canReviewSupervisionWeekly(actor.role) && dossier.createdById !== acto...
+> 42 |     throw new Error("Bạn không có quyền xem hồ sơ này.");
+     |           ^
+  43 |   }
+  44 |   return dossier;
+  45 | }
+⨯ Error: Bạn không có quyền xem hồ sơ này.
+    at getDossierForActor (src\app\(dashboard)\supervision\weekly\actions.ts:42:11)
+    at async SupervisionWeeklyEditPage (src\app\(dashboard)\supervision\weekly\[id]\edit\page.tsx:15:31)
+  40 |   });
+  41 |   if (!dossier || (!canReviewSupervisionWeekly(actor.role) && dossier.createdById !== acto...
+> 42 |     throw new Error("Bạn không có quyền xem hồ sơ này.");
+     |           ^
+  43 |   }
+  44 |   return dossier;
+  45 | } {
+  digest: '2445201257'
+}
+[browser] Uncaught Error: Bạn không có quyền xem hồ sơ này.
+    at getDossierForActor (src\app\(dashboard)\supervision\weekly\actions.ts:42:11)
+    at  SupervisionWeeklyEditPage (src\app\(dashboard)\supervision\weekly\[id]\edit\page.tsx:15:31)
+  40 |   });
+  41 |   if (!dossier || (!canReviewSupervisionWeekly(actor.role) && dossier.createdById !== acto...
+> 42 |     throw new Error("Bạn không có quyền xem hồ sơ này.");
+     |           ^
+  43 |   }
+  44 |   return dossier;
+  45 | }

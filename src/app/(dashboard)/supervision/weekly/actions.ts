@@ -1,6 +1,6 @@
 "use server";
 
-import { Prisma, SupervisionWeeklyStatus, UserRole } from "@prisma/client";
+import { Prisma, UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
@@ -11,6 +11,7 @@ import { supervisionDossierSaveSchema, type SupervisionDossierSaveInput } from "
 import { assertSupervisionDatabaseReady } from "@/lib/supervision-weekly/database-readiness";
 import { formatSupervisionInspectionSource, hasMeaningfulSupervisionProject } from "@/lib/supervision-weekly/source-formatter";
 import { normalizeSupervisionUnit } from "@/lib/supervision-weekly/quantity";
+import { getWeeklyWorkflowTarget, type WeeklyWorkflowAction } from "@/lib/supervision-weekly/workflow";
 
 type Actor = { id: string; role: UserRole; name: string };
 
@@ -158,7 +159,7 @@ export async function createSupervisionWeeklyDossier(anchorDate: string) {
     });
     const version = (latest?.version ?? 0) + 1;
     const created = await tx.supervisionWeeklyDossier.create({
-      data: { weekStart, weekEnd, nextWeekStart, nextWeekEnd, createdById: actor.id, version },
+      data: { weekStart, weekEnd, nextWeekStart, nextWeekEnd, place: null, createdById: actor.id, version },
     });
     await tx.supervisionWeeklyRevision.create({
       data: { dossierId: created.id, actorId: actor.id, action: "CREATE", toStatus: "DRAFT", version, changedFields: "Khởi tạo hồ sơ tuần" },
@@ -185,6 +186,14 @@ export async function saveSupervisionWeeklyDossier(id: string, rawInput: Supervi
 
   await validateDraftSourceReferences(input);
 
+  const reusableRowIds = new Set([
+    ...dossier.entries.map((row) => row.id),
+    ...dossier.observations.map((row) => row.id),
+    ...dossier.transitions.map((row) => row.id),
+    ...dossier.quantities.map((row) => row.id),
+    ...dossier.progressRows.map((row) => row.id),
+  ]);
+
   const updated = await prisma.$transaction(async (tx) => {
     const update = await tx.supervisionWeeklyDossier.updateMany({
       where: { id, lockVersion: input.expectedLockVersion, status: { in: ["DRAFT", "REVISION_REQUIRED"] } },
@@ -202,9 +211,11 @@ export async function saveSupervisionWeeklyDossier(id: string, rawInput: Supervi
     await tx.supervisionWeeklyQuantity.deleteMany({ where: { dossierId: id } });
     await tx.supervisionWeeklyProgress.deleteMany({ where: { dossierId: id } });
     const rowIdMappings: Record<string, string> = {};
+    const assignedIds = new Set<string>();
     const assignId = (clientKey?: string | null, id?: string | null) => {
-      const isTemp = !id || id.startsWith("temp-");
-      const finalId = isTemp ? crypto.randomUUID() : id;
+      const canReuse = Boolean(id && !id.startsWith("temp-") && reusableRowIds.has(id) && !assignedIds.has(id));
+      const finalId = canReuse ? id! : crypto.randomUUID();
+      assignedIds.add(finalId);
       if (clientKey) rowIdMappings[clientKey] = finalId;
       return finalId;
     };
@@ -249,7 +260,7 @@ export async function saveSupervisionWeeklyDossier(id: string, rawInput: Supervi
   return updated;
 }
 
-export async function transitionSupervisionWeeklyDossier(id: string, action: "SUBMIT" | "REQUEST_REVISION" | "APPROVE" | "LOCK", reason?: string) {
+export async function transitionSupervisionWeeklyDossier(id: string, action: WeeklyWorkflowAction, reason?: string) {
   const actor = await getActor();
   const dossier = await getDossierForActor(id, actor);
   const ownDraftAction = action === "SUBMIT" && dossier.createdById === actor.id && ["DRAFT", "REVISION_REQUIRED"].includes(dossier.status);
@@ -259,15 +270,12 @@ export async function transitionSupervisionWeeklyDossier(id: string, action: "SU
     throw new Error("Thiếu người nhận hoặc chức vụ người nhận trong cả hai biểu mẫu.");
   }
   if (action === "SUBMIT") validateBeforeSubmit(dossier);
-  const target: Record<typeof action, SupervisionWeeklyStatus> = { SUBMIT: "SUBMITTED", REQUEST_REVISION: "REVISION_REQUIRED", APPROVE: "APPROVED", LOCK: "LOCKED" };
-  const allowed: Record<typeof action, SupervisionWeeklyStatus[]> = {
-    SUBMIT: ["DRAFT", "REVISION_REQUIRED"], REQUEST_REVISION: ["SUBMITTED"], APPROVE: ["SUBMITTED"], LOCK: ["APPROVED"],
-  };
-  if (!allowed[action].includes(dossier.status)) throw new Error("Trạng thái hiện tại không cho phép thao tác này.");
-  await prisma.$transaction(async (tx) => {
-    const next = target[action];
-    await tx.supervisionWeeklyDossier.update({
-      where: { id }, data: {
+  const next = getWeeklyWorkflowTarget(dossier.status, action);
+  if (!next) throw new Error("Trạng thái hiện tại không cho phép thao tác này.");
+  const updated = await prisma.$transaction(async (tx) => {
+    const update = await tx.supervisionWeeklyDossier.updateMany({
+      where: { id, status: dossier.status, lockVersion: dossier.lockVersion },
+      data: {
         status: next, reviewedById: reviewAction ? actor.id : undefined,
         submittedAt: action === "SUBMIT" ? new Date() : undefined,
         reviewedAt: action === "REQUEST_REVISION" || action === "APPROVE" ? new Date() : undefined,
@@ -275,11 +283,14 @@ export async function transitionSupervisionWeeklyDossier(id: string, action: "SU
         lockVersion: { increment: 1 },
       },
     });
+    if (update.count !== 1) throw new Error("CONFLICT: Hồ sơ trên máy chủ mới hơn bản đang mở. Hãy tải lại để tránh ghi đè dữ liệu.");
     await tx.supervisionWeeklyRevision.create({ data: { dossierId: id, actorId: actor.id, action, fromStatus: dossier.status, toStatus: next, version: dossier.version, reason: reason?.trim() || null } });
+    return { status: next, lockVersion: dossier.lockVersion + 1 };
   });
   revalidatePath(`/supervision/weekly/${id}`);
   revalidatePath(`/supervision/weekly/${id}/edit`);
   revalidatePath("/supervision/weekly");
+  return updated;
 }
 
 export async function getSupervisionWeeklyProjects(query = "") {

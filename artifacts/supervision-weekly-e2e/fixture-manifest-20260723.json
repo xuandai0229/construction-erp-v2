@@ -1,0 +1,135 @@
+{
+  "status": "READY",
+  "prefix": "QA-SUPERVISION-E2E-",
+  "timestamp": "2026-07-23T09:53:45.939Z",
+  "databaseFingerprint": {
+    "database": "construction_erp_v2_qa_e2e_20260723",
+    "host": "127.0.0.1",
+    "port": "5432"
+  },
+  "users": {
+    "QA_ADMIN_A": "0226907c-f373-4f03-aaae-14fdd8ce7573",
+    "QA_SUPERVISOR_A": "8d2c325f-a1cf-4168-8447-12b81a4d4702",
+    "QA_REVIEWER_A": "d6f467a8-157c-40cb-94ee-60703ebe8ae4",
+    "QA_USER_PROJECT_A": "e835425d-f181-419b-943b-86ffcb3a0e9e",
+    "QA_USER_PROJECT_B": "80d1e31e-d1a6-493e-a0c1-056fe1397a5f"
+  },
+  "projects": {
+    "A": "b151162f-ea1a-49cf-9278-a25b5ca08d3d",
+    "B": "051f1430-616b-4476-bfd5-3d3d39b84ac0"
+  },
+  "projectMembers": {
+    "supervisorA": "54342db5-9649-4278-936e-fde9d3909eda",
+    "supervisorB": "62f4ca6a-bbc6-46da-872f-09af11ee29e7",
+    "userA": "5b2e1129-93b0-41ce-a374-5e90bbe23e99",
+    "userB": "f652d89b-0644-4060-b9a1-a0a23eb56e0c"
+  },
+  "scopes": {
+    "supervisor": "afe7e658-ae60-47c9-ba77-b23a8a1c06f9",
+    "userA": "53146449-45db-46d0-81d0-83df2ae485d1",
+    "userB": "0414620d-3508-4bc8-9621-0f34026d70f1"
+  },
+  "scopeProjects": {
+    "supervisorA": "877addaa-4472-4410-b266-fa9cb9c31148",
+    "supervisorB": "bf8392b4-388b-4f4a-a4b0-d8597e9862f8",
+    "userA": "ad198e70-fa06-43a8-99c2-25bc0004f3d3",
+    "userB": "3434626d-fd1c-4487-b33a-c3af14ef3a26"
+  },
+  "templates": {
+    "A": "58052f39-fe78-40fb-95d3-898de4fab43e",
+    "B": "29103d84-5865-4ff4-91ba-16783206e44f"
+  },
+  "fieldProgressItems": {
+    "categoryA": "93fb60f6-2ae5-48a6-b687-b2554c393192",
+    "workA1": "965ee1e6-a3ff-40ff-8794-d0821107e44b",
+    "workA2": "cf4b14f9-183c-41f8-a1dd-f7dea6d07183",
+    "categoryB": "462d5e47-9459-460d-aabe-d3687f3b7dab",
+    "workB1": "48ef2121-67f9-4e15-a9f5-2edd7a4b8234"
+  },
+  "dossiers": {
+    "result": "fac16a22-2494-46c0-a67a-87943361266d",
+    "nextWeek": "ed9c81e9-2611-4380-9e81-8d20c4b31edd"
+  },
+  "revisions": {
+    "resultCreate": "50bd5975-a21c-4dff-b45d-3ab55284c4ee",
+    "nextWeekCreate": "253ec9c3-6498-4210-a5b9-fbe809e2fe46"
+  },
+  "rowIds": [
+    "0226907c-f373-4f03-aaae-14fdd8ce7573",
+    "8d2c325f-a1cf-4168-8447-12b81a4d4702",
+    "d6f467a8-157c-40cb-94ee-60703ebe8ae4",
+    "e835425d-f181-419b-943b-86ffcb3a0e9e",
+    "80d1e31e-d1a6-493e-a0c1-056fe1397a5f",
+    "b151162f-ea1a-49cf-9278-a25b5ca08d3d",
+    "051f1430-616b-4476-bfd5-3d3d39b84ac0",
+    "54342db5-9649-4278-936e-fde9d3909eda",
+    "62f4ca6a-bbc6-46da-872f-09af11ee29e7",
+    "5b2e1129-93b0-41ce-a374-5e90bbe23e99",
+    "f652d89b-0644-4060-b9a1-a0a23eb56e0c",
+    "afe7e658-ae60-47c9-ba77-b23a8a1c06f9",
+    "53146449-45db-46d0-81d0-83df2ae485d1",
+    "0414620d-3508-4bc8-9621-0f34026d70f1",
+    "877addaa-4472-4410-b266-fa9cb9c31148",
+    "bf8392b4-388b-4f4a-a4b0-d8597e9862f8",
+    "ad198e70-fa06-43a8-99c2-25bc0004f3d3",
+    "3434626d-fd1c-4487-b33a-c3af14ef3a26",
+    "58052f39-fe78-40fb-95d3-898de4fab43e",
+    "29103d84-5865-4ff4-91ba-16783206e44f",
+    "93fb60f6-2ae5-48a6-b687-b2554c393192",
+    "965ee1e6-a3ff-40ff-8794-d0821107e44b",
+    "cf4b14f9-183c-41f8-a1dd-f7dea6d07183",
+    "462d5e47-9459-460d-aabe-d3687f3b7dab",
+    "48ef2121-67f9-4e15-a9f5-2edd7a4b8234",
+    "fac16a22-2494-46c0-a67a-87943361266d",
+    "ed9c81e9-2611-4380-9e81-8d20c4b31edd",
+    "50bd5975-a21c-4dff-b45d-3ab55284c4ee",
+    "253ec9c3-6498-4210-a5b9-fbe809e2fe46"
+  ],
+  "committedAt": "2026-07-23T09:53:46.411Z",
+  "runtimeRows": {
+    "shiftSelections": [
+      "cmrxd5pwn0006eowkpyrjeqy4",
+      "cmrxdawgd000weowkc9iram6c"
+    ],
+    "entries": [
+      "3b8fd36b-59a2-4b87-84a7-1a233ec3fb30",
+      "7b2a2950-fc9f-4c4b-9477-4498bec14367"
+    ],
+    "transitions": [
+      "0b04b234-84e4-42b9-8706-a9ede98514c8"
+    ],
+    "quantities": [
+      "d87cae7a-7a00-4f65-8434-6debe92455a9"
+    ],
+    "progressRows": [
+      "507dce79-c14c-4436-9096-a1f6a578cfa1"
+    ],
+    "observations": [
+      "2188047d-bc68-4825-b380-53364b133e06",
+      "93e3552b-08a7-4cf1-bd17-00ceadf1340a",
+      "a7a640e0-56d0-4bf4-ac8d-3a2aa0e4b181"
+    ],
+    "revisions": [
+      "253ec9c3-6498-4210-a5b9-fbe809e2fe46",
+      "cmrxd4wuv0001eowk2obwgdyr",
+      "cmrxd512f0003eowkw5u0jpf0",
+      "cmrxd5b760005eowks6ai1djf",
+      "cmrxd5pwt0007eowkmt1bvl2e",
+      "50bd5975-a21c-4dff-b45d-3ab55284c4ee",
+      "cmrxd7xh70009eowkq28w6jtw",
+      "cmrxd828i000beowkp0o2irn0",
+      "cmrxd86eh000deowk85q5ayw6",
+      "cmrxd8cdi000feowkgblwt4zz",
+      "cmrxd8qzo000heowkamjzmy8c",
+      "cmrxd8y1f000jeowk8glcwewq",
+      "cmrxd99mh000leowkddybv5a0",
+      "cmrxd9fmc000neowk64nxn6re",
+      "cmrxd9sjm000peowkyl520n38",
+      "cmrxd9w8n000reowkt8ejobs0",
+      "cmrxdaerc000teowk4yg0jbj0",
+      "cmrxdaj2w000veowk7sxoutji",
+      "cmrxdawgj000xeowk2tbmdg3t"
+    ]
+  },
+  "runtimeCapturedAt": "2026-07-23T10:29:17.841Z"
+}
