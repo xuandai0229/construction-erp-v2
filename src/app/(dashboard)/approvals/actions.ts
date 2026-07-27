@@ -186,7 +186,7 @@ async function generateApprovalCode() {
   const d = String(today.getDate()).padStart(2, "0");
 
   for (let attempt = 0; attempt < 5; attempt += 1) {
-    const suffix = Math.floor(1000 + Math.random() * 9000);
+    const suffix = (crypto.getRandomValues(new Uint32Array(1))[0] % 9000) + 1000;
     const code = `APR-${y}${m}${d}-${suffix}`;
     const existing = await prisma.approvalRequest.findUnique({ where: { code } });
     if (!existing) return code;

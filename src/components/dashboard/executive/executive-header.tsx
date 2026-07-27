@@ -1,9 +1,17 @@
-import Link from 'next/link';
+"use client";
+
 import type { DashboardData } from '@/lib/dashboard/dashboard-queries';
 import { cn } from '@/lib/utils';
 import { ExecutiveLiveClock } from './executive-live-clock';
+import type { DrawerType } from './executive-detail-drawer';
 
-export function ExecutiveHeader({ data }: { data: DashboardData }) {
+export function ExecutiveHeader({ 
+  data,
+  onOpenDrawer,
+}: { 
+  data: DashboardData;
+  onOpenDrawer?: (type: DrawerType) => void;
+}) {
   const pendingActions = data.actionItems.length;
   const atRiskProjects = data.projectOverview.filter(p => p.health === 'AT_RISK' || p.health === 'DELAYED').length;
   const pendingApprovals = data.pendingApprovals.length;
@@ -54,10 +62,11 @@ export function ExecutiveHeader({ data }: { data: DashboardData }) {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 sm:gap-3.5 mt-2">
-            <Link
-              href="#action-items"
+            <button
+              type="button"
+              onClick={() => onOpenDrawer?.("ACTIONS")}
               className={cn(
-                "group relative flex items-center gap-2 sm:gap-2.5 rounded-full border px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-[13px] font-bold transition-all duration-300 ease-out overflow-hidden",
+                "group relative flex items-center gap-2 sm:gap-2.5 rounded-full border px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-[13px] font-bold transition-all duration-300 ease-out overflow-hidden cursor-pointer text-left",
                 pendingActions > 0
                   ? "border-amber-200/60 bg-gradient-to-b from-amber-50/90 to-amber-100/50 text-amber-800 shadow-[0_4px_16px_rgba(251,191,36,0.15)] hover:shadow-[0_6px_20px_rgba(251,191,36,0.25)] hover:-translate-y-0.5"
                   : "border-[var(--border)] bg-[var(--surface)]/60 backdrop-blur-md text-[var(--muted-foreground)] shadow-[var(--shadow-card)] hover:bg-white/90 hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5"
@@ -66,12 +75,13 @@ export function ExecutiveHeader({ data }: { data: DashboardData }) {
               <div className="absolute inset-0 bg-gradient-to-b from-white/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className={cn("relative h-2 w-2 rounded-full shrink-0", pendingActions > 0 ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]" : "bg-slate-400")} />
               <span className="relative z-10"><span className="text-[14px] font-black mr-0.5">{pendingActions}</span> việc cần xử lý</span>
-            </Link>
+            </button>
 
-            <Link
-              href="#project-progress"
+            <button
+              type="button"
+              onClick={() => onOpenDrawer?.("RISK")}
               className={cn(
-                "group relative flex items-center gap-2 sm:gap-2.5 rounded-full border px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-[13px] font-bold transition-all duration-300 ease-out overflow-hidden",
+                "group relative flex items-center gap-2 sm:gap-2.5 rounded-full border px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-[13px] font-bold transition-all duration-300 ease-out overflow-hidden cursor-pointer text-left",
                 atRiskProjects > 0
                   ? "border-rose-200/60 bg-gradient-to-b from-rose-50/90 to-rose-100/50 text-rose-800 shadow-[0_4px_16px_rgba(244,63,94,0.15)] hover:shadow-[0_6px_20px_rgba(244,63,94,0.25)] hover:-translate-y-0.5"
                   : "border-[var(--border)] bg-[var(--surface)]/60 backdrop-blur-md text-[var(--muted-foreground)] shadow-[var(--shadow-card)] hover:bg-white/90 hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5"
@@ -80,12 +90,13 @@ export function ExecutiveHeader({ data }: { data: DashboardData }) {
               <div className="absolute inset-0 bg-gradient-to-b from-white/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className={cn("relative h-2 w-2 rounded-full shrink-0", atRiskProjects > 0 ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]" : "bg-slate-400")} />
               <span className="relative z-10"><span className="text-[14px] font-black mr-0.5">{atRiskProjects}</span> công trình rủi ro</span>
-            </Link>
+            </button>
 
-            <Link
-              href={data.selectedProjectId ? `/approvals?projectId=${data.selectedProjectId}&status=PENDING` : `/approvals?status=PENDING`}
+            <button
+              type="button"
+              onClick={() => onOpenDrawer?.("PENDING_APPROVALS")}
               className={cn(
-                "group relative flex items-center gap-2 sm:gap-2.5 rounded-full border px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-[13px] font-bold transition-all duration-300 ease-out overflow-hidden",
+                "group relative flex items-center gap-2 sm:gap-2.5 rounded-full border px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-[13px] font-bold transition-all duration-300 ease-out overflow-hidden cursor-pointer text-left",
                 pendingApprovals > 0
                   ? "border-blue-200/60 bg-gradient-to-b from-blue-50/90 to-blue-100/50 text-blue-800 shadow-[0_4px_16px_rgba(59,130,246,0.15)] hover:shadow-[0_6px_20px_rgba(59,130,246,0.25)] hover:-translate-y-0.5"
                   : "border-[var(--border)] bg-[var(--surface)]/60 backdrop-blur-md text-[var(--muted-foreground)] shadow-[var(--shadow-card)] hover:bg-white/90 hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5"
@@ -94,11 +105,10 @@ export function ExecutiveHeader({ data }: { data: DashboardData }) {
               <div className="absolute inset-0 bg-gradient-to-b from-white/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className={cn("relative h-2 w-2 rounded-full shrink-0", pendingApprovals > 0 ? "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]" : "bg-slate-400")} />
               <span className="relative z-10"><span className="text-[14px] font-black mr-0.5">{pendingApprovals}</span> hồ sơ chờ duyệt</span>
-            </Link>
+            </button>
           </div>
         </div>
       </div>
-
     </section>
   );
 }

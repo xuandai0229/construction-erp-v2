@@ -1,3 +1,5 @@
+"use client";
+
 import Link from 'next/link';
 import { ChevronRight, Calendar } from 'lucide-react';
 import type { DashboardSiteReportItem } from '@/lib/dashboard/dashboard-queries';
@@ -37,17 +39,22 @@ function getIconTone(statusRaw: string, hasIssue: boolean): IconColorTone {
 }
 
 export function ExecutiveSiteReportHighlights({ 
-  reports 
+  reports,
+  selectedProjectId,
+  onOpenReportDrawer,
 }: { 
-  reports: DashboardSiteReportItem[] 
+  reports: DashboardSiteReportItem[];
+  selectedProjectId?: string | null;
+  onOpenReportDrawer?: (reportId: string) => void;
 }) {
   const displayReports = reports.slice(0, 3);
+  const viewAllHref = selectedProjectId ? `/reports?projectId=${selectedProjectId}` : `/reports`;
 
   return (
     <ContentCard className="flex flex-col h-full hover:shadow-md transition-shadow overflow-hidden">
       <div className="flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4 shrink-0">
         <h3 className="font-bold text-slate-900">Báo cáo hiện trường nổi bật</h3>
-        <Link href="/reports" className="flex items-center gap-1 text-[13px] font-medium text-blue-600 hover:text-blue-700">
+        <Link href={viewAllHref} className="flex items-center gap-1 text-[13px] font-medium text-blue-600 hover:text-blue-700">
           Xem tất cả <ChevronRight className="h-3.5 w-3.5" />
         </Link>
       </div>
@@ -60,11 +67,12 @@ export function ExecutiveSiteReportHighlights({
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {displayReports.map((report) => (
-              <Link 
-                key={report.id} 
-                href={report.href}
+              <button
+                key={report.id}
+                type="button"
+                onClick={() => onOpenReportDrawer ? onOpenReportDrawer(report.id) : null}
                 className={cn(
-                  "group flex flex-col justify-between rounded-xl border p-3.5 transition-all duration-200 ease-out hover:shadow-sm hover:-translate-y-0.5",
+                  "group flex flex-col justify-between rounded-xl border p-3.5 transition-all duration-200 ease-out hover:shadow-sm hover:-translate-y-0.5 text-left cursor-pointer",
                   getCardColor(report.status, report.hasIssue)
                 )}
               >
@@ -85,12 +93,12 @@ export function ExecutiveSiteReportHighlights({
                   
                   <div className="flex items-center justify-between mt-1">
                     {getStatusBadge(report.status, report.hasIssue)}
-                    <span className="text-[11px] font-medium text-slate-400">
+                    <span className="text-[11px] font-medium text-slate-400 font-mono">
                       {format(new Date(report.reportDate), 'dd/MM/yyyy')}
                     </span>
                   </div>
                 </div>
-              </Link>
+              </button>
             ))}
           </div>
         )}

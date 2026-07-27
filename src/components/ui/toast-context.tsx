@@ -32,7 +32,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     }
     lastToastRef.current = { message, time: now };
 
-    const id = Math.random().toString(36).substring(2, 9);
+    const id = crypto.randomUUID();
     setToasts((prev) => [...prev.slice(-2), { id, message, type }]); // Keep max 3
 
     // Auto remove after 3 seconds

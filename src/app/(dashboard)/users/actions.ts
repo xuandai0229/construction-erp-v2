@@ -485,12 +485,15 @@ export async function updateUser(userId: string, input: UpdateUserInput) {
 function generateSecurePassword(length = 12): string {
   const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
   let password = "";
+  const randomBytes = new Uint32Array(length);
+  crypto.getRandomValues(randomBytes);
   for (let i = 0; i < length; i++) {
-    password += charset.charAt(Math.floor(Math.random() * charset.length));
+    password += charset.charAt(randomBytes[i] % charset.length);
   }
-  // Ensure at least one uppercase, one lowercase, one number, one special
-  password = password.replace(/^[a-z]/, charset.charAt(Math.floor(Math.random() * 26) + 26)); // uppercase
-  password = password.replace(/^[A-Z]/, charset.charAt(Math.floor(Math.random() * 10) + 52)); // number
+  const upperIdx = crypto.getRandomValues(new Uint32Array(1))[0] % 26 + 26;
+  const numIdx = crypto.getRandomValues(new Uint32Array(1))[0] % 10 + 52;
+  password = password.replace(/^[a-z]/, charset.charAt(upperIdx));
+  password = password.replace(/^[A-Z]/, charset.charAt(numIdx));
   return password;
 }
 

@@ -12,6 +12,9 @@ import {
   canViewCompanyWideDashboard,
 } from "./dashboard-permissions";
 
+import { resolveExecutiveDashboardScope } from "./dashboard-scope";
+import { getExecutiveActionItems } from "./executive-action-service";
+
 export type DashboardPeriod = "7d" | "30d" | "month";
 
 export type DashboardKpi = {
@@ -117,6 +120,7 @@ export type DashboardData = {
   }[];
   kpis: DashboardKpi[];
   actionItems: DashboardActionItem[];
+  totalActionCount: number;
   pendingApprovals: DashboardActionItem[];
   projectOverview: DashboardProjectOverview[];
   recentDocuments: DashboardDocumentItem[];
@@ -503,55 +507,19 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
     href: `/projects/${project.id}`,
   })));
 
-  const reportActions: DashboardActionItem[] = issueReports
-    .filter((report) => report.status === "SUBMITTED" || report.status === "REVISION_REQUESTED" || (hasReportIssue(report) && report.status !== "APPROVED"))
-    .slice(0, 3)
-    .map((report) => ({
-      id: `report-${report.id}`,
-      title: report.status === "SUBMITTED" ? "Báo cáo chờ duyệt" : "Báo cáo có vấn đề",
-      projectName: report.project.name,
-      type: "Báo cáo",
-      priority: hasReportIssue(report) ? "HIGH" as const : "MEDIUM" as const,
-      status: statusLabel(report.status),
-      createdAt: report.updatedAt,
-      href: `/reports?projectId=${report.projectId}`,
-    }));
+  const executiveScope = await resolveExecutiveDashboardScope(session, rawProjectId);
+  const actionResult = await getExecutiveActionItems(executiveScope, 4);
 
-  const materialActions: DashboardActionItem[] = [
-    ...materialRequests.map((request) => ({
-      id: `material-${request.id}`,
-      title: `Yêu cầu vật tư ${request.requestNo}`,
-      projectName: request.project.name,
-      type: "Vật tư",
-      priority: "MEDIUM" as const,
-      status: statusLabel(request.status),
-      createdAt: request.createdAt,
-      href: `/projects/${request.projectId}/material-requests`,
-    })),
-    ...fieldMaterialRequests.map((request) => ({
-      id: `field-material-${request.id}`,
-      title: "Đề xuất vật tư hiện trường",
-      projectName: request.project.name,
-      type: "Vật tư",
-      priority: request.priority === "URGENT" || request.priority === "HIGH" ? "HIGH" as const : "MEDIUM" as const,
-      status: statusLabel(request.status),
-      createdAt: request.createdAt,
-      href: `/projects/${request.projectId}/material-requests`,
-    })),
-  ].slice(0, 4);
-
-  const forbiddenStatuses = ["APPROVED", "COMPLETED", "DONE", "FINISHED", "RESOLVED", "Đã duyệt", "Hoàn thành"];
-  
-  // Do NOT include approvalItems in actionItems to separate them
-  const actionItems = [...projectActions, ...reportActions, ...materialActions]
-    .filter((item) => !forbiddenStatuses.includes(item.status) && !forbiddenStatuses.includes(item.status.toUpperCase()))
-    .sort((a, b) => {
-      const priorityScore = { HIGH: 3, MEDIUM: 2, LOW: 1 };
-      const priorityDiff = priorityScore[b.priority] - priorityScore[a.priority];
-      if (priorityDiff !== 0) return priorityDiff;
-      return (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0);
-    })
-    .slice(0, 5); // strict max 5 items
+  const actionItems: DashboardActionItem[] = actionResult.topItems.map((item) => ({
+    id: item.id,
+    title: item.title,
+    projectName: item.projectName,
+    type: item.typeLabel,
+    priority: item.priority,
+    status: item.status,
+    createdAt: null,
+    href: item.targetType === "PROJECT" ? `/projects/${item.projectId}` : `/dashboard`,
+  }));
 
   const projectNameById = new Map([
     ...overviewProjects.map((project) => [project.id, project.name] as const),
@@ -601,6 +569,20 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
   });
 
   // 3. Reports with issues
+  const reportActions: DashboardActionItem[] = issueReports
+    .filter((report) => report.status === "SUBMITTED" || report.status === "REVISION_REQUESTED" || (hasReportIssue(report) && report.status !== "APPROVED"))
+    .slice(0, 3)
+    .map((report) => ({
+      id: `report-${report.id}`,
+      title: report.status === "SUBMITTED" ? "Báo cáo chờ duyệt" : "Báo cáo có vấn đề",
+      projectName: report.project.name,
+      type: "Báo cáo",
+      priority: hasReportIssue(report) ? "HIGH" as const : "MEDIUM" as const,
+      status: statusLabel(report.status),
+      createdAt: report.updatedAt,
+      href: `/reports?projectId=${report.projectId}`,
+    }));
+
   reportActions.filter(r => r.priority === 'HIGH').forEach(r => {
     notifications.push({
       id: `notif-${r.id}`,
@@ -646,9 +628,9 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
     {
       id: "action-items",
       label: "Việc cần xử lý",
-      value: String(actionItems.length),
+      value: String(actionResult.total),
       description: "Yêu cầu hành động ngay",
-      tone: actionItems.length > 0 ? "rose" : "emerald",
+      tone: actionResult.total > 0 ? "rose" : "emerald",
     },
     {
       id: "entries-today",
@@ -688,22 +670,23 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
     quickActions,
     kpis,
     actionItems,
+    totalActionCount: actionResult.total,
     pendingApprovals: approvalItems,
     projectOverview,
-    recentDocuments: recentDocuments.map((document) => ({
-      id: document.id,
-      title: document.displayName || document.originalName,
-      projectName: document.project.name,
-      extension: document.extension,
-      uploadedBy: document.uploadedBy.name,
-      createdAt: document.createdAt,
-      href: `/documents/${document.projectId}`,
+    recentDocuments: recentDocuments.map((doc) => ({
+      id: doc.id,
+      title: doc.displayName || doc.originalName,
+      projectName: doc.project.name,
+      extension: doc.extension,
+      uploadedBy: doc.uploadedBy.name,
+      createdAt: doc.createdAt,
+      href: `/documents/${doc.projectId}`,
     })),
     recentSiteReports: recentSiteReports.map((report) => ({
       id: report.id,
-      title: report.title && !report.title.includes("ngày 202") ? report.title : `Báo cáo ngày ${new Intl.DateTimeFormat("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit", year: "numeric" }).format(report.reportDate)}`,
+      title: report.title || `Báo cáo ngày ${new Date(report.reportDate).toLocaleDateString("vi-VN")}`,
       projectName: report.project.name,
-      reporterName: report.reporterName || report.createdBy.name,
+      reporterName: report.createdBy.name,
       status: statusLabel(report.status),
       type: report.type,
       reportDate: report.reportDate,

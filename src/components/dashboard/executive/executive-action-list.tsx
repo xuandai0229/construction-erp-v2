@@ -1,3 +1,5 @@
+"use client";
+
 import Link from 'next/link';
 import { 
   ChevronRight, 
@@ -13,6 +15,8 @@ import type { DashboardActionItem } from '@/lib/dashboard/dashboard-queries';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { formatStatusLabel } from '@/lib/dashboard/dashboard-formatters';
+import { ExecutiveSmallIcon, type IconColorTone } from './executive-icon';
+import type { DrawerType } from './executive-detail-drawer';
 
 function getPriorityBadge(priority: DashboardActionItem['priority']) {
   switch (priority) {
@@ -40,8 +44,6 @@ function getStatusBadge(status: string) {
   );
 }
 
-import { ExecutiveSmallIcon, type IconColorTone } from './executive-icon';
-
 function getIcon(type: string, priority: string) {
   let icon = AlertCircle;
   let tone: IconColorTone = 'slate';
@@ -60,21 +62,43 @@ export function ExecutiveActionList({
   title, 
   items, 
   viewAllHref = "#", 
-  count 
+  count,
+  selectedProjectId,
+  onOpenDrawer
 }: { 
-  title: string, 
-  items: DashboardActionItem[], 
-  viewAllHref?: string,
-  count?: number
+  title: string;
+  items: DashboardActionItem[];
+  viewAllHref?: string;
+  count?: number;
+  selectedProjectId?: string | null;
+  onOpenDrawer?: (type: DrawerType, targetId?: string) => void;
 }) {
+  function handleItemClick(item: DashboardActionItem, e: React.MouseEvent) {
+    if (!onOpenDrawer) return;
+
+    if (title.includes('Phê duyệt') || item.id.startsWith('approval-') || item.type === 'Phê duyệt') {
+      e.preventDefault();
+      onOpenDrawer('APPROVAL', item.id);
+    } else if (item.id.startsWith('report-') || item.type === 'Báo cáo') {
+      e.preventDefault();
+      onOpenDrawer('SITE_REPORT', item.id);
+    } else if (item.id.startsWith('material-') || item.id.startsWith('field-material-') || item.type === 'Vật tư') {
+      e.preventDefault();
+      onOpenDrawer('MATERIAL_REQUEST', item.id);
+    } else if (item.id.startsWith('project-') || item.type === 'Tiến độ') {
+      e.preventDefault();
+      onOpenDrawer('RISK');
+    }
+  }
+
   return (
     <section id="action-items" className="flex flex-col h-full rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-elevated)] transition-shadow overflow-hidden scroll-mt-24">
       <div className="flex items-center justify-between border-b border-[var(--border)] bg-[var(--surface)] px-5 py-4 shrink-0">
         <div className="flex items-center gap-3">
           <h3 className="font-bold text-[var(--foreground)] tracking-tight">{title}</h3>
-          {count !== undefined && (
-            <span className="flex items-center justify-center rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-bold text-rose-600">
-              {count} việc
+          {count !== undefined && count > 0 && (
+            <span className="flex items-center justify-center rounded-full bg-rose-100 px-2.5 py-0.5 text-[11px] font-bold text-rose-600">
+              {count > items.length ? `Hiển thị ${items.length}/${count} việc` : `${count} việc`}
             </span>
           )}
         </div>
@@ -101,6 +125,7 @@ export function ExecutiveActionList({
             <Link 
               key={item.id} 
               href={item.href}
+              onClick={(e) => handleItemClick(item, e)}
               className="group flex items-center gap-3.5 px-5 py-3.5 transition-colors duration-150 ease-out hover:bg-slate-50/80"
             >
               {getIcon(item.type, item.priority)}

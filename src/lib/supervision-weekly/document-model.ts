@@ -190,7 +190,7 @@ export function buildWeeklyDocumentModel(dossier: SupervisionWeeklyPrintDto, doc
         }
 
         validRows.push({
-          id: e.id || Math.random().toString(),
+          id: e.id || crypto.randomUUID(),
           sourceText: sourceText,
           content: (isResult ? e.inspectionContent : e.commanderProposal) || "",
           result: (isResult ? e.result : (e.inspectionContent || e.result)) || "",
@@ -236,7 +236,7 @@ export function buildWeeklyDocumentModel(dossier: SupervisionWeeklyPrintDto, doc
          actualText += `Trạng thái: Đúng tiến độ`;
       }
       return {
-        id: r.id || Math.random().toString(),
+        id: r.id || crypto.randomUUID(),
         sourceText: getSourceText(r),
         plannedProgress: r.plannedProgress || "",
         actualProgress: actualText,
@@ -252,7 +252,7 @@ export function buildWeeklyDocumentModel(dossier: SupervisionWeeklyPrintDto, doc
       const verifiedTextVal = `${r.verifiedQuantity ?? ""} ${r.verifiedUnit || ""}`.trim();
       const varResult = calculateSupervisionQuantityVariance(r.reportedQuantity, r.verifiedQuantity, reportedTextVal, verifiedTextVal, reportedCode, reportedUnit, r.varianceReason);
       return {
-        id: r.id || Math.random().toString(),
+        id: r.id || crypto.randomUUID(),
         sourceText: getSourceText(r),
         reportedText: reportedTextVal,
         verifiedText: verifiedTextVal,
@@ -269,7 +269,7 @@ export function buildWeeklyDocumentModel(dossier: SupervisionWeeklyPrintDto, doc
       const verifiedTextVal = `${r.verifiedQuantity ?? ""} ${r.verifiedUnit || r.unit || ""}`.trim();
       const varResult = calculateSupervisionQuantityVariance(r.reportedQuantity, r.verifiedQuantity, reportedTextVal, verifiedTextVal, reportedCode, reportedUnit, r.varianceReason);
       return {
-        id: r.id || Math.random().toString(),
+        id: r.id || crypto.randomUUID(),
         sourceText: getSourceText(r),
         reportedText: reportedTextVal,
         verifiedText: verifiedTextVal,

@@ -1,9 +1,7 @@
 import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
 import type { DashboardProjectOverview } from '@/lib/dashboard/dashboard-queries';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-
 import { formatStatusLabel } from '@/lib/dashboard/dashboard-formatters';
 import { ContentCard } from '@/components/ui/enterprise';
 
@@ -34,19 +32,25 @@ function getHealthColor(health: DashboardProjectOverview['health']) {
 }
 
 export function ExecutiveProjectProgress({
-  projects
+  projects,
+  selectedProjectId,
+  onOpenRiskDrawer,
 }: {
-  projects: DashboardProjectOverview[]
+  projects: DashboardProjectOverview[];
+  selectedProjectId?: string | null;
+  onOpenRiskDrawer?: () => void;
 }) {
+  const viewAllHref = selectedProjectId ? `/projects/${selectedProjectId}` : `/projects`;
+
   return (
     <ContentCard id="project-progress" className="flex h-full flex-col overflow-hidden hover:shadow-[var(--shadow-elevated)] transition-shadow duration-200 scroll-mt-24">
-      {/* Header is ONLY for Table Mode. In Summary Mode, we integrate it into the layout */}
+      {/* Header is ONLY for Table Mode */}
       {projects.length > 1 && (
         <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4 shrink-0">
           <div className="flex items-center gap-2">
             <h3 className="text-base font-bold tracking-tight text-[var(--foreground)]">Tổng quan tiến độ công trình</h3>
           </div>
-          <Link href="/projects" className="text-[13px] font-semibold text-blue-600 hover:text-blue-700 hover:underline">
+          <Link href={viewAllHref} className="text-[13px] font-semibold text-blue-600 hover:text-blue-700 hover:underline">
             Xem tất cả
           </Link>
         </div>
@@ -57,8 +61,8 @@ export function ExecutiveProjectProgress({
           <div className="flex flex-col p-6">
             <div className="flex items-center justify-between pb-4">
               <h3 className="text-base font-bold tracking-tight text-[var(--foreground)]">Tổng quan tiến độ công trình</h3>
-              <Link href={`?timeProgressDrawer=${projects[0].id}`} className="text-[13px] font-semibold text-blue-600 hover:text-blue-700 hover:underline transition-colors">
-                Chi tiết
+              <Link href={`/projects/${projects[0].id}`} className="text-[13px] font-semibold text-blue-600 hover:text-blue-700 hover:underline transition-colors">
+                Chi tiết công trình
               </Link>
             </div>
 
@@ -70,7 +74,9 @@ export function ExecutiveProjectProgress({
                     <span className="text-[12px] font-mono tracking-tight text-[var(--muted-foreground)] bg-[var(--surface-subtle)] px-2 py-0.5 rounded border border-[var(--border)]">{projects[0].code}</span>
                   </div>
                 </div>
-                <div className="shrink-0">{getHealthBadge(projects[0].health)}</div>
+                <button type="button" onClick={onOpenRiskDrawer} className="shrink-0 cursor-pointer">
+                  {getHealthBadge(projects[0].health)}
+                </button>
               </div>
 
               {/* Progress Highlights */}
@@ -155,12 +161,14 @@ export function ExecutiveProjectProgress({
                   <td className="px-4 py-3.5 text-[12px] font-medium text-[var(--muted-foreground)] opacity-70">{i + 1}</td>
                   <td className="px-4 py-3.5 text-[12px] font-semibold text-[var(--foreground)] font-mono tracking-tight whitespace-nowrap">{project.code}</td>
                   <td className="px-4 py-3.5 text-[13px] font-bold text-[var(--foreground)] truncate max-w-[140px] 2xl:max-w-[200px]">
-                    <Link href={`?timeProgressDrawer=${project.id}`} className="hover:text-blue-600 transition-colors">
+                    <Link href={`/projects/${project.id}`} className="hover:text-blue-600 transition-colors">
                       {project.name}
                     </Link>
                   </td>
                   <td className="px-4 py-3.5 whitespace-nowrap hidden xl:table-cell">
-                    {getHealthBadge(project.health)}
+                    <button type="button" onClick={onOpenRiskDrawer} className="cursor-pointer text-left">
+                      {getHealthBadge(project.health)}
+                    </button>
                   </td>
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-2">
@@ -187,16 +195,18 @@ export function ExecutiveProjectProgress({
 
       {/* Mobile Card View */}
       <div className="sm:hidden flex flex-col divide-y divide-slate-100">
-        {projects.map((project, i) => (
+        {projects.map((project) => (
           <div key={project.id} className="p-4 flex flex-col gap-3">
             <div className="flex justify-between items-start">
               <div className="flex flex-col">
                 <span className="text-[11px] font-bold text-[var(--muted-foreground)] opacity-70">{project.code}</span>
-                <Link href={`?timeProgressDrawer=${project.id}`} className="text-[14px] font-bold text-[var(--foreground)] hover:text-blue-600 transition-colors">
+                <Link href={`/projects/${project.id}`} className="text-[14px] font-bold text-[var(--foreground)] hover:text-blue-600 transition-colors">
                   {project.name}
                 </Link>
               </div>
-              {getHealthBadge(project.health)}
+              <button type="button" onClick={onOpenRiskDrawer} className="cursor-pointer">
+                {getHealthBadge(project.health)}
+              </button>
             </div>
 
             <div className="flex items-center gap-3">

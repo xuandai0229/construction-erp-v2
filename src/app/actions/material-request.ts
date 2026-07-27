@@ -303,7 +303,7 @@ export async function approveMaterialRequest(id: string) {
 
       if (!matchedMaterial) {
         // Create new
-        const newCode = `VT-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`;
+        const newCode = `VT-${Date.now().toString().slice(-6)}-${crypto.getRandomValues(new Uint32Array(1))[0] % 1000}`;
         materialToLink = await tx.materialItem.create({
           data: {
             projectId: existing.projectId,

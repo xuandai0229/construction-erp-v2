@@ -20,7 +20,7 @@ type WorkSourceMode = "CATALOG" | "CUSTOM";
 
 function createBlankRequestItem() {
   return {
-    id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    id: crypto.randomUUID(),
     materialSourceMode: "CATALOG" as MaterialSourceMode,
     workSourceMode: "CATALOG" as WorkSourceMode,
     materialItemId: "",
