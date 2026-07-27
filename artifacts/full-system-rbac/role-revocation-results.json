@@ -1,0 +1,12 @@
+[
+  {
+    "action": "Revoke ADMIN role",
+    "expected": "Immediate rejection of administrative actions",
+    "result": "PASS"
+  },
+  {
+    "action": "Lock user account",
+    "expected": "Session invalidated and redirect to login",
+    "result": "PASS"
+  }
+]

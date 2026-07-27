@@ -54,7 +54,7 @@ export function ReportsWorkspace({
   globalContext,
   hideHeader = false,
 }: ReportsWorkspaceProps) {
-  const sourceReadOnly = currentUser.role === "CONSTRUCTION_SUPERVISOR";
+  const sourceReadOnly = currentUser.role === "CONSTRUCTION_SUPERVISOR" || !["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR", "CHIEF_COMMANDER", "MANAGER", "ENGINEER"].includes(currentUser.role || "");
   const toast = useToast();
   const router = useRouter();
   const pathname = usePathname();

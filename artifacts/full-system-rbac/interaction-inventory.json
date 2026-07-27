@@ -1,0 +1,56 @@
+[
+  {
+    "route": "/dashboard",
+    "control": "Header Project Switcher",
+    "type": "dropdown",
+    "expectedRoles": "ALL"
+  },
+  {
+    "route": "/dashboard",
+    "control": "Header Profile / Logout",
+    "type": "menu",
+    "expectedRoles": "ALL"
+  },
+  {
+    "route": "/projects",
+    "control": "Create Project Button",
+    "type": "button",
+    "expectedRoles": "COMPANY_WIDE"
+  },
+  {
+    "route": "/reports/field",
+    "control": "Tạo báo cáo mới Button",
+    "type": "button",
+    "expectedRoles": "NON_SUPERVISOR"
+  },
+  {
+    "route": "/reports/field",
+    "control": "Print/Export Icon",
+    "type": "icon_button",
+    "expectedRoles": "NON_SUPERVISOR"
+  },
+  {
+    "route": "/reports/weekly-inspection",
+    "control": "Tạo hồ sơ kiểm tra tuần Button",
+    "type": "button",
+    "expectedRoles": "SUPERVISION_AUTHORS"
+  },
+  {
+    "route": "/materials",
+    "control": "Tạo yêu cầu vật tư Button",
+    "type": "button",
+    "expectedRoles": "NON_SUPERVISOR"
+  },
+  {
+    "route": "/documents",
+    "control": "Upload Document Button",
+    "type": "button",
+    "expectedRoles": "NON_SUPERVISOR"
+  },
+  {
+    "route": "/users",
+    "control": "Tạo tài khoản Button",
+    "type": "button",
+    "expectedRoles": "COMPANY_WIDE"
+  }
+]

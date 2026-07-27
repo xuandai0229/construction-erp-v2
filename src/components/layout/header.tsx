@@ -1,12 +1,12 @@
 "use client";
 
-import { LogOut, User, Menu, X } from 'lucide-react';
+import { LogOut, User, X } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState } from 'react';
 import Link from 'next/link';
 import { 
   LayoutDashboard, Building2, FolderOpen, ClipboardCheck, 
-  Package,
+  Package, ListTodo,
   CheckSquare, Settings, UserCog, ChevronDown
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -17,6 +17,7 @@ import { GlobalNotificationBell } from './global-notification-bell';
 import { GlobalSearchCommand } from './global-search-command';
 import type { GlobalProjectContext } from '@/lib/project-context';
 import { canViewNavigationItem, projectNavName } from '@/lib/navigation-permissions';
+import { getDefaultRouteForRole } from '@/lib/roles/role-workspace-policy';
 
 const mobileNavSections = [
   {
@@ -45,6 +46,12 @@ const mobileNavSections = [
     items: [
       { name: 'Tài khoản', href: '/users', icon: UserCog },
       { name: 'Cài đặt', href: '/settings', icon: Settings },
+    ],
+  },
+  {
+    label: 'CÔNG VIỆC',
+    items: [
+      { name: 'Nhiệm vụ', href: '/tasks', icon: ListTodo },
     ],
   },
 ];
@@ -82,7 +89,9 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
-  const filteredSections = getFilteredMobileSections(userRoleRaw || 'STAFF');
+  const resolvedRole = userRoleRaw || 'STAFF';
+  const filteredSections = getFilteredMobileSections(resolvedRole);
+  const homeHref = getDefaultRouteForRole(resolvedRole);
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -94,7 +103,7 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
     <>
       <header data-app-header className="sticky top-0 z-[var(--z-app-header)] flex h-[var(--app-header-h)] shrink-0 items-center justify-between border-b border-[var(--border)] bg-white/95 px-3 backdrop-blur-md md:px-6">
         <div className="flex min-w-0 flex-1 items-center">
-          <Link href="/dashboard" className="mr-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-blue-600 text-white shadow-sm lg:hidden" aria-label="Trang chủ">
+          <Link href={homeHref} className="mr-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-blue-600 text-white shadow-sm lg:hidden" aria-label="Trang chủ">
             <Building2 className="h-4 w-4" />
           </Link>
 
@@ -108,6 +117,7 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
              pathname.startsWith('/approvals') ? 'Phê duyệt' :
              pathname.startsWith('/users') ? 'Tài khoản' :
              pathname.startsWith('/settings') ? 'Cài đặt' :
+             pathname.startsWith('/tasks') ? 'Nhiệm vụ' :
              'Tổng quan'}
           </span>
         </div>

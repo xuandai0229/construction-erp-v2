@@ -2,31 +2,47 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Building2, ClipboardCheck, Package, Menu, X, FolderOpen, CheckSquare, Settings, UserCog, LogOut, ScanSearch } from "lucide-react";
+import { LayoutDashboard, Building2, ClipboardCheck, Package, Menu, X, FolderOpen, CheckSquare, Settings, UserCog, LogOut, ListTodo } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import type { UserRole } from "@prisma/client";
 import { canViewNavigationItem } from "@/lib/navigation-permissions";
 import { useRouter } from "next/navigation";
+import {
+  canAccessExecutiveDashboard,
+  getDefaultNavigationHrefForRole,
+} from "@/lib/roles/role-workspace-policy";
 
 export function MobileBottomNav({ userRole }: { userRole: UserRole }) {
   const pathname = usePathname();
   const router = useRouter();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
 
-  const navItems = [
+  const primaryCandidates = [
     { name: "Tổng quan", href: "/dashboard", icon: LayoutDashboard },
     { name: "Công trình", href: "/projects", icon: Building2 },
     { name: "Báo cáo công trình", href: "/reports", icon: ClipboardCheck },
     { name: "Vật tư", href: "/materials", icon: Package },
-  ];
+  ].filter(item => canViewNavigationItem(userRole, item.href));
 
-  const moreItems = [
+  const secondaryCandidates = [
     { name: 'Tài liệu', href: '/documents', icon: FolderOpen },
     { name: 'Phê duyệt', href: '/approvals', icon: CheckSquare },
     { name: 'Tài khoản', href: '/users', icon: UserCog },
     { name: 'Cài đặt', href: '/settings', icon: Settings },
+    { name: 'Nhiệm vụ', href: '/tasks', icon: ListTodo },
   ].filter(item => canViewNavigationItem(userRole, item.href));
+
+  const defaultHref = getDefaultNavigationHrefForRole(userRole);
+  const orderedOperationalItems = [...primaryCandidates, ...secondaryCandidates].toSorted((left, right) => {
+    return Number(right.href === defaultHref) - Number(left.href === defaultHref);
+  });
+  const navItems = canAccessExecutiveDashboard(userRole)
+    ? primaryCandidates
+    : orderedOperationalItems.slice(0, 4);
+  const moreItems = canAccessExecutiveDashboard(userRole)
+    ? secondaryCandidates
+    : orderedOperationalItems.slice(4);
 
   // Close more menu when route changes
   useEffect(() => {

@@ -295,14 +295,16 @@ export function ReportsTable({
                               >
                                 <Eye className="w-[18px] h-[18px]" strokeWidth={2} />
                               </button>
-                              <button
-                                onClick={(e) => handlePrint(e, report)}
-                                className="icon-button h-9 w-9"
-                                title="In / Xuất PDF"
-                                aria-label="In / Xuất PDF"
-                              >
-                                <Printer className="w-[18px] h-[18px]" strokeWidth={2} />
-                              </button>
+                              {currentUser?.role !== "CONSTRUCTION_SUPERVISOR" && (
+                                <button
+                                  onClick={(e) => handlePrint(e, report)}
+                                  className="icon-button h-9 w-9"
+                                  title="In / Xuất PDF"
+                                  aria-label="In / Xuất PDF"
+                                >
+                                  <Printer className="w-[18px] h-[18px]" strokeWidth={2} />
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>

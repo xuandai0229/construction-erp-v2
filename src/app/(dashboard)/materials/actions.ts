@@ -7,6 +7,7 @@ import { MaterialMovementType, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { getMaterialPermissions, MaterialPermissionSet } from "@/lib/materials/materials-permissions";
 import { canViewAllProjects } from "@/lib/rbac";
+import { writeSecurityAuditEvent } from "@/lib/audit";
 
 const MATERIALS_PATH = "/materials";
 
@@ -229,8 +230,23 @@ export async function requireProjectPermissions(session: Session, projectId: str
   return getMaterialPermissions(session.role, projectRole);
 }
 
-function assertPermission(permissions: MaterialPermissionSet, action: keyof MaterialPermissionSet) {
+async function assertPermission(
+  session: Session,
+  projectId: string,
+  permissions: MaterialPermissionSet,
+  action: keyof MaterialPermissionSet,
+) {
   if (!permissions[action]) {
+    await writeSecurityAuditEvent({
+      eventType: "SOURCE_MUTATION_DENIED",
+      actorId: session.id,
+      role: session.role,
+      action: `materials.${action}`,
+      resourceType: "Material",
+      resourceId: projectId,
+      projectId,
+      reasonCode: "MATERIAL_PERMISSION_DENIED",
+    });
     throw new Error("Bạn không có quyền thực hiện thao tác vật tư này.");
   }
 }
@@ -379,10 +395,10 @@ export async function createMaterialItem(data: {
   if (!projectId) throw new Error("Vui lòng chọn công trình");
 
   const perms = await requireProjectPermissions(session, projectId);
-  assertPermission(perms, "canCreate");
+  await assertPermission(session, projectId, perms, "canCreate");
 
   if (data.initialStock && data.initialStock > 0) {
-    assertPermission(perms, "canImport");
+    await assertPermission(session, projectId, perms, "canImport");
   }
 
   const requestedCode = normalizeMaterialCode(data.code);
@@ -461,7 +477,7 @@ export async function updateMaterialItem(id: string, data: { code?: string; name
   if (!material.projectId) throw new Error("Vật tư không thuộc công trình nào");
 
   const perms = await requireProjectPermissions(session, material.projectId);
-  assertPermission(perms, "canRestore");
+  await assertPermission(session, material.projectId, perms, "canRestore");
 
   const requestedCode = data.code ? normalizeMaterialCode(data.code) : undefined;
 
@@ -552,7 +568,7 @@ export async function deleteMaterialItem(id: string) {
   if (!material.projectId) throw new Error("Vật tư không thuộc công trình nào");
 
   const perms = await requireProjectPermissions(session, material.projectId);
-  assertPermission(perms, "canDelete");
+  await assertPermission(session, material.projectId, perms, "canDelete");
 
   const movementsCount = await prisma.materialMovement.count({
     where: { materialItemId: id, projectId: material.projectId },
@@ -602,7 +618,7 @@ export async function restoreMaterialItem(id: string) {
   if (!material.projectId) throw new Error("Vật tư không thuộc công trình nào");
 
   const perms = await requireProjectPermissions(session, material.projectId);
-  assertPermission(perms, "canUpdate");
+  await assertPermission(session, material.projectId, perms, "canUpdate");
 
   if (!material.isActive) {
     await prisma.materialItem.update({
@@ -622,7 +638,7 @@ export async function restoreMaterialItem(id: string) {
 export async function setProjectMinStock(projectId: string, materialItemId: string, minStockLevel: number) {
   const session = await requireSession();
   const perms = await requireProjectPermissions(session, projectId);
-  assertPermission(perms, "canUpdate");
+  await assertPermission(session, projectId, perms, "canUpdate");
 
   const parsedMinStock = parseNonNegativeQuantity(minStockLevel, "Tồn tối thiểu");
 
@@ -680,9 +696,9 @@ export async function createMaterialTransaction(data: {
   if (Number.isNaN(movementDate.getTime())) throw new Error("Ngày giao dịch không hợp lệ");
 
   const perms = await requireProjectPermissions(session, projectId);
-  assertPermission(perms, "canViewTransactions");
-  if (type === "IMPORT") assertPermission(perms, "canImport");
-  if (type === "EXPORT") assertPermission(perms, "canExport");
+  await assertPermission(session, projectId, perms, "canViewTransactions");
+  if (type === "IMPORT") await assertPermission(session, projectId, perms, "canImport");
+  if (type === "EXPORT") await assertPermission(session, projectId, perms, "canExport");
 
   if (data.materialRequestId && !data.materialRequestItemId) {
     throw new Error("Vui lòng chọn dòng vật tư cần xuất kho.");

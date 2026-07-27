@@ -1,0 +1,130 @@
+[
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-ADMIN",
+    "role": "ADMIN",
+    "routesOpened": 18,
+    "passedRoutes": 18,
+    "failedRoutes": 0,
+    "uiControlAudit": "PASS"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-DIRECTOR",
+    "role": "DIRECTOR",
+    "routesOpened": 18,
+    "passedRoutes": 18,
+    "failedRoutes": 0,
+    "uiControlAudit": "PASS"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-DEPUTY-DIRECTOR",
+    "role": "DEPUTY_DIRECTOR",
+    "routesOpened": 18,
+    "passedRoutes": 18,
+    "failedRoutes": 0,
+    "uiControlAudit": "PASS"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-SUPERVISION-HEAD",
+    "role": "SUPERVISION_HEAD",
+    "routesOpened": 18,
+    "passedRoutes": 18,
+    "failedRoutes": 0,
+    "uiControlAudit": "PASS"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-SUPERVISOR-A",
+    "role": "CONSTRUCTION_SUPERVISOR",
+    "routesOpened": 18,
+    "passedRoutes": 18,
+    "failedRoutes": 0,
+    "uiControlAudit": "PASS"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-SUPERVISOR-B",
+    "role": "CONSTRUCTION_SUPERVISOR",
+    "routesOpened": 18,
+    "passedRoutes": 18,
+    "failedRoutes": 0,
+    "uiControlAudit": "PASS"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-COMMANDER-A",
+    "role": "CHIEF_COMMANDER",
+    "routesOpened": 18,
+    "passedRoutes": 18,
+    "failedRoutes": 0,
+    "uiControlAudit": "PASS"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-COMMANDER-B",
+    "role": "CHIEF_COMMANDER",
+    "routesOpened": 18,
+    "passedRoutes": 18,
+    "failedRoutes": 0,
+    "uiControlAudit": "PASS"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-MANAGER-A",
+    "role": "MANAGER",
+    "routesOpened": 18,
+    "passedRoutes": 18,
+    "failedRoutes": 0,
+    "uiControlAudit": "PASS"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-MANAGER-NONE",
+    "role": "MANAGER",
+    "routesOpened": 18,
+    "passedRoutes": 18,
+    "failedRoutes": 0,
+    "uiControlAudit": "PASS"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-ENGINEER-A",
+    "role": "ENGINEER",
+    "routesOpened": 18,
+    "passedRoutes": 18,
+    "failedRoutes": 0,
+    "uiControlAudit": "PASS"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-ENGINEER-B",
+    "role": "ENGINEER",
+    "routesOpened": 18,
+    "passedRoutes": 18,
+    "failedRoutes": 0,
+    "uiControlAudit": "PASS"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-ENGINEER-NONE",
+    "role": "ENGINEER",
+    "routesOpened": 18,
+    "passedRoutes": 18,
+    "failedRoutes": 0,
+    "uiControlAudit": "PASS"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-STAFF-A",
+    "role": "STAFF",
+    "routesOpened": 18,
+    "passedRoutes": 18,
+    "failedRoutes": 0,
+    "uiControlAudit": "PASS"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-STAFF-B",
+    "role": "STAFF",
+    "routesOpened": 18,
+    "passedRoutes": 18,
+    "failedRoutes": 0,
+    "uiControlAudit": "PASS"
+  },
+  {
+    "archetype": "QA-RBAC-ANONYMOUS",
+    "role": "UNAUTHENTICATED",
+    "routesOpened": 18,
+    "passedRoutes": 18,
+    "failedRoutes": 0,
+    "uiControlAudit": "PASS"
+  }
+]

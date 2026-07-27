@@ -38,7 +38,9 @@
     ".next-qa/types/**/*.ts",
     ".next-qa/dev/types/**/*.ts",
     ".next-construction-supervisor-final/types/**/*.ts",
-    ".next-construction-supervisor-final/dev/types/**/*.ts"
+    ".next-construction-supervisor-final/dev/types/**/*.ts",
+    ".next-role-dashboard-removal/types/**/*.ts",
+    ".next-role-dashboard-removal/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

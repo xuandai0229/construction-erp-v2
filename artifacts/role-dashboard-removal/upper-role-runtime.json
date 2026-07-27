@@ -1,0 +1,35 @@
+[
+  {
+    "role": "ADMIN",
+    "url": "http://127.0.0.1:3100/dashboard",
+    "state": {
+      "dashboardLinks": 4,
+      "h1": null,
+      "kpiCards": 0,
+      "overviewText": true
+    },
+    "consoleIssues": 0
+  },
+  {
+    "role": "DIRECTOR",
+    "url": "http://127.0.0.1:3100/dashboard",
+    "state": {
+      "dashboardLinks": 5,
+      "h1": "Tổng quan điều hành hôm nay",
+      "kpiCards": 4,
+      "overviewText": true
+    },
+    "consoleIssues": 0
+  },
+  {
+    "role": "DEPUTY_DIRECTOR",
+    "url": "http://127.0.0.1:3100/dashboard",
+    "state": {
+      "dashboardLinks": 5,
+      "h1": "Tổng quan điều hành hôm nay",
+      "kpiCards": 4,
+      "overviewText": true
+    },
+    "consoleIssues": 0
+  }
+]

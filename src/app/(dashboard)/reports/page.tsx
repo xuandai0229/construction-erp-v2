@@ -5,6 +5,7 @@ import { canReadSupervisionWeekly } from "@/lib/supervision-weekly/permissions";
 import { ReportWorkspacePicker } from "@/components/reports/report-workspace-picker";
 import { PageHeader, PageHeading } from "@/components/ui/enterprise";
 import { ClipboardList } from "lucide-react";
+import { getDefaultRouteForRole } from "@/lib/roles/role-workspace-policy";
 
 export const metadata = {
   title: "Chọn loại báo cáo | ERP Công trình",
@@ -20,7 +21,7 @@ export default async function ReportsPage() {
   const canViewWeekly = canReadSupervisionWeekly(session.role);
 
   if (!canViewField && !canViewWeekly) {
-    redirect("/dashboard");
+    redirect(getDefaultRouteForRole(session.role));
   }
 
   return (

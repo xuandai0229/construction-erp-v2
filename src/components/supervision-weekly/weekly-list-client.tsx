@@ -133,6 +133,7 @@ export function WeeklyListClient({
   projects = [],
   currentUserId,
   currentUserRole,
+  canCreate = false,
   readiness,
   initialSearch = "",
   initialStatus = "ALL",
@@ -144,6 +145,7 @@ export function WeeklyListClient({
   projects?: ProjectOption[];
   currentUserId?: string;
   currentUserRole?: string;
+  canCreate?: boolean;
   readiness?: SupervisionDatabaseReadiness;
   initialSearch?: string;
   initialStatus?: string;
@@ -438,7 +440,7 @@ export function WeeklyListClient({
                 </div>
               }
               description="Lập báo cáo kiểm tra toàn bộ công trình và kế hoạch công tác theo tuần."
-              action={
+              action={canCreate ? (
                 <Button
                   onClick={() => setCreateModalOpen(true)}
                   className="gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm transition-all hover:shadow-md h-10 px-4"
@@ -446,7 +448,7 @@ export function WeeklyListClient({
                   <CalendarPlus className="h-4 w-4" />
                   <span>Tạo hồ sơ tuần mới</span>
                 </Button>
-              }
+              ) : undefined}
             />
           </PageHeader>
         </div>
@@ -455,13 +457,13 @@ export function WeeklyListClient({
           <div className="text-xs font-medium text-slate-500">
             Hồ sơ kiểm tra kết quả tuần và đề xuất kế hoạch công tác tuần tiếp theo
           </div>
-          <Button
+          {canCreate && <Button
             onClick={() => setCreateModalOpen(true)}
             className="gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm transition-all hover:shadow-md h-10 px-4 shrink-0"
           >
             <CalendarPlus className="h-4 w-4" />
             <span>Tạo hồ sơ tuần mới</span>
-          </Button>
+          </Button>}
         </div>
       )}
 

@@ -40,7 +40,11 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          email,
+          password,
+          next: new URLSearchParams(window.location.search).get('next'),
+        }),
       });
 
       const data = await res.json();
@@ -49,7 +53,7 @@ export default function LoginPage() {
         throw new Error(data.error || 'Đăng nhập thất bại');
       }
 
-      router.push('/dashboard');
+      router.replace(typeof data.redirectTo === 'string' ? data.redirectTo : '/dashboard');
       router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));

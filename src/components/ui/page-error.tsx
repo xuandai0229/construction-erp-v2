@@ -47,7 +47,7 @@ export function PageError({
             Quay lại
           </button>
           <Link
-            href="/dashboard"
+            href="/"
             className="inline-flex h-10 items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[var(--input-border)] bg-[var(--surface)] px-5 text-sm font-semibold text-[var(--muted-foreground)] transition-all hover:bg-[var(--surface-subtle)] hover:text-[var(--foreground)] active:scale-95 shadow-sm"
           >
             <Home className="h-4 w-4" />

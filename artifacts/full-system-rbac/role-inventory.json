@@ -1,0 +1,245 @@
+{
+  "systemRoles": [
+    {
+      "technicalName": "ADMIN",
+      "displayName": "Quản trị viên hệ thống",
+      "description": "Quản trị kỹ thuật và cấu hình hệ thống.",
+      "level": 100,
+      "sensitive": true,
+      "defaultScope": "GLOBAL",
+      "canViewAllProjects": true,
+      "canManageProjects": true,
+      "canManageUsers": true,
+      "expectedMenu": [
+        "/dashboard",
+        "/projects",
+        "/documents",
+        "/reports",
+        "/materials",
+        "/approvals",
+        "/tasks",
+        "/users",
+        "/settings"
+      ]
+    },
+    {
+      "technicalName": "DIRECTOR",
+      "displayName": "Giám đốc điều hành",
+      "description": "Điều hành và phê duyệt nghiệp vụ toàn công ty.",
+      "level": 90,
+      "sensitive": true,
+      "defaultScope": "GLOBAL",
+      "canViewAllProjects": true,
+      "canManageProjects": true,
+      "canManageUsers": true,
+      "expectedMenu": [
+        "/dashboard",
+        "/projects",
+        "/documents",
+        "/reports",
+        "/materials",
+        "/approvals",
+        "/tasks",
+        "/users",
+        "/settings"
+      ]
+    },
+    {
+      "technicalName": "DEPUTY_DIRECTOR",
+      "displayName": "Phó giám đốc",
+      "description": "Điều hành theo phân quyền toàn công ty.",
+      "level": 80,
+      "sensitive": true,
+      "defaultScope": "GLOBAL",
+      "canViewAllProjects": true,
+      "canManageProjects": true,
+      "canManageUsers": true,
+      "expectedMenu": [
+        "/dashboard",
+        "/projects",
+        "/documents",
+        "/reports",
+        "/materials",
+        "/approvals",
+        "/tasks",
+        "/users",
+        "/settings"
+      ]
+    },
+    {
+      "technicalName": "SUPERVISION_HEAD",
+      "displayName": "Trưởng ban giám sát",
+      "description": "Giám sát độc lập theo phạm vi công trình do Quản trị viên chỉ định.",
+      "level": 60,
+      "sensitive": true,
+      "defaultScope": "ASSIGNED_PROJECTS",
+      "canViewAllProjects": false,
+      "canManageProjects": false,
+      "canManageUsers": false,
+      "expectedMenu": [
+        "/dashboard",
+        "/projects",
+        "/documents",
+        "/reports",
+        "/materials",
+        "/tasks"
+      ]
+    },
+    {
+      "technicalName": "CONSTRUCTION_SUPERVISOR",
+      "displayName": "Cán bộ giám sát công trình",
+      "description": "Xem toàn bộ dữ liệu công trình và lập hồ sơ kiểm tra, kế hoạch tuần của chính mình.",
+      "level": 40,
+      "sensitive": false,
+      "defaultScope": "GLOBAL",
+      "canViewAllProjects": true,
+      "canManageProjects": false,
+      "canManageUsers": false,
+      "expectedMenu": [
+        "/dashboard",
+        "/projects",
+        "/documents",
+        "/reports",
+        "/materials",
+        "/approvals",
+        "/tasks"
+      ]
+    },
+    {
+      "technicalName": "CHIEF_COMMANDER",
+      "displayName": "Chỉ huy trưởng",
+      "description": "Vai trò nghiệp vụ hiện trường cấp hệ thống.",
+      "level": 50,
+      "sensitive": false,
+      "defaultScope": "ASSIGNED_PROJECTS",
+      "canViewAllProjects": false,
+      "canManageProjects": false,
+      "canManageUsers": false,
+      "expectedMenu": [
+        "/dashboard",
+        "/projects",
+        "/documents",
+        "/reports",
+        "/materials",
+        "/approvals",
+        "/tasks"
+      ]
+    },
+    {
+      "technicalName": "MANAGER",
+      "displayName": "Quản lý",
+      "description": "Vai trò quản lý nghiệp vụ.",
+      "level": 30,
+      "sensitive": false,
+      "defaultScope": "ASSIGNED_PROJECTS",
+      "canViewAllProjects": false,
+      "canManageProjects": false,
+      "canManageUsers": false,
+      "expectedMenu": [
+        "/dashboard",
+        "/projects",
+        "/documents",
+        "/reports",
+        "/materials",
+        "/approvals",
+        "/tasks"
+      ]
+    },
+    {
+      "technicalName": "ENGINEER",
+      "displayName": "Kỹ sư",
+      "description": "Vai trò kỹ thuật/nghiệp vụ hiện trường.",
+      "level": 20,
+      "sensitive": false,
+      "defaultScope": "ASSIGNED_PROJECTS",
+      "canViewAllProjects": false,
+      "canManageProjects": false,
+      "canManageUsers": false,
+      "expectedMenu": [
+        "/dashboard",
+        "/projects",
+        "/documents",
+        "/reports",
+        "/materials",
+        "/tasks"
+      ]
+    },
+    {
+      "technicalName": "STAFF",
+      "displayName": "Nhân viên",
+      "description": "Vai trò nghiệp vụ cơ bản.",
+      "level": 10,
+      "sensitive": false,
+      "defaultScope": "ASSIGNED_PROJECTS",
+      "canViewAllProjects": false,
+      "canManageProjects": false,
+      "canManageUsers": false,
+      "expectedMenu": [
+        "/dashboard",
+        "/projects",
+        "/documents",
+        "/reports",
+        "/materials",
+        "/tasks"
+      ]
+    }
+  ],
+  "projectRoles": [
+    {
+      "technicalName": "PROJECT_MANAGER",
+      "displayName": "Quản lý dự án",
+      "description": "Điều phối dự án được gán.",
+      "sensitive": true,
+      "defaultScope": "ASSIGNED_PROJECTS"
+    },
+    {
+      "technicalName": "SITE_COMMANDER",
+      "displayName": "Chỉ huy công trường",
+      "description": "Điều hành hiện trường của công trình được gán.",
+      "sensitive": true,
+      "defaultScope": "ASSIGNED_PROJECTS"
+    },
+    {
+      "technicalName": "CHIEF_COMMANDER",
+      "displayName": "Chỉ huy trưởng công trình",
+      "description": "Chỉ huy tại công trình được gán.",
+      "sensitive": true,
+      "defaultScope": "ASSIGNED_PROJECTS"
+    },
+    {
+      "technicalName": "ASSISTANT_COMMANDER",
+      "displayName": "Chỉ huy phó",
+      "description": "Hỗ trợ chỉ huy tại công trình được gán.",
+      "sensitive": false,
+      "defaultScope": "ASSIGNED_PROJECTS"
+    },
+    {
+      "technicalName": "QA_QC",
+      "displayName": "QA/QC",
+      "description": "Kiểm soát chất lượng tại công trình được gán.",
+      "sensitive": false,
+      "defaultScope": "ASSIGNED_PROJECTS"
+    },
+    {
+      "technicalName": "HSE",
+      "displayName": "An toàn HSE",
+      "description": "An toàn lao động tại công trình được gán.",
+      "sensitive": false,
+      "defaultScope": "ASSIGNED_PROJECTS"
+    },
+    {
+      "technicalName": "SUPERVISOR",
+      "displayName": "Giám sát",
+      "description": "Giám sát thi công tại công trình được gán.",
+      "sensitive": false,
+      "defaultScope": "ASSIGNED_PROJECTS"
+    },
+    {
+      "technicalName": "VIEWER",
+      "displayName": "Chỉ xem",
+      "description": "Chỉ xem dữ liệu trong công trình được gán.",
+      "sensitive": false,
+      "defaultScope": "ASSIGNED_PROJECTS"
+    }
+  ]
+}

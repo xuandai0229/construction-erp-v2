@@ -36,8 +36,27 @@ import {
 import { getWorkDateRange } from "@/lib/date/work-date";
 import { evaluateVolumeGuard } from "@/lib/field-progress/volume-guard";
 import { getReportProgressSourceMarker } from "@/lib/reports/report-progress-sync";
+import { writeSecurityAuditEvent } from "@/lib/audit";
 
 const Decimal = Prisma.Decimal;
+
+async function auditReportMutationDenied(input: {
+  actor: { id: string; role: UserRole };
+  action: string;
+  reportId?: string;
+  projectId: string;
+}) {
+  await writeSecurityAuditEvent({
+    eventType: "SOURCE_MUTATION_DENIED",
+    actorId: input.actor.id,
+    role: input.actor.role,
+    action: input.action,
+    resourceType: "SiteReport",
+    resourceId: input.reportId ?? "NEW",
+    projectId: input.projectId,
+    reasonCode: "SITE_REPORT_MUTATION_DENIED",
+  });
+}
 
 function projectIdScope(scope: ProjectAccessScope) {
   return scope.kind === "ALL_PROJECTS"
@@ -317,6 +336,7 @@ export async function createSiteReport(data: Record<string, unknown>, isDraft: b
 
   const hasProjectAccess = projectScopeAllows(accessScope, pId);
   if (!canCreateReport(user, hasProjectAccess)) {
+    await auditReportMutationDenied({ actor: user, action: "reports.create", projectId: pId });
     throw new Error("KhÃ´ng cÃ³ quyá»n táº¡o bÃ¡o cÃ¡o hiá»‡n trÆ°á»ng.");
   }
 
@@ -797,6 +817,7 @@ export async function submitSiteReport(reportId: string) {
 
   const hasProjectAccess = await canAccessProject(user, report.projectId);
   if (!canSubmitReport(report, user, hasProjectAccess)) {
+    await auditReportMutationDenied({ actor: user, action: "reports.submit", reportId, projectId: report.projectId });
     throw new Error("KhÃ´ng cÃ³ quyá»n gá»­i bÃ¡o cÃ¡o nÃ y.");
   }
 
@@ -819,6 +840,7 @@ export async function approveSiteReport(reportId: string, note?: string) {
 
   const hasProjectAccess = await canAccessProject(user, report.projectId);
   if (!canApproveReport(report, user, hasProjectAccess)) {
+    await auditReportMutationDenied({ actor: user, action: "reports.approve", reportId, projectId: report.projectId });
     throw new Error("KhÃ´ng cÃ³ quyá»n duyá»‡t bÃ¡o cÃ¡o nÃ y.");
   }
 
@@ -841,6 +863,7 @@ export async function rejectSiteReport(reportId: string, reason: string) {
 
   const hasProjectAccess = await canAccessProject(user, report.projectId);
   if (!canRejectReport(report, user, hasProjectAccess)) {
+    await auditReportMutationDenied({ actor: user, action: "reports.reject", reportId, projectId: report.projectId });
     throw new Error("KhÃ´ng cÃ³ quyá»n tá»« chá»‘i bÃ¡o cÃ¡o nÃ y.");
   }
 
@@ -1189,6 +1212,7 @@ export async function updateSiteReport(reportId: string, data: Record<string, un
   const hasProjectAccess = await canAccessProject(policyUser, report.projectId);
 
   if (!canUpdateReport(report, policyUser, hasProjectAccess)) {
+    await auditReportMutationDenied({ actor: policyUser, action: "reports.update", reportId, projectId: report.projectId });
     if (report.status !== "DRAFT" && report.status !== "REJECTED") {
       throw new Error("Chỉ được sửa báo cáo nháp hoặc báo cáo bị từ chối.");
     }
@@ -1332,6 +1356,7 @@ export async function softDeleteSiteReport(reportId: string) {
   const hasProjectAccess = await canAccessProject(policyUser, report.projectId);
 
   if (!canDeleteReport(report, policyUser, hasProjectAccess)) {
+    await auditReportMutationDenied({ actor: policyUser, action: "reports.delete", reportId, projectId: report.projectId });
     if (report.status === "APPROVED" || report.status === "LOCKED" || report.status === "CANCELLED") {
       throw new Error("Không thể xóa báo cáo đã duyệt hoặc đã khóa.");
     }

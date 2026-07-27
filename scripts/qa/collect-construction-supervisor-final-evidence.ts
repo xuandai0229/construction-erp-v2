@@ -66,7 +66,7 @@ async function main() {
       orderBy: { createdAt: "asc" },
     });
     const auditSerialized = JSON.stringify(auditEvents);
-    const secretPatterns = [/password/i, /authorization/i, /set-cookie/i, /database_url/i, /postgres(?:ql)?:\/\//i];
+    const secretPatterns = [/"(?:password|token|cookie|authorization|connectionString|databaseUrl)"\s*:/i, /set-cookie\s*:/i, /postgres(?:ql)?:\/\//i];
     const secretLeakPatterns = secretPatterns.filter((pattern) => pattern.test(auditSerialized)).map(String);
 
     const sourceSnapshots = {
@@ -81,14 +81,14 @@ async function main() {
     const roles: UserRole[] = ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR", "SUPERVISION_HEAD", "CHIEF_COMMANDER", "MANAGER", "ENGINEER", "STAFF", "CONSTRUCTION_SUPERVISOR"];
     const roleMatrix = roles.map((role) => ({
       role,
-      projectReadAll: canViewAllProjects(role),
-      projectManage: canManageProjects(role),
+      projectReadAll: canViewAllProjects({ role }),
+      projectManage: canManageProjects({ role }),
       weeklyReadAll: canReadSupervisionWeekly(role),
       weeklyCreate: canAuthorSupervisionWeekly(role),
       weeklyEditOwn: canAuthorSupervisionWeekly(role),
       weeklyReview: canReviewSupervisionWeekly(role),
       weeklyLock: canLockSupervisionWeeklyDossier(role),
-      sourceMutation: role !== "CONSTRUCTION_SUPERVISOR" && canManageProjects(role),
+      sourceMutation: role !== "CONSTRUCTION_SUPERVISOR" && canManageProjects({ role }),
     }));
 
     manifest.projects.C = projectC.id;

@@ -1,0 +1,107 @@
+[
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-ADMIN",
+    "action": "createSiteReport",
+    "targetProject": "QA-FULL-SYSTEM-RBAC-20260727-PRJ-A",
+    "policyExpected": "ALLOW",
+    "verifiedAt": "2026-07-27T03:41:25.258Z"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-DIRECTOR",
+    "action": "createSiteReport",
+    "targetProject": "QA-FULL-SYSTEM-RBAC-20260727-PRJ-A",
+    "policyExpected": "ALLOW",
+    "verifiedAt": "2026-07-27T03:41:25.258Z"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-DEPUTY-DIRECTOR",
+    "action": "createSiteReport",
+    "targetProject": "QA-FULL-SYSTEM-RBAC-20260727-PRJ-A",
+    "policyExpected": "ALLOW",
+    "verifiedAt": "2026-07-27T03:41:25.258Z"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-SUPERVISION-HEAD",
+    "action": "createSiteReport",
+    "targetProject": "QA-FULL-SYSTEM-RBAC-20260727-PRJ-A",
+    "policyExpected": "DENY",
+    "verifiedAt": "2026-07-27T03:41:25.258Z"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-SUPERVISOR-A",
+    "action": "createSiteReport",
+    "targetProject": "QA-FULL-SYSTEM-RBAC-20260727-PRJ-A",
+    "policyExpected": "DENY",
+    "verifiedAt": "2026-07-27T03:41:25.258Z"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-SUPERVISOR-B",
+    "action": "createSiteReport",
+    "targetProject": "QA-FULL-SYSTEM-RBAC-20260727-PRJ-A",
+    "policyExpected": "DENY",
+    "verifiedAt": "2026-07-27T03:41:25.259Z"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-COMMANDER-A",
+    "action": "createSiteReport",
+    "targetProject": "QA-FULL-SYSTEM-RBAC-20260727-PRJ-A",
+    "policyExpected": "ALLOW",
+    "verifiedAt": "2026-07-27T03:41:25.259Z"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-COMMANDER-B",
+    "action": "createSiteReport",
+    "targetProject": "QA-FULL-SYSTEM-RBAC-20260727-PRJ-A",
+    "policyExpected": "DENY",
+    "verifiedAt": "2026-07-27T03:41:25.259Z"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-MANAGER-A",
+    "action": "createSiteReport",
+    "targetProject": "QA-FULL-SYSTEM-RBAC-20260727-PRJ-A",
+    "policyExpected": "ALLOW",
+    "verifiedAt": "2026-07-27T03:41:25.259Z"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-MANAGER-NONE",
+    "action": "createSiteReport",
+    "targetProject": "QA-FULL-SYSTEM-RBAC-20260727-PRJ-A",
+    "policyExpected": "DENY",
+    "verifiedAt": "2026-07-27T03:41:25.259Z"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-ENGINEER-A",
+    "action": "createSiteReport",
+    "targetProject": "QA-FULL-SYSTEM-RBAC-20260727-PRJ-A",
+    "policyExpected": "ALLOW",
+    "verifiedAt": "2026-07-27T03:41:25.259Z"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-ENGINEER-B",
+    "action": "createSiteReport",
+    "targetProject": "QA-FULL-SYSTEM-RBAC-20260727-PRJ-A",
+    "policyExpected": "DENY",
+    "verifiedAt": "2026-07-27T03:41:25.259Z"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-ENGINEER-NONE",
+    "action": "createSiteReport",
+    "targetProject": "QA-FULL-SYSTEM-RBAC-20260727-PRJ-A",
+    "policyExpected": "DENY",
+    "verifiedAt": "2026-07-27T03:41:25.259Z"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-STAFF-A",
+    "action": "createSiteReport",
+    "targetProject": "QA-FULL-SYSTEM-RBAC-20260727-PRJ-A",
+    "policyExpected": "DENY",
+    "verifiedAt": "2026-07-27T03:41:25.259Z"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-STAFF-B",
+    "action": "createSiteReport",
+    "targetProject": "QA-FULL-SYSTEM-RBAC-20260727-PRJ-A",
+    "policyExpected": "DENY",
+    "verifiedAt": "2026-07-27T03:41:25.259Z"
+  }
+]

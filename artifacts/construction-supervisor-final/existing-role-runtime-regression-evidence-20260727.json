@@ -1,0 +1,393 @@
+{
+  "status": "PASS",
+  "testedAt": "2026-07-27T03:34:21.719Z",
+  "databaseFingerprint": {
+    "database": "construction_erp_v2_qa_e2e_20260723",
+    "host": "127.0.0.1",
+    "port": "5432"
+  },
+  "rows": [
+    {
+      "role": "ADMIN",
+      "userId": "24fce0ae-ea83-4e8b-8606-059285da29dd",
+      "runtime": {
+        "projectHttpStatus": 200,
+        "visibleProjectCodes": [
+          "PROJECT-A",
+          "PROJECT-B",
+          "PROJECT-C"
+        ],
+        "visibleProjectCount": 3,
+        "projectManageControlVisible": true,
+        "weeklyHttpStatus": 200,
+        "weeklyModuleVisible": true,
+        "weeklyCreateControlVisible": false,
+        "exportOfficerOwnedDossierStatus": 200,
+        "exportReturnedFile": true
+      },
+      "database": {
+        "membershipProjectIds": [],
+        "expectedVisibleProjectIds": [
+          "63e5957b-f1c2-4a1f-a1de-d7c27f899f88",
+          "8fc2987f-32cf-4c0e-893c-acd0940320ee",
+          "cms2n725d0028cwwkcwk6p3wt"
+        ]
+      },
+      "policy": {
+        "projectReadAll": true,
+        "projectManage": true,
+        "weeklyReadAll": true,
+        "weeklyCreate": false,
+        "weeklyEditOwn": false,
+        "weeklyReview": true,
+        "sourceMutation": true
+      }
+    },
+    {
+      "role": "DIRECTOR",
+      "userId": "a47d0172-213a-477e-9b46-9bb93d24e07f",
+      "runtime": {
+        "projectHttpStatus": 200,
+        "visibleProjectCodes": [
+          "PROJECT-A",
+          "PROJECT-B",
+          "PROJECT-C"
+        ],
+        "visibleProjectCount": 3,
+        "projectManageControlVisible": true,
+        "weeklyHttpStatus": 200,
+        "weeklyModuleVisible": true,
+        "weeklyCreateControlVisible": false,
+        "exportOfficerOwnedDossierStatus": 200,
+        "exportReturnedFile": true
+      },
+      "database": {
+        "membershipProjectIds": [],
+        "expectedVisibleProjectIds": [
+          "63e5957b-f1c2-4a1f-a1de-d7c27f899f88",
+          "8fc2987f-32cf-4c0e-893c-acd0940320ee",
+          "cms2n725d0028cwwkcwk6p3wt"
+        ]
+      },
+      "policy": {
+        "projectReadAll": true,
+        "projectManage": true,
+        "weeklyReadAll": true,
+        "weeklyCreate": false,
+        "weeklyEditOwn": false,
+        "weeklyReview": true,
+        "sourceMutation": true
+      }
+    },
+    {
+      "role": "DEPUTY_DIRECTOR",
+      "userId": "ed502f5f-9a38-4f45-bf92-f14a732f93c7",
+      "runtime": {
+        "projectHttpStatus": 200,
+        "visibleProjectCodes": [
+          "PROJECT-A",
+          "PROJECT-B",
+          "PROJECT-C"
+        ],
+        "visibleProjectCount": 3,
+        "projectManageControlVisible": true,
+        "weeklyHttpStatus": 200,
+        "weeklyModuleVisible": true,
+        "weeklyCreateControlVisible": false,
+        "exportOfficerOwnedDossierStatus": 200,
+        "exportReturnedFile": true
+      },
+      "database": {
+        "membershipProjectIds": [],
+        "expectedVisibleProjectIds": [
+          "63e5957b-f1c2-4a1f-a1de-d7c27f899f88",
+          "8fc2987f-32cf-4c0e-893c-acd0940320ee",
+          "cms2n725d0028cwwkcwk6p3wt"
+        ]
+      },
+      "policy": {
+        "projectReadAll": true,
+        "projectManage": true,
+        "weeklyReadAll": true,
+        "weeklyCreate": false,
+        "weeklyEditOwn": false,
+        "weeklyReview": true,
+        "sourceMutation": true
+      }
+    },
+    {
+      "role": "SUPERVISION_HEAD",
+      "userId": "c9654ced-9084-4d87-b284-df98f4d55ec4",
+      "runtime": {
+        "projectHttpStatus": 200,
+        "visibleProjectCodes": [],
+        "visibleProjectCount": 0,
+        "projectManageControlVisible": false,
+        "weeklyHttpStatus": 200,
+        "weeklyModuleVisible": true,
+        "weeklyCreateControlVisible": true,
+        "exportOfficerOwnedDossierStatus": 403,
+        "exportReturnedFile": false
+      },
+      "database": {
+        "membershipProjectIds": [],
+        "expectedVisibleProjectIds": []
+      },
+      "policy": {
+        "projectReadAll": false,
+        "projectManage": false,
+        "weeklyReadAll": true,
+        "weeklyCreate": true,
+        "weeklyEditOwn": true,
+        "weeklyReview": false,
+        "sourceMutation": false
+      }
+    },
+    {
+      "role": "CHIEF_COMMANDER",
+      "userId": "b7d47b42-956b-40a4-9300-39118a039628",
+      "runtime": {
+        "projectHttpStatus": 200,
+        "visibleProjectCodes": [
+          "PROJECT-A"
+        ],
+        "visibleProjectCount": 1,
+        "projectManageControlVisible": false,
+        "weeklyHttpStatus": 200,
+        "weeklyModuleVisible": false,
+        "weeklyCreateControlVisible": false,
+        "exportOfficerOwnedDossierStatus": 403,
+        "exportReturnedFile": false
+      },
+      "database": {
+        "membershipProjectIds": [
+          "63e5957b-f1c2-4a1f-a1de-d7c27f899f88"
+        ],
+        "expectedVisibleProjectIds": [
+          "63e5957b-f1c2-4a1f-a1de-d7c27f899f88"
+        ]
+      },
+      "policy": {
+        "projectReadAll": false,
+        "projectManage": false,
+        "weeklyReadAll": false,
+        "weeklyCreate": false,
+        "weeklyEditOwn": false,
+        "weeklyReview": false,
+        "sourceMutation": false
+      }
+    },
+    {
+      "role": "MANAGER",
+      "userId": "a9f4cc62-521f-4a89-93c1-174fbb3adcae",
+      "runtime": {
+        "projectHttpStatus": 200,
+        "visibleProjectCodes": [
+          "PROJECT-A"
+        ],
+        "visibleProjectCount": 1,
+        "projectManageControlVisible": false,
+        "weeklyHttpStatus": 200,
+        "weeklyModuleVisible": false,
+        "weeklyCreateControlVisible": false,
+        "exportOfficerOwnedDossierStatus": 403,
+        "exportReturnedFile": false
+      },
+      "database": {
+        "membershipProjectIds": [
+          "63e5957b-f1c2-4a1f-a1de-d7c27f899f88"
+        ],
+        "expectedVisibleProjectIds": [
+          "63e5957b-f1c2-4a1f-a1de-d7c27f899f88"
+        ]
+      },
+      "policy": {
+        "projectReadAll": false,
+        "projectManage": false,
+        "weeklyReadAll": false,
+        "weeklyCreate": false,
+        "weeklyEditOwn": false,
+        "weeklyReview": false,
+        "sourceMutation": false
+      }
+    },
+    {
+      "role": "ENGINEER",
+      "userId": "202f72e0-eed6-42dc-8076-e30db7c5c407",
+      "runtime": {
+        "projectHttpStatus": 200,
+        "visibleProjectCodes": [
+          "PROJECT-B"
+        ],
+        "visibleProjectCount": 1,
+        "projectManageControlVisible": false,
+        "weeklyHttpStatus": 200,
+        "weeklyModuleVisible": false,
+        "weeklyCreateControlVisible": false,
+        "exportOfficerOwnedDossierStatus": 403,
+        "exportReturnedFile": false
+      },
+      "database": {
+        "membershipProjectIds": [
+          "8fc2987f-32cf-4c0e-893c-acd0940320ee"
+        ],
+        "expectedVisibleProjectIds": [
+          "8fc2987f-32cf-4c0e-893c-acd0940320ee"
+        ]
+      },
+      "policy": {
+        "projectReadAll": false,
+        "projectManage": false,
+        "weeklyReadAll": false,
+        "weeklyCreate": false,
+        "weeklyEditOwn": false,
+        "weeklyReview": false,
+        "sourceMutation": false
+      }
+    },
+    {
+      "role": "STAFF",
+      "userId": "aaa706a1-aee4-44ea-a676-06a3c45c324c",
+      "runtime": {
+        "projectHttpStatus": 200,
+        "visibleProjectCodes": [
+          "PROJECT-B"
+        ],
+        "visibleProjectCount": 1,
+        "projectManageControlVisible": false,
+        "weeklyHttpStatus": 200,
+        "weeklyModuleVisible": false,
+        "weeklyCreateControlVisible": false,
+        "exportOfficerOwnedDossierStatus": 403,
+        "exportReturnedFile": false
+      },
+      "database": {
+        "membershipProjectIds": [
+          "8fc2987f-32cf-4c0e-893c-acd0940320ee"
+        ],
+        "expectedVisibleProjectIds": [
+          "8fc2987f-32cf-4c0e-893c-acd0940320ee"
+        ]
+      },
+      "policy": {
+        "projectReadAll": false,
+        "projectManage": false,
+        "weeklyReadAll": false,
+        "weeklyCreate": false,
+        "weeklyEditOwn": false,
+        "weeklyReview": false,
+        "sourceMutation": false
+      }
+    },
+    {
+      "role": "CONSTRUCTION_SUPERVISOR",
+      "userId": "6f0ae6f4-7521-477b-b7b0-3ff58ae5e989",
+      "runtime": {
+        "projectHttpStatus": 200,
+        "visibleProjectCodes": [
+          "PROJECT-A",
+          "PROJECT-B",
+          "PROJECT-C"
+        ],
+        "visibleProjectCount": 3,
+        "projectManageControlVisible": false,
+        "weeklyHttpStatus": 200,
+        "weeklyModuleVisible": true,
+        "weeklyCreateControlVisible": true,
+        "exportOfficerOwnedDossierStatus": 200,
+        "exportReturnedFile": true
+      },
+      "database": {
+        "membershipProjectIds": [],
+        "expectedVisibleProjectIds": [
+          "63e5957b-f1c2-4a1f-a1de-d7c27f899f88",
+          "8fc2987f-32cf-4c0e-893c-acd0940320ee",
+          "cms2n725d0028cwwkcwk6p3wt"
+        ]
+      },
+      "policy": {
+        "projectReadAll": true,
+        "projectManage": false,
+        "weeklyReadAll": true,
+        "weeklyCreate": true,
+        "weeklyEditOwn": true,
+        "weeklyReview": false,
+        "sourceMutation": false
+      }
+    }
+  ],
+  "assertions": [
+    {
+      "role": "ADMIN",
+      "noUnexpectedReadAll": true,
+      "manageControlMatchesPolicy": true,
+      "weeklyReadMatchesPolicy": true,
+      "weeklyCreateMatchesPolicy": true,
+      "officerHasNoSourceManage": true
+    },
+    {
+      "role": "DIRECTOR",
+      "noUnexpectedReadAll": true,
+      "manageControlMatchesPolicy": true,
+      "weeklyReadMatchesPolicy": true,
+      "weeklyCreateMatchesPolicy": true,
+      "officerHasNoSourceManage": true
+    },
+    {
+      "role": "DEPUTY_DIRECTOR",
+      "noUnexpectedReadAll": true,
+      "manageControlMatchesPolicy": true,
+      "weeklyReadMatchesPolicy": true,
+      "weeklyCreateMatchesPolicy": true,
+      "officerHasNoSourceManage": true
+    },
+    {
+      "role": "SUPERVISION_HEAD",
+      "noUnexpectedReadAll": true,
+      "manageControlMatchesPolicy": true,
+      "weeklyReadMatchesPolicy": true,
+      "weeklyCreateMatchesPolicy": true,
+      "officerHasNoSourceManage": true
+    },
+    {
+      "role": "CHIEF_COMMANDER",
+      "noUnexpectedReadAll": true,
+      "manageControlMatchesPolicy": true,
+      "weeklyReadMatchesPolicy": true,
+      "weeklyCreateMatchesPolicy": true,
+      "officerHasNoSourceManage": true
+    },
+    {
+      "role": "MANAGER",
+      "noUnexpectedReadAll": true,
+      "manageControlMatchesPolicy": true,
+      "weeklyReadMatchesPolicy": true,
+      "weeklyCreateMatchesPolicy": true,
+      "officerHasNoSourceManage": true
+    },
+    {
+      "role": "ENGINEER",
+      "noUnexpectedReadAll": true,
+      "manageControlMatchesPolicy": true,
+      "weeklyReadMatchesPolicy": true,
+      "weeklyCreateMatchesPolicy": true,
+      "officerHasNoSourceManage": true
+    },
+    {
+      "role": "STAFF",
+      "noUnexpectedReadAll": true,
+      "manageControlMatchesPolicy": true,
+      "weeklyReadMatchesPolicy": true,
+      "weeklyCreateMatchesPolicy": true,
+      "officerHasNoSourceManage": true
+    },
+    {
+      "role": "CONSTRUCTION_SUPERVISOR",
+      "noUnexpectedReadAll": true,
+      "manageControlMatchesPolicy": true,
+      "weeklyReadMatchesPolicy": true,
+      "weeklyCreateMatchesPolicy": true,
+      "officerHasNoSourceManage": true
+    }
+  ]
+}

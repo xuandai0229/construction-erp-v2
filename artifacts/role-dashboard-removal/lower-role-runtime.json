@@ -1,0 +1,104 @@
+[
+  {
+    "role": "SUPERVISION_HEAD",
+    "expected": "/reports/weekly-inspection",
+    "loginUrl": "http://127.0.0.1:3100/reports/weekly-inspection",
+    "directUrl": "http://127.0.0.1:3100/reports/weekly-inspection",
+    "landing": {
+      "dashboardLinks": 0,
+      "heading": "Kiểm tra & kế hoạch tuần",
+      "overviewText": false
+    },
+    "direct": {
+      "dashboardLinks": 0,
+      "heading": "Kiểm tra & kế hoạch tuần",
+      "overviewText": false
+    },
+    "consoleIssues": 0
+  },
+  {
+    "role": "CONSTRUCTION_SUPERVISOR",
+    "expected": "/reports/weekly-inspection",
+    "loginUrl": "http://127.0.0.1:3100/reports/weekly-inspection",
+    "directUrl": "http://127.0.0.1:3100/reports/weekly-inspection",
+    "landing": {
+      "dashboardLinks": 0,
+      "heading": "Kiểm tra & kế hoạch tuần",
+      "overviewText": false
+    },
+    "direct": {
+      "dashboardLinks": 0,
+      "heading": "Kiểm tra & kế hoạch tuần",
+      "overviewText": false
+    },
+    "consoleIssues": 0
+  },
+  {
+    "role": "CHIEF_COMMANDER",
+    "expected": "/projects",
+    "loginUrl": "http://127.0.0.1:3100/projects",
+    "directUrl": "http://127.0.0.1:3100/projects",
+    "landing": {
+      "dashboardLinks": 0,
+      "heading": "Công trình của tôi",
+      "overviewText": false
+    },
+    "direct": {
+      "dashboardLinks": 0,
+      "heading": "Công trình của tôi",
+      "overviewText": false
+    },
+    "consoleIssues": 0
+  },
+  {
+    "role": "MANAGER",
+    "expected": "/projects",
+    "loginUrl": "http://127.0.0.1:3100/projects",
+    "directUrl": "http://127.0.0.1:3100/projects",
+    "landing": {
+      "dashboardLinks": 0,
+      "heading": "Quản lý Công trình",
+      "overviewText": false
+    },
+    "direct": {
+      "dashboardLinks": 0,
+      "heading": "Quản lý Công trình",
+      "overviewText": false
+    },
+    "consoleIssues": 0
+  },
+  {
+    "role": "ENGINEER",
+    "expected": "/tasks?mine=1",
+    "loginUrl": "http://127.0.0.1:3100/tasks?mine=1",
+    "directUrl": "http://127.0.0.1:3100/tasks?mine=1",
+    "landing": {
+      "dashboardLinks": 0,
+      "heading": "Điều hành công việc",
+      "overviewText": false
+    },
+    "direct": {
+      "dashboardLinks": 0,
+      "heading": "Điều hành công việc",
+      "overviewText": false
+    },
+    "consoleIssues": 0
+  },
+  {
+    "role": "STAFF",
+    "expected": "/tasks?mine=1",
+    "loginUrl": "http://127.0.0.1:3100/tasks?mine=1",
+    "directUrl": "http://127.0.0.1:3100/tasks?mine=1",
+    "landing": {
+      "dashboardLinks": 0,
+      "heading": "Điều hành công việc",
+      "overviewText": false
+    },
+    "direct": {
+      "dashboardLinks": 0,
+      "heading": "Điều hành công việc",
+      "overviewText": false
+    },
+    "consoleIssues": 0
+  }
+]

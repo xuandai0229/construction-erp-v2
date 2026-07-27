@@ -1,0 +1,44 @@
+[
+  {
+    "name": "Desktop Large",
+    "width": 1440,
+    "height": 900,
+    "maxHorizontalOverflowDelta": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "Desktop Standard",
+    "width": 1280,
+    "height": 800,
+    "maxHorizontalOverflowDelta": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "Laptop Small",
+    "width": 1024,
+    "height": 768,
+    "maxHorizontalOverflowDelta": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "Tablet Portrait",
+    "width": 768,
+    "height": 1024,
+    "maxHorizontalOverflowDelta": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "Mobile Large (iPhone 14 Pro)",
+    "width": 390,
+    "height": 844,
+    "maxHorizontalOverflowDelta": 0,
+    "status": "PASS"
+  },
+  {
+    "name": "Mobile Compact",
+    "width": 360,
+    "height": 800,
+    "maxHorizontalOverflowDelta": 0,
+    "status": "PASS"
+  }
+]

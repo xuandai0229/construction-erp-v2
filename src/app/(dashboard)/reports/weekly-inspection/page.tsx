@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { canReadSupervisionWeekly } from "@/lib/supervision-weekly/permissions";
+import { canAuthorSupervisionWeekly, canReadSupervisionWeekly } from "@/lib/supervision-weekly/permissions";
 import { getSupervisionWeeklyDossiers, getSupervisionWeeklyProjects } from "@/app/(dashboard)/supervision/weekly/actions";
 import { WeeklyListClient } from "@/components/supervision-weekly/weekly-list-client";
 import { getSupervisionDatabaseReadiness } from "@/lib/supervision-weekly/database-readiness";
@@ -41,6 +41,7 @@ export default async function WeeklyInspectionPage({
       projects={projects}
       currentUserId={session.id}
       currentUserRole={session.role}
+      canCreate={canAuthorSupervisionWeekly(session.role)}
       initialSearch={initialSearch}
       initialStatus={initialStatus}
       initialProjectId={initialProjectId}

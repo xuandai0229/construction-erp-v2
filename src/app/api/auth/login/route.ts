@@ -2,10 +2,11 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import * as bcrypt from 'bcryptjs';
 import { setSession } from '@/lib/auth';
+import { resolvePostLoginRoute } from '@/lib/roles/role-workspace-policy';
 
 export async function POST(request: Request) {
   try {
-    const { email, password } = await request.json();
+    const { email, password, next } = await request.json();
 
     if (!email || !password) {
       return NextResponse.json({ error: 'Email và mật khẩu không được bỏ trống' }, { status: 400 });
@@ -37,7 +38,10 @@ export async function POST(request: Request) {
 
     await setSession(user.id);
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      redirectTo: resolvePostLoginRoute(user.role, typeof next === "string" ? next : null),
+    });
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json({ error: 'Hệ thống đăng nhập đang gặp sự cố. Vui lòng thử lại hoặc liên hệ quản trị.' }, { status: 500 });

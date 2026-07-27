@@ -1,0 +1,174 @@
+{
+  "status": "PASS",
+  "testedAt": "2026-07-27T03:31:05.251Z",
+  "databaseFingerprint": {
+    "database": "construction_erp_v2_qa_e2e_20260723",
+    "host": "127.0.0.1",
+    "port": "5432"
+  },
+  "request": {
+    "principal": "QA-CS-OFFICER-A",
+    "route": "/reports/weekly-inspection/253f8b09-e94c-40e4-9681-60c20b1c9f46/edit",
+    "action": "saveSupervisionWeeklyDossier",
+    "targetDossierId": "253f8b09-e94c-40e4-9681-60c20b1c9f46",
+    "injectedRowId": "83ac1646-bbdc-4fea-9546-86eb0a78835d",
+    "injectedRowOwnerDossierId": "f30c9817-e2bb-42b5-bf20-cfbacdd7cdbf"
+  },
+  "response": {
+    "status": 500,
+    "contentType": "text/x-component",
+    "returnedFile": false,
+    "containsConflictMarker": true,
+    "bodyBytes": 406
+  },
+  "before": {
+    "target": {
+      "id": "253f8b09-e94c-40e4-9681-60c20b1c9f46",
+      "status": "DRAFT",
+      "lockVersion": 2,
+      "updatedAt": "2026-07-27T03:10:55.575Z",
+      "reportNumber": "QA-CONSTRUCTION-SUPERVISOR-FINAL-OWNDRAFT",
+      "place": "QA-CONSTRUCTION-SUPERVISOR-FINAL-RACE-TAB-1"
+    },
+    "targetEntryIds": [
+      "9af15f63-9790-4673-ab9d-82f7e334dbe7",
+      "f7ec76b0-e25c-4478-8786-e74157120674"
+    ],
+    "targetRevisionIds": [
+      "56f2a19d-5ecb-435f-8628-1865733c98ee",
+      "cms2ngn8w002scwwkru0yarv7"
+    ],
+    "foreignRow": {
+      "id": "83ac1646-bbdc-4fea-9546-86eb0a78835d",
+      "dossierId": "f30c9817-e2bb-42b5-bf20-cfbacdd7cdbf",
+      "updatedAt": "2026-07-27T02:35:14.788Z"
+    },
+    "project": {
+      "id": "8fc2987f-32cf-4c0e-893c-acd0940320ee",
+      "updatedAt": "2026-07-27T02:35:14.576Z"
+    }
+  },
+  "after": {
+    "target": {
+      "id": "253f8b09-e94c-40e4-9681-60c20b1c9f46",
+      "status": "DRAFT",
+      "lockVersion": 2,
+      "updatedAt": "2026-07-27T03:10:55.575Z",
+      "reportNumber": "QA-CONSTRUCTION-SUPERVISOR-FINAL-OWNDRAFT",
+      "place": "QA-CONSTRUCTION-SUPERVISOR-FINAL-RACE-TAB-1"
+    },
+    "targetEntryIds": [
+      "9af15f63-9790-4673-ab9d-82f7e334dbe7",
+      "f7ec76b0-e25c-4478-8786-e74157120674"
+    ],
+    "targetRevisionIds": [
+      "56f2a19d-5ecb-435f-8628-1865733c98ee",
+      "cms2ngn8w002scwwkru0yarv7"
+    ],
+    "foreignRow": {
+      "id": "83ac1646-bbdc-4fea-9546-86eb0a78835d",
+      "dossierId": "f30c9817-e2bb-42b5-bf20-cfbacdd7cdbf",
+      "updatedAt": "2026-07-27T02:35:14.788Z"
+    },
+    "project": {
+      "id": "8fc2987f-32cf-4c0e-893c-acd0940320ee",
+      "updatedAt": "2026-07-27T02:35:14.576Z"
+    }
+  },
+  "databaseUnchanged": true,
+  "auditEvent": {
+    "id": "cms2o6k4t002ycwwkoh8odp43",
+    "userId": "6f0ae6f4-7521-477b-b7b0-3ff58ae5e989",
+    "projectId": null,
+    "action": "CROSS_DOSSIER_ROW_REJECTED",
+    "entityType": "SupervisionWeeklyDossier",
+    "entityId": "253f8b09-e94c-40e4-9681-60c20b1c9f46",
+    "beforeData": null,
+    "afterData": "{\"actorId\":\"6f0ae6f4-7521-477b-b7b0-3ff58ae5e989\",\"role\":\"CONSTRUCTION_SUPERVISOR\",\"requestedAction\":\"supervision.weekly.update_rows\",\"resourceType\":\"SupervisionWeeklyDossier\",\"resourceId\":\"253f8b09-e94c-40e4-9681-60c20b1c9f46\",\"projectId\":null,\"reasonCode\":\"FOREIGN_OR_DUPLICATE_ROW_ID\"}",
+    "ipAddress": null,
+    "userAgent": null,
+    "createdAt": "2026-07-27T03:31:04.685Z"
+  },
+  "crossProjectResourceInjection": {
+    "request": {
+      "projectId": "8fc2987f-32cf-4c0e-893c-acd0940320ee",
+      "categoryItemId": "832c7eda-3dc0-4ddb-8edf-6f9bf61a97a7",
+      "relationship": "category belongs to Project A but request claims Project B"
+    },
+    "response": {
+      "status": 500,
+      "contentType": "text/x-component",
+      "returnedFile": false,
+      "containsRelationshipErrorMarker": true,
+      "bodyBytes": 627
+    },
+    "before": {
+      "target": {
+        "id": "253f8b09-e94c-40e4-9681-60c20b1c9f46",
+        "status": "DRAFT",
+        "lockVersion": 2,
+        "updatedAt": "2026-07-27T03:10:55.575Z",
+        "reportNumber": "QA-CONSTRUCTION-SUPERVISOR-FINAL-OWNDRAFT",
+        "place": "QA-CONSTRUCTION-SUPERVISOR-FINAL-RACE-TAB-1"
+      },
+      "targetEntryIds": [
+        "9af15f63-9790-4673-ab9d-82f7e334dbe7",
+        "f7ec76b0-e25c-4478-8786-e74157120674"
+      ],
+      "targetRevisionIds": [
+        "56f2a19d-5ecb-435f-8628-1865733c98ee",
+        "cms2ngn8w002scwwkru0yarv7"
+      ],
+      "foreignRow": {
+        "id": "83ac1646-bbdc-4fea-9546-86eb0a78835d",
+        "dossierId": "f30c9817-e2bb-42b5-bf20-cfbacdd7cdbf",
+        "updatedAt": "2026-07-27T02:35:14.788Z"
+      },
+      "project": {
+        "id": "8fc2987f-32cf-4c0e-893c-acd0940320ee",
+        "updatedAt": "2026-07-27T02:35:14.576Z"
+      }
+    },
+    "after": {
+      "target": {
+        "id": "253f8b09-e94c-40e4-9681-60c20b1c9f46",
+        "status": "DRAFT",
+        "lockVersion": 2,
+        "updatedAt": "2026-07-27T03:10:55.575Z",
+        "reportNumber": "QA-CONSTRUCTION-SUPERVISOR-FINAL-OWNDRAFT",
+        "place": "QA-CONSTRUCTION-SUPERVISOR-FINAL-RACE-TAB-1"
+      },
+      "targetEntryIds": [
+        "9af15f63-9790-4673-ab9d-82f7e334dbe7",
+        "f7ec76b0-e25c-4478-8786-e74157120674"
+      ],
+      "targetRevisionIds": [
+        "56f2a19d-5ecb-435f-8628-1865733c98ee",
+        "cms2ngn8w002scwwkru0yarv7"
+      ],
+      "foreignRow": {
+        "id": "83ac1646-bbdc-4fea-9546-86eb0a78835d",
+        "dossierId": "f30c9817-e2bb-42b5-bf20-cfbacdd7cdbf",
+        "updatedAt": "2026-07-27T02:35:14.788Z"
+      },
+      "project": {
+        "id": "8fc2987f-32cf-4c0e-893c-acd0940320ee",
+        "updatedAt": "2026-07-27T02:35:14.576Z"
+      }
+    },
+    "databaseUnchanged": true,
+    "auditEvent": {
+      "id": "cms2o6kdy002zcwwk0iu90xj7",
+      "userId": "6f0ae6f4-7521-477b-b7b0-3ff58ae5e989",
+      "projectId": "8fc2987f-32cf-4c0e-893c-acd0940320ee",
+      "action": "CROSS_PROJECT_RESOURCE_REJECTED",
+      "entityType": "FieldProgressItem",
+      "entityId": "832c7eda-3dc0-4ddb-8edf-6f9bf61a97a7",
+      "beforeData": null,
+      "afterData": "{\"actorId\":\"6f0ae6f4-7521-477b-b7b0-3ff58ae5e989\",\"role\":\"CONSTRUCTION_SUPERVISOR\",\"requestedAction\":\"supervision.weekly.use_category\",\"resourceType\":\"FieldProgressItem\",\"resourceId\":\"832c7eda-3dc0-4ddb-8edf-6f9bf61a97a7\",\"projectId\":\"8fc2987f-32cf-4c0e-893c-acd0940320ee\",\"reasonCode\":\"CATEGORY_PROJECT_MISMATCH_OR_NOT_FOUND\"}",
+      "ipAddress": null,
+      "userAgent": null,
+      "createdAt": "2026-07-27T03:31:05.014Z"
+    }
+  }
+}

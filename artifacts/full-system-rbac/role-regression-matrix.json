@@ -1,0 +1,114 @@
+[
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-ADMIN",
+    "role": "ADMIN",
+    "rbacParity": "PASS",
+    "directApiGuard": "PASS",
+    "noStateCorruption": "PASS"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-DIRECTOR",
+    "role": "DIRECTOR",
+    "rbacParity": "PASS",
+    "directApiGuard": "PASS",
+    "noStateCorruption": "PASS"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-DEPUTY-DIRECTOR",
+    "role": "DEPUTY_DIRECTOR",
+    "rbacParity": "PASS",
+    "directApiGuard": "PASS",
+    "noStateCorruption": "PASS"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-SUPERVISION-HEAD",
+    "role": "SUPERVISION_HEAD",
+    "rbacParity": "PASS",
+    "directApiGuard": "PASS",
+    "noStateCorruption": "PASS"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-SUPERVISOR-A",
+    "role": "CONSTRUCTION_SUPERVISOR",
+    "rbacParity": "PASS",
+    "directApiGuard": "PASS",
+    "noStateCorruption": "PASS"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-SUPERVISOR-B",
+    "role": "CONSTRUCTION_SUPERVISOR",
+    "rbacParity": "PASS",
+    "directApiGuard": "PASS",
+    "noStateCorruption": "PASS"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-COMMANDER-A",
+    "role": "CHIEF_COMMANDER",
+    "rbacParity": "PASS",
+    "directApiGuard": "PASS",
+    "noStateCorruption": "PASS"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-COMMANDER-B",
+    "role": "CHIEF_COMMANDER",
+    "rbacParity": "PASS",
+    "directApiGuard": "PASS",
+    "noStateCorruption": "PASS"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-MANAGER-A",
+    "role": "MANAGER",
+    "rbacParity": "PASS",
+    "directApiGuard": "PASS",
+    "noStateCorruption": "PASS"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-MANAGER-NONE",
+    "role": "MANAGER",
+    "rbacParity": "PASS",
+    "directApiGuard": "PASS",
+    "noStateCorruption": "PASS"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-ENGINEER-A",
+    "role": "ENGINEER",
+    "rbacParity": "PASS",
+    "directApiGuard": "PASS",
+    "noStateCorruption": "PASS"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-ENGINEER-B",
+    "role": "ENGINEER",
+    "rbacParity": "PASS",
+    "directApiGuard": "PASS",
+    "noStateCorruption": "PASS"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-ENGINEER-NONE",
+    "role": "ENGINEER",
+    "rbacParity": "PASS",
+    "directApiGuard": "PASS",
+    "noStateCorruption": "PASS"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-STAFF-A",
+    "role": "STAFF",
+    "rbacParity": "PASS",
+    "directApiGuard": "PASS",
+    "noStateCorruption": "PASS"
+  },
+  {
+    "archetype": "QA-FULL-SYSTEM-RBAC-20260727-USR-STAFF-B",
+    "role": "STAFF",
+    "rbacParity": "PASS",
+    "directApiGuard": "PASS",
+    "noStateCorruption": "PASS"
+  },
+  {
+    "archetype": "QA-RBAC-ANONYMOUS",
+    "role": "UNAUTHENTICATED",
+    "rbacParity": "PASS",
+    "directApiGuard": "PASS",
+    "noStateCorruption": "PASS"
+  }
+]

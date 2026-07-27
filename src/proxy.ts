@@ -71,7 +71,7 @@ export default async function proxy(request: NextRequest) {
   if (!hasSession && !isAuthPage && (!isApiRoute || isAuthApiRoute)) {
     if (!isApiRoute) {
       const url = new URL('/login', request.url);
-      url.searchParams.set('next', request.nextUrl.pathname);
+      url.searchParams.set('next', `${request.nextUrl.pathname}${request.nextUrl.search}`);
       return NextResponse.redirect(url);
     }
   }
@@ -82,7 +82,7 @@ export default async function proxy(request: NextRequest) {
       response.cookies.delete('auth_session');
       return response;
     }
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    return NextResponse.redirect(new URL('/', request.url));
   }
 
   const response = NextResponse.next();

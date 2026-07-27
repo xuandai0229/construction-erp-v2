@@ -7,7 +7,6 @@ import {
   Building2,
   FolderOpen,
   ClipboardCheck,
-  ScanSearch,
   Package,
   ListTodo,
   CheckSquare,
@@ -18,6 +17,11 @@ import { cn } from "@/lib/utils";
 import type { UserRole } from "@prisma/client";
 import styles from "./sidebar.module.css";
 import { canViewNavigationItem, projectNavName } from "@/lib/navigation-permissions";
+import {
+  canAccessExecutiveDashboard,
+  getDefaultNavigationHrefForRole,
+  getDefaultRouteForRole,
+} from "@/lib/roles/role-workspace-policy";
 
 const navigationSections = [
   {
@@ -54,7 +58,7 @@ const navigationSections = [
 ];
 
 function getFilteredSections(role: UserRole) {
-  return navigationSections
+  const sections = navigationSections
     .map((section) => {
       const items = section.items
         .filter((item) => canViewNavigationItem(role, item.href))
@@ -62,16 +66,33 @@ function getFilteredSections(role: UserRole) {
       return { ...section, items };
     })
     .filter((section) => section.items.length > 0);
+
+  if (canAccessExecutiveDashboard(role)) return sections;
+
+  const defaultHref = getDefaultNavigationHrefForRole(role);
+  return sections
+    .map((section) => ({
+      ...section,
+      items: section.items.toSorted((left, right) => {
+        return Number(right.href === defaultHref) - Number(left.href === defaultHref);
+      }),
+    }))
+    .toSorted((left, right) => {
+      const leftIsDefault = left.items.some((item) => item.href === defaultHref);
+      const rightIsDefault = right.items.some((item) => item.href === defaultHref);
+      return Number(rightIsDefault) - Number(leftIsDefault);
+    });
 }
 
 export function Sidebar({ userRole }: { userRole: UserRole }) {
   const pathname = usePathname();
   const filteredSections = getFilteredSections(userRole);
+  const homeHref = getDefaultRouteForRole(userRole);
 
   return (
     <div className={styles.sidebarRoot}>
       <div className={styles.brand}>
-        <Link href="/dashboard" className={styles.brandLink}>
+        <Link href={homeHref} className={styles.brandLink}>
           <div className={styles.brandIcon}>
             <svg width="24" height="28" viewBox="0 0 28 32" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M4 16H8V32H4V16Z" fill="#ffffff" fillOpacity="0.7" />

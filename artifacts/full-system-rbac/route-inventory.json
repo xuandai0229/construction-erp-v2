@@ -1,0 +1,128 @@
+[
+  {
+    "route": "/dashboard",
+    "module": "dashboard",
+    "type": "PAGE",
+    "authRequired": true,
+    "expectedRoles": "ALL"
+  },
+  {
+    "route": "/projects",
+    "module": "projects",
+    "type": "PAGE",
+    "authRequired": true,
+    "expectedRoles": "ALL"
+  },
+  {
+    "route": "/projects/new",
+    "module": "projects",
+    "type": "PAGE",
+    "authRequired": true,
+    "expectedRoles": "COMPANY_WIDE"
+  },
+  {
+    "route": "/projects/[id]",
+    "module": "projects",
+    "type": "PAGE",
+    "authRequired": true,
+    "expectedRoles": "SCOPED_OR_GLOBAL"
+  },
+  {
+    "route": "/projects/[id]/edit",
+    "module": "projects",
+    "type": "PAGE",
+    "authRequired": true,
+    "expectedRoles": "COMPANY_WIDE"
+  },
+  {
+    "route": "/projects/[id]/field-progress",
+    "module": "projects",
+    "type": "PAGE",
+    "authRequired": true,
+    "expectedRoles": "SCOPED_OR_GLOBAL"
+  },
+  {
+    "route": "/projects/[id]/field-progress/daily",
+    "module": "projects",
+    "type": "PAGE",
+    "authRequired": true,
+    "expectedRoles": "SCOPED_OR_GLOBAL"
+  },
+  {
+    "route": "/projects/[id]/field-progress/summary",
+    "module": "projects",
+    "type": "PAGE",
+    "authRequired": true,
+    "expectedRoles": "SCOPED_OR_GLOBAL"
+  },
+  {
+    "route": "/projects/[id]/material-requests",
+    "module": "projects",
+    "type": "PAGE",
+    "authRequired": true,
+    "expectedRoles": "SCOPED_OR_GLOBAL"
+  },
+  {
+    "route": "/reports",
+    "module": "reports",
+    "type": "PAGE",
+    "authRequired": true,
+    "expectedRoles": "ALL"
+  },
+  {
+    "route": "/reports/field",
+    "module": "reports_field",
+    "type": "PAGE",
+    "authRequired": true,
+    "expectedRoles": "ALL"
+  },
+  {
+    "route": "/reports/weekly-inspection",
+    "module": "reports_weekly",
+    "type": "PAGE",
+    "authRequired": true,
+    "expectedRoles": "SUPERVISION_AND_COMPANY"
+  },
+  {
+    "route": "/materials",
+    "module": "materials",
+    "type": "PAGE",
+    "authRequired": true,
+    "expectedRoles": "ALL"
+  },
+  {
+    "route": "/documents",
+    "module": "documents",
+    "type": "PAGE",
+    "authRequired": true,
+    "expectedRoles": "ALL"
+  },
+  {
+    "route": "/tasks",
+    "module": "tasks",
+    "type": "PAGE",
+    "authRequired": true,
+    "expectedRoles": "ALL"
+  },
+  {
+    "route": "/approvals",
+    "module": "approvals",
+    "type": "PAGE",
+    "authRequired": true,
+    "expectedRoles": "COMPANY_AND_SUPERVISORS_AND_MANAGERS"
+  },
+  {
+    "route": "/users",
+    "module": "users",
+    "type": "PAGE",
+    "authRequired": true,
+    "expectedRoles": "COMPANY_WIDE"
+  },
+  {
+    "route": "/settings",
+    "module": "settings",
+    "type": "PAGE",
+    "authRequired": true,
+    "expectedRoles": "COMPANY_WIDE"
+  }
+]

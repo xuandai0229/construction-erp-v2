@@ -6,6 +6,7 @@ import { addWorkDays, formatWorkDate, getWorkDateRange, parseWorkDate, todayWork
 import { groupEntriesByItemAndDate } from "@/lib/field-progress";
 import { buildFieldProgressRollupTree } from "@/lib/field-progress/rollup";
 import { isPreparationProjectStatus } from "@/lib/project-status";
+import { assertCanAccessExecutiveDashboard } from "@/lib/roles/role-workspace-policy";
 import {
   canViewApprovalDashboard,
   canViewCompanyWideDashboard,
@@ -266,6 +267,7 @@ function calculateProjectProgress(
 }
 
 export async function getDashboardData(session: SessionUser, rawPeriod?: string, rawProjectId?: string): Promise<DashboardData> {
+  assertCanAccessExecutiveDashboard(session.role);
   const period = getPeriodRange(normalizePeriod(rawPeriod));
   
   // Base access

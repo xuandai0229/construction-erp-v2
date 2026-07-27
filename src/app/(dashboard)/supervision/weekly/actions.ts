@@ -84,7 +84,7 @@ function validateEntryDates(input: SupervisionDossierSaveInput, dossier: { weekS
   }
 }
 
-async function validateDraftSourceReferences(input: SupervisionDossierSaveInput) {
+async function validateDraftSourceReferences(input: SupervisionDossierSaveInput, actor: Actor) {
   const sourceRows = [...input.entries, ...input.observations, ...input.transitions, ...input.quantities, ...input.progressRows];
   const categoryIds = [...new Set(sourceRows.map((row) => row.categoryItemId).filter((id): id is string => Boolean(id)))];
   const categoryItems = categoryIds.length ? await prisma.fieldProgressItem.findMany({
@@ -97,6 +97,7 @@ async function validateDraftSourceReferences(input: SupervisionDossierSaveInput)
     if (!row.categoryItemId) continue;
     const category = categoryById.get(row.categoryItemId);
     if (!row.projectId || !category || category.itemType !== "GROUP" || category.projectId !== row.projectId) {
+      await writeSecurityAuditEvent({ eventType: "CROSS_PROJECT_RESOURCE_REJECTED", actorId: actor.id, role: actor.role, action: "supervision.weekly.use_category", resourceType: "FieldProgressItem", resourceId: row.categoryItemId, projectId: row.projectId, reasonCode: "CATEGORY_PROJECT_MISMATCH_OR_NOT_FOUND" });
       throw new Error("Không thể lưu Hạng mục đã chọn vì Hạng mục này không còn tồn tại hoặc không thuộc Công trình. Vui lòng chọn lại Hạng mục.");
     }
   }
@@ -112,6 +113,7 @@ async function validateDraftSourceReferences(input: SupervisionDossierSaveInput)
     if (!entry.inspectionWorkItemId) continue;
     const work = workById.get(entry.inspectionWorkItemId);
     if (!entry.projectId || !entry.categoryItemId || !work || work.itemType !== "WORK" || work.projectId !== entry.projectId || work.parentId !== entry.categoryItemId) {
+      await writeSecurityAuditEvent({ eventType: "CROSS_PROJECT_RESOURCE_REJECTED", actorId: actor.id, role: actor.role, action: "supervision.weekly.use_work_item", resourceType: "FieldProgressItem", resourceId: entry.inspectionWorkItemId, projectId: entry.projectId, reasonCode: "WORK_ITEM_CATEGORY_OR_PROJECT_MISMATCH" });
       throw new Error("Không thể lưu Công việc đã chọn vì Công việc không còn thuộc đúng Hạng mục. Vui lòng chọn lại Công việc.");
     }
   }
@@ -291,7 +293,7 @@ export async function saveSupervisionWeeklyDossier(id: string, rawInput: Supervi
   await Promise.all(input.quantities.map((entry) => assertSupervisionProjectScope(actor, entry.projectId)));
   await Promise.all(input.progressRows.map((entry) => assertSupervisionProjectScope(actor, entry.projectId)));
 
-  await validateDraftSourceReferences(input);
+  await validateDraftSourceReferences(input, actor);
 
   const reusableRowIds = new Set([
     ...dossier.entries.map((row) => row.id),
