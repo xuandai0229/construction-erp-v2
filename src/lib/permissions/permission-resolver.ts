@@ -3,6 +3,7 @@ import { PERMISSION_REGISTRY } from "./permission-registry";
 import { evaluatePermissionPolicy } from "./evaluate-permission-policy";
 import type { Permission, PermissionActor, PermissionContext, PermissionResolution } from "./permission-types";
 import { getActiveProjectMembership, type ProjectMembership } from "./project-scope";
+import { writeSecurityAuditEvent } from "@/lib/audit";
 
 export class PermissionDeniedError extends Error {
   readonly reasonCode = "PERMISSION_DENIED";
@@ -31,7 +32,20 @@ export async function resolvePermission(actor: PermissionActor, permission: Perm
 
 export async function assertPermission(actor: PermissionActor, permission: Permission, context: PermissionContext = {}) {
   const resolution = await resolvePermission(actor, permission, context);
-  if (!resolution.allowed) throw new PermissionDeniedError(resolution, context.projectId ?? null);
+  if (!resolution.allowed) {
+    const isSourceMutation = actor.role === "CONSTRUCTION_SUPERVISOR" && !permission.endsWith(".view");
+    await writeSecurityAuditEvent({
+      eventType: isSourceMutation ? "SOURCE_MUTATION_DENIED" : "AUTHORIZATION_DENIED",
+      actorId: actor.id,
+      role: actor.role,
+      action: permission,
+      resourceType: permission.split(".")[0] ?? "Permission",
+      resourceId: context.ownerId ?? context.projectId ?? "GLOBAL",
+      projectId: context.projectId,
+      reasonCode: resolution.reason || resolution.sourcePolicy,
+    });
+    throw new PermissionDeniedError(resolution, context.projectId ?? null);
+  }
   return resolution;
 }
 

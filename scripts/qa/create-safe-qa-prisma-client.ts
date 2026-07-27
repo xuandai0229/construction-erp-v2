@@ -17,7 +17,11 @@ export async function verifyQaPrismaFingerprint(prisma: PrismaClient, expected: 
     "SELECT current_database() AS database, current_user AS user, inet_server_addr()::text AS host, inet_server_port() AS port",
   );
   const actual = rows[0];
-  if (!actual || actual.database !== expected.database || actual.host !== expected.host || Number(actual.port) !== Number(expected.port)) {
-    throw new Error("QA Prisma client fingerprint không khớp QA_DATABASE_URL; đã dừng trước fixture.");
+  const normalizeHost = (host: string) => {
+    const normalized = host.toLowerCase().split("/")[0];
+    return ["127.0.0.1", "::1", "localhost"].includes(normalized) ? "loopback" : normalized;
+  };
+  if (!actual || actual.database !== expected.database || normalizeHost(actual.host) !== normalizeHost(expected.host) || Number(actual.port) !== Number(expected.port)) {
+    throw new Error(`QA Prisma client fingerprint không khớp QA_DATABASE_URL; expected=${JSON.stringify(expected)} actual=${JSON.stringify(actual ?? null)}; đã dừng trước fixture.`);
   }
 }

@@ -56,6 +56,7 @@ interface DocumentViewerProps {
   hasNext: boolean;
   canRename: boolean;
   canDelete: boolean;
+  canDownload: boolean;
   onClose: () => void;
   onPrevious: () => void;
   onNext: () => void;
@@ -140,6 +141,7 @@ export function DocumentViewer({
   hasNext,
   canRename,
   canDelete,
+  canDownload,
   onClose,
   onPrevious,
   onNext,
@@ -223,13 +225,13 @@ export function DocumentViewer({
         </header>
 
         <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-[var(--border)] bg-[var(--surface-subtle)] px-4 py-2 sm:px-5">
-          <a
+          {canDownload && <a
             href={downloadUrl}
             className="inline-flex h-9 items-center gap-2 rounded-[var(--radius-md)] bg-blue-600 px-3 text-sm font-medium text-white hover:bg-blue-700"
           >
             <Download className="h-4 w-4" />
             Tải xuống
-          </a>
+          </a>}
           <a
             href={previewUrl}
             target="_blank"
@@ -239,14 +241,14 @@ export function DocumentViewer({
             <ExternalLink className="h-4 w-4" />
             Mở tab mới
           </a>
-          <button
+          {canDownload && <button
             type="button"
             onClick={onCopyLink}
             className="inline-flex h-9 items-center gap-2 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-3 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--border)]"
           >
             <Copy className="h-4 w-4" />
             Sao chép link
-          </button>
+          </button>}
           {canRename && (
             <button
               type="button"
@@ -342,13 +344,13 @@ export function DocumentViewer({
                 </div>
                 <h2 className="mt-4 text-lg font-bold text-[var(--foreground)]">{fallback.title}</h2>
                 <p className="mt-2 text-sm leading-6 text-[var(--muted-foreground)]">{fallback.description}</p>
-                <a
+                {canDownload && <a
                   href={downloadUrl}
                   className="mt-5 inline-flex h-10 items-center gap-2 rounded-[var(--radius-md)] bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700"
                 >
                   <Download className="h-4 w-4" />
                   Tải file xuống
-                </a>
+                </a>}
               </ContentCard>
             </div>
           )}

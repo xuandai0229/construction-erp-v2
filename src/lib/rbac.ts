@@ -8,6 +8,7 @@ import { SYSTEM_ROLE_DISPLAY_NAMES, SYSTEM_ROLE_REGISTRY } from "./roles/role-re
 // ─── Role Constants ───────────────────────────────────────────
 export const SYSTEM_ADMIN_ROLES: UserRole[] = ["ADMIN"];
 export const COMPANY_WIDE_ROLES: UserRole[] = ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"];
+export const ALL_PROJECT_OPERATIONAL_READ_ROLES: UserRole[] = ["CONSTRUCTION_SUPERVISOR"];
 const HIGH_LEVEL_ROLES: UserRole[] = COMPANY_WIDE_ROLES;
 
 // ─── Role Display Names (Vietnamese) ─────────────────────────
@@ -98,7 +99,7 @@ export function isCompanyWideUser(user: { role: UserRole }): boolean {
  * Check if user can view all projects (not just assigned ones)
  */
 export function canViewAllProjects(user: { role: UserRole }): boolean {
-  return isCompanyWideUser(user);
+  return isCompanyWideUser(user) || ALL_PROJECT_OPERATIONAL_READ_ROLES.includes(user.role);
 }
 
 /**
@@ -119,7 +120,7 @@ export async function getProjectRoleForUser(
   user: { id: string; role: UserRole },
   projectId: string
 ) {
-  if (isCompanyWideUser(user)) return null;
+  if (canViewAllProjects(user)) return null;
 
   const member = await prisma.projectMember.findFirst({
     where: {
@@ -139,7 +140,7 @@ export async function requireProjectScope(
   user: { id: string; role: UserRole },
   projectId: string
 ) {
-  if (isCompanyWideUser(user)) return null;
+  if (canViewAllProjects(user)) return null;
 
   const projectRole = await getProjectRoleForUser(user, projectId);
   if (!projectRole) {
@@ -158,7 +159,7 @@ export async function canAccessProject(
   user: { id: string; role: UserRole },
   projectId: string
 ): Promise<boolean> {
-  if (HIGH_LEVEL_ROLES.includes(user.role)) return true;
+  if (canViewAllProjects(user)) return true;
   if (user.role === "SUPERVISION_HEAD") {
     return canAccessSupervisionProject(user, projectId);
   }
@@ -258,20 +259,33 @@ export async function getSupervisionProjectWhere(actor: { id: string; role: User
   return scope.scopeType === "ALL_PROJECTS" ? {} : { id: { in: scope.projects.map((item) => item.projectId) } };
 }
 
-/**
- * Get list of project IDs the user can access.
- * For high-level users, returns null (meaning all projects).
- * For others, returns array of assigned project IDs.
- */
-export async function getAccessibleProjectIds(
+export type ProjectAccessScope =
+  | { kind: "ALL_PROJECTS" }
+  | { kind: "PROJECT_IDS"; projectIds: string[] }
+  | { kind: "NO_PROJECTS" };
+
+export function projectScopeAllows(scope: ProjectAccessScope, projectId: string): boolean {
+  return scope.kind === "ALL_PROJECTS"
+    || (scope.kind === "PROJECT_IDS" && scope.projectIds.includes(projectId));
+}
+
+export function projectScopeWhere(scope: ProjectAccessScope) {
+  return scope.kind === "ALL_PROJECTS"
+    ? {}
+    : { id: { in: scope.kind === "PROJECT_IDS" ? scope.projectIds : [] } };
+}
+
+/** Resolve an explicit project scope; no sentinel null/undefined values are used. */
+export async function getProjectAccessScope(
   user: { id: string; role: UserRole }
-): Promise<string[] | null> {
-  if (HIGH_LEVEL_ROLES.includes(user.role)) return null; // null = all projects
+): Promise<ProjectAccessScope> {
+  if (canViewAllProjects(user)) return { kind: "ALL_PROJECTS" };
 
   if (user.role === "SUPERVISION_HEAD") {
     const scopeWhere = await getSupervisionProjectWhere(user);
-    if (!scopeWhere.id) return null; // ALL_PROJECTS
-    return scopeWhere.id.in || [];
+    if (!scopeWhere.id) return { kind: "ALL_PROJECTS" };
+    const projectIds = scopeWhere.id.in || [];
+    return projectIds.length ? { kind: "PROJECT_IDS", projectIds } : { kind: "NO_PROJECTS" };
   }
 
   const members = await prisma.projectMember.findMany({
@@ -283,7 +297,8 @@ export async function getAccessibleProjectIds(
     select: { projectId: true },
   });
 
-  return members.map((m) => m.projectId);
+  const projectIds = members.map((m) => m.projectId);
+  return projectIds.length ? { kind: "PROJECT_IDS", projectIds } : { kind: "NO_PROJECTS" };
 }
 
 // ─── Sidebar Navigation Visibility ──────────────────────────

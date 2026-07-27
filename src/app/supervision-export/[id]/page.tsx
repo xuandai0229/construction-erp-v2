@@ -14,7 +14,7 @@ export default async function SupervisionWeeklyExportViewPage({ params, searchPa
   const session = await getSession();
   if (!session) redirect("/login?reason=session_expired");
   
-  const dossier = await getSupervisionWeeklyPrintData(id);
+  const dossier = await getSupervisionWeeklyPrintData(id, "EXPORT");
   if (!dossier) notFound();
   
   return (

@@ -5,7 +5,7 @@ import mime from "mime-types";
 import { canAccessProject } from "@/lib/rbac";
 import { resolvePermission } from "@/lib/permissions/permission-resolver";
 import { storageProvider } from "@/lib/storage/index";
-import { writeAuditLog } from "@/lib/audit";
+import { writeAuditLog, writeSecurityAuditEvent } from "@/lib/audit";
 import { Readable } from "stream";
 
 export async function GET(
@@ -28,16 +28,32 @@ export async function GET(
       return new NextResponse("Không tìm thấy tài liệu", { status: 404 });
     }
 
-    const permission = await resolvePermission(session, "documents.download", { projectId: document.projectId });
+    const isPreview = req.nextUrl.searchParams.get('preview') === 'true';
+    const permission = await resolvePermission(session, isPreview ? "documents.view" : "documents.download", { projectId: document.projectId });
     if (!permission.allowed || !(await canAccessProject(session, document.projectId))) {
+      await writeSecurityAuditEvent({
+        eventType: isPreview ? "AUTHORIZATION_DENIED" : "SOURCE_MUTATION_DENIED",
+        actorId: session.id,
+        role: session.role,
+        action: isPreview ? "documents.preview" : "documents.download",
+        resourceType: "Document",
+        resourceId: document.id,
+        projectId: document.projectId,
+        reasonCode: permission.allowed ? "PROJECT_SCOPE_DENIED" : permission.reason,
+      });
       return new NextResponse("Không có quyền truy cập", { status: 403 });
+    }
+
+    const contentType = document.mimeType || mime.lookup(document.originalName) || "application/octet-stream";
+    if (isPreview && !(contentType.startsWith("image/") || contentType === "application/pdf")) {
+      return new NextResponse("Unsupported preview format", {
+        status: 415,
+        headers: { "Cache-Control": "private, no-store, max-age=0" },
+      });
     }
 
     const nodeStream = storageProvider.readFileStream(document.storagePath);
     const webStream = Readable.toWeb(nodeStream as any);
-    
-    const isPreview = req.nextUrl.searchParams.get('preview') === 'true';
-    const contentType = document.mimeType || mime.lookup(document.originalName) || "application/octet-stream";
     
     // Fire and forget audit log for view/download
     writeAuditLog({
@@ -57,7 +73,7 @@ export async function GET(
     const asciiName = document.originalName.replace(/[^\x20-\x7E]/g, '_');
     const encodedName = encodeURIComponent(document.originalName);
 
-    if (isPreview && (contentType.startsWith('image/') || contentType === 'application/pdf')) {
+    if (isPreview) {
       headers.set("Content-Disposition", `inline; filename="${asciiName}"; filename*=UTF-8''${encodedName}`);
     } else {
       headers.set("Content-Disposition", `attachment; filename="${asciiName}"; filename*=UTF-8''${encodedName}`);

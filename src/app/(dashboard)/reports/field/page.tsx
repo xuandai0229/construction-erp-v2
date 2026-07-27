@@ -11,7 +11,6 @@ import { parseWeeklyGeneralNote } from "@/lib/reports/weekly-report-utils";
 import { getGlobalProjectContext } from "@/lib/project-context";
 import { serializePrisma } from "@/lib/serialize";
 import { canViewNavigationItem } from "@/lib/navigation-permissions";
-import { canUseSupervisionWeekly } from "@/lib/supervision-weekly/permissions";
 
 const formatFileSize = (bytes: number | null | undefined | string | bigint) => {
   if (bytes === undefined || bytes === null || bytes === "") return "Không rõ dung lượng";

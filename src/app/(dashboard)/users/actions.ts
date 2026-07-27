@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { requireHighLevelUser, assertRoleHierarchy, getAllowedRolesForActor, ROLE_DISPLAY_NAMES } from "@/lib/rbac";
-import { writeAuditLog } from "@/lib/audit";
+import { writeAuditLog, writeSecurityAuditEvent } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
 import * as bcrypt from "bcryptjs";
 import { ProjectRole, UserRole } from "@prisma/client";
@@ -10,7 +10,7 @@ import { assertPermission } from "@/lib/permissions/permission-resolver";
 
 const VALID_ROLES: UserRole[] = [
   "ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR", "SUPERVISION_HEAD", "CHIEF_COMMANDER",
-  "MANAGER", "ENGINEER", "STAFF",
+  "CONSTRUCTION_SUPERVISOR", "MANAGER", "ENGINEER", "STAFF",
 ];
 const VALID_PROJECT_ROLES: ProjectRole[] = [
   "PROJECT_MANAGER", "SITE_COMMANDER", "CHIEF_COMMANDER", "ASSISTANT_COMMANDER",
@@ -232,6 +232,9 @@ export async function createUser(input: CreateUserInput) {
       entityId: user.id,
       afterData: { name: user.name, email: user.email, role: user.role } as unknown as Record<string, unknown>,
     });
+    if (user.role === "CONSTRUCTION_SUPERVISOR") {
+      await writeSecurityAuditEvent({ eventType: "ROLE_GRANTED", actorId: session.id, role: session.role, action: "users.create", resourceType: "User", resourceId: user.id, reasonCode: "CONSTRUCTION_SUPERVISOR_ASSIGNED" });
+    }
 
     revalidatePath("/users");
     return { success: true, userId: user.id };
@@ -463,6 +466,11 @@ export async function updateUser(userId: string, input: UpdateUserInput) {
       beforeData: { name: existing.name, role: existing.role, isActive: existing.isActive } as unknown as Record<string, unknown>,
       afterData: { name: updated.name, role: updated.role, isActive: updated.isActive } as unknown as Record<string, unknown>,
     });
+    if (existing.role !== updated.role && updated.role === "CONSTRUCTION_SUPERVISOR") {
+      await writeSecurityAuditEvent({ eventType: "ROLE_GRANTED", actorId: session.id, role: session.role, action: "users.assign_system_role", resourceType: "User", resourceId: userId, reasonCode: "CONSTRUCTION_SUPERVISOR_ASSIGNED" });
+    } else if (existing.role === "CONSTRUCTION_SUPERVISOR" && updated.role !== existing.role) {
+      await writeSecurityAuditEvent({ eventType: "ROLE_REVOKED", actorId: session.id, role: session.role, action: "users.assign_system_role", resourceType: "User", resourceId: userId, reasonCode: "CONSTRUCTION_SUPERVISOR_REMOVED" });
+    }
 
     revalidatePath("/users");
     return { success: true };
@@ -576,6 +584,17 @@ export async function toggleUserActive(userId: string) {
     entityType: "User",
     entityId: userId,
   });
+  if (user.role === "CONSTRUCTION_SUPERVISOR") {
+    await writeSecurityAuditEvent({
+      eventType: updated.isActive ? "ROLE_GRANTED" : "ROLE_REVOKED",
+      actorId: session.id,
+      role: session.role,
+      action: updated.isActive ? "users.activate" : "users.deactivate",
+      resourceType: "User",
+      resourceId: userId,
+      reasonCode: updated.isActive ? "ACCOUNT_REACTIVATED" : "ACCOUNT_DEACTIVATED",
+    });
+  }
 
   revalidatePath("/users");
   return { success: true, isActive: updated.isActive };
@@ -649,7 +668,6 @@ export async function assignProjectToUser(
     entityType: "ProjectMember",
     entityId: `${userId}:${projectId}`,
   });
-
   revalidatePath("/users");
   return { success: true };
 }
@@ -754,6 +772,9 @@ export async function softDeleteUser(userId: string) {
     entityType: "User",
     entityId: userId,
   });
+  if (user.role === "CONSTRUCTION_SUPERVISOR") {
+    await writeSecurityAuditEvent({ eventType: "ROLE_REVOKED", actorId: session.id, role: session.role, action: "users.soft_delete", resourceType: "User", resourceId: userId, reasonCode: "ACCOUNT_SOFT_DELETED" });
+  }
 
   revalidatePath("/users");
   return { success: true };

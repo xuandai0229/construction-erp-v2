@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { canReviewSupervisionWeekly, canUseSupervisionWeekly } from "@/lib/supervision-weekly/permissions";
+import { canEditSupervisionWeeklyDossier, canExportSupervisionWeeklyDossier, canReadSupervisionWeekly, canReviewSupervisionWeekly } from "@/lib/supervision-weekly/permissions";
 import { getSupervisionWeeklyDossier, getSupervisionWeeklyProjects } from "@/app/(dashboard)/supervision/weekly/actions";
 import { WeeklyEditor } from "@/components/supervision-weekly/weekly-editor";
 import { isoDate } from "@/lib/supervision-weekly/date";
@@ -11,13 +11,19 @@ export default async function WeeklyInspectionEditPage({ params }: { params: Pro
   const { id } = await params;
   const session = await getSession();
   if (!session) redirect("/login?reason=session_expired");
-  if (!canUseSupervisionWeekly(session.role)) redirect("/reports");
+  if (!canReadSupervisionWeekly(session.role)) redirect("/reports");
   const [dossier, projects] = await Promise.all([getSupervisionWeeklyDossier(id), getSupervisionWeeklyProjects()]);
   if (!dossier) notFound();
   const revisionEntry = dossier.status === "REVISION_REQUIRED"
     ? dossier.revisions.find((r) => r.action === "REQUEST_REVISION")
     : null;
-  return <WeeklyEditor canReview={canReviewSupervisionWeekly(session.role)} projects={projects} initial={{
+  return <WeeklyEditor
+    canReview={canReviewSupervisionWeekly(session.role)}
+    canEditPolicy={canEditSupervisionWeeklyDossier(session, dossier)}
+    canExport={canExportSupervisionWeeklyDossier(session, dossier)}
+    isOwner={dossier.createdById === session.id}
+    projects={projects}
+    initial={{
       id: dossier.id, reportNumber: dossier.reportNumber, weekStart: isoDate(dossier.weekStart), weekEnd: isoDate(dossier.weekEnd), nextWeekStart: isoDate(dossier.nextWeekStart), nextWeekEnd: isoDate(dossier.nextWeekEnd), place: dossier.place, recipientName: dossier.recipientName, recipientTitle: dossier.recipientTitle, authorName: dossier.createdBy?.name ?? "", status: dossier.status, version: dossier.version, lockVersion: dossier.lockVersion,
       latestRevision: revisionEntry ? { actorName: revisionEntry.actor?.name ?? "", reason: revisionEntry.reason, createdAt: revisionEntry.createdAt.toISOString() } : null,
       entries: dossier.entries.map((entry) => ({

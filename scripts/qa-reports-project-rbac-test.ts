@@ -1,5 +1,5 @@
 import prisma from '../src/lib/prisma';
-import { getAccessibleProjectIds } from '../src/lib/rbac';
+import { getProjectAccessScope, projectScopeAllows, type ProjectAccessScope } from '../src/lib/rbac';
 import { UserRole } from '@prisma/client';
 
 async function runTests() {
@@ -48,17 +48,18 @@ async function runTests() {
     });
 
     console.log('[1] Test Admin Access');
-    const adminAccess = await getAccessibleProjectIds({ id: admin.id, role: admin.role });
-    console.log('  - Admin truy cập được tất cả dự án (null):', adminAccess === null ? 'PASS' : 'FAIL');
+    const adminAccess = await getProjectAccessScope({ id: admin.id, role: admin.role });
+    console.log('  - Admin truy cập được tất cả dự án:', adminAccess.kind === "ALL_PROJECTS" ? 'PASS' : 'FAIL');
 
     console.log('\n[2] Test Commander Access (Assigned to A only)');
-    const commanderAccess = await getAccessibleProjectIds({ id: commander.id, role: commander.role });
-    console.log('  - Commander truy cập được Project A:', commanderAccess?.includes(projectA.id) ? 'PASS' : 'FAIL');
-    console.log('  - Commander KHÔNG truy cập được Project B:', !commanderAccess?.includes(projectB.id) ? 'PASS' : 'FAIL');
+    const commanderAccess = await getProjectAccessScope({ id: commander.id, role: commander.role });
+    console.log('  - Commander truy cập được Project A:', projectScopeAllows(commanderAccess, projectA.id) ? 'PASS' : 'FAIL');
+    console.log('  - Commander KHÔNG truy cập được Project B:', !projectScopeAllows(commanderAccess, projectB.id) ? 'PASS' : 'FAIL');
 
     console.log('\n[3] Test where Clause Simulation (như trong getSiteReports)');
-    const buildWhere = (accessIds: string[] | null) => {
-      if (accessIds === null) return "Tất cả Project";
+    const buildWhere = (scope: ProjectAccessScope) => {
+      if (scope.kind === "ALL_PROJECTS") return "Tất cả Project";
+      const accessIds = scope.kind === "PROJECT_IDS" ? scope.projectIds : [];
       return accessIds.length > 0 ? `Chỉ các Project: ${accessIds.join(', ')}` : "Không có Project nào";
     };
 

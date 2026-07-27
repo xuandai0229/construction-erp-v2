@@ -29,7 +29,7 @@ function cleanActionError(error: unknown) {
   return message.replace(/^Error:\s*/i, "").replace(/^CONFLICT:\s*/i, "");
 }
 
-export function WeeklyEditor({ initial, projects, canReview }: { initial: WeeklyEditorDossier; projects: WeeklyProject[]; canReview: boolean }) {
+export function WeeklyEditor({ initial, projects, canReview, canEditPolicy, canExport, isOwner }: { initial: WeeklyEditorDossier; projects: WeeklyProject[]; canReview: boolean; canEditPolicy: boolean; canExport: boolean; isOwner: boolean }) {
   const [dossier, setDossier] = useState(initial);
   const [activeDocument, setActiveDocument] = useState<WeeklyDocumentType>("RESULT");
   const [saveState, setSaveState] = useState<SaveState>("saved");
@@ -42,7 +42,7 @@ export function WeeklyEditor({ initial, projects, canReview }: { initial: Weekly
   const savePromiseRef = useRef<Promise<boolean> | null>(null);
   const transitionInFlightRef = useRef(false);
   const persistFunctionRef = useRef<() => Promise<boolean>>(async () => true);
-  const editable = editableStates.has(dossier.status);
+  const editable = canEditPolicy && editableStates.has(dossier.status);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewData, setPreviewData] = useState<SupervisionWeeklyPrintDto | null>(null);
   const [revisionDialogOpen, setRevisionDialogOpen] = useState(false);
@@ -280,6 +280,11 @@ export function WeeklyEditor({ initial, projects, canReview }: { initial: Weekly
   }, []);
 
   return <div className="space-y-5 pb-24 sm:pb-20">
+    {!isOwner && (
+      <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900" role="status">
+        Hồ sơ do {dossier.authorName || "cán bộ khác"} thực hiện — Bạn chỉ có quyền xem
+      </div>
+    )}
     <EditorHeader
       title="Báo cáo tuần"
       weekLabel={weekLabel}
@@ -359,7 +364,8 @@ export function WeeklyEditor({ initial, projects, canReview }: { initial: Weekly
     <PreviewDialog 
       isOpen={previewOpen} 
       onClose={() => setPreviewOpen(false)} 
-      dossier={previewData} 
+      dossier={previewData}
+      canExport={canExport}
     />
     {revisionDialogOpen && <div className="fixed inset-0 z-[130] flex items-center justify-center bg-slate-900/60 p-4" role="dialog" aria-modal="true" aria-labelledby="revision-reason-title">
       <div className="w-full max-w-lg rounded-xl bg-white p-5 shadow-xl">
@@ -390,7 +396,7 @@ export function WeeklyEditor({ initial, projects, canReview }: { initial: Weekly
   </div>;
 }
 
-function PreviewDialog({ dossier, isOpen, onClose }: { dossier: SupervisionWeeklyPrintDto | null; isOpen: boolean; onClose: () => void }) {
+function PreviewDialog({ dossier, isOpen, onClose, canExport }: { dossier: SupervisionWeeklyPrintDto | null; isOpen: boolean; onClose: () => void; canExport: boolean }) {
   const [activeDocument, setActiveDocument] = useState<WeeklyDocumentType>("RESULT");
 
   useEffect(() => {
@@ -443,9 +449,11 @@ function PreviewDialog({ dossier, isOpen, onClose }: { dossier: SupervisionWeekl
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => handleExport("docx")}><FileText className="mr-2 h-4 w-4" />Tải Word</Button>
-          <Button variant="outline" size="sm" onClick={() => handleExport("pdf")}><File className="mr-2 h-4 w-4" />Tải PDF</Button>
-          <Button variant="outline" size="sm" onClick={handlePrint} title="Mẹo: Để bỏ URL và ngày giờ, hãy tắt 'Đầu trang và chân trang' trong cài đặt in."><Printer className="mr-2 h-4 w-4" />In</Button>
+          {canExport && <>
+            <Button variant="outline" size="sm" onClick={() => handleExport("docx")}><FileText className="mr-2 h-4 w-4" />Tải Word</Button>
+            <Button variant="outline" size="sm" onClick={() => handleExport("pdf")}><File className="mr-2 h-4 w-4" />Tải PDF</Button>
+            <Button variant="outline" size="sm" onClick={handlePrint} title="Mẹo: Để bỏ URL và ngày giờ, hãy tắt 'Đầu trang và chân trang' trong cài đặt in."><Printer className="mr-2 h-4 w-4" />In</Button>
+          </>}
           <Button variant="outline" size="sm" onClick={onClose}>Đóng</Button>
         </div>
       </div>

@@ -6,12 +6,8 @@ const APPROVAL_DASHBOARD_ROLES: UserRole[] = [
   "DIRECTOR",
   "DEPUTY_DIRECTOR",
   "MANAGER",
+  "CONSTRUCTION_SUPERVISOR",
 ];
-
-export type DashboardProjectScope = {
-  allProjects: boolean;
-  projectIds: string[] | null;
-};
 
 export function canViewCompanyWideDashboard(role: UserRole) {
   return COMPANY_WIDE_ROLES.includes(role);
@@ -19,11 +15,4 @@ export function canViewCompanyWideDashboard(role: UserRole) {
 
 export function canViewApprovalDashboard(role: UserRole) {
   return APPROVAL_DASHBOARD_ROLES.includes(role);
-}
-
-export function getDashboardProjectScope(accessibleProjectIds: string[] | null): DashboardProjectScope {
-  return {
-    allProjects: accessibleProjectIds === null,
-    projectIds: accessibleProjectIds,
-  };
 }

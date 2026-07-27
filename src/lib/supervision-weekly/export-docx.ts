@@ -3,14 +3,17 @@ import type { SupervisionWeeklyPrintDto } from "./print-types";
 import { buildWeeklyDocumentModel, NEXT_WEEK_PLAN_GROUP_2_CATEGORIES } from "./document-model";
 
 const PAGE = {
-  width: 16838,
-  height: 11906,
+  // `docx` swaps width/height when LANDSCAPE is set. Supply portrait A4
+  // dimensions here so the emitted OOXML has w > h and Word renders landscape.
+  width: 11906,
+  height: 16838,
+  landscapeWidth: 16838,
   marginTop: 850, // 15mm
   marginBottom: 850,
   marginLeft: 850,
   marginRight: 850,
 };
-const USABLE_WIDTH = PAGE.width - PAGE.marginLeft - PAGE.marginRight;
+const USABLE_WIDTH = PAGE.landscapeWidth - PAGE.marginLeft - PAGE.marginRight;
 
 export async function exportSupervisionWeeklyDocx(dossier: SupervisionWeeklyPrintDto, documentType: "RESULT" | "NEXT_WEEK_PLAN"): Promise<any> {
   const model = buildWeeklyDocumentModel(dossier, documentType);

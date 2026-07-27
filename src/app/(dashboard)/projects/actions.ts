@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
-import { writeAuditLog } from "@/lib/audit";
+import { writeAuditLog, writeSecurityAuditEvent } from "@/lib/audit";
 import { canManageProjects, isSystemAdmin } from "@/lib/rbac";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
@@ -37,6 +37,7 @@ export async function createProject(prevState: unknown, formData: FormData) {
   if (!session) return { error: "Vui lòng đăng nhập" };
 
   if (!canManageProjects(session)) {
+    await writeSecurityAuditEvent({ eventType: "SOURCE_MUTATION_DENIED", actorId: session.id, role: session.role, action: "projects.create", resourceType: "Project", resourceId: "NEW", reasonCode: "PROJECT_MANAGEMENT_DENIED" });
     return { error: "Bạn không có quyền tạo công trình" };
   }
 
@@ -99,6 +100,7 @@ export async function updateProject(id: string, prevState: unknown, formData: Fo
   if (!session) return { error: "Vui lòng đăng nhập" };
 
   if (!canManageProjects(session)) {
+    await writeSecurityAuditEvent({ eventType: "SOURCE_MUTATION_DENIED", actorId: session.id, role: session.role, action: "projects.update", resourceType: "Project", resourceId: id, projectId: id, reasonCode: "PROJECT_MANAGEMENT_DENIED" });
     return { error: "Bạn không có quyền sửa công trình" };
   }
 
@@ -157,6 +159,7 @@ export async function deleteProject(id: string) {
   if (!session) return { error: "Vui lòng đăng nhập" };
 
   if (!canManageProjects(session)) {
+    await writeSecurityAuditEvent({ eventType: "SOURCE_MUTATION_DENIED", actorId: session.id, role: session.role, action: "projects.delete", resourceType: "Project", resourceId: id, projectId: id, reasonCode: "PROJECT_MANAGEMENT_DENIED" });
     return { error: "Bạn không có quyền xóa công trình" };
   }
 

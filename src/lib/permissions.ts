@@ -4,7 +4,7 @@ import prisma from './prisma';
 const HIGH_LEVEL_ROLES: UserRole[] = ['ADMIN', 'DIRECTOR', 'DEPUTY_DIRECTOR'];
 
 export async function canViewProject(userId: string, userRole: UserRole, projectId: string): Promise<boolean> {
-  if (HIGH_LEVEL_ROLES.includes(userRole)) return true;
+  if (HIGH_LEVEL_ROLES.includes(userRole) || userRole === 'CONSTRUCTION_SUPERVISOR') return true;
 
   const member = await prisma.projectMember.findUnique({
     where: {

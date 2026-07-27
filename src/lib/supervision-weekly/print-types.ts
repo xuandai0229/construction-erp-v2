@@ -22,6 +22,7 @@ export type PrintEntryDto = {
 
 export type SupervisionWeeklyPrintDto = {
   id: string;
+  status: "DRAFT" | "SUBMITTED" | "REVISION_REQUIRED" | "APPROVED" | "LOCKED";
   reportNumber: string | null;
   weekStart: string;
   weekEnd: string;

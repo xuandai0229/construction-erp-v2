@@ -45,6 +45,10 @@ export function getFieldProgressPermissions(
     };
   }
 
+  if (userRole === "CONSTRUCTION_SUPERVISOR") {
+    return { canViewProgress: true, canUpdateProgress: false, canApproveProgress: false, canLockProgress: false };
+  }
+
   if (!projectRole) return empty;
 
   return {

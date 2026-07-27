@@ -44,6 +44,7 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
   const session = await requireProjectAccessOrRedirect(resolvedParams.id);
 
   const canManage = canManageProjects(session);
+  const sourceReadOnly = session.role === "CONSTRUCTION_SUPERVISOR";
 
   const project = await prisma.project.findFirst({
     where: { id: resolvedParams.id, deletedAt: null },
@@ -75,6 +76,11 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
 
   return (
     <div className="app-page space-y-5 max-w-[1600px] mx-auto pb-10">
+      {sourceReadOnly && (
+        <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900" role="status">
+          Chế độ giám sát — Dữ liệu nguồn công trình chỉ được xem
+        </div>
+      )}
       
       {/* =========================================
           MOBILE LAYOUT
@@ -87,9 +93,9 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
             <span className="text-[12px] font-black text-[var(--muted-foreground)] uppercase tracking-widest">{project.code}</span>
             <div className="flex items-center gap-2">
               {getStatusBadge(project.status)}
-              <div className="w-8 h-8 rounded-full bg-[var(--border)] flex items-center justify-center text-slate-600">
+              {canManage && <div className="w-8 h-8 rounded-full bg-[var(--border)] flex items-center justify-center text-slate-600">
                 <MoreVertical className="w-4 h-4" />
-              </div>
+              </div>}
             </div>
           </div>
           <h1 className="text-[20px] font-black text-[var(--foreground)] leading-snug line-clamp-2">
@@ -124,7 +130,7 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="text-[15px] font-bold text-[var(--foreground)] truncate">Hạng mục & Công việc</h3>
-              <p className="text-[12px] text-[var(--muted-foreground)] truncate mt-0.5">{hasWbs ? "Quản lý hạng mục thi công" : "Chưa thiết lập WBS"}</p>
+              <p className="text-[12px] text-[var(--muted-foreground)] truncate mt-0.5">{hasWbs ? (sourceReadOnly ? "Xem hạng mục thi công" : "Quản lý hạng mục thi công") : "Chưa thiết lập WBS"}</p>
             </div>
             <ChevronRight className="w-5 h-5 text-[var(--muted-foreground)] opacity-70 shrink-0"/>
           </Link>
@@ -136,7 +142,7 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="text-[15px] font-bold text-[var(--foreground)] truncate">Khối lượng thực hiện</h3>
-                <p className="text-[12px] text-[var(--muted-foreground)] truncate mt-0.5">Cập nhật khối lượng theo ngày</p>
+                <p className="text-[12px] text-[var(--muted-foreground)] truncate mt-0.5">{sourceReadOnly ? "Xem khối lượng theo ngày" : "Cập nhật khối lượng theo ngày"}</p>
               </div>
               <ChevronRight className="w-5 h-5 text-[var(--muted-foreground)] opacity-70 shrink-0"/>
             </Link>
@@ -275,7 +281,7 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
                 <h2 className="text-[15px] font-bold text-[var(--foreground)]">Thư mục</h2>
               </div>
               <Link href={`/documents/${project.id}`} className="text-[13px] font-semibold text-blue-600 hover:text-blue-700 transition-colors">
-                Quản lý &rarr;
+                {sourceReadOnly ? "Xem" : "Quản lý"} &rarr;
               </Link>
             </div>
             <div className="p-3 flex-1 flex flex-col">
@@ -319,7 +325,7 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
               <ListTree className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </div>
             <h3 className="font-bold text-[var(--foreground)] text-[13px] sm:text-[14px] mb-1">Hạng mục & Công việc</h3>
-            <p className="text-[12px] sm:text-[12.5px] text-[var(--muted-foreground)] leading-relaxed mb-3 line-clamp-2 sm:line-clamp-none">Quản lý danh mục hạng mục, công việc, đơn vị và khối lượng thiết kế của công trình.</p>
+            <p className="text-[12px] sm:text-[12.5px] text-[var(--muted-foreground)] leading-relaxed mb-3 line-clamp-2 sm:line-clamp-none">{sourceReadOnly ? "Xem danh mục hạng mục, công việc, đơn vị và khối lượng thiết kế của công trình." : "Quản lý danh mục hạng mục, công việc, đơn vị và khối lượng thiết kế của công trình."}</p>
             <div className="mt-auto pt-2.5 sm:pt-3 border-t border-[var(--border)] flex items-center justify-between">
               <span className={`text-[11px] sm:text-[12px] font-semibold ${hasWbs ? 'text-emerald-600' : 'text-[var(--muted-foreground)] opacity-70'}`}>
                 {hasWbs ? 'Đã thiết lập' : 'Chưa thiết lập'}
@@ -336,10 +342,10 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
                 <ClipboardCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
               <h3 className="font-bold text-[var(--foreground)] text-[13px] sm:text-[14px] mb-1">Khối lượng thực hiện</h3>
-              <p className="text-[12px] sm:text-[12.5px] text-[var(--muted-foreground)] leading-relaxed mb-3 line-clamp-2 sm:line-clamp-none">Cập nhật và theo dõi khối lượng thi công thực tế theo từng ngày.</p>
+              <p className="text-[12px] sm:text-[12.5px] text-[var(--muted-foreground)] leading-relaxed mb-3 line-clamp-2 sm:line-clamp-none">{sourceReadOnly ? "Xem và theo dõi khối lượng thi công thực tế theo từng ngày." : "Cập nhật và theo dõi khối lượng thi công thực tế theo từng ngày."}</p>
               <div className="mt-auto pt-2.5 sm:pt-3 border-t border-[var(--border)] flex items-center justify-between">
                 <span className="text-[11px] sm:text-[12px] font-semibold text-[var(--muted-foreground)]">
-                  Cập nhật khối lượng
+                  {sourceReadOnly ? "Xem khối lượng" : "Cập nhật khối lượng"}
                 </span>
                 <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[var(--surface-subtle)] flex items-center justify-center text-[var(--muted-foreground)] opacity-70 group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors">
                   <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:translate-x-0.5 transition-transform" />

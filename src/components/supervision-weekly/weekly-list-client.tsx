@@ -235,31 +235,6 @@ export function WeeklyListClient({
     };
   }, [createModalOpen, anchorDate]);
 
-  // Database Readiness View
-  if (readiness && !readiness.ready) {
-    const title = {
-      MIGRATION_NOT_APPLIED: "Chưa áp migration Giám sát",
-      DATABASE_UNREACHABLE: "Không kết nối được cơ sở dữ liệu",
-      DATABASE_PERMISSION_DENIED: "Không đủ quyền cơ sở dữ liệu",
-      UNKNOWN: "Không thể kiểm tra cơ sở dữ liệu",
-    }[readiness.reason];
-    return (
-      <div className="space-y-5">
-        <PageHeader>
-          <PageHeading title="Báo cáo tuần Giám sát" description="Phân hệ chưa sẵn sàng để truy xuất dữ liệu." />
-        </PageHeader>
-        <ContentCard className="p-8">
-          <div className="flex items-center gap-3 text-rose-600 mb-2">
-            <AlertTriangle className="h-6 w-6" />
-            <h2 className="text-base font-bold">{title}</h2>
-          </div>
-          <p className="max-w-2xl text-sm leading-6 text-slate-600">{readiness.message}</p>
-          <p className="mt-3 text-xs text-slate-500">Thông tin kỹ thuật chi tiết được ghi ở server để quản trị viên chẩn đoán.</p>
-        </ContentCard>
-      </div>
-    );
-  }
-
   // Summary Counters
   const counts = useMemo(() => {
     const total = rows.length;
@@ -362,6 +337,32 @@ export function WeeklyListClient({
     }
   }, [anchorDate]);
 
+  // Keep every hook above this conditional return so readiness failures do not
+  // change hook ordering between renders.
+  if (readiness && !readiness.ready) {
+    const title = {
+      MIGRATION_NOT_APPLIED: "Chưa áp migration Giám sát",
+      DATABASE_UNREACHABLE: "Không kết nối được cơ sở dữ liệu",
+      DATABASE_PERMISSION_DENIED: "Không đủ quyền cơ sở dữ liệu",
+      UNKNOWN: "Không thể kiểm tra cơ sở dữ liệu",
+    }[readiness.reason];
+    return (
+      <div className="space-y-5">
+        <PageHeader>
+          <PageHeading title="Báo cáo tuần Giám sát" description="Phân hệ chưa sẵn sàng để truy xuất dữ liệu." />
+        </PageHeader>
+        <ContentCard className="p-8">
+          <div className="flex items-center gap-3 text-rose-600 mb-2">
+            <AlertTriangle className="h-6 w-6" />
+            <h2 className="text-base font-bold">{title}</h2>
+          </div>
+          <p className="max-w-2xl text-sm leading-6 text-slate-600">{readiness.message}</p>
+          <p className="mt-3 text-xs text-slate-500">Thông tin kỹ thuật chi tiết được ghi ở server để quản trị viên chẩn đoán.</p>
+        </ContentCard>
+      </div>
+    );
+  }
+
   const handleCreateDossier = () => {
     if (!anchorDate) {
       toast.error("Vui lòng chọn ngày trong tuần báo cáo.");
@@ -436,7 +437,7 @@ export function WeeklyListClient({
                   <span>Kiểm tra & kế hoạch tuần</span>
                 </div>
               }
-              description="Quản lý kết quả kiểm tra, yêu cầu chỉnh sửa và kế hoạch công tác theo tuần."
+              description="Lập báo cáo kiểm tra toàn bộ công trình và kế hoạch công tác theo tuần."
               action={
                 <Button
                   onClick={() => setCreateModalOpen(true)}
@@ -647,6 +648,8 @@ export function WeeklyListClient({
                     const StatusIcon = st.icon;
                     const weekInfo = getWeekNumber(row.weekStart);
                     const isYear2099 = new Date(row.weekStart).getFullYear() >= 2090;
+                    const isOwner = row.createdById === currentUserId;
+                    const isReviewer = ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"].includes(currentUserRole || "");
 
                     const primaryProjects = row.projects.slice(0, 2);
                     const extraProjects = row.projects.slice(2);
@@ -768,7 +771,7 @@ export function WeeklyListClient({
                         <td className="px-4 py-4 text-right whitespace-nowrap relative">
                           <div className="flex items-center justify-end gap-1.5">
                             {/* Primary Action Button based on status */}
-                            {["DRAFT", "REVISION_REQUIRED"].includes(row.status) ? (
+                            {isOwner && ["DRAFT", "REVISION_REQUIRED"].includes(row.status) ? (
                               <Button
                                 size="sm"
                                 onClick={() => router.push(`/reports/weekly-inspection/${row.id}/edit`)}
@@ -812,7 +815,7 @@ export function WeeklyListClient({
                                     <span>Xem trước</span>
                                   </button>
 
-                                  {["SUBMITTED", "APPROVED", "LOCKED"].includes(row.status) && (
+                                  {(isOwner || isReviewer) && ["SUBMITTED", "APPROVED"].includes(row.status) && (
                                     <button
                                       onClick={() => {
                                         setActiveMenuId(null);
@@ -838,7 +841,7 @@ export function WeeklyListClient({
                                     </button>
                                   )}
 
-                                  {["DRAFT", "REVISION_REQUIRED"].includes(row.status) && (
+                                  {(isReviewer || (isOwner && currentUserRole !== "CONSTRUCTION_SUPERVISOR")) && ["DRAFT", "REVISION_REQUIRED"].includes(row.status) && (
                                     <button
                                       onClick={() => {
                                         setActiveMenuId(null);
@@ -869,6 +872,7 @@ export function WeeklyListClient({
                 const StatusIcon = st.icon;
                 const weekInfo = getWeekNumber(row.weekStart);
                 const isYear2099 = new Date(row.weekStart).getFullYear() >= 2090;
+                const isOwner = row.createdById === currentUserId;
 
                 return (
                   <div key={row.id} className="p-4 space-y-3">
@@ -917,7 +921,7 @@ export function WeeklyListClient({
                       </div>
 
                       <div className="flex items-center gap-2">
-                        {["DRAFT", "REVISION_REQUIRED"].includes(row.status) && (
+                        {isOwner && ["DRAFT", "REVISION_REQUIRED"].includes(row.status) && (
                           <Button
                             size="sm"
                             onClick={() => router.push(`/reports/weekly-inspection/${row.id}/edit`)}

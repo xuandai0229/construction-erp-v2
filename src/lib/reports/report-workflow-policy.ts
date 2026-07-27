@@ -41,6 +41,10 @@ function isHighLevelReportUser(user?: ReportPolicyUser): boolean {
   return Boolean(user && isHighLevelUser(user as { role: UserRole }));
 }
 
+function isSourceReadOnlyReportUser(user?: ReportPolicyUser): boolean {
+  return user?.role === "CONSTRUCTION_SUPERVISOR";
+}
+
 export function canCreateReport(user: ReportPolicyUser, hasProjectAccess: boolean): boolean {
   if (!hasProjectAccess) return false;
   return REPORT_CREATE_ROLES.has(user.role);
@@ -69,6 +73,7 @@ export function canUpdateReport(
   user: ReportPolicyUser,
   hasProjectAccess: boolean,
 ): boolean {
+  if (isSourceReadOnlyReportUser(user)) return false;
   if (!hasProjectAccess) return false;
   if (isDeletedReport(report)) return false;
   if (!CONTENT_WRITABLE_STATUSES.has(report.status)) return false;
@@ -99,7 +104,7 @@ export function canSubmitReport(
     return CONTENT_WRITABLE_STATUSES.has(reportOrStatus);
   }
 
-  if (!user || !hasProjectAccess) return false;
+  if (!user || !hasProjectAccess || isSourceReadOnlyReportUser(user)) return false;
   if (isDeletedReport(reportOrStatus)) return false;
   if (!CONTENT_WRITABLE_STATUSES.has(reportOrStatus.status)) return false;
   return user.id === reportOrStatus.createdById;
@@ -166,9 +171,10 @@ export function canDeleteReport(
 
 export function canPrintReport(
   report: ReportReadableTarget,
-  _user: ReportPolicyUser,
+  user: ReportPolicyUser,
   hasProjectAccess: boolean,
 ): boolean {
+  if (isSourceReadOnlyReportUser(user)) return false;
   if (!hasProjectAccess) return false;
   return !isDeletedReport(report);
 }
@@ -178,6 +184,7 @@ export function canExportReport(
   user: ReportPolicyUser,
   hasProjectAccess: boolean,
 ): boolean {
+  if (isSourceReadOnlyReportUser(user)) return false;
   return canPrintReport(report, user, hasProjectAccess);
 }
 

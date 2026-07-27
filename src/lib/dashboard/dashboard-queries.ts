@@ -1,6 +1,6 @@
 import type { Prisma, ProjectStatus, UserRole } from "@prisma/client";
 import prisma from "@/lib/prisma";
-import { ROLE_DISPLAY_NAMES, getAccessibleProjectIds } from "@/lib/rbac";
+import { ROLE_DISPLAY_NAMES, getProjectAccessScope, projectScopeAllows, projectScopeWhere, type ProjectAccessScope } from "@/lib/rbac";
 import type { SessionUser } from "@/lib/auth";
 import { addWorkDays, formatWorkDate, getWorkDateRange, parseWorkDate, todayWorkDate } from "@/lib/date/work-date";
 import { groupEntriesByItemAndDate } from "@/lib/field-progress";
@@ -9,7 +9,6 @@ import { isPreparationProjectStatus } from "@/lib/project-status";
 import {
   canViewApprovalDashboard,
   canViewCompanyWideDashboard,
-  getDashboardProjectScope,
 } from "./dashboard-permissions";
 
 export type DashboardPeriod = "7d" | "30d" | "month";
@@ -156,20 +155,18 @@ function getPeriodRange(period: DashboardPeriod) {
   };
 }
 
-function getProjectWhere(accessibleProjectIds: string[] | null): Prisma.ProjectWhereInput {
-  return accessibleProjectIds === null
-    ? { deletedAt: null }
-    : { deletedAt: null, id: { in: accessibleProjectIds } };
+function getProjectWhere(scope: ProjectAccessScope): Prisma.ProjectWhereInput {
+  return { deletedAt: null, ...projectScopeWhere(scope) };
 }
 
-function projectIdScope(accessibleProjectIds: string[] | null) {
-  return accessibleProjectIds === null ? {} : { projectId: { in: accessibleProjectIds } };
+function projectIdScope(scope: ProjectAccessScope) {
+  return scope.kind === "ALL_PROJECTS"
+    ? {}
+    : { projectId: { in: scope.kind === "PROJECT_IDS" ? scope.projectIds : [] } };
 }
 
-function projectRelationScope(accessibleProjectIds: string[] | null) {
-  return accessibleProjectIds === null
-    ? { project: { deletedAt: null } }
-    : { project: { deletedAt: null, id: { in: accessibleProjectIds } } };
+function projectRelationScope(scope: ProjectAccessScope) {
+  return { project: { deletedAt: null, ...projectScopeWhere(scope) } };
 }
 
 function statusLabel(status: string) {
@@ -272,13 +269,10 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
   const period = getPeriodRange(normalizePeriod(rawPeriod));
   
   // Base access
-  let accessibleProjectIds = await getAccessibleProjectIds(session);
-  const scope = getDashboardProjectScope(accessibleProjectIds);
+  let accessScope = await getProjectAccessScope(session);
 
   // Fetch light list of all accessible projects for the switcher
-  const allAccessibleProjectWhere: Prisma.ProjectWhereInput = accessibleProjectIds === null 
-    ? { deletedAt: null } 
-    : { deletedAt: null, id: { in: accessibleProjectIds } };
+  const allAccessibleProjectWhere: Prisma.ProjectWhereInput = getProjectWhere(accessScope);
     
   const allAccessibleProjectsList = await prisma.project.findMany({
     where: allAccessibleProjectWhere,
@@ -290,15 +284,15 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
   // Apply project filter if requested
   let selectedProjectId: string | null = null;
   if (rawProjectId && rawProjectId !== 'all') {
-    if (accessibleProjectIds !== null && !accessibleProjectIds.includes(rawProjectId)) {
-      accessibleProjectIds = []; // User doesn't have access to this project
+    if (!projectScopeAllows(accessScope, rawProjectId)) {
+      accessScope = { kind: "NO_PROJECTS" };
     } else {
-      accessibleProjectIds = [rawProjectId]; // Restrict scope to this project
+      accessScope = { kind: "PROJECT_IDS", projectIds: [rawProjectId] };
       selectedProjectId = rawProjectId;
     }
   }
 
-  const projectWhere = getProjectWhere(accessibleProjectIds);
+  const projectWhere = getProjectWhere(accessScope);
   const today = todayWorkDate();
   const todayRange = getWorkDateRange(today);
   const lastSevenStart = getWorkDateRange(formatWorkDate(addWorkDays(parseWorkDate(today), -6))).start;
@@ -328,13 +322,13 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
     prisma.project.count({ where: projectWhere }),
     prisma.project.count({ where: activeProjectWhere }),
     prisma.siteReport.count({
-      where: { deletedAt: null, reportDate: { gte: period.start, lt: period.end }, ...projectIdScope(accessibleProjectIds) },
+      where: { deletedAt: null, reportDate: { gte: period.start, lt: period.end }, ...projectIdScope(accessScope) },
     }),
     prisma.document.count({
-      where: { deletedAt: null, createdAt: { gte: period.start, lt: period.end }, ...projectRelationScope(accessibleProjectIds) },
+      where: { deletedAt: null, createdAt: { gte: period.start, lt: period.end }, ...projectRelationScope(accessScope) },
     }),
     prisma.fieldProgressEntry.count({
-      where: { deletedAt: null, entryDate: { gte: todayRange.start, lt: todayRange.end }, ...projectIdScope(accessibleProjectIds) },
+      where: { deletedAt: null, entryDate: { gte: todayRange.start, lt: todayRange.end }, ...projectIdScope(accessScope) },
     }),
     prisma.project.findMany({
       where: visibleProjectWhere,
@@ -363,13 +357,13 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
       },
     }),
     prisma.document.findMany({
-      where: { deletedAt: null, ...projectRelationScope(accessibleProjectIds) },
+      where: { deletedAt: null, ...projectRelationScope(accessScope) },
       orderBy: { createdAt: "desc" },
       take: 5,
       include: { project: { select: { id: true, name: true } }, uploadedBy: { select: { name: true } } },
     }),
     prisma.siteReport.findMany({
-      where: { deletedAt: null, ...projectIdScope(accessibleProjectIds) },
+      where: { deletedAt: null, ...projectIdScope(accessScope) },
       orderBy: { reportDate: "desc" },
       take: 5,
       include: {
@@ -381,7 +375,7 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
     prisma.siteReport.findMany({
       where: {
         deletedAt: null,
-        ...projectIdScope(accessibleProjectIds),
+        ...projectIdScope(accessScope),
         OR: [
           { status: { in: ["SUBMITTED", "REVISION_REQUESTED"] } },
           { issues: { not: null } },
@@ -393,20 +387,20 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
       include: { project: { select: { name: true } }, lines: { select: { issueNote: true }, take: 8 } },
     }),
     prisma.materialRequest.findMany({
-      where: { deletedAt: null, status: { in: ["REQUESTED", "SUBMITTED"] }, ...projectIdScope(accessibleProjectIds) },
+      where: { deletedAt: null, status: { in: ["REQUESTED", "SUBMITTED"] }, ...projectIdScope(accessScope) },
       orderBy: { createdAt: "desc" },
       take: 4,
       include: { project: { select: { name: true } } },
     }),
     prisma.fieldMaterialRequest.findMany({
-      where: { deletedAt: null, status: "SUBMITTED", ...projectIdScope(accessibleProjectIds) },
+      where: { deletedAt: null, status: "SUBMITTED", ...projectIdScope(accessScope) },
       orderBy: { createdAt: "desc" },
       take: 4,
       include: { project: { select: { name: true } } },
     }),
     prisma.auditLog.findMany({
       where: {
-        ...(scope.allProjects ? {} : { projectId: { in: scope.projectIds ?? [] } }),
+        ...projectIdScope(accessScope),
         entityType: { 
           in: [
             "FieldProgressEntry", "FIELD_PROGRESS_ENTRY",
@@ -428,7 +422,7 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
   const pendingApprovals = await (
     canViewApprovals
       ? prisma.approvalRequest.findMany({
-          where: { deletedAt: null, status: "PENDING", ...projectIdScope(accessibleProjectIds) },
+          where: { deletedAt: null, status: "PENDING", ...projectIdScope(accessScope) },
           orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
           take: 5,
           include: { project: { select: { name: true } }, requester: { select: { name: true } } },
@@ -628,12 +622,12 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
   });
 
   const activeProjectForAction = overviewProjects[0] ?? null;
-  const quickActions = [
+  const quickActions = (session.role === "CONSTRUCTION_SUPERVISOR" ? [] : [
     activeProjectForAction ? { label: "Tạo báo cáo", href: `/reports?projectId=${activeProjectForAction.id}`, tone: "primary" as const } : null,
     activeProjectForAction ? { label: "Khối lượng thực hiện", href: `/projects/${activeProjectForAction.id}/field-progress/daily`, tone: "secondary" as const } : null,
     activeProjectForAction ? { label: "Tải tài liệu lên", href: `/documents/${activeProjectForAction.id}`, tone: "secondary" as const } : null,
     canViewApprovals ? { label: "Trung tâm phê duyệt", href: "/approvals", tone: "secondary" as const } : null,
-  ].filter((action): action is NonNullable<typeof action> => Boolean(action));
+  ]).filter((action): action is NonNullable<typeof action> => Boolean(action));
 
   const atRiskCount = projectOverview.filter(p => p.health === "DELAYED").length;
   const warningCount = projectOverview.filter(p => p.health === "AT_RISK").length;

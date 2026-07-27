@@ -11,6 +11,7 @@ import { ProjectModuleTabs } from "@/components/project/project-module-tabs";
 export default async function FieldProgressPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await requireProjectAccessOrRedirect(id);
+  const sourceReadOnly = session.role === "CONSTRUCTION_SUPERVISOR";
 
   const project = await prisma.project.findUnique({
     where: { id, deletedAt: null }
@@ -82,7 +83,7 @@ export default async function FieldProgressPage({ params }: { params: Promise<{ 
             <span className="font-semibold text-slate-700">{project.code}</span> - {project.name}
           </p>
           <p className="text-sm text-slate-600 mt-1 ml-7 sm:ml-11">
-            Quản lý danh mục hạng mục, công việc, đơn vị và khối lượng thiết kế của công trình.
+            {sourceReadOnly ? "Xem danh mục hạng mục, công việc, đơn vị và khối lượng thiết kế của công trình." : "Quản lý danh mục hạng mục, công việc, đơn vị và khối lượng thiết kế của công trình."}
           </p>
         </div>
         
@@ -116,11 +117,38 @@ export default async function FieldProgressPage({ params }: { params: Promise<{ 
       </div>
 
 
-      <MasterTable 
-        projectId={id} 
-        templateId={template.id} 
-        initialItems={JSON.parse(JSON.stringify(itemsWithRollup))} 
-      />
+      {sourceReadOnly ? (
+        <div className="space-y-3">
+          <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900" role="status">
+            Chế độ giám sát — Bảng khối lượng nguồn chỉ được xem
+          </div>
+          <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <table className="min-w-[760px] w-full text-sm">
+              <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+                <tr><th className="px-4 py-3">Mã</th><th className="px-4 py-3">Hạng mục / Công việc</th><th className="px-4 py-3">Đơn vị</th><th className="px-4 py-3 text-right">Thiết kế</th><th className="px-4 py-3 text-right">Lũy kế</th><th className="px-4 py-3 text-right">Tiến độ</th></tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {itemsWithRollup.map((item) => (
+                  <tr key={item.id} className={item.itemType === "GROUP" ? "bg-slate-50/60 font-semibold" : ""}>
+                    <td className="px-4 py-3 text-slate-500">{item.code || "—"}</td>
+                    <td className="px-4 py-3 text-slate-900" style={{ paddingLeft: `${16 + Number(item.displayLevel || 0) * 20}px` }}>{item.categoryName || item.workContent || "—"}</td>
+                    <td className="px-4 py-3 text-slate-600">{item.unit || "—"}</td>
+                    <td className="px-4 py-3 text-right tabular-nums">{item.designQuantity ? formatQuantity(item.designQuantity) : "—"}</td>
+                    <td className="px-4 py-3 text-right tabular-nums">{item.rollupCumulative ? formatQuantity(item.rollupCumulative) : "0"}</td>
+                    <td className="px-4 py-3 text-right tabular-nums">{item.rollupPercent ? `${item.rollupPercent}%` : "0%"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <MasterTable 
+          projectId={id} 
+          templateId={template.id} 
+          initialItems={JSON.parse(JSON.stringify(itemsWithRollup))} 
+        />
+      )}
     </div>
   );
 }

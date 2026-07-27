@@ -1,6 +1,6 @@
 import { ProjectRole, UserRole } from "@prisma/client";
 import prisma from "../src/lib/prisma";
-import { canViewAllProjects, getAccessibleProjectIds, requireProjectScope } from "../src/lib/rbac";
+import { getProjectAccessScope, requireProjectScope, type ProjectAccessScope } from "../src/lib/rbac";
 
 const qaUserIds: string[] = [];
 
@@ -46,8 +46,8 @@ async function findOrCreate(role: UserRole, projectId?: string, projectRole?: Pr
   return user ?? createQaUser(role, projectId, outside ? undefined : projectRole);
 }
 
-async function expectScope(label: string, user: { id: string; role: UserRole }, projectIds: string[] | null, expected: "ALL" | "ASSIGNED" | "NONE") {
-  const actual = canViewAllProjects(user) ? "ALL" : projectIds?.length ? "ASSIGNED" : "NONE";
+async function expectScope(label: string, user: { id: string; role: UserRole }, projectScope: ProjectAccessScope, expected: "ALL" | "ASSIGNED" | "NONE") {
+  const actual = projectScope.kind === "ALL_PROJECTS" ? "ALL" : projectScope.kind === "PROJECT_IDS" ? "ASSIGNED" : "NONE";
   const result = actual === expected ? "PASS" : "FAIL";
   console.log(`${label} | ${user.role} | expected=${expected} | actual=${actual} | result=${result}`);
   return result === "PASS";
@@ -72,11 +72,11 @@ async function main() {
   console.log(`Projects: ${projects.length}; Sample project: ${project.code} / ${project.id}`);
 
   let ok = true;
-  ok = (await expectScope(`DIRECTOR ${director.email}`, director, await getAccessibleProjectIds(director), "ALL")) && ok;
-  ok = (await expectScope(`DEPUTY_DIRECTOR ${deputy.email}`, deputy, await getAccessibleProjectIds(deputy), "ALL")) && ok;
-  ok = (await expectScope(`CHIEF_COMMANDER ${commander.email}`, commander, await getAccessibleProjectIds(commander), "ASSIGNED")) && ok;
-  ok = (await expectScope(`VIEWER ${viewer.email}`, viewer, await getAccessibleProjectIds(viewer), "ASSIGNED")) && ok;
-  ok = (await expectScope(`OUTSIDE ${outside.email}`, outside, await getAccessibleProjectIds(outside), "NONE")) && ok;
+  ok = (await expectScope(`DIRECTOR ${director.email}`, director, await getProjectAccessScope(director), "ALL")) && ok;
+  ok = (await expectScope(`DEPUTY_DIRECTOR ${deputy.email}`, deputy, await getProjectAccessScope(deputy), "ALL")) && ok;
+  ok = (await expectScope(`CHIEF_COMMANDER ${commander.email}`, commander, await getProjectAccessScope(commander), "ASSIGNED")) && ok;
+  ok = (await expectScope(`VIEWER ${viewer.email}`, viewer, await getProjectAccessScope(viewer), "ASSIGNED")) && ok;
+  ok = (await expectScope(`OUTSIDE ${outside.email}`, outside, await getProjectAccessScope(outside), "NONE")) && ok;
 
   let directBlocked = false;
   try {

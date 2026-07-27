@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
-import { getAccessibleProjectIds } from "@/lib/rbac";
+import { getProjectAccessScope, projectScopeAllows, projectScopeWhere } from "@/lib/rbac";
 import type { UserRole } from "@prisma/client";
 import { buildApprovalNotificationTarget, buildReportNotificationTarget } from "@/lib/notifications/notification-routing";
 
@@ -14,19 +14,17 @@ export async function searchSystem(query: string, globalProjectId: string | null
   if (!q) return { projects: [], notifications: [], reports: [] };
 
   const user = { id: session.id, role: session.role as UserRole };
-  const accessibleProjectIds = await getAccessibleProjectIds(user);
-  const selectedProjectId = globalProjectId && (
-    accessibleProjectIds === null || accessibleProjectIds.includes(globalProjectId)
-  ) ? globalProjectId : null;
+  const accessScope = await getProjectAccessScope(user);
+  const selectedProjectId = globalProjectId && projectScopeAllows(accessScope, globalProjectId) ? globalProjectId : null;
   const recordProjectScope = selectedProjectId
     ? { projectId: selectedProjectId }
-    : accessibleProjectIds === null ? {} : { projectId: { in: accessibleProjectIds } };
+    : { project: projectScopeWhere(accessScope) };
 
   // 1. Projects Search
   const projects = await prisma.project.findMany({
     where: {
       deletedAt: null,
-      ...(accessibleProjectIds !== null ? { id: { in: accessibleProjectIds } } : {}),
+      ...projectScopeWhere(accessScope),
       OR: [
         { name: { contains: q, mode: "insensitive" } },
         { code: { contains: q, mode: "insensitive" } },

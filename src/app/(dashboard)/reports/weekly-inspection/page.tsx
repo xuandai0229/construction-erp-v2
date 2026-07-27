@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { canUseSupervisionWeekly } from "@/lib/supervision-weekly/permissions";
+import { canReadSupervisionWeekly } from "@/lib/supervision-weekly/permissions";
 import { getSupervisionWeeklyDossiers, getSupervisionWeeklyProjects } from "@/app/(dashboard)/supervision/weekly/actions";
 import { WeeklyListClient } from "@/components/supervision-weekly/weekly-list-client";
 import { getSupervisionDatabaseReadiness } from "@/lib/supervision-weekly/database-readiness";
@@ -17,7 +17,7 @@ export default async function WeeklyInspectionPage({
 }) {
   const session = await getSession();
   if (!session) redirect("/login?reason=session_expired");
-  if (!canUseSupervisionWeekly(session.role)) redirect("/reports");
+  if (!canReadSupervisionWeekly(session.role)) redirect("/reports");
 
   const readiness = await getSupervisionDatabaseReadiness();
   if (!readiness.ready) {

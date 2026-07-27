@@ -67,6 +67,7 @@ import {
   canDeleteFolder,
   canEditDocumentMetadata,
   canChangeDocumentStatus,
+  canDownloadDocument,
   SessionUser
 } from "@/lib/documents/permissions";
 import { DocumentStatus } from "@prisma/client";
@@ -1949,14 +1950,14 @@ const handleEditMetadata = async () => {
                                   >
                                     <Eye className="h-4 w-4" />
                                   </button>
-                                  <a
+                                  {canDownloadDocument(sessionUser, { id: document.id, status: document.status, uploadedById: document.uploadedById }) && <a
                                     href={`/api/documents/${document.id}/download`}
                                     onClick={(event) => event.stopPropagation()}
                                     className="rounded-[var(--radius-md)] p-1.5 text-[var(--muted-foreground)] hover:bg-emerald-50 hover:text-emerald-600"
                                     title="Tải xuống"
                                   >
                                     <Download className="h-4 w-4" />
-                                  </a>
+                                  </a>}
                                   <button
                                     type="button"
                                     onClick={(event) => {
@@ -2093,6 +2094,7 @@ const handleEditMetadata = async () => {
           }
           canRename={!isTrashView && canRenameDocument(sessionUser, { id: selectedDocument.id, status: selectedDocument.status, uploadedById: selectedDocument.uploadedById }, selectedFolderData ? { id: selectedFolderData.id, name: selectedFolderData.name } : { id: "trash", name: "Thùng rác" })}
           canDelete={!isTrashView && canDeleteDocument(sessionUser, { id: selectedDocument.id, status: selectedDocument.status, uploadedById: selectedDocument.uploadedById }, selectedFolderData ? { id: selectedFolderData.id, name: selectedFolderData.name } : { id: "trash", name: "Thùng rác" })}
+          canDownload={canDownloadDocument(sessionUser, { id: selectedDocument.id, status: selectedDocument.status, uploadedById: selectedDocument.uploadedById })}
           canEditMetadata={!isTrashView && canEditDocumentMetadata(sessionUser, { id: selectedDocument.id, status: selectedDocument.status, uploadedById: selectedDocument.uploadedById }, selectedFolderData ? { id: selectedFolderData.id, name: selectedFolderData.name } : { id: "trash", name: "Thùng rác" })}
           onEditMetadata={() => {
             setEditMetadataModal({
@@ -2453,7 +2455,7 @@ const handleEditMetadata = async () => {
         onOpenInNewTab={() => {
           if (contextMenu?.type === "file" && contextMenu.targetId) {
             const doc = localDocuments.find((d) => d.id === contextMenu.targetId);
-            if (doc) window.open(`/api/documents/${doc.id}/download`, "_blank");
+            if (doc) window.open(`/api/documents/${doc.id}/download?preview=true`, "_blank");
           }
         }}
         onDownload={() => {
@@ -2466,6 +2468,7 @@ const handleEditMetadata = async () => {
         canDelete={canDeleteContext}
         canUpload={canUploadContext}
         canCreateFolder={canCreateFolderContext}
+        canDownload={sessionUser.role !== "CONSTRUCTION_SUPERVISOR"}
         isTrashView={isTrashView}
       />
 
@@ -2577,6 +2580,7 @@ export function DocumentContextMenu({
   canDelete,
   canUpload,
   canCreateFolder,
+  canDownload,
   isTrashView,
   onRestore,
   onPermanentDelete,
@@ -2599,6 +2603,7 @@ export function DocumentContextMenu({
   canDelete: boolean;
   canUpload: boolean;
   canCreateFolder: boolean;
+  canDownload: boolean;
   isTrashView?: boolean;
   onRestore?: () => void;
   onPermanentDelete?: () => void;
@@ -2717,10 +2722,10 @@ export function DocumentContextMenu({
                 <Eye className="h-4 w-4" />
                 Xem chi tiết
               </button>
-              <button onClick={() => { onDownload(); onClose(); }} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
+              {canDownload && <button onClick={() => { onDownload(); onClose(); }} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
                 <Download className="h-4 w-4" />
                 Tải xuống
-              </button>
+              </button>}
             </>
           )}
           {contextMenu.type !== "workspace" && (
@@ -2739,7 +2744,7 @@ export function DocumentContextMenu({
         </>
       ) : contextMenu.type === "workspace" ? (
         <>
-          {contextMenu.targetId && (
+          {canDownload && contextMenu.targetId && (
             <button onClick={() => { onCopyLink(); onClose(); }} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
               <Copy className="h-4 w-4" />
               Sao chép đường dẫn thư mục
@@ -2784,10 +2789,10 @@ export function DocumentContextMenu({
             <Pencil className="h-4 w-4" />
             Đổi tên
           </button>
-          <button onClick={() => { onCopyLink(); onClose(); }} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
+          {canDownload && <button onClick={() => { onCopyLink(); onClose(); }} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
             <Copy className="h-4 w-4" />
             Sao chép đường dẫn
-          </button>
+          </button>}
           <div className="my-1 h-px bg-[var(--border)]"></div>
           <button onClick={() => { onDelete(); onClose(); }} disabled={!canDelete} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-red-50 disabled:opacity-50 disabled:hover:bg-transparent text-red-600">
             <Trash2 className="h-4 w-4" />
@@ -2804,10 +2809,10 @@ export function DocumentContextMenu({
             <ExternalLink className="h-4 w-4" />
             Mở thẻ mới
           </button>
-          <button onClick={() => { onDownload(); onClose(); }} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
+          {canDownload && <button onClick={() => { onDownload(); onClose(); }} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
             <Download className="h-4 w-4" />
             Tải xuống
-          </button>
+          </button>}
           <div className="my-1 h-px bg-[var(--border)]"></div>
           <button onClick={() => { onEditMetadata(); onClose(); }} disabled={!canRename} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] disabled:opacity-50 disabled:hover:bg-transparent text-[var(--foreground)]">
             <Pencil className="h-4 w-4" />
@@ -2817,10 +2822,10 @@ export function DocumentContextMenu({
             <Pencil className="h-4 w-4" />
             Đổi tên file
           </button>
-          <button onClick={() => { onCopyLink(); onClose(); }} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
+          {canDownload && <button onClick={() => { onCopyLink(); onClose(); }} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-[var(--border)] text-[var(--foreground)]">
             <Copy className="h-4 w-4" />
             Sao chép liên kết
-          </button>
+          </button>}
           <div className="my-1 h-px bg-[var(--border)]"></div>
           <button onClick={() => { onDelete(); onClose(); }} disabled={!canDelete} className="flex w-full items-center gap-2 rounded-[var(--radius-md)] px-2 py-1.5 text-sm hover:bg-red-50 disabled:opacity-50 disabled:hover:bg-transparent text-red-600">
             <Trash2 className="h-4 w-4" />

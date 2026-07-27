@@ -1,5 +1,5 @@
 import prisma from '../src/lib/prisma';
-import { canAccessProject, getAccessibleProjectIds } from '../src/lib/rbac';
+import { canAccessProject, getProjectAccessScope, projectScopeAllows } from '../src/lib/rbac';
 import { canEditReportContent, canSoftDeleteReport } from '../src/lib/reports/report-workflow-policy';
 import { UserRole } from '@prisma/client';
 
@@ -9,17 +9,17 @@ import { UserRole } from '@prisma/client';
  * ta trích xuất logic filter ra thành 1 hàm test.
  */
 async function simulateGetSiteReportsWhereClause(sessionUser: { id: string, role: UserRole }, filters: any = {}) {
-  const accessibleProjectIds = await getAccessibleProjectIds(sessionUser);
+  const projectScope = await getProjectAccessScope(sessionUser);
   const where: any = { deletedAt: null, project: { deletedAt: null } };
 
-  if (accessibleProjectIds !== null) {
+  if (projectScope.kind !== "ALL_PROJECTS") {
     if (filters.projectId && filters.projectId !== 'ALL' && filters.projectId !== 'all') {
-      if (!accessibleProjectIds.includes(filters.projectId)) {
+      if (!projectScopeAllows(projectScope, filters.projectId)) {
         return null; // Forbidden / No access
       }
       where.projectId = filters.projectId;
     } else {
-      where.projectId = { in: accessibleProjectIds };
+      where.projectId = { in: projectScope.kind === "PROJECT_IDS" ? projectScope.projectIds : [] };
     }
   } else if (filters.projectId && filters.projectId !== 'ALL' && filters.projectId !== 'all') {
     where.projectId = filters.projectId;

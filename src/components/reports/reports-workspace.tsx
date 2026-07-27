@@ -54,6 +54,7 @@ export function ReportsWorkspace({
   globalContext,
   hideHeader = false,
 }: ReportsWorkspaceProps) {
+  const sourceReadOnly = currentUser.role === "CONSTRUCTION_SUPERVISOR";
   const toast = useToast();
   const router = useRouter();
   const pathname = usePathname();
@@ -474,6 +475,11 @@ export function ReportsWorkspace({
 
   return (
     <div className="space-y-5 sm:space-y-6">
+      {sourceReadOnly && (
+        <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900" role="status">
+          Chế độ giám sát — Chỉ xem
+        </div>
+      )}
       {/* Page header */}
       {!hideHeader ? (
         <div className="space-y-3">
@@ -511,21 +517,21 @@ export function ReportsWorkspace({
                   <Filter className="w-4 h-4" />
                   Bộ lọc
                 </Button>
-                <Button
+                {!sourceReadOnly && <Button
                   onClick={() => { setDialogMode("create"); setEditReportData(null); setIsCreateOpen(true); }}
                   className="bg-blue-600 hover:bg-blue-700 text-white h-9 px-3 text-sm shrink-0"
                 >
                   <Plus className="w-4 h-4" />
-                </Button>
+                </Button>}
               </div>
             </div>
-            <Button
+            {!sourceReadOnly && <Button
               onClick={() => { setDialogMode("create"); setEditReportData(null); setIsCreateOpen(true); }}
               className="hidden sm:flex gap-1.5 bg-blue-600 hover:bg-blue-700 text-white h-10 px-5 text-sm shrink-0 self-start sm:self-auto"
             >
               <Plus className="w-4 h-4" />
               Tạo báo cáo mới
-            </Button>
+            </Button>}
           </div>
         </div>
       ) : (
@@ -533,13 +539,13 @@ export function ReportsWorkspace({
           <div className="text-xs font-medium text-slate-500">
             Nhật ký ngày, tổng hợp hiện trường tuần, phát sinh và sự cố công trình
           </div>
-          <Button
+          {!sourceReadOnly && <Button
             onClick={() => { setDialogMode("create"); setEditReportData(null); setIsCreateOpen(true); }}
             className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white h-10 px-4 text-sm shrink-0"
           >
             <Plus className="w-4 h-4" />
             <span>Tạo báo cáo mới</span>
-          </Button>
+          </Button>}
         </div>
       )}
 
@@ -714,7 +720,7 @@ export function ReportsWorkspace({
         )}
       </div>
 
-      <CreateReportDialog
+      {!sourceReadOnly && <CreateReportDialog
         key={isCreateOpen ? "open" : "closed"} // Ensure remount to pick up initialReport if any
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
@@ -725,7 +731,7 @@ export function ReportsWorkspace({
         mode={dialogMode}
         initialReport={editReportData}
         currentProjectId={projectFilter || globalContext?.selectedProjectId || undefined}
-      />
+      />}
 
       {/* Report Detail Drawer */}
       <ReportDetailDrawer

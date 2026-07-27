@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import prisma from '@/lib/prisma';
-import { getAccessibleProjectIds } from '@/lib/rbac';
+import { getProjectAccessScope, projectScopeAllows, projectScopeWhere } from '@/lib/rbac';
 import type { SessionUser } from '@/lib/auth';
 import { getProjectStatusMeta, isPreparationProjectStatus } from '@/lib/project-status';
 import {
@@ -42,7 +42,7 @@ export async function getGlobalProjectContext(
   session: SessionUser,
   searchParamsProjectId?: string
 ): Promise<GlobalProjectContext> {
-  const accessibleProjectIds = await getAccessibleProjectIds(session);
+  const accessScope = await getProjectAccessScope(session);
   const cookieStore = await cookies();
   const cookieProjectId = cookieStore.get('selectedProjectId')?.value;
 
@@ -53,15 +53,13 @@ export async function getGlobalProjectContext(
   // 2. Validate RBAC
   let selectedProjectId: string | null = null;
   if (rawProjectId) {
-    if (accessibleProjectIds === null || accessibleProjectIds.includes(rawProjectId)) {
+    if (projectScopeAllows(accessScope, rawProjectId)) {
       selectedProjectId = rawProjectId;
     }
   }
 
   // 3. Fetch light list of all accessible projects
-  const allAccessibleProjectWhere = accessibleProjectIds === null
-    ? { deletedAt: null }
-    : { deletedAt: null, id: { in: accessibleProjectIds } };
+  const allAccessibleProjectWhere = { deletedAt: null, ...projectScopeWhere(accessScope) };
 
   const accessibleProjects = await prisma.project.findMany({
     where: allAccessibleProjectWhere,
@@ -132,7 +130,7 @@ export async function getGlobalProjectContext(
     where: {
       deletedAt: null,
       status: "PENDING",
-      ...(selectedProjectId ? { projectId: selectedProjectId } : (accessibleProjectIds === null ? {} : { projectId: { in: accessibleProjectIds } }))
+      ...(selectedProjectId ? { projectId: selectedProjectId } : { project: projectScopeWhere(accessScope) })
     },
     orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
     take: 5,
@@ -170,7 +168,7 @@ export async function getGlobalProjectContext(
   const rawIssueReports = await prisma.siteReport.findMany({
     where: {
       deletedAt: null,
-      ...(selectedProjectId ? { projectId: selectedProjectId } : (accessibleProjectIds === null ? {} : { projectId: { in: accessibleProjectIds } })),
+      ...(selectedProjectId ? { projectId: selectedProjectId } : { project: projectScopeWhere(accessScope) }),
       OR: [
         { status: { in: ["SUBMITTED", "REVISION_REQUESTED"] } },
         { issues: { not: null } },

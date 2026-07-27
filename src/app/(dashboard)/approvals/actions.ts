@@ -63,6 +63,10 @@ function isHighLevelViewRole(role: UserRole) {
   return role === "ADMIN" || role === "DIRECTOR" || role === "DEPUTY_DIRECTOR";
 }
 
+function canViewAllApprovalProjects(role: UserRole) {
+  return isHighLevelViewRole(role) || role === "CONSTRUCTION_SUPERVISOR";
+}
+
 function canCreateInAnyProject(role: UserRole, memberships: { role: ProjectRole }[]) {
   if (isHighLevelViewRole(role)) return true;
   return memberships.some((membership) => membership.role !== "VIEWER");
@@ -89,7 +93,7 @@ function buildApprovalWhere(
     project: { deletedAt: null },
   };
 
-  if (isHighLevelViewRole(actor.role)) return base;
+  if (canViewAllApprovalProjects(actor.role)) return base;
 
   const scopedOr: Prisma.ApprovalRequestWhereInput[] = [
     { requesterId: actor.id },
@@ -107,7 +111,7 @@ async function getProjectsForActor(
   projectIds: string[],
 ) {
   const where: Prisma.ProjectWhereInput = { deletedAt: null };
-  if (!isHighLevelViewRole(actor.role)) {
+  if (!canViewAllApprovalProjects(actor.role)) {
     where.id = { in: projectIds };
   }
 

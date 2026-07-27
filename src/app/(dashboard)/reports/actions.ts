@@ -19,7 +19,7 @@ import {
   canViewReportHistory,
 } from "@/lib/reports/report-workflow-policy";
 import { Prisma, UserRole } from "@prisma/client";
-import { canAccessProject, getAccessibleProjectIds } from "@/lib/rbac";
+import { canAccessProject, getProjectAccessScope, projectScopeAllows, projectScopeWhere, type ProjectAccessScope } from "@/lib/rbac";
 import { computeReportStats } from "@/lib/reports/report-stats";
 import { WeeklyGeneralNote, serializeWeeklyGeneralNote, assertWeeklyResultDateAllowed } from "@/lib/reports/weekly-report-utils";
 import { updateWeeklyReportCore } from "@/lib/reports/report-update-service";
@@ -39,18 +39,24 @@ import { getReportProgressSourceMarker } from "@/lib/reports/report-progress-syn
 
 const Decimal = Prisma.Decimal;
 
+function projectIdScope(scope: ProjectAccessScope) {
+  return scope.kind === "ALL_PROJECTS"
+    ? {}
+    : { projectId: { in: scope.kind === "PROJECT_IDS" ? scope.projectIds : [] } };
+}
+
 export async function getActiveProjects() {
   const session = await getSession();
   if (!session) throw new Error("Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
   
   const user = { id: session.id, role: session.role as UserRole };
-  const accessibleProjectIds = await getAccessibleProjectIds(user);
+  const accessScope = await getProjectAccessScope(user);
   
   const projects = await prisma.project.findMany({
     where: { 
       deletedAt: null, 
       status: { in: ["PLANNING", "ACTIVE", "ON_HOLD"] },
-      ...(accessibleProjectIds !== null ? { id: { in: accessibleProjectIds } } : {})
+      ...projectScopeWhere(accessScope)
     },
     select: { id: true, name: true, code: true },
     orderBy: { createdAt: "desc" },
@@ -208,8 +214,8 @@ export async function getProjectWorkItems(projectId: string, reportDate?: string
   if (!session) throw new Error("Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
 
   const user = { id: session.id, role: session.role as UserRole };
-  const accessibleProjectIds = await getAccessibleProjectIds(user);
-  if (accessibleProjectIds !== null && !accessibleProjectIds.includes(projectId)) {
+  const accessScope = await getProjectAccessScope(user);
+  if (!projectScopeAllows(accessScope, projectId)) {
     throw new Error("Bạn không có quyền truy cập công trình này.");
   }
 
@@ -304,12 +310,12 @@ export async function createSiteReport(data: Record<string, unknown>, isDraft: b
 
   const pId = String(data.projectId);
   const user = { id: session.id, role: session.role as UserRole };
-  const accessibleProjectIds = await getAccessibleProjectIds(user);
-  if (accessibleProjectIds !== null && !accessibleProjectIds.includes(pId)) {
+  const accessScope = await getProjectAccessScope(user);
+  if (!projectScopeAllows(accessScope, pId)) {
     throw new Error("Bạn không có quyền truy cập công trình này.");
   }
 
-  const hasProjectAccess = accessibleProjectIds === null || accessibleProjectIds.includes(pId);
+  const hasProjectAccess = projectScopeAllows(accessScope, pId);
   if (!canCreateReport(user, hasProjectAccess)) {
     throw new Error("KhÃ´ng cÃ³ quyá»n táº¡o bÃ¡o cÃ¡o hiá»‡n trÆ°á»ng.");
   }
@@ -387,19 +393,12 @@ export async function getSiteReports(filters: Record<string, unknown> = {}) {
   };
 
   const user = { id: session.id, role: session.role as UserRole };
-  const accessibleProjectIds = await getAccessibleProjectIds(user);
-
-  if (accessibleProjectIds !== null) {
-    if (filters.projectId && filters.projectId !== 'ALL' && filters.projectId !== 'all') {
-      if (!accessibleProjectIds.includes(filters.projectId as string)) {
-        return []; // No access
-      }
-      where.projectId = filters.projectId;
-    } else {
-      where.projectId = { in: accessibleProjectIds };
-    }
-  } else if (filters.projectId && filters.projectId !== 'ALL' && filters.projectId !== 'all') {
+  const accessScope = await getProjectAccessScope(user);
+  if (filters.projectId && filters.projectId !== 'ALL' && filters.projectId !== 'all') {
+    if (!projectScopeAllows(accessScope, filters.projectId as string)) return [];
     where.projectId = filters.projectId;
+  } else {
+    Object.assign(where, projectIdScope(accessScope));
   }
 
   if (filters.type && filters.type !== 'ALL' && filters.type !== 'all') {
@@ -514,16 +513,14 @@ function applyDateRange(where: Prisma.SiteReportWhereInput, dateRange?: string) 
 
 function buildSiteReportsWhere(
   filters: ReportPageFilters | Record<string, unknown>,
-  accessibleProjectIds: string[] | null,
+  accessScope: ProjectAccessScope,
 ): Prisma.SiteReportWhereInput {
   const where: Prisma.SiteReportWhereInput = {
     deletedAt: null,
     project: { deletedAt: null },
   };
 
-  if (accessibleProjectIds !== null) {
-    where.projectId = { in: accessibleProjectIds };
-  }
+  Object.assign(where, projectIdScope(accessScope));
 
   if (filters.tab === "daily") where.type = "DAILY";
   if (filters.tab === "weekly") where.type = "WEEKLY";
@@ -538,7 +535,7 @@ function buildSiteReportsWhere(
   }
 
   if (typeof filters.projectId === "string" && filters.projectId !== "all" && filters.projectId !== "ALL") {
-    if (accessibleProjectIds !== null && !accessibleProjectIds.includes(filters.projectId)) {
+    if (!projectScopeAllows(accessScope, filters.projectId)) {
       where.id = "__NO_ACCESS__";
       return where;
     }
@@ -585,7 +582,7 @@ async function getSiteReportsPageLegacy(filters: ReportPageFilters) {
   if (!session) throw new Error("Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
   
   const user = { id: session.id, role: session.role as UserRole };
-  const accessibleProjectIds = await getAccessibleProjectIds(user);
+  const accessScope = await getProjectAccessScope(user);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const where: any = { 
@@ -593,9 +590,7 @@ async function getSiteReportsPageLegacy(filters: ReportPageFilters) {
     project: { deletedAt: null }
   };
 
-  if (accessibleProjectIds !== null) {
-    where.projectId = { in: accessibleProjectIds };
-  }
+  Object.assign(where, projectIdScope(accessScope));
 
   // 1. Tab filtering
   if (filters.tab === "daily") where.type = "DAILY";
@@ -632,7 +627,7 @@ async function getSiteReportsPageLegacy(filters: ReportPageFilters) {
   }
   
   if (filters.projectId && filters.projectId !== "all") {
-    if (accessibleProjectIds !== null && !accessibleProjectIds.includes(filters.projectId as string)) {
+    if (!projectScopeAllows(accessScope, filters.projectId as string)) {
       return { items: [], total: 0, page: 1, pageSize: filters.pageSize || 20, totalPages: 0 };
     }
     where.projectId = filters.projectId;
@@ -748,8 +743,8 @@ export async function getSiteReportsPage(filters: ReportPageFilters) {
   if (!session) throw new Error("Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
 
   const user = { id: session.id, role: session.role as UserRole };
-  const accessibleProjectIds = await getAccessibleProjectIds(user);
-  const where = buildSiteReportsWhere(filters, accessibleProjectIds);
+  const accessScope = await getProjectAccessScope(user);
+  const where = buildSiteReportsWhere(filters, accessScope);
 
   const total = await prisma.siteReport.count({ where });
   const page = Math.max(1, filters.page || 1);

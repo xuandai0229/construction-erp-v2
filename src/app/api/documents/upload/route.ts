@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { storageProvider } from "@/lib/storage/index";
-import { writeAuditLog } from "@/lib/audit";
+import { writeAuditLog, writeSecurityAuditEvent } from "@/lib/audit";
 import path from "path";
 import { Readable } from "stream";
 import { canAccessProject, requireProjectScope } from "@/lib/rbac";
@@ -137,6 +137,7 @@ export async function POST(req: NextRequest) {
     if (!project) return json({ error: "Không tìm thấy công trình" }, { status: 404 });
     const permission = await resolvePermission(session, "documents.upload", { projectId: upload.projectId });
     if (!permission.allowed || !(await canAccessProject(session, upload.projectId))) {
+      await writeSecurityAuditEvent({ eventType: "SOURCE_MUTATION_DENIED", actorId: session.id, role: session.role, action: "documents.upload", resourceType: "Document", resourceId: "NEW", projectId: upload.projectId, reasonCode: permission.allowed ? "PROJECT_SCOPE_DENIED" : permission.reason });
       return json({ error: "Không có quyền truy cập công trình" }, { status: 403 });
     }
 

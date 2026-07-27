@@ -5,6 +5,7 @@ describe("document-model", () => {
   it("preserves blank metadata instead of inventing document values", () => {
     const model = buildWeeklyDocumentModel({
       id: "blank-metadata",
+      status: "DRAFT",
       reportNumber: null,
       weekStart: "2026-07-20",
       weekEnd: "2026-07-26",
@@ -30,6 +31,7 @@ describe("document-model", () => {
   it("keeps a category-only legacy row in the canonical schedule", () => {
     const model = buildWeeklyDocumentModel({
       id: "category-only",
+      status: "DRAFT",
       reportNumber: null,
       weekStart: "2026-07-20",
       weekEnd: "2026-07-26",

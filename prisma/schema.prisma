@@ -17,6 +17,7 @@ enum UserRole {
   ENGINEER
   STAFF
   SUPERVISION_HEAD
+  CONSTRUCTION_SUPERVISOR
 }
 
 enum ProjectRole {

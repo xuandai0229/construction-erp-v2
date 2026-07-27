@@ -1,7 +1,7 @@
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { canViewNavigationItem } from "@/lib/navigation-permissions";
-import { canUseSupervisionWeekly } from "@/lib/supervision-weekly/permissions";
+import { canReadSupervisionWeekly } from "@/lib/supervision-weekly/permissions";
 import { ReportWorkspacePicker } from "@/components/reports/report-workspace-picker";
 import { PageHeader, PageHeading } from "@/components/ui/enterprise";
 import { ClipboardList } from "lucide-react";
@@ -17,7 +17,7 @@ export default async function ReportsPage() {
 
   // Check RBAC permissions for report workspaces
   const canViewField = canViewNavigationItem(session.role, "/reports/field");
-  const canViewWeekly = canUseSupervisionWeekly(session.role);
+  const canViewWeekly = canReadSupervisionWeekly(session.role);
 
   if (!canViewField && !canViewWeekly) {
     redirect("/dashboard");
@@ -46,4 +46,3 @@ export default async function ReportsPage() {
     </div>
   );
 }
-

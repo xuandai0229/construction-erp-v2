@@ -1,5 +1,5 @@
 import prisma from "../src/lib/prisma";
-import { getAccessibleProjectIds } from "../src/lib/rbac";
+import { getProjectAccessScope, projectScopeAllows } from "../src/lib/rbac";
 
 async function main() {
   console.log("=== BẮT ĐẦU TEST PHÂN QUYỀN RBAC TÀI LIỆU CÔNG TRÌNH ===");
@@ -44,11 +44,11 @@ async function main() {
   // 4. Test User A query danh sách các project
   // Giả lập session User A
   const sessionUserA = { id: userA.id, role: userA.role };
-  const accessibleIdsUserA = await getAccessibleProjectIds(sessionUserA);
+  const accessibleIdsUserA = await getProjectAccessScope(sessionUserA);
 
   console.log("Danh sách dự án User A được phép truy cập:");
   console.log(accessibleIdsUserA);
-  if (accessibleIdsUserA && accessibleIdsUserA.includes(project1.id) && !accessibleIdsUserA.includes(project2.id)) {
+  if (projectScopeAllows(accessibleIdsUserA, project1.id) && !projectScopeAllows(accessibleIdsUserA, project2.id)) {
     console.log("✅ TEST PASS: User A CHỈ thấy Tây Hồ, KHÔNG thấy Cầu Giấy.");
   } else {
     console.log("❌ TEST FAIL: User A có quyền truy cập sai.");
@@ -65,10 +65,10 @@ async function main() {
   });
 
   const sessionDirector = { id: director.id, role: director.role };
-  const accessibleIdsDirector = await getAccessibleProjectIds(sessionDirector);
+  const accessibleIdsDirector = await getProjectAccessScope(sessionDirector);
   
-  if (accessibleIdsDirector === null) {
-    console.log("✅ TEST PASS: DIRECTOR có quyền truy cập TOÀN BỘ (null).");
+  if (accessibleIdsDirector.kind === "ALL_PROJECTS") {
+    console.log("✅ TEST PASS: DIRECTOR có quyền truy cập TOÀN BỘ.");
   } else {
     console.log("❌ TEST FAIL: DIRECTOR bị giới hạn quyền.");
   }

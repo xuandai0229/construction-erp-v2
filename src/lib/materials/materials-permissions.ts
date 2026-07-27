@@ -73,6 +73,9 @@ export function getMaterialPermissions(
   userRole?: UserRole,
   projectRole?: ProjectRole | null
 ): MaterialPermissionSet {
+  if (userRole === "CONSTRUCTION_SUPERVISOR") {
+    return READ_ONLY_MATERIAL_PERMISSIONS;
+  }
   // System admin and company-wide leadership have full business visibility.
   if (userRole === "ADMIN" || userRole === "DIRECTOR" || userRole === "DEPUTY_DIRECTOR") {
     return FULL_MATERIAL_PERMISSIONS;

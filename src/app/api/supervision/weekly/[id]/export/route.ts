@@ -32,7 +32,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const documentType = documentParam;
     const format = url.searchParams.get("format") || "pdf";
     const filename = url.searchParams.get("filename") || `export.${format}`;
-    const dossier = await getSupervisionWeeklyPrintData(id);
+    const dossier = await getSupervisionWeeklyPrintData(id, "EXPORT");
 
     if (format === "docx") {
       const buffer = await exportSupervisionWeeklyDocx(dossier, documentType);
@@ -106,6 +106,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       operation: "export",
       message: error instanceof Error ? error.message : "Unknown error",
     });
-    return NextResponse.json({ error: "Lỗi hệ thống khi xuất file" }, { status: 500 });
+    const denied = error instanceof Error && error.message.includes("không có quyền");
+    return NextResponse.json({ error: denied ? "Forbidden" : "Lỗi hệ thống khi xuất file" }, { status: denied ? 403 : 500 });
   }
 }

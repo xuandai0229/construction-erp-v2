@@ -26,7 +26,11 @@ export function DashboardHeader({ data }: { data: DashboardData }) {
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[12px] sm:text-sm font-semibold text-blue-700">
             <span>{data.session.roleDisplayName}</span>
             <span className="text-slate-300 hidden sm:inline-block">/</span>
-            <span className="hidden sm:inline-block">{data.permissions.canViewCompanyWideDashboard ? "Toàn hệ thống" : "Theo công trình được phân quyền"}</span>
+            <span className="hidden sm:inline-block">
+              {data.permissions.canViewCompanyWideDashboard || data.session.role === "CONSTRUCTION_SUPERVISOR"
+                ? "Toàn bộ công trình trong doanh nghiệp"
+                : "Theo công trình được phân quyền"}
+            </span>
           </div>
           <h1 className="mt-1 sm:mt-2 text-[22px] sm:text-2xl font-black tracking-tight text-[var(--foreground)] lg:text-3xl">
             Xin chào, {data.session.name.split(' ').pop()}

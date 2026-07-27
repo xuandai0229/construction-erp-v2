@@ -5,20 +5,36 @@ import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { addDays, startOfMonday, isWithinInclusive, isoDate } from "@/lib/supervision-weekly/date";
-import { assertSupervisionProjectScope, canReviewSupervisionWeekly, canUseSupervisionWeekly } from "@/lib/supervision-weekly/permissions";
+import {
+  assertSupervisionProjectScope,
+  canAuthorSupervisionWeekly,
+  canDeleteSupervisionWeeklyDossier,
+  canEditSupervisionWeeklyDossier,
+  canExportSupervisionWeeklyDossier,
+  canLockSupervisionWeeklyDossier,
+  canPreviewSupervisionWeeklyDossier,
+  canReadSupervisionWeeklyDossier,
+  canReviewSupervisionWeekly,
+  canSubmitSupervisionWeeklyDossier,
+  canReadSupervisionWeekly,
+  hasInvalidSupervisionWeeklyRowIds,
+  isConstructionSupervisor,
+} from "@/lib/supervision-weekly/permissions";
 import type { SupervisionWeeklyPrintDto } from "@/lib/supervision-weekly/print-types";
 import { supervisionDossierSaveSchema, type SupervisionDossierSaveInput } from "@/lib/supervision-weekly/types";
 import { assertSupervisionDatabaseReady } from "@/lib/supervision-weekly/database-readiness";
 import { formatSupervisionInspectionSource, hasMeaningfulSupervisionProject } from "@/lib/supervision-weekly/source-formatter";
 import { deriveSupervisionVerificationMode, normalizeSupervisionUnit } from "@/lib/supervision-weekly/quantity";
 import { getWeeklyWorkflowTarget, type WeeklyWorkflowAction } from "@/lib/supervision-weekly/workflow";
+import { writeAuditLog, writeSecurityAuditEvent } from "@/lib/audit";
 
 type Actor = { id: string; role: UserRole; name: string };
 
 async function getActor(): Promise<Actor> {
   await assertSupervisionDatabaseReady();
   const session = await getSession();
-  if (!session || !canUseSupervisionWeekly(session.role)) {
+  if (!session || !canReadSupervisionWeekly(session.role)) {
+    if (session) await writeSecurityAuditEvent({ eventType: "AUTHORIZATION_DENIED", actorId: session.id, role: session.role, action: "supervision.weekly.view", resourceType: "SupervisionWeekly", resourceId: "MODULE", reasonCode: "WEEKLY_READER_REQUIRED" });
     throw new Error("Bạn không có quyền truy cập phân hệ Giám sát.");
   }
   return { id: session.id, role: session.role, name: session.name };
@@ -38,7 +54,8 @@ async function getDossierForActor(id: string, actor: Actor) {
       revisions: { include: { actor: { select: { name: true, role: true } } }, orderBy: { createdAt: "desc" } },
     },
   });
-  if (!dossier || (!canReviewSupervisionWeekly(actor.role) && dossier.createdById !== actor.id)) {
+  if (!dossier || !canReadSupervisionWeeklyDossier(actor, dossier)) {
+    await writeSecurityAuditEvent({ eventType: "AUTHORIZATION_DENIED", actorId: actor.id, role: actor.role, action: "supervision.weekly.view", resourceType: "SupervisionWeeklyDossier", resourceId: id, reasonCode: dossier ? "DOSSIER_READ_DENIED" : "DOSSIER_NOT_FOUND" });
     throw new Error("Bạn không có quyền xem hồ sơ này.");
   }
   return dossier;
@@ -150,6 +167,7 @@ export async function checkSupervisionWeeklyDuplicate(anchorDate: string) {
   const existing = await prisma.supervisionWeeklyDossier.findFirst({
     where: {
       weekStart,
+      createdById: actor.id,
       deletedAt: null,
     },
     orderBy: { version: "desc" },
@@ -183,6 +201,10 @@ export async function createSupervisionWeeklyDossier(
   anchorDate: string
 ) {
   const actor = await getActor();
+  if (!canAuthorSupervisionWeekly(actor.role)) {
+    await writeSecurityAuditEvent({ eventType: "AUTHORIZATION_DENIED", actorId: actor.id, role: actor.role, action: "supervision.weekly.create", resourceType: "SupervisionWeeklyDossier", resourceId: "NEW", reasonCode: "WEEKLY_AUTHOR_REQUIRED" });
+    throw new Error("Bạn không có quyền tạo hồ sơ tuần.");
+  }
   const anchor = toDateInput(anchorDate);
   const year = anchor.getFullYear();
   if (Number.isNaN(anchor.getTime())) {
@@ -199,7 +221,7 @@ export async function createSupervisionWeeklyDossier(
 
   // Check if a non-deleted dossier already exists for this week
   const existing = await prisma.supervisionWeeklyDossier.findFirst({
-    where: { weekStart, deletedAt: null },
+    where: { weekStart, createdById: actor.id, deletedAt: null },
     orderBy: { version: "desc" },
     select: { id: true, status: true },
   });
@@ -211,7 +233,7 @@ export async function createSupervisionWeeklyDossier(
   const dossier = await prisma.$transaction(async (tx) => {
     // Re-check inside transaction to prevent race condition / double submit
     const txExisting = await tx.supervisionWeeklyDossier.findFirst({
-      where: { weekStart, deletedAt: null },
+      where: { weekStart, createdById: actor.id, deletedAt: null },
       orderBy: { version: "desc" },
       select: { id: true, status: true },
     });
@@ -232,19 +254,17 @@ export async function createSupervisionWeeklyDossier(
   revalidatePath("/supervision/weekly");
   revalidatePath("/reports/weekly-inspection");
   revalidatePath("/reports");
+  await writeAuditLog({ userId: actor.id, action: "CREATE_SUPERVISION_WEEKLY_DOSSIER", entityType: "SupervisionWeeklyDossier", entityId: dossier.id, afterData: { status: dossier.status } });
   return dossier;
 }
 
 export async function deleteSupervisionWeeklyDossier(id: string) {
   const actor = await getActor();
   const dossier = await getDossierForActor(id, actor);
-  if (dossier.createdById !== actor.id && actor.role !== "ADMIN" && actor.role !== "DIRECTOR") {
+  if (!canDeleteSupervisionWeeklyDossier(actor, dossier)) {
+    await writeSecurityAuditEvent({ eventType: "AUTHORIZATION_DENIED", actorId: actor.id, role: actor.role, action: "supervision.weekly.delete", resourceType: "SupervisionWeeklyDossier", resourceId: id, reasonCode: "WEEKLY_DELETE_DENIED" });
     throw new Error("Bạn không có quyền xóa hồ sơ này.");
   }
-  if (!["DRAFT", "REVISION_REQUIRED"].includes(dossier.status)) {
-    throw new Error("Chỉ có thể xóa hồ sơ ở trạng thái Bản nháp hoặc Yêu cầu chỉnh sửa.");
-  }
-
   await prisma.supervisionWeeklyDossier.update({
     where: { id },
     data: { deletedAt: new Date() },
@@ -260,7 +280,8 @@ export async function saveSupervisionWeeklyDossier(id: string, rawInput: Supervi
   const actor = await getActor();
   const input = supervisionDossierSaveSchema.parse(rawInput);
   const dossier = await getDossierForActor(id, actor);
-  if (dossier.createdById !== actor.id || !["DRAFT", "REVISION_REQUIRED"].includes(dossier.status)) {
+  if (!canEditSupervisionWeeklyDossier(actor, dossier)) {
+    await writeSecurityAuditEvent({ eventType: "AUTHORIZATION_DENIED", actorId: actor.id, role: actor.role, action: "supervision.weekly.update", resourceType: "SupervisionWeeklyDossier", resourceId: id, reasonCode: dossier.createdById === actor.id ? "DOSSIER_STATE_READ_ONLY" : "DOSSIER_OWNER_REQUIRED" });
     throw new Error("Chỉ người lập mới được sửa bản nháp hoặc bản bị yêu cầu chỉnh sửa.");
   }
   validateEntryDates(input, dossier);
@@ -288,10 +309,8 @@ export async function saveSupervisionWeeklyDossier(id: string, rawInput: Supervi
   ]
     .map((row) => row.id)
     .filter((rowId): rowId is string => Boolean(rowId && !rowId.startsWith("temp-")));
-  if (
-    suppliedRowIds.some((rowId) => !reusableRowIds.has(rowId))
-    || new Set(suppliedRowIds).size !== suppliedRowIds.length
-  ) {
+  if (hasInvalidSupervisionWeeklyRowIds(reusableRowIds, suppliedRowIds)) {
+    await writeSecurityAuditEvent({ eventType: "CROSS_DOSSIER_ROW_REJECTED", actorId: actor.id, role: actor.role, action: "supervision.weekly.update_rows", resourceType: "SupervisionWeeklyDossier", resourceId: id, reasonCode: "FOREIGN_OR_DUPLICATE_ROW_ID" });
     throw new Error("CONFLICT: Dòng dữ liệu không thuộc hồ sơ đang chỉnh sửa hoặc đã bị lặp.");
   }
 
@@ -304,7 +323,10 @@ export async function saveSupervisionWeeklyDossier(id: string, rawInput: Supervi
         lockVersion: { increment: 1 },
       },
     });
-    if (update.count !== 1) throw new Error("CONFLICT: Hồ sơ trên máy chủ mới hơn bản đang mở. Hãy tải lại để tránh ghi đè dữ liệu.");
+    if (update.count !== 1) {
+      await writeSecurityAuditEvent({ eventType: "STALE_WRITE_REJECTED", actorId: actor.id, role: actor.role, action: "supervision.weekly.update", resourceType: "SupervisionWeeklyDossier", resourceId: id, reasonCode: "LOCK_VERSION_OR_STATE_CONFLICT" });
+      throw new Error("CONFLICT: Hồ sơ trên máy chủ mới hơn bản đang mở. Hãy tải lại để tránh ghi đè dữ liệu.");
+    }
     await tx.supervisionWeeklyEntry.deleteMany({ where: { dossierId: id } });
     await tx.supervisionWeeklyShiftSelection.deleteMany({ where: { dossierId: id } });
     await tx.supervisionWeeklyObservation.deleteMany({ where: { dossierId: id, documentType: "NEXT_WEEK_PLAN" } });
@@ -376,15 +398,27 @@ export async function saveSupervisionWeeklyDossier(id: string, rawInput: Supervi
   revalidatePath("/supervision/weekly");
   revalidatePath("/reports/weekly-inspection");
   revalidatePath("/reports");
+  await writeAuditLog({
+    userId: actor.id,
+    action: "UPDATE_SUPERVISION_WEEKLY_DOSSIER",
+    entityType: "SupervisionWeeklyDossier",
+    entityId: id,
+    afterData: updated,
+  });
   return updated;
 }
 
 export async function transitionSupervisionWeeklyDossier(id: string, action: WeeklyWorkflowAction, reason?: string) {
   const actor = await getActor();
   const dossier = await getDossierForActor(id, actor);
-  const ownDraftAction = action === "SUBMIT" && dossier.createdById === actor.id && ["DRAFT", "REVISION_REQUIRED"].includes(dossier.status);
-  const reviewAction = canReviewSupervisionWeekly(actor.role);
-  if (!ownDraftAction && !reviewAction) throw new Error("Bạn không có quyền chuyển trạng thái hồ sơ này.");
+  const ownDraftAction = action === "SUBMIT" && canSubmitSupervisionWeeklyDossier(actor, dossier);
+  const reviewAction = action !== "SUBMIT"
+    && canReviewSupervisionWeekly(actor.role)
+    && (action !== "LOCK" || canLockSupervisionWeeklyDossier(actor.role));
+  if (!ownDraftAction && !reviewAction) {
+    await writeSecurityAuditEvent({ eventType: "AUTHORIZATION_DENIED", actorId: actor.id, role: actor.role, action: `supervision.weekly.${action.toLowerCase()}`, resourceType: "SupervisionWeeklyDossier", resourceId: id, reasonCode: action === "SUBMIT" ? "OWNER_AUTHOR_STATE_REQUIRED" : "WEEKLY_REVIEWER_REQUIRED" });
+    throw new Error("Bạn không có quyền chuyển trạng thái hồ sơ này.");
+  }
   if (action === "SUBMIT" && (!dossier.recipientName || !dossier.recipientTitle)) {
     throw new Error("Thiếu người nhận hoặc chức vụ người nhận trong cả hai biểu mẫu.");
   }
@@ -405,7 +439,10 @@ export async function transitionSupervisionWeeklyDossier(id: string, action: Wee
         lockVersion: { increment: 1 },
       },
     });
-    if (update.count !== 1) throw new Error("CONFLICT: Hồ sơ trên máy chủ mới hơn bản đang mở. Hãy tải lại để tránh ghi đè dữ liệu.");
+    if (update.count !== 1) {
+      await writeSecurityAuditEvent({ eventType: "STALE_WRITE_REJECTED", actorId: actor.id, role: actor.role, action: `supervision.weekly.${action.toLowerCase()}`, resourceType: "SupervisionWeeklyDossier", resourceId: id, reasonCode: "LOCK_VERSION_OR_STATE_CONFLICT" });
+      throw new Error("CONFLICT: Hồ sơ trên máy chủ mới hơn bản đang mở. Hãy tải lại để tránh ghi đè dữ liệu.");
+    }
     await tx.supervisionWeeklyRevision.create({ data: { dossierId: id, actorId: actor.id, action, fromStatus: dossier.status, toStatus: next, version: dossier.version, reason: reason?.trim() || null } });
     return { status: next, lockVersion: dossier.lockVersion + 1 };
   });
@@ -414,6 +451,16 @@ export async function transitionSupervisionWeeklyDossier(id: string, action: Wee
   revalidatePath("/supervision/weekly");
   revalidatePath("/reports/weekly-inspection");
   revalidatePath("/reports");
+  await writeAuditLog({
+    userId: actor.id,
+    action: action === "SUBMIT" && dossier.status === "REVISION_REQUIRED"
+      ? "RESUBMIT_SUPERVISION_WEEKLY_DOSSIER"
+      : `${action}_SUPERVISION_WEEKLY_DOSSIER`,
+    entityType: "SupervisionWeeklyDossier",
+    entityId: id,
+    beforeData: { status: dossier.status },
+    afterData: updated,
+  });
   return updated;
 }
 
@@ -433,7 +480,7 @@ export async function getSupervisionWeeklyProjects(query = "") {
 export async function getSupervisionWeeklyDossiers() {
   const actor = await getActor();
   const dossiers = await prisma.supervisionWeeklyDossier.findMany({
-    where: { deletedAt: null, ...(canReviewSupervisionWeekly(actor.role) ? {} : { createdById: actor.id }) },
+    where: { deletedAt: null, ...(canReviewSupervisionWeekly(actor.role) || isConstructionSupervisor(actor.role) ? {} : { createdById: actor.id }) },
     select: {
       id: true, reportNumber: true, weekStart: true, weekEnd: true, status: true, version: true, updatedAt: true, createdAt: true, createdById: true,
       createdBy: { select: { id: true, name: true, role: true } },
@@ -503,7 +550,9 @@ export async function getSupervisionWeeklyDossiers() {
 
 export async function getSupervisionWeeklyDossier(id: string) {
   const actor = await getActor();
-  return getDossierForActor(id, actor);
+  const dossier = await getDossierForActor(id, actor);
+  await writeAuditLog({ userId: actor.id, action: "VIEW_SUPERVISION_WEEKLY_DOSSIER", entityType: "SupervisionWeeklyDossier", entityId: id, afterData: { status: dossier.status, ownerId: dossier.createdById } });
+  return dossier;
 }
 
 export async function getSupervisionWeeklyWorkItems(projectId: string) {
@@ -575,12 +624,21 @@ export async function getSupervisionWeeklySourceOptions(projectId: string) {
   };
 }
 
-export async function getSupervisionWeeklyPrintData(id: string): Promise<SupervisionWeeklyPrintDto> {
+export async function getSupervisionWeeklyPrintData(id: string, purpose: "PREVIEW" | "EXPORT" = "PREVIEW"): Promise<SupervisionWeeklyPrintDto> {
   const actor = await getActor();
   const dossier = await getDossierForActor(id, actor);
+  const allowed = purpose === "EXPORT"
+    ? canExportSupervisionWeeklyDossier(actor, dossier)
+    : canPreviewSupervisionWeeklyDossier(actor, dossier);
+  if (!allowed) {
+    await writeSecurityAuditEvent({ eventType: purpose === "EXPORT" ? "WEEKLY_EXPORT_DENIED" : "AUTHORIZATION_DENIED", actorId: actor.id, role: actor.role, action: purpose === "EXPORT" ? "supervision.weekly.export" : "supervision.weekly.preview", resourceType: "SupervisionWeeklyDossier", resourceId: id, reasonCode: purpose === "EXPORT" ? "OWNER_EXPORT_POLICY_DENIED" : "DOSSIER_PREVIEW_DENIED" });
+    throw new Error("Bạn không có quyền xem trước hoặc xuất hồ sơ này.");
+  }
+  await writeAuditLog({ userId: actor.id, action: purpose === "EXPORT" ? "EXPORT_SUPERVISION_WEEKLY_DOSSIER" : "PREVIEW_SUPERVISION_WEEKLY_DOSSIER", entityType: "SupervisionWeeklyDossier", entityId: id, afterData: { status: dossier.status, ownerId: dossier.createdById } });
   const creatorName = dossier.createdBy?.name || dossier.revisions?.[dossier.revisions.length - 1]?.actor?.name || "—";
   return {
     id: dossier.id,
+    status: dossier.status,
     reportNumber: dossier.reportNumber,
     weekStart: isoDate(dossier.weekStart),
     weekEnd: isoDate(dossier.weekEnd),

@@ -86,8 +86,8 @@ export function canViewDocument(_user: SessionUser, _document: DocumentContext) 
   return true;
 }
 
-export function canDownloadDocument(_user: SessionUser, _document: DocumentContext) {
-  return true;
+export function canDownloadDocument(user: SessionUser, _document: DocumentContext) {
+  return user.role !== UserRole.CONSTRUCTION_SUPERVISOR;
 }
 
 export function canCreateFolder(user: SessionUser) {

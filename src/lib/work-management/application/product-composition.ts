@@ -16,6 +16,7 @@ const operationalPermissions = new Set<WorkManagementPermission>([
 ]);
 
 function permissionsFor(role: UserRole): ReadonlySet<WorkManagementPermission> {
+  if (role === "CONSTRUCTION_SUPERVISOR") return new Set(["task.view.companywide"]);
   if (companyWide.has(role) || role === "MANAGER") return new Set(WORK_MANAGEMENT_PERMISSIONS);
   if (role === "STAFF" || role === "ENGINEER" || role === "CHIEF_COMMANDER") return new Set(operationalPermissions);
   return new Set(["task.view.own"]);

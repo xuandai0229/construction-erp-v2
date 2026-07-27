@@ -7,7 +7,7 @@ import { ProjectsListClient } from "@/components/projects/project-list-client";
 import { ProjectsKPISummary } from "@/components/projects/projects-kpi-summary";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { canViewAllProjects, canManageProjects, getAccessibleProjectIds } from "@/lib/rbac";
+import { canViewAllProjects, canManageProjects, getProjectAccessScope, projectScopeWhere } from "@/lib/rbac";
 import { PageHeading, FilterBar, ContentCard, Pagination } from "@/components/ui/enterprise";
 import { Button } from "@/components/ui/button";
 
@@ -37,10 +37,8 @@ export default async function ProjectsPage({
   };
 
   if (!isHighLevel) {
-    const accessibleIds = await getAccessibleProjectIds(session);
-    if (accessibleIds !== null) {
-      baseWhereCondition.id = { in: accessibleIds };
-    }
+    const accessScope = await getProjectAccessScope(session);
+    Object.assign(baseWhereCondition, projectScopeWhere(accessScope));
   }
 
   // Condition for list filtering

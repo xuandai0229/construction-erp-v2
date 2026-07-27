@@ -7,6 +7,7 @@ import { DailyStatusCalendar } from "@/components/field-progress/daily-status-ca
 import { addWorkDays, formatWorkDate, getWorkDateRange, parseWorkDate, todayWorkDate } from "@/lib/date/work-date";
 import { requireProjectAccessOrRedirect } from "@/lib/rbac";
 import { ProjectModuleTabs } from "@/components/project/project-module-tabs";
+import { formatQuantity } from "@/lib/field-progress";
 
 export default async function FieldProgressDailyPage({
   params,
@@ -19,6 +20,7 @@ export default async function FieldProgressDailyPage({
   const sp = await searchParams;
 
   const session = await requireProjectAccessOrRedirect(id);
+  const sourceReadOnly = session.role === "CONSTRUCTION_SUPERVISOR";
 
   const project = await prisma.project.findUnique({
     where: { id, deletedAt: null },
@@ -27,15 +29,15 @@ export default async function FieldProgressDailyPage({
   if (!project) notFound();
 
   // Load template and items
-  const template = await prisma.fieldProgressTemplate.findFirst({
+  let template = await prisma.fieldProgressTemplate.findFirst({
     where: { projectId: id, deletedAt: null },
-  }) || await prisma.fieldProgressTemplate.create({
-    data: {
-      projectId: id,
-      name: "Bảng khối lượng hiện trường",
-      createdById: session.id,
-    }
   });
+  if (!template) {
+    if (sourceReadOnly) notFound();
+    template = await prisma.fieldProgressTemplate.create({
+      data: { projectId: id, name: "Bảng khối lượng hiện trường", createdById: session.id },
+    });
+  }
 
   const items = await prisma.fieldProgressItem.findMany({
     where: { templateId: template.id, deletedAt: null, itemType: "WORK" },
@@ -143,7 +145,7 @@ export default async function FieldProgressDailyPage({
             Khối lượng thực hiện theo ngày
           </h1>
           <p className="text-slate-600 mt-1.5 ml-8 sm:ml-11 text-sm sm:text-base hidden sm:block">
-            Cập nhật và theo dõi khối lượng thi công thực tế theo từng ngày.
+            {sourceReadOnly ? "Xem và theo dõi khối lượng thi công thực tế theo từng ngày." : "Cập nhật và theo dõi khối lượng thi công thực tế theo từng ngày."}
           </p>
           <p className="text-xs sm:text-sm text-slate-500 mt-1 sm:mt-1.5 ml-8 sm:ml-11 line-clamp-1">
             Công trình: <span className="font-semibold text-slate-700">{project.code}</span> - {project.name}
@@ -172,15 +174,31 @@ export default async function FieldProgressDailyPage({
         </div>
       </div>
 
-      <DailyEntryTable
-        projectId={id}
-        templateId={template.id}
-        dateStr={selectedDateStr}
-        projectLabel={`${project.code} - ${project.name}`}
-        initialItems={JSON.parse(JSON.stringify(workItemsData))}
-        parentGroups={JSON.parse(JSON.stringify(parentGroups))}
-        userRole={session.role}
-      />
+      {sourceReadOnly ? (
+        <div className="space-y-3">
+          <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900" role="status">
+            Chế độ giám sát — Khối lượng và tiến độ nguồn chỉ được xem
+          </div>
+          <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <table className="min-w-[760px] w-full text-sm">
+              <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-4 py-3">Công việc</th><th className="px-4 py-3">Hạng mục</th><th className="px-4 py-3">Đơn vị</th><th className="px-4 py-3 text-right">Lũy kế trước</th><th className="px-4 py-3 text-right">Trong ngày</th><th className="px-4 py-3">Trạng thái</th></tr></thead>
+              <tbody className="divide-y divide-slate-100">
+                {workItemsData.map((item) => <tr key={item.id}><td className="px-4 py-3 font-medium text-slate-900">{item.name || item.code || "—"}</td><td className="px-4 py-3 text-slate-600">{item.parentName || "—"}</td><td className="px-4 py-3 text-slate-600">{item.unit || "—"}</td><td className="px-4 py-3 text-right tabular-nums">{formatQuantity(item.cumulativeBefore)}</td><td className="px-4 py-3 text-right tabular-nums">{item.todayEntry ? formatQuantity(item.todayEntry.quantity) : "0"}</td><td className="px-4 py-3 text-slate-600">{item.todayEntry?.status || "Chưa nhập"}</td></tr>)}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <DailyEntryTable
+          projectId={id}
+          templateId={template.id}
+          dateStr={selectedDateStr}
+          projectLabel={`${project.code} - ${project.name}`}
+          initialItems={JSON.parse(JSON.stringify(workItemsData))}
+          parentGroups={JSON.parse(JSON.stringify(parentGroups))}
+          userRole={session.role}
+        />
+      )}
     </div>
   );
 }
