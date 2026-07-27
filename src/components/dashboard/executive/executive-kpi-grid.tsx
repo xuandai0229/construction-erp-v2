@@ -137,18 +137,18 @@ export function ExecutiveKpiGrid({ data }: { data: DashboardData }) {
         <Link
           key={index}
           href={kpi.href || '#'}
-          className="group flex min-h-[120px] flex-col justify-between rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-sm)] transition-all duration-300 hover:-translate-y-1 hover:border-[var(--border-strong)] hover:shadow-[var(--shadow-elevated)] ring-1 ring-inset ring-slate-900/5 dark:ring-white/5"
+          className="group flex min-h-[115px] flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4.5 shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
         >
           <div className="flex items-start justify-between gap-2">
-            <div className="space-y-1 flex-1 min-w-0 pr-2">
-              <p className="truncate whitespace-nowrap text-[12px] font-bold uppercase tracking-wide text-[var(--muted-foreground)]">
+            <div className="space-y-1 flex-1 min-w-0 pr-1">
+              <p className="text-[11.5px] font-bold uppercase tracking-wider text-slate-500 leading-tight">
                 {kpi.label}
               </p>
               <h3 className={cn(
-                "text-[var(--foreground)] mt-1.5",
+                "text-slate-900 mt-1",
                 typeof kpi.value === 'string' && kpi.value.length > 14 
-                  ? "text-[16px] sm:text-[17px] font-semibold leading-tight whitespace-normal break-words line-clamp-2" 
-                  : "text-[18px] sm:text-[19px] font-semibold whitespace-nowrap leading-tight"
+                  ? "text-[15px] sm:text-[16px] font-bold leading-snug whitespace-normal break-words line-clamp-2" 
+                  : "text-[19px] sm:text-[21px] font-extrabold whitespace-nowrap leading-tight tracking-tight"
               )}>
                 {kpi.value}
               </h3>
@@ -157,12 +157,12 @@ export function ExecutiveKpiGrid({ data }: { data: DashboardData }) {
               <ExecutiveIcon icon={kpi.icon} tone={kpi.tone} />
             </div>
           </div>
-          <div className="mt-4 flex items-center gap-1.5">
+          <div className="mt-3 flex items-center gap-1.5 pt-1">
             {kpi.trend === 'up' && <ArrowUp className="h-3 w-3 shrink-0 text-emerald-500" />}
             {kpi.trend === 'down' && <ArrowDown className="h-3 w-3 shrink-0 text-rose-500" />}
             {kpi.trend === 'up-bad' && <ArrowUp className="h-3 w-3 shrink-0 text-rose-500" />}
             {kpi.trend === 'neutral' && <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />}
-            <span className="truncate whitespace-nowrap text-[11px] font-medium text-[var(--muted-foreground)]">
+            <span className="truncate whitespace-nowrap text-[11.5px] font-medium text-slate-500">
               {kpi.subtext}
             </span>
           </div>

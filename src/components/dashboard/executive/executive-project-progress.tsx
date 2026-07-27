@@ -87,52 +87,52 @@ export function ExecutiveProjectProgress({
                 </div>
 
                 {projects[0].progressPercent !== null ? (
-                  <div className="mt-2 relative pb-6">
-                    <div className="relative h-2 w-full rounded-full bg-[var(--border)] overflow-hidden inset-0">
+                  <div className="mt-1 relative pb-6">
+                    <div className="relative h-2.5 w-full rounded-full bg-slate-100 overflow-hidden inset-0 border border-slate-200/50">
                       <div
-                        className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out bg-gradient-to-r from-blue-500 to-emerald-400"
-                        style={{ width: `${Math.max(projects[0].progressPercent ?? 0, 0)}%` }}
+                        className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out bg-gradient-to-r from-blue-600 via-blue-500 to-emerald-500 shadow-sm"
+                        style={{ width: `${Math.max(projects[0].progressPercent ?? 0, 1)}%` }}
                       />
                     </div>
                     {/* Marker */}
                     {projects[0].progressPercent >= 0 && projects[0].progressPercent <= 100 && (
                       <div 
-                        className="absolute top-[-4px] bottom-6 w-0.5 bg-slate-700 rounded-full z-10"
+                        className="absolute top-[-3px] w-1 bg-slate-900 rounded-full z-10 shadow-sm"
                         style={{ left: `${projects[0].progressPercent}%`, height: '16px', transform: 'translateX(-50%)' }}
                       />
                     )}
                     {/* Labels */}
-                    <div className="absolute left-0 bottom-0 text-[11px] font-semibold text-[var(--muted-foreground)]">
-                      Bắt đầu: {projects[0].startDate ? format(new Date(projects[0].startDate), 'dd/MM/yyyy') : '--'}
+                    <div className="absolute left-0 bottom-0 text-[11px] font-medium text-slate-500">
+                      Bắt đầu: <span className="font-semibold text-slate-700 font-mono">{projects[0].startDate ? format(new Date(projects[0].startDate), 'dd/MM/yyyy') : '--'}</span>
                     </div>
-                    <div className="absolute right-0 bottom-0 text-[11px] font-semibold text-[var(--muted-foreground)] text-right">
-                      Kết thúc: {projects[0].endDate ? format(new Date(projects[0].endDate), 'dd/MM/yyyy') : '--'}
+                    <div className="absolute right-0 bottom-0 text-[11px] font-medium text-slate-500 text-right">
+                      Kết thúc: <span className="font-semibold text-slate-700 font-mono">{projects[0].endDate ? format(new Date(projects[0].endDate), 'dd/MM/yyyy') : '--'}</span>
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center p-3 rounded-lg border border-dashed border-[var(--border)] bg-[var(--surface-subtle)]">
-                    <span className="text-[13px] font-medium text-[var(--muted-foreground)]">Chưa đủ mốc thời gian để tính tiến độ</span>
+                  <div className="flex items-center justify-center p-3 rounded-lg border border-dashed border-slate-200 bg-slate-50/50">
+                    <span className="text-[13px] font-medium text-slate-500">Chưa đủ mốc thời gian để tính tiến độ</span>
                   </div>
                 )}
               </div>
 
               {/* Mini Metrics - Time Based */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-1">
-                <div className="flex flex-col gap-1.5 p-3 rounded-lg bg-[var(--surface-subtle)] border border-[var(--border)] transition-colors hover:bg-[var(--border)]/50">
-                  <span className="text-[11px] uppercase tracking-wider text-[var(--muted-foreground)] opacity-70 font-semibold">Bắt đầu</span>
-                  <span className="text-sm font-bold text-[var(--foreground)]">{projects[0].startDate ? format(new Date(projects[0].startDate), 'dd/MM/yyyy') : '--'}</span>
+                <div className="flex flex-col gap-1 p-3 rounded-xl bg-slate-50/80 border border-slate-200/60 transition-colors hover:bg-slate-100/60">
+                  <span className="text-[10.5px] uppercase tracking-wider text-slate-500 font-bold">Bắt đầu</span>
+                  <span className="text-[13.5px] font-bold text-slate-900 font-mono">{projects[0].startDate ? format(new Date(projects[0].startDate), 'dd/MM/yyyy') : '--'}</span>
                 </div>
-                <div className="flex flex-col gap-1.5 p-3 rounded-lg bg-[var(--surface-subtle)] border border-[var(--border)] transition-colors hover:bg-[var(--border)]/50">
-                  <span className="text-[11px] uppercase tracking-wider text-[var(--muted-foreground)] opacity-70 font-semibold">Kết thúc</span>
-                  <span className="text-sm font-bold text-[var(--foreground)]">{projects[0].endDate ? format(new Date(projects[0].endDate), 'dd/MM/yyyy') : '--'}</span>
+                <div className="flex flex-col gap-1 p-3 rounded-xl bg-slate-50/80 border border-slate-200/60 transition-colors hover:bg-slate-100/60">
+                  <span className="text-[10.5px] uppercase tracking-wider text-slate-500 font-bold">Kết thúc</span>
+                  <span className="text-[13.5px] font-bold text-slate-900 font-mono">{projects[0].endDate ? format(new Date(projects[0].endDate), 'dd/MM/yyyy') : '--'}</span>
                 </div>
-                <div className="flex flex-col gap-1.5 p-3 rounded-lg bg-[var(--surface-subtle)] border border-[var(--border)] transition-colors hover:bg-[var(--border)]/50">
-                  <span className="text-[11px] uppercase tracking-wider text-[var(--muted-foreground)] opacity-70 font-semibold">Còn lại</span>
-                  <span className="text-sm font-bold text-[var(--foreground)]">{projects[0].daysRemaining !== null ? `${projects[0].daysRemaining} ngày` : '--'}</span>
+                <div className="flex flex-col gap-1 p-3 rounded-xl bg-slate-50/80 border border-slate-200/60 transition-colors hover:bg-slate-100/60">
+                  <span className="text-[10.5px] uppercase tracking-wider text-slate-500 font-bold">Còn lại</span>
+                  <span className="text-[13.5px] font-bold text-slate-900">{projects[0].daysRemaining !== null ? `${projects[0].daysRemaining} ngày` : '--'}</span>
                 </div>
-                <div className="flex flex-col gap-1.5 p-3 rounded-lg bg-[var(--surface-subtle)] border border-[var(--border)] transition-colors hover:bg-[var(--border)]/50">
-                  <span className="text-[11px] uppercase tracking-wider text-[var(--muted-foreground)] opacity-70 font-semibold">Cập nhật</span>
-                  <span className="text-sm font-bold text-[var(--foreground)]">{format(new Date(projects[0].updatedAt), 'dd/MM/yyyy')}</span>
+                <div className="flex flex-col gap-1 p-3 rounded-xl bg-slate-50/80 border border-slate-200/60 transition-colors hover:bg-slate-100/60">
+                  <span className="text-[10.5px] uppercase tracking-wider text-slate-500 font-bold">Cập nhật</span>
+                  <span className="text-[13.5px] font-bold text-slate-900 font-mono">{format(new Date(projects[0].updatedAt), 'dd/MM/yyyy')}</span>
                 </div>
               </div>
             </div>

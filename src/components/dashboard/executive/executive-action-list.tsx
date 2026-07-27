@@ -83,25 +83,33 @@ export function ExecutiveActionList({
         </Link>
       </div>
 
-      <div className="flex flex-col divide-y divide-[var(--border)] flex-1">
+      <div className="flex flex-col divide-y divide-slate-100 flex-1">
         {items.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center min-h-[200px] px-5 py-8 text-center text-sm text-[var(--muted-foreground)]">
-            Không có dữ liệu
+          <div className="flex-1 flex flex-col items-center justify-center min-h-[220px] px-6 py-8 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100/80 mb-3 text-slate-400">
+              <FileCheck className="h-6 w-6 stroke-[1.5]" />
+            </div>
+            <p className="text-sm font-semibold text-slate-700">
+              {title.includes('Phê duyệt') ? 'Hiện không có hồ sơ chờ xử lý' : 'Hiện không có công việc cần xử lý ngay'}
+            </p>
+            <p className="text-xs text-slate-500 mt-1 max-w-[280px]">
+              {title.includes('Phê duyệt') ? 'Các hồ sơ cần phê duyệt sẽ xuất hiện tại đây.' : 'Các công việc phát sinh cần xử lý sẽ hiển thị tại đây.'}
+            </p>
           </div>
         ) : (
           items.map((item) => (
             <Link 
               key={item.id} 
               href={item.href}
-              className="group flex items-center gap-4 px-5 py-3 transition-colors duration-150 ease-out hover:bg-[var(--surface)] hover:shadow-sm"
+              className="group flex items-center gap-3.5 px-5 py-3.5 transition-colors duration-150 ease-out hover:bg-slate-50/80"
             >
               {getIcon(item.type, item.priority)}
               
-              <div className="flex min-w-0 flex-1 flex-col">
-                <span className="text-sm font-bold text-[var(--foreground)] group-hover:text-blue-700 transition-colors line-clamp-2">
+              <div className="flex min-w-0 flex-1 flex-col pr-2">
+                <span className="text-[13.5px] font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-2 leading-snug">
                   {item.title}
                 </span>
-                <span className="text-[12px] font-medium text-[var(--muted-foreground)] mt-0.5 line-clamp-1">
+                <span className="text-[12px] font-medium text-slate-500 mt-0.5 line-clamp-1">
                   {item.projectName}
                 </span>
               </div>
@@ -112,12 +120,12 @@ export function ExecutiveActionList({
               </div>
 
               <div className="shrink-0 text-right w-[75px] hidden sm:block">
-                <span className="text-[12px] font-medium text-[var(--muted-foreground)]">
+                <span className="text-[11.5px] font-medium font-mono text-slate-400">
                   {item.createdAt ? format(new Date(item.createdAt), 'dd/MM/yyyy') : ''}
                 </span>
               </div>
 
-              <div className="shrink-0 text-[var(--muted-foreground)] opacity-50 transition-colors duration-150 group-hover:text-blue-600 group-hover:opacity-100">
+              <div className="shrink-0 text-slate-400 opacity-60 transition-colors duration-150 group-hover:text-blue-600 group-hover:opacity-100">
                 <ChevronRight className="h-4 w-4 transition-transform duration-150 ease-out group-hover:translate-x-0.5" />
               </div>
             </Link>

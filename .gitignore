@@ -15,6 +15,7 @@
 
 # next.js
 /.next/
+/.next-*/
 /out/
 
 # production
@@ -49,12 +50,16 @@ ms-playwright/
 .playwright/
 playwright-report/
 test-results/
+playwright/.auth/
 *.webm
 trace.zip
 storageState.json
 *.png
 *.jpg
 *.jpeg
+!public/**/*.png
+!public/**/*.jpg
+!public/**/*.jpeg
 
 # Local DB backups / sensitive dumps
 backups/
@@ -67,9 +72,29 @@ backups/
 
 # QA screenshots/artifacts
 docs/qa/screenshots/
+/scripts/qa-field-progress-db-audit-report.json
+
+# Local one-off diagnostics and renderer workspaces
+/logs/
+/scratch/
+/qa/
+/tmp/
+/.tmp*/
 
 # Storage
 /storage/
 /storage/**
 
 .next-qa/
+
+.next/
+.next-*/
+
+.next/
+.next-*/
+
+.next/
+.next-*
+node_modules/
+logs/
+*.log

@@ -35,46 +35,46 @@ export function ExecutiveStatusChart({
   const delayedOffset = atRiskOffset - atRiskStroke;
 
   return (
-    <div className="flex flex-col xl:flex-row gap-4 h-full rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-elevated)] transition-shadow overflow-hidden">
+    <div className="flex flex-col xl:flex-row gap-4 h-full rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
       
-      <div className="flex-1 flex flex-col justify-center border-b xl:border-b-0 xl:border-r border-[var(--border)] pb-3 xl:pb-0 xl:pr-3">
-        <h4 className="text-[12px] font-bold text-[var(--foreground)] mb-3 tracking-tight">Phân bổ trạng thái công trình</h4>
-        <div className="flex items-center gap-3">
+      <div className="flex-1 flex flex-col justify-center border-b xl:border-b-0 xl:border-r border-slate-100 pb-3.5 xl:pb-0 xl:pr-4">
+        <h4 className="text-[12.5px] font-bold text-slate-900 mb-3 tracking-tight">Phân bổ trạng thái công trình</h4>
+        <div className="flex items-center gap-3.5">
           <div className="relative h-16 w-16 shrink-0 flex items-center justify-center">
             <svg className="h-full w-full -rotate-90 transform" viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r={radius} className="fill-none stroke-slate-100" strokeWidth="14" />
+              <circle cx="50" cy="50" r={radius} className="fill-none stroke-slate-100" strokeWidth="13" />
               {onTrackPct > 0 && (
-                <circle cx="50" cy="50" r={radius} className="fill-none stroke-emerald-500" strokeWidth="14" strokeDasharray={`${onTrackStroke} ${circumference}`} strokeLinecap="round" />
+                <circle cx="50" cy="50" r={radius} className="fill-none stroke-emerald-500" strokeWidth="13" strokeDasharray={`${onTrackStroke} ${circumference}`} strokeLinecap="round" />
               )}
               {atRiskPct > 0 && (
-                <circle cx="50" cy="50" r={radius} className="fill-none stroke-amber-500" strokeWidth="14" strokeDasharray={`${atRiskStroke} ${circumference}`} strokeDashoffset={atRiskOffset} strokeLinecap="round" />
+                <circle cx="50" cy="50" r={radius} className="fill-none stroke-amber-500" strokeWidth="13" strokeDasharray={`${atRiskStroke} ${circumference}`} strokeDashoffset={atRiskOffset} strokeLinecap="round" />
               )}
               {delayedPct > 0 && (
-                <circle cx="50" cy="50" r={radius} className="fill-none stroke-rose-500" strokeWidth="14" strokeDasharray={`${delayedStroke} ${circumference}`} strokeDashoffset={delayedOffset} strokeLinecap="round" />
+                <circle cx="50" cy="50" r={radius} className="fill-none stroke-rose-500" strokeWidth="13" strokeDasharray={`${delayedStroke} ${circumference}`} strokeDashoffset={delayedOffset} strokeLinecap="round" />
               )}
             </svg>
             <div className="flex items-center justify-center absolute inset-0">
-              <span className="text-[16px] font-bold text-[var(--foreground)] leading-none">{total}</span>
+              <span className="text-[16px] font-extrabold text-slate-900 leading-none">{total}</span>
             </div>
           </div>
           
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-1.5">
               <div className="h-2 w-2 rounded-full bg-emerald-500" />
-              <span className="text-[11px] font-medium text-[var(--muted-foreground)]">
-                Đúng tiến độ: <span className="font-bold text-[var(--foreground)]">{onTrackCount}</span> <span className="opacity-70">({Math.round(onTrackPct)}%)</span>
+              <span className="text-[11.5px] font-medium text-slate-600">
+                Đúng tiến độ: <span className="font-bold text-slate-900">{onTrackCount}</span> <span className="text-slate-400 font-mono text-[11px]">({Math.round(onTrackPct)}%)</span>
               </span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="h-2 w-2 rounded-full bg-amber-500" />
-              <span className="text-[11px] font-medium text-[var(--muted-foreground)]">
-                Cần chú ý: <span className="font-bold text-[var(--foreground)]">{atRiskCount}</span> <span className="opacity-70">({Math.round(atRiskPct)}%)</span>
+              <span className="text-[11.5px] font-medium text-slate-600">
+                Cần chú ý: <span className="font-bold text-slate-900">{atRiskCount}</span> <span className="text-slate-400 font-mono text-[11px]">({Math.round(atRiskPct)}%)</span>
               </span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="h-2 w-2 rounded-full bg-rose-500" />
-              <span className="text-[11px] font-medium text-[var(--muted-foreground)]">
-                Rủi ro: <span className="font-bold text-[var(--foreground)]">{delayedCount}</span> <span className="opacity-70">({Math.round(delayedPct)}%)</span>
+              <span className="text-[11.5px] font-medium text-slate-600">
+                Rủi ro: <span className="font-bold text-slate-900">{delayedCount}</span> <span className="text-slate-400 font-mono text-[11px]">({Math.round(delayedPct)}%)</span>
               </span>
             </div>
           </div>
@@ -82,27 +82,27 @@ export function ExecutiveStatusChart({
       </div>
 
       <div className="flex-1 flex flex-col justify-center sm:pl-2">
-        <h4 className="text-[12px] font-bold text-[var(--foreground)] mb-1 tracking-tight">Tiến độ trung bình theo thời gian</h4>
-        <div className="flex items-end gap-2.5 mt-0.5">
-          <span className="text-[28px] font-black text-[var(--foreground)] leading-none tracking-tight">{Math.round(avgProgress)}%</span>
+        <h4 className="text-[12.5px] font-bold text-slate-900 mb-1 tracking-tight">Tiến độ trung bình theo thời gian</h4>
+        <div className="flex items-end gap-2 mt-1">
+          <span className="text-[28px] font-extrabold text-slate-900 leading-none tracking-tight">{Math.round(avgProgress)}%</span>
           <div className="flex items-center gap-1 text-emerald-600 mb-0.5">
-            <ArrowUp className="h-3 w-3" />
-            <span className="text-[11px] font-bold">8% vs tháng trước</span>
+            <ArrowUp className="h-3.5 w-3.5 stroke-[2.5]" />
+            <span className="text-[11.5px] font-bold">8% vs tháng trước</span>
           </div>
         </div>
         
-        <div className="mt-3 relative h-[30px] w-full max-w-[180px] overflow-hidden">
+        <div className="mt-3.5 relative h-[32px] w-full max-w-[180px] overflow-hidden">
           {/* Mini line chart mock using SVG */}
           <svg className="absolute inset-0 h-full w-full" preserveAspectRatio="none" viewBox="0 0 100 30">
             <defs>
               <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.2" />
-                <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+                <stop offset="0%" stopColor="#2563eb" stopOpacity="0.25" />
+                <stop offset="100%" stopColor="#2563eb" stopOpacity="0" />
               </linearGradient>
             </defs>
             <path d="M0,20 L10,15 L20,18 L30,10 L40,12 L50,5 L60,8 L70,2 L80,4 L90,1 L100,0 V30 H0 Z" fill="url(#chartGradient)" />
-            <path d="M0,20 L10,15 L20,18 L30,10 L40,12 L50,5 L60,8 L70,2 L80,4 L90,1 L100,0" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx="100" cy="0" r="2.5" fill="#3b82f6" stroke="white" strokeWidth="1.5" />
+            <path d="M0,20 L10,15 L20,18 L30,10 L40,12 L50,5 L60,8 L70,2 L80,4 L90,1 L100,0" fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="100" cy="0" r="3" fill="#2563eb" stroke="white" strokeWidth="1.5" />
           </svg>
         </div>
       </div>

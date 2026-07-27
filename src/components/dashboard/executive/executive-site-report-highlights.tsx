@@ -22,10 +22,10 @@ function getStatusBadge(statusRaw: string, hasIssue: boolean) {
 }
 
 function getCardColor(statusRaw: string, hasIssue: boolean) {
+  if (hasIssue) return 'border-slate-200/80 bg-white hover:border-rose-300 border-l-4 border-l-rose-500';
   const status = formatStatusLabel(statusRaw) || statusRaw;
-  if (hasIssue) return 'border-rose-200/60 bg-rose-50/30 hover:border-rose-300';
-  if (status === 'Chờ duyệt' || status.toUpperCase().includes('SUBMITTED')) return 'border-amber-200/60 bg-amber-50/30 hover:border-amber-300';
-  return 'border-slate-100 bg-white hover:border-slate-300';
+  if (status === 'Chờ duyệt' || status.toUpperCase().includes('SUBMITTED')) return 'border-slate-200/80 bg-white hover:border-amber-300 border-l-4 border-l-amber-400';
+  return 'border-slate-200/80 bg-white hover:border-slate-300 border-l-4 border-l-slate-300';
 }
 
 function getIconTone(statusRaw: string, hasIssue: boolean): IconColorTone {
@@ -58,7 +58,7 @@ export function ExecutiveSiteReportHighlights({
             Không có báo cáo nổi bật
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {displayReports.map((report) => (
               <Link 
                 key={report.id} 
