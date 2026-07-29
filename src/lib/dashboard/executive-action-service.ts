@@ -20,6 +20,7 @@ export type ExecutiveActionItem = {
   dueDate: string | null;
   overdueDuration: string | null;
   createdAt: string;
+  occurredAt: Date;
   targetType: string;
   targetId: string;
 };
@@ -97,7 +98,8 @@ export async function getExecutiveActionItems(
           assignee: p.members[0]?.user.name ?? "Chỉ huy trưởng",
           dueDate: new Date(p.endDate).toLocaleDateString("vi-VN"),
           overdueDuration: `${Math.abs(daysRemaining)} ngày`,
-          createdAt: new Date().toLocaleDateString("vi-VN"),
+          createdAt: todayRange.start.toLocaleDateString("vi-VN"),
+          occurredAt: todayRange.start,
           targetType: "PROJECT",
           targetId: p.id,
         });
@@ -139,13 +141,17 @@ export async function getExecutiveActionItems(
         title: r.title || `Ghi nhận vấn đề ngày ${new Date(r.reportDate).toLocaleDateString("vi-VN")}`,
         type: "REPORT",
         typeLabel: "Sự cố / Vướng mắc",
-        reason: issueState.reasonCodes.join("; ") || (r.issues ?? "Ghi nhận sự cố tại công trường"),
+        reason: r.issues?.trim()
+          || r.recommendations?.trim()
+          || issueState.reasonCodes.join("; ")
+          || "Ghi nhận sự cố tại công trường",
         priority: issueState.severity === "CRITICAL" || issueState.severity === "HIGH" ? "HIGH" : "MEDIUM",
         status: issueState.displayLabel,
         assignee: r.createdBy?.name ?? "Cán bộ hiện trường",
         dueDate: null,
         overdueDuration: null,
-        createdAt: new Date(r.createdAt).toLocaleDateString("vi-VN"),
+        createdAt: r.createdAt.toLocaleDateString("vi-VN"),
+        occurredAt: r.createdAt,
         targetType: "SITE_REPORT",
         targetId: r.id,
       });
@@ -190,7 +196,8 @@ export async function getExecutiveActionItems(
       assignee: m.requestedBy?.name ?? "Kỹ sư vật tư",
       dueDate: m.neededDate ? new Date(m.neededDate).toLocaleDateString("vi-VN") : null,
       overdueDuration: null,
-      createdAt: new Date(m.createdAt).toLocaleDateString("vi-VN"),
+      createdAt: m.createdAt.toLocaleDateString("vi-VN"),
+      occurredAt: m.createdAt,
       targetType: "MATERIAL_REQUEST",
       targetId: m.id,
     })),
@@ -207,7 +214,8 @@ export async function getExecutiveActionItems(
       assignee: fm.requestedBy?.name ?? "Cán bộ hiện trường",
       dueDate: null,
       overdueDuration: null,
-      createdAt: new Date(fm.createdAt).toLocaleDateString("vi-VN"),
+      createdAt: fm.createdAt.toLocaleDateString("vi-VN"),
+      occurredAt: fm.createdAt,
       targetType: "FIELD_MATERIAL_REQUEST",
       targetId: fm.id,
     })),
@@ -227,7 +235,11 @@ export async function getExecutiveActionItems(
     },
   });
 
-  const taskItems: ExecutiveActionItem[] = overdueTasks.map((t) => ({
+  const taskItems: ExecutiveActionItem[] = overdueTasks.map((t) => {
+    const overdueDays = t.deadlineAt
+      ? Math.max(1, Math.ceil((todayRange.start.getTime() - t.deadlineAt.getTime()) / 86_400_000))
+      : null;
+    return {
     id: `task-${t.id}`,
     projectId: t.projectId,
     projectName: t.project.name,
@@ -239,18 +251,20 @@ export async function getExecutiveActionItems(
     status: "Quá hạn",
     assignee: t.primaryAssignee?.name ?? "Người phụ trách",
     dueDate: t.deadlineAt ? new Date(t.deadlineAt).toLocaleDateString("vi-VN") : null,
-    overdueDuration: null,
-    createdAt: new Date(t.createdAt).toLocaleDateString("vi-VN"),
+    overdueDuration: overdueDays === null ? null : `${overdueDays} ngày`,
+    createdAt: t.createdAt.toLocaleDateString("vi-VN"),
+    occurredAt: t.createdAt,
     targetType: "WORK_TASK",
     targetId: t.id,
-  }));
+    };
+  });
 
   // Combine and sort all items (Highest priority & newest first)
   const allItems = [...riskItems, ...reportItems, ...materialItems, ...taskItems].sort((a, b) => {
     const pScore = { HIGH: 3, MEDIUM: 2, LOW: 1 };
     const pDiff = pScore[b.priority] - pScore[a.priority];
     if (pDiff !== 0) return pDiff;
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    return b.occurredAt.getTime() - a.occurredAt.getTime();
   });
 
   const total = allItems.length;

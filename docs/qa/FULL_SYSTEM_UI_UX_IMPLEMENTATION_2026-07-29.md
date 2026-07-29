@@ -4,7 +4,7 @@
 
 | Hạng mục | Kết luận | Bằng chứng |
 |---|---|---|
-| UI/UX implementation | **PASS STATIC / RUNTIME BLOCKED** | TypeScript, lint phạm vi thay đổi, build và 14 unit test đều PASS. Bộ Playwright UI mới đã được nạp thành công nhưng không thể đăng nhập môi trường QA vì thiếu biến xác thực bắt buộc. |
+| UI/UX implementation | **PASS STATIC; DASHBOARD COMPOSITION PASS MANUAL RUNTIME; AUTOMATED BLOCKED** | Ảnh runtime thủ công sau sửa xác nhận PORTFOLIO và PROJECT composition. TypeScript, lint phạm vi thay đổi, build và unit test PASS; Playwright chưa đăng nhập được vì thiếu biến xác thực bắt buộc. |
 | Data static integrity | **PASS** | Giữ nguyên view model semantic từ phase trước: `plannedProgressPercent`, `actualProgressPercent`, `variancePercent`, `actualProgressDataStatus`, `completenessCategory`, `approvedActualQuantity`, `totalDesignQuantity`, `lastActualProgressAt`. |
 | Data runtime parity | **BLOCKED** | Theo `DASHBOARD_ACTUAL_PROGRESS_DATA_INTEGRITY_2026-07-29.md`: môi trường QA chưa có bộ dữ liệu đối chiếu runtime an toàn/đầy đủ. |
 | Production GO/NO-GO | **NO-GO** | Chưa có bằng chứng browser authenticated cho overflow, overlap, resize, ảnh trước/sau và parity runtime. Không có lỗi UI nào được che bằng `overflow-x: hidden` hoặc dữ liệu giả. |
@@ -121,7 +121,7 @@ Test long-name chỉ chạy khi fixture QA cô lập thực sự tồn tại —
 
 Ma trận đã mã hóa trong Playwright: 1366×768, 1440×900, 1536×864, 1920×1080, 1024×768, 820×1180, 768×1024, 430×932, 390×844, 375×812, 360×800.
 
-Ảnh sau cho desktop/tablet/mobile và ảnh trước/sau **chưa thể tạo** vì Playwright bị chặn trước khi có session QA. Không dùng screenshot giả, DOM injection hoặc dữ liệu local để thay thế. Khi có credential QA read-only, test sẽ ghi ảnh vào `test-results/dashboard-ui-integrity/`.
+Ảnh runtime thủ công sau sửa do người dùng cung cấp đã xác nhận composition PORTFOLIO/PROJECT và phải được xem là bằng chứng nghiệm thu thủ công. Bộ ảnh tự động desktop/tablet/mobile vẫn **BLOCKED** vì Playwright bị chặn trước khi có session QA. Không dùng screenshot giả, DOM injection hoặc dữ liệu local để thay thế. Khi có credential QA read-only, test sẽ ghi ảnh vào `test-results/dashboard-ui-integrity/`.
 
 ## Hạng mục còn chặn và bước tiếp theo
 

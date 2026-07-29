@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, DatabaseZap, Siren } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock3, DatabaseZap, Siren, UserRound } from "lucide-react";
 import { ProjectName } from "@/components/project/project-name";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -39,6 +39,7 @@ export function PortfolioPriorityListCard({
       id={isOperational ? "portfolio-operational-list" : "portfolio-data-quality-list"}
       data-dashboard-card={isOperational ? "portfolio-operational-list" : "portfolio-data-quality-list"}
       data-priority-list={isOperational ? "operational" : "data-quality"}
+      data-card-layout="CONTENT"
       className="grid min-w-0 grid-rows-[auto_minmax(0,1fr)_auto] scroll-mt-24"
     >
       <div className="border-b border-slate-200/80 px-4 py-3 sm:px-5 sm:py-3.5">
@@ -54,7 +55,7 @@ export function PortfolioPriorityListCard({
       </div>
 
       {selection.items.length === 0 ? (
-        <div className="grid min-h-52 place-items-center px-5 py-8 text-center">
+        <div className="grid min-h-[150px] place-items-center px-5 py-5 text-center">
           <div>
             <span className="mx-auto grid size-11 place-items-center rounded-full bg-slate-100 text-slate-500">
               <CheckCircle2 className="size-5" aria-hidden="true" />
@@ -92,14 +93,25 @@ export function PortfolioPriorityListCard({
                 </span>
                 <div className="min-w-0 flex-1">
                   <ProjectName name={item.projectName} className="group-hover:text-blue-700" />
-                  <div className="mt-1.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[11px] leading-4">
+                  <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[11px] leading-4">
                     <span className="font-mono font-semibold text-slate-500">{item.projectCode}</span>
+                    {item.projectQualifier ? <span className="text-slate-500">{item.projectQualifier}</span> : null}
+                  </div>
+                  <div className="mt-1.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[11px] leading-4">
                     <StatusBadge size="sm" variant={isOperational ? (item.priority === "HIGH" ? "danger" : "warning") : "info"}>
                       {item.badgeLabel}
                     </StatusBadge>
-                    {formatDate(item.lastActualProgressAt) ? <span className="text-slate-500">Cập nhật {formatDate(item.lastActualProgressAt)}</span> : null}
+                    {isOperational && item.severityLabel ? <span className="font-semibold text-slate-600">{item.severityLabel}</span> : null}
+                    {!isOperational && formatDate(item.lastActualProgressAt) ? <span className="text-slate-500">Cập nhật {formatDate(item.lastActualProgressAt)}</span> : null}
                   </div>
                   <p className="mt-2 text-xs font-medium leading-5 text-slate-600">{item.reason}</p>
+                  {isOperational && (item.timeLabel || item.assignee || item.additionalIssueCount > 0) ? (
+                    <div className="mt-1.5 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-medium leading-4 text-slate-500">
+                      {item.timeLabel ? <span className="inline-flex items-center gap-1"><Clock3 className="size-3" aria-hidden="true" />{item.timeLabel}</span> : null}
+                      {item.assignee ? <span className="inline-flex items-center gap-1"><UserRound className="size-3" aria-hidden="true" />Phụ trách: {item.assignee}</span> : null}
+                      {item.additionalIssueCount > 0 ? <span className="font-bold text-rose-700">+{item.additionalIssueCount} vấn đề khác</span> : null}
+                    </div>
+                  ) : null}
                   {isOperational && item.actualProgressPercent !== null ? (
                     <div className="mt-2.5">
                       <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-2 text-[11px]">

@@ -29,16 +29,31 @@ export function getProgressVariance(
   return actualProgress - plannedProgress;
 }
 
+export const PROJECT_PROGRESS_STATUS_POLICY = {
+  aheadVariancePercent: 2,
+  attentionVariancePercent: -2,
+  delayedVariancePercent: -10,
+} as const;
+
+export type ProjectProgressStatus = "AHEAD" | "ON_TRACK" | "AT_RISK" | "DELAYED" | "NO_DATA";
+
+export function getProjectProgressStatus(
+  actualProgress: number | null,
+  plannedProgress: number | null,
+): ProjectProgressStatus {
+  const variance = getProgressVariance(actualProgress, plannedProgress);
+  if (variance === null) return "NO_DATA";
+  if (variance > PROJECT_PROGRESS_STATUS_POLICY.aheadVariancePercent) return "AHEAD";
+  if (variance >= PROJECT_PROGRESS_STATUS_POLICY.attentionVariancePercent) return "ON_TRACK";
+  if (variance >= PROJECT_PROGRESS_STATUS_POLICY.delayedVariancePercent) return "AT_RISK";
+  return "DELAYED";
+}
+
 export function getProgressHealth(
   actualProgress: number | null,
   plannedProgress: number | null
 ): "ON_TRACK" | "AT_RISK" | "DELAYED" | "NO_DATA" {
-  if (actualProgress === null && plannedProgress === null) return "NO_DATA";
-  if (actualProgress === null || plannedProgress === null) return "NO_DATA"; // Or maybe "ON_TRACK" if we don't know? Let's say NO_DATA
-
-  const variance = getProgressVariance(actualProgress, plannedProgress) ?? 0;
-
-  if (variance >= -2) return "ON_TRACK"; // Within 2% is fine
-  if (variance >= -10) return "AT_RISK"; // 2% to 10% behind
-  return "DELAYED"; // > 10% behind
+  const status = getProjectProgressStatus(actualProgress, plannedProgress);
+  if (status === "AHEAD" || status === "ON_TRACK") return "ON_TRACK";
+  return status;
 }

@@ -3,11 +3,13 @@ import {
   ArrowRight,
   CheckCircle2,
   CircleDashed,
+  Clock3,
   ClipboardCheck,
   Database,
   FileWarning,
   ListChecks,
   TriangleAlert,
+  UserRound,
 } from "lucide-react";
 import { ContentCard } from "@/components/ui/enterprise";
 import { ProgressBar } from "@/components/ui/progress-bar";
@@ -15,6 +17,7 @@ import { StatusBadge, type StatusBadgeVariant } from "@/components/ui/status-bad
 import type { DashboardActionItem, DashboardProjectOverview } from "@/lib/dashboard/dashboard-queries";
 import { getActualProgressDataLabel } from "@/lib/dashboard/dashboard-project-presentation";
 import { selectProjectNextActions } from "@/lib/dashboard/dashboard-information-architecture";
+import { getProjectProgressStatus } from "@/lib/dashboard/progress-utils";
 
 function formatPercent(value: number | null) {
   return value === null ? null : `${Math.round(value)}%`;
@@ -26,11 +29,11 @@ function formatDate(value: Date | null) {
 }
 
 function projectProgressStatus(project: DashboardProjectOverview): { label: string; variant: StatusBadgeVariant } {
-  if (project.actualProgressPercent === null || project.plannedProgressPercent === null || project.variancePercent === null) {
-    return { label: "Chưa thể đánh giá", variant: "neutral" };
-  }
-  if (project.health === "DELAYED") return { label: "Chậm tiến độ", variant: "danger" };
-  if (project.health === "AT_RISK") return { label: "Cần chú ý", variant: "warning" };
+  const status = getProjectProgressStatus(project.actualProgressPercent, project.plannedProgressPercent);
+  if (status === "NO_DATA") return { label: "Chưa thể đánh giá", variant: "neutral" };
+  if (status === "AHEAD") return { label: "Vượt kế hoạch", variant: "info" };
+  if (status === "DELAYED") return { label: "Chậm tiến độ", variant: "danger" };
+  if (status === "AT_RISK") return { label: "Cần chú ý", variant: "warning" };
   return { label: "Đúng tiến độ", variant: "success" };
 }
 
@@ -38,7 +41,7 @@ export function ProjectProgressCard({ project }: { project: DashboardProjectOver
   const status = projectProgressStatus(project);
 
   return (
-    <ContentCard data-dashboard-card="project-progress" className="grid min-w-0 grid-rows-[auto_minmax(0,1fr)]">
+    <ContentCard data-dashboard-card="project-progress" data-card-layout="BALANCED" className="grid min-w-0 grid-rows-[auto_minmax(0,1fr)]">
       <div className="flex min-w-0 flex-wrap items-start justify-between gap-3 border-b border-slate-200/80 px-4 py-3 sm:px-5 sm:py-3.5">
         <div className="min-w-0">
           <h3 className="text-sm font-bold tracking-tight text-slate-950 sm:text-base">Tiến độ công trình</h3>
@@ -104,19 +107,36 @@ function Metric({ label, value, tone }: { label: string; value: string; tone: "b
 
 type DataHealthRow = { label: string; value: string; healthy: boolean; warning?: boolean };
 
+function formatQuantity(value: number | null, project: DashboardProjectOverview) {
+  if (value === null) return null;
+  if (project.quantityUnitStatus !== "SINGLE_UNIT" || !project.quantityUnit) return null;
+  return `${new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 4 }).format(value)} ${project.quantityUnit}`;
+}
+
+function quantityUnitDescription(project: DashboardProjectOverview) {
+  if (project.quantityUnitStatus === "SINGLE_UNIT") return `Đồng nhất: ${project.quantityUnit}`;
+  if (project.quantityUnitStatus === "MIXED_UNITS") return `${project.quantityUnitCount} đơn vị; không cộng tổng khối lượng`;
+  if (project.quantityUnitStatus === "MISSING_UNIT") return "Có hạng mục thiếu đơn vị; không cộng tổng khối lượng";
+  return "Chưa có hạng mục đủ điều kiện";
+}
+
 export function ProjectDataHealthCard({ project }: { project: DashboardProjectOverview }) {
+  const designQuantity = formatQuantity(project.totalDesignQuantity, project);
+  const actualQuantity = formatQuantity(project.approvedActualQuantity, project);
+  const quantitiesAreComparable = project.quantityUnitStatus === "SINGLE_UNIT";
   const rows: DataHealthRow[] = [
     { label: "Kế hoạch tiến độ", value: project.plannedProgressPercent === null ? "Chưa có kế hoạch" : "Đã có kế hoạch", healthy: project.plannedProgressPercent !== null },
     { label: "WBS / hạng mục khối lượng", value: project.workItemCount > 0 ? `${project.workItemCount} hạng mục hợp lệ` : "Chưa có hạng mục", healthy: project.workItemCount > 0 },
-    { label: "Khối lượng thiết kế", value: project.totalDesignQuantity === null ? "Chưa đủ dữ liệu thiết kế" : new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2 }).format(project.totalDesignQuantity), healthy: project.totalDesignQuantity !== null },
-    { label: "Khối lượng thực tế được phê duyệt", value: project.approvedActualQuantity === null ? getActualProgressDataLabel(project) : new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2 }).format(project.approvedActualQuantity), healthy: project.actualProgressDataStatus === "AVAILABLE" },
+    { label: "Đơn vị khối lượng", value: quantityUnitDescription(project), healthy: quantitiesAreComparable, warning: !quantitiesAreComparable && project.workItemCount > 0 },
+    { label: "Khối lượng thiết kế", value: designQuantity ?? (project.totalDesignQuantity === null ? "Chưa đủ dữ liệu thiết kế" : `${project.workItemCount} hạng mục; không hiển thị tổng khác đơn vị`), healthy: designQuantity !== null },
+    { label: "Khối lượng thực tế được phê duyệt", value: actualQuantity ?? (project.approvedActualQuantity === null ? getActualProgressDataLabel(project) : `${project.workItemCount} hạng mục; không hiển thị tổng khác đơn vị`), healthy: actualQuantity !== null && project.actualProgressDataStatus === "AVAILABLE" },
     { label: "Biểu mẫu đang hoạt động", value: project.actualProgressDataStatus === "MULTIPLE_ACTIVE_TEMPLATES" ? "Có nhiều biểu mẫu đang hoạt động" : "Không ghi nhận xung đột", healthy: project.actualProgressDataStatus !== "MULTIPLE_ACTIVE_TEMPLATES" },
     { label: "Lần cập nhật gần nhất", value: formatDate(project.lastActualProgressAt), healthy: project.lastActualProgressAt !== null },
     { label: "Cảnh báo dữ liệu", value: project.actualProgressWarnings.length > 0 ? `${project.actualProgressWarnings.length} cảnh báo cần kiểm tra` : "Không có cảnh báo", healthy: project.actualProgressWarnings.length === 0, warning: project.actualProgressWarnings.length > 0 },
   ];
 
   return (
-    <ContentCard data-dashboard-card="project-data-health" className="grid min-w-0 grid-rows-[auto_minmax(0,1fr)]">
+    <ContentCard data-dashboard-card="project-data-health" data-card-layout="BALANCED" className="grid min-w-0 grid-rows-[auto_minmax(0,1fr)]">
       <div className="border-b border-slate-200/80 px-4 py-3 sm:px-5 sm:py-3.5">
         <h3 className="text-sm font-bold tracking-tight text-slate-950 sm:text-base">Sức khỏe dữ liệu công trình</h3>
         <p className="mt-0.5 text-xs leading-5 text-slate-500">Checklist dữ liệu đầu vào; không dùng donut cho một công trình.</p>
@@ -139,21 +159,21 @@ export function ProjectDataHealthCard({ project }: { project: DashboardProjectOv
 export function ProjectIssuesCard({ project, actionItems }: { project: DashboardProjectOverview; actionItems: DashboardActionItem[] }) {
   const scopedActions = actionItems.filter((item) => item.projectId === project.id);
   const progressIssue = project.variancePercent !== null && project.variancePercent < 0
-    ? { id: "progress-variance", title: "Sai lệch tiến độ", reason: `Tiến độ thực tế thấp hơn kế hoạch ${Math.abs(Math.round(project.variancePercent))} điểm %.`, href: `/projects/${project.id}/field-progress/summary`, status: project.health === "DELAYED" ? "Chậm tiến độ" : "Cần chú ý" }
+    ? { id: "progress-variance", title: "Sai lệch tiến độ", reason: `Tiến độ thực tế thấp hơn kế hoạch ${Math.abs(Math.round(project.variancePercent))} điểm %.`, href: `/projects/${project.id}/field-progress/summary`, status: project.health === "DELAYED" ? "Chậm tiến độ" : "Cần chú ý", type: "Tiến độ", assignee: null, timeLabel: project.lastActualProgressAt ? `Cập nhật ${formatDate(project.lastActualProgressAt)}` : null }
     : null;
   const issues = [
     ...(progressIssue ? [progressIssue] : []),
-    ...scopedActions.map((item) => ({ id: item.id, title: item.title, reason: item.reason || item.title, href: item.href, status: item.status })),
+    ...scopedActions.map((item) => ({ id: item.id, title: item.title, reason: item.reason || item.title, href: item.href, status: item.status, type: item.type, assignee: item.assignee, timeLabel: item.ageLabel })),
   ].filter((item, index, all) => all.findIndex((candidate) => candidate.id === item.id) === index).slice(0, 5);
 
   return (
-    <ContentCard data-dashboard-card="project-issues" className="grid min-w-0 grid-rows-[auto_minmax(0,1fr)]">
+    <ContentCard data-dashboard-card="project-issues" data-card-layout="CONTENT" className="grid min-w-0 grid-rows-[auto_auto]">
       <div className="border-b border-slate-200/80 px-4 py-3 sm:px-5 sm:py-3.5">
         <h3 className="text-sm font-bold tracking-tight text-slate-950 sm:text-base">Vấn đề và rủi ro cần xử lý</h3>
         <p className="mt-0.5 text-xs leading-5 text-slate-500">Chỉ gồm tín hiệu vận hành thật trong phạm vi công trình đang chọn.</p>
       </div>
       {issues.length === 0 ? (
-        <div className="grid min-h-48 place-items-center p-6 text-center">
+        <div data-dashboard-empty="project-issues" className="grid min-h-[150px] place-items-center p-5 text-center">
           <div><CheckCircle2 className="mx-auto size-7 text-emerald-600" aria-hidden="true" /><p className="mt-2 text-sm font-bold text-slate-900">Chưa ghi nhận vấn đề vận hành ưu tiên</p><p className="mt-1 text-xs leading-5 text-slate-500">Trạng thái thiếu dữ liệu được xử lý riêng trong card sức khỏe dữ liệu.</p></div>
         </div>
       ) : (
@@ -163,6 +183,11 @@ export function ProjectIssuesCard({ project, actionItems }: { project: Dashboard
               <TriangleAlert className="mt-0.5 size-4 shrink-0 text-rose-600" aria-hidden="true" />
               <div className="min-w-0 flex-1">
                 <div className="flex min-w-0 flex-wrap items-start justify-between gap-2"><span className="text-sm font-bold text-slate-900 group-hover:text-blue-700">{issue.title}</span><StatusBadge size="sm" variant="danger">{issue.status}</StatusBadge></div>
+                <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-semibold leading-4 text-slate-500">
+                  <span>{issue.type}</span>
+                  {issue.timeLabel ? <span className="inline-flex items-center gap-1"><Clock3 className="size-3" aria-hidden="true" />{issue.timeLabel}</span> : null}
+                  {issue.assignee ? <span className="inline-flex items-center gap-1"><UserRound className="size-3" aria-hidden="true" />Phụ trách: {issue.assignee}</span> : null}
+                </div>
                 <p className="mt-1 text-xs leading-5 text-slate-600">{issue.reason}</p>
               </div>
               <ArrowRight className="mt-1 size-4 shrink-0 text-slate-400 group-hover:text-blue-700" aria-hidden="true" />
@@ -181,7 +206,7 @@ export function ProjectNextActionsCard({ project, pendingApprovalCount }: { proj
     : actions;
 
   return (
-    <ContentCard data-dashboard-card="project-next-actions" className="grid min-w-0 grid-rows-[auto_minmax(0,1fr)]">
+    <ContentCard data-dashboard-card="project-next-actions" data-card-layout="CONTENT" className="grid min-w-0 grid-rows-[auto_auto]">
       <div className="border-b border-slate-200/80 px-4 py-3 sm:px-5 sm:py-3.5">
         <h3 className="text-sm font-bold tracking-tight text-slate-950 sm:text-base">Hành động tiếp theo</h3>
         <p className="mt-0.5 text-xs leading-5 text-slate-500">CTA theo trạng thái dữ liệu thật và quyền điều hành của vai trò hiện tại.</p>

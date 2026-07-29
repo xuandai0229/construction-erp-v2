@@ -78,6 +78,32 @@ async function assertBalancedRow(page: Page, rowName: string) {
   }));
   expect(Math.abs(boxes[0].height - boxes[1].height), `${rowName} card heights: ${JSON.stringify(boxes)}`).toBeLessThanOrEqual(12);
   expect(Math.abs(boxes[0].top - boxes[1].top), `${rowName} card tops: ${JSON.stringify(boxes)}`).toBeLessThanOrEqual(1);
+  await expect(cards.nth(0)).toHaveAttribute("data-card-layout", "BALANCED");
+  await expect(cards.nth(1)).toHaveAttribute("data-card-layout", "BALANCED");
+}
+
+async function assertContentRow(page: Page, rowName: string) {
+  const row = page.locator(`[data-dashboard-row="${rowName}"]`);
+  const cards = row.locator(":scope > [data-dashboard-card]");
+  await expect(cards).toHaveCount(2);
+  const result = await row.evaluate((element) => {
+    const children = [...element.children] as HTMLElement[];
+    return {
+      alignItems: getComputedStyle(element).alignItems,
+      cards: children.map((child) => ({
+        top: child.getBoundingClientRect().top,
+        height: child.getBoundingClientRect().height,
+        className: child.className,
+        layout: child.dataset.cardLayout,
+      })),
+    };
+  });
+  expect(result.alignItems).toBe("start");
+  expect(Math.abs(result.cards[0].top - result.cards[1].top)).toBeLessThanOrEqual(1);
+  for (const card of result.cards) {
+    expect(card.layout).toBe("CONTENT");
+    expect(card.className).not.toMatch(/\bh-full\b|\bmin-h-\[/);
+  }
 }
 
 async function openProjectContext(page: Page, index = 0) {
@@ -144,12 +170,38 @@ test.describe("Dashboard context and information architecture", () => {
     await expect(projectDashboard.locator("[data-priority-project-id]")).toHaveCount(0);
   });
 
-  test("balances both portfolio rows at desktop without page overflow", async ({ page }) => {
+  test("balances only summary cards and lets content cards size themselves", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.reload({ waitUntil: "networkidle" });
     await assertBalancedRow(page, "portfolio-summary");
-    await assertBalancedRow(page, "portfolio-lists");
+    await assertContentRow(page, "portfolio-lists");
     await assertNoPageOverflow(page);
+  });
+
+  test("keeps empty approval content compact", async ({ page }) => {
+    const empty = page.locator('[data-dashboard-empty="approvals"]');
+    test.skip(await empty.count() === 0, "QA hiện có hồ sơ chờ phê duyệt.");
+    const box = await empty.boundingBox();
+    expect(box?.height).toBeGreaterThanOrEqual(130);
+    expect(box?.height).toBeLessThanOrEqual(170);
+  });
+
+  test("keeps project action cards top-aligned without equal-height stretching", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openProjectContext(page, 0);
+    await assertContentRow(page, "project-actions");
+  });
+
+  test("shows a compact hero and an explicit period on every KPI", async ({ page }) => {
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    const hero = page.locator("[data-dashboard-hero]");
+    const heroBox = await hero.boundingBox();
+    expect(heroBox?.height).toBeLessThanOrEqual(140);
+    const kpis = page.locator("[data-dashboard-kpis] > *");
+    await expect(kpis).toHaveCount(6);
+    for (let index = 0; index < 6; index += 1) {
+      await expect(kpis.nth(index).locator("[data-kpi-period]")).toBeVisible();
+    }
   });
 
   for (const viewport of viewports) {
@@ -195,7 +247,8 @@ test.describe("Dashboard context and information architecture", () => {
     for (const viewport of [viewports[1], viewports[6], viewports[9]]) {
       await page.setViewportSize(viewport);
       await page.goto("/dashboard?projectId=all", { waitUntil: "networkidle" });
-      await page.screenshot({ path: path.join(outputDir, `portfolio-${viewport.name}.png`), fullPage: true });
+      await page.screenshot({ path: path.join(outputDir, `portfolio-${viewport.name}-top.png`), fullPage: false });
+      await page.locator('[data-dashboard-row="portfolio-lists"]').screenshot({ path: path.join(outputDir, `portfolio-${viewport.name}-lists.png`) });
       await openProjectContext(page, 0);
       await page.screenshot({ path: path.join(outputDir, `project-${viewport.name}.png`), fullPage: true });
     }

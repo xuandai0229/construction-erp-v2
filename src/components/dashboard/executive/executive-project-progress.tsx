@@ -43,6 +43,7 @@ export function ExecutiveProjectProgress({ projects }: { projects: DashboardProj
     <ContentCard
       id="portfolio-progress-summary"
       data-dashboard-card="portfolio-progress-summary"
+      data-card-layout="BALANCED"
       className="grid min-w-0 grid-rows-[auto_minmax(0,1fr)] scroll-mt-24"
     >
       <div className="flex min-w-0 flex-wrap items-start justify-between gap-3 border-b border-slate-200/80 px-4 py-3 sm:px-5 sm:py-3.5">

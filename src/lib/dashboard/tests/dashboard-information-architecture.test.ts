@@ -12,6 +12,8 @@ function projectFixture(overrides: Partial<DashboardProjectOverview> = {}): Dash
     id: "project-1",
     code: "QA-1",
     name: "Nhà văn phòng điều hành 5 tầng – Khu công nghiệp Từ Hiệp và hạ tầng kỹ thuật phụ trợ",
+    location: null,
+    identityQualifier: null,
     status: "ACTIVE",
     plannedProgressPercent: null,
     actualProgressPercent: null,
@@ -23,6 +25,9 @@ function projectFixture(overrides: Partial<DashboardProjectOverview> = {}): Dash
     lastActualProgressAt: null,
     actualProgressWarnings: [],
     workItemCount: 0,
+    quantityUnitStatus: "NOT_APPLICABLE",
+    quantityUnit: null,
+    quantityUnitCount: 0,
     updatedAt: new Date("2026-07-29T00:00:00.000Z"),
     startDate: null,
     endDate: null,
@@ -47,6 +52,9 @@ function actionFixture(overrides: Partial<DashboardActionItem> = {}): DashboardA
     reason: "Ghi nhận nguy cơ mất an toàn cần xử lý ngay.",
     targetType: "SITE_REPORT",
     targetId: "report-1",
+    assignee: "Chỉ huy trưởng QA",
+    dueDateLabel: null,
+    ageLabel: "Phát sinh 29/07/2026",
     ...overrides,
   };
 }
@@ -104,6 +112,26 @@ describe("Dashboard semantic selectors", () => {
 
     expect(selection.items[0]).toMatchObject({ projectId: "delayed", badgeLabel: "Chậm tiến độ", ctaLabel: "Mở tổng hợp tiến độ" });
     expect(selection.items[0].reason).toContain("30 điểm %");
+  });
+
+  it("aggregates multiple operational signals by project and keeps the most severe real action", () => {
+    const project = projectFixture({ id: "project-1", identityQualifier: "Gói thầu QA-01" });
+    const selection = selectOperationalInterventionProjects({
+      projectOverview: [project],
+      actionItems: [
+        actionFixture({ id: "task-1", targetType: "WORK_TASK", targetId: "task-1", priority: "MEDIUM", type: "Nhiệm vụ", reason: "Nhiệm vụ nghiệm thu đã quá hạn.", assignee: "Nguyễn Văn A", ageLabel: "Quá hạn 3 ngày" }),
+        actionFixture({ id: "report-2", targetId: "report-2", priority: "HIGH", reason: "Rào chắn an toàn tại khu vực thi công bị thiếu.", assignee: "Trần Văn B", ageLabel: "Phát sinh 28/07/2026" }),
+      ],
+    });
+
+    expect(selection.items).toHaveLength(1);
+    expect(selection.items[0]).toMatchObject({
+      reason: "Rào chắn an toàn tại khu vực thi công bị thiếu.",
+      assignee: "Trần Văn B",
+      timeLabel: "Phát sinh 28/07/2026",
+      additionalIssueCount: 1,
+      projectQualifier: "Gói thầu QA-01",
+    });
   });
 
   it("builds project actions from semantic null/status values without actual-to-planned fallback", () => {

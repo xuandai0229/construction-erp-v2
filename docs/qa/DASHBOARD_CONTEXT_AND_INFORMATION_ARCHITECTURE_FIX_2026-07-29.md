@@ -2,7 +2,7 @@
 
 ## 1. Kết luận điều hành
 
-Ảnh runtime đầu vào là bằng chứng hợp lệ rằng composition cũ **FAIL** về kiến trúc thông tin: hai card dùng cùng project, cùng thứ tự, cùng lý do và cùng CTA; khi chọn một project vẫn dựng Dashboard danh mục một phần tử.
+Ảnh runtime đầu vào là bằng chứng hợp lệ rằng composition cũ **FAIL** về kiến trúc thông tin: hai card dùng cùng project, cùng thứ tự, cùng lý do và cùng CTA; khi chọn một project vẫn dựng Dashboard danh mục một phần tử. Ảnh runtime thủ công sau sửa do người dùng cung cấp đồng thời xác nhận hai composition mới hoạt động đúng ở cả phạm vi danh mục và một công trình.
 
 Phase này đã thay đổi code ở cấp context, selector và composition, không chỉ đổi title/CSS:
 
@@ -10,12 +10,12 @@ Phase này đã thay đổi code ở cấp context, selector và composition, kh
 |---|---|---|
 | Code checks | **PASS** | TypeScript, lint phạm vi thay đổi, unit test và build PASS. |
 | Data static integrity | **PASS** | Không thay aggregate; không có fallback actual → planned; semantic fields được giữ nguyên. |
-| Portfolio Dashboard | **PASS STATIC / RUNTIME UNVERIFIED** | Có composition và selector riêng; cần phiên QA authenticated để nghiệm thu hình ảnh/bounding box. |
-| Project Dashboard | **PASS STATIC / RUNTIME UNVERIFIED** | Không render KPI/donut/list danh mục; cần phiên QA authenticated để nghiệm thu runtime. |
+| Portfolio Dashboard | **PASS MANUAL RUNTIME** | Ảnh sau sửa xác nhận composition danh mục và hai danh sách khác semantic. |
+| Project Dashboard | **PASS MANUAL RUNTIME** | Ảnh sau sửa xác nhận project mode không còn donut/KPI/list danh mục. |
 | Automated runtime | **BLOCKED** | Playwright dừng ở global setup do thiếu `QA_ADMIN_EMAIL` và `QA_ADMIN_PASSWORD`; in-app browser cũng bị chuyển tới `/login?reason=session_expired`. |
-| Production | **NO-GO** | Chưa có screenshot sau sửa và chưa chạy được context/layout/overflow test trên dữ liệu QA thật. |
+| Production | **NO-GO** | Có ảnh runtime thủ công sau sửa, nhưng chưa chạy được ma trận multi-viewport, overflow/overlap và data parity tự động trên session QA authenticated. |
 
-Không ghi nhận UI PASS khi runtime chưa được xác minh.
+PASS MANUAL RUNTIME chỉ áp dụng cho composition PORTFOLIO/PROJECT thể hiện trong ảnh; không thay thế automated multi-viewport runtime.
 
 ## 2. Root cause của hai danh sách trùng nhau
 
@@ -183,9 +183,9 @@ Runner chưa thực thi được DOM assertions vì thiếu credential QA bắt 
 |---|---|
 | `npx tsc --noEmit` | PASS |
 | ESLint phạm vi thay đổi | PASS, 0 error |
-| `npx vitest run ...dashboard...` | PASS — 6 files, 22 tests |
+| `npx vitest run ...dashboard...` | PASS — kết quả mới nhất của phase refinement: 9 files, 32 tests |
 | `npm run build` | PASS — Next.js 16.2.7; còn warning NFT có sẵn ở storage provider, ngoài scope |
-| `npx playwright test --list ...` | PASS — 19 tests được nạp |
+| `npx playwright test --list ...` | PASS — 22 tests được nạp |
 | `npx playwright test ...` | BLOCKED tại global setup vì thiếu QA credentials |
 | In-app browser read-only | BLOCKED — chuyển tới `/login?reason=session_expired` |
 | Static semantic scan | PASS — không có fallback actual/planned, `progressPercent`, shared priority helper hoặc title/list cũ trong Dashboard flow |
@@ -193,23 +193,22 @@ Runner chưa thực thi được DOM assertions vì thiếu credential QA bắt 
 ## 11. Overflow, overlap và ảnh trước/sau
 
 - Ảnh **trước**: ảnh runtime thủ công người dùng đính kèm, thể hiện hai danh sách giống hệt và project mode vẫn dùng composition danh mục.
-- Ảnh **sau**: chưa thể chụp từ trang authenticated. Không tạo screenshot giả, không inject DOM, không seed mock và không bỏ qua đăng nhập.
+- Ảnh **sau**: ảnh runtime thủ công do người dùng cung cấp là bằng chứng nghiệm thu composition PORTFOLIO và PROJECT. Runner chưa thể tự động chụp bộ ảnh multi-viewport mới vì không có session authenticated; không tạo screenshot giả, không inject DOM, không seed mock và không bỏ qua đăng nhập.
 - Overflow/overlap/layout balance: test đo bằng DOM đã được viết nhưng kết quả runtime vẫn **BLOCKED**, không ghi PASS bằng suy luận từ CSS.
 
 ## 12. Rủi ro còn lại và điều kiện mở Production
 
 1. Cấp credential QA read-only hợp lệ cho runner hoặc đăng nhập phiên in-app browser.
-2. Chạy 19 Playwright tests trên dữ liệu thật có ít nhất hai project và nhiều trạng thái completeness/operational.
+2. Chạy 22 Playwright tests trên dữ liệu thật có ít nhất hai project và nhiều trạng thái completeness/operational.
 3. Lưu ảnh Portfolio và Project ở desktop/tablet/mobile, bao gồm project có actual và project thiếu actual.
-4. Xác nhận hai row desktop chênh cao không quá 12px, body `scrollWidth === clientWidth`, không có overlap/console error.
-5. Chỉ khi các bước trên PASS mới nâng Portfolio/Project Dashboard lên UI PASS và xem xét Production GO.
+4. Chỉ kiểm tra chênh cao ≤ 12px cho summary row `BALANCED`; list/action row `CONTENT` phải căn top và tự cao theo nội dung. Đồng thời xác nhận body `scrollWidth === clientWidth`, không có overlap/console error.
+5. Chỉ khi các bước tự động trên PASS mới xem xét Production GO; trạng thái composition thủ công hiện vẫn là PASS.
 
 ## 13. Kết luận cuối
 
 - **Code checks: PASS**
 - **Data static integrity: PASS**
-- **Portfolio Dashboard: PASS STATIC / RUNTIME UNVERIFIED**
-- **Project Dashboard: PASS STATIC / RUNTIME UNVERIFIED**
+- **Portfolio Dashboard: PASS MANUAL RUNTIME**
+- **Project Dashboard: PASS MANUAL RUNTIME**
 - **Automated runtime: BLOCKED**
 - **Production: NO-GO**
-

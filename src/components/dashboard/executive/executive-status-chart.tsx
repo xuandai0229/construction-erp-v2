@@ -64,6 +64,7 @@ export function ExecutiveStatusChart({ projects }: { projects: DashboardProjectO
     <ResponsiveChartCard
       id="portfolio-data-health-summary"
       data-dashboard-card="portfolio-data-health-summary"
+      data-card-layout="BALANCED"
       className="portfolio-health-card"
       title="Sức khỏe dữ liệu danh mục công trình"
       description="Một partition duy nhất theo mức đầy đủ của kế hoạch và dữ liệu thực tế."

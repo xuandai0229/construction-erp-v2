@@ -11,6 +11,7 @@ export type DashboardPriorityItem = {
   projectId: string;
   projectCode: string;
   projectName: string;
+  projectQualifier: string | null;
   badgeLabel: string;
   reason: string;
   ctaLabel: string;
@@ -20,6 +21,11 @@ export type DashboardPriorityItem = {
   actualProgressPercent: number | null;
   variancePercent: number | null;
   lastActualProgressAt: Date | null;
+  issueType: string | null;
+  severityLabel: string | null;
+  timeLabel: string | null;
+  assignee: string | null;
+  additionalIssueCount: number;
 };
 
 export type DashboardPrioritySelection = {
@@ -30,6 +36,32 @@ export type DashboardPrioritySelection = {
 };
 
 type OperationalCandidate = DashboardPriorityItem & { score: number };
+type OperationalCandidateGroup = { top: OperationalCandidate; signalIds: Set<string> };
+
+function severityLabel(priority: DashboardActionItem["priority"]) {
+  if (priority === "HIGH") return "Mức độ cao";
+  if (priority === "MEDIUM") return "Mức độ trung bình";
+  return "Mức độ thấp";
+}
+
+function formatProgressUpdate(value: Date | null) {
+  if (!value) return null;
+  return `Cập nhật tiến độ ${new Intl.DateTimeFormat("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" }).format(value)}`;
+}
+
+function addOperationalCandidate(
+  groups: Map<string, OperationalCandidateGroup>,
+  candidate: OperationalCandidate,
+  signalId: string,
+) {
+  const existing = groups.get(candidate.projectId);
+  if (!existing) {
+    groups.set(candidate.projectId, { top: candidate, signalIds: new Set([signalId]) });
+    return;
+  }
+  existing.signalIds.add(signalId);
+  if (candidate.score > existing.top.score) existing.top = candidate;
+}
 
 function operationalActionPresentation(item: DashboardActionItem) {
   switch (item.targetType) {
@@ -59,7 +91,7 @@ export function selectOperationalInterventionProjects(
   maxVisible = DASHBOARD_MAX_VISIBLE_PROJECTS,
 ): DashboardPrioritySelection {
   const projectById = new Map(input.projectOverview.map((project) => [project.id, project]));
-  const byProject = new Map<string, OperationalCandidate>();
+  const byProject = new Map<string, OperationalCandidateGroup>();
 
   for (const action of input.actionItems) {
     if (!action.projectId) continue;
@@ -70,6 +102,7 @@ export function selectOperationalInterventionProjects(
       projectId: project.id,
       projectCode: project.code,
       projectName: project.name,
+      projectQualifier: project.identityQualifier,
       badgeLabel: presentation.badgeLabel,
       reason: action.reason || action.title,
       ctaLabel: presentation.ctaLabel,
@@ -79,10 +112,14 @@ export function selectOperationalInterventionProjects(
       actualProgressPercent: project.actualProgressPercent,
       variancePercent: project.variancePercent,
       lastActualProgressAt: project.lastActualProgressAt,
+      issueType: action.type,
+      severityLabel: severityLabel(action.priority),
+      timeLabel: action.ageLabel ?? (action.dueDateLabel ? `Hạn xử lý ${action.dueDateLabel}` : null),
+      assignee: action.assignee,
+      additionalIssueCount: 0,
       score: priorityScore(action.priority) + (action.targetType === "PROJECT" ? 20 : 40),
     };
-    const existing = byProject.get(project.id);
-    if (!existing || candidate.score > existing.score) byProject.set(project.id, candidate);
+    addOperationalCandidate(byProject, candidate, `${action.targetType ?? "ACTION"}:${action.targetId ?? action.id}`);
   }
 
   for (const project of input.projectOverview) {
@@ -100,6 +137,7 @@ export function selectOperationalInterventionProjects(
       projectId: project.id,
       projectCode: project.code,
       projectName: project.name,
+      projectQualifier: project.identityQualifier,
       badgeLabel: isDelayed ? "Chậm tiến độ" : "Cần chú ý",
       reason: `Tiến độ thực tế thấp hơn kế hoạch ${Math.abs(Math.round(project.variancePercent))} điểm %.`,
       ctaLabel: "Mở tổng hợp tiến độ",
@@ -109,18 +147,23 @@ export function selectOperationalInterventionProjects(
       actualProgressPercent: project.actualProgressPercent,
       variancePercent: project.variancePercent,
       lastActualProgressAt: project.lastActualProgressAt,
+      issueType: "Tiến độ",
+      severityLabel: isDelayed ? "Mức độ cao" : "Mức độ trung bình",
+      timeLabel: formatProgressUpdate(project.lastActualProgressAt),
+      assignee: null,
+      additionalIssueCount: 0,
       score: isDelayed ? 280 + Math.abs(project.variancePercent) : 180 + Math.abs(project.variancePercent),
     };
-    const existing = byProject.get(project.id);
-    if (!existing || candidate.score > existing.score) byProject.set(project.id, candidate);
+    addOperationalCandidate(byProject, candidate, "PROGRESS_VARIANCE");
   }
 
   const candidates = [...byProject.values()]
-    .sort((left, right) => right.score - left.score || left.projectName.localeCompare(right.projectName, "vi"));
-  const items = candidates.slice(0, maxVisible).map((candidate): DashboardPriorityItem => ({
+    .sort((left, right) => right.top.score - left.top.score || left.top.projectName.localeCompare(right.top.projectName, "vi"));
+  const items = candidates.slice(0, maxVisible).map(({ top: candidate, signalIds }): DashboardPriorityItem => ({
     projectId: candidate.projectId,
     projectCode: candidate.projectCode,
     projectName: candidate.projectName,
+    projectQualifier: candidate.projectQualifier,
     badgeLabel: candidate.badgeLabel,
     reason: candidate.reason,
     ctaLabel: candidate.ctaLabel,
@@ -130,6 +173,11 @@ export function selectOperationalInterventionProjects(
     actualProgressPercent: candidate.actualProgressPercent,
     variancePercent: candidate.variancePercent,
     lastActualProgressAt: candidate.lastActualProgressAt,
+    issueType: candidate.issueType,
+    severityLabel: candidate.severityLabel,
+    timeLabel: candidate.timeLabel,
+    assignee: candidate.assignee,
+    additionalIssueCount: Math.max(0, signalIds.size - 1),
   }));
 
   return { totalCount: candidates.length, visibleCount: items.length, maxVisible, items };
@@ -195,6 +243,7 @@ export function selectDataQualityPriorityProjects(
       projectId: project.id,
       projectCode: project.code,
       projectName: project.name,
+      projectQualifier: project.identityQualifier,
       badgeLabel: project.completenessCategory === "COMPLETE"
         ? getActualProgressDataLabel(project)
         : completenessPresentation[project.completenessCategory].label,
@@ -206,6 +255,11 @@ export function selectDataQualityPriorityProjects(
       actualProgressPercent: project.actualProgressPercent,
       variancePercent: project.variancePercent,
       lastActualProgressAt: project.lastActualProgressAt,
+      issueType: null,
+      severityLabel: null,
+      timeLabel: null,
+      assignee: null,
+      additionalIssueCount: 0,
     };
   });
 

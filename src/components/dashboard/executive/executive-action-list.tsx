@@ -63,14 +63,12 @@ export function ExecutiveActionList({
   items, 
   viewAllHref = "#", 
   count,
-  selectedProjectId,
   onOpenDrawer
 }: { 
   title: string;
   items: DashboardActionItem[];
   viewAllHref?: string;
   count?: number;
-  selectedProjectId?: string | null;
   onOpenDrawer?: (type: DrawerType, targetId?: string) => void;
 }) {
   function handleItemClick(item: DashboardActionItem, e: React.MouseEvent) {
@@ -92,7 +90,7 @@ export function ExecutiveActionList({
   }
 
   return (
-    <section id="action-items" className="flex flex-col h-full rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-elevated)] transition-shadow overflow-hidden scroll-mt-24">
+    <section id="action-items" data-dashboard-card="approvals" data-card-layout="CONTENT" className="flex min-w-0 flex-col rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-card)] transition-shadow hover:shadow-[var(--shadow-elevated)] scroll-mt-24">
       <div className="flex items-center justify-between border-b border-[var(--border)] bg-[var(--surface)] px-5 py-4 shrink-0">
         <div className="flex items-center gap-3">
           <h3 className="font-bold text-[var(--foreground)] tracking-tight">{title}</h3>
@@ -102,16 +100,18 @@ export function ExecutiveActionList({
             </span>
           )}
         </div>
-        <Link href={viewAllHref} className="flex items-center gap-1 text-[13px] font-medium text-blue-600 hover:text-blue-700">
-          Xem tất cả <ChevronRight className="h-3.5 w-3.5" />
-        </Link>
+        {items.length > 0 ? (
+          <Link href={viewAllHref} className="flex items-center gap-1 text-[13px] font-medium text-blue-600 hover:text-blue-700">
+            Xem tất cả <ChevronRight className="h-3.5 w-3.5" />
+          </Link>
+        ) : null}
       </div>
 
-      <div className="flex flex-col divide-y divide-slate-100 flex-1">
+      <div className="flex flex-col divide-y divide-slate-100">
         {items.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center min-h-[220px] px-6 py-8 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100/80 mb-3 text-slate-400">
-              <FileCheck className="h-6 w-6 stroke-[1.5]" />
+          <div data-dashboard-empty="approvals" className="flex min-h-[148px] max-h-[170px] flex-col items-center justify-center px-6 py-5 text-center">
+            <div className="mb-2.5 flex size-9 items-center justify-center rounded-full bg-slate-100/80 text-slate-400">
+              <FileCheck className="size-4.5 stroke-[1.5]" />
             </div>
             <p className="text-sm font-semibold text-slate-700">
               {title.includes('Phê duyệt') ? 'Hiện không có hồ sơ chờ xử lý' : 'Hiện không có công việc cần xử lý ngay'}

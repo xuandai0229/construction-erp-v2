@@ -164,7 +164,7 @@
     grid-template-columns: minmax(0, 1fr);
     gap: 1.25rem;
     min-width: 0;
-    align-items: stretch;
+    align-items: start;
   }
 
   .dashboard-card-action {
@@ -230,11 +230,16 @@
     .dashboard-project-summary-row {
       grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
       gap: 1.5rem;
+      align-items: stretch;
     }
 
-    .dashboard-list-row,
-    .dashboard-project-action-row {
+    .dashboard-list-row {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.5rem;
+    }
+
+    .dashboard-project-action-row {
+      grid-template-columns: minmax(0, 2fr) minmax(20rem, 1fr);
       gap: 1.5rem;
     }
   }

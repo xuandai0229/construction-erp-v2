@@ -20,6 +20,7 @@ import {
   type ProjectProgressWarning,
 } from "./project-progress-aggregate";
 import { calculatePlannedProgress, getProgressHealth } from "./progress-utils";
+import { summarizeProjectProgressUnits, type ProjectProgressUnitStatus } from "./project-progress-units";
 
 export type DashboardPeriod = "7d" | "30d" | "month";
 
@@ -45,12 +46,17 @@ export type DashboardActionItem = {
   reason: string | null;
   targetType: string | null;
   targetId: string | null;
+  assignee: string | null;
+  dueDateLabel: string | null;
+  ageLabel: string | null;
 };
 
 export type DashboardProjectOverview = {
   id: string;
   code: string;
   name: string;
+  location: string | null;
+  identityQualifier: string | null;
   status: ProjectStatus;
   plannedProgressPercent: number | null;
   actualProgressPercent: number | null;
@@ -62,6 +68,9 @@ export type DashboardProjectOverview = {
   lastActualProgressAt: Date | null;
   actualProgressWarnings: ProjectProgressWarning[];
   workItemCount: number;
+  quantityUnitStatus: ProjectProgressUnitStatus;
+  quantityUnit: string | null;
+  quantityUnitCount: number;
   updatedAt: Date;
   startDate: Date | null;
   endDate: Date | null;
@@ -250,7 +259,6 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
   const projectWhere = getProjectWhere(accessScope);
   const today = todayWorkDate();
   const todayRange = getWorkDateRange(today);
-  const lastSevenStart = getWorkDateRange(formatWorkDate(addWorkDays(parseWorkDate(today), -6))).start;
   const canViewApprovals = canViewApprovalDashboard(session.role);
   const canViewCompanyWide = canViewCompanyWideDashboard(session.role);
   const activeProjectWhere: Prisma.ProjectWhereInput = { ...projectWhere, status: "ACTIVE" };
@@ -270,8 +278,6 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
     recentDocuments,
     recentSiteReports,
     issueReports,
-    materialRequests,
-    fieldMaterialRequests,
     auditLogs,
   ] = await Promise.all([
     prisma.project.count({ where: projectWhere }),
@@ -304,6 +310,7 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
         id: true,
         code: true,
         name: true,
+        location: true,
         status: true,
         startDate: true,
         endDate: true,
@@ -339,18 +346,6 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
       orderBy: { updatedAt: "desc" },
       take: 8,
       include: { project: { select: { name: true } }, lines: { select: { issueNote: true }, take: 8 } },
-    }),
-    prisma.materialRequest.findMany({
-      where: { deletedAt: null, status: { in: ["REQUESTED", "SUBMITTED"] }, ...projectIdScope(accessScope) },
-      orderBy: { createdAt: "desc" },
-      take: 4,
-      include: { project: { select: { name: true } } },
-    }),
-    prisma.fieldMaterialRequest.findMany({
-      where: { deletedAt: null, status: "SUBMITTED", ...projectIdScope(accessScope) },
-      orderBy: { createdAt: "desc" },
-      take: 4,
-      include: { project: { select: { name: true } } },
     }),
     prisma.auditLog.findMany({
       where: {
@@ -414,7 +409,7 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
         itemType: "WORK",
         template: { deletedAt: null },
       },
-      select: { id: true, projectId: true, itemType: true, designQuantity: true, deletedAt: true },
+      select: { id: true, projectId: true, itemType: true, designQuantity: true, unit: true, deletedAt: true },
     }),
     prisma.fieldProgressEntry.findMany({
       where: {
@@ -454,6 +449,16 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
     progressEntriesByProjectId.set(entry.projectId, current);
   }
 
+  const duplicateProjectNames = new Set(
+    [...overviewProjects.reduce((counts, project) => {
+      const key = project.name.trim().toLocaleLowerCase("vi-VN");
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+      return counts;
+    }, new Map<string, number>())]
+      .filter(([, count]) => count > 1)
+      .map(([name]) => name),
+  );
+
   const projectOverview: DashboardProjectOverview[] = overviewProjects.map((project) => {
     const daysRemaining = getDaysRemaining(project.endDate, todayStart);
     const plannedProgressPercent = calculatePlannedProgress(project.startDate, project.endDate, todayStart);
@@ -463,6 +468,7 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
       items: progressItemsByProjectId.get(project.id) ?? [],
       entries: progressEntriesByProjectId.get(project.id) ?? [],
     });
+    const unitSummary = summarizeProjectProgressUnits(progressItemsByProjectId.get(project.id) ?? []);
     const hasMultipleActiveTemplates = (templateCountByProjectId.get(project.id) ?? 0) > 1;
     const actualProgressPercent = hasMultipleActiveTemplates ? null : aggregate.actualProgressPercent;
     const actualProgressDataStatus = hasMultipleActiveTemplates
@@ -497,6 +503,10 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
       id: project.id,
       code: project.code,
       name: project.name,
+      location: project.location,
+      identityQualifier: duplicateProjectNames.has(project.name.trim().toLocaleLowerCase("vi-VN"))
+        ? project.location?.trim() || null
+        : null,
       status: project.status,
       plannedProgressPercent,
       actualProgressPercent,
@@ -508,6 +518,9 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
       lastActualProgressAt: hasMultipleActiveTemplates ? null : aggregate.lastActualProgressAt,
       actualProgressWarnings,
       workItemCount: aggregate.eligibleWorkItemCount,
+      quantityUnitStatus: unitSummary.status,
+      quantityUnit: unitSummary.unit,
+      quantityUnitCount: unitSummary.distinctUnitCount,
       updatedAt: project.updatedAt,
       startDate: project.startDate,
       endDate: project.endDate,
@@ -530,6 +543,9 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
     reason: "Hồ sơ đang chờ phê duyệt.",
     targetType: "APPROVAL",
     targetId: approval.id,
+    assignee: approval.requester.name,
+    dueDateLabel: null,
+    ageLabel: `Tạo ngày ${approval.createdAt.toLocaleDateString("vi-VN")}`,
   }));
 
   const projectActions: DashboardActionItem[] = [];
@@ -547,6 +563,9 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
     reason,
     targetType: "PROJECT",
     targetId: project.id,
+    assignee: null,
+    dueDateLabel: project.endDate?.toLocaleDateString("vi-VN") ?? null,
+    ageLabel: null,
   })));
 
   const executiveScope = await resolveExecutiveDashboardScope(session, rawProjectId);
@@ -560,7 +579,7 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
     type: item.typeLabel,
     priority: item.priority,
     status: item.status,
-    createdAt: null,
+    createdAt: item.occurredAt,
     href: item.targetType === "PROJECT"
       ? `/projects/${item.projectId}`
       : item.targetType === "SITE_REPORT"
@@ -573,6 +592,11 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
     reason: item.reason,
     targetType: item.targetType,
     targetId: item.targetId,
+    assignee: item.assignee,
+    dueDateLabel: item.dueDate,
+    ageLabel: item.overdueDuration
+      ? `Quá hạn ${item.overdueDuration}`
+      : `Phát sinh ${item.occurredAt.toLocaleDateString("vi-VN")}`,
   }));
 
   const projectNameById = new Map([
@@ -639,6 +663,9 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
       reason: report.issues,
       targetType: "SITE_REPORT",
       targetId: report.id,
+      assignee: null,
+      dueDateLabel: null,
+      ageLabel: `Cập nhật ${report.updatedAt.toLocaleDateString("vi-VN")}`,
     }));
 
   reportActions.filter(r => r.priority === 'HIGH').forEach(r => {
