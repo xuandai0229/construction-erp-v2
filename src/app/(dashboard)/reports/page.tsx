@@ -29,14 +29,14 @@ export default async function ReportsPage() {
       <PageHeader>
         <PageHeading
           title={
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100 shadow-2xs">
-                <ClipboardList className="h-5 w-5" />
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-100/80 shadow-2xs">
+                <ClipboardList className="h-4.5 w-4.5" />
               </div>
-              <span>Trung tâm Báo cáo Công trình</span>
+              <span>Báo cáo</span>
             </div>
           }
-          description="Chọn loại báo cáo cần quản lý."
+          description="Chọn nội dung cần xem và quản lý."
         />
       </PageHeader>
 

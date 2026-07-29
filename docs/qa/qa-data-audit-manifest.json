@@ -1,0 +1,1336 @@
+{
+  "timestamp": "2026-07-28T03:31:35.281Z",
+  "qaProjects": [
+    {
+      "id": "cmrncgyn000011kwkpqz1vntx",
+      "code": "QA_PROJ_2026_07",
+      "name": "Công trình Thử nghiệm QA (QA_UI_UX_2026_07)",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-17T02:26:34.674Z"
+    },
+    {
+      "id": "cmrobkwot00079owkfb1xzzkd",
+      "code": "QA-TUHIEP-5F-001",
+      "name": "Nhà văn phòng điều hành 5 tầng – Khu công nghiệp Tứ Hiệp",
+      "reason": "Matches QA Namespace",
+      "deletedAt": null
+    },
+    {
+      "id": "cmrsq9xvy0000egwksftixwx0",
+      "code": "QA-SWR-1784521919946-2",
+      "name": "QA Supervision Weekly Project 2",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T04:32:11.194Z"
+    },
+    {
+      "id": "cmrsq9xw50001egwkpzlzjca8",
+      "code": "QA-SWR-1784521919946-3",
+      "name": "QA Supervision Weekly Project 3",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T04:32:11.194Z"
+    },
+    {
+      "id": "cmrsqco8z0000qcwknempxtu1",
+      "code": "QA-SWR-1784522047422-2",
+      "name": "QA Supervision Weekly Project 2",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T04:34:18.584Z"
+    },
+    {
+      "id": "cmrsqco930001qcwk5l473vnm",
+      "code": "QA-SWR-1784522047422-3",
+      "name": "QA Supervision Weekly Project 3",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T04:34:18.584Z"
+    },
+    {
+      "id": "cmrsqdtpi00001gwk8amf1jf5",
+      "code": "QA-SWR-1784522101153-2",
+      "name": "QA Supervision Weekly Project 2",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T04:35:12.000Z"
+    },
+    {
+      "id": "cmrsqdtpq00011gwky9ud7vis",
+      "code": "QA-SWR-1784522101153-3",
+      "name": "QA Supervision Weekly Project 3",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T04:35:12.000Z"
+    },
+    {
+      "id": "cmrsqezs000002swkmhupn48o",
+      "code": "QA-SWR-1784522155675-2",
+      "name": "QA Supervision Weekly Project 2",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T04:36:12.231Z"
+    },
+    {
+      "id": "cmrsqezs500012swkdorwhjet",
+      "code": "QA-SWR-1784522155675-3",
+      "name": "QA Supervision Weekly Project 3",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T04:36:12.231Z"
+    },
+    {
+      "id": "cmrsqg42g000050wkmeut3hf0",
+      "code": "QA-SWR-1784522207892-2",
+      "name": "QA Supervision Weekly Project 2",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T04:37:02.249Z"
+    },
+    {
+      "id": "cmrsqg42l000150wk4xk1pxoo",
+      "code": "QA-SWR-1784522207892-3",
+      "name": "QA Supervision Weekly Project 3",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T04:37:02.249Z"
+    },
+    {
+      "id": "cmrsqhpgk0000ewwkh322650a",
+      "code": "QA-SWR-1784522282272-2",
+      "name": "QA Supervision Weekly Project 2",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T04:38:21.960Z"
+    },
+    {
+      "id": "cmrsqhpgp0001ewwkxfglkf2v",
+      "code": "QA-SWR-1784522282272-3",
+      "name": "QA Supervision Weekly Project 3",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T04:38:21.960Z"
+    },
+    {
+      "id": "cmrsql6gh0000scwk0civ63e7",
+      "code": "QA-SWR-1784522444269-2",
+      "name": "QA Supervision Weekly Project 2",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T04:40:59.410Z"
+    },
+    {
+      "id": "cmrsql6gl0001scwkpjxfkt04",
+      "code": "QA-SWR-1784522444269-3",
+      "name": "QA Supervision Weekly Project 3",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T04:40:59.410Z"
+    },
+    {
+      "id": "cmrsqmg6b0000x8wksuuv2yfy",
+      "code": "QA-SWR-1784522503519-2",
+      "name": "QA Supervision Weekly Project 2",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T04:42:07.287Z"
+    },
+    {
+      "id": "cmrsqmg6g0001x8wk2s078z84",
+      "code": "QA-SWR-1784522503519-3",
+      "name": "QA Supervision Weekly Project 3",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T04:42:07.287Z"
+    },
+    {
+      "id": "cmrsqok2z0000c0wkyp4l8cxm",
+      "code": "QA-SWR-1784522601894-2",
+      "name": "QA Supervision Weekly Project 2",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T04:43:37.395Z"
+    },
+    {
+      "id": "cmrsqok340001c0wkr7ykh1js",
+      "code": "QA-SWR-1784522601894-3",
+      "name": "QA Supervision Weekly Project 3",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T04:43:37.395Z"
+    },
+    {
+      "id": "cmrsqr47p0000k0wkm0fu5bg8",
+      "code": "QA-SWR-1784522721297-2",
+      "name": "QA Supervision Weekly Project 2",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T04:45:37.583Z"
+    },
+    {
+      "id": "cmrsqr47s0001k0wklxcmmesi",
+      "code": "QA-SWR-1784522721297-3",
+      "name": "QA Supervision Weekly Project 3",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T04:45:37.583Z"
+    },
+    {
+      "id": "cmrsqudqb0000i0wk1ts3n838",
+      "code": "QA-SWR-1784522873598-2",
+      "name": "QA Supervision Weekly Project 2",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T07:00:02.135Z"
+    },
+    {
+      "id": "cmrsqudqd0001i0wkxnyhq73l",
+      "code": "QA-SWR-1784522873598-3",
+      "name": "QA Supervision Weekly Project 3",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T07:00:02.135Z"
+    },
+    {
+      "id": "cmrsxis4g0000vcwk2mj92r1y",
+      "code": "QA-SWR-UX-1784534089691-2",
+      "name": "Công trình QA UX 2",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T07:55:26.854Z"
+    },
+    {
+      "id": "cmrsxis4l0001vcwk184vu03h",
+      "code": "QA-SWR-UX-1784534089691-3",
+      "name": "Công trình QA UX 3",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T07:55:26.854Z"
+    },
+    {
+      "id": "cmrsxlqns0000ncwknh8fq00t",
+      "code": "QA-SWR-UX-1784534227763-2",
+      "name": "Công trình QA UX 2",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T07:57:49.450Z"
+    },
+    {
+      "id": "cmrsxlqnx0001ncwkxkcna38c",
+      "code": "QA-SWR-UX-1784534227763-3",
+      "name": "Công trình QA UX 3",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T07:57:49.450Z"
+    },
+    {
+      "id": "cmrsxop5c00008swkbuhm3wf9",
+      "code": "QA-SWR-UX-1784534365772-2",
+      "name": "Công trình QA UX 2",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T08:00:06.441Z"
+    },
+    {
+      "id": "cmrsxop5g00018swkvpa95s2x",
+      "code": "QA-SWR-UX-1784534365772-3",
+      "name": "Công trình QA UX 3",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T08:00:06.441Z"
+    },
+    {
+      "id": "cmrsxqe6t0000yowkqekjoqkb",
+      "code": "QA-SWR-UX-1784534444880-2",
+      "name": "Công trình QA UX 2",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T08:00:55.480Z"
+    },
+    {
+      "id": "cmrsxqe6x0001yowkjkzs41yf",
+      "code": "QA-SWR-UX-1784534444880-3",
+      "name": "Công trình QA UX 3",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T08:00:55.480Z"
+    },
+    {
+      "id": "cmrsxtmo10000oswkh89v1wm9",
+      "code": "QA-SWR-UX-1784534595837-2",
+      "name": "Công trình QA UX 2",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T08:03:27.080Z"
+    },
+    {
+      "id": "cmrsxtmo50001oswk4j7pefu9",
+      "code": "QA-SWR-UX-1784534595837-3",
+      "name": "Công trình QA UX 3",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T08:03:27.080Z"
+    },
+    {
+      "id": "cmrsxumni0000h4wk231z4szl",
+      "code": "QA-SWR-UX-1784534642474-2",
+      "name": "Công trình QA UX 2",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T08:04:37.725Z"
+    },
+    {
+      "id": "cmrsxumnm0001h4wkgpuydr7s",
+      "code": "QA-SWR-UX-1784534642474-3",
+      "name": "Công trình QA UX 3",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T08:04:37.725Z"
+    },
+    {
+      "id": "cmrsxz05s0000kcwkha45t3kp",
+      "code": "QA-SWR-UX-1784534846603-2",
+      "name": "Công trình QA UX 2",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T08:08:03.066Z"
+    },
+    {
+      "id": "cmrsxz0600001kcwk3lv8pvq8",
+      "code": "QA-SWR-UX-1784534846603-3",
+      "name": "Công trình QA UX 3",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T08:08:03.066Z"
+    },
+    {
+      "id": "cmrsy2bub0000nswk5xi0ix3w",
+      "code": "QA-SWR-UX-1784535001711-2",
+      "name": "Công trình QA UX 2",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T08:10:12.179Z"
+    },
+    {
+      "id": "cmrsy2bug0001nswkhpt6v1ib",
+      "code": "QA-SWR-UX-1784535001711-3",
+      "name": "Công trình QA UX 3",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T08:10:12.179Z"
+    },
+    {
+      "id": "cmrsy3h0k00005wwkmcze5hfi",
+      "code": "QA-SWR-UX-1784535055071-2",
+      "name": "Công trình QA UX 2",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T08:11:04.967Z"
+    },
+    {
+      "id": "cmrsy3h0u00015wwka7gl5ugl",
+      "code": "QA-SWR-UX-1784535055071-3",
+      "name": "Công trình QA UX 3",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T08:11:04.967Z"
+    },
+    {
+      "id": "cmrsy4ukj0000bgwkomrs43r4",
+      "code": "QA-SWR-UX-1784535119295-2",
+      "name": "Công trình QA UX 2",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T08:12:09.133Z"
+    },
+    {
+      "id": "cmrsy4uko0001bgwkjjsiaoih",
+      "code": "QA-SWR-UX-1784535119295-3",
+      "name": "Công trình QA UX 3",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T08:12:09.133Z"
+    },
+    {
+      "id": "cmrsy63pf0000gkwk7v28sqhy",
+      "code": "QA-SWR-UX-1784535177790-2",
+      "name": "Công trình QA UX 2",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T08:13:12.611Z"
+    },
+    {
+      "id": "cmrsy63pl0001gkwke68ps8u1",
+      "code": "QA-SWR-UX-1784535177790-3",
+      "name": "Công trình QA UX 3",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T08:13:12.611Z"
+    },
+    {
+      "id": "cmrsys7w700001cwk30vz2li8",
+      "code": "QA-DIRECT-1784536209650-2",
+      "name": "Công trình QA nhập trực tiếp 2",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T08:30:26.857Z"
+    },
+    {
+      "id": "cmrsys7wq00021cwkgp7gbp18",
+      "code": "QA-DIRECT-1784536209650-3",
+      "name": "Công trình QA nhập trực tiếp 3",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T08:30:26.857Z"
+    },
+    {
+      "id": "cmrsyy5pr0000ykwkx81tymzm",
+      "code": "QA-DIRECT-1784536486760-2",
+      "name": "Công trình QA nhập trực tiếp 2",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T08:35:05.255Z"
+    },
+    {
+      "id": "cmrsyy5q70002ykwkmlxuuttv",
+      "code": "QA-DIRECT-1784536486760-3",
+      "name": "Công trình QA nhập trực tiếp 3",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T08:35:05.255Z"
+    },
+    {
+      "id": "cmrsz8o4r0000r4wkpxc7ohp7",
+      "code": "QA-DIRECT-1784536977190-2",
+      "name": "Công trình QA nhập trực tiếp 2",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T08:43:08.672Z"
+    },
+    {
+      "id": "cmrsz8o500002r4wk7e83mvgb",
+      "code": "QA-DIRECT-1784536977190-3",
+      "name": "Công trình QA nhập trực tiếp 3",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-20T08:43:08.672Z"
+    },
+    {
+      "id": "cmrzw5hxh0000x8wkmxterc5v",
+      "code": "QA-DIRECT-1784955053569-2",
+      "name": "Công trình QA nhập trực tiếp 2",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-25T04:51:33.773Z"
+    },
+    {
+      "id": "cmrzw5hy80002x8wkg24gvrxl",
+      "code": "QA-DIRECT-1784955053569-3",
+      "name": "Công trình QA nhập trực tiếp 3",
+      "reason": "Matches QA Namespace",
+      "deletedAt": "2026-07-25T04:51:33.773Z"
+    },
+    {
+      "id": "cms31p5770001bkwk2qpp8t23",
+      "code": "OK1",
+      "name": "Công trình Test",
+      "reason": "Test Project Code OK1",
+      "deletedAt": null
+    },
+    {
+      "id": "cms32ov36000bv8wk779ate08",
+      "code": "QA-EWR-VPTH-01",
+      "name": "Nhà văn phòng điều hành 5 tầng – Khu công nghiệp Tứ Hiệp",
+      "reason": "Matches QA Namespace",
+      "deletedAt": null
+    },
+    {
+      "id": "cms32ov3b000ev8wkyg46z4wa",
+      "code": "QA-EWR-NXDP-02",
+      "name": "Nhà xưởng sản xuất cơ khí Đông Phú",
+      "reason": "Matches QA Namespace",
+      "deletedAt": null
+    },
+    {
+      "id": "cms32ov3e000hv8wklno4a53y",
+      "code": "QA-EWR-THGL-03",
+      "name": "Trường tiểu học Gia Lâm",
+      "reason": "Matches QA Namespace",
+      "deletedAt": null
+    },
+    {
+      "id": "cms32ov3g000kv8wk3ytwu2zb",
+      "code": "QA-EWR-NOHD-04",
+      "name": "Khối nhà ở xã hội Hoài Đức",
+      "reason": "Matches QA Namespace",
+      "deletedAt": null
+    },
+    {
+      "id": "cms32ov3j000nv8wksjxljktu",
+      "code": "QA-EWR-HTQM-05",
+      "name": "Hạ tầng kỹ thuật Khu công nghiệp Quang Minh",
+      "reason": "Matches QA Namespace",
+      "deletedAt": null
+    },
+    {
+      "id": "cms40u4rc0001ock5mxm2fbv8",
+      "code": "QA_WS_VPH",
+      "name": "Nhà văn phòng điều hành 5 tầng – Khu công nghiệp Từ Hiệp",
+      "reason": "Matches QA Namespace",
+      "deletedAt": null
+    },
+    {
+      "id": "cms40u4re0002ock5zao3nty8",
+      "code": "QA_WS_NXD",
+      "name": "Nhà xưởng sản xuất cơ khí Đông Phú",
+      "reason": "Matches QA Namespace",
+      "deletedAt": null
+    },
+    {
+      "id": "cms40u4rf0003ock5bvh27o59",
+      "code": "QA_WS_TGL",
+      "name": "Trường tiểu học Gia Lâm",
+      "reason": "Matches QA Namespace",
+      "deletedAt": null
+    },
+    {
+      "id": "cms40u4rg0004ock5e0ctqqc2",
+      "code": "QA_WS_NOH",
+      "name": "Khối nhà ở xã hội Hoài Đức",
+      "reason": "Matches QA Namespace",
+      "deletedAt": null
+    },
+    {
+      "id": "cms40u4rh0005ock53rq47o45",
+      "code": "QA_WS_HTK",
+      "name": "Hạ tầng kỹ thuật Khu công nghiệp Quang Minh",
+      "reason": "Matches QA Namespace",
+      "deletedAt": null
+    }
+  ],
+  "qaSiteReports": [
+    {
+      "id": "cmrobkwu7002q9owk6pef8tym",
+      "reportNo": "BCN-QA-TUHIEP-20260702",
+      "projectId": "cmrobkwot00079owkfb1xzzkd",
+      "summary": "Cập nhật tiến độ, nhân lực, thiết bị và các hạng mục thi công trong kỳ báo cáo.",
+      "issues": "Theo dõi điều kiện thời tiết, an toàn lao động và tiến độ cấp vật tư."
+    },
+    {
+      "id": "cmrobkwuj002x9owk5twrr5s8",
+      "reportNo": "BCN-QA-TUHIEP-20260703",
+      "projectId": "cmrobkwot00079owkfb1xzzkd",
+      "summary": "Cập nhật tiến độ, nhân lực, thiết bị và các hạng mục thi công trong kỳ báo cáo.",
+      "issues": "Theo dõi điều kiện thời tiết, an toàn lao động và tiến độ cấp vật tư."
+    },
+    {
+      "id": "cmrobkwuw00379owkov3ahctc",
+      "reportNo": "BCN-QA-TUHIEP-20260706",
+      "projectId": "cmrobkwot00079owkfb1xzzkd",
+      "summary": "Cập nhật tiến độ, nhân lực, thiết bị và các hạng mục thi công trong kỳ báo cáo.",
+      "issues": "Theo dõi điều kiện thời tiết, an toàn lao động và tiến độ cấp vật tư."
+    },
+    {
+      "id": "cmrobkwvc003k9owkoemkuy6w",
+      "reportNo": "BCN-QA-TUHIEP-20260709",
+      "projectId": "cmrobkwot00079owkfb1xzzkd",
+      "summary": "Cập nhật tiến độ, nhân lực, thiết bị và các hạng mục thi công trong kỳ báo cáo.",
+      "issues": "Theo dõi điều kiện thời tiết, an toàn lao động và tiến độ cấp vật tư."
+    },
+    {
+      "id": "cmrobkwvk003q9owkgb1pb9hb",
+      "reportNo": "BCN-QA-TUHIEP-20260710",
+      "projectId": "cmrobkwot00079owkfb1xzzkd",
+      "summary": "Cập nhật tiến độ, nhân lực, thiết bị và các hạng mục thi công trong kỳ báo cáo.",
+      "issues": "Theo dõi điều kiện thời tiết, an toàn lao động và tiến độ cấp vật tư."
+    },
+    {
+      "id": "cmrobkww100449owkvn6zncoh",
+      "reportNo": "BCN-QA-TUHIEP-20260713",
+      "projectId": "cmrobkwot00079owkfb1xzzkd",
+      "summary": "Cập nhật tiến độ, nhân lực, thiết bị và các hạng mục thi công trong kỳ báo cáo.",
+      "issues": "Theo dõi điều kiện thời tiết, an toàn lao động và tiến độ cấp vật tư."
+    },
+    {
+      "id": "cmrobkwtq002j9owky6rupfjq",
+      "reportNo": "BCN-QA-TUHIEP-20260701",
+      "projectId": "cmrobkwot00079owkfb1xzzkd",
+      "summary": "Cập nhật tiến độ, nhân lực, thiết bị và các hạng mục thi công trong kỳ báo cáo.",
+      "issues": "Theo dõi điều kiện thời tiết, an toàn lao động và tiến độ cấp vật tư."
+    },
+    {
+      "id": "cmrobkwur00339owkaw3y8bj3",
+      "reportNo": "BCN-QA-TUHIEP-20260704",
+      "projectId": "cmrobkwot00079owkfb1xzzkd",
+      "summary": "Cập nhật tiến độ, nhân lực, thiết bị và các hạng mục thi công trong kỳ báo cáo.",
+      "issues": "Theo dõi điều kiện thời tiết, an toàn lao động và tiến độ cấp vật tư."
+    },
+    {
+      "id": "cmrobkwv5003e9owk0gmr55q4",
+      "reportNo": "BCN-QA-TUHIEP-20260707",
+      "projectId": "cmrobkwot00079owkfb1xzzkd",
+      "summary": "Cập nhật tiến độ, nhân lực, thiết bị và các hạng mục thi công trong kỳ báo cáo.",
+      "issues": "Theo dõi điều kiện thời tiết, an toàn lao động và tiến độ cấp vật tư."
+    },
+    {
+      "id": "cmrobkwvs003x9owkzl8rvyk4",
+      "reportNo": "BCN-QA-TUHIEP-20260712",
+      "projectId": "cmrobkwot00079owkfb1xzzkd",
+      "summary": "Cập nhật tiến độ, nhân lực, thiết bị và các hạng mục thi công trong kỳ báo cáo.",
+      "issues": "Theo dõi điều kiện thời tiết, an toàn lao động và tiến độ cấp vật tư."
+    },
+    {
+      "id": "cmrobkww9004b9owkiuestx2e",
+      "reportNo": "BCT-QA-TUHIEP-20260701-20260707",
+      "projectId": "cmrobkwot00079owkfb1xzzkd",
+      "summary": "Cập nhật tiến độ, nhân lực, thiết bị và các hạng mục thi công trong kỳ báo cáo.",
+      "issues": "Theo dõi điều kiện thời tiết, an toàn lao động và tiến độ cấp vật tư."
+    },
+    {
+      "id": "cmrobkwwt004w9owk2nftqcxd",
+      "reportNo": "BCT-QA-TUHIEP-20260708-20260714",
+      "projectId": "cmrobkwot00079owkfb1xzzkd",
+      "summary": "Cập nhật tiến độ, nhân lực, thiết bị và các hạng mục thi công trong kỳ báo cáo.",
+      "issues": "Theo dõi điều kiện thời tiết, an toàn lao động và tiến độ cấp vật tư."
+    },
+    {
+      "id": "cms40u4s10009ock5myzm73nj",
+      "reportNo": "0812417c-b6f4-4465-b093-13430fd1a52a",
+      "projectId": "cms40u4rh0005ock53rq47o45",
+      "summary": "Thi công hệ thống thoát nước.",
+      "issues": null
+    },
+    {
+      "id": "cms40u4rk0006ock50iu9tlsj",
+      "reportNo": "355baad2-2438-493c-9de3-cebb5154e06b",
+      "projectId": "cms40u4rc0001ock5mxm2fbv8",
+      "summary": "Hoàn thành đổ bê tông cột tầng 3, lắp dựng cốp pha sàn tầng 4. Tiến độ đạt 92% kế hoạch tuần.",
+      "issues": "Thiếu thép phi 18 cho sàn tầng 4, nhà cung cấp hẹn giao muộn 2 ngày."
+    },
+    {
+      "id": "cms40u4ru0007ock523ext507",
+      "reportNo": "12bf825e-8343-4b59-966b-f56030bfc6be",
+      "projectId": "cms40u4re0002ock5zao3nty8",
+      "summary": "Thi công móng nhà xưởng hoàn thành 60%. Đào đất móng M5-M8 xong, đang đổ bê tông lót.",
+      "issues": "Mưa lớn ngày 22-23/07, phải bơm nước hố móng liên tục."
+    },
+    {
+      "id": "cms40u4ry0008ock5ucf3a3m7",
+      "reportNo": "3cb6cd09-6643-46a6-9def-fdeeaff883b9",
+      "projectId": "cms40u4rf0003ock5bvh27o59",
+      "summary": "Đang xây dựng khối lớp học, hoàn thành xây tường tầng 1.",
+      "issues": "Phát hiện vết nứt tại vị trí dầm D3, cần đánh giá lại."
+    },
+    {
+      "id": "cms40u4s4000aock5b4pm9bdp",
+      "reportNo": "4ed8834a-3e35-4ae8-a34d-db4d1bfc7fe3",
+      "projectId": "cms40u4rc0001ock5mxm2fbv8",
+      "summary": "Hoàn thành đổ bê tông sàn tầng 4, lắp dựng cốp pha cột tầng 4. Tiến độ tốt.",
+      "issues": "Không có vướng mắc lớn."
+    },
+    {
+      "id": "cms40u4s6000bock5kvkbzphf",
+      "reportNo": "8e5f383e-42b8-49f5-9234-1896f2599f3d",
+      "projectId": "cms40u4re0002ock5zao3nty8",
+      "summary": "Hoàn thành đổ bê tông móng M5-M8. Bắt đầu thi công cột thép nhà xưởng.",
+      "issues": "Cần bổ sung 3 bộ dụng cụ hàn chuyên dụng."
+    },
+    {
+      "id": "cms40u4s8000cock5khwl789v",
+      "reportNo": "dd47c244-ce2f-402a-a1fe-3ea4958bff35",
+      "projectId": "cms40u4rf0003ock5bvh27o59",
+      "summary": "Đã xử lý vết nứt dầm D3 bằng phương pháp bơm keo Sikadur. Tiếp tục xây tường tầng 2.",
+      "issues": "Cần thêm thời gian để chờ keo khô (7 ngày)."
+    },
+    {
+      "id": "cms40u4s9000dock5ml99phtm",
+      "reportNo": "179829d4-96ae-423c-a948-998efaac2f6d",
+      "projectId": "cms40u4rg0004ock5e0ctqqc2",
+      "summary": "Bắt đầu thi công phần thô khối A. Đào đất móng hoàn thành 100%.",
+      "issues": "Giao thông vận chuyển vật liệu vào công trường khó khăn do đường hẹp."
+    },
+    {
+      "id": "cms40u4sb000eock51kr2dytl",
+      "reportNo": "8eded020-6b3e-4a3b-a615-7741eef4d00a",
+      "projectId": "cms40u4rh0005ock53rq47o45",
+      "summary": "Lắp đặt cống thoát nước D800 từ hố ga HG1 đến HG5. Đào rãnh cáp điện tuyến 1.",
+      "issues": "Va chạm đường ống nước cũ tại vị trí HG3, cần xử lý."
+    },
+    {
+      "id": "cms40u4sd000fock5urw8t9md",
+      "reportNo": "e77741fb-ea50-4942-97e7-3e5764a7ff3c",
+      "projectId": "cms40u4rc0001ock5mxm2fbv8",
+      "summary": "[QA] Báo cáo ngày 2026-07-21 - Nhà văn phòng điều hành 5 tầng – Khu công nghiệp Từ Hiệp. KHÔNG ĐƯỢC XUẤT HIỆN TRONG BẢN TỔNG HỢP.",
+      "issues": null
+    },
+    {
+      "id": "cms40u4sf000gock5i9yg274e",
+      "reportNo": "c0d9aff1-f88a-4539-9b18-112c3840708e",
+      "projectId": "cms40u4rc0001ock5mxm2fbv8",
+      "summary": "[QA] Báo cáo ngày 2026-07-23 - Nhà văn phòng điều hành 5 tầng – Khu công nghiệp Từ Hiệp. KHÔNG ĐƯỢC XUẤT HIỆN TRONG BẢN TỔNG HỢP.",
+      "issues": null
+    },
+    {
+      "id": "cms32ov3n000qv8wkxgzgdq3b",
+      "reportNo": "BCTN-QA-EWR-VPTH-01-20260713",
+      "projectId": "cms32ov36000bv8wk779ate08",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov3s000sv8wkwudo08p6",
+      "reportNo": "BCTN-QA-EWR-VPTH-01-20260714",
+      "projectId": "cms32ov36000bv8wk779ate08",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov3v000uv8wkxz3atgle",
+      "reportNo": "BCTN-QA-EWR-VPTH-01-20260715",
+      "projectId": "cms32ov36000bv8wk779ate08",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov3y000wv8wk3fhrc0qy",
+      "reportNo": "BCTN-QA-EWR-VPTH-01-20260716",
+      "projectId": "cms32ov36000bv8wk779ate08",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov41000yv8wkgba0y7kb",
+      "reportNo": "BCTN-QA-EWR-VPTH-01-20260717",
+      "projectId": "cms32ov36000bv8wk779ate08",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov430010v8wkbtek068g",
+      "reportNo": "BCTN-QA-EWR-VPTH-01-20260718",
+      "projectId": "cms32ov36000bv8wk779ate08",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov470012v8wkxh9b09wc",
+      "reportNo": "BCTN-QA-EWR-VPTH-01-20260719",
+      "projectId": "cms32ov36000bv8wk779ate08",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov4a0014v8wkj34qc8vi",
+      "reportNo": "BCTN-QA-EWR-VPTH-01-20260720",
+      "projectId": "cms32ov36000bv8wk779ate08",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov4d0016v8wk5tegag2z",
+      "reportNo": "BCTN-QA-EWR-VPTH-01-20260721",
+      "projectId": "cms32ov36000bv8wk779ate08",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov4g0018v8wkcjutc9ok",
+      "reportNo": "BCTN-QA-EWR-VPTH-01-20260722",
+      "projectId": "cms32ov36000bv8wk779ate08",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov4k001av8wkohn0lt2n",
+      "reportNo": "BCTN-QA-EWR-VPTH-01-20260723",
+      "projectId": "cms32ov36000bv8wk779ate08",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov4n001cv8wkujfeu97v",
+      "reportNo": "BCTN-QA-EWR-VPTH-01-20260724",
+      "projectId": "cms32ov36000bv8wk779ate08",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov4q001ev8wkavkglj17",
+      "reportNo": "BCTN-QA-EWR-VPTH-01-20260725",
+      "projectId": "cms32ov36000bv8wk779ate08",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov4s001gv8wkqs5qqt8z",
+      "reportNo": "BCTN-QA-EWR-VPTH-01-20260726",
+      "projectId": "cms32ov36000bv8wk779ate08",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov4u001iv8wk9390keaq",
+      "reportNo": "BCTN-QA-EWR-NXDP-02-20260713",
+      "projectId": "cms32ov3b000ev8wkyg46z4wa",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov4w001kv8wknniq5svi",
+      "reportNo": "BCTN-QA-EWR-NXDP-02-20260714",
+      "projectId": "cms32ov3b000ev8wkyg46z4wa",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov4x001mv8wkx7ndco8q",
+      "reportNo": "BCTN-QA-EWR-NXDP-02-20260715",
+      "projectId": "cms32ov3b000ev8wkyg46z4wa",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov4z001ov8wkbjgfqarb",
+      "reportNo": "BCTN-QA-EWR-NXDP-02-20260716",
+      "projectId": "cms32ov3b000ev8wkyg46z4wa",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov50001qv8wkmm1vx8f1",
+      "reportNo": "BCTN-QA-EWR-NXDP-02-20260717",
+      "projectId": "cms32ov3b000ev8wkyg46z4wa",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov52001sv8wknqh5wq2f",
+      "reportNo": "BCTN-QA-EWR-NXDP-02-20260718",
+      "projectId": "cms32ov3b000ev8wkyg46z4wa",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov53001uv8wkj3c9lg95",
+      "reportNo": "BCTN-QA-EWR-NXDP-02-20260719",
+      "projectId": "cms32ov3b000ev8wkyg46z4wa",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov55001wv8wkeckqqfpa",
+      "reportNo": "BCTN-QA-EWR-NXDP-02-20260720",
+      "projectId": "cms32ov3b000ev8wkyg46z4wa",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov56001yv8wkwe3v8sfi",
+      "reportNo": "BCTN-QA-EWR-NXDP-02-20260721",
+      "projectId": "cms32ov3b000ev8wkyg46z4wa",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov580020v8wk1ee22o7e",
+      "reportNo": "BCTN-QA-EWR-NXDP-02-20260722",
+      "projectId": "cms32ov3b000ev8wkyg46z4wa",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov590022v8wkogzun4t7",
+      "reportNo": "BCTN-QA-EWR-NXDP-02-20260723",
+      "projectId": "cms32ov3b000ev8wkyg46z4wa",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov5b0024v8wkfl0k028m",
+      "reportNo": "BCTN-QA-EWR-NXDP-02-20260724",
+      "projectId": "cms32ov3b000ev8wkyg46z4wa",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov5c0026v8wk1t89hki8",
+      "reportNo": "BCTN-QA-EWR-NXDP-02-20260725",
+      "projectId": "cms32ov3b000ev8wkyg46z4wa",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov5d0028v8wkoz80cz1s",
+      "reportNo": "BCTN-QA-EWR-NXDP-02-20260726",
+      "projectId": "cms32ov3b000ev8wkyg46z4wa",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov5f002av8wkeuws0ajs",
+      "reportNo": "BCTN-QA-EWR-THGL-03-20260713",
+      "projectId": "cms32ov3e000hv8wklno4a53y",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov5h002cv8wkr2y9gir2",
+      "reportNo": "BCTN-QA-EWR-THGL-03-20260714",
+      "projectId": "cms32ov3e000hv8wklno4a53y",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov5i002ev8wkfpivqonj",
+      "reportNo": "BCTN-QA-EWR-THGL-03-20260715",
+      "projectId": "cms32ov3e000hv8wklno4a53y",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov5k002gv8wkfwyt7g9n",
+      "reportNo": "BCTN-QA-EWR-THGL-03-20260716",
+      "projectId": "cms32ov3e000hv8wklno4a53y",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov5m002iv8wkklfb890o",
+      "reportNo": "BCTN-QA-EWR-THGL-03-20260717",
+      "projectId": "cms32ov3e000hv8wklno4a53y",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov5o002kv8wkh51kv6xb",
+      "reportNo": "BCTN-QA-EWR-THGL-03-20260718",
+      "projectId": "cms32ov3e000hv8wklno4a53y",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov5p002mv8wkdnkv01i4",
+      "reportNo": "BCTN-QA-EWR-THGL-03-20260719",
+      "projectId": "cms32ov3e000hv8wklno4a53y",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov5r002ov8wk03peu0ji",
+      "reportNo": "BCTN-QA-EWR-THGL-03-20260720",
+      "projectId": "cms32ov3e000hv8wklno4a53y",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov5t002qv8wketg1xm2k",
+      "reportNo": "BCTN-QA-EWR-THGL-03-20260721",
+      "projectId": "cms32ov3e000hv8wklno4a53y",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov5v002sv8wkfxtsc3tk",
+      "reportNo": "BCTN-QA-EWR-THGL-03-20260722",
+      "projectId": "cms32ov3e000hv8wklno4a53y",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov5w002uv8wk1qudjv5n",
+      "reportNo": "BCTN-QA-EWR-THGL-03-20260723",
+      "projectId": "cms32ov3e000hv8wklno4a53y",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov5y002wv8wk6bpwvq89",
+      "reportNo": "BCTN-QA-EWR-THGL-03-20260724",
+      "projectId": "cms32ov3e000hv8wklno4a53y",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov5z002yv8wk79ysd9dp",
+      "reportNo": "BCTN-QA-EWR-THGL-03-20260725",
+      "projectId": "cms32ov3e000hv8wklno4a53y",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov610030v8wko1647izo",
+      "reportNo": "BCTN-QA-EWR-THGL-03-20260726",
+      "projectId": "cms32ov3e000hv8wklno4a53y",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov620032v8wkzu5erif5",
+      "reportNo": "BCTN-QA-EWR-NOHD-04-20260713",
+      "projectId": "cms32ov3g000kv8wk3ytwu2zb",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov640034v8wkl02uvhp3",
+      "reportNo": "BCTN-QA-EWR-NOHD-04-20260714",
+      "projectId": "cms32ov3g000kv8wk3ytwu2zb",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov650036v8wk1iu7efxr",
+      "reportNo": "BCTN-QA-EWR-NOHD-04-20260715",
+      "projectId": "cms32ov3g000kv8wk3ytwu2zb",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov670038v8wkgeyivsep",
+      "reportNo": "BCTN-QA-EWR-NOHD-04-20260716",
+      "projectId": "cms32ov3g000kv8wk3ytwu2zb",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov68003av8wko0wyruva",
+      "reportNo": "BCTN-QA-EWR-NOHD-04-20260717",
+      "projectId": "cms32ov3g000kv8wk3ytwu2zb",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov6a003cv8wkwuw9nb2z",
+      "reportNo": "BCTN-QA-EWR-NOHD-04-20260718",
+      "projectId": "cms32ov3g000kv8wk3ytwu2zb",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov6b003ev8wkbe4dvr39",
+      "reportNo": "BCTN-QA-EWR-NOHD-04-20260719",
+      "projectId": "cms32ov3g000kv8wk3ytwu2zb",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov6d003gv8wk8de38uf5",
+      "reportNo": "BCTN-QA-EWR-NOHD-04-20260720",
+      "projectId": "cms32ov3g000kv8wk3ytwu2zb",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov6e003iv8wks8a3zzby",
+      "reportNo": "BCTN-QA-EWR-NOHD-04-20260721",
+      "projectId": "cms32ov3g000kv8wk3ytwu2zb",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov6g003kv8wk0kuygf0a",
+      "reportNo": "BCTN-QA-EWR-NOHD-04-20260722",
+      "projectId": "cms32ov3g000kv8wk3ytwu2zb",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov6i003mv8wkxsujim38",
+      "reportNo": "BCTN-QA-EWR-NOHD-04-20260723",
+      "projectId": "cms32ov3g000kv8wk3ytwu2zb",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov6k003ov8wk4w4lkv90",
+      "reportNo": "BCTN-QA-EWR-NOHD-04-20260724",
+      "projectId": "cms32ov3g000kv8wk3ytwu2zb",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov6n003qv8wku5cztzi6",
+      "reportNo": "BCTN-QA-EWR-NOHD-04-20260725",
+      "projectId": "cms32ov3g000kv8wk3ytwu2zb",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov6p003sv8wkr7eraf2n",
+      "reportNo": "BCTN-QA-EWR-NOHD-04-20260726",
+      "projectId": "cms32ov3g000kv8wk3ytwu2zb",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov6r003uv8wkd825kd9t",
+      "reportNo": "BCTN-QA-EWR-HTQM-05-20260713",
+      "projectId": "cms32ov3j000nv8wksjxljktu",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov6t003wv8wkr19rm8mv",
+      "reportNo": "BCTN-QA-EWR-HTQM-05-20260714",
+      "projectId": "cms32ov3j000nv8wksjxljktu",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov6v003yv8wkmus0c1m5",
+      "reportNo": "BCTN-QA-EWR-HTQM-05-20260715",
+      "projectId": "cms32ov3j000nv8wksjxljktu",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov6x0040v8wk7eotcps0",
+      "reportNo": "BCTN-QA-EWR-HTQM-05-20260716",
+      "projectId": "cms32ov3j000nv8wksjxljktu",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov6y0042v8wksdslm834",
+      "reportNo": "BCTN-QA-EWR-HTQM-05-20260717",
+      "projectId": "cms32ov3j000nv8wksjxljktu",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov700044v8wkysuja6bp",
+      "reportNo": "BCTN-QA-EWR-HTQM-05-20260718",
+      "projectId": "cms32ov3j000nv8wksjxljktu",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov720046v8wk34g0zl8v",
+      "reportNo": "BCTN-QA-EWR-HTQM-05-20260719",
+      "projectId": "cms32ov3j000nv8wksjxljktu",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov740048v8wka6vt7za5",
+      "reportNo": "BCTN-QA-EWR-HTQM-05-20260720",
+      "projectId": "cms32ov3j000nv8wksjxljktu",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov75004av8wkxkcccsdt",
+      "reportNo": "BCTN-QA-EWR-HTQM-05-20260721",
+      "projectId": "cms32ov3j000nv8wksjxljktu",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov77004cv8wknsf5xrxv",
+      "reportNo": "BCTN-QA-EWR-HTQM-05-20260722",
+      "projectId": "cms32ov3j000nv8wksjxljktu",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov79004ev8wktuecsj78",
+      "reportNo": "BCTN-QA-EWR-HTQM-05-20260723",
+      "projectId": "cms32ov3j000nv8wksjxljktu",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov7b004gv8wkhzi4dlse",
+      "reportNo": "BCTN-QA-EWR-HTQM-05-20260724",
+      "projectId": "cms32ov3j000nv8wksjxljktu",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov7c004iv8wkyswqv9ey",
+      "reportNo": "BCTN-QA-EWR-HTQM-05-20260725",
+      "projectId": "cms32ov3j000nv8wksjxljktu",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov7e004kv8wko0bd5ve6",
+      "reportNo": "BCTN-QA-EWR-HTQM-05-20260726",
+      "projectId": "cms32ov3j000nv8wksjxljktu",
+      "summary": null,
+      "issues": null
+    },
+    {
+      "id": "cms32ov7h004mv8wkyoehgff5",
+      "reportNo": "BC-TUAN-29-QA-EWR-VPTH-01",
+      "projectId": "cms32ov36000bv8wk779ate08",
+      "summary": null,
+      "issues": "Thời tiết có mưa nhẹ vào chiều thứ 5 nhưng không làm gián đoạn thi công."
+    },
+    {
+      "id": "cms32ov7j004nv8wkkglug0ua",
+      "reportNo": "BC-TUAN-29-QA-EWR-NXDP-02",
+      "projectId": "cms32ov3b000ev8wkyg46z4wa",
+      "summary": null,
+      "issues": "Nhà cung cấp giao thép chậm 2 ngày so với tiến độ hợp đồng."
+    },
+    {
+      "id": "cms32ov7l004ov8wku7nb9jwh",
+      "reportNo": "BC-TUAN-29-QA-EWR-THGL-03",
+      "projectId": "cms32ov3e000hv8wklno4a53y",
+      "summary": null,
+      "issues": "Thiếu thông tin chi tiết về kế hoạch tuần tới."
+    },
+    {
+      "id": "cms32ov7m004pv8wkaydw4x70",
+      "reportNo": "BC-TUAN-29-QA-EWR-HTQM-05",
+      "projectId": "cms32ov3j000nv8wksjxljktu",
+      "summary": null,
+      "issues": "Vướng mắc mặt bằng tại nút giao N2 chưa giải tỏa xong."
+    },
+    {
+      "id": "cms40u4sg000hock58laq0a3v",
+      "reportNo": "1f3d82ba-5dab-42ad-be28-a20efd6dd48b",
+      "projectId": "cms40u4re0002ock5zao3nty8",
+      "summary": "[QA] Báo cáo ngày 2026-07-21 - Nhà xưởng sản xuất cơ khí Đông Phú. KHÔNG ĐƯỢC XUẤT HIỆN TRONG BẢN TỔNG HỢP.",
+      "issues": null
+    },
+    {
+      "id": "cms32ov7n004qv8wkwtbhn4f7",
+      "reportNo": "BC-TUAN-30-QA-EWR-VPTH-01",
+      "projectId": "cms32ov36000bv8wk779ate08",
+      "summary": null,
+      "issues": "Cần duyệt phương án thiết kế phát sinh hệ thống điện thông minh tầng 1."
+    },
+    {
+      "id": "cms32ov7o004rv8wk0gnt6k67",
+      "reportNo": "BC-TUAN-30-QA-EWR-NXDP-02",
+      "projectId": "cms32ov3b000ev8wkyg46z4wa",
+      "summary": null,
+      "issues": "Giá vật liệu tấm lợp cách nhiệt tăng nhẹ."
+    },
+    {
+      "id": "cms32ov7p004sv8wkgfuodhy9",
+      "reportNo": "BC-TUAN-30-QA-EWR-THGL-03",
+      "projectId": "cms32ov3e000hv8wklno4a53y",
+      "summary": null,
+      "issues": "Mưa lớn kéo dài 1 ngày gây đọng nước cục bộ tại sân trường."
+    },
+    {
+      "id": "cms32ov7q004tv8wkbhn7w7lo",
+      "reportNo": "BC-TUAN-30-QA-EWR-NOHD-04",
+      "projectId": "cms32ov3g000kv8wk3ytwu2zb",
+      "summary": null,
+      "issues": "Địa chất thực tế có lớp đất yếu dày hơn hồ sơ khảo sát 0.8m."
+    },
+    {
+      "id": "cms32ov7r004uv8wkdw3g3yyt",
+      "reportNo": "BC-TUAN-30-QA-EWR-HTQM-05",
+      "projectId": "cms32ov3j000nv8wksjxljktu",
+      "summary": null,
+      "issues": "Vướng đường dây điện cao thế cắt ngang chưa di dời."
+    },
+    {
+      "id": "cms40u4sh000iock5fuz8yzss",
+      "reportNo": "5de4a08a-4470-4658-99ab-fc2449bea8c6",
+      "projectId": "cms40u4re0002ock5zao3nty8",
+      "summary": "[QA] Báo cáo ngày 2026-07-23 - Nhà xưởng sản xuất cơ khí Đông Phú. KHÔNG ĐƯỢC XUẤT HIỆN TRONG BẢN TỔNG HỢP.",
+      "issues": null
+    },
+    {
+      "id": "cms40u4sj000jock52alxpeqm",
+      "reportNo": "ef7381db-045e-4aa2-923a-5d7ad9cdee7a",
+      "projectId": "cms40u4rf0003ock5bvh27o59",
+      "summary": "[QA] Báo cáo ngày 2026-07-21 - Trường tiểu học Gia Lâm. KHÔNG ĐƯỢC XUẤT HIỆN TRONG BẢN TỔNG HỢP.",
+      "issues": null
+    },
+    {
+      "id": "cms40u4sk000kock5vwniqrpj",
+      "reportNo": "5059ad62-8091-42a8-a86c-ef02148590f6",
+      "projectId": "cms40u4rf0003ock5bvh27o59",
+      "summary": "[QA] Báo cáo ngày 2026-07-23 - Trường tiểu học Gia Lâm. KHÔNG ĐƯỢC XUẤT HIỆN TRONG BẢN TỔNG HỢP.",
+      "issues": null
+    },
+    {
+      "id": "cms40u4sl000lock5thardyrh",
+      "reportNo": "3f691a9f-eee6-415b-b279-99124aac0b21",
+      "projectId": "cms40u4rg0004ock5e0ctqqc2",
+      "summary": "[QA] Báo cáo ngày 2026-07-21 - Khối nhà ở xã hội Hoài Đức. KHÔNG ĐƯỢC XUẤT HIỆN TRONG BẢN TỔNG HỢP.",
+      "issues": null
+    },
+    {
+      "id": "cms40u4sm000mock5s3822w11",
+      "reportNo": "89e8feee-71ea-498c-9c42-a5aa33ff9a2c",
+      "projectId": "cms40u4rg0004ock5e0ctqqc2",
+      "summary": "[QA] Báo cáo ngày 2026-07-23 - Khối nhà ở xã hội Hoài Đức. KHÔNG ĐƯỢC XUẤT HIỆN TRONG BẢN TỔNG HỢP.",
+      "issues": null
+    },
+    {
+      "id": "cms40u4sn000nock57nczdtzj",
+      "reportNo": "d6415c18-cf54-42fb-be60-0640c3df7aea",
+      "projectId": "cms40u4rh0005ock53rq47o45",
+      "summary": "[QA] Báo cáo ngày 2026-07-21 - Hạ tầng kỹ thuật Khu công nghiệp Quang Minh. KHÔNG ĐƯỢC XUẤT HIỆN TRONG BẢN TỔNG HỢP.",
+      "issues": null
+    },
+    {
+      "id": "cms40u4so000oock5ot8wqjyc",
+      "reportNo": "9639fb65-5f9e-4b7a-8a5b-038d3ada0f0d",
+      "projectId": "cms40u4rh0005ock53rq47o45",
+      "summary": "[QA] Báo cáo ngày 2026-07-23 - Hạ tầng kỹ thuật Khu công nghiệp Quang Minh. KHÔNG ĐƯỢC XUẤT HIỆN TRONG BẢN TỔNG HỢP.",
+      "issues": null
+    }
+  ],
+  "qaUsers": [
+    {
+      "id": "cmrobkwoq00069owkwptq0jwx",
+      "email": "qa.outsider@example.test",
+      "name": "QA User Ngoai Cong Trinh"
+    },
+    {
+      "id": "cmrobkwnb00009owkqcxnwc4j",
+      "email": "qa.admin.tuhiep@example.test",
+      "name": "QA Admin Tu Hiep"
+    },
+    {
+      "id": "cmrobkwoh00029owkqcszqwzq",
+      "email": "qa.commander.tuhiep@example.test",
+      "name": "Nguyễn Hoàng Nam"
+    },
+    {
+      "id": "cmrobkwoj00039owkqq5pgqeg",
+      "email": "qa.engineer.tuhiep@example.test",
+      "name": "Lê Quang Huy"
+    },
+    {
+      "id": "cmrobkwom00049owkaa2mp0h0",
+      "email": "qa.accountant.tuhiep@example.test",
+      "name": "Vũ Thị Mai Anh"
+    },
+    {
+      "id": "cmrobkwoo00059owk10dwzgon",
+      "email": "qa.viewer.tuhiep@example.test",
+      "name": "Phạm Gia Linh"
+    },
+    {
+      "id": "cmrncgylp00001kwkab9e5qcp",
+      "email": "qa_admin_2026_07@construction-erp-qa.local",
+      "name": "QA Admin User 2026_07"
+    },
+    {
+      "id": "cmrobkwoe00019owkd3eeskir",
+      "email": "qa.director.tuhiep@example.test",
+      "name": "Trần Minh Khôi"
+    },
+    {
+      "id": "cms40u4r90000ock5kbh6gclu",
+      "email": "qa-weekly-summary@erp-test.vn",
+      "name": "QA Kiểm thử tổng hợp tuần"
+    },
+    {
+      "id": "cms32ov2o0000v8wkie6o852o",
+      "email": "qa.ewr.admin@company.com",
+      "name": "Trần Văn Admin"
+    },
+    {
+      "id": "cms32ov2s0001v8wkce1h7qjj",
+      "email": "qa.ewr.director@company.com",
+      "name": "Nguyễn Văn Giám Đốc"
+    },
+    {
+      "id": "cms32ov2v0002v8wklylriime",
+      "email": "qa.ewr.deputy@company.com",
+      "name": "Lê Văn Phó Giám Đốc"
+    },
+    {
+      "id": "cms32ov2x0003v8wklus9ixgv",
+      "email": "qa.ewr.cmd1@company.com",
+      "name": "Nguyễn Hoàng Nam"
+    },
+    {
+      "id": "cms32ov2y0004v8wk3esbgykz",
+      "email": "qa.ewr.cmd2@company.com",
+      "name": "Trần Đức Thắng"
+    },
+    {
+      "id": "cms32ov2z0005v8wksb0hoil4",
+      "email": "qa.ewr.cmd3@company.com",
+      "name": "Phạm Minh Đức"
+    },
+    {
+      "id": "cms32ov300006v8wkimg2nvk9",
+      "email": "qa.ewr.cmd4@company.com",
+      "name": "Hoàng Quốc Bảo"
+    },
+    {
+      "id": "cms32ov310007v8wk41wkxoxd",
+      "email": "qa.ewr.cmd5@company.com",
+      "name": "Đỗ Thanh Sơn"
+    },
+    {
+      "id": "cms32ov320008v8wkntsrykeo",
+      "email": "qa.ewr.eng1@company.com",
+      "name": "Kỹ sư Vũ Văn A"
+    },
+    {
+      "id": "cms32ov330009v8wkze9xv1mz",
+      "email": "qa.ewr.eng2@company.com",
+      "name": "Kỹ sư Đặng Văn B"
+    },
+    {
+      "id": "cms32ov34000av8wkw1gxi7av",
+      "email": "qa.ewr.unauth@company.com",
+      "name": "Nhân viên Chưa Phân Quyền"
+    }
+  ],
+  "realProjectsCount": 0,
+  "realSiteReportsCount": 1
+}

@@ -11,6 +11,8 @@ import { parseWeeklyGeneralNote } from "@/lib/reports/weekly-report-utils";
 import { getGlobalProjectContext } from "@/lib/project-context";
 import { serializePrisma } from "@/lib/serialize";
 import { canViewNavigationItem } from "@/lib/navigation-permissions";
+import { isCompanyWideUser } from "@/lib/rbac";
+import { getVietnamIsoWeekInfo } from "@/lib/reports/report-timezone";
 
 const formatFileSize = (bytes: number | null | undefined | string | bigint) => {
   if (bytes === undefined || bytes === null || bytes === "") return "Không rõ dung lượng";
@@ -48,6 +50,8 @@ export default async function FieldReportsPage({
 
   const resolvedParams = await searchParams;
   const urlProjectId = typeof resolvedParams.projectId === "string" ? resolvedParams.projectId : undefined;
+  const requestedWeekStart = typeof resolvedParams.weekStart === "string" ? resolvedParams.weekStart : undefined;
+  const weeklySummaryWeekStart = getVietnamIsoWeekInfo(requestedWeekStart || new Date()).weekStartDate;
   const globalContext = serializePrisma(await getGlobalProjectContext(session, urlProjectId));
 
   const filters = {
@@ -172,6 +176,8 @@ export default async function FieldReportsPage({
       initialProjects={projects} 
       currentUser={{ id: session.id, name: session.name || session.email || "Người dùng hiện tại", role: session.role }} 
       globalContext={globalContext}
+      canAggregateCompanyWeekly={isCompanyWideUser({ role: session.role })}
+      weeklySummaryWeekStart={weeklySummaryWeekStart}
       hideHeader={false}
     />
   );

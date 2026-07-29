@@ -40,6 +40,7 @@
         routeProjectId = documentMatch[1];
       }
 
+
       let isRootGlobalRoute = false;
       if (pathname === '/documents' || pathname === '/projects') {
         isRootGlobalRoute = true;
@@ -130,10 +131,13 @@
         }
       }
 
+
+
       return (
         <div className="flex min-w-0 items-center gap-2">
-          <div className="relative">
+          <div className="relative min-w-0">
             <button
+              data-project-context-trigger
               onClick={() => setIsOpen(!isOpen)}
               className={cn(
                 "flex h-10 max-w-[400px] items-center justify-between gap-2 rounded-lg border border-slate-200 bg-[var(--surface-subtle)] px-3 text-sm transition-colors hover:bg-slate-50",
@@ -148,7 +152,7 @@
                 ) : (
                   <Globe className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-slate-500" />
                 )}
-                <span className="truncate font-medium">
+                <span className="truncate font-medium" title={selectedProject?.name}>
                   {selectedProject ? selectedProject.name : displayProjectId ? "Đang xem công trình" : "Toàn hệ thống"}
                 </span>
               </div>
@@ -175,6 +179,7 @@
 
                   <div className="max-h-64 overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-slate-200">
                     <button
+                      data-project-context-id="all"
                       onClick={() => handleSelect('all')}
                       className={cn(
                         "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition-colors hover:bg-slate-100",
@@ -259,16 +264,17 @@
 
       return (
         <button
+          data-project-context-id={project.id}
           onClick={onClick}
           className={cn(
             "group flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-slate-50",
             isSelected && "bg-blue-50/80 text-blue-800 hover:bg-blue-50"
           )}
         >
-          <div className="flex items-center gap-2.5 truncate pr-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2.5 pr-2">
             <StatusIcon className={cn("h-4 w-4 shrink-0", meta.iconToneClassName)} />
             <div className="truncate">
-              <div className={cn("font-medium truncate transition-colors", isSelected ? "text-blue-800" : "text-slate-700 group-hover:text-blue-700")}>
+              <div className={cn("font-medium truncate transition-colors", isSelected ? "text-blue-800" : "text-slate-700 group-hover:text-blue-700")} title={project.name}>
                 {project.name}
               </div>
               <div className="flex items-center gap-1.5 text-[11px] text-slate-500">

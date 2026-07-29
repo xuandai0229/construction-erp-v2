@@ -3,8 +3,6 @@ import prisma from "@/lib/prisma";
 import { ROLE_DISPLAY_NAMES, getProjectAccessScope, projectScopeAllows, projectScopeWhere, type ProjectAccessScope } from "@/lib/rbac";
 import type { SessionUser } from "@/lib/auth";
 import { addWorkDays, formatWorkDate, getWorkDateRange, parseWorkDate, todayWorkDate } from "@/lib/date/work-date";
-import { groupEntriesByItemAndDate } from "@/lib/field-progress";
-import { buildFieldProgressRollupTree } from "@/lib/field-progress/rollup";
 import { isPreparationProjectStatus } from "@/lib/project-status";
 import { assertCanAccessExecutiveDashboard } from "@/lib/roles/role-workspace-policy";
 import {
@@ -14,6 +12,14 @@ import {
 
 import { resolveExecutiveDashboardScope } from "./dashboard-scope";
 import { getExecutiveActionItems } from "./executive-action-service";
+import {
+  calculateProjectActualProgress,
+  deriveCompletenessCategory,
+  type ActualProgressDataStatus,
+  type CompletenessCategory,
+  type ProjectProgressWarning,
+} from "./project-progress-aggregate";
+import { calculatePlannedProgress, getProgressHealth } from "./progress-utils";
 
 export type DashboardPeriod = "7d" | "30d" | "month";
 
@@ -28,6 +34,7 @@ export type DashboardKpi = {
 
 export type DashboardActionItem = {
   id: string;
+  projectId: string | null;
   title: string;
   projectName: string;
   type: string;
@@ -35,6 +42,9 @@ export type DashboardActionItem = {
   status: string;
   createdAt: Date | null;
   href: string;
+  reason: string | null;
+  targetType: string | null;
+  targetId: string | null;
 };
 
 export type DashboardProjectOverview = {
@@ -42,8 +52,16 @@ export type DashboardProjectOverview = {
   code: string;
   name: string;
   status: ProjectStatus;
-  progressPercent: number | null;
-  itemCount: number;
+  plannedProgressPercent: number | null;
+  actualProgressPercent: number | null;
+  variancePercent: number | null;
+  actualProgressDataStatus: ActualProgressDataStatus | "MULTIPLE_ACTIVE_TEMPLATES";
+  completenessCategory: CompletenessCategory;
+  approvedActualQuantity: number | null;
+  totalDesignQuantity: number | null;
+  lastActualProgressAt: Date | null;
+  actualProgressWarnings: ProjectProgressWarning[];
+  workItemCount: number;
   updatedAt: Date;
   startDate: Date | null;
   endDate: Date | null;
@@ -201,75 +219,6 @@ function getDaysRemaining(endDate: Date | null, todayStart: Date) {
   return Math.ceil((end.getTime() - todayStart.getTime()) / 86_400_000);
 }
 
-function getHealth(project: {
-  status: ProjectStatus;
-  progressPercent: number | null;
-  itemCount: number;
-  recentEntryCount: number;
-  daysRemaining: number | null;
-}): { health: DashboardProjectOverview["health"]; warning: string } {
-  if (project.status === "COMPLETED") return { health: "COMPLETED", warning: "Hoàn thành" };
-  if (isPreparationProjectStatus(project.status)) return { health: "NO_DATA", warning: "Công tác chuẩn bị" };
-  if (project.itemCount === 0) return { health: "NO_DATA", warning: "Chưa thiết lập WBS" };
-  if (project.daysRemaining !== null && project.daysRemaining < 0) return { health: "DELAYED", warning: "Trễ tiến độ" };
-  if (project.recentEntryCount === 0) return { health: "AT_RISK", warning: "Chưa có nhập liệu gần đây" };
-  
-  const prog = project.progressPercent ?? 0;
-  if (project.daysRemaining !== null && project.daysRemaining > 0) {
-    if (prog < 30) return { health: "DELAYED", warning: "Rủi ro chậm tiến độ" };
-    if (prog < 50) return { health: "AT_RISK", warning: "Cần chú ý" };
-  }
-  
-  if (project.daysRemaining !== null && project.daysRemaining <= 14 && prog < 90) {
-    return { health: "AT_RISK", warning: "Có nguy cơ trễ" };
-  }
-  return { health: "ON_TRACK", warning: "Đang ổn" };
-}
-
-function calculateProjectProgress(
-  template: {
-    id: string;
-    items: {
-      id: string;
-      parentId: string | null;
-      itemType: string;
-      sortOrder: number;
-      categoryName: string | null;
-      workContent: string | null;
-      constructionCrew: string | null;
-      unit: string | null;
-      designQuantity: unknown;
-    }[];
-  } | null,
-  entries: { itemId: string; entryDate: Date; quantity: Prisma.Decimal | number | string | null }[],
-) {
-  if (!template || template.items.length === 0) return { progressPercent: null, itemCount: 0 };
-
-  const workItems = template.items.filter((item) => item.itemType === "WORK");
-  const availableDates = new Set(entries.map((entry) => formatWorkDate(new Date(entry.entryDate))));
-  const dynamicDates = Array.from(availableDates).sort().map((date) => parseWorkDate(date));
-  const groupedEntries = groupEntriesByItemAndDate(entries);
-  const { itemTree } = buildFieldProgressRollupTree({
-    items: template.items,
-    groupedEntries,
-    cumulativeBeforeMap: {},
-    dynamicDates,
-  });
-
-  const totals = itemTree.reduce(
-    (sum, item) => ({
-      design: sum.design + item.designQty,
-      cumulative: sum.cumulative + item.cumulative,
-    }),
-    { design: 0, cumulative: 0 },
-  );
-
-  return {
-    progressPercent: totals.design > 0 ? Math.min(100, (totals.cumulative / totals.design) * 100) : null,
-    itemCount: workItems.length,
-  };
-}
-
 export async function getDashboardData(session: SessionUser, rawPeriod?: string, rawProjectId?: string): Promise<DashboardData> {
   assertCanAccessExecutiveDashboard(session.role);
   const period = getPeriodRange(normalizePeriod(rawPeriod));
@@ -351,7 +300,6 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
     prisma.project.findMany({
       where: visibleProjectWhere,
       orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
-      take: 6,
       select: {
         id: true,
         code: true,
@@ -453,38 +401,125 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
     })
     .filter((item): item is NonNullable<typeof item> => Boolean(item));
 
-  const { calculatePlannedProgress } = await import("./progress-utils");
+  const overviewProjectIds = overviewProjects.map((project) => project.id);
+  const [progressTemplates, progressItems, progressEntries] = await Promise.all([
+    prisma.fieldProgressTemplate.findMany({
+      where: { projectId: { in: overviewProjectIds }, deletedAt: null },
+      select: { id: true, projectId: true },
+    }),
+    prisma.fieldProgressItem.findMany({
+      where: {
+        projectId: { in: overviewProjectIds },
+        deletedAt: null,
+        itemType: "WORK",
+        template: { deletedAt: null },
+      },
+      select: { id: true, projectId: true, itemType: true, designQuantity: true, deletedAt: true },
+    }),
+    prisma.fieldProgressEntry.findMany({
+      where: {
+        projectId: { in: overviewProjectIds },
+        deletedAt: null,
+        status: "APPROVED",
+        entryDate: { lt: todayRange.end },
+        template: { deletedAt: null },
+      },
+      select: {
+        id: true,
+        projectId: true,
+        itemId: true,
+        quantity: true,
+        status: true,
+        entryDate: true,
+        approvedAt: true,
+        deletedAt: true,
+      },
+    }),
+  ]);
 
-  const projectOverview = overviewProjects.map((project) => {
+  const templateCountByProjectId = new Map<string, number>();
+  for (const template of progressTemplates) {
+    templateCountByProjectId.set(template.projectId, (templateCountByProjectId.get(template.projectId) ?? 0) + 1);
+  }
+  const progressItemsByProjectId = new Map<string, typeof progressItems>();
+  for (const item of progressItems) {
+    const current = progressItemsByProjectId.get(item.projectId) ?? [];
+    current.push(item);
+    progressItemsByProjectId.set(item.projectId, current);
+  }
+  const progressEntriesByProjectId = new Map<string, typeof progressEntries>();
+  for (const entry of progressEntries) {
+    const current = progressEntriesByProjectId.get(entry.projectId) ?? [];
+    current.push(entry);
+    progressEntriesByProjectId.set(entry.projectId, current);
+  }
+
+  const projectOverview: DashboardProjectOverview[] = overviewProjects.map((project) => {
     const daysRemaining = getDaysRemaining(project.endDate, todayStart);
-    
-    const progressPercent = calculatePlannedProgress(project.startDate, project.endDate, todayStart);
-
-    const health = getHealth({
-      status: project.status,
-      progressPercent: progressPercent,
-      itemCount: 1,
-      recentEntryCount: 1,
-      daysRemaining,
+    const plannedProgressPercent = calculatePlannedProgress(project.startDate, project.endDate, todayStart);
+    const aggregate = calculateProjectActualProgress({
+      projectId: project.id,
+      asOf: new Date(todayRange.end.getTime() - 1),
+      items: progressItemsByProjectId.get(project.id) ?? [],
+      entries: progressEntriesByProjectId.get(project.id) ?? [],
     });
-    
+    const hasMultipleActiveTemplates = (templateCountByProjectId.get(project.id) ?? 0) > 1;
+    const actualProgressPercent = hasMultipleActiveTemplates ? null : aggregate.actualProgressPercent;
+    const actualProgressDataStatus = hasMultipleActiveTemplates
+      ? "MULTIPLE_ACTIVE_TEMPLATES" as const
+      : aggregate.actualProgressDataStatus;
+    const actualProgressWarnings = hasMultipleActiveTemplates
+      ? [...aggregate.warnings, "MULTIPLE_ACTIVE_TEMPLATES" as const]
+      : aggregate.warnings;
+    const completenessCategory = deriveCompletenessCategory(plannedProgressPercent, actualProgressPercent);
+    const variancePercent = actualProgressPercent !== null && plannedProgressPercent !== null
+      ? actualProgressPercent - plannedProgressPercent
+      : null;
+    const calculatedHealth = getProgressHealth(actualProgressPercent, plannedProgressPercent);
+    const health = project.status === "COMPLETED" && completenessCategory === "COMPLETE"
+      ? "COMPLETED"
+      : calculatedHealth;
+    const warning = actualProgressDataStatus === "MULTIPLE_ACTIVE_TEMPLATES"
+      ? "Có nhiều bảng khối lượng đang hoạt động"
+      : actualProgressDataStatus !== "AVAILABLE"
+        ? "Chưa đủ dữ liệu thực tế"
+        : plannedProgressPercent === null
+          ? "Chưa có kế hoạch"
+          : health === "DELAYED"
+            ? "Trễ tiến độ"
+            : health === "AT_RISK"
+              ? "Có nguy cơ chậm tiến độ"
+              : project.status === "COMPLETED"
+                ? "Hoàn thành"
+                : "Đang ổn";
+
     return {
       id: project.id,
       code: project.code,
       name: project.name,
       status: project.status,
-      progressPercent,
-      itemCount: 0,
+      plannedProgressPercent,
+      actualProgressPercent,
+      variancePercent,
+      actualProgressDataStatus,
+      completenessCategory,
+      approvedActualQuantity: hasMultipleActiveTemplates ? null : aggregate.approvedActualQuantity,
+      totalDesignQuantity: hasMultipleActiveTemplates ? null : aggregate.totalDesignQuantity,
+      lastActualProgressAt: hasMultipleActiveTemplates ? null : aggregate.lastActualProgressAt,
+      actualProgressWarnings,
+      workItemCount: aggregate.eligibleWorkItemCount,
       updatedAt: project.updatedAt,
       startDate: project.startDate,
       endDate: project.endDate,
       daysRemaining,
-      ...health,
+      health,
+      warning,
     };
   });
 
   const approvalItems: DashboardActionItem[] = pendingApprovals.map((approval) => ({
     id: `approval-${approval.id}`,
+    projectId: approval.projectId,
     title: approval.title,
     projectName: approval.project.name,
     type: "Phê duyệt",
@@ -492,12 +527,16 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
     status: statusLabel(approval.status),
     createdAt: approval.createdAt,
     href: "/approvals",
+    reason: "Hồ sơ đang chờ phê duyệt.",
+    targetType: "APPROVAL",
+    targetId: approval.id,
   }));
 
   const projectActions: DashboardActionItem[] = [];
   
   projectActions.push(...attentionProjects.slice(0, 5).map(({ project, reason, priority }) => ({
     id: `project-${project.id}-${reason}`,
+    projectId: project.id,
     title: reason,
     projectName: project.name,
     type: "Tiến độ",
@@ -505,20 +544,35 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
     status: "Cần xử lý",
     createdAt: null,
     href: `/projects/${project.id}`,
+    reason,
+    targetType: "PROJECT",
+    targetId: project.id,
   })));
 
   const executiveScope = await resolveExecutiveDashboardScope(session, rawProjectId);
-  const actionResult = await getExecutiveActionItems(executiveScope, 4);
+  const actionResult = await getExecutiveActionItems(executiveScope, 5);
 
-  const actionItems: DashboardActionItem[] = actionResult.topItems.map((item) => ({
+  const actionItems: DashboardActionItem[] = actionResult.allItems.map((item) => ({
     id: item.id,
+    projectId: item.projectId,
     title: item.title,
     projectName: item.projectName,
     type: item.typeLabel,
     priority: item.priority,
     status: item.status,
     createdAt: null,
-    href: item.targetType === "PROJECT" ? `/projects/${item.projectId}` : `/dashboard`,
+    href: item.targetType === "PROJECT"
+      ? `/projects/${item.projectId}`
+      : item.targetType === "SITE_REPORT"
+        ? `/reports?projectId=${item.projectId}`
+        : item.targetType === "MATERIAL_REQUEST"
+          ? `/projects/${item.projectId}/material-requests`
+          : item.targetType === "WORK_TASK"
+            ? `/tasks?projectId=${item.projectId}`
+            : `/projects/${item.projectId}`,
+    reason: item.reason,
+    targetType: item.targetType,
+    targetId: item.targetId,
   }));
 
   const projectNameById = new Map([
@@ -574,6 +628,7 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
     .slice(0, 3)
     .map((report) => ({
       id: `report-${report.id}`,
+      projectId: report.projectId,
       title: report.status === "SUBMITTED" ? "Báo cáo chờ duyệt" : "Báo cáo có vấn đề",
       projectName: report.project.name,
       type: "Báo cáo",
@@ -581,6 +636,9 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
       status: statusLabel(report.status),
       createdAt: report.updatedAt,
       href: `/reports?projectId=${report.projectId}`,
+      reason: report.issues,
+      targetType: "SITE_REPORT",
+      targetId: report.id,
     }));
 
   reportActions.filter(r => r.priority === 'HIGH').forEach(r => {

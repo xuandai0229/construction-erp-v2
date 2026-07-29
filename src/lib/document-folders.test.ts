@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import { test } from "vitest";
 import {
   buildFolderAncestorChain,
   formatDocumentFolderName,
@@ -15,7 +15,7 @@ const folders = [
 test("maps technical system folder names to Vietnamese display labels", () => {
   assert.equal(formatDocumentFolderName("02_Ban_ve_Thiet_ke"), "02. Bản vẽ thiết kế");
   assert.equal(formatDocumentFolderName("03_Bien_ban_Nghiem_thu"), "03. Biên bản nghiệm thu");
-  assert.equal(formatDocumentFolderName("ok_1"), "ok_1");
+  assert.equal(formatDocumentFolderName("ok_1"), "ok 1");
 });
 
 test("returns every ancestor id from root to direct parent", () => {

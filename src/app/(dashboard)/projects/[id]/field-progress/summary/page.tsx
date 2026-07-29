@@ -25,7 +25,7 @@ export default async function FieldProgressSummaryPage({
   const { id } = await params;
   const sp = await searchParams;
   
-  const session = await requireProjectAccessOrRedirect(id);
+  await requireProjectAccessOrRedirect(id);
 
   const project = await prisma.project.findUnique({
     where: { id, deletedAt: null }
@@ -33,16 +33,30 @@ export default async function FieldProgressSummaryPage({
 
   if (!project) notFound();
 
-  const template = await prisma.fieldProgressTemplate.findFirst({
+  const templates = await prisma.fieldProgressTemplate.findMany({
     where: { projectId: id, deletedAt: null },
     include: {
       items: { where: { deletedAt: null }, orderBy: { sortOrder: "asc" }, include: { parent: true } }
-    }
+    },
+    take: 2,
   });
 
-  if (!template) {
+  if (templates.length === 0) {
     redirect(`/projects/${id}/field-progress`);
   }
+
+  if (templates.length > 1) {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+        <h1 className="text-xl font-bold text-slate-900">Không thể tổng hợp khối lượng</h1>
+        <p className="mt-2 text-sm text-slate-600">
+          Công trình đang có nhiều bảng khối lượng hoạt động. Hãy chuẩn hóa dữ liệu trước khi xem tiến độ thực tế.
+        </p>
+      </div>
+    );
+  }
+
+  const template = templates[0];
 
   // Parse filters
   const todayStr = todayWorkDate();

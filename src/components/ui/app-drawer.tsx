@@ -49,7 +49,7 @@ export function AppDrawer({
         aria-label={ariaLabel}
         className={cn(
           // Panel base
-          "flex w-full max-w-[100vw] flex-col overflow-hidden bg-white transition-transform duration-300 ease-out",
+          "flex w-full min-w-0 max-w-full flex-col overflow-hidden bg-white transition-transform duration-300 ease-out",
           // Full screen height, no radius, flush to right edge
           "h-[100dvh] rounded-none",
           "sm:max-w-3xl",

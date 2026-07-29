@@ -24,7 +24,7 @@ export type RiskDetailItem = {
   assignee: string;
   dueDate: string | null;
   impact: string;
-  progressPercent: number | null;
+  actualProgressPercent: number | null;
   daysRemaining: number | null;
   evidenceTargetType?: string;
   evidenceTargetId?: string;
@@ -110,7 +110,7 @@ export type ProjectStatusDetailItem = {
   name: string;
   status: string;
   health: "ON_TRACK" | "AT_RISK" | "DELAYED" | "COMPLETED" | "NO_DATA";
-  progressPercent: number | null;
+  plannedProgressPercent: number | null;
   startDate: string | null;
   endDate: string | null;
   daysRemaining: number | null;
@@ -235,7 +235,7 @@ export async function fetchProjectStatusDetails(projectId?: string | null): Prom
       end.setUTCHours(0, 0, 0, 0);
       daysRemaining = Math.ceil((end.getTime() - todayStart.getTime()) / 86_400_000);
     }
-    const progressPercent = calculatePlannedProgress(p.startDate, p.endDate, todayStart);
+    const plannedProgressPercent = calculatePlannedProgress(p.startDate, p.endDate, todayStart);
     const healthInfo = p.status === 'COMPLETED' 
       ? { health: 'COMPLETED' as const, warning: 'Hoàn thành' }
       : daysRemaining !== null && daysRemaining < 0 
@@ -248,7 +248,7 @@ export async function fetchProjectStatusDetails(projectId?: string | null): Prom
       name: p.name,
       status: p.status,
       health: healthInfo.health,
-      progressPercent,
+      plannedProgressPercent,
       startDate: p.startDate ? new Date(p.startDate).toLocaleDateString('vi-VN') : null,
       endDate: p.endDate ? new Date(p.endDate).toLocaleDateString('vi-VN') : null,
       daysRemaining,
@@ -412,7 +412,7 @@ export async function fetchExecutiveRiskDetails(projectId?: string | null): Prom
         assignee: project.members[0]?.user.name ?? "Chỉ huy trưởng công trình",
         dueDate: riskDueDate,
         impact,
-        progressPercent: null,
+        actualProgressPercent: null,
         daysRemaining,
         evidenceTargetType,
         evidenceTargetId,

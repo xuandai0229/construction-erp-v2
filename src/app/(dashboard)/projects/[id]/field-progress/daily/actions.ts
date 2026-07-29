@@ -200,6 +200,8 @@ export async function batchSaveDailyEntries(projectId: string, templateId: strin
     revalidatePath(`/projects/${projectId}/field-progress/daily`);
     revalidatePath(`/projects/${projectId}/field-progress/summary`);
     revalidatePath(`/projects/${projectId}/field-progress`, "layout");
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/projects-status");
     return { success: true };
   } catch (error: any) {
     return { error: error.message };

@@ -9,6 +9,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 
 import { ReportsToolbar } from "./reports-toolbar";
+import { WeeklyCompanySummaryTrigger } from "./weekly-company-summary-trigger";
 import { ReportsTable } from "./reports-table";
 import { ReportsMobileCards } from "./reports-mobile-cards";
 import { CreateReportDialog } from "./create-report-dialog";
@@ -42,6 +43,8 @@ interface ReportsWorkspaceProps {
   currentUser: { id: string; name: string; role?: string };
   globalContext?: { selectedProjectId: string | null };
   hideHeader?: boolean;
+  canAggregateCompanyWeekly?: boolean;
+  weeklySummaryWeekStart?: string;
 }
 
 export function ReportsWorkspace({
@@ -53,6 +56,8 @@ export function ReportsWorkspace({
   currentUser,
   globalContext,
   hideHeader = false,
+  canAggregateCompanyWeekly = false,
+  weeklySummaryWeekStart,
 }: ReportsWorkspaceProps) {
   const sourceReadOnly = currentUser.role === "CONSTRUCTION_SUPERVISOR" || !["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR", "CHIEF_COMMANDER", "MANAGER", "ENGINEER"].includes(currentUser.role || "");
   const toast = useToast();
@@ -586,7 +591,7 @@ export function ReportsWorkspace({
               <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h3 className={`font-semibold text-[13px] sm:text-sm ${stats.pending === 0 ? 'text-[var(--muted-foreground)]' : 'text-amber-900'}`}>Chờ duyệt</h3>
+              <h3 className={`font-semibold text-[13px] sm:text-sm ${stats.pending === 0 ? 'text-[var(--muted-foreground)]' : 'text-amber-900'}`}>Có phát sinh</h3>
             </div>
           </div>
           <span className={`text-lg sm:text-xl font-bold ${stats.pending === 0 ? 'text-[var(--muted-foreground)]' : 'text-amber-700'}`}>{stats.pending}</span>
@@ -607,7 +612,7 @@ export function ReportsWorkspace({
               <CheckSquare className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h3 className={`font-semibold text-[13px] sm:text-sm ${stats.approved === 0 ? 'text-[var(--muted-foreground)]' : 'text-emerald-900'}`}>Đã duyệt</h3>
+              <h3 className={`font-semibold text-[13px] sm:text-sm ${stats.approved === 0 ? 'text-[var(--muted-foreground)]' : 'text-emerald-900'}`}>Cần xử lý</h3>
             </div>
           </div>
           <span className={`text-lg sm:text-xl font-bold ${stats.approved === 0 ? 'text-[var(--muted-foreground)]' : 'text-emerald-700'}`}>{stats.approved}</span>
@@ -628,7 +633,7 @@ export function ReportsWorkspace({
               <XCircle className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h3 className={`font-semibold text-[13px] sm:text-sm ${stats.rejected === 0 ? 'text-[var(--muted-foreground)]' : 'text-red-900'}`}>Từ chối</h3>
+              <h3 className={`font-semibold text-[13px] sm:text-sm ${stats.rejected === 0 ? 'text-[var(--muted-foreground)]' : 'text-red-900'}`}>Khẩn cấp</h3>
             </div>
           </div>
           <span className={`text-lg sm:text-xl font-bold ${stats.rejected === 0 ? 'text-[var(--muted-foreground)]' : 'text-red-700'}`}>{stats.rejected}</span>
@@ -662,6 +667,12 @@ export function ReportsWorkspace({
           <span>Từ chối: <span className="text-red-600 font-medium">{stats.rejected}</span></span>
         </div>
       </div>
+
+      {activeTab === "weekly" && canAggregateCompanyWeekly && weeklySummaryWeekStart ? (
+        <div className="flex justify-end pt-1">
+          <WeeklyCompanySummaryTrigger weekStartDate={weeklySummaryWeekStart} />
+        </div>
+      ) : null}
 
       {/* Toolbar */}
       <div className={`${isMobileFilterOpen ? 'block' : 'hidden'} sm:block sticky top-16 z-30 -mx-1 px-1 py-2 bg-[var(--surface-subtle)] backdrop-blur supports-[backdrop-filter]:bg-[var(--surface-subtle)]`}>

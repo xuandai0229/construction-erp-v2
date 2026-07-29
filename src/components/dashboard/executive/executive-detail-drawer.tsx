@@ -567,7 +567,7 @@ export function ExecutiveDetailDrawer({
                             </div>
 
                             <div className="grid grid-cols-2 gap-2 text-xs text-slate-600">
-                              <div>Tiến độ kế hoạch: <strong className="text-slate-900">{item.progressPercent !== null ? `${Math.round(item.progressPercent)}%` : "--"}</strong></div>
+                              <div>Tiến độ kế hoạch: <strong className="text-slate-900">{item.plannedProgressPercent !== null ? `${Math.round(item.plannedProgressPercent)}%` : "--"}</strong></div>
                               <div>Thời gian còn lại: <strong className="text-slate-900">{item.daysRemaining !== null ? `${item.daysRemaining} ngày` : "--"}</strong></div>
                             </div>
 

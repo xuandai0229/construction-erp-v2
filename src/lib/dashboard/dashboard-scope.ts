@@ -59,3 +59,33 @@ export function scopeWhereProjectId(scope: ExecutiveDashboardScope) {
   }
   return { projectId: { in: scope.allowedProjectIds }, deletedAt: null };
 }
+
+export function scopeWhereTaskProjectId(scope: ExecutiveDashboardScope) {
+  if (scope.mode === "SINGLE_PROJECT" && scope.projectId) {
+    return { projectId: scope.projectId };
+  }
+  return { projectId: { in: scope.allowedProjectIds } };
+}
+
+export async function resolveDashboardProjectScope(
+  session: SessionUser,
+  rawProjectId?: string | null
+): Promise<{
+  scope: ExecutiveDashboardScope;
+  projectWhere: { deletedAt: null; id?: string | { in: string[] } };
+  visibleProjectWhere: { deletedAt: null; id?: string | { in: string[] }; status: { in: ("PLANNING" | "ACTIVE" | "ON_HOLD" | "COMPLETED")[] } };
+}> {
+  const scope = await resolveExecutiveDashboardScope(session, rawProjectId);
+  const projectWhere = scopeWhereProject(scope);
+  const visibleProjectWhere = {
+    ...projectWhere,
+    status: { in: ["PLANNING", "ACTIVE", "ON_HOLD", "COMPLETED"] as ("PLANNING" | "ACTIVE" | "ON_HOLD" | "COMPLETED")[] },
+  };
+
+  return {
+    scope,
+    projectWhere,
+    visibleProjectWhere,
+  };
+}
+

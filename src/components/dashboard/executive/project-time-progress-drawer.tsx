@@ -135,11 +135,11 @@ export function ProjectTimeProgressDrawer({ projects }: { projects: DashboardPro
                 )}
               </div>
               <span className="text-4xl font-bold text-slate-900 tracking-tight">
-                {project.progressPercent !== null ? `${Math.round(project.progressPercent)}%` : '--'}
+                {project.plannedProgressPercent !== null ? `${Math.round(project.plannedProgressPercent)}%` : '--'}
               </span>
             </div>
 
-            {project.progressPercent !== null ? (
+            {project.plannedProgressPercent !== null ? (
               <div className="mt-2 relative">
                 {/* 3 top labels */}
                 <div className="flex justify-between items-end mb-2 text-[11px] font-semibold text-slate-500">
@@ -152,15 +152,15 @@ export function ProjectTimeProgressDrawer({ projects }: { projects: DashboardPro
                 <div className="relative h-2 w-full rounded-full bg-slate-100 overflow-hidden ring-1 ring-slate-900/5 inset-0">
                   <div
                     className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-blue-500 to-emerald-400"
-                    style={{ width: `${Math.max(project.progressPercent ?? 0, 0)}%` }}
+                    style={{ width: `${Math.max(project.plannedProgressPercent ?? 0, 0)}%` }}
                   />
                 </div>
                 
                 {/* Today marker (only if within range) */}
-                {project.progressPercent >= 0 && project.progressPercent <= 100 && (
+                {project.plannedProgressPercent >= 0 && project.plannedProgressPercent <= 100 && (
                   <div 
                     className="absolute top-6 bottom-4 w-0.5 bg-slate-700 rounded-full z-10"
-                    style={{ left: `${project.progressPercent}%`, height: '12px', transform: 'translateX(-50%)' }}
+                    style={{ left: `${project.plannedProgressPercent}%`, height: '12px', transform: 'translateX(-50%)' }}
                   />
                 )}
 

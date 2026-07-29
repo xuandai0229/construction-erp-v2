@@ -1,233 +1,103 @@
-import Link from 'next/link';
-import type { DashboardProjectOverview } from '@/lib/dashboard/dashboard-queries';
-import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
-import { formatStatusLabel } from '@/lib/dashboard/dashboard-formatters';
-import { ContentCard } from '@/components/ui/enterprise';
+import Link from "next/link";
+import { AlertTriangle, ArrowRight, CheckCircle2, FileQuestion, ShieldAlert } from "lucide-react";
+import type { DashboardProjectOverview } from "@/lib/dashboard/dashboard-queries";
+import { ContentCard } from "@/components/ui/enterprise";
 
-function getHealthBadge(health: DashboardProjectOverview['health']) {
-  switch (health) {
-    case 'ON_TRACK':
-    case 'COMPLETED':
-      return <span className="rounded-md bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-600 border border-emerald-100">Đúng tiến độ</span>;
-    case 'AT_RISK':
-      return <span className="rounded-md bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-600 border border-amber-100">Cần chú ý</span>;
-    case 'DELAYED':
-    case 'NO_DATA':
-      return <span className="rounded-md bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-600 border border-rose-100">Rủi ro</span>;
-  }
+export type PortfolioProgressRiskSummary = {
+  onTrack: number;
+  atRisk: number;
+  delayed: number;
+  unavailable: number;
+  evaluable: number;
+  total: number;
+};
+
+export function buildPortfolioProgressRiskSummary(projects: DashboardProjectOverview[]): PortfolioProgressRiskSummary {
+  return projects.reduce<PortfolioProgressRiskSummary>((result, project) => {
+    if (
+      project.plannedProgressPercent === null
+      || project.actualProgressPercent === null
+      || project.variancePercent === null
+    ) {
+      result.unavailable += 1;
+    } else {
+      result.evaluable += 1;
+      if (project.health === "DELAYED") result.delayed += 1;
+      else if (project.health === "AT_RISK") result.atRisk += 1;
+      else result.onTrack += 1;
+    }
+    return result;
+  }, { onTrack: 0, atRisk: 0, delayed: 0, unavailable: 0, evaluable: 0, total: projects.length });
 }
 
-function getHealthColor(health: DashboardProjectOverview['health']) {
-  switch (health) {
-    case 'ON_TRACK':
-    case 'COMPLETED':
-      return 'bg-emerald-500';
-    case 'AT_RISK':
-      return 'bg-amber-500';
-    case 'DELAYED':
-    case 'NO_DATA':
-      return 'bg-rose-500';
-  }
-}
-
-export function ExecutiveProjectProgress({
-  projects,
-  selectedProjectId,
-  onOpenRiskDrawer,
-}: {
-  projects: DashboardProjectOverview[];
-  selectedProjectId?: string | null;
-  onOpenRiskDrawer?: () => void;
-}) {
-  const viewAllHref = selectedProjectId ? `/projects/${selectedProjectId}` : `/projects`;
+export function ExecutiveProjectProgress({ projects }: { projects: DashboardProjectOverview[] }) {
+  const counts = buildPortfolioProgressRiskSummary(projects);
+  const evaluableRatio = counts.total === 0 ? 0 : Math.round((counts.evaluable / counts.total) * 100);
+  const insight = counts.unavailable > 0
+    ? `${counts.unavailable}/${counts.total} công trình chưa thể xếp hạng vì thiếu dữ liệu có ý nghĩa.`
+    : counts.delayed > 0
+      ? `${counts.delayed} công trình chậm tiến độ cần được ưu tiên kiểm tra.`
+      : "Các công trình có dữ liệu hợp lệ chưa ghi nhận trường hợp chậm tiến độ.";
 
   return (
-    <ContentCard id="project-progress" className="flex h-full flex-col overflow-hidden hover:shadow-[var(--shadow-elevated)] transition-shadow duration-200 scroll-mt-24">
-      {/* Header is ONLY for Table Mode */}
-      {projects.length > 1 && (
-        <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4 shrink-0">
-          <div className="flex items-center gap-2">
-            <h3 className="text-base font-bold tracking-tight text-[var(--foreground)]">Tổng quan tiến độ công trình</h3>
-          </div>
-          <Link href={viewAllHref} className="text-[13px] font-semibold text-blue-600 hover:text-blue-700 hover:underline">
-            Xem tất cả
-          </Link>
+    <ContentCard
+      id="portfolio-progress-summary"
+      data-dashboard-card="portfolio-progress-summary"
+      className="grid min-w-0 grid-rows-[auto_minmax(0,1fr)] scroll-mt-24"
+    >
+      <div className="flex min-w-0 flex-wrap items-start justify-between gap-3 border-b border-slate-200/80 px-4 py-3 sm:px-5 sm:py-3.5">
+        <div className="min-w-0">
+          <h3 className="text-sm font-bold tracking-tight text-slate-950 sm:text-base">Tình trạng tiến độ và rủi ro</h3>
+          <p className="mt-0.5 text-xs leading-5 text-slate-500">Phân bố chỉ tính các công trình có cả kế hoạch và tiến độ thực tế hợp lệ.</p>
         </div>
-      )}
-
-      <div className="hidden sm:block flex-1">
-        {projects.length === 1 ? (
-          <div className="flex flex-col p-6">
-            <div className="flex items-center justify-between pb-4">
-              <h3 className="text-base font-bold tracking-tight text-[var(--foreground)]">Tổng quan tiến độ công trình</h3>
-              <Link href={`/projects/${projects[0].id}`} className="text-[13px] font-semibold text-blue-600 hover:text-blue-700 hover:underline transition-colors">
-                Chi tiết công trình
-              </Link>
-            </div>
-
-            <div className="flex flex-col gap-6 pt-3">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h5 className="text-xl font-bold text-[var(--foreground)] tracking-tight">{projects[0].name}</h5>
-                  <div className="mt-1.5 flex items-center gap-2">
-                    <span className="text-[12px] font-mono tracking-tight text-[var(--muted-foreground)] bg-[var(--surface-subtle)] px-2 py-0.5 rounded border border-[var(--border)]">{projects[0].code}</span>
-                  </div>
-                </div>
-                <button type="button" onClick={onOpenRiskDrawer} className="shrink-0 cursor-pointer">
-                  {getHealthBadge(projects[0].health)}
-                </button>
-              </div>
-
-              {/* Progress Highlights */}
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[12px] font-bold text-[var(--muted-foreground)] uppercase tracking-wide">Tiến độ theo thời gian</span>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-[36px] font-bold text-[var(--foreground)] leading-none tracking-tight">
-                        {projects[0].progressPercent !== null ? `${Math.round(projects[0].progressPercent)}%` : '--'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {projects[0].progressPercent !== null ? (
-                  <div className="mt-1 relative pb-6">
-                    <div className="relative h-2.5 w-full rounded-full bg-slate-100 overflow-hidden inset-0 border border-slate-200/50">
-                      <div
-                        className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out bg-gradient-to-r from-blue-600 via-blue-500 to-emerald-500 shadow-sm"
-                        style={{ width: `${Math.max(projects[0].progressPercent ?? 0, 1)}%` }}
-                      />
-                    </div>
-                    {/* Marker */}
-                    {projects[0].progressPercent >= 0 && projects[0].progressPercent <= 100 && (
-                      <div 
-                        className="absolute top-[-3px] w-1 bg-slate-900 rounded-full z-10 shadow-sm"
-                        style={{ left: `${projects[0].progressPercent}%`, height: '16px', transform: 'translateX(-50%)' }}
-                      />
-                    )}
-                    {/* Labels */}
-                    <div className="absolute left-0 bottom-0 text-[11px] font-medium text-slate-500">
-                      Bắt đầu: <span className="font-semibold text-slate-700 font-mono">{projects[0].startDate ? format(new Date(projects[0].startDate), 'dd/MM/yyyy') : '--'}</span>
-                    </div>
-                    <div className="absolute right-0 bottom-0 text-[11px] font-medium text-slate-500 text-right">
-                      Kết thúc: <span className="font-semibold text-slate-700 font-mono">{projects[0].endDate ? format(new Date(projects[0].endDate), 'dd/MM/yyyy') : '--'}</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center p-3 rounded-lg border border-dashed border-slate-200 bg-slate-50/50">
-                    <span className="text-[13px] font-medium text-slate-500">Chưa đủ mốc thời gian để tính tiến độ</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Mini Metrics - Time Based */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-1">
-                <div className="flex flex-col gap-1 p-3 rounded-xl bg-slate-50/80 border border-slate-200/60 transition-colors hover:bg-slate-100/60">
-                  <span className="text-[10.5px] uppercase tracking-wider text-slate-500 font-bold">Bắt đầu</span>
-                  <span className="text-[13.5px] font-bold text-slate-900 font-mono">{projects[0].startDate ? format(new Date(projects[0].startDate), 'dd/MM/yyyy') : '--'}</span>
-                </div>
-                <div className="flex flex-col gap-1 p-3 rounded-xl bg-slate-50/80 border border-slate-200/60 transition-colors hover:bg-slate-100/60">
-                  <span className="text-[10.5px] uppercase tracking-wider text-slate-500 font-bold">Kết thúc</span>
-                  <span className="text-[13.5px] font-bold text-slate-900 font-mono">{projects[0].endDate ? format(new Date(projects[0].endDate), 'dd/MM/yyyy') : '--'}</span>
-                </div>
-                <div className="flex flex-col gap-1 p-3 rounded-xl bg-slate-50/80 border border-slate-200/60 transition-colors hover:bg-slate-100/60">
-                  <span className="text-[10.5px] uppercase tracking-wider text-slate-500 font-bold">Còn lại</span>
-                  <span className="text-[13.5px] font-bold text-slate-900">{projects[0].daysRemaining !== null ? `${projects[0].daysRemaining} ngày` : '--'}</span>
-                </div>
-                <div className="flex flex-col gap-1 p-3 rounded-xl bg-slate-50/80 border border-slate-200/60 transition-colors hover:bg-slate-100/60">
-                  <span className="text-[10.5px] uppercase tracking-wider text-slate-500 font-bold">Cập nhật</span>
-                  <span className="text-[13.5px] font-bold text-slate-900 font-mono">{format(new Date(projects[0].updatedAt), 'dd/MM/yyyy')}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <table className="w-full text-left text-sm text-slate-600 table-auto">
-            <thead className="bg-[var(--surface-subtle)] text-[11px] font-bold uppercase tracking-wider text-[var(--muted-foreground)] border-b border-[var(--border)]">
-              <tr>
-                <th className="px-4 py-3 w-10 font-semibold">#</th>
-                <th className="px-4 py-3 font-semibold whitespace-nowrap">Mã công trình</th>
-                <th className="px-4 py-3 font-semibold">Tên công trình</th>
-                <th className="px-4 py-3 font-semibold whitespace-nowrap hidden xl:table-cell">Mức độ</th>
-                <th className="px-4 py-3 w-32 font-semibold whitespace-nowrap">Tiến độ</th>
-                <th className="px-4 py-3 font-semibold text-right whitespace-nowrap hidden xl:table-cell">Còn lại</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {projects.map((project, i) => (
-                <tr key={project.id} className="hover:bg-[var(--surface-subtle)] transition-colors duration-150 ease-out">
-                  <td className="px-4 py-3.5 text-[12px] font-medium text-[var(--muted-foreground)] opacity-70">{i + 1}</td>
-                  <td className="px-4 py-3.5 text-[12px] font-semibold text-[var(--foreground)] font-mono tracking-tight whitespace-nowrap">{project.code}</td>
-                  <td className="px-4 py-3.5 text-[13px] font-bold text-[var(--foreground)] truncate max-w-[140px] 2xl:max-w-[200px]">
-                    <Link href={`/projects/${project.id}`} className="hover:text-blue-600 transition-colors">
-                      {project.name}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3.5 whitespace-nowrap hidden xl:table-cell">
-                    <button type="button" onClick={onOpenRiskDrawer} className="cursor-pointer text-left">
-                      {getHealthBadge(project.health)}
-                    </button>
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <div className="flex items-center gap-2">
-                      <span className="w-9 text-[12px] font-bold text-[var(--foreground)] shrink-0">
-                        {project.progressPercent !== null ? `${Math.round(project.progressPercent)}%` : '--'}
-                      </span>
-                      <div className="h-1.5 flex-1 rounded-full bg-[var(--border)] overflow-hidden min-w-[40px]">
-                        <div
-                          className={cn("h-full rounded-full", getHealthColor(project.health))}
-                          style={{ width: `${Math.max(project.progressPercent ?? 0, 2)}%` }}
-                        />
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3.5 text-[12px] font-medium text-[var(--muted-foreground)] text-right whitespace-nowrap hidden xl:table-cell">
-                    {project.daysRemaining !== null ? `${project.daysRemaining} ngày` : '--'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+        <Link href="/dashboard/projects-status" className="dashboard-card-action">
+          Xem trạng thái <ArrowRight className="size-3.5" aria-hidden="true" />
+        </Link>
       </div>
 
-      {/* Mobile Card View */}
-      <div className="sm:hidden flex flex-col divide-y divide-slate-100">
-        {projects.map((project) => (
-          <div key={project.id} className="p-4 flex flex-col gap-3">
-            <div className="flex justify-between items-start">
-              <div className="flex flex-col">
-                <span className="text-[11px] font-bold text-[var(--muted-foreground)] opacity-70">{project.code}</span>
-                <Link href={`/projects/${project.id}`} className="text-[14px] font-bold text-[var(--foreground)] hover:text-blue-600 transition-colors">
-                  {project.name}
-                </Link>
-              </div>
-              <button type="button" onClick={onOpenRiskDrawer} className="cursor-pointer">
-                {getHealthBadge(project.health)}
-              </button>
-            </div>
+      <div className="grid min-w-0 content-start gap-4 p-4 sm:p-5">
+        <div className="grid min-w-0 grid-cols-2 gap-2 sm:grid-cols-4">
+          <Kpi label="Đúng tiến độ" value={counts.onTrack} tone="emerald" icon={<CheckCircle2 className="size-4" />} />
+          <Kpi label="Cần chú ý" value={counts.atRisk} tone="amber" icon={<AlertTriangle className="size-4" />} />
+          <Kpi label="Chậm tiến độ" value={counts.delayed} tone="rose" icon={<ShieldAlert className="size-4" />} />
+          <Kpi label="Chưa thể đánh giá" value={counts.unavailable} tone="slate" icon={<FileQuestion className="size-4" />} />
+        </div>
 
-            <div className="flex items-center gap-3">
-              <div className="flex-1">
-                <div className="flex justify-between items-center mb-1.5">
-                  <span className="text-[11px] font-semibold text-[var(--muted-foreground)]">Tiến độ</span>
-                  <span className="text-[12px] font-bold text-[var(--foreground)]">
-                    {project.progressPercent !== null ? `${Math.round(project.progressPercent)}%` : '--'}
-                  </span>
-                </div>
-                <div className="h-1.5 w-full rounded-full bg-[var(--border)] overflow-hidden">
-                  <div
-                    className={cn("h-full rounded-full", getHealthColor(project.health))}
-                    style={{ width: `${Math.max(project.progressPercent ?? 0, 2)}%` }}
-                  />
-                </div>
-              </div>
-            </div>
+        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <span className="text-xs font-bold uppercase tracking-wide text-slate-600">Khả năng đánh giá danh mục</span>
+            <span className="text-sm font-black tabular-nums text-slate-950">{counts.evaluable}/{counts.total} công trình · {evaluableRatio}%</span>
           </div>
-        ))}
+          <div className="mt-2 h-2 overflow-clip rounded-full bg-slate-200" aria-hidden="true">
+            <div className="h-full rounded-full bg-blue-600" style={{ width: `${evaluableRatio}%` }} />
+          </div>
+          <p className="mt-2 text-xs leading-5 text-slate-600">{insight}</p>
+        </div>
       </div>
     </ContentCard>
+  );
+}
+
+function Kpi({ label, value, tone, icon }: {
+  label: string;
+  value: number;
+  tone: "emerald" | "amber" | "rose" | "slate";
+  icon: React.ReactNode;
+}) {
+  const classes = {
+    emerald: "border-emerald-200 bg-emerald-50/80 text-emerald-800",
+    amber: "border-amber-200 bg-amber-50/80 text-amber-800",
+    rose: "border-rose-200 bg-rose-50/80 text-rose-800",
+    slate: "border-slate-200 bg-slate-50 text-slate-700",
+  }[tone];
+
+  return (
+    <div className={`min-w-0 rounded-xl border p-2.5 ${classes}`}>
+      <div className="flex min-w-0 items-start gap-1.5 text-[11px] font-bold leading-4">
+        <span className="mt-0.5 shrink-0" aria-hidden="true">{icon}</span>
+        <span className="min-w-0">{label}</span>
+      </div>
+      <div className="mt-2 text-xl font-black leading-none tabular-nums text-slate-950">{value}</div>
+    </div>
   );
 }

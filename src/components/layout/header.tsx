@@ -107,9 +107,9 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
             <Building2 className="h-4 w-4" />
           </Link>
 
-        {/* Mobile Page Title (Middle) */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 lg:hidden pointer-events-none">
-          <span className="text-[15px] font-bold text-slate-900">
+        {/* Mobile page title participates in flex layout so it cannot overlap actions. */}
+        <div className="min-w-0 flex-1 pr-2 lg:hidden">
+          <span className="block truncate text-[15px] font-bold text-slate-900">
             {pathname.startsWith('/projects') ? 'Công trình' :
              pathname.startsWith('/documents') ? 'Tài liệu' :
              pathname.startsWith('/reports') ? 'Báo cáo' :
@@ -134,7 +134,7 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
         </div>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           {/* Global Search */}
           <GlobalSearchCommand globalContext={globalContext} />
           

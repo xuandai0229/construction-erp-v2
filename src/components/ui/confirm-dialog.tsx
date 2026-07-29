@@ -84,12 +84,12 @@ export function ConfirmDialog({
         className="relative flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl shadow-slate-950/20 outline-none animate-in zoom-in-95 duration-200 sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex gap-4 overflow-y-auto px-5 py-5 sm:p-6">
+        <div className="flex min-w-0 gap-4 overflow-y-auto px-5 py-5 sm:p-6">
           <div className={`flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full ${colors[variant]}`}>
             {icons[variant]}
           </div>
-          <div className="flex-1 mt-1">
-            <h3 id="confirm-dialog-title" className="text-lg font-bold text-slate-900 mb-2">
+          <div className="mt-1 min-w-0 flex-1">
+            <h3 id="confirm-dialog-title" className="mb-2 pr-8 text-lg font-bold leading-6 text-slate-900">
               {title}
             </h3>
             {description && (

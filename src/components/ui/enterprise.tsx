@@ -21,7 +21,7 @@ export function PageHeader({ className, ...props }: React.HTMLAttributes<HTMLEle
   return (
     <section
       className={cn(
-        "rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-card)] sm:p-5 lg:rounded-2xl",
+        "min-w-0 max-w-full rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-card)] sm:p-5 lg:rounded-2xl",
         className,
       )}
       {...props}
@@ -57,7 +57,7 @@ export function ContentCard({ className, ...props }: React.HTMLAttributes<HTMLDi
   return (
     <div
       className={cn(
-        "rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-card)] lg:rounded-2xl",
+        "min-w-0 max-w-full rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-card)] lg:rounded-2xl",
         className,
       )}
       {...props}
@@ -70,7 +70,7 @@ export function FilterBar({ className, ...props }: React.HTMLAttributes<HTMLDivE
   return (
     <div
       className={cn(
-        "rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow-card)] sm:p-4",
+        "min-w-0 max-w-full rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow-card)] sm:p-4",
         className,
       )}
       {...props}
@@ -124,7 +124,7 @@ export function KpiCard({
       )}
     >
       <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0 text-sm font-semibold text-[var(--muted-foreground)] whitespace-nowrap">{label}</div>
+        <div className="min-w-0 text-sm font-semibold leading-5 text-[var(--muted-foreground)]">{label}</div>
         {icon ? (
           <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-colors group-hover:bg-blue-100 group-hover:border-blue-200 group-hover:text-blue-700", toneClasses[tone])}>
             {icon}

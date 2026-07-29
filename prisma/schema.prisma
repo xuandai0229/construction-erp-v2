@@ -262,6 +262,7 @@ model User {
   supervisionWeeklyDossiersReviewed SupervisionWeeklyDossier[]      @relation("SupervisionWeeklyDossierReviewer")
   supervisionWeeklyRevisionActors   SupervisionWeeklyRevision[]     @relation("SupervisionWeeklyRevisionActor")
 
+
   @@index([email])
   @@index([username])
   @@index([createdAt])
@@ -317,6 +318,7 @@ model Project {
   supervisionWeeklyTransitions     SupervisionWeeklyTransition[]
   supervisionWeeklyProgressRows    SupervisionWeeklyProgress[]
   supervisionWeeklyObservations    SupervisionWeeklyObservation[]
+
 
   @@index([code])
   @@index([status])

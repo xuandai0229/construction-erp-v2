@@ -1,112 +1,47 @@
 "use client";
 
-import type { DashboardData } from '@/lib/dashboard/dashboard-queries';
-import { cn } from '@/lib/utils';
-import { ExecutiveLiveClock } from './executive-live-clock';
-import type { DrawerType } from './executive-detail-drawer';
+import { Building2, Globe2 } from "lucide-react";
+import type { DashboardData } from "@/lib/dashboard/dashboard-queries";
+import type { DashboardContext } from "@/lib/dashboard/dashboard-context";
+import { ProjectName } from "@/components/project/project-name";
+import { ExecutiveLiveClock } from "./executive-live-clock";
 
-export function ExecutiveHeader({ 
-  data,
-  onOpenDrawer,
-}: { 
-  data: DashboardData;
-  onOpenDrawer?: (type: DrawerType) => void;
-}) {
-  const pendingActions = data.actionItems.length;
-  const atRiskProjects = data.projectOverview.filter(p => p.health === 'AT_RISK' || p.health === 'DELAYED').length;
-  const pendingApprovals = data.pendingApprovals.length;
+export function ExecutiveHeader({ data, context }: { data: DashboardData; context: DashboardContext }) {
+  const selectedProject = context.mode === "PROJECT"
+    ? data.projectOverview.find((project) => project.id === context.projectId) ?? null
+    : null;
 
   return (
-    <section className="relative overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-elevated)] min-h-[160px] md:min-h-[210px] xl:min-h-[240px] flex flex-col justify-center">
-      {/* Background Image Layer */}
+    <section className="relative min-h-40 overflow-clip rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-elevated)] md:min-h-48">
       <div
-        className="absolute inset-0 z-0 bg-no-repeat bg-cover bg-[center_right]"
+        className="absolute inset-0 bg-cover bg-[center_right] bg-no-repeat"
         style={{ backgroundImage: "url('/images/dashboard/dashboard-hero-2400x420-v4.png')" }}
+        aria-hidden="true"
       />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.99)_0%,rgba(255,255,255,0.94)_42%,rgba(255,255,255,0.28)_76%,rgba(255,255,255,0.06)_100%)]" aria-hidden="true" />
 
-      {/* Gradient Readability Layer */}
-      <div
-        className="absolute inset-0 z-10 pointer-events-none"
-        style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.92) 30%, rgba(255,255,255,0.58) 52%, rgba(255,255,255,0.18) 72%, rgba(255,255,255,0.02) 100%)' }}
-      />
+      <div className="relative z-10 flex min-h-40 max-w-3xl flex-col justify-center gap-4 px-5 py-6 sm:px-7 md:min-h-48 md:px-9">
+        <div className="inline-flex w-fit max-w-full items-center gap-2 rounded-full border border-slate-200 bg-white/85 px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm backdrop-blur">
+          {context.mode === "PORTFOLIO" ? <Globe2 className="size-4 shrink-0 text-blue-600" aria-hidden="true" /> : <Building2 className="size-4 shrink-0 text-blue-600" aria-hidden="true" />}
+          <span>{context.mode === "PORTFOLIO" ? "Phạm vi toàn hệ thống" : "Phạm vi một công trình"}</span>
+        </div>
 
-      {/* Premium Depth Layers */}
-      <div
-        className="absolute inset-0 z-[11] pointer-events-none"
-        style={{ background: 'radial-gradient(circle at 75% 45%, rgba(59,130,246,0.16), transparent 42%)' }}
-      />
-      <div
-        className="absolute inset-0 z-[12] pointer-events-none"
-        style={{
-          backgroundImage: 'linear-gradient(rgba(148,163,184,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,0.08) 1px, transparent 1px)',
-          backgroundSize: '32px 32px'
-        }}
-      />
+        <div className="min-w-0">
+          <h1 className="text-2xl font-black leading-tight tracking-tight text-slate-950 sm:text-[28px]">
+            {context.mode === "PORTFOLIO" ? "Tổng quan điều hành toàn hệ thống" : "Điều hành công trình"}
+          </h1>
+          {selectedProject ? (
+            <ProjectName name={selectedProject.name} maxLines={2} className="mt-1 text-base font-bold text-slate-700 sm:text-lg" />
+          ) : (
+            <p className="mt-1 max-w-xl text-sm leading-6 text-slate-600">So sánh tiến độ, rủi ro và chất lượng dữ liệu giữa các công trình trong phạm vi được phép xem.</p>
+          )}
+        </div>
 
-      <div className="relative z-20 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between px-6 py-6 lg:px-9 lg:py-8 max-w-full sm:max-w-[58%]">
-        <div className="flex flex-col gap-4">
-          <div className="space-y-1.5 pr-2">
-            <h1 className="text-2xl sm:text-[28px] font-extrabold tracking-tight bg-gradient-to-br from-slate-950 via-slate-800 to-slate-600 bg-clip-text text-transparent drop-shadow-sm leading-tight">
-              Tổng quan điều hành hôm nay
-            </h1>
-            <div className="text-[13.5px] font-medium text-[var(--muted-foreground)] flex flex-wrap items-center gap-3 pt-1">
-              <ExecutiveLiveClock />
-              <div className="flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-100 bg-white/80 px-2 py-0.5 shadow-sm backdrop-blur-md">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
-                </span>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Live</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3.5 mt-2">
-            <button
-              type="button"
-              onClick={() => onOpenDrawer?.("ACTIONS")}
-              className={cn(
-                "group relative flex items-center gap-2 sm:gap-2.5 rounded-full border px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-[13px] font-bold transition-all duration-300 ease-out overflow-hidden cursor-pointer text-left",
-                pendingActions > 0
-                  ? "border-amber-200/60 bg-gradient-to-b from-amber-50/90 to-amber-100/50 text-amber-800 shadow-[0_4px_16px_rgba(251,191,36,0.15)] hover:shadow-[0_6px_20px_rgba(251,191,36,0.25)] hover:-translate-y-0.5"
-                  : "border-[var(--border)] bg-[var(--surface)]/60 backdrop-blur-md text-[var(--muted-foreground)] shadow-[var(--shadow-card)] hover:bg-white/90 hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5"
-              )}
-            >
-              <div className="absolute inset-0 bg-gradient-to-b from-white/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className={cn("relative h-2 w-2 rounded-full shrink-0", pendingActions > 0 ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]" : "bg-slate-400")} />
-              <span className="relative z-10"><span className="text-[14px] font-black mr-0.5">{pendingActions}</span> việc cần xử lý</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onOpenDrawer?.("RISK")}
-              className={cn(
-                "group relative flex items-center gap-2 sm:gap-2.5 rounded-full border px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-[13px] font-bold transition-all duration-300 ease-out overflow-hidden cursor-pointer text-left",
-                atRiskProjects > 0
-                  ? "border-rose-200/60 bg-gradient-to-b from-rose-50/90 to-rose-100/50 text-rose-800 shadow-[0_4px_16px_rgba(244,63,94,0.15)] hover:shadow-[0_6px_20px_rgba(244,63,94,0.25)] hover:-translate-y-0.5"
-                  : "border-[var(--border)] bg-[var(--surface)]/60 backdrop-blur-md text-[var(--muted-foreground)] shadow-[var(--shadow-card)] hover:bg-white/90 hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5"
-              )}
-            >
-              <div className="absolute inset-0 bg-gradient-to-b from-white/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className={cn("relative h-2 w-2 rounded-full shrink-0", atRiskProjects > 0 ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]" : "bg-slate-400")} />
-              <span className="relative z-10"><span className="text-[14px] font-black mr-0.5">{atRiskProjects}</span> công trình rủi ro</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onOpenDrawer?.("PENDING_APPROVALS")}
-              className={cn(
-                "group relative flex items-center gap-2 sm:gap-2.5 rounded-full border px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-[13px] font-bold transition-all duration-300 ease-out overflow-hidden cursor-pointer text-left",
-                pendingApprovals > 0
-                  ? "border-blue-200/60 bg-gradient-to-b from-blue-50/90 to-blue-100/50 text-blue-800 shadow-[0_4px_16px_rgba(59,130,246,0.15)] hover:shadow-[0_6px_20px_rgba(59,130,246,0.25)] hover:-translate-y-0.5"
-                  : "border-[var(--border)] bg-[var(--surface)]/60 backdrop-blur-md text-[var(--muted-foreground)] shadow-[var(--shadow-card)] hover:bg-white/90 hover:shadow-[var(--shadow-elevated)] hover:-translate-y-0.5"
-              )}
-            >
-              <div className="absolute inset-0 bg-gradient-to-b from-white/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className={cn("relative h-2 w-2 rounded-full shrink-0", pendingApprovals > 0 ? "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]" : "bg-slate-400")} />
-              <span className="relative z-10"><span className="text-[14px] font-black mr-0.5">{pendingApprovals}</span> hồ sơ chờ duyệt</span>
-            </button>
-          </div>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs font-medium text-slate-600">
+          <ExecutiveLiveClock />
+          <span aria-hidden="true" className="hidden size-1 rounded-full bg-slate-300 sm:block" />
+          <span>Kỳ dữ liệu: {data.period.label}</span>
+          {selectedProject ? <><span aria-hidden="true" className="hidden size-1 rounded-full bg-slate-300 sm:block" /><span className="font-mono">{selectedProject.code}</span></> : null}
         </div>
       </div>
     </section>
