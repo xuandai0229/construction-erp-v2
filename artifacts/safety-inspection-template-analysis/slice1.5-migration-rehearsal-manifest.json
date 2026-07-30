@@ -1,14 +1,14 @@
 {
-  "runId": "7dc002eb-1ca8-4b2a-b35a-8f15103f6a5e",
-  "startedAtUtc": "2026-07-30T02:49:50.022Z",
-  "completedAtUtc": "2026-07-30T02:49:56.291Z",
+  "runId": "c3c8f46d-630a-4b1d-aef3-5e9a71b86cce",
+  "startedAtUtc": "2026-07-30T03:35:10.429Z",
+  "completedAtUtc": "2026-07-30T03:35:18.368Z",
   "sourceQa": {
     "database": "construction_erp_v2_qa_e2e_20260723",
     "host": "127.0.0.1",
     "port": "5432"
   },
   "rehearsalDatabase": {
-    "database": "construction_erp_v2_qa_safety_migration_rehearsal_7dc002eb1c",
+    "database": "construction_erp_v2_qa_safety_migration_rehearsal_c3c8f46d63",
     "host": "127.0.0.1",
     "port": "5432"
   },
@@ -21,13 +21,13 @@
     {
       "command": "npx prisma migrate deploy",
       "exitCode": 0,
-      "stdout": "Datasource \"db\": PostgreSQL database \"construction_erp_v2_qa_safety_migration_rehearsal_7dc002eb1c\", schema \"public\" at \"127.0.0.1:5432\"\n\n14 migrations found in prisma/migrations\n\nApplying migration `0_baseline_v2_existing_product_schema`\nApplying migration `20260716090000_work_management_main_product_phase1`\nApplying migration `20260717000000_approval_request_legacy_compatibility`\nApplying migration `20260717120000_supervision_head_weekly`\nApplying migration `20260720143000_supervision_weekly_rebuild`\nApplying migration `20260720150000_supervision_weekly_result_tables`\nApplying migration `20260720170000_supervision_weekly_input_ux`\nApplying migration `20260720183000_supervision_weekly_direct_entry`\nApplying migration `20260720195000_supervision_weekly_category_work_split`\nApplying migration `20260723120000_supervision_weekly_verification_fields_reconcile`\nApplying migration `20260727120000_add_construction_supervisor_role`\nApplying migration `20260727170000_add_executive_weekly_report`\nApplying migration `20260728110000_remove_executive_weekly_reports`\nApplying migration `20260730150000_add_safety_inspection_slice1`\n\nThe following migration(s) have been applied:\n\nmigrations/\n  └─ 0_baseline_v2_existing_product_schema/\n    └─ migration.sql\n  └─ 20260716090000_work_management_main_product_phase1/\n    └─ migration.sql\n  └─ 20260717000000_approval_request_legacy_compatibility/\n    └─ migration.sql\n  └─ 20260717120000_supervision_head_weekly/\n    └─ migration.sql\n  └─ 20260720143000_supervision_weekly_rebuild/\n    └─ migration.sql\n  └─ 20260720150000_supervision_weekly_result_tables/\n    └─ migration.sql\n  └─ 20260720170000_supervision_weekly_input_ux/\n    └─ migration.sql\n  └─ 20260720183000_supervision_weekly_direct_entry/\n    └─ migration.sql\n  └─ 20260720195000_supervision_weekly_category_work_split/\n    └─ migration.sql\n  └─ 20260723120000_supervision_weekly_verification_fields_reconcile/\n    └─ migration.sql\n  └─ 20260727120000_add_construction_supervisor_role/\n    └─ migration.sql\n  └─ 20260727170000_add_executive_weekly_report/\n    └─ migration.sql\n  └─ 20260728110000_remove_executive_weekly_reports/\n    └─ migration.sql\n  └─ 20260730150000_add_safety_inspection_slice1/\n    └─ migration.sql\n\nAll migrations have been successfully applied.",
+      "stdout": "Datasource \"db\": PostgreSQL database \"construction_erp_v2_qa_safety_migration_rehearsal_c3c8f46d63\", schema \"public\" at \"127.0.0.1:5432\"\n\n15 migrations found in prisma/migrations\n\nApplying migration `0_baseline_v2_existing_product_schema`\nApplying migration `20260716090000_work_management_main_product_phase1`\nApplying migration `20260717000000_approval_request_legacy_compatibility`\nApplying migration `20260717120000_supervision_head_weekly`\nApplying migration `20260720143000_supervision_weekly_rebuild`\nApplying migration `20260720150000_supervision_weekly_result_tables`\nApplying migration `20260720170000_supervision_weekly_input_ux`\nApplying migration `20260720183000_supervision_weekly_direct_entry`\nApplying migration `20260720195000_supervision_weekly_category_work_split`\nApplying migration `20260723120000_supervision_weekly_verification_fields_reconcile`\nApplying migration `20260727120000_add_construction_supervisor_role`\nApplying migration `20260727170000_add_executive_weekly_report`\nApplying migration `20260728110000_remove_executive_weekly_reports`\nApplying migration `20260730150000_add_safety_inspection_slice1`\nApplying migration `20260730190000_add_safety_checklist_v1_metadata`\n\nThe following migration(s) have been applied:\n\nmigrations/\n  └─ 0_baseline_v2_existing_product_schema/\n    └─ migration.sql\n  └─ 20260716090000_work_management_main_product_phase1/\n    └─ migration.sql\n  └─ 20260717000000_approval_request_legacy_compatibility/\n    └─ migration.sql\n  └─ 20260717120000_supervision_head_weekly/\n    └─ migration.sql\n  └─ 20260720143000_supervision_weekly_rebuild/\n    └─ migration.sql\n  └─ 20260720150000_supervision_weekly_result_tables/\n    └─ migration.sql\n  └─ 20260720170000_supervision_weekly_input_ux/\n    └─ migration.sql\n  └─ 20260720183000_supervision_weekly_direct_entry/\n    └─ migration.sql\n  └─ 20260720195000_supervision_weekly_category_work_split/\n    └─ migration.sql\n  └─ 20260723120000_supervision_weekly_verification_fields_reconcile/\n    └─ migration.sql\n  └─ 20260727120000_add_construction_supervisor_role/\n    └─ migration.sql\n  └─ 20260727170000_add_executive_weekly_report/\n    └─ migration.sql\n  └─ 20260728110000_remove_executive_weekly_reports/\n    └─ migration.sql\n  └─ 20260730150000_add_safety_inspection_slice1/\n    └─ migration.sql\n  └─ 20260730190000_add_safety_checklist_v1_metadata/\n    └─ migration.sql\n\nAll migrations have been successfully applied.",
       "stderr": "Loaded Prisma config from prisma.config.ts.\n\nPrisma schema loaded from prisma\\schema.prisma."
     },
     {
       "command": "npx prisma migrate status",
       "exitCode": 0,
-      "stdout": "Datasource \"db\": PostgreSQL database \"construction_erp_v2_qa_safety_migration_rehearsal_7dc002eb1c\", schema \"public\" at \"127.0.0.1:5432\"\n\n14 migrations found in prisma/migrations\n\nDatabase schema is up to date!",
+      "stdout": "Datasource \"db\": PostgreSQL database \"construction_erp_v2_qa_safety_migration_rehearsal_c3c8f46d63\", schema \"public\" at \"127.0.0.1:5432\"\n\n15 migrations found in prisma/migrations\n\nDatabase schema is up to date!",
       "stderr": "Loaded Prisma config from prisma.config.ts.\n\nPrisma schema loaded from prisma\\schema.prisma."
     },
     {
@@ -37,95 +37,101 @@
       "stderr": "Loaded Prisma config from prisma.config.ts."
     },
     {
-      "command": "npx tsx scripts/qa/safety-inspection-slice15.integration.ts",
+      "command": "npx tsx scripts/qa/safety-slice2a-http.integration.ts",
       "exitCode": 0,
-      "stdout": "{\"runId\":\"8d4072b4-5507-4ba3-881e-a91fd47e142c\",\"database\":\"construction_erp_v2_qa_safety_migration_rehearsal_7dc002eb1c\",\"assertions\":{\"singleActiveChecklist\":true,\"singleActiveDocumentTemplate\":true,\"planScopeRollback\":true,\"concurrentIdempotencyReplay\":true,\"idempotencyHashMismatchBlocked\":true,\"concurrentVersionConflictSafe\":true,\"multipleFindingsPerResult\":true,\"failToPassBlocked\":true,\"completedSessionBlocked\":true,\"independentPolicyServerSide\":true,\"reinspectionMatrixRuntime\":true,\"evidenceDocumentProjectBlocked\":true,\"evidenceAssignmentStateAndVoid\":true,\"crossProjectEvidenceViewBlocked\":true,\"databaseCheckConstraints\":true,\"reportScopeRollback\":true,\"scopeRetentionAndRemoval\":true},\"fixtureCleanup\":\"DATABASE_REHEARSAL_DROP\",\"artifactPath\":\"D:\\\\construction-erp-v2\\\\artifacts\\\\safety-inspection-template-analysis\\\\slice1.5-integration-manifest.json\"}",
-      "stderr": "(node:17800) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)"
+      "stdout": "{\"runId\":\"ed366ff5-4fd6-45df-a1c9-9ddc2ee2b16f\",\"database\":\"construction_erp_v2_qa_safety_migration_rehearsal_c3c8f46d63\",\"requestCount\":19,\"assertions\":{\"unauthenticatedRejected\":true,\"tamperedActorIgnored\":true,\"crossProjectPlanFiltered\":true,\"crossProjectFindingDenied\":true,\"checklistActiveRead\":true,\"planSubmitApproveRealRoles\":true,\"failCreatesMultipleFindings\":true,\"concurrentIdempotencyReplay\":true,\"concurrentVersionConflictSafe\":true,\"checklistOutsideTemplateRejected\":true,\"crossProjectMutationDenied\":true,\"completedSessionLocked\":true,\"adminCannotEditFinding\":true,\"approvalEnvelopeFollowsAggregate\":true,\"auditCorrelationId\":true,\"noPrismaOrStackLeak\":true,\"bootstrapIdempotentAndHashSafe\":true},\"artifactPath\":\"D:\\\\construction-erp-v2\\\\artifacts\\\\safety-inspection-template-analysis\\\\slice2a-runtime-request-manifest.json\"}",
+      "stderr": ""
     }
   ],
   "appliedMigrations": [
     {
       "migrationName": "0_baseline_v2_existing_product_schema",
       "checksum": "8989b409c44c80b42aa18adfac61411e45bc575dd14a60d9bda0ec18b112a38c",
-      "finishedAt": "2026-07-30T02:49:51.894Z",
+      "finishedAt": "2026-07-30T03:35:12.301Z",
       "rolledBackAt": null
     },
     {
       "migrationName": "20260716090000_work_management_main_product_phase1",
       "checksum": "21a19b82a067007bad261f4787daafdee8a82fd3f0289cec744c694a05f191cc",
-      "finishedAt": "2026-07-30T02:49:51.934Z",
+      "finishedAt": "2026-07-30T03:35:12.337Z",
       "rolledBackAt": null
     },
     {
       "migrationName": "20260717000000_approval_request_legacy_compatibility",
       "checksum": "ddbc3acdbad81ed785a334b020bce7e7e6400be5cdbd6b4d5c9cd72c9d3e8096",
-      "finishedAt": "2026-07-30T02:49:51.937Z",
+      "finishedAt": "2026-07-30T03:35:12.340Z",
       "rolledBackAt": null
     },
     {
       "migrationName": "20260717120000_supervision_head_weekly",
       "checksum": "8bbf7d1351216c2b488faf5b12bfb155bd1065974237e60bf9891e25306cd82b",
-      "finishedAt": "2026-07-30T02:49:51.992Z",
+      "finishedAt": "2026-07-30T03:35:12.393Z",
       "rolledBackAt": null
     },
     {
       "migrationName": "20260720143000_supervision_weekly_rebuild",
       "checksum": "deb1499be965a30cf67d311c2640f7472006ebd31172ff7ae4e883184b04307f",
-      "finishedAt": "2026-07-30T02:49:52.049Z",
+      "finishedAt": "2026-07-30T03:35:12.453Z",
       "rolledBackAt": null
     },
     {
       "migrationName": "20260720150000_supervision_weekly_result_tables",
       "checksum": "5452d1565b3e3259a7195d0257d8dd10bbf78a637dd035fa076951f6db6e1032",
-      "finishedAt": "2026-07-30T02:49:52.058Z",
+      "finishedAt": "2026-07-30T03:35:12.464Z",
       "rolledBackAt": null
     },
     {
       "migrationName": "20260720170000_supervision_weekly_input_ux",
       "checksum": "7aedc824c21c5ac45bdf826d6b22e05382afde2afd11b286dcc788464d403db0",
-      "finishedAt": "2026-07-30T02:49:52.062Z",
+      "finishedAt": "2026-07-30T03:35:12.467Z",
       "rolledBackAt": null
     },
     {
       "migrationName": "20260720183000_supervision_weekly_direct_entry",
       "checksum": "7aeafb1a323a538807b3c1badec518442d1a8e3573497504e37506380ad3258d",
-      "finishedAt": "2026-07-30T02:49:52.064Z",
+      "finishedAt": "2026-07-30T03:35:12.470Z",
       "rolledBackAt": null
     },
     {
       "migrationName": "20260720195000_supervision_weekly_category_work_split",
       "checksum": "2399ff36da037711946c6f5aacbed44cec539a438bd8a451c8b169e396a3582b",
-      "finishedAt": "2026-07-30T02:49:52.066Z",
+      "finishedAt": "2026-07-30T03:35:12.473Z",
       "rolledBackAt": null
     },
     {
       "migrationName": "20260723120000_supervision_weekly_verification_fields_reconcile",
       "checksum": "3f8af0c63b8ade75f50bb0d631ce5fe68941275e161c534487adf3ccc1fce2f4",
-      "finishedAt": "2026-07-30T02:49:52.068Z",
+      "finishedAt": "2026-07-30T03:35:12.474Z",
       "rolledBackAt": null
     },
     {
       "migrationName": "20260727120000_add_construction_supervisor_role",
       "checksum": "50eb3f8c05b50b99a7d25237460cbfda847f6dbea66b68b39e4dfec25d875ce6",
-      "finishedAt": "2026-07-30T02:49:52.069Z",
+      "finishedAt": "2026-07-30T03:35:12.475Z",
       "rolledBackAt": null
     },
     {
       "migrationName": "20260727170000_add_executive_weekly_report",
       "checksum": "32f7cb7f8d31ce349c6441ccc02732668de588d8562e6a6f537e8bbf10726cca",
-      "finishedAt": "2026-07-30T02:49:52.070Z",
+      "finishedAt": "2026-07-30T03:35:12.477Z",
       "rolledBackAt": null
     },
     {
       "migrationName": "20260728110000_remove_executive_weekly_reports",
       "checksum": "3faf0d0842e305ed0da53f30d0009bd91cd4cb10a19d725ccd30ecf0cd8e264a",
-      "finishedAt": "2026-07-30T02:49:52.071Z",
+      "finishedAt": "2026-07-30T03:35:12.478Z",
       "rolledBackAt": null
     },
     {
       "migrationName": "20260730150000_add_safety_inspection_slice1",
       "checksum": "7eb1d6a11ce056f9fc1f3c066e60698462e20af269c4507b9a4dd9464b7a5815",
-      "finishedAt": "2026-07-30T02:49:52.317Z",
+      "finishedAt": "2026-07-30T03:35:12.699Z",
+      "rolledBackAt": null
+    },
+    {
+      "migrationName": "20260730190000_add_safety_checklist_v1_metadata",
+      "checksum": "2d102e6345bc824bfc4976dc0d1a58f632ea0419d0da3b1c8660fc5436eab9f0",
+      "finishedAt": "2026-07-30T03:35:12.701Z",
       "rolledBackAt": null
     }
   ],
@@ -141,6 +147,7 @@
     "SafetyChecklistItem_sectionId_fkey",
     "SafetyChecklistSection_pkey",
     "SafetyChecklistSection_templateId_fkey",
+    "SafetyChecklistTemplate_canonical_hash_check",
     "SafetyChecklistTemplate_createdById_fkey",
     "SafetyChecklistTemplate_pkey",
     "SafetyCorrectiveAction_assigneeUserId_fkey",
@@ -233,11 +240,15 @@
   ],
   "migrateDeployPassed": true,
   "migrateStatusClean": true,
-  "schemaDiffClean": true,
-  "schemaDiffRawExitCode": 2,
-  "explainedDriftEntities": [
-    "SafetyChecklistTemplate",
-    "SafetyDocumentTemplate",
+  "safetySchemaDriftClean": true,
+  "repositorySchemaDriftClean": false,
+  "rawExitCode": 2,
+  "allowedDifferences": [
+    "SafetyChecklistTemplate_one_active_per_code",
+    "SafetyDocumentTemplate_one_active_per_type"
+  ],
+  "unexpectedDifferences": [],
+  "repositoryLegacyDifferences": [
     "SupervisionAttachment",
     "SupervisionInspectionSchedule",
     "SupervisionInspectionStatus",
@@ -246,11 +257,20 @@
     "SupervisionRecommendation",
     "SupervisionTransitionCheck",
     "SupervisionWeeklyEntry",
+    "SupervisionWeeklyEntry_dossierId_documentType_entryDate_shi_idx",
+    "SupervisionWeeklyEntry_dossierId_documentType_entryDate_shift_s",
     "SupervisionWeeklyObservation",
-    "SupervisionWeeklyShiftSelection"
+    "SupervisionWeeklyObservation_dossierId_documentType_categor_idx",
+    "SupervisionWeeklyObservation_dossierId_documentType_category_so",
+    "SupervisionWeeklyShiftSelection",
+    "SupervisionWeeklyShiftSelection_dossierId_documentType_entr_idx",
+    "SupervisionWeeklyShiftSelection_dossierId_documentType_entr_key",
+    "SupervisionWeeklyShiftSelection_dossierId_documentType_entryDat",
+    "SupervisionWeeklyShiftSelection_lookup_idx"
   ],
-  "unexpectedDriftEntities": [],
-  "integrationPassed": true,
+  "repositoryLegacyDriftStatus": "REPOSITORY LEGACY DRIFT — NGOÀI PHẠM VI SAFETY — PRODUCTION RELEASE BLOCKER",
+  "integrationPassed": null,
+  "slice2aHttpPassed": true,
   "databaseDropped": true,
   "failure": null
 }

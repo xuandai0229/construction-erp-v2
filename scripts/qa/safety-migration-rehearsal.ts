@@ -39,11 +39,17 @@ type RehearsalManifest = {
   partialUniqueIndexes: string[];
   migrateDeployPassed: boolean;
   migrateStatusClean: boolean;
-  schemaDiffClean: boolean;
-  schemaDiffRawExitCode: number | null;
-  explainedDriftEntities: string[];
-  unexpectedDriftEntities: string[];
+  safetySchemaDriftClean: boolean;
+  repositorySchemaDriftClean: boolean;
+  rawExitCode: number | null;
+  allowedDifferences: string[];
+  unexpectedDifferences: string[];
+  repositoryLegacyDifferences: string[];
+  repositoryLegacyDriftStatus:
+    | "NONE"
+    | "REPOSITORY LEGACY DRIFT — NGOÀI PHẠM VI SAFETY — PRODUCTION RELEASE BLOCKER";
   integrationPassed: boolean | null;
+  slice2aHttpPassed: boolean | null;
   databaseDropped: boolean;
   failure: string | null;
 };
@@ -154,11 +160,15 @@ async function main(): Promise<void> {
     partialUniqueIndexes: [],
     migrateDeployPassed: false,
     migrateStatusClean: false,
-    schemaDiffClean: false,
-    schemaDiffRawExitCode: null,
-    explainedDriftEntities: [],
-    unexpectedDriftEntities: [],
+    safetySchemaDriftClean: false,
+    repositorySchemaDriftClean: false,
+    rawExitCode: null,
+    allowedDifferences: [],
+    unexpectedDifferences: [],
+    repositoryLegacyDifferences: [],
+    repositoryLegacyDriftStatus: "NONE",
     integrationPassed: null,
+    slice2aHttpPassed: null,
     databaseDropped: false,
     failure: null,
   };
@@ -234,43 +244,40 @@ async function main(): Promise<void> {
       secrets: [password, rehearsalUrlValue],
     });
     manifest.commands.push(diff);
-    manifest.schemaDiffRawExitCode = diff.exitCode;
+    manifest.rawExitCode = diff.exitCode;
     if (diff.exitCode !== 0 && diff.exitCode !== 2) {
       throw new Error("Không thể thực hiện schema diff.");
     }
-    const driftEntities = [
-      ...diff.stdout.matchAll(/Changed the `([^`]+)` table/g),
-      ...diff.stdout.matchAll(/^\s+-\s+([A-Za-z][A-Za-z0-9_]*)$/gm),
-    ].map((match) => match[1]);
-    const allowedDriftEntities = new Set([
-      "SafetyChecklistTemplate",
-      "SafetyDocumentTemplate",
-      "SupervisionAttachment",
-      "SupervisionInspectionSchedule",
-      "SupervisionInspectionStatus",
-      "SupervisionProgressAssessment",
-      "SupervisionQuantityVerification",
-      "SupervisionRecommendation",
-      "SupervisionTransitionCheck",
-      "SupervisionWeeklyEntry",
-      "SupervisionWeeklyObservation",
-      "SupervisionWeeklyShiftSelection",
-    ]);
-    manifest.explainedDriftEntities = [
-      ...new Set(
-        driftEntities.filter((entity) => allowedDriftEntities.has(entity)),
-      ),
-    ].sort();
-    manifest.unexpectedDriftEntities = [
-      ...new Set(
-        driftEntities.filter((entity) => !allowedDriftEntities.has(entity)),
-      ),
-    ].sort();
-    manifest.schemaDiffClean =
-      diff.exitCode === 0 || manifest.unexpectedDriftEntities.length === 0;
-    if (!manifest.schemaDiffClean) {
-      throw new Error("Schema drift ngoài allowlist chưa được giải thích.");
+    const expectedSafetyDiffs = [
+      {
+        objectName: "SafetyChecklistTemplate_one_active_per_code",
+        pattern:
+          /\[\*\] Changed the `SafetyChecklistTemplate` table\r?\n\s+\[-\] Removed unique index on columns \(code\)\r?\n?/g,
+      },
+      {
+        objectName: "SafetyDocumentTemplate_one_active_per_type",
+        pattern:
+          /\[\*\] Changed the `SafetyDocumentTemplate` table\r?\n\s+\[-\] Removed unique index on columns \(templateType\)\r?\n?/g,
+      },
+    ] as const;
+    let safetyRemainder = diff.stdout;
+    for (const allowed of expectedSafetyDiffs) {
+      if (safetyRemainder.match(allowed.pattern)) {
+        manifest.allowedDifferences.push(allowed.objectName);
+        safetyRemainder = safetyRemainder.replace(allowed.pattern, "");
+      }
     }
+    manifest.unexpectedDifferences = [
+      ...new Set(safetyRemainder.match(/Safety[A-Za-z0-9_]*/g) ?? []),
+    ].sort();
+    manifest.repositoryLegacyDifferences = [
+      ...new Set(diff.stdout.match(/Supervision[A-Za-z0-9_]*/g) ?? []),
+    ].sort();
+    if (manifest.repositoryLegacyDifferences.length > 0) {
+      manifest.repositoryLegacyDriftStatus =
+        "REPOSITORY LEGACY DRIFT — NGOÀI PHẠM VI SAFETY — PRODUCTION RELEASE BLOCKER";
+    }
+    manifest.repositorySchemaDriftClean = diff.exitCode === 0;
 
     const verification = new Client({ connectionString: rehearsalUrlValue });
     await verification.connect();
@@ -314,6 +321,22 @@ async function main(): Promise<void> {
     } finally {
       await verification.end();
     }
+    const exactSafetyAllowlist = [
+      "SafetyChecklistTemplate_one_active_per_code",
+      "SafetyDocumentTemplate_one_active_per_type",
+    ];
+    manifest.safetySchemaDriftClean =
+      manifest.unexpectedDifferences.length === 0 &&
+      exactSafetyAllowlist.every(
+        (name) =>
+          manifest.allowedDifferences.includes(name) &&
+          manifest.partialUniqueIndexes.includes(name),
+      );
+    if (!manifest.safetySchemaDriftClean) {
+      throw new Error(
+        "Safety schema drift có khác biệt ngoài đúng hai partial index đã cho phép.",
+      );
+    }
 
     if (process.env.RUN_SAFETY_SLICE15_INTEGRATION === "true") {
       const integration = await runCommand({
@@ -336,6 +359,29 @@ async function main(): Promise<void> {
       manifest.integrationPassed = integration.exitCode === 0;
       if (integration.exitCode !== 0) {
         throw new Error("Integration/concurrency suite thất bại.");
+      }
+    }
+    if (process.env.RUN_SAFETY_SLICE2A_HTTP === "true") {
+      const httpSuite = await runCommand({
+        label:
+          "npx tsx scripts/qa/safety-slice2a-http.integration.ts",
+        executable: process.execPath,
+        args: [
+          path.resolve("node_modules/tsx/dist/cli.mjs"),
+          path.resolve(
+            "scripts/qa/safety-slice2a-http.integration.ts",
+          ),
+        ],
+        environment: {
+          ...process.env,
+          QA_DATABASE_URL: rehearsalUrlValue,
+        },
+        secrets: [password, rehearsalUrlValue],
+      });
+      manifest.commands.push(httpSuite);
+      manifest.slice2aHttpPassed = httpSuite.exitCode === 0;
+      if (httpSuite.exitCode !== 0) {
+        throw new Error("HTTP/API security suite Lát 2A thất bại.");
       }
     }
   } catch (error) {
@@ -370,8 +416,11 @@ async function main(): Promise<void> {
         productionDatabase: manifest.productionDatabase,
         migrateDeployPassed: manifest.migrateDeployPassed,
         migrateStatusClean: manifest.migrateStatusClean,
-        schemaDiffClean: manifest.schemaDiffClean,
+        safetySchemaDriftClean: manifest.safetySchemaDriftClean,
+        repositorySchemaDriftClean: manifest.repositorySchemaDriftClean,
+        rawExitCode: manifest.rawExitCode,
         integrationPassed: manifest.integrationPassed,
+        slice2aHttpPassed: manifest.slice2aHttpPassed,
         databaseDropped: manifest.databaseDropped,
         failure: manifest.failure,
         artifactPath,

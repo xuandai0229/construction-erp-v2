@@ -1,0 +1,23 @@
+{
+  "manifestVersion": 1,
+  "code": "SAFETY_COMPANY_V1",
+  "version": 1,
+  "name": "Checklist kiểm tra ATLĐ, PCCC, VSMT Công ty V1",
+  "effectiveFrom": "2026-07-30",
+  "canonicalJsonRule": "SHA-256(JSON.stringify(parsed canonical JSON))",
+  "canonicalSha256": "93d6ceb42aab613effe277aaf78b5552b3616609e70465d7364bd81c99554470",
+  "sectionCount": 7,
+  "itemCount": 75,
+  "reportItemCount": 20,
+  "sourceTemplates": [
+    {
+      "templateType": "WEEKLY_PLAN",
+      "sourceSha256": "723eeebeb93b6dbfe49688bb7faf1414ff1e5602160d9aaa055e1d5e460f50e3"
+    },
+    {
+      "templateType": "WEEKLY_SELF_ASSESSMENT_REPORT",
+      "sourceSha256": "3c334f384cadb52b8bcf058f9f1592de3689f771fc600e4a91936115e820272e"
+    }
+  ],
+  "activationPolicy": "Idempotent; cùng code/version khác hash phải FAIL; không sửa template khóa; chỉ một version active."
+}

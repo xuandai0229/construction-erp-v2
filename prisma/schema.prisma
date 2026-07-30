@@ -2158,6 +2158,7 @@ model SafetyChecklistTemplate {
   code          String
   name          String
   version       Int
+  canonicalHash String?   @db.VarChar(64)
   effectiveFrom DateTime  @db.Date
   effectiveTo   DateTime? @db.Date
   isActive      Boolean   @default(false)
@@ -2190,14 +2191,18 @@ model SafetyChecklistSection {
 }
 
 model SafetyChecklistItem {
-  id                      String  @id @default(cuid())
+  id                      String                   @id @default(cuid())
   sectionId               String
   code                    String
-  sourceText              String  @db.Text
-  normalizedLabel         String? @db.Text
-  sortOrder               Int     @default(0)
-  requiresFindingWhenFail Boolean @default(true)
-  isActive                Boolean @default(true)
+  sourceText              String                   @db.Text
+  normalizedLabel         String?                  @db.Text
+  sourceDocument          String?
+  sourceReference         String?
+  reportItemNumbers       Int[]                    @default([])
+  constructionTypes       SafetyConstructionType[] @default([])
+  sortOrder               Int                      @default(0)
+  requiresFindingWhenFail Boolean                  @default(true)
+  isActive                Boolean                  @default(true)
 
   section            SafetyChecklistSection                  @relation(fields: [sectionId], references: [id], onDelete: Restrict)
   scheduleSelections SafetyInspectionScheduleChecklistItem[]

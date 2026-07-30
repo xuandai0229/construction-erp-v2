@@ -113,7 +113,11 @@ async function main(): Promise<void> {
     completedAtUtc: null,
   };
   const { prisma, close } = createSafeQaPrismaClient(qaUrl);
+  const raceClientOne = createSafeQaPrismaClient(qaUrl);
+  const raceClientTwo = createSafeQaPrismaClient(qaUrl);
   await verifyQaPrismaFingerprint(prisma, safe.qaDatabase);
+  await verifyQaPrismaFingerprint(raceClientOne.prisma, safe.qaDatabase);
+  await verifyQaPrismaFingerprint(raceClientTwo.prisma, safe.qaDatabase);
 
   try {
     const suffix = runId.replaceAll("-", "").slice(0, 10);
@@ -243,14 +247,16 @@ async function main(): Promise<void> {
     checklistTemplates.forEach((row) =>
       addId(manifest, "checklistTemplates", row.id),
     );
-    await Promise.all(
-      checklistTemplates.map((template, index) =>
-        activateSafetyChecklistTemplate(prisma, adminActor, {
-          templateId: template.id,
-          clientMutationId: `${runId}-activate-check-${index}`,
-        }),
-      ),
-    );
+    await Promise.all([
+      activateSafetyChecklistTemplate(raceClientOne.prisma, adminActor, {
+        templateId: checklistTemplates[0].id,
+        clientMutationId: `${runId}-activate-check-0`,
+      }),
+      activateSafetyChecklistTemplate(raceClientTwo.prisma, adminActor, {
+        templateId: checklistTemplates[1].id,
+        clientMutationId: `${runId}-activate-check-1`,
+      }),
+    ]);
     const activeChecklistTemplates =
       await prisma.safetyChecklistTemplate.findMany({
         where: {
@@ -314,14 +320,16 @@ async function main(): Promise<void> {
     documentTemplates.forEach((row) =>
       addId(manifest, "documentTemplates", row.id),
     );
-    await Promise.all(
-      documentTemplates.map((template, index) =>
-        activateSafetyDocumentTemplate(prisma, adminActor, {
-          templateId: template.id,
-          clientMutationId: `${runId}-activate-doc-${index}`,
-        }),
-      ),
-    );
+    await Promise.all([
+      activateSafetyDocumentTemplate(raceClientOne.prisma, adminActor, {
+        templateId: documentTemplates[0].id,
+        clientMutationId: `${runId}-activate-doc-0`,
+      }),
+      activateSafetyDocumentTemplate(raceClientTwo.prisma, adminActor, {
+        templateId: documentTemplates[1].id,
+        clientMutationId: `${runId}-activate-doc-1`,
+      }),
+    ]);
     requireCondition(
       (await prisma.safetyDocumentTemplate.count({
         where: { templateType: "WEEKLY_PLAN", isActive: true },
@@ -461,12 +469,12 @@ async function main(): Promise<void> {
     };
     const sameIdResults = await Promise.all([
       saveInspectionResultWithFinding(
-        prisma,
+        raceClientOne.prisma,
         inspectorActor,
         concurrentInput,
       ),
       saveInspectionResultWithFinding(
-        prisma,
+        raceClientTwo.prisma,
         inspectorActor,
         concurrentInput,
       ),
@@ -513,13 +521,13 @@ async function main(): Promise<void> {
       findings: [] as const,
     };
     const differentContent = await Promise.allSettled([
-      saveInspectionResultWithFinding(prisma, inspectorActor, {
+      saveInspectionResultWithFinding(raceClientOne.prisma, inspectorActor, {
         ...competingBase,
         clientMutationId: `${runId}-content-a`,
         status: "PASS",
         notApplicableReason: null,
       }),
-      saveInspectionResultWithFinding(prisma, inspectorActor, {
+      saveInspectionResultWithFinding(raceClientTwo.prisma, inspectorActor, {
         ...competingBase,
         clientMutationId: `${runId}-content-b`,
         status: "NOT_APPLICABLE",
@@ -1125,6 +1133,8 @@ async function main(): Promise<void> {
     );
   } finally {
     await close();
+    await raceClientOne.close();
+    await raceClientTwo.close();
   }
 }
 
