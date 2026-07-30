@@ -1,0 +1,104 @@
+{
+  "runId": "8d4072b4-5507-4ba3-881e-a91fd47e142c",
+  "database": "construction_erp_v2_qa_safety_migration_rehearsal_7dc002eb1c",
+  "fixtureIds": {
+    "users": [
+      "cms6x17140000qgk51p2jp3h4",
+      "cms6x17140001qgk58m8ua838",
+      "cms6x17150002qgk5yucqm60d",
+      "cms6x17160003qgk5hu4r7z31"
+    ],
+    "projects": [
+      "cms6x171x0004qgk5xr1pic5v",
+      "cms6x171x0005qgk5l9z42qb9"
+    ],
+    "memberships": [
+      "cms6x17240006qgk5mxnupmzn",
+      "cms6x17250007qgk58zas4idb",
+      "cms6x17250008qgk5ovdhe9h5",
+      "cms6x17250009qgk5pviiz611"
+    ],
+    "checklistTemplates": [
+      "cms6x172e000aqgk5mhho5w3m",
+      "cms6x172e000bqgk5ve6i83yy"
+    ],
+    "checklistSections": [
+      "cms6x173g000eqgk57vkmsr6w"
+    ],
+    "checklistItems": [
+      "cms6x173k000fqgk57v4kr49l",
+      "cms6x173k000gqgk56m16m9of",
+      "cms6x173k000hqgk50t1201uy",
+      "cms6x173k000iqgk5r71v6mx0"
+    ],
+    "documentTemplates": [
+      "cms6x173p000jqgk5teii2i93",
+      "cms6x173q000kqgk50fri0lpf"
+    ],
+    "plans": [
+      "cms6x174h000nqgk5hb8chkak",
+      "cms6x1758000uqgk56ssufagk"
+    ],
+    "schedules": [
+      "cms6x174n000oqgk52qma80k9",
+      "cms6x1753000sqgk57s1r5x16"
+    ],
+    "sessions": [
+      "cms6x176f0011qgk5923x5677",
+      "cms6x17bw001zqgk5qltz7x6w"
+    ],
+    "findings": [
+      "cms6x177y001aqgk5xhzc59ba",
+      "cms6x1780001bqgk57vpxcmc9"
+    ],
+    "correctiveActions": [
+      "cms6x178j001eqgk5dn49rcm9",
+      "cms6x17ab001qqgk5ppy0nh3m"
+    ],
+    "reinspections": [
+      "cms6x178z001fqgk5r0c3998h",
+      "cms6x179l001iqgk5t9uho2mt"
+    ],
+    "documentFolders": [
+      "cms6x179p001lqgk5gqhmuvgg",
+      "cms6x179p001mqgk5547f5lql"
+    ],
+    "documents": [
+      "cms6x179u001nqgk5v45ifh86",
+      "cms6x179v001oqgk5kgueb4y2"
+    ],
+    "evidence": [
+      "cms6x17a1001pqgk5j1w392ti",
+      "cms6x17ac001rqgk5texzdz45"
+    ],
+    "reports": [
+      "cms6x17b5001uqgk5o5egn2wt",
+      "cms6x17cm0026qgk58x0u6du5"
+    ],
+    "reportEntries": [
+      "cms6x17bi001vqgk55vjk8eoq",
+      "cms6x17c00021qgk5o6sxz9ty"
+    ]
+  },
+  "assertions": {
+    "singleActiveChecklist": true,
+    "singleActiveDocumentTemplate": true,
+    "planScopeRollback": true,
+    "concurrentIdempotencyReplay": true,
+    "idempotencyHashMismatchBlocked": true,
+    "concurrentVersionConflictSafe": true,
+    "multipleFindingsPerResult": true,
+    "failToPassBlocked": true,
+    "completedSessionBlocked": true,
+    "independentPolicyServerSide": true,
+    "reinspectionMatrixRuntime": true,
+    "evidenceDocumentProjectBlocked": true,
+    "evidenceAssignmentStateAndVoid": true,
+    "crossProjectEvidenceViewBlocked": true,
+    "databaseCheckConstraints": true,
+    "reportScopeRollback": true,
+    "scopeRetentionAndRemoval": true
+  },
+  "fixtureCleanup": "DATABASE_REHEARSAL_DROP",
+  "completedAtUtc": "2026-07-30T02:49:56.110Z"
+}

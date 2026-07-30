@@ -1,0 +1,101 @@
+{
+  "runId": "safety-slice1-0e5cb385-63f4-4acb-9141-2eb77ffeb2c7",
+  "qaDatabase": "construction_erp_v2_qa_e2e_20260723",
+  "users": [
+    "cms6vgtgh00021ck5fvif9jjs",
+    "cms6vgtgf00011ck59nms8as7",
+    "cms6vgtg500001ck5lx6fqwpg"
+  ],
+  "projects": [
+    "cms6vgtgn00041ck5x8ww6v3e",
+    "cms6vgtgj00031ck5a4zhdvtk"
+  ],
+  "memberships": [
+    "cms6vgth000081ck5snze0paz",
+    "cms6vgtgy00071ck5d921wpax",
+    "cms6vgtgx00061ck56m7l1lgw",
+    "cms6vgtgq00051ck5a21r6i2m"
+  ],
+  "checklistTemplates": [
+    "cms6vgth100091ck5e1cxucpm"
+  ],
+  "checklistSections": [
+    "cms6vgth6000a1ck52l5qs6fg"
+  ],
+  "checklistItems": [
+    "cms6vgthd000e1ck56373b5u1",
+    "cms6vgthd000d1ck5ywtmbu2v",
+    "cms6vgthc000c1ck5tk5q9ze8",
+    "cms6vgth9000b1ck5mrs9sv1m"
+  ],
+  "plans": [
+    "cms6vgthg000f1ck5stq88l3f"
+  ],
+  "planProjects": [
+    "cms6vgtho000h1ck5huzrgzcs",
+    "cms6vgthk000g1ck5qde10nsm"
+  ],
+  "schedules": [
+    "cms6vgti6000j1ck5yil87kzd",
+    "cms6vgti2000i1ck5gcwg3dis"
+  ],
+  "scheduleCollaborators": [
+    "cms6vgti8000k1ck5y973xwz4"
+  ],
+  "scheduleChecklistItems": [
+    "cms6vgtih000o1ck5ydvaioxr",
+    "cms6vgtig000n1ck5iwn6awfc",
+    "cms6vgtif000m1ck5cn8eb9b7",
+    "cms6vgtic000l1ck5drynf4rz"
+  ],
+  "sessions": [
+    "cms6vgtii000p1ck5ksw4vmx8"
+  ],
+  "results": [
+    "cms6vgtjx000w1ck5vg7aolkf",
+    "cms6vgtjp000t1ck5bzqnchbc",
+    "cms6vgtj6000q1ck5q6n3h7h9"
+  ],
+  "findings": [
+    "cms6vgtjz000x1ck5v3mic4w0"
+  ],
+  "correctiveActions": [
+    "cms6vgtkc00101ck596psma5y"
+  ],
+  "reinspections": [
+    "cms6vgtl500141ck5uwda0qal",
+    "cms6vgtkn00111ck5pb96wf8d"
+  ],
+  "reports": [
+    "cms6vgtlc00171ck5vdncl456"
+  ],
+  "reportProjects": [
+    "cms6vgtlp00191ck5v21ko83h"
+  ],
+  "reportEntries": [
+    "cms6vgtlg00181ck5cnbtw135"
+  ],
+  "auditLogs": [
+    "cms6vgtl700151ck56lazfvt6",
+    "cms6vgtkr00121ck5boifp3ax",
+    "cms6vgtk2000y1ck50bewzp41",
+    "cms6vgtjs000u1ck5jtrsce0j",
+    "cms6vgtjg000r1ck5kxsjhtnj"
+  ],
+  "idempotencyRows": [
+    "cms6vgtl700161ck5ibgk2sca",
+    "cms6vgtks00131ck53vql44zz",
+    "cms6vgtk3000z1ck5c3qga3hl",
+    "cms6vgtjt000v1ck5rfqv7mp3",
+    "cms6vgtjk000s1ck5opm4gcvk"
+  ],
+  "cleanupCompleted": true,
+  "assertions": {
+    "planHasTwoProjects": true,
+    "idempotentReplay": true,
+    "crossProjectRollback": true,
+    "rejectDoesNotComplete": true,
+    "acceptCompletes": true,
+    "reportProjectRelationSynced": true
+  }
+}
