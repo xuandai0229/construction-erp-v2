@@ -567,7 +567,7 @@ async function main(): Promise<void> {
         inspectedAt: new Date("2026-07-30T03:30:00.000Z"),
         findings: [
           {
-            code: `S15-F1-${suffix}`,
+            localReference: `S15-F1-${suffix}`,
             description: "Thiếu lan can vị trí 1",
             severity: "MEDIUM",
             violationGroup: "Làm việc trên cao",
@@ -579,7 +579,7 @@ async function main(): Promise<void> {
             dueAt: new Date("2026-07-31T10:00:00.000Z"),
           },
           {
-            code: `S15-F2-${suffix}`,
+            localReference: `S15-F2-${suffix}`,
             description: "Thiếu lan can vị trí 2",
             severity: "SERIOUS",
             violationGroup: "Làm việc trên cao",
@@ -720,15 +720,15 @@ async function main(): Promise<void> {
         afterReject.completedAt === null,
       "Reject transition không đúng.",
     );
-    await prisma.$transaction([
-      prisma.safetyFinding.update({
+    await prisma.$transaction(async (tx) => {
+      await tx.safetyFinding.update({
         where: { id: primaryFindingId },
         data: {
           status: "WAITING_REINSPECTION",
           version: { increment: 1 },
         },
-      }),
-      prisma.safetyCorrectiveAction.update({
+      });
+      await tx.safetyCorrectiveAction.update({
         where: { id: correctiveAction.id },
         data: {
           status: "SUBMITTED",
@@ -736,8 +736,8 @@ async function main(): Promise<void> {
           submittedById: commander.id,
           version: { increment: 1 },
         },
-      }),
-    ]);
+      });
+    });
     const accepted = await recordSafetyReinspection(
       prisma,
       reviewerActor,

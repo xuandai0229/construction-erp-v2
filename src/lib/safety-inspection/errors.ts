@@ -14,11 +14,17 @@ export type SafetyErrorCode = (typeof SAFETY_ERROR_CODES)[number];
 
 export class SafetyApiError extends Error {
   readonly code: SafetyErrorCode;
+  readonly httpStatus?: number;
 
-  constructor(code: SafetyErrorCode, message: string) {
+  constructor(
+    code: SafetyErrorCode,
+    message: string,
+    options?: { httpStatus?: number },
+  ) {
     super(message);
     this.name = "SafetyApiError";
     this.code = code;
+    this.httpStatus = options?.httpStatus;
   }
 }
 
@@ -62,6 +68,12 @@ export function safetyErrorHttpStatus(code: SafetyErrorCode): number {
     case "SAFETY_INTERNAL_ERROR":
       return 500;
   }
+}
+
+export function safetyErrorStatus(error: unknown, code: SafetyErrorCode): number {
+  return error instanceof SafetyApiError && error.httpStatus
+    ? error.httpStatus
+    : safetyErrorHttpStatus(code);
 }
 
 export function mapSafetyError(

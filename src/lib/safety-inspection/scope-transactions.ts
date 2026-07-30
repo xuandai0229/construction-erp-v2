@@ -18,16 +18,14 @@ async function reconcilePlanProjects(
   planId: string,
   correlationId: string,
 ): Promise<void> {
-  const [schedules, current] = await Promise.all([
-    tx.safetyInspectionSchedule.findMany({
-      where: { planId, status: { not: "CANCELLED" } },
-      select: { projectId: true },
-    }),
-    tx.safetyInspectionPlanProject.findMany({
-      where: { planId },
-      select: { projectId: true },
-    }),
-  ]);
+  const schedules = await tx.safetyInspectionSchedule.findMany({
+    where: { planId, status: { not: "CANCELLED" } },
+    select: { projectId: true },
+  });
+  const current = await tx.safetyInspectionPlanProject.findMany({
+    where: { planId },
+    select: { projectId: true },
+  });
   const desired = new Set(schedules.map((row) => row.projectId));
   const existing = new Set(current.map((row) => row.projectId));
   const additions = [...desired].filter((id) => !existing.has(id));
@@ -73,16 +71,14 @@ async function reconcileReportProjects(
   reportId: string,
   correlationId: string,
 ): Promise<void> {
-  const [entries, current] = await Promise.all([
-    tx.safetyWeeklyReportEntry.findMany({
-      where: { reportId, cancelledAt: null },
-      select: { projectId: true },
-    }),
-    tx.safetyWeeklyReportProject.findMany({
-      where: { reportId },
-      select: { projectId: true },
-    }),
-  ]);
+  const entries = await tx.safetyWeeklyReportEntry.findMany({
+    where: { reportId, cancelledAt: null },
+    select: { projectId: true },
+  });
+  const current = await tx.safetyWeeklyReportProject.findMany({
+    where: { reportId },
+    select: { projectId: true },
+  });
   const desired = new Set(entries.map((row) => row.projectId));
   const existing = new Set(current.map((row) => row.projectId));
   const additions = [...desired].filter((id) => !existing.has(id));

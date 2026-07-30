@@ -95,7 +95,7 @@ function readStringArray(value: Prisma.JsonValue | undefined): string[] | null {
 }
 
 export type SafetyFindingDraft = {
-  code: string;
+  localReference: string | null;
   description: string;
   severity: SafetySeverity;
   violationGroup: string | null;
@@ -123,6 +123,7 @@ export type SaveInspectionResultInput = {
 export type SaveInspectionResultResponse = {
   resultId: string;
   findingIds: string[];
+  findingCodes: string[];
   replayed: boolean;
 };
 
@@ -134,10 +135,40 @@ function readSaveResultReceipt(
   }
   const resultId = readString(resultData.resultId);
   const findingIds = readStringArray(resultData.findingIds);
-  if (!resultId || !findingIds) {
+  const findingCodes = readStringArray(resultData.findingCodes);
+  if (!resultId || !findingIds || !findingCodes) {
     throw new Error("Biên nhận đồng bộ kết quả kiểm tra không hợp lệ.");
   }
-  return { resultId, findingIds };
+  return { resultId, findingIds, findingCodes };
+}
+
+function safetyBusinessYear(value: Date): number {
+  return Number(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Ho_Chi_Minh",
+      year: "numeric",
+    }).format(value),
+  );
+}
+
+async function allocateSafetyFindingCode(
+  tx: Prisma.TransactionClient,
+  occurredAt: Date,
+): Promise<string> {
+  const businessYear = safetyBusinessYear(occurredAt);
+  const rows = await tx.$queryRaw<Array<{ allocatedNumber: number }>>`
+    INSERT INTO "SafetyFindingSequence" ("businessYear", "nextNumber", "updatedAt")
+    VALUES (${businessYear}, 2, NOW())
+    ON CONFLICT ("businessYear") DO UPDATE
+      SET "nextNumber" = "SafetyFindingSequence"."nextNumber" + 1,
+          "updatedAt" = NOW()
+    RETURNING "nextNumber" - 1 AS "allocatedNumber"
+  `;
+  const allocatedNumber = rows[0]?.allocatedNumber;
+  if (!Number.isInteger(allocatedNumber) || allocatedNumber < 1) {
+    throw new Error("Không thể cấp mã tồn tại ATLĐ.");
+  }
+  return `ATLD-${businessYear}-${String(allocatedNumber).padStart(6, "0")}`;
 }
 
 export async function saveInspectionResultWithFinding(
@@ -174,16 +205,6 @@ export async function saveInspectionResultWithFinding(
 
       const session = await tx.safetyInspectionSession.findUnique({
         where: { id: input.sessionId },
-        include: {
-          schedule: {
-            select: {
-              checklistItems: {
-                where: { checklistItemId: input.checklistItemId },
-                select: { id: true },
-              },
-            },
-          },
-        },
       });
       if (!session) throw new Error("Phiên kiểm tra không tồn tại.");
       assertSafetySessionMutable(session.status);
@@ -191,6 +212,14 @@ export async function saveInspectionResultWithFinding(
       if (session.version !== input.expectedSessionVersion) {
         throw new Error("Phiên kiểm tra đã thay đổi, vui lòng tải lại dữ liệu.");
       }
+      const selectedOnSchedule = session.scheduleId
+        ? (await tx.safetyInspectionScheduleChecklistItem.count({
+            where: {
+              scheduleId: session.scheduleId,
+              checklistItemId: input.checklistItemId,
+            },
+          })) === 1
+        : false;
 
       const checklistItem = await tx.safetyChecklistItem.findUnique({
         where: { id: input.checklistItemId },
@@ -204,8 +233,7 @@ export async function saveInspectionResultWithFinding(
         sessionTemplateId: session.checklistTemplateId,
         itemTemplateId: checklistItem.section.templateId,
         scheduleId: session.scheduleId,
-        selectedOnSchedule:
-          session.schedule?.checklistItems.length === 1,
+        selectedOnSchedule,
         itemActive: checklistItem.isActive,
       });
 
@@ -216,8 +244,14 @@ export async function saveInspectionResultWithFinding(
             checklistItemId: input.checklistItemId,
           },
         },
-        include: { findings: { select: { id: true } } },
       });
+      const existingFindings = existing
+        ? await tx.safetyFinding.findMany({
+            where: { inspectionResultId: existing.id },
+            orderBy: { createdAt: "asc" },
+            select: { id: true, code: true },
+          })
+        : [];
       if (
         (existing === null && input.expectedResultVersion !== null) ||
         (existing !== null &&
@@ -230,7 +264,7 @@ export async function saveInspectionResultWithFinding(
       assertInspectionResultTransition({
         currentStatus: existing?.status ?? null,
         nextStatus: input.status,
-        existingFindingCount: existing?.findings.length ?? 0,
+        existingFindingCount: existingFindings.length,
         newFindingCount: input.findings.length,
         notApplicableReason: input.notApplicableReason,
       });
@@ -271,13 +305,16 @@ export async function saveInspectionResultWithFinding(
       }
 
       const newFindingIds: string[] = [];
+      const newFindingCodes: string[] = [];
       for (const finding of input.findings) {
+        const code = await allocateSafetyFindingCode(tx, input.inspectedAt);
         const created = await tx.safetyFinding.create({
           data: {
             projectId: session.projectId,
             sessionId: input.sessionId,
             inspectionResultId: resultId,
-            code: finding.code,
+            code,
+            localReference: finding.localReference,
             description: finding.description,
             severity: finding.severity,
             violationGroup: finding.violationGroup,
@@ -291,14 +328,19 @@ export async function saveInspectionResultWithFinding(
             status: "NEW",
             createdById: actor.id,
           },
-          select: { id: true },
+          select: { id: true, code: true },
         });
         newFindingIds.push(created.id);
+        newFindingCodes.push(created.code);
       }
       const findingIds = [
-        ...(existing?.findings.map((finding) => finding.id) ?? []),
+        ...existingFindings.map((finding) => finding.id),
         ...newFindingIds,
       ];
+      const existingFindingCodes = existingFindings.map(
+        (finding) => finding.code,
+      );
+      const findingCodes = [...existingFindingCodes, ...newFindingCodes];
 
       const sessionUpdate = await tx.safetyInspectionSession.updateMany({
         where: {
@@ -311,7 +353,7 @@ export async function saveInspectionResultWithFinding(
         throw new Error("Phiên kiểm tra đã thay đổi, vui lòng tải lại dữ liệu.");
       }
 
-      const immutableResult = { resultId, findingIds };
+      const immutableResult = { resultId, findingIds, findingCodes };
       await tx.safetyAuditLog.create({
         data: {
           projectId: session.projectId,

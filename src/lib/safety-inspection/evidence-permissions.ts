@@ -65,9 +65,20 @@ export function createPrismaSafetyEvidenceTraceRepository(
           id: true,
           projectId: true,
           findingId: true,
+          actionId: true,
+          documentId: true,
           cancelledAt: true,
-          finding: { select: { projectId: true, status: true } },
-          action: {
+        },
+      });
+      if (!evidence) return null;
+      const finding = await client.safetyFinding.findUnique({
+        where: { id: evidence.findingId },
+        select: { projectId: true, status: true },
+      });
+      if (!finding) return null;
+      const action = evidence.actionId
+        ? await client.safetyCorrectiveAction.findUnique({
+            where: { id: evidence.actionId },
             select: {
               id: true,
               findingId: true,
@@ -76,19 +87,28 @@ export function createPrismaSafetyEvidenceTraceRepository(
               assigneeUserId: true,
               assigneeUnit: true,
             },
-          },
-          document: { select: { id: true, projectId: true } },
-        },
-      });
-      if (!evidence) return null;
+          })
+        : null;
+      const document = evidence.documentId
+        ? await client.document.findUnique({
+            where: { id: evidence.documentId },
+            select: { id: true, projectId: true },
+          })
+        : null;
+      if (
+        (evidence.actionId && !action) ||
+        (evidence.documentId && !document)
+      ) {
+        return null;
+      }
       return {
         evidenceId: evidence.id,
         evidenceProjectId: evidence.projectId,
         findingId: evidence.findingId,
-        findingProjectId: evidence.finding.projectId,
-        findingStatus: evidence.finding.status,
-        action: evidence.action,
-        document: evidence.document,
+        findingProjectId: finding.projectId,
+        findingStatus: finding.status,
+        action,
+        document,
         cancelledAt: evidence.cancelledAt,
       };
     },

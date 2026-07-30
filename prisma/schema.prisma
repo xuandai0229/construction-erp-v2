@@ -555,13 +555,13 @@ model Document {
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt
 
-  project           Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  folder            DocumentFolder       @relation(fields: [folderId], references: [id], onDelete: Cascade)
-  uploadedBy        User                 @relation(fields: [uploadedById], references: [id])
-  fieldProgressItem FieldProgressItem?   @relation(fields: [fieldProgressItemId], references: [id])
-  locationNode      ProjectLocationNode? @relation(fields: [locationNodeId], references: [id])
-  safetyEvidence SafetyCorrectiveEvidence[]
-  safetyTemplates SafetyDocumentTemplate[]
+  project           Project                    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  folder            DocumentFolder             @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  uploadedBy        User                       @relation(fields: [uploadedById], references: [id])
+  fieldProgressItem FieldProgressItem?         @relation(fields: [fieldProgressItemId], references: [id])
+  locationNode      ProjectLocationNode?       @relation(fields: [locationNodeId], references: [id])
+  safetyEvidence    SafetyCorrectiveEvidence[]
+  safetyTemplates   SafetyDocumentTemplate[]
 
   @@index([projectId])
   @@index([folderId])
@@ -847,9 +847,9 @@ model ApprovalRequest {
   createdAt    DateTime              @default(now())
   updatedAt    DateTime              @updatedAt
 
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  requester User    @relation("Requester", fields: [requesterId], references: [id])
-  decidedBy User?   @relation("Approver", fields: [decidedById], references: [id])
+  project         Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  requester       User                    @relation("Requester", fields: [requesterId], references: [id])
+  decidedBy       User?                   @relation("Approver", fields: [decidedById], references: [id])
   safetyHistories SafetyApprovalHistory[]
 
   @@index([projectId])
@@ -1671,34 +1671,34 @@ model SupervisionWeeklyShiftSelection {
 }
 
 model SupervisionWeeklyEntry {
-  id                   String                        @id @default(cuid())
-  dossierId            String
-  documentType         SupervisionWeeklyDocumentType
-  entryDate            DateTime
-  shift                SupervisionWeeklyShift
-  sortOrder            Int
-  inputMode            SupervisionWeeklyInputMode
-  projectId            String?
-  projectNameSnapshot  String?
-  locationId           String?
-  locationNameSnapshot String?
-  workItemId           String?
-  workItemNameSnapshot String?
-  manualText           String?
-  manualLocation       String?
-  manualProjectName    String?
-  manualWorkItemName   String?
-  categoryItemId       String?
-  categoryNameSnapshot String?
-  manualCategoryName   String?
-  inspectionWorkItemId String?
+  id                         String                        @id @default(cuid())
+  dossierId                  String
+  documentType               SupervisionWeeklyDocumentType
+  entryDate                  DateTime
+  shift                      SupervisionWeeklyShift
+  sortOrder                  Int
+  inputMode                  SupervisionWeeklyInputMode
+  projectId                  String?
+  projectNameSnapshot        String?
+  locationId                 String?
+  locationNameSnapshot       String?
+  workItemId                 String?
+  workItemNameSnapshot       String?
+  manualText                 String?
+  manualLocation             String?
+  manualProjectName          String?
+  manualWorkItemName         String?
+  categoryItemId             String?
+  categoryNameSnapshot       String?
+  manualCategoryName         String?
+  inspectionWorkItemId       String?
   inspectionWorkNameSnapshot String?
-  displayText          String
-  inspectionContent    String?
-  result               String?
-  commanderProposal    String?
-  createdAt            DateTime                      @default(now())
-  updatedAt            DateTime                      @updatedAt
+  displayText                String
+  inspectionContent          String?
+  result                     String?
+  commanderProposal          String?
+  createdAt                  DateTime                      @default(now())
+  updatedAt                  DateTime                      @updatedAt
 
   dossier SupervisionWeeklyDossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
   project Project?                 @relation(fields: [projectId], references: [id], onDelete: Restrict)
@@ -2167,9 +2167,10 @@ model SafetyChecklistTemplate {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  createdBy User                      @relation("SafetyChecklistTemplateCreator", fields: [createdById], references: [id], onDelete: Restrict)
-  sections  SafetyChecklistSection[]
-  sessions  SafetyInspectionSession[]
+  createdBy        User                      @relation("SafetyChecklistTemplateCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  sections         SafetyChecklistSection[]
+  sessions         SafetyInspectionSession[]
+  reportCategories SafetyReportCategory[]
 
   @@unique([code, version])
   @@index([isActive, effectiveFrom])
@@ -2202,14 +2203,68 @@ model SafetyChecklistItem {
   constructionTypes       SafetyConstructionType[] @default([])
   sortOrder               Int                      @default(0)
   requiresFindingWhenFail Boolean                  @default(true)
+  isRequired              Boolean                  @default(true)
+  isScored                Boolean                  @default(true)
   isActive                Boolean                  @default(true)
 
   section            SafetyChecklistSection                  @relation(fields: [sectionId], references: [id], onDelete: Restrict)
   scheduleSelections SafetyInspectionScheduleChecklistItem[]
   results            SafetyInspectionResult[]
+  sources            SafetyChecklistItemSource[]
+  reportMappings     SafetyReportCategoryItem[]
 
   @@unique([sectionId, code])
   @@index([sectionId, sortOrder])
+}
+
+model SafetyChecklistItemSource {
+  id              String @id @default(cuid())
+  checklistItemId String
+  sourceItemCode  String
+  sourceDocument  String
+  sourceReference String
+  sourceText      String @db.Text
+  sortOrder       Int    @default(0)
+
+  checklistItem SafetyChecklistItem @relation(fields: [checklistItemId], references: [id], onDelete: Restrict)
+
+  @@unique([checklistItemId, sourceItemCode])
+  @@index([sourceItemCode])
+  @@index([checklistItemId, sortOrder])
+}
+
+model SafetyReportCategory {
+  id                            String  @id @default(cuid())
+  templateId                    String
+  code                          String
+  sourceNumber                  Int
+  sourceText                    String  @db.Text
+  normalizedLabel               String  @db.Text
+  sortOrder                     Int     @default(0)
+  requiresBusinessClarification Boolean @default(false)
+  blocksCompletion              Boolean @default(true)
+  isScored                      Boolean @default(true)
+  isActive                      Boolean @default(true)
+
+  template SafetyChecklistTemplate    @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  items    SafetyReportCategoryItem[]
+
+  @@unique([templateId, code])
+  @@unique([templateId, sourceNumber])
+  @@index([templateId, isActive, sortOrder])
+}
+
+model SafetyReportCategoryItem {
+  reportCategoryId String
+  checklistItemId  String
+  mappingKind      String @default("DIRECT")
+  sortOrder        Int    @default(0)
+
+  reportCategory SafetyReportCategory @relation(fields: [reportCategoryId], references: [id], onDelete: Restrict)
+  checklistItem  SafetyChecklistItem  @relation(fields: [checklistItemId], references: [id], onDelete: Restrict)
+
+  @@id([reportCategoryId, checklistItemId])
+  @@index([checklistItemId, reportCategoryId])
 }
 
 model SafetyInspectionResult {
@@ -2243,6 +2298,7 @@ model SafetyFinding {
   sessionId          String
   inspectionResultId String
   code               String              @unique
+  localReference     String?
   description        String              @db.Text
   severity           SafetySeverity
   violationGroup     String?
@@ -2276,6 +2332,12 @@ model SafetyFinding {
   @@index([sessionId])
   @@index([inspectionResultId])
   @@index([responsibleUserId, status])
+}
+
+model SafetyFindingSequence {
+  businessYear Int      @id
+  nextNumber   Int
+  updatedAt    DateTime @updatedAt
 }
 
 model SafetyCorrectiveAction {

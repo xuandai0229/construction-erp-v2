@@ -11,11 +11,11 @@ import {
 } from "./mutation-actor";
 import { filterSafetyPlanForActor, type SafetyPlanProjection } from "./plan-dto";
 import {
-  cancelSafetyScheduleWithScope,
-  createSafetyScheduleWithScope,
-  updateSafetyScheduleWithScope,
-  type SafetyScheduleMutationData,
-} from "./scope-transactions";
+  cancelConfiguredSafetySchedule,
+  createConfiguredSafetySchedule,
+  updateConfiguredSafetySchedule,
+  type ConfiguredScheduleData,
+} from "./configured-schedule-transactions";
 import {
   createSafetyInspectionSession,
 } from "./session-transactions";
@@ -109,6 +109,7 @@ export async function getActiveSafetyChecklist(
   const template = await prisma.safetyChecklistTemplate.findFirst({
     where: {
       code: "SAFETY_COMPANY_V1",
+      version: 2,
       isActive: true,
       isLocked: true,
     },
@@ -150,6 +151,8 @@ export async function getActiveSafetyChecklist(
         sourceText: item.sourceText,
         normalizedLabel: item.normalizedLabel,
         requiresFindingWhenFail: item.requiresFindingWhenFail,
+        isRequired: item.isRequired,
+        isScored: item.isScored,
         sourceDocument: item.sourceDocument,
         sourceReference: item.sourceReference,
         reportItemNumbers: item.reportItemNumbers,
@@ -344,7 +347,7 @@ export async function mutateSafetySchedule(
         planId: string;
         expectedPlanVersion: number;
         clientMutationId: string;
-        data: SafetyScheduleMutationData;
+        data: ConfiguredScheduleData;
       }
     | {
         mode: "UPDATE";
@@ -352,7 +355,7 @@ export async function mutateSafetySchedule(
         expectedScheduleVersion: number;
         expectedPlanVersion: number;
         clientMutationId: string;
-        data: SafetyScheduleMutationData;
+        data: ConfiguredScheduleData;
       }
     | {
         mode: "CANCEL";
@@ -364,19 +367,18 @@ export async function mutateSafetySchedule(
       },
 ) {
   if (input.mode === "CREATE") {
-    return createSafetyScheduleWithScope(
+    return createConfiguredSafetySchedule(
       prisma,
       safetyActorForProject(context, input.data.projectId),
       input,
     );
   }
   if (input.mode === "UPDATE") {
-    await updateSafetyScheduleWithScope(
+    return updateConfiguredSafetySchedule(
       prisma,
       safetyActorForProject(context, input.data.projectId),
       input,
     );
-    return { scheduleId: input.scheduleId };
   }
   const schedule = await prisma.safetyInspectionSchedule.findUnique({
     where: { id: input.scheduleId },
@@ -388,12 +390,11 @@ export async function mutateSafetySchedule(
       "Không thể truy cập dữ liệu ATLĐ được yêu cầu.",
     );
   }
-  await cancelSafetyScheduleWithScope(
+  return cancelConfiguredSafetySchedule(
     prisma,
     safetyActorForProject(context, schedule.projectId),
     input,
   );
-  return { scheduleId: input.scheduleId };
 }
 
 export async function configureSafetySchedule(

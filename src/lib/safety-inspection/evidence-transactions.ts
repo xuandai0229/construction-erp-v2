@@ -19,23 +19,23 @@ export async function cancelSafetyEvidence(
     async (tx) => {
       const evidence = await tx.safetyCorrectiveEvidence.findUnique({
         where: { id: input.evidenceId },
-        include: {
-          finding: {
-            select: {
-              sessionId: true,
-              reinspections: {
-                where: { decision: "ACCEPT_COMPLETION" },
-                select: { id: true },
-                take: 1,
-              },
-            },
-          },
-        },
+        select: { id: true, projectId: true, findingId: true },
       });
       if (!evidence) throw new Error("Không thể truy cập bằng chứng ATLĐ.");
+      const finding = await tx.safetyFinding.findUnique({
+        where: { id: evidence.findingId },
+        select: { sessionId: true },
+      });
+      if (!finding) throw new Error("Không thể truy cập bằng chứng ATLĐ.");
+      const acceptedReinspectionCount = await tx.safetyReinspection.count({
+        where: {
+          findingId: evidence.findingId,
+          decision: "ACCEPT_COMPLETION",
+        },
+      });
       const lockedReport = await tx.safetyWeeklyReportEntry.findFirst({
         where: {
-          sessionId: evidence.finding.sessionId,
+          sessionId: finding.sessionId,
           cancelledAt: null,
           report: { status: "LOCKED" },
         },
@@ -48,7 +48,7 @@ export async function cancelSafetyEvidence(
         evidenceId: input.evidenceId,
         reason: input.reason,
         usedInAcceptedReinspection:
-          evidence.finding.reinspections.length > 0,
+          acceptedReinspectionCount > 0,
         usedInLockedReport: lockedReport !== null,
       });
       const updated = await tx.safetyCorrectiveEvidence.updateMany({

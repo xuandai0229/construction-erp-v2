@@ -112,3 +112,34 @@
 - [x] T053 Chạy bootstrap/reference data và HTTP security/concurrency suite trên QA sạch, lưu manifest không chứa secret
 - [x] T054 Chạy Prisma/TypeScript/Vitest/lint/build/diff cuối và xác minh không đổi `Supervision*`
 - [x] T055 Tạo checkpoint Lát 2A và hoàn tất `slice-2a-report.md`
+
+## Lát 2A.5 — Hợp nhất ngữ nghĩa checklist và tính nguyên tử API
+
+### Phase 13: Baseline và test đỏ
+
+- [x] T056 Xác minh worktree sạch, checksum migration/template/checklist V1 và đọc Route Handler guide Next.js 16
+- [x] T057 [P] Viết test canonical operational V2, bảo toàn 55 nguồn, đủ 20 category và không trùng ngữ nghĩa
+- [x] T058 [P] Viết test projection 20 nhóm báo cáo, gồm trạng thái hỗn hợp và `Công việc ngày`
+- [x] T059 [P] Viết test parser JSON/content-type/body-limit và same-origin
+- [x] T060 Viết integration/concurrency test schedule aggregate và mã finding server-side
+
+### Phase 14: Schema và reference data additive
+
+- [x] T061 Thêm migration additive cho source mapping, report category/mapping và sequence mã finding
+- [x] T062 Tạo canonical operational checklist V2 và manifest SHA-256
+- [x] T063 Tạo bootstrap V2 có advisory lock, hash guard, single-active và audit
+
+### Phase 15: Domain và Route Handler
+
+- [x] T064 Tạo projection tổng hợp report category từ result/finding nguồn
+- [x] T065 Tạo aggregate transaction create/update/cancel schedule gồm cấu hình/scope/idempotency/audit
+- [x] T066 Sinh finding code server-side concurrency-safe và loại `code` khỏi payload public
+- [x] T067 Tạo helper Route Handler chung cho actor/parser/same-origin/error/correlation
+- [x] T068 Tách catch-all thành Route Handler theo tài nguyên, không lặp logic quyền
+- [x] T069 Bổ sung test approval envelope rollback nguyên tử
+
+### Phase 16: QA và bàn giao
+
+- [x] T070 Chạy bootstrap/reference data, HTTP security và concurrency suite trên QA sạch qua guard
+- [x] T071 Chạy Prisma/TypeScript/Vitest/lint/build/diff/drift và xác minh không đổi `Supervision*`
+- [ ] T072 Commit Lát 2A.5 và hoàn tất `slice-2a.5-report.md`

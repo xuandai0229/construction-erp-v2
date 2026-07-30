@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
+import { SafetyApiError } from "./errors";
 import {
   assertSafetyActorPermission,
   assertSafetyActorProjectScope,
@@ -165,6 +166,23 @@ export async function decideSafetyPlanApproval(
         deletedAt: null,
       },
     });
+    const expectedProjects = new Set(
+      plan.projects.map((project) => project.projectId),
+    );
+    const envelopeProjects = new Set(
+      envelopes.map((envelope) => envelope.projectId),
+    );
+    if (
+      envelopes.length !== expectedProjects.size ||
+      [...expectedProjects].some(
+        (projectId) => !envelopeProjects.has(projectId),
+      )
+    ) {
+      throw new SafetyApiError(
+        "SAFETY_STATE_CONFLICT",
+        "Hồ sơ duyệt đa công trình chưa đầy đủ; không thể duyệt một phần.",
+      );
+    }
     for (const envelope of envelopes) {
       await tx.approvalRequest.update({
         where: { id: envelope.id },

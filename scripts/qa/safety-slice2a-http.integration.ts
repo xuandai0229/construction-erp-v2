@@ -3,7 +3,7 @@ import { spawn, type ChildProcess } from "node:child_process";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import "dotenv/config";
-import { bootstrapSafetyChecklistV1 } from "../../src/lib/safety-inspection/checklist-bootstrap";
+import { bootstrapSafetyOperationalV2 } from "../../src/lib/safety-inspection/checklist-operational-bootstrap";
 import { getSafetyPermissionSet } from "../../src/lib/safety-inspection/permissions";
 import { createSessionToken } from "../../src/lib/session-token";
 import { assertSafeQaDatabase } from "./assert-safe-qa-database";
@@ -134,7 +134,7 @@ async function main(): Promise<void> {
       isCommandActor: false,
       unitNames: [] as const,
     };
-    const bootstrapOne = await bootstrapSafetyChecklistV1(
+    const bootstrapOne = await bootstrapSafetyOperationalV2(
       client.prisma,
       adminActor,
       {
@@ -142,7 +142,7 @@ async function main(): Promise<void> {
         processName: "safety-slice2a-http.integration.ts",
       },
     );
-    const bootstrapTwo = await bootstrapSafetyChecklistV1(
+    const bootstrapTwo = await bootstrapSafetyOperationalV2(
       client.prisma,
       adminActor,
       {
@@ -156,7 +156,7 @@ async function main(): Promise<void> {
     );
     const template = await client.prisma.safetyChecklistTemplate.findUniqueOrThrow({
       where: {
-        code_version: { code: "SAFETY_COMPANY_V1", version: 1 },
+        code_version: { code: "SAFETY_COMPANY_V1", version: 2 },
       },
     });
     await client.prisma.safetyChecklistTemplate.update({
@@ -165,7 +165,7 @@ async function main(): Promise<void> {
     });
     let mismatchBlocked = false;
     try {
-      await bootstrapSafetyChecklistV1(client.prisma, adminActor, {
+      await bootstrapSafetyOperationalV2(client.prisma, adminActor, {
         correlationId: `${runId}-bootstrap-mismatch`,
         processName: "safety-slice2a-http.integration.ts",
       });
@@ -210,6 +210,7 @@ async function main(): Promise<void> {
         method,
         headers: {
           "content-type": "application/json",
+          origin: baseUrl,
           "x-correlation-id": correlationId,
           ...(actor
             ? { cookie: `auth_session=${tokens[actor]}` }
@@ -243,6 +244,62 @@ async function main(): Promise<void> {
     };
 
     await call(null, [], "GET", "/api/safety-inspection/plans", null, 401);
+    const rawMutation = async (
+      label: string,
+      headers: Record<string, string>,
+      body: string,
+      expectedStatus: number,
+    ) => {
+      const response = await fetch(
+        `${baseUrl}/api/safety-inspection/plans`,
+        {
+          method: "POST",
+          headers: {
+            cookie: `auth_session=${tokens.creator}`,
+            ...headers,
+          },
+          body,
+        },
+      );
+      evidence.push({
+        request: label,
+        actorRole: users.creator.role,
+        projectScope: [projectA.id, projectB.id],
+        expectedStatus,
+        actualStatus: response.status,
+      });
+      requireCondition(
+        response.status === expectedStatus,
+        `${label}: expected=${expectedStatus} actual=${response.status}`,
+      );
+    };
+    await rawMutation(
+      "POST plans cross-origin",
+      {
+        "content-type": "application/json",
+        origin: "https://attacker.invalid",
+      },
+      "{}",
+      403,
+    );
+    await rawMutation(
+      "POST plans malformed-json",
+      { "content-type": "application/json", origin: baseUrl },
+      "{",
+      400,
+    );
+    await rawMutation(
+      "POST plans wrong-content-type",
+      { "content-type": "text/plain", origin: baseUrl },
+      "{}",
+      415,
+    );
+    await rawMutation(
+      "POST plans oversized",
+      { "content-type": "application/json", origin: baseUrl },
+      JSON.stringify({ value: "x".repeat(300_000) }),
+      413,
+    );
     const checklist = await call(
       "creator",
       [projectA.id, projectB.id],
@@ -314,8 +371,70 @@ async function main(): Promise<void> {
     );
     const scheduleA = scheduleAResponse.data as {
       scheduleId: string;
-      version: number;
+      scheduleVersion: number;
+      planVersion: number;
     };
+    const scheduleReplay = await call(
+      "creator",
+      [projectA.id, projectB.id],
+      "POST",
+      `/api/safety-inspection/plans/${plan.id}/schedules`,
+      scheduleBody(projectA.id, 1, `${runId}-schedule-a`),
+      201,
+    );
+    requireCondition(
+      (scheduleReplay.data as { scheduleId: string }).scheduleId ===
+        scheduleA.scheduleId &&
+        (await client.prisma.safetyInspectionSchedule.count({
+          where: { planId: plan.id, projectId: projectA.id },
+        })) === 1,
+      "Retry aggregate schedule không trả đúng biên nhận bất biến.",
+    );
+    const beforeRollbackCount =
+      await client.prisma.safetyInspectionSchedule.count({
+        where: { planId: plan.id },
+      });
+    await call(
+      "creator",
+      [projectA.id, projectB.id],
+      "POST",
+      `/api/safety-inspection/plans/${plan.id}/schedules`,
+      {
+        ...scheduleBody(
+          projectA.id,
+          2,
+          `${runId}-schedule-invalid-checklist`,
+        ),
+        checklistItemIds: ["checklist-item-khong-ton-tai"],
+      },
+      400,
+    );
+    await call(
+      "creator",
+      [projectA.id, projectB.id],
+      "POST",
+      `/api/safety-inspection/plans/${plan.id}/schedules`,
+      {
+        ...scheduleBody(
+          projectA.id,
+          2,
+          `${runId}-schedule-invalid-collaborator`,
+        ),
+        collaboratorUserIds: [users.projectB.id],
+      },
+      400,
+    );
+    requireCondition(
+      (await client.prisma.safetyInspectionSchedule.count({
+        where: { planId: plan.id },
+      })) === beforeRollbackCount &&
+        (
+          await client.prisma.safetyInspectionPlan.findUniqueOrThrow({
+            where: { id: plan.id },
+          })
+        ).version === 2,
+      "Schedule/configuration lỗi không rollback toàn aggregate.",
+    );
     await call(
       "creator",
       [projectA.id, projectB.id],
@@ -348,6 +467,40 @@ async function main(): Promise<void> {
       scheduleBody(projectB.id, 3, `${runId}-cross-project-schedule`),
       404,
     );
+    const updateBody = {
+      ...scheduleBody(projectA.id, 3, `${runId}-schedule-update-a`),
+      expectedScheduleVersion: 1,
+      shift: "AFTERNOON",
+    };
+    const scheduleCompetition = await Promise.all([
+      call(
+        "creator",
+        [projectA.id, projectB.id],
+        "PATCH",
+        `/api/safety-inspection/schedules/${scheduleA.scheduleId}`,
+        updateBody,
+        [200, 409],
+      ),
+      call(
+        "creator",
+        [projectA.id, projectB.id],
+        "PATCH",
+        `/api/safety-inspection/schedules/${scheduleA.scheduleId}`,
+        {
+          ...updateBody,
+          clientMutationId: `${runId}-schedule-update-b`,
+          shift: "EVENING",
+        },
+        [200, 409],
+      ),
+    ]);
+    requireCondition(
+      scheduleCompetition
+        .map((response) => response.__status)
+        .sort()
+        .join(",") === "200,409",
+      "Cạnh tranh aggregate schedule không tạo đúng một version conflict.",
+    );
     await call(
       "creator",
       [projectA.id, projectB.id],
@@ -355,11 +508,57 @@ async function main(): Promise<void> {
       `/api/safety-inspection/plans/${plan.id}/submit`,
       {
         clientMutationId: `${runId}-submit`,
-        expectedVersion: 3,
+        expectedVersion: 4,
         decision: "SUBMIT",
       },
       200,
     );
+    const submittedEnvelopes =
+      await client.prisma.approvalRequest.findMany({
+        where: {
+          sourceType: "SAFETY_INSPECTION_PLAN",
+          sourceId: plan.id,
+        },
+        orderBy: { projectId: "asc" },
+      });
+    requireCondition(
+      submittedEnvelopes.length === 2,
+      "Submit plan chưa tạo đủ approval envelope.",
+    );
+    const sabotagedEnvelope = submittedEnvelopes[1];
+    await client.prisma.approvalRequest.update({
+      where: { id: sabotagedEnvelope.id },
+      data: { sourceId: `${plan.id}-qa-missing-envelope` },
+    });
+    await call(
+      "director",
+      ["ALL_PROJECTS"],
+      "POST",
+      `/api/safety-inspection/plans/${plan.id}/review`,
+      {
+        clientMutationId: `${runId}-approve-partial-blocked`,
+        expectedVersion: 5,
+        decision: "APPROVE",
+      },
+      409,
+    );
+    requireCondition(
+      (
+        await client.prisma.safetyInspectionPlan.findUniqueOrThrow({
+          where: { id: plan.id },
+        })
+      ).status === "PENDING_APPROVAL" &&
+        (
+          await client.prisma.approvalRequest.findUniqueOrThrow({
+            where: { id: submittedEnvelopes[0].id },
+          })
+        ).status === "PENDING",
+      "Approval thiếu envelope không rollback toàn aggregate.",
+    );
+    await client.prisma.approvalRequest.update({
+      where: { id: sabotagedEnvelope.id },
+      data: { sourceId: plan.id },
+    });
     await call(
       "director",
       ["ALL_PROJECTS"],
@@ -367,7 +566,7 @@ async function main(): Promise<void> {
       `/api/safety-inspection/plans/${plan.id}/review`,
       {
         clientMutationId: `${runId}-approve`,
-        expectedVersion: 4,
+        expectedVersion: 5,
         decision: "APPROVE",
       },
       200,
@@ -396,7 +595,7 @@ async function main(): Promise<void> {
       `/api/safety-inspection/schedules/${scheduleA.scheduleId}/start`,
       {
         clientMutationId: `${runId}-start`,
-        expectedVersion: scheduleA.version,
+        expectedVersion: scheduleA.scheduleVersion + 1,
         occurredAt: "2026-07-28T02:00:00.000Z",
         shift: "MORNING",
       },
@@ -421,6 +620,31 @@ async function main(): Promise<void> {
       },
       404,
     );
+    await call(
+      "creator",
+      [projectA.id, projectB.id],
+      "POST",
+      `/api/safety-inspection/sessions/${session.sessionId}/results`,
+      {
+        clientMutationId: `${runId}-client-finding-code`,
+        expectedSessionVersion: 1,
+        expectedResultVersion: null,
+        checklistItemId: itemIds[0],
+        status: "FAIL",
+        note: null,
+        notApplicableReason: null,
+        inspectedAt: "2026-07-28T02:08:00.000Z",
+        findings: [
+          {
+            code: "CLIENT-MUST-NOT-CONTROL",
+            description: "Payload thử giả mã tồn tại",
+            severity: "MEDIUM",
+            workSuspended: false,
+          },
+        ],
+      },
+      400,
+    );
     const failBody = {
       clientMutationId: `${runId}-result-fail`,
       expectedSessionVersion: 1,
@@ -431,7 +655,7 @@ async function main(): Promise<void> {
       notApplicableReason: null,
       inspectedAt: "2026-07-28T02:10:00.000Z",
       findings: [1, 2].map((index) => ({
-        code: `S2A-${suffix}-${index}`,
+        localReference: `S2A-LOCAL-${suffix}-${index}`,
         description: `Tồn tại QA ${index}`,
         severity: "MEDIUM",
         workSuspended: false,
@@ -466,7 +690,16 @@ async function main(): Promise<void> {
     );
     const resultData = retryOne.data as {
       findingIds: string[];
+      findingCodes: string[];
     };
+    requireCondition(
+      resultData.findingCodes.length === 2 &&
+        new Set(resultData.findingCodes).size === 2 &&
+        resultData.findingCodes.every((code) =>
+          /^ATLD-2026-\d{6}$/.test(code),
+        ),
+      "Mã finding không do server sinh duy nhất theo định dạng cấu hình.",
+    );
     await call(
       "projectB",
       [projectB.id],
@@ -592,15 +825,26 @@ async function main(): Promise<void> {
         completedSessionLocked: true,
         adminCannotEditFinding: true,
         approvalEnvelopeFollowsAggregate: true,
+        approvalEnvelopeFailureRollsBackAggregate: true,
         auditCorrelationId: true,
         noPrismaOrStackLeak: true,
         bootstrapIdempotentAndHashSafe: true,
+        operationalChecklistV2Active: true,
+        scheduleAggregateAtomicRollback: true,
+        scheduleAggregateIdempotentReplay: true,
+        scheduleAggregateVersionConflict: true,
+        findingCodeServerGenerated: true,
+        malformedJsonReturns400: true,
+        wrongContentTypeReturns415: true,
+        oversizedPayloadReturns413: true,
+        crossOriginMutationRejected: true,
+        sameOriginMutationAccepted: true,
       },
       cleanup: "DATABASE_REHEARSAL_DROP",
       completedAtUtc: new Date().toISOString(),
     };
     const artifactPath = path.resolve(
-      "artifacts/safety-inspection-template-analysis/slice2a-runtime-request-manifest.json",
+      "artifacts/safety-inspection-template-analysis/slice2a5-runtime-request-manifest.json",
     );
     await writeFile(
       artifactPath,

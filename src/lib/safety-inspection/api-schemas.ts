@@ -96,7 +96,7 @@ export const unplannedSafetySessionSchema = z.object({
 });
 
 const safetyFindingInputSchema = z.object({
-  code: z.string().trim().min(1).max(100),
+  localReference: z.string().trim().min(1).max(160).nullable().optional(),
   description: z.string().trim().min(1).max(10000),
   severity: z.enum([
     "REMINDER",
@@ -111,7 +111,7 @@ const safetyFindingInputSchema = z.object({
   responsibleUnit: z.string().trim().max(500).nullable().optional(),
   responsibleUserId: z.string().trim().min(1).nullable().optional(),
   dueAt: z.coerce.date().nullable().optional(),
-});
+}).strict();
 
 export const saveSafetyResultSchema = z.object({
   clientMutationId: z.string().trim().min(8).max(160),
