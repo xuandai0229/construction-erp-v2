@@ -12,6 +12,7 @@ import {
   CheckSquare,
   Settings,
   UserCog,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@prisma/client";
