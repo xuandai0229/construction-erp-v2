@@ -142,4 +142,4 @@
 
 - [x] T070 Chạy bootstrap/reference data, HTTP security và concurrency suite trên QA sạch qua guard
 - [x] T071 Chạy Prisma/TypeScript/Vitest/lint/build/diff/drift và xác minh không đổi `Supervision*`
-- [ ] T072 Commit Lát 2A.5 và hoàn tất `slice-2a.5-report.md`
+- [x] T072 Commit Lát 2A.5 và hoàn tất `slice-2a.5-report.md`
