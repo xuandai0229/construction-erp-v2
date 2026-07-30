@@ -57,6 +57,7 @@ storageState.json
 *.png
 *.jpg
 *.jpeg
+~$*.docx
 !public/**/*.png
 !public/**/*.jpg
 !public/**/*.jpeg
