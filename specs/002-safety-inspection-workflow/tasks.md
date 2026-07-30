@@ -79,3 +79,36 @@
 - [x] T034 Chạy Prisma format/validate/generate, TypeScript và unit test
 - [x] T035 Chạy integration/concurrency suite trên QA sạch và cleanup theo manifest
 - [x] T036 Xác minh không tác động production/`Supervision*`, chạy post-hook và hoàn tất báo cáo Lát 1.5
+
+## Lát 2A — Baseline, checklist chính thức và server boundary/API core
+
+### Phase 9: Baseline và test đỏ
+
+- [x] T037 Đóng băng Lát 1/1.5 thành checkpoint Git tách discovery, domain/schema và QA evidence
+- [x] T038 Chạy Prisma/TypeScript/Vitest/build/lint baseline và loại bỏ warning concurrency `pg`
+- [x] T039 [P] Viết unit test canonical checklist/hash/bootstrap, error mapping và actor permission
+- [x] T040 [P] Viết unit test DTO filtering, plan đa công trình và approval adapter
+- [x] T041 Viết HTTP integration/security test cho auth, scope, tampering, version và idempotency
+
+### Phase 10: Reference data và boundary
+
+- [x] T042 Tạo canonical checklist `SAFETY_COMPANY_V1`, ma trận nguồn, manifest SHA-256 và migration metadata additive
+- [x] T043 Tạo bootstrap checklist V1 idempotent, hash-safe, single-active và audit
+- [x] T044 Tách báo cáo drift thành Safety scoped/repository wide với allowlist object chính xác
+- [x] T045 Tạo `getSafetyServerActorContext()` server-only từ session/user/membership thật
+- [x] T046 Tạo Safety error model, correlation log và response DTO an toàn
+- [x] T047 Tạo DTO query/filter cho plan đa công trình theo phương án filtered visibility
+- [x] T048 Tạo ApprovalRequest adapter hẹp, Safety aggregate là nguồn trạng thái chính
+
+### Phase 11: API core
+
+- [x] T049 Tạo Route Handler checklist active và plan list/create/detail/update/schedule/collaborator/checklist selection
+- [x] T050 Tạo Route Handler submit/review/approve plan theo permission/state/version
+- [x] T051 Tạo Route Handler session scheduled/unplanned/read/result/complete
+- [x] T052 Tạo Route Handler finding list/detail/assign/remediation/reinspection
+
+### Phase 12: QA và bàn giao
+
+- [x] T053 Chạy bootstrap/reference data và HTTP security/concurrency suite trên QA sạch, lưu manifest không chứa secret
+- [x] T054 Chạy Prisma/TypeScript/Vitest/lint/build/diff cuối và xác minh không đổi `Supervision*`
+- [x] T055 Tạo checkpoint Lát 2A và hoàn tất `slice-2a-report.md`
