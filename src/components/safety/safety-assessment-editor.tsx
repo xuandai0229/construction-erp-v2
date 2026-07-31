@@ -32,8 +32,13 @@ import {
   getWeekRange,
   formatIsoDateOnly,
   normalizeNfc,
+  normalizeOptionalReportText,
 } from "@/lib/safety-reporting/date-utils";
-import { SAFETY_ASSESSMENT_OFFICIAL_CONTENT } from "@/lib/safety-reporting/safety-assessment-official-content";
+import {
+  SAFETY_ASSESSMENT_OFFICIAL_CONTENT,
+  SAFETY_SELF_ASSESSMENT_INSPECTION_TITLE,
+  SAFETY_SELF_ASSESSMENT_INSPECTION_CONTENT,
+} from "@/lib/safety-reporting/safety-assessment-official-content";
 
 export interface SafetyAssessmentEditorProps {
   report: any;
@@ -67,11 +72,11 @@ const AssessmentEntryRow = React.memo(function AssessmentEntryRow({
   onOpenPickerModal: (id: string) => void;
 }) {
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,25fr)_minmax(0,22fr)_minmax(0,22fr)_minmax(0,21fr)_44px] border-b border-slate-200 last:border-b-0 hover:bg-slate-50/50 transition-colors p-3 xl:p-2.5 items-stretch gap-3 xl:gap-0 font-sans">
-      {/* Col 1: Công trình & Nội dung kiểm tra */}
-      <div className="xl:border-r xl:border-slate-200 xl:pr-2.5 space-y-2 flex flex-col justify-start">
+    <div className="grid grid-cols-1 md:grid-cols-[minmax(0,28fr)_minmax(0,21fr)_minmax(0,19fr)_minmax(0,17fr)_44px] border-b border-slate-200 last:border-b-0 hover:bg-slate-50/50 transition-colors p-3 md:p-2.5 items-stretch gap-3 md:gap-0 font-sans">
+      {/* Col 1: Công trình & Nội dung (28%) */}
+      <div className="md:border-r md:border-slate-200 md:pr-2.5 space-y-2 flex flex-col justify-start">
         <div className="flex items-center justify-between">
-          <label className="text-[11px] font-bold text-slate-700">1. Công trình & Nội dung:</label>
+          <label className="text-[11px] font-bold text-slate-700 md:hidden">1. Công trình & Nội dung:</label>
           {canEdit && (
             <button
               type="button"
@@ -119,53 +124,73 @@ const AssessmentEntryRow = React.memo(function AssessmentEntryRow({
           disabled={!canEdit}
           value={entry.inspectionContent || ""}
           onChange={(val) => onUpdateField(entry.id, "inspectionContent", val)}
-          placeholder="Nhập nội dung đi kiểm tra..."
+          placeholder="Nhập nội dung kiểm tra..."
           minHeight={60}
           className="w-full rounded-lg border border-slate-300 p-2 text-xs text-slate-900 focus:outline-none focus:border-blue-500 bg-white"
         />
+        {(entry.inspectionContent || "").length > 500 && (
+          <div className="text-[10px] text-slate-400 text-right">
+            {(entry.inspectionContent || "").length.toLocaleString()} ký tự
+          </div>
+        )}
       </div>
 
-      {/* Col 2: Đánh giá công trình */}
-      <div className="xl:border-r xl:border-slate-200 xl:px-2.5 space-y-1.5 flex flex-col justify-start">
-        <label className="text-[11px] font-bold text-slate-700">2. Đánh giá công trình:</label>
+      {/* Col 2: Đánh giá công trình (21%) */}
+      <div className="md:border-r md:border-slate-200 md:px-2.5 space-y-1.5 flex flex-col justify-start">
+        <label className="text-[11px] font-bold text-slate-700 md:hidden">2. Đánh giá công trình:</label>
         <AutoTextarea
           disabled={!canEdit}
           value={entry.assessment || ""}
           onChange={(val) => onUpdateField(entry.id, "assessment", val)}
-          placeholder="Nhập kết quả đánh giá thực tế..."
+          placeholder="Nhập đánh giá thực tế tại công trình..."
           minHeight={90}
-          className="w-full rounded-lg border border-slate-300 p-2 text-xs text-slate-900 focus:outline-none focus:border-blue-500 bg-white"
+          className="w-full rounded-lg border border-slate-300 p-2 text-xs text-slate-900 focus:outline-none focus:border-blue-500 bg-white leading-relaxed"
         />
+        {(entry.assessment || "").length > 500 && (
+          <div className="text-[10px] text-slate-400 text-right">
+            {(entry.assessment || "").length.toLocaleString()} ký tự
+          </div>
+        )}
       </div>
 
-      {/* Col 3: Kiến nghị yêu cầu */}
-      <div className="xl:border-r xl:border-slate-200 xl:px-2.5 space-y-1.5 flex flex-col justify-start">
-        <label className="text-[11px] font-bold text-slate-700">3. Kiến nghị yêu cầu:</label>
+      {/* Col 3: Kiến nghị yêu cầu (19%) */}
+      <div className="md:border-r md:border-slate-200 md:px-2.5 space-y-1.5 flex flex-col justify-start">
+        <label className="text-[11px] font-bold text-slate-700 md:hidden">3. Kiến nghị yêu cầu:</label>
         <AutoTextarea
           disabled={!canEdit}
           value={entry.recommendation || ""}
           onChange={(val) => onUpdateField(entry.id, "recommendation", val)}
-          placeholder="Ghi nhận kiến nghị, yêu cầu khắc phục..."
+          placeholder="Nhập kiến nghị, yêu cầu khắc phục..."
           minHeight={90}
-          className="w-full rounded-lg border border-slate-300 p-2 text-xs text-slate-900 focus:outline-none focus:border-blue-500 bg-white"
+          className="w-full rounded-lg border border-slate-300 p-2 text-xs text-slate-900 focus:outline-none focus:border-blue-500 bg-white leading-relaxed"
         />
+        {(entry.recommendation || "").length > 500 && (
+          <div className="text-[10px] text-slate-400 text-right">
+            {(entry.recommendation || "").length.toLocaleString()} ký tự
+          </div>
+        )}
       </div>
 
-      {/* Col 4: Kết quả thực hiện */}
-      <div className="xl:border-r xl:border-slate-200 xl:px-2.5 space-y-1.5 flex flex-col justify-start">
-        <label className="text-[11px] font-bold text-slate-700">4. Kết quả thực hiện:</label>
+      {/* Col 4: Kết quả thực hiện (17%) */}
+      <div className="md:border-r md:border-slate-200 md:px-2.5 space-y-1.5 flex flex-col justify-start">
+        <label className="text-[11px] font-bold text-slate-700 md:hidden">4. Kết quả thực hiện:</label>
         <AutoTextarea
           disabled={!canEdit}
           value={entry.implementationResult || ""}
           onChange={(val) => onUpdateField(entry.id, "implementationResult", val)}
-          placeholder="Xác nhận kết quả xử lý..."
+          placeholder="Nhập kết quả xử lý, thực hiện..."
           minHeight={90}
-          className="w-full rounded-lg border border-slate-300 p-2 text-xs text-slate-900 focus:outline-none focus:border-blue-500 bg-white"
+          className="w-full rounded-lg border border-slate-300 p-2 text-xs text-slate-900 focus:outline-none focus:border-blue-500 bg-white leading-relaxed"
         />
+        {(entry.implementationResult || "").length > 500 && (
+          <div className="text-[10px] text-slate-400 text-right">
+            {(entry.implementationResult || "").length.toLocaleString()} ký tự
+          </div>
+        )}
       </div>
 
-      {/* Col 5: Actions */}
-      <div className="shrink-0 w-[44px] flex items-center justify-center pt-6 xl:pt-7">
+      {/* Col 5: Actions (44px) */}
+      <div className="shrink-0 w-[44px] flex items-center justify-center p-1">
         {canEdit ? (
           <SafetyRowActionMenu
             onDuplicate={() => onDuplicate(entry.id)}
@@ -196,10 +221,10 @@ export function SafetyAssessmentEditor({
   const [selectedSourcePlanId, setSelectedSourcePlanId] = useState(report.sourcePlanId || "");
 
   // Section I & II fields
-  const [previousWeekRemediation, setPreviousWeekRemediation] = useState(report.previousWeekRemediation || "");
-  const [reinspectionConfirmation, setReinspectionConfirmation] = useState(report.reinspectionConfirmation || "");
-  const [managementRecommendation, setManagementRecommendation] = useState(report.managementRecommendation || report.managementResourceRecommendation || "");
-  const [otherOpinion, setOtherOpinion] = useState(report.otherOpinion || report.otherRecommendation || "");
+  const [previousWeekRemediation, setPreviousWeekRemediation] = useState(() => normalizeOptionalReportText(report.previousWeekRemediation));
+  const [reinspectionConfirmation, setReinspectionConfirmation] = useState(() => normalizeOptionalReportText(report.reinspectionConfirmation));
+  const [managementRecommendation, setManagementRecommendation] = useState(() => normalizeOptionalReportText(report.managementRecommendation || report.managementResourceRecommendation));
+  const [otherOpinion, setOtherOpinion] = useState(() => normalizeOptionalReportText(report.otherOpinion || report.otherRecommendation));
 
   const [lockVersion, setLockVersion] = useState(report.version || 1);
   const [autoSaveState, setAutoSaveState] = useState<AutoSaveState>("saved");
@@ -210,6 +235,7 @@ export function SafetyAssessmentEditor({
   const [conflictDialogOpen, setConflictDialogOpen] = useState(false);
   const [showFull20Items, setShowFull20Items] = useState(false);
   const [pickerModalEntryId, setPickerModalEntryId] = useState<string | null>(null);
+  const [deactivatingShiftInfo, setDeactivatingShiftInfo] = useState<{ dateIso: string; shiftKey: string; count: number } | null>(null);
   const [isImportingPlan, setIsImportingPlan] = useState(false);
 
   const canEdit = report.status !== "CANCELLED";
@@ -317,14 +343,40 @@ export function SafetyAssessmentEditor({
     reporterTitle,
     reporterDepartment,
     internalNote,
-    previousWeekRemediation,
-    reinspectionConfirmation,
-    managementRecommendation,
     otherOpinion,
     entries,
   ]);
 
   const lastSavedSnapshotRef = useRef<string>("");
+
+  const mapAssessmentFormToSaveCommand = useCallback((expectedLockVersion: number, data: typeof dataRef.current) => {
+    return {
+      expectedLockVersion,
+      officialDocumentNumber: (data.officialDocumentNumber || "").trim(),
+      documentPlace: (data.documentPlace || "").trim(),
+      recipientText: (data.recipientText || "").trim(),
+      reporterName: (data.reporterName || "").trim(),
+      reporterTitle: (data.reporterTitle || "").trim(),
+      reporterDepartment: (data.reporterDepartment || "").trim(),
+      internalNote: data.internalNote || undefined,
+      previousWeekRemediation: data.previousWeekRemediation || undefined,
+      reinspectionConfirmation: data.reinspectionConfirmation || undefined,
+      managementRecommendation: data.managementRecommendation || undefined,
+      otherOpinion: data.otherOpinion || undefined,
+      entries: (data.entries || []).map((e, index) => ({
+        id: e.id && !e.id.startsWith("temp-") ? e.id : undefined,
+        inspectionDate: e.inspectionDate,
+        shift: e.shift,
+        projectId: e.projectMode === "CUSTOM" ? null : e.projectId || null,
+        customProjectName: e.projectMode === "CUSTOM" ? (e.customProjectName || "").trim() : null,
+        inspectionContent: (e.inspectionContent || "").trim(),
+        assessment: e.assessment ? e.assessment.trim() : "",
+        recommendation: e.recommendation ? e.recommendation.trim() : "",
+        implementationResult: e.implementationResult ? e.implementationResult.trim() : "",
+        sortOrder: e.sortOrder ?? index,
+      })),
+    };
+  }, []);
 
   const computeSnapshotString = useCallback((data: typeof dataRef.current) => {
     return JSON.stringify({
@@ -372,7 +424,7 @@ export function SafetyAssessmentEditor({
         return savePromiseRef.current;
       }
 
-      const executeSave = async () => {
+      const executeSave = async (): Promise<boolean> => {
         try {
           isSavingRef.current = true;
           setAutoSaveState("saving");
@@ -381,32 +433,19 @@ export function SafetyAssessmentEditor({
           const snapBeforeSave = computeSnapshotString(currentData);
           const currentVer = lockVersionRef.current;
 
-          const res = await saveSafetyAssessmentAction(report.id, {
-            expectedLockVersion: currentVer,
-            officialDocumentNumber: currentData.officialDocumentNumber.trim(),
-            documentPlace: currentData.documentPlace.trim(),
-            recipientText: currentData.recipientText.trim(),
-            reporterName: currentData.reporterName.trim(),
-            reporterTitle: currentData.reporterTitle.trim(),
-            reporterDepartment: currentData.reporterDepartment.trim(),
-            internalNote: currentData.internalNote,
-            previousWeekRemediation: currentData.previousWeekRemediation,
-            reinspectionConfirmation: currentData.reinspectionConfirmation,
-            managementRecommendation: currentData.managementRecommendation,
-            otherOpinion: currentData.otherOpinion,
-            entries: currentData.entries.map((e) => ({
-              id: e.id.startsWith("temp-") ? undefined : e.id,
-              inspectionDate: e.inspectionDate,
-              shift: e.shift,
-              projectId: e.projectMode === "CUSTOM" ? null : e.projectId || null,
-              customProjectName: e.projectMode === "CUSTOM" ? e.customProjectName.trim() : null,
-              inspectionContent: e.inspectionContent.trim(),
-              assessment: e.assessment ? e.assessment.trim() : "",
-              recommendation: e.recommendation ? e.recommendation.trim() : "",
-              implementationResult: e.implementationResult ? e.implementationResult.trim() : "",
-              sortOrder: e.sortOrder,
-            })),
-          });
+          const payload = mapAssessmentFormToSaveCommand(currentVer, currentData);
+          const res = await saveSafetyAssessmentAction(report.id, payload);
+
+          if (!res.ok) {
+            failedRef.current = true;
+            if (res.code === "VERSION_CONFLICT") {
+              setAutoSaveState("conflict");
+              setConflictDialogOpen(true);
+            } else {
+              setAutoSaveState("error");
+            }
+            return false;
+          }
 
           lockVersionRef.current = res.lockVersion;
           setLockVersion(res.lockVersion);
@@ -456,9 +495,6 @@ export function SafetyAssessmentEditor({
             setConflictDialogOpen(true);
           } else {
             setAutoSaveState("error");
-            if (options?.source === "MANUAL" || options?.source === "KEYBOARD") {
-              alert(err.message || "Lỗi lưu Báo cáo.");
-            }
           }
           return false;
         } finally {
@@ -471,7 +507,7 @@ export function SafetyAssessmentEditor({
       savePromiseRef.current = p;
       return p;
     },
-    [report.id, computeSnapshotString, router]
+    [report.id, computeSnapshotString, mapAssessmentFormToSaveCommand, router]
   );
 
   // Keyboard Ctrl+S
@@ -486,7 +522,7 @@ export function SafetyAssessmentEditor({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [canEdit, saveDraft]);
 
-  // Debounced AutoSave (900ms)
+  // Debounced AutoSave (1000ms)
   const triggerAutoSave = useCallback(() => {
     if (!canEdit) return;
     dirtyRef.current = true;
@@ -497,7 +533,7 @@ export function SafetyAssessmentEditor({
 
     autoSaveTimerRef.current = setTimeout(() => {
       saveDraft({ source: "AUTOSAVE" });
-    }, 900);
+    }, 1000);
   }, [canEdit, saveDraft]);
 
   useEffect(() => {
@@ -608,13 +644,31 @@ export function SafetyAssessmentEditor({
         ];
       });
     } else {
-      setActiveShifts((prev) => ({
-        ...prev,
-        [dateIso]: { ...prev[dateIso], [shiftKey]: false },
-      }));
-      setEntries((prev) => prev.filter((e) => !(e.inspectionDate === dateIso && e.shift === shiftKey)));
+      setEntries((prev) => {
+        const existingEntries = prev.filter((e) => e.inspectionDate === dateIso && e.shift === shiftKey);
+        if (existingEntries.length > 0) {
+          setDeactivatingShiftInfo({ dateIso, shiftKey, count: existingEntries.length });
+          return prev;
+        }
+        setActiveShifts((aPrev) => ({
+          ...aPrev,
+          [dateIso]: { ...aPrev[dateIso], [shiftKey]: false },
+        }));
+        return prev;
+      });
     }
   }, [projects]);
+
+  const confirmDeactivateShift = useCallback(() => {
+    if (!deactivatingShiftInfo) return;
+    const { dateIso, shiftKey } = deactivatingShiftInfo;
+    setActiveShifts((prev) => ({
+      ...prev,
+      [dateIso]: { ...prev[dateIso], [shiftKey]: false },
+    }));
+    setEntries((prev) => prev.filter((e) => !(e.inspectionDate === dateIso && e.shift === shiftKey)));
+    setDeactivatingShiftInfo(null);
+  }, [deactivatingShiftInfo]);
 
   const handleAddRowForShift = useCallback((dateIso: string, shiftKey: string) => {
     setEntries((prev) => [
@@ -824,42 +878,46 @@ export function SafetyAssessmentEditor({
         </div>
       </div>
 
-      {/* SECTION 2: DANH MỤC 20 MỤC KIỂM TRA CHUẨN */}
+      {/* SECTION 2: NỘI DUNG KIỂM TRA (20 MỤC NGUYÊN VĂN MẪU 01) */}
       <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-3">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2">
             <Lock className="h-4 w-4 text-emerald-600" />
             <h2 className="font-bold text-sm text-slate-900">
-              Danh mục 20 nội dung kiểm tra tiêu chuẩn (Mẫu 01)
+              {SAFETY_SELF_ASSESSMENT_INSPECTION_TITLE}
             </h2>
           </div>
           <Button
+            type="button"
             size="sm"
             variant="ghost"
             onClick={() => setShowFull20Items(!showFull20Items)}
             className="h-7 text-xs font-bold text-blue-600 hover:bg-blue-50 gap-1"
           >
-            {showFull20Items ? "Thu gọn" : "Xem 20 mục tiêu chuẩn"}
+            {showFull20Items ? "Thu gọn" : "Xem toàn bộ nội dung"}
             {showFull20Items ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
           </Button>
         </div>
 
-        {showFull20Items && (
-          <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-4 text-xs space-y-2 leading-relaxed text-slate-800">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {SAFETY_ASSESSMENT_OFFICIAL_CONTENT.standard20Items.map((item, i) => (
-                <div key={i} className="p-1.5 bg-white rounded border border-slate-200 font-medium">
-                  {item}
-                </div>
-              ))}
-            </div>
+        {!showFull20Items ? (
+          <p className="text-xs text-slate-600 leading-relaxed">
+            Danh mục gồm 20 nội dung kiểm tra ATLĐ, PCCC, VSMT theo Mẫu 01.
+          </p>
+        ) : (
+          <div className="mt-3 rounded-xl border border-slate-200/80 bg-slate-50/70 p-4 sm:p-5 text-xs leading-[1.65] text-slate-800 space-y-2.5">
+            {SAFETY_SELF_ASSESSMENT_INSPECTION_CONTENT.map((item) => (
+              <div key={item.number} className="text-slate-800 text-xs flex items-start gap-1.5">
+                <span className="font-bold text-slate-900 shrink-0">{item.number}.</span>
+                <span>{item.content}</span>
+              </div>
+            ))}
           </div>
         )}
       </div>
 
-      {/* SECTION 3: BẢNG BÁO CÁO KẾT QUẢ KIỂM TRA (5 CỘT) */}
+      {/* SECTION 3: BẢNG BÁO CÁO KẾT QUẢ KIỂM TRA (5 CỘT CHUẨN MẪU 01) */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-        <div className="p-5 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="p-4 sm:p-5 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="font-bold text-sm text-slate-900 flex items-center gap-2">
               <FileText className="h-4 w-4 text-blue-600" />
@@ -871,80 +929,102 @@ export function SafetyAssessmentEditor({
           </div>
         </div>
 
-        <div className="divide-y divide-slate-200">
-          {weekDays.map((day) => {
+        {/* 5-Column Continuous Table Container Matching Supervision Layout */}
+        <div className="overflow-hidden bg-white">
+          {/* Table Desktop Header */}
+          <div className="hidden grid-cols-[15%_minmax(0,28fr)_minmax(0,21fr)_minmax(0,19fr)_minmax(0,17fr)_44px] bg-slate-100 border-b border-slate-200 text-xs font-bold text-slate-700 md:grid">
+            <div className="p-3 border-r border-slate-200">NGÀY KIỂM TRA</div>
+            <div className="p-3 border-r border-slate-200">CÔNG TRÌNH/NỘI DUNG KIỂM TRA</div>
+            <div className="p-3 border-r border-slate-200">ĐÁNH GIÁ CÔNG TRÌNH</div>
+            <div className="p-3 border-r border-slate-200">KIẾN NGHỊ YÊU CẦU</div>
+            <div className="p-3 border-r border-slate-200">KẾT QUẢ THỰC HIỆN</div>
+            <div className="shrink-0 w-[44px]"></div>
+          </div>
+
+          {/* Days Loop */}
+          {weekDays.map((w) => {
+            const dayEntries = entries.filter((e) => e.inspectionDate === w.dateIso);
+            const dayShifts = activeShifts[w.dateIso] || { MORNING: false, AFTERNOON: false, EVENING: false };
+            const activeShiftKeys = shiftsList.filter((s) => dayShifts[s.key as keyof typeof dayShifts]);
+
             return (
-              <div key={day.dateIso} className="p-4 sm:p-5 space-y-4">
-                <div className="flex items-center gap-3 border-b border-slate-100 pb-2.5">
-                  <span className="font-bold text-sm text-slate-900">{day.dayName}</span>
-                  <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-                    {day.dateFormatted}
-                  </span>
-                </div>
+              <div key={w.dateIso} className="border-b border-slate-200 last:border-b-0 md:grid md:grid-cols-[15%_85%] md:items-start">
+                {/* Col 1 (15%): Date Label & Vertical Shift Checkboxes */}
+                <div className="bg-slate-50 md:border-r md:border-slate-200 md:bg-white p-3 space-y-2.5">
+                  <div>
+                    <span className="font-bold text-xs text-slate-900 block">{w.dayName}</span>
+                    <span className="text-[11px] text-slate-500 font-medium">{w.dateFormatted}</span>
+                  </div>
 
-                {/* Shift Checkboxes & Rows */}
-                <div className="space-y-4">
-                  {shiftsList.map((shiftObj) => {
-                    const shiftKey = shiftObj.key;
-                    const shiftLabel = shiftObj.label;
-                    const isChecked = !!activeShifts[day.dateIso]?.[shiftKey];
-                    const shiftEntries = entries.filter(
-                      (e) => e.inspectionDate === day.dateIso && e.shift === shiftKey
-                    );
-
-                    return (
-                      <div key={shiftKey} className="rounded-xl border border-slate-200/80 bg-slate-50/30 overflow-hidden">
-                        <div className="bg-slate-100/70 px-3.5 py-2 flex items-center justify-between">
-                          <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-800">
+                  {/* Vertical Shift Checkboxes */}
+                  {canEdit && (
+                    <div className="space-y-1.5 pt-1">
+                      {shiftsList.map((s) => {
+                        const isChecked = !!dayShifts[s.key as keyof typeof dayShifts];
+                        return (
+                          <label key={s.key} className="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-slate-700 select-none hover:text-blue-600">
                             <input
                               type="checkbox"
-                              disabled={!canEdit}
                               checked={isChecked}
-                              onChange={(e) => handleToggleShift(day.dateIso, shiftKey, e.target.checked)}
-                              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                              onChange={(e) => handleToggleShift(w.dateIso, s.key, e.target.checked)}
+                              className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                             />
-                            <span>Buổi {shiftLabel}</span>
+                            <span>Buổi {s.label}</span>
                           </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
 
-                          {canEdit && isChecked && (
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleAddRowForShift(day.dateIso, shiftKey)}
-                              className="h-6 text-[11px] font-bold text-blue-600 hover:bg-blue-100 px-2 gap-1"
-                            >
-                              <Plus className="h-3 w-3" />
-                              <span>Thêm dòng</span>
-                            </Button>
+                {/* Col 2 (85%): Shift Groups & Entries */}
+                <div className="min-h-[44px]">
+                  {activeShiftKeys.length === 0 ? (
+                    <div className="p-4 text-center text-xs text-slate-400 italic min-h-[64px] flex items-center justify-center">
+                      Chưa phát sinh kết quả kiểm tra trong ngày.
+                    </div>
+                  ) : (
+                    activeShiftKeys.map((s) => {
+                      const shiftEntries = dayEntries.filter((e) => e.shift === s.key);
+
+                      return (
+                        <div key={s.key} className="border-b border-slate-200 last:border-b-0">
+                          {/* Group Sub-Header with full day/date context */}
+                          <div className="bg-blue-50/70 px-3.5 py-1.5 text-xs font-bold text-blue-900 border-b border-slate-200 flex items-center justify-between">
+                            <span>Buổi {s.label} — {w.dayName}, ngày {w.dateFormatted}</span>
+                          </div>
+
+                          {/* Rows */}
+                          {shiftEntries.map((entry) => (
+                            <AssessmentEntryRow
+                              key={entry.id}
+                              entry={entry}
+                              canEdit={canEdit}
+                              projects={projects}
+                              onUpdateField={handleUpdateEntryField}
+                              onDuplicate={handleDuplicateRow}
+                              onDelete={handleDeleteRow}
+                              onOpenPickerModal={(id) => setPickerModalEntryId(id)}
+                            />
+                          ))}
+
+                          {/* Add Row Button */}
+                          {canEdit && (
+                            <div className="p-2 bg-slate-50/50 flex items-center gap-2 border-t border-slate-100">
+                              <button
+                                type="button"
+                                onClick={() => handleAddRowForShift(w.dateIso, s.key)}
+                                className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2.5 py-1 rounded-lg transition-colors"
+                              >
+                                <Plus className="h-3.5 w-3.5" />
+                                <span>Thêm công trình kiểm tra trong buổi [{s.label}]</span>
+                              </button>
+                            </div>
                           )}
                         </div>
-
-                        {isChecked && (
-                          <div className="bg-white">
-                            {shiftEntries.length === 0 ? (
-                              <div className="p-3 text-xs text-slate-400 italic text-center">
-                                Chưa có nội dung kiểm tra cho Buổi {shiftLabel}. Bấm "Thêm dòng" để nhập thông tin.
-                              </div>
-                            ) : (
-                              shiftEntries.map((entry) => (
-                                <AssessmentEntryRow
-                                  key={entry.id}
-                                  entry={entry}
-                                  canEdit={canEdit}
-                                  projects={projects}
-                                  onUpdateField={handleUpdateEntryField}
-                                  onDuplicate={handleDuplicateRow}
-                                  onDelete={handleDeleteRow}
-                                  onOpenPickerModal={(id) => setPickerModalEntryId(id)}
-                                />
-                              ))
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                  )}
                 </div>
               </div>
             );
@@ -954,78 +1034,98 @@ export function SafetyAssessmentEditor({
 
       {/* SECTION 4: PHẦN I — ĐÁNH GIÁ KẾT QUẢ XỬ LÝ TỒN TẠI TUẦN TRƯỚC */}
       <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-4">
-        <div className="border-b border-slate-100 pb-2">
+        <div className="border-b border-slate-100 pb-2 flex items-center justify-between">
           <h2 className="font-bold text-sm text-slate-900 uppercase">
             {SAFETY_ASSESSMENT_OFFICIAL_CONTENT.sectionITitle}
           </h2>
         </div>
 
         <div className="space-y-4 text-xs">
-          <div>
-            <label className="block font-bold text-slate-800 mb-1.5">
+          <div className="space-y-1.5">
+            <label className="block font-bold text-slate-800">
               1. Theo dõi khắc phục các yêu cầu của tuần trước còn tồn đọng:
             </label>
             <AutoTextarea
               disabled={!canEdit}
               value={previousWeekRemediation}
               onChange={(val) => setPreviousWeekRemediation(normalizeNfc(val))}
-              placeholder="Nhập tiến độ và tình hình khắc phục các tồn tại của tuần trước..."
-              minHeight={64}
+              placeholder="Nhập nội dung theo dõi khắc phục..."
+              minHeight={80}
               className="w-full rounded-lg border border-slate-300 p-2.5 text-xs text-slate-900 focus:outline-none focus:border-blue-500 bg-white"
             />
+            {previousWeekRemediation.length > 500 && (
+              <div className="text-[11px] text-slate-500 text-right">
+                Độ dài: {previousWeekRemediation.length.toLocaleString()} ký tự
+              </div>
+            )}
           </div>
 
-          <div>
-            <label className="block font-bold text-slate-800 mb-1.5">
+          <div className="space-y-1.5">
+            <label className="block font-bold text-slate-800">
               2. Kiểm tra lại sau khắc phục và xác nhận đã hoàn thành:
             </label>
             <AutoTextarea
               disabled={!canEdit}
               value={reinspectionConfirmation}
               onChange={(val) => setReinspectionConfirmation(normalizeNfc(val))}
-              placeholder="Xác nhận kết quả tái kiểm tra đối với các mục đã yêu cầu sửa đổi..."
-              minHeight={64}
+              placeholder="Nhập kết quả kiểm tra lại..."
+              minHeight={80}
               className="w-full rounded-lg border border-slate-300 p-2.5 text-xs text-slate-900 focus:outline-none focus:border-blue-500 bg-white"
             />
+            {reinspectionConfirmation.length > 500 && (
+              <div className="text-[11px] text-slate-500 text-right">
+                Độ dài: {reinspectionConfirmation.length.toLocaleString()} ký tự
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* SECTION 5: PHẦN II — KIẾN NGHỊ ĐỀ XUẤT BAN GIÁM ĐỐC */}
       <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-4">
-        <div className="border-b border-slate-100 pb-2">
+        <div className="border-b border-slate-100 pb-2 flex items-center justify-between">
           <h2 className="font-bold text-sm text-slate-900 uppercase">
             {SAFETY_ASSESSMENT_OFFICIAL_CONTENT.sectionIITitle}
           </h2>
         </div>
 
         <div className="space-y-4 text-xs">
-          <div>
-            <label className="block font-bold text-slate-800 mb-1.5">
+          <div className="space-y-1.5">
+            <label className="block font-bold text-slate-800">
               1. Bổ sung nhân lực, thiết bị, thay thế đội ngũ yếu kém không đạt về kỹ mỹ thuật, ATLĐ, PCCC, VSMT:
             </label>
             <AutoTextarea
               disabled={!canEdit}
               value={managementRecommendation}
               onChange={(val) => setManagementRecommendation(normalizeNfc(val))}
-              placeholder="Ghi rõ yêu cầu kiến nghị Ban Giám đốc về nhân sự, thiết bị..."
-              minHeight={64}
+              placeholder="Nhập kiến nghị đề xuất..."
+              minHeight={80}
               className="w-full rounded-lg border border-slate-300 p-2.5 text-xs text-slate-900 focus:outline-none focus:border-blue-500 bg-white"
             />
+            {managementRecommendation.length > 500 && (
+              <div className="text-[11px] text-slate-500 text-right">
+                Độ dài: {managementRecommendation.length.toLocaleString()} ký tự
+              </div>
+            )}
           </div>
 
-          <div>
-            <label className="block font-bold text-slate-800 mb-1.5">
+          <div className="space-y-1.5">
+            <label className="block font-bold text-slate-800">
               2. Ý kiến khác:
             </label>
             <AutoTextarea
               disabled={!canEdit}
               value={otherOpinion}
               onChange={(val) => setOtherOpinion(normalizeNfc(val))}
-              placeholder="Nhập các đề xuất, ý kiến bổ sung khác..."
-              minHeight={64}
+              placeholder="Nhập ý kiến khác..."
+              minHeight={80}
               className="w-full rounded-lg border border-slate-300 p-2.5 text-xs text-slate-900 focus:outline-none focus:border-blue-500 bg-white"
             />
+            {otherOpinion.length > 500 && (
+              <div className="text-[11px] text-slate-500 text-right">
+                Độ dài: {otherOpinion.length.toLocaleString()} ký tự
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -1036,6 +1136,66 @@ export function SafetyAssessmentEditor({
         onClose={() => setPickerModalEntryId(null)}
         onSelectItems={handleApplyPickerContent}
       />
+
+      {/* Version Conflict Modal */}
+      {conflictDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 space-y-4 border border-slate-200">
+            <div className="flex items-center gap-3 text-amber-600">
+              <div className="p-2.5 rounded-full bg-amber-50">
+                <AlertTriangle className="h-6 w-6" />
+              </div>
+              <h3 className="font-bold text-slate-900 text-base">Xung đột phiên dữ liệu</h3>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Dữ liệu trên máy đã cũ hơn dữ liệu đang lưu trên hệ thống (do được chỉnh sửa bởi phiên làm việc khác). Vui lòng tải lại dữ liệu mới nhất trước khi tiếp tục.
+            </p>
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setConflictDialogOpen(false)}
+                className="text-xs font-semibold"
+              >
+                Đóng
+              </Button>
+              <Button
+                type="button"
+                onClick={() => {
+                  setConflictDialogOpen(false);
+                  window.location.reload();
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold"
+              >
+                Tải lại dữ liệu mới nhất
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Shift Deactivation Confirmation Modal */}
+      {deactivatingShiftInfo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+          <div className="bg-white rounded-xl max-w-sm w-full p-6 space-y-4 shadow-xl">
+            <div className="flex items-center gap-2 text-amber-600 font-bold text-sm">
+              <AlertTriangle className="h-5 w-5" />
+              Xác nhận hủy buổi kiểm tra
+            </div>
+            <p className="text-xs text-slate-600">
+              Buổi này đang có <strong className="text-slate-900">{deactivatingShiftInfo.count} dòng</strong> kết quả kiểm tra đã nhập. Việc bỏ chọn buổi sẽ xóa toàn bộ nội dung đã nhập trong buổi này. Bạn có chắc chắn muốn tiếp tục?
+            </p>
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <Button size="sm" variant="outline" onClick={() => setDeactivatingShiftInfo(null)} className="h-8 text-xs font-bold">
+                Hủy bỏ
+              </Button>
+              <Button size="sm" variant="destructive" onClick={confirmDeactivateShift} className="h-8 text-xs font-bold bg-rose-600 hover:bg-rose-700">
+                Đồng ý xóa
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

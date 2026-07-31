@@ -1,5 +1,11 @@
-import { buildSafetyAssessmentOutputModel, SafetyAssessmentOutputModel } from './assessment-view-model';
-import { SAFETY_ASSESSMENT_OFFICIAL_CONTENT } from './safety-assessment-official-content';
+import { buildSafetyAssessmentOutputModel, SafetyAssessmentOutputModel, NarrativeSectionValue } from './assessment-view-model';
+import {
+  SAFETY_ASSESSMENT_OFFICIAL_CONTENT,
+  SAFETY_SELF_ASSESSMENT_INSPECTION_TITLE,
+  SAFETY_SELF_ASSESSMENT_INSPECTION_CONTENT,
+} from './safety-assessment-official-content';
+
+const HANDWRITING_DOTS = "................................................................................................................................................................................................................................";
 
 function escapeHtml(text: string | null | undefined): string {
   if (!text) return '';
@@ -16,8 +22,21 @@ function formatMultilines(text: string | null | undefined): string {
   return escapeHtml(text).replace(/\n/g, '<br/>');
 }
 
+function renderSectionContentHtml(section: NarrativeSectionValue): string {
+  if (section.isEmpty) {
+    const linesHtml = Array.from({ length: 4 }, () =>
+      `<div class="assessment-handwriting-text-line" aria-hidden="true">${HANDWRITING_DOTS}</div>`
+    ).join('');
+
+    return `<div class="assessment-handwriting-lines" aria-label="Vùng để viết bổ sung">${linesHtml}</div>`;
+  }
+  return `<div class="assessment-narrative-value">${formatMultilines(section.text)}</div>`;
+}
+
 export function renderSafetyAssessmentHtml(reportInput: any): string {
-  const model: SafetyAssessmentOutputModel = buildSafetyAssessmentOutputModel(reportInput);
+  const model: SafetyAssessmentOutputModel = reportInput && Array.isArray(reportInput.tableRows)
+    ? reportInput
+    : buildSafetyAssessmentOutputModel(reportInput);
 
   const docNo = model.officialDocumentNumber ? escapeHtml(model.officialDocumentNumber) : '……/……';
   const placeDateStr = `${escapeHtml(model.documentPlace)}, ${model.documentDateFormatted}`;
@@ -36,7 +55,7 @@ export function renderSafetyAssessmentHtml(reportInput: any): string {
   <style>
     @page {
       size: A4 portrait;
-      margin: 18mm 15mm 18mm 20mm;
+      margin: 18mm 16mm 18mm 20mm;
     }
     *, *:before, *:after {
       box-sizing: border-box;
@@ -50,6 +69,7 @@ export function renderSafetyAssessmentHtml(reportInput: any): string {
       margin: 0;
       padding: 0;
       -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
     .a4-container {
       width: 100%;
@@ -153,16 +173,17 @@ export function renderSafetyAssessmentHtml(reportInput: any): string {
     .inspection-table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 15px;
-      margin-bottom: 20px;
+      margin-top: 10px;
+      margin-bottom: 12px;
       page-break-inside: auto;
     }
     .inspection-table th,
     .inspection-table td {
       border: 1px solid #000000;
-      padding: 6px 7px;
-      font-size: 11pt;
-      vertical-align: top;
+      padding: 3px 5px;
+      font-size: 10pt;
+      line-height: 1.25;
+      vertical-align: middle;
       word-wrap: break-word;
       overflow-wrap: break-word;
     }
@@ -172,7 +193,8 @@ export function renderSafetyAssessmentHtml(reportInput: any): string {
       text-align: center;
       vertical-align: middle;
       text-transform: uppercase;
-      font-size: 10.5pt;
+      font-size: 9.5pt;
+      padding: 4px 4px;
     }
     .inspection-table tr {
       page-break-inside: avoid;
@@ -189,41 +211,106 @@ export function renderSafetyAssessmentHtml(reportInput: any): string {
       font-size: 11pt;
     }
 
+    /* Column 2 Project & Inspection Content Cell */
+    .assessment-project-content-cell {
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: normal;
+      line-height: 1.3;
+      text-align: left;
+    }
+    .assessment-cell-label {
+      font-weight: 700;
+      font-size: 9pt;
+      margin-bottom: 1px;
+      color: #000000;
+    }
+    .assessment-project-name {
+      font-weight: 600;
+      font-size: 9.5pt;
+      color: #111111;
+    }
+    .assessment-inspection-content {
+      font-weight: 400;
+      font-size: 9.5pt;
+      color: #111111;
+      white-space: pre-wrap;
+    }
+
     /* Section I & II */
     .report-section {
-      margin-top: 20px;
-      margin-bottom: 20px;
-      page-break-inside: avoid;
+      margin-top: 15px;
+      margin-bottom: 15px;
+      page-break-inside: auto;
     }
     .section-header {
       font-weight: bold;
       font-size: 13pt;
       text-transform: uppercase;
-      margin-bottom: 8px;
+      margin-top: 5mm;
+      margin-bottom: 3mm;
+      page-break-after: avoid;
+      break-after: avoid;
     }
-    .subsection-title {
+
+    /* Subsection & Real Text Dot Handwriting Lines */
+    .assessment-narrative-subsection {
+      margin-top: 2mm;
+      margin-bottom: 3mm;
+    }
+    .assessment-narrative-label {
       font-weight: bold;
       font-size: 12.5pt;
-      margin-top: 10px;
-      margin-bottom: 4px;
+      margin-top: 3mm;
+      margin-bottom: 2mm;
+      page-break-after: avoid;
+      break-after: avoid;
     }
-    .subsection-content {
-      font-size: 12.5pt;
-      margin-left: 15px;
-      min-height: 24px;
+    .assessment-handwriting-lines {
+      width: 100%;
+      margin: 3mm 0 4mm;
+      padding-left: 5mm;
+      padding-right: 1mm;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .assessment-handwriting-text-line {
+      width: 100%;
+      height: 6mm;
+      overflow: hidden;
+      white-space: nowrap;
+      font-family: "Times New Roman", Times, serif;
+      font-size: 12pt;
+      font-weight: 400;
+      font-style: normal;
+      line-height: 6mm;
+      letter-spacing: 0.7pt;
+      color: #000000;
+      text-rendering: geometricPrecision;
+      -webkit-font-smoothing: auto;
+    }
+    .assessment-narrative-value {
+      font-size: 12pt;
+      margin-left: 5mm;
+      min-height: 0;
       white-space: pre-wrap;
+      overflow-wrap: anywhere;
     }
-    .empty-content {
-      font-style: italic;
-      color: #555555;
+
+    /* Signature Block */
+    .assessment-signature-block {
+      margin-top: 8mm;
+      page-break-inside: avoid;
+      break-inside: avoid;
     }
 
     /* Footer Table */
     .footer-table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 30px;
+      margin-top: 10px;
       page-break-inside: avoid;
+      break-inside: avoid;
     }
     .footer-table td {
       vertical-align: top;
@@ -273,6 +360,16 @@ export function renderSafetyAssessmentHtml(reportInput: any): string {
       }
       thead { display: table-header-group; }
       tr { page-break-inside: avoid; }
+      .section-header,
+      .assessment-narrative-label {
+        break-after: avoid;
+        page-break-after: avoid;
+      }
+      .assessment-handwriting-lines,
+      .assessment-signature-block {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
     }
   </style>
 </head>
@@ -313,6 +410,17 @@ export function renderSafetyAssessmentHtml(reportInput: any): string {
       <div class="opening-reporter">
         Tôi <strong>${escapeHtml(model.reporterName)}</strong> – ${escapeHtml(model.reporterTitle)} – ${escapeHtml(model.reporterDepartment)} Công ty CP xây dựng và thương mại số 2 Hà Nội báo cáo kết quả kiểm tra như sau:
       </div>
+
+      <div style="margin-top: 12px; margin-bottom: 15px; page-break-inside: auto;">
+        <div style="font-weight: bold; font-size: 13pt; margin-bottom: 6px;">${escapeHtml(SAFETY_SELF_ASSESSMENT_INSPECTION_TITLE)}</div>
+        <div style="padding-left: 4px; line-height: 1.45; font-size: 12.5pt;">
+          ${SAFETY_SELF_ASSESSMENT_INSPECTION_CONTENT.map(item => `
+            <div style="margin-bottom: 3px; text-align: justify;">
+              <strong>${item.number}.</strong> ${escapeHtml(item.content)}
+            </div>
+          `).join('')}
+        </div>
+      </div>
     </div>
 
     <!-- Official 5-Column Table -->
@@ -334,14 +442,36 @@ export function renderSafetyAssessmentHtml(reportInput: any): string {
             ? `<div style="font-weight:bold;">Buổi ${escapeHtml(row.shiftLabel)}</div>`
             : '';
 
-          const projAndContent = row.projectName
-            ? `<strong>${escapeHtml(row.projectName)}</strong>${row.inspectionContent ? `<br/>${formatMultilines(row.inspectionContent)}` : ''}`
-            : formatMultilines(row.inspectionContent);
+          const hasProject = Boolean(row.projectName && row.projectName.trim());
+          const hasContent = Boolean(row.inspectionContent && row.inspectionContent.trim());
+
+          let colContentHtml = '';
+          if (hasProject || hasContent) {
+            colContentHtml = `<div class="assessment-project-content-cell">`;
+            if (hasProject) {
+              colContentHtml += `
+                <div class="assessment-project-block">
+                  <div class="assessment-cell-label">Công trình:</div>
+                  <div class="assessment-project-name">${escapeHtml(row.projectName)}</div>
+                </div>
+              `;
+            }
+            if (hasContent) {
+              const borderStyle = hasProject ? 'margin-top: 2.5mm; padding-top: 2mm; border-top: 0.35pt solid #777777;' : '';
+              colContentHtml += `
+                <div class="assessment-inspection-block" style="${borderStyle}">
+                  <div class="assessment-cell-label">Nội dung kiểm tra:</div>
+                  <div class="assessment-inspection-content">${formatMultilines(row.inspectionContent)}</div>
+                </div>
+              `;
+            }
+            colContentHtml += `</div>`;
+          }
 
           return `
             <tr>
               <td class="col-date">${dateCellHtml}</td>
-              <td class="col-content">${projAndContent}</td>
+              <td class="col-content">${colContentHtml}</td>
               <td class="col-assessment">${formatMultilines(row.assessment)}</td>
               <td class="col-recommendation">${formatMultilines(row.recommendation)}</td>
               <td class="col-result">${formatMultilines(row.implementationResult)}</td>
@@ -355,39 +485,49 @@ export function renderSafetyAssessmentHtml(reportInput: any): string {
     <div class="report-section">
       <div class="section-header">${escapeHtml(SAFETY_ASSESSMENT_OFFICIAL_CONTENT.sectionITitle)}</div>
       
-      <div class="subsection-title">${escapeHtml(SAFETY_ASSESSMENT_OFFICIAL_CONTENT.sectionISub1)}</div>
-      <div class="subsection-content">${model.previousWeekRemediation ? formatMultilines(model.previousWeekRemediation) : '<span class="empty-content">(Không có)</span>'}</div>
+      <section class="assessment-narrative-subsection">
+        <div class="assessment-narrative-label">${escapeHtml(SAFETY_ASSESSMENT_OFFICIAL_CONTENT.sectionISub1)}</div>
+        ${renderSectionContentHtml(model.previousWeekRemediationSection)}
+      </section>
 
-      <div class="subsection-title">${escapeHtml(SAFETY_ASSESSMENT_OFFICIAL_CONTENT.sectionISub2)}</div>
-      <div class="subsection-content">${model.reinspectionConfirmation ? formatMultilines(model.reinspectionConfirmation) : '<span class="empty-content">(Không có)</span>'}</div>
+      <section class="assessment-narrative-subsection">
+        <div class="assessment-narrative-label">${escapeHtml(SAFETY_ASSESSMENT_OFFICIAL_CONTENT.sectionISub2)}</div>
+        ${renderSectionContentHtml(model.reinspectionConfirmationSection)}
+      </section>
     </div>
 
     <!-- Section II -->
     <div class="report-section">
       <div class="section-header">${escapeHtml(SAFETY_ASSESSMENT_OFFICIAL_CONTENT.sectionIITitle)}</div>
       
-      <div class="subsection-title">${escapeHtml(SAFETY_ASSESSMENT_OFFICIAL_CONTENT.sectionIISub1)}</div>
-      <div class="subsection-content">${model.managementRecommendation ? formatMultilines(model.managementRecommendation) : '<span class="empty-content">(Không có)</span>'}</div>
+      <section class="assessment-narrative-subsection">
+        <div class="assessment-narrative-label">${escapeHtml(SAFETY_ASSESSMENT_OFFICIAL_CONTENT.sectionIISub1)}</div>
+        ${renderSectionContentHtml(model.managementRecommendationSection)}
+      </section>
 
-      <div class="subsection-title">${escapeHtml(SAFETY_ASSESSMENT_OFFICIAL_CONTENT.sectionIISub2)}</div>
-      <div class="subsection-content">${model.otherOpinion ? formatMultilines(model.otherOpinion) : '<span class="empty-content">(Không có)</span>'}</div>
+      <section class="assessment-narrative-subsection">
+        <div class="assessment-narrative-label">${escapeHtml(SAFETY_ASSESSMENT_OFFICIAL_CONTENT.sectionIISub2)}</div>
+        ${renderSectionContentHtml(model.otherOpinionSection)}
+      </section>
     </div>
 
-    <!-- Footer Table -->
-    <table class="footer-table">
-      <tr>
-        <td class="footer-left">
-          <div class="footer-left-title">Nơi nhận:</div>
-          <div class="footer-left-item">- Như kính gửi;</div>
-          <div class="footer-left-item">- Lưu KT.</div>
-        </td>
-        <td class="footer-right">
-          <div class="reporter-role">${escapeHtml(SAFETY_ASSESSMENT_OFFICIAL_CONTENT.reporterRoleTitleUpper)}</div>
-          <div class="reporter-sign">(Ký, ghi rõ họ tên)</div>
-          <div class="reporter-name">${escapeHtml(model.reporterName)}</div>
-        </td>
-      </tr>
-    </table>
+    <!-- Footer Table Signature Block -->
+    <div class="assessment-signature-block">
+      <table class="footer-table">
+        <tr>
+          <td class="footer-left">
+            <div class="footer-left-title">Nơi nhận:</div>
+            <div class="footer-left-item">- Như kính gửi;</div>
+            <div class="footer-left-item">- Lưu KT.</div>
+          </td>
+          <td class="footer-right">
+            <div class="reporter-role">${escapeHtml(SAFETY_ASSESSMENT_OFFICIAL_CONTENT.reporterRoleTitleUpper)}</div>
+            <div class="reporter-sign">(Ký, ghi rõ họ tên)</div>
+            <div class="reporter-name">${escapeHtml(model.reporterName)}</div>
+          </td>
+        </tr>
+      </table>
+    </div>
   </div>
 </body>
 </html>`;

@@ -40,13 +40,55 @@ export const SAFETY_DOCUMENT_TYPOGRAPHY = {
 
 /**
  * Normalizes Vietnamese text into canonical Unicode NFC form without altering deliberate line breaks or spacing.
+ * Strips dangerous ASCII control characters while preserving tabs (\t) and line breaks (\n).
  */
 export function normalizeVietnameseText(value: string | null | undefined): string {
   if (!value) return "";
-  return value.normalize("NFC");
+  let str = String(value).normalize("NFC");
+  // Remove control characters (except \t = 0x09, \n = 0x0A, \r = 0x0D)
+  str = str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
+  // Normalize line endings to \n
+  str = str.replace(/\r\n?/g, "\n");
+  return str;
 }
 
 export const normalizeNfc = normalizeVietnameseText;
+
+/**
+ * Standard data normalization function across all boundaries (DB read, DB write, ViewModel/Preview/Export).
+ * Strips legacy placeholders ("none", "null", "undefined", "n/a", "-", "—") and normalizes Unicode NFC.
+ * Preserves internal line breaks while trimming leading/trailing whitespace.
+ */
+export function normalizeOptionalReportText(value: unknown): string {
+  if (typeof value !== "string") return "";
+
+  const normalized = value
+    .normalize("NFC")
+    .replace(/\r\n?/g, "\n")
+    .trim();
+
+  const invalidLegacyValues = new Set([
+    "none",
+    "null",
+    "undefined",
+    "n/a",
+    "-",
+    "—",
+  ]);
+
+  if (invalidLegacyValues.has(normalized.toLowerCase())) {
+    return "";
+  }
+
+  return normalized;
+}
+
+/**
+ * Cleans legacy placeholder strings and returns normalized text or empty string.
+ */
+export function cleanContentValue(val: string | null | undefined): string {
+  return normalizeOptionalReportText(val);
+}
 
 /**
  * Detects broken Vietnamese encoding, replacement characters (), mojibake patterns (e.g. UTF-8 misdecoded as Win-1252),
@@ -109,7 +151,12 @@ export function getWeekRange(dateInput: string | Date = new Date()) {
   return { weekStart: monday, weekEnd: sunday };
 }
 
-export function formatIsoDateOnly(dateInput: string | Date): string {
+export function formatIsoDateOnly(dateInput: string | Date | null | undefined): string {
+  if (!dateInput) return "";
+  if (typeof dateInput === "string") {
+    const match = dateInput.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (match) return match[1];
+  }
   const d = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
   if (Number.isNaN(d.getTime())) return "";
   const y = d.getFullYear();

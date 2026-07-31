@@ -55,7 +55,7 @@ export function SafetyItemPickerModal({
             </div>
             <div>
               <h3 className="font-bold text-sm text-slate-900">
-                Danh mục 20 nội dung kiểm tra tiêu chuẩn (Mẫu 01)
+                Nội dung kiểm tra (Mẫu 01)
               </h3>
               <p className="text-xs text-slate-500">
                 Chọn một hoặc nhiều nội dung bên dưới để thêm vào ô nội dung kiểm tra.

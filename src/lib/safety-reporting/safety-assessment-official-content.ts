@@ -1,5 +1,35 @@
 import { normalizeNfc } from './date-utils';
 
+export const SAFETY_SELF_ASSESSMENT_INSPECTION_TITLE = normalizeNfc('Nội dung kiểm tra:');
+
+export interface SelfAssessmentInspectionItem {
+  number: number;
+  content: string;
+}
+
+export const SAFETY_SELF_ASSESSMENT_INSPECTION_CONTENT: SelfAssessmentInspectionItem[] = [
+  { number: 1, content: normalizeNfc('Phương tiện bảo vệ bảo hộ cá nhân.') },
+  { number: 2, content: normalizeNfc('Thiết bị bảo hộ làm việc trên cao (Dây đai, mũ, lưới, hệ thống điểm neo…).') },
+  { number: 3, content: normalizeNfc('An toàn thang và lối đi lại: Kiểm tra độ an toàn của thang; hướng dẫn công nhân và Chỉ huy đảm bảo các lối lên xuống, lối đi lại chắc chắn.') },
+  { number: 4, content: normalizeNfc('Hệ thống giàn giáo.') },
+  { number: 5, content: normalizeNfc('Lưới bao che: Chắn vật liệu rơi, chống bụi và kiểm tra độ võng của lưới') },
+  { number: 6, content: normalizeNfc('Khu vực nguy hiểm: Hố đào sâu, lỗ mở, hố ga... (Lắp đặt rào chắn và hệ thống văng chống hố đào).') },
+  { number: 7, content: normalizeNfc('Công việc phát sinh nhiệt: (Hàn, cắt, mối nối... đảm bảo an toàn cháy nổ).') },
+  { number: 8, content: normalizeNfc('Công việc ngày') },
+  { number: 9, content: normalizeNfc('Dụng cụ, máy móc, thiết bị: (Kiểm tra độ an toàn và tình trạng vận hành).') },
+  { number: 10, content: normalizeNfc('Lối đi lại và thoát hiểm: Đảm bảo lối đi thông thoáng, không để vật liệu cản trở để xử lý kịp thời khi có sự cố.') },
+  { number: 11, content: normalizeNfc('Vệ sinh công trình') },
+  { number: 12, content: normalizeNfc('Thiết bị và biển báo PCCC: Kiểm tra số lượng, vị trí lắp đặt và tình trạng hoạt động.') },
+  { number: 13, content: normalizeNfc('Hệ thống biển báo nội quy và cảnh báo: Đảm bảo treo đầy đủ tại: Ban chỉ huy, khu vực làm việc trên cao, tủ điện, khu vực nguy hiểm (cấm tiếp cận khi có thi công phía trên cao), biển cảnh báo giao thông, đèn tín hiệu và đèn phản quang.') },
+  { number: 14, content: normalizeNfc('Sinh hoạt của công nhân: Kiểm tra an toàn điện sinh hoạt, vệ sinh môi trường nơi ăn ở và lắp đặt đầy đủ biển cảnh báo tại khu vực lưu trú.') },
+  { number: 15, content: normalizeNfc('Hệ thống điện thi công: Đảm bảo dây dẫn được treo cao, tủ điện đấu nối đúng kỹ thuật; kiểm tra an toàn các ổ cắm và dây nguồn của thiết bị cầm tay.') },
+  { number: 16, content: normalizeNfc('Hồ sơ nhân công: Kiểm tra tính đầy đủ của hồ sơ pháp lý và chữ ký xác nhận của công nhân.') },
+  { number: 17, content: normalizeNfc('Công tác huấn luyện: Đảm bảo việc huấn luyện ATLĐ, VSMT, PCCC được thực hiện tập trung và nghiêm túc.') },
+  { number: 18, content: normalizeNfc('Phối hợp nhân sự: Kiểm tra mức độ phối hợp giữa các Cán bộ chỉ huy trong công tác an toàn.') },
+  { number: 19, content: normalizeNfc('Chế độ báo cáo: Thực hiện báo cáo định kỳ vào thứ 2 hàng tuần.') },
+  { number: 20, content: normalizeNfc('Các công tác kiểm tra khác.') }
+];
+
 export const SAFETY_ASSESSMENT_OFFICIAL_CONTENT = {
   companyNameUpper: normalizeNfc('CÔNG TY CỔ PHẦN XÂY DỰNG VÀ THƯƠNG MẠI SỐ 2 HÀ NỘI'),
   countryTitleUpper: normalizeNfc('CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM'),
@@ -23,29 +53,11 @@ export const SAFETY_ASSESSMENT_OFFICIAL_CONTENT = {
     department: normalizeNfc('Phòng kỹ thuật')
   },
 
-  // Exactly 20 standard checklist items verbatim as requested in Section VII
-  standard20Items: [
-    normalizeNfc('1. Phương tiện bảo vệ bảo hộ cá nhân.'),
-    normalizeNfc('2. Thiết bị bảo hộ làm việc trên cao (Dây đai, mũ, lưới, hệ thống điểm neo…).'),
-    normalizeNfc('3. An toàn thang và lối đi lại: Kiểm tra độ an toàn của thang; hướng dẫn công nhân và Chỉ huy đảm bảo các lối lên xuống, lối đi lại chắc chắn.'),
-    normalizeNfc('4. Hệ thống giàn giáo.'),
-    normalizeNfc('5. Lưới bao che: Chắn vật liệu rơi, chống bụi và kiểm tra độ võng của lưới'),
-    normalizeNfc('6. Khu vực nguy hiểm: Hố đào sâu, lỗ mở, hố ga... (Lắp đặt rào chắn và hệ thống văng chống hố đào).'),
-    normalizeNfc('7. Công việc phát sinh nhiệt: (Hàn, cắt, mối nối... đảm bảo an toàn cháy nổ).'),
-    normalizeNfc('8. Công việc ngày'),
-    normalizeNfc('9. Dụng cụ, máy móc, thiết bị: (Kiểm tra độ an toàn và tình trạng vận hành).'),
-    normalizeNfc('10. Lối đi lại và thoát hiểm: Đảm bảo lối đi thông thoáng, không để vật liệu cản trở để xử lý kịp thời khi có sự cố.'),
-    normalizeNfc('11. Vệ sinh công trình'),
-    normalizeNfc('12. Thiết bị và biển báo PCCC: Kiểm tra số lượng, vị trí lắp đặt và tình trạng hoạt động.'),
-    normalizeNfc('13. Hệ thống biển báo nội quy và cảnh báo: Đảm bảo treo đầy đủ tại: Ban chỉ huy, khu vực làm việc trên cao, tủ điện, khu vực nguy hiểm (cấm tiếp cận khi có thi công phía trên cao), biển cảnh báo giao thông, đèn tín hiệu và đèn phản quang.'),
-    normalizeNfc('14. Sinh hoạt của công nhân: Kiểm tra an toàn điện sinh hoạt, vệ sinh môi trường nơi ăn ở và lắp đặt đầy đủ biển cảnh báo tại khu vực lưu trú.'),
-    normalizeNfc('15. Hệ thống điện thi công: Đảm bảo dây dẫn được treo cao, tủ điện đấu nối đúng kỹ thuật; kiểm tra an toàn các ổ cắm và dây nguồn của thiết bị cầm tay.'),
-    normalizeNfc('16. Hồ sơ nhân công: Kiểm tra tính đầy đủ của hồ sơ pháp lý và chữ ký xác nhận của công nhân.'),
-    normalizeNfc('17. Công tác huấn luyện: Đảm bảo việc huấn luyện ATLĐ, VSMT, PCCC được thực hiện tập trung và nghiêm túc.'),
-    normalizeNfc('18. Phối hợp nhân sự: Kiểm tra mức độ phối hợp giữa các Cán bộ chỉ huy trong công tác an toàn.'),
-    normalizeNfc('19. Chế độ báo cáo: Thực hiện báo cáo định kỳ vào thứ 2 hàng tuần.'),
-    normalizeNfc('20. Các công tác kiểm tra khác.')
-  ],
+  inspectionTitle: SAFETY_SELF_ASSESSMENT_INSPECTION_TITLE,
+  inspectionItems: SAFETY_SELF_ASSESSMENT_INSPECTION_CONTENT,
+  standard20Items: SAFETY_SELF_ASSESSMENT_INSPECTION_CONTENT.map(
+    item => `${item.number}. ${item.content}`
+  ),
 
   sectionITitle: normalizeNfc('I. ĐÁNH GIÁ KẾT QUẢ, XỬ LÝ TỒN TẠI CỦA TUẦN TRƯỚC'),
   sectionISub1: normalizeNfc('1. Theo dõi khắc phục các yêu cầu của tuần trước còn tồn đọng'),

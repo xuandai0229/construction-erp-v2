@@ -1,4 +1,4 @@
-import { formatVnDate, formatVnPeriod, getWeekRange, formatIsoDateOnly, normalizeNfc } from './date-utils';
+import { formatVnDate, formatVnPeriod, getWeekRange, formatIsoDateOnly, cleanContentValue, normalizeOptionalReportText } from './date-utils';
 import { SAFETY_ASSESSMENT_OFFICIAL_CONTENT } from './safety-assessment-official-content';
 
 export interface SafetyAssessmentEntryViewModel {
@@ -27,6 +27,37 @@ export interface SafetyAssessmentDayViewModel {
   }>;
 }
 
+export type NarrativeSectionValue = {
+  text: string;
+  isEmpty: boolean;
+  handwritingLineCount: number;
+};
+
+export function normalizeNarrativeValue(value: unknown): string {
+  if (typeof value !== "string") return "";
+
+  const normalized = value.normalize("NFC").trim();
+
+  if (
+    normalized === "" ||
+    /^(none|null|undefined|n\/a)$/i.test(normalized)
+  ) {
+    return "";
+  }
+
+  return normalized;
+}
+
+export function buildNarrativeSectionValue(value: unknown): NarrativeSectionValue {
+  const text = normalizeNarrativeValue(value);
+  const isEmpty = text === "";
+  return {
+    text,
+    isEmpty,
+    handwritingLineCount: isEmpty ? 4 : 0,
+  };
+}
+
 export interface SafetyAssessmentOutputModel {
   id: string;
   internalCode: string; // documentNumber or fallback
@@ -48,11 +79,17 @@ export interface SafetyAssessmentOutputModel {
   sourcePlanNumber?: string | null;
   internalNote: string;
   
-  // Section I & II
+  // Section I & II Raw Text
   previousWeekRemediation: string;
   reinspectionConfirmation: string;
   managementRecommendation: string;
   otherOpinion: string;
+
+  // Section I & II Structured Narrative Objects
+  previousWeekRemediationSection: NarrativeSectionValue;
+  reinspectionConfirmationSection: NarrativeSectionValue;
+  managementRecommendationSection: NarrativeSectionValue;
+  otherOpinionSection: NarrativeSectionValue;
   
   // Structured Matrix Data (7 days, 3 shifts per day)
   days: SafetyAssessmentDayViewModel[];
@@ -83,33 +120,33 @@ const SHIFT_LABELS: Record<string, string> = {
 const DAY_NAMES = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ Nhật'];
 
 export function buildSafetyAssessmentOutputModel(report: any): SafetyAssessmentOutputModel {
-  const periodStart = report.periodStart ? new Date(report.periodStart) : new Date();
-  const { weekStart, weekEnd } = getWeekRange(periodStart);
+  const { weekStart, weekEnd } = getWeekRange(report.periodStart);
+  const periodStart = weekStart;
   
-  const officialDocumentNumber = normalizeNfc(report.officialDocumentNumber || '');
+  const officialDocumentNumber = cleanContentValue(report.officialDocumentNumber || '');
   const internalCode = report.documentNumber || `BC-ATLD-${periodStart.getFullYear()}-0001`;
-  const documentPlace = normalizeNfc(report.documentPlace || 'Hà Nội');
+  const documentPlace = cleanContentValue(report.documentPlace || 'Hà Nội');
   const docDate = report.documentDate ? new Date(report.documentDate) : (report.createdDate ? new Date(report.createdDate) : new Date());
   
-  const recipientText = normalizeNfc(report.recipientText || 'Ban Giám đốc Công ty; Phòng kỹ thuật');
+  const recipientText = cleanContentValue(report.recipientText || 'Ban Giám đốc Công ty; Phòng kỹ thuật');
   const recipientsList = recipientText.split(';').map(r => r.trim()).filter(Boolean);
 
-  const reporterName = normalizeNfc(report.reporterName || report.createdBy?.name || SAFETY_ASSESSMENT_OFFICIAL_CONTENT.defaultReporter.name);
-  const reporterTitle = normalizeNfc(report.reporterTitle || SAFETY_ASSESSMENT_OFFICIAL_CONTENT.defaultReporter.title);
-  const reporterDepartment = normalizeNfc(report.reporterDepartment || SAFETY_ASSESSMENT_OFFICIAL_CONTENT.defaultReporter.department);
+  const reporterName = cleanContentValue(report.reporterName || report.createdBy?.name || SAFETY_ASSESSMENT_OFFICIAL_CONTENT.defaultReporter.name);
+  const reporterTitle = cleanContentValue(report.reporterTitle || SAFETY_ASSESSMENT_OFFICIAL_CONTENT.defaultReporter.title);
+  const reporterDepartment = cleanContentValue(report.reporterDepartment || SAFETY_ASSESSMENT_OFFICIAL_CONTENT.defaultReporter.department);
 
   const rawEntries = report.entries || [];
   
   // Build 7 days (Mon -> Sun)
-  const days: SafetyAssessmentDayViewModel[] = DAY_NAMES.map((dayName, index) => {
-    const d = new Date(weekStart);
-    d.setDate(weekStart.getDate() + index);
-    const dateIso = formatIsoDateOnly(d);
+    const days: SafetyAssessmentDayViewModel[] = DAY_NAMES.map((dayName, index) => {
+      const d = new Date(weekStart);
+      d.setDate(weekStart.getDate() + index);
+      const dateIso = formatIsoDateOnly(d);
     const dateFormatted = formatVnDate(d);
 
     const shifts = (['MORNING', 'AFTERNOON', 'EVENING'] as const).map((shiftKey) => {
       const shiftEntries = rawEntries
-        .filter((e: any) => formatIsoDateOnly(new Date(e.inspectionDate)) === dateIso && e.shift === shiftKey)
+        .filter((e: any) => formatIsoDateOnly(e.inspectionDate) === dateIso && e.shift === shiftKey)
         .sort((a: any, b: any) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
         .map((e: any) => {
           const projName = e.customProjectName || e.projectNameSnapshot || e.project?.name || '';
@@ -119,12 +156,12 @@ export function buildSafetyAssessmentOutputModel(report: any): SafetyAssessmentO
             shift: shiftKey,
             shiftLabel: SHIFT_LABELS[shiftKey],
             projectId: e.projectId || null,
-            projectName: normalizeNfc(projName),
-            customProjectName: e.customProjectName ? normalizeNfc(e.customProjectName) : null,
-            inspectionContent: normalizeNfc(e.inspectionContent || ''),
-            assessment: normalizeNfc(e.assessment || ''),
-            recommendation: normalizeNfc(e.recommendation || ''),
-            implementationResult: normalizeNfc(e.implementationResult || ''),
+            projectName: cleanContentValue(projName),
+            customProjectName: e.customProjectName ? cleanContentValue(e.customProjectName) : null,
+            inspectionContent: cleanContentValue(e.inspectionContent || ''),
+            assessment: cleanContentValue(e.assessment || ''),
+            recommendation: cleanContentValue(e.recommendation || ''),
+            implementationResult: cleanContentValue(e.implementationResult || ''),
             sortOrder: e.sortOrder ?? 0,
           };
         });
@@ -189,6 +226,11 @@ export function buildSafetyAssessmentOutputModel(report: any): SafetyAssessmentO
     });
   });
 
+  const previousWeekRemediation = cleanContentValue(report.previousWeekRemediation || '');
+  const reinspectionConfirmation = cleanContentValue(report.reinspectionConfirmation || '');
+  const managementRecommendation = cleanContentValue(report.managementRecommendation || report.managementResourceRecommendation || '');
+  const otherOpinion = cleanContentValue(report.otherOpinion || report.otherRecommendation || '');
+
   return {
     id: report.id,
     internalCode,
@@ -208,11 +250,15 @@ export function buildSafetyAssessmentOutputModel(report: any): SafetyAssessmentO
     reporterDepartment,
     sourcePlanId: report.sourcePlanId || null,
     sourcePlanNumber: report.sourcePlan?.documentNumber || report.sourcePlan?.title || null,
-    internalNote: normalizeNfc(report.internalNote || ''),
-    previousWeekRemediation: normalizeNfc(report.previousWeekRemediation || ''),
-    reinspectionConfirmation: normalizeNfc(report.reinspectionConfirmation || ''),
-    managementRecommendation: normalizeNfc(report.managementRecommendation || report.managementResourceRecommendation || ''),
-    otherOpinion: normalizeNfc(report.otherOpinion || report.otherRecommendation || ''),
+    internalNote: cleanContentValue(report.internalNote || ''),
+    previousWeekRemediation,
+    reinspectionConfirmation,
+    managementRecommendation,
+    otherOpinion,
+    previousWeekRemediationSection: buildNarrativeSectionValue(previousWeekRemediation),
+    reinspectionConfirmationSection: buildNarrativeSectionValue(reinspectionConfirmation),
+    managementRecommendationSection: buildNarrativeSectionValue(managementRecommendation),
+    otherOpinionSection: buildNarrativeSectionValue(otherOpinion),
     days,
     flatEntries,
     tableRows,

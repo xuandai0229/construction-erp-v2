@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useLayoutEffect, useRef, useCallback } from "react";
+
+const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 export function AutoTextarea({
   value,
@@ -29,7 +31,7 @@ export function AutoTextarea({
     el.style.overflowY = "hidden";
   }, [minHeight]);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     resize();
   }, [value, resize]);
 

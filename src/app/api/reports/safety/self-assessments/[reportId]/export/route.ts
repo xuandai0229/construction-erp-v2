@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
+import { getSession } from "@/lib/auth";
 import { SafetyAssessmentService } from '@/lib/safety-reporting/assessment-service';
 import { SafetyAssessmentDocxGenerator } from '@/lib/safety-reporting/assessment-docx-generator';
 import { SafetyPdfConverter } from '@/lib/safety-reporting/pdf-converter';
 
 function getSafeHeaderFilenames(rawName: string, prefix: string, extension: string) {
   const sanitized = rawName.replace(/[/\\?%*:|"<>]/g, '-').trim();
-  // Strip non-ASCII characters to prevent Node.js ERR_INVALID_CHAR in HTTP headers
   const asciiOnly = sanitized
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -23,17 +23,22 @@ function getSafeHeaderFilenames(rawName: string, prefix: string, extension: stri
 
 export async function GET(request: Request, { params }: { params: Promise<{ reportId: string }> }) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 });
+    }
+
     const { reportId } = await params;
     const { searchParams } = new URL(request.url);
     const format = searchParams.get('format') || 'docx';
 
     const report = await SafetyAssessmentService.getReportById(reportId);
     if (!report) {
-      return NextResponse.json({ error: 'Không tìm thấy Báo cáo' }, { status: 404 });
+      return NextResponse.json({ error: 'Không tìm thấy Báo cáo tự đánh giá' }, { status: 404 });
     }
 
     const docNoRaw = report.officialDocumentNumber || report.documentNumber || reportId;
-    const filenames = getSafeHeaderFilenames(docNoRaw, 'Bao-Cao-Tu-Danh-Gia', format === 'pdf' ? 'pdf' : 'docx');
+    const filenames = getSafeHeaderFilenames(docNoRaw, 'Bao-cao-tu-danh-gia-ATLD-PCCC-VSMT', format === 'pdf' ? 'pdf' : 'docx');
 
     if (format === 'pdf') {
       const pdfBuffer = await SafetyPdfConverter.generateAssessmentPdf(report);
@@ -54,6 +59,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ repo
     });
   } catch (error: any) {
     console.error("[Export Assessment API Error]", error);
-    return NextResponse.json({ error: error.message || 'Lỗi sinh văn bản' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Không thể sinh tệp văn bản. Vui lòng thử lại.' }, { status: 500 });
   }
 }

@@ -8,8 +8,9 @@ import { renderSafetyPlanStandaloneHtml } from "./html-renderer";
 
 export class SafetyPdfConverter {
   /**
-   * Generates a validated PDF buffer for a Safety Plan strictly from the Document DTO.
-   * This guarantees that PDF output NEVER redirects to login pages and ALWAYS contains real report data.
+   * Generates a validated PDF buffer for a Safety Plan strictly from Standalone HTML.
+   * Guarantees PDF output NEVER redirects to login pages, NEVER renders AppShell/navigation,
+   * and ALWAYS contains clean A4 document content.
    */
   static async generatePlanPdf(plan: any): Promise<Buffer> {
     const viewModel = buildSafetyPlanPreviewModel(plan);
@@ -23,12 +24,15 @@ export class SafetyPdfConverter {
       const page = await context.newPage();
 
       await page.setContent(htmlContent, { waitUntil: "load" });
+      await page.evaluate(() => document.fonts.ready).catch(() => undefined);
       await page.emulateMedia({ media: "print" });
 
       const pdfBuffer = await page.pdf({
         format: "A4",
-        margin: { top: "18mm", right: "15mm", bottom: "18mm", left: "20mm" },
         printBackground: true,
+        preferCSSPageSize: true,
+        displayHeaderFooter: false,
+        margin: { top: "18mm", right: "15mm", bottom: "18mm", left: "20mm" },
       });
 
       await browser.close();
@@ -113,7 +117,7 @@ export class SafetyPdfConverter {
   }
 
   /**
-   * PDF Buffer Guard Validation (Section VI.D)
+   * PDF Buffer Guard Validation
    */
   private static validatePdfBuffer(pdfBuffer: Buffer, viewModel: any) {
     if (!pdfBuffer || pdfBuffer.length < 5000) {
@@ -127,14 +131,14 @@ export class SafetyPdfConverter {
 
     const pdfRawText = pdfBuffer.toString("utf-8");
 
-    // Must NOT contain login screen indicators
+    // Must NOT contain login screen indicators or app shell elements
     if (pdfRawText.includes("Đăng nhập") || pdfRawText.includes("Mật khẩu") || pdfRawText.includes("Email đăng nhập")) {
-      throw new Error("LỖI AN NINH: PDF chụp nhầm trang đăng nhập thay vì nội dung kế hoạch!");
+      throw new Error("LỖI AN NINH: PDF chụp nhầm trang đăng nhập thay vì nội dung văn bản!");
     }
   }
 
   /**
-   * Generates a validated PDF buffer for a Safety Assessment Report strictly from HTML rendering.
+   * Generates a validated PDF buffer for a Safety Assessment Report strictly from Standalone HTML rendering.
    */
   static async generateAssessmentPdf(report: any): Promise<Buffer> {
     const { buildSafetyAssessmentOutputModel } = await import("./assessment-view-model");
@@ -151,12 +155,20 @@ export class SafetyPdfConverter {
       const page = await context.newPage();
 
       await page.setContent(htmlContent, { waitUntil: "load" });
+      await page.evaluate(() => document.fonts.ready).catch(() => undefined);
       await page.emulateMedia({ media: "print" });
 
       const pdfBuffer = await page.pdf({
         format: "A4",
-        margin: { top: "18mm", right: "15mm", bottom: "18mm", left: "20mm" },
         printBackground: true,
+        preferCSSPageSize: true,
+        displayHeaderFooter: false,
+        margin: {
+          top: "0",
+          right: "0",
+          bottom: "0",
+          left: "0",
+        },
       });
 
       await browser.close();

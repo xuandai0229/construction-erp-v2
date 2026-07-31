@@ -577,46 +577,78 @@ export async function saveSafetyAssessmentAction(
     }>;
   }
 ) {
-  const actor = await getActor();
+  try {
+    const actor = await getActor();
 
-  const updated = await SafetyAssessmentService.saveReport(actor.id, id, {
-    expectedLockVersion: input.expectedLockVersion,
-    officialDocumentNumber: input.officialDocumentNumber,
-    documentPlace: input.documentPlace,
-    documentDate: input.documentDate ? new Date(input.documentDate) : undefined,
-    recipientText: input.recipientText,
-    reporterName: input.reporterName,
-    reporterTitle: input.reporterTitle,
-    reporterDepartment: input.reporterDepartment,
-    title: input.title,
-    internalNote: input.internalNote,
-    previousWeekRemediation: input.previousWeekRemediation,
-    reinspectionConfirmation: input.reinspectionConfirmation,
-    managementRecommendation: input.managementRecommendation,
-    otherOpinion: input.otherOpinion,
-    entries: input.entries,
-  });
+    const updated = await SafetyAssessmentService.saveReport(actor.id, id, {
+      expectedLockVersion: input.expectedLockVersion,
+      officialDocumentNumber: input.officialDocumentNumber,
+      documentPlace: input.documentPlace,
+      documentDate: input.documentDate ? new Date(input.documentDate) : undefined,
+      recipientText: input.recipientText,
+      reporterName: input.reporterName,
+      reporterTitle: input.reporterTitle,
+      reporterDepartment: input.reporterDepartment,
+      title: input.title,
+      internalNote: input.internalNote,
+      previousWeekRemediation: input.previousWeekRemediation,
+      reinspectionConfirmation: input.reinspectionConfirmation,
+      managementRecommendation: input.managementRecommendation,
+      otherOpinion: input.otherOpinion,
+      entries: input.entries,
+    });
 
-  revalidatePath(`/reports/safety/self-assessments/${id}`);
-  revalidatePath(`/reports/safety/reports/${id}`);
-  revalidatePath("/reports/safety");
+    revalidatePath(`/reports/safety/self-assessments/${id}`);
+    revalidatePath(`/reports/safety/reports/${id}`);
+    revalidatePath("/reports/safety");
 
-  return {
-    lockVersion: updated.version,
-    entries: updated.entries.map((e) => ({
-      id: e.id,
-      inspectionDate: e.inspectionDate.toISOString(),
-      shift: e.shift,
-      projectId: e.projectId,
-      customProjectName: e.customProjectName,
-      projectNameSnapshot: e.projectNameSnapshot,
-      inspectionContent: e.inspectionContent,
-      assessment: e.assessment,
-      recommendation: e.recommendation,
-      implementationResult: e.implementationResult,
-      sortOrder: e.sortOrder,
-    })),
-  };
+    return {
+      ok: true as const,
+      lockVersion: updated.version,
+      updatedAt: updated.updatedAt.toISOString(),
+      entries: updated.entries.map((e) => ({
+        id: e.id,
+        inspectionDate: e.inspectionDate.toISOString(),
+        shift: e.shift,
+        projectId: e.projectId,
+        customProjectName: e.customProjectName,
+        projectNameSnapshot: e.projectNameSnapshot,
+        inspectionContent: e.inspectionContent,
+        assessment: e.assessment,
+        recommendation: e.recommendation,
+        implementationResult: e.implementationResult,
+        sortOrder: e.sortOrder,
+      })),
+    };
+  } catch (error: any) {
+    console.error("SAFETY_ASSESSMENT_SAVE_FAILED", {
+      name: error.name,
+      code: error.code,
+      message: error.message,
+      meta: error.meta,
+      cause: error.cause,
+      reportId: id,
+      expectedVersion: input.expectedLockVersion,
+    });
+
+    if (
+      error.name === "SafetyReportVersionConflictError" ||
+      error.message?.includes("CONFLICT") ||
+      error.message?.includes("phiên làm việc khác")
+    ) {
+      return {
+        ok: false as const,
+        code: "VERSION_CONFLICT" as const,
+        currentVersion: error.currentVersion,
+        message: "Dữ liệu trên máy đã cũ hơn dữ liệu đang lưu trên hệ thống. Vui lòng tải lại dữ liệu mới nhất.",
+      };
+    }
+    return {
+      ok: false as const,
+      code: "SAVE_FAILED" as const,
+      message: error.message || "Không thể lưu báo cáo. Vui lòng thử lại.",
+    };
+  }
 }
 
 /**

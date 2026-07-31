@@ -1,6 +1,10 @@
 import * as docx from "docx";
-import { buildSafetyAssessmentOutputModel, SafetyAssessmentOutputModel } from "./assessment-view-model";
-import { SAFETY_ASSESSMENT_OFFICIAL_CONTENT } from "./safety-assessment-official-content";
+import { buildSafetyAssessmentOutputModel, SafetyAssessmentOutputModel, NarrativeSectionValue } from "./assessment-view-model";
+import {
+  SAFETY_ASSESSMENT_OFFICIAL_CONTENT,
+  SAFETY_SELF_ASSESSMENT_INSPECTION_TITLE,
+  SAFETY_SELF_ASSESSMENT_INSPECTION_CONTENT,
+} from "./safety-assessment-official-content";
 import { normalizeVietnameseText, SAFETY_DOCUMENT_TYPOGRAPHY } from "./date-utils";
 
 const PAGE_PORTRAIT = {
@@ -16,8 +20,10 @@ const USABLE_WIDTH = PAGE_PORTRAIT.width - PAGE_PORTRAIT.marginLeft - PAGE_PORTR
 const FONT_TIMES = SAFETY_DOCUMENT_TYPOGRAPHY.fontName;
 const LANG_VI = { value: SAFETY_DOCUMENT_TYPOGRAPHY.language };
 
-function createParagraph(text: string, options?: { bold?: boolean; italics?: boolean; size?: number; align?: (typeof docx.AlignmentType)[keyof typeof docx.AlignmentType]; spaceAfter?: number; spaceBefore?: number }) {
+function createParagraph(text: string, options?: { bold?: boolean; italics?: boolean; size?: number; align?: (typeof docx.AlignmentType)[keyof typeof docx.AlignmentType]; spaceAfter?: number; spaceBefore?: number; keepNext?: boolean }) {
   return new docx.Paragraph({
+    keepNext: options?.keepNext ?? false,
+    keepLines: true,
     children: [
       new docx.TextRun({
         text: normalizeVietnameseText(text),
@@ -43,6 +49,7 @@ function createCellParagraphs(text: string, options?: { bold?: boolean; italics?
   }
   return text.split("\n").map((line) =>
     new docx.Paragraph({
+      keepLines: true,
       children: [
         new docx.TextRun({
           text: normalizeVietnameseText(line),
@@ -57,6 +64,67 @@ function createCellParagraphs(text: string, options?: { bold?: boolean; italics?
       spacing: { before: 0, after: 40, line: 240 },
     })
   );
+}
+
+function createSubsectionTitleParagraph(text: string): docx.Paragraph {
+  return new docx.Paragraph({
+    keepNext: true,
+    keepLines: true,
+    children: [
+      new docx.TextRun({
+        text: normalizeVietnameseText(text),
+        bold: true,
+        font: FONT_TIMES,
+        size: 25,
+        language: LANG_VI,
+      }),
+    ],
+    spacing: { before: 120, after: 40, line: 240 },
+  });
+}
+
+function createWordHandwritingLines(options?: { leftIndent?: number; rightPosition?: number; count?: number }): docx.Paragraph[] {
+  const count = options?.count ?? 4;
+  const leftIndent = options?.leftIndent ?? 360;
+  const rightPosition = options?.rightPosition ?? USABLE_WIDTH; // 9922 DXA
+
+  return Array.from({ length: count }, (_, idx) =>
+    new docx.Paragraph({
+      keepNext: idx < count - 1, // Line 1, 2, 3 have keepNext: true to keep block together
+      keepLines: true,
+      spacing: {
+        before: 0,
+        after: 60, // 3pt spacing after each line for ~5-7mm line height
+        line: 300,
+        lineRule: docx.LineRuleType.AUTO,
+      },
+      indent: {
+        left: leftIndent,
+      },
+      tabStops: [
+        {
+          type: docx.TabStopType.RIGHT,
+          position: rightPosition,
+          leader: docx.LeaderType.DOT,
+        },
+      ],
+      children: [
+        new docx.TextRun({
+          text: "\t",
+          font: FONT_TIMES,
+          size: 26,
+          language: LANG_VI,
+        }),
+      ],
+    })
+  );
+}
+
+function renderDocxSectionParagraphs(section: NarrativeSectionValue): docx.Paragraph[] {
+  if (section.isEmpty) {
+    return createWordHandwritingLines({ count: 4 });
+  }
+  return createCellParagraphs(section.text, { size: 25 });
 }
 
 export class SafetyAssessmentDocxGenerator {
@@ -113,9 +181,10 @@ export class SafetyAssessmentDocxGenerator {
       : ["- Ban Giám đốc Công ty;", "- Phòng kỹ thuật"];
 
     const recipientParagraphs = [
-      createParagraph("Kính gửi:", { bold: true, italics: true, size: 26, spaceAfter: 60 }),
-      ...recipientList.map((r) =>
+      createParagraph("Kính gửi:", { bold: true, italics: true, size: 26, spaceAfter: 60, keepNext: true }),
+      ...recipientList.map((r, idx) =>
         new docx.Paragraph({
+          keepNext: idx < recipientList.length - 1,
           children: [
             new docx.TextRun({
               text: normalizeVietnameseText(r),
@@ -156,7 +225,6 @@ export class SafetyAssessmentDocxGenerator {
     });
 
     // 5-Column Table Setup
-    // Widths: Col 1: 15% (1488 DXA), Col 2: 27% (2678 DXA), Col 3: 20% (1984 DXA), Col 4: 20% (1984 DXA), Col 5: 18% (1788 DXA)
     const colWidths = [1488, 2678, 1984, 1984, 1788];
 
     const cellBorders = {
@@ -232,18 +300,20 @@ export class SafetyAssessmentDocxGenerator {
       }
 
       const contentParagraphs: docx.Paragraph[] = [];
-      if (row.projectName) {
-        contentParagraphs.push(createParagraph(row.projectName, { bold: true, size: 23, spaceAfter: 40 }));
+      if (row.projectName && row.projectName.trim()) {
+        contentParagraphs.push(createParagraph("Công trình:", { bold: true, size: 21, spaceAfter: 20 }));
+        contentParagraphs.push(createParagraph(row.projectName, { bold: true, size: 22, spaceAfter: row.inspectionContent ? 60 : 40 }));
       }
-      if (row.inspectionContent) {
-        contentParagraphs.push(...createCellParagraphs(row.inspectionContent, { size: 23 }));
+      if (row.inspectionContent && row.inspectionContent.trim()) {
+        contentParagraphs.push(createParagraph("Nội dung kiểm tra:", { bold: true, size: 21, spaceAfter: 20 }));
+        contentParagraphs.push(...createCellParagraphs(row.inspectionContent, { size: 22 }));
       }
       if (contentParagraphs.length === 0) {
         contentParagraphs.push(new docx.Paragraph({ text: "", spacing: { before: 0, after: 40 } }));
       }
 
       return new docx.TableRow({
-        cantSplit: false, // Allow long rows to split gracefully
+        cantSplit: false,
         children: [
           new docx.TableCell({
             width: { size: colWidths[0], type: docx.WidthType.DXA },
@@ -292,23 +362,23 @@ export class SafetyAssessmentDocxGenerator {
       borders: cellBorders,
     });
 
-    // Section I Paragraphs
+    // Section I Paragraphs (keepNext ensures titles and handwriting lines stay together)
     const sectionIParagraphs = [
       new docx.Paragraph({ text: "", spacing: { before: 160, after: 0 } }),
-      createParagraph(SAFETY_ASSESSMENT_OFFICIAL_CONTENT.sectionITitle, { bold: true, size: 26, spaceBefore: 120, spaceAfter: 80 }),
-      createParagraph(SAFETY_ASSESSMENT_OFFICIAL_CONTENT.sectionISub1, { bold: true, size: 25, spaceAfter: 40 }),
-      ...createCellParagraphs(model.previousWeekRemediation || "(Không có)", { size: 25 }),
-      createParagraph(SAFETY_ASSESSMENT_OFFICIAL_CONTENT.sectionISub2, { bold: true, size: 25, spaceBefore: 80, spaceAfter: 40 }),
-      ...createCellParagraphs(model.reinspectionConfirmation || "(Không có)", { size: 25 }),
+      createParagraph(SAFETY_ASSESSMENT_OFFICIAL_CONTENT.sectionITitle, { bold: true, size: 26, spaceBefore: 120, spaceAfter: 80, keepNext: true }),
+      createSubsectionTitleParagraph(SAFETY_ASSESSMENT_OFFICIAL_CONTENT.sectionISub1),
+      ...renderDocxSectionParagraphs(model.previousWeekRemediationSection),
+      createSubsectionTitleParagraph(SAFETY_ASSESSMENT_OFFICIAL_CONTENT.sectionISub2),
+      ...renderDocxSectionParagraphs(model.reinspectionConfirmationSection),
     ];
 
     // Section II Paragraphs
     const sectionIIParagraphs = [
-      createParagraph(SAFETY_ASSESSMENT_OFFICIAL_CONTENT.sectionIITitle, { bold: true, size: 26, spaceBefore: 160, spaceAfter: 80 }),
-      createParagraph(SAFETY_ASSESSMENT_OFFICIAL_CONTENT.sectionIISub1, { bold: true, size: 25, spaceAfter: 40 }),
-      ...createCellParagraphs(model.managementRecommendation || "(Không có)", { size: 25 }),
-      createParagraph(SAFETY_ASSESSMENT_OFFICIAL_CONTENT.sectionIISub2, { bold: true, size: 25, spaceBefore: 80, spaceAfter: 40 }),
-      ...createCellParagraphs(model.otherOpinion || "(Không có)", { size: 25 }),
+      createParagraph(SAFETY_ASSESSMENT_OFFICIAL_CONTENT.sectionIITitle, { bold: true, size: 26, spaceBefore: 160, spaceAfter: 80, keepNext: true }),
+      createSubsectionTitleParagraph(SAFETY_ASSESSMENT_OFFICIAL_CONTENT.sectionIISub1),
+      ...renderDocxSectionParagraphs(model.managementRecommendationSection),
+      createSubsectionTitleParagraph(SAFETY_ASSESSMENT_OFFICIAL_CONTENT.sectionIISub2),
+      ...renderDocxSectionParagraphs(model.otherOpinionSection),
     ];
 
     // Footer Signature Table
@@ -323,15 +393,15 @@ export class SafetyAssessmentDocxGenerator {
           children: [
             new docx.TableCell({
               children: [
-                createParagraph("Nơi nhận:", { bold: true, size: 24, spaceAfter: 20 }),
-                createParagraph("- Như kính gửi;", { size: 24, spaceAfter: 20 }),
+                createParagraph("Nơi nhận:", { bold: true, size: 24, spaceAfter: 20, keepNext: true }),
+                createParagraph("- Như kính gửi;", { size: 24, spaceAfter: 20, keepNext: true }),
                 createParagraph("- Lưu KT.", { size: 24, spaceAfter: 0 }),
               ],
             }),
             new docx.TableCell({
               children: [
-                createParagraph(SAFETY_ASSESSMENT_OFFICIAL_CONTENT.reporterRoleTitleUpper, { bold: true, size: 24, align: docx.AlignmentType.CENTER, spaceAfter: 20 }),
-                createParagraph("(Ký, ghi rõ họ tên)", { italics: true, size: 24, align: docx.AlignmentType.CENTER, spaceAfter: 600 }),
+                createParagraph(SAFETY_ASSESSMENT_OFFICIAL_CONTENT.reporterRoleTitleUpper, { bold: true, size: 24, align: docx.AlignmentType.CENTER, spaceAfter: 20, keepNext: true }),
+                createParagraph("(Ký, ghi rõ họ tên)", { italics: true, size: 24, align: docx.AlignmentType.CENTER, spaceAfter: 600, keepNext: true }),
                 createParagraph(model.reporterName, { bold: true, size: 25, align: docx.AlignmentType.CENTER, spaceAfter: 0 }),
               ],
             }),
@@ -339,6 +409,22 @@ export class SafetyAssessmentDocxGenerator {
         }),
       ],
     });
+
+    // 20 Inspection Items Section Paragraphs
+    const inspectionContentParagraphs = [
+      createParagraph(SAFETY_SELF_ASSESSMENT_INSPECTION_TITLE, { bold: true, size: 26, spaceBefore: 120, spaceAfter: 80 }),
+      ...SAFETY_SELF_ASSESSMENT_INSPECTION_CONTENT.map(
+        (item) =>
+          new docx.Paragraph({
+            children: [
+              new docx.TextRun({ text: `${item.number}. `, bold: true, font: FONT_TIMES, size: 25, language: LANG_VI }),
+              new docx.TextRun({ text: normalizeVietnameseText(item.content), font: FONT_TIMES, size: 25, language: LANG_VI }),
+            ],
+            spacing: { before: 0, after: 40, line: 240 },
+          })
+      ),
+      new docx.Paragraph({ text: "", spacing: { after: 120 } }),
+    ];
 
     const doc = new docx.Document({
       styles: {
@@ -366,6 +452,7 @@ export class SafetyAssessmentDocxGenerator {
             ...recipientParagraphs,
             ...legalParagraphs,
             reporterIntroParagraph,
+            ...inspectionContentParagraphs,
             reportTable,
             ...sectionIParagraphs,
             ...sectionIIParagraphs,
