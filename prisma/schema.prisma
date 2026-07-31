@@ -262,6 +262,14 @@ model User {
   supervisionWeeklyDossiersReviewed SupervisionWeeklyDossier[]      @relation("SupervisionWeeklyDossierReviewer")
   supervisionWeeklyRevisionActors   SupervisionWeeklyRevision[]     @relation("SupervisionWeeklyRevisionActor")
 
+  safetyReportPlansCreated       SafetyReportPlan[]            @relation("SafetyPlanCreator")
+  safetyReportPlansSubmitted     SafetyReportPlan[]            @relation("SafetyPlanSubmitter")
+  safetyReportPlansApproved      SafetyReportPlan[]            @relation("SafetyPlanApprover")
+  safetySelfAssessmentsCreated   SafetySelfAssessmentReport[]  @relation("SafetyAssessmentCreator")
+  safetySelfAssessmentsSubmitted SafetySelfAssessmentReport[]  @relation("SafetyAssessmentSubmitter")
+  safetySelfAssessmentsApproved  SafetySelfAssessmentReport[]  @relation("SafetyAssessmentApprover")
+  safetyReportApprovalHistories  SafetyReportApprovalHistory[] @relation("SafetyReportApprovalActor")
+  safetyReportAuditLogs          SafetyReportAuditLog[]        @relation("SafetyReportAuditActor")
 
   @@index([email])
   @@index([username])
@@ -319,6 +327,8 @@ model Project {
   supervisionWeeklyProgressRows    SupervisionWeeklyProgress[]
   supervisionWeeklyObservations    SupervisionWeeklyObservation[]
 
+  safetyPlanEntries           SafetyReportPlanEntry[]
+  safetySelfAssessmentEntries SafetySelfAssessmentEntry[]
 
   @@index([code])
   @@index([status])
@@ -812,6 +822,8 @@ model ApprovalRequest {
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   requester User    @relation("Requester", fields: [requesterId], references: [id])
   decidedBy User?   @relation("Approver", fields: [decidedById], references: [id])
+
+  safetyReportApprovalHistories SafetyReportApprovalHistory[]
 
   @@index([projectId])
   @@index([requesterId])
@@ -1632,34 +1644,34 @@ model SupervisionWeeklyShiftSelection {
 }
 
 model SupervisionWeeklyEntry {
-  id                   String                        @id @default(cuid())
-  dossierId            String
-  documentType         SupervisionWeeklyDocumentType
-  entryDate            DateTime
-  shift                SupervisionWeeklyShift
-  sortOrder            Int
-  inputMode            SupervisionWeeklyInputMode
-  projectId            String?
-  projectNameSnapshot  String?
-  locationId           String?
-  locationNameSnapshot String?
-  workItemId           String?
-  workItemNameSnapshot String?
-  manualText           String?
-  manualLocation       String?
-  manualProjectName    String?
-  manualWorkItemName   String?
-  categoryItemId       String?
-  categoryNameSnapshot String?
-  manualCategoryName   String?
-  inspectionWorkItemId String?
+  id                         String                        @id @default(cuid())
+  dossierId                  String
+  documentType               SupervisionWeeklyDocumentType
+  entryDate                  DateTime
+  shift                      SupervisionWeeklyShift
+  sortOrder                  Int
+  inputMode                  SupervisionWeeklyInputMode
+  projectId                  String?
+  projectNameSnapshot        String?
+  locationId                 String?
+  locationNameSnapshot       String?
+  workItemId                 String?
+  workItemNameSnapshot       String?
+  manualText                 String?
+  manualLocation             String?
+  manualProjectName          String?
+  manualWorkItemName         String?
+  categoryItemId             String?
+  categoryNameSnapshot       String?
+  manualCategoryName         String?
+  inspectionWorkItemId       String?
   inspectionWorkNameSnapshot String?
-  displayText          String
-  inspectionContent    String?
-  result               String?
-  commanderProposal    String?
-  createdAt            DateTime                      @default(now())
-  updatedAt            DateTime                      @updatedAt
+  displayText                String
+  inspectionContent          String?
+  result                     String?
+  commanderProposal          String?
+  createdAt                  DateTime                      @default(now())
+  updatedAt                  DateTime                      @updatedAt
 
   dossier SupervisionWeeklyDossier @relation(fields: [dossierId], references: [id], onDelete: Cascade)
   project Project?                 @relation(fields: [projectId], references: [id], onDelete: Restrict)
@@ -1848,4 +1860,218 @@ model SupervisionWeeklyRevision {
   actor   User                     @relation("SupervisionWeeklyRevisionActor", fields: [actorId], references: [id])
 
   @@index([dossierId, createdAt])
+}
+
+// ============================================================================
+// SAFETY REPORTING MODULE (ATLĐ • PCCC • VSMT) — REBUILT STANDALONE MODEL
+// ============================================================================
+
+enum SafetyReportPlanStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REVISION_REQUIRED
+  CANCELLED
+}
+
+enum SafetyReportShift {
+  MORNING
+  AFTERNOON
+  EVENING
+}
+
+enum SafetyReportConstructionType {
+  BUILDING
+  INFRASTRUCTURE
+  OTHER
+}
+
+enum SafetySelfAssessmentStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REVISION_REQUIRED
+  CANCELLED
+}
+
+model SafetyReportPlanSequence {
+  businessYear Int      @id
+  nextNumber   Int      @default(1)
+  updatedAt    DateTime @updatedAt
+}
+
+model SafetySelfAssessmentSequence {
+  businessYear Int      @id
+  nextNumber   Int      @default(1)
+  updatedAt    DateTime @updatedAt
+}
+
+model SafetyReportPlan {
+  id                 String                 @id @default(cuid())
+  documentYear       Int
+  sequenceNumber     Int?
+  documentNumber     String?
+  officialDocumentNumber String?
+  title              String
+  createdDate        DateTime               @db.Date
+  periodStart        DateTime               @db.Date
+  periodEnd          DateTime               @db.Date
+  legalBases         Json?
+  recipients         Json?
+  purpose            String?                @db.Text
+  note               String?                @db.Text
+  status             SafetyReportPlanStatus @default(DRAFT)
+  createdById        String
+  submittedById      String?
+  submittedAt        DateTime?
+  approvedById       String?
+  approvedAt         DateTime?
+  revisionReason     String?                @db.Text
+  cancelledAt        DateTime?
+  cancellationReason String?                @db.Text
+  version            Int                    @default(1)
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  createdBy       User                         @relation("SafetyPlanCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  submittedBy     User?                        @relation("SafetyPlanSubmitter", fields: [submittedById], references: [id], onDelete: Restrict)
+  approvedBy      User?                        @relation("SafetyPlanApprover", fields: [approvedById], references: [id], onDelete: Restrict)
+  entries         SafetyReportPlanEntry[]
+  selfAssessments SafetySelfAssessmentReport[]
+
+  @@unique([documentYear, sequenceNumber])
+  @@index([status, periodStart])
+  @@index([createdById, periodStart])
+}
+
+model SafetyReportPlanEntry {
+  id                  String                       @id @default(cuid())
+  planId              String
+  inspectionDate      DateTime                     @db.Date
+  shift               SafetyReportShift
+  projectId           String
+  projectNameSnapshot String
+  constructionType    SafetyReportConstructionType @default(BUILDING)
+  inspectionContent   String                       @db.Text
+  trainingContent     String?                      @db.Text
+  collaborators       String?                      @db.Text
+  location            String?
+  note                String?                      @db.Text
+  sortOrder           Int                          @default(0)
+  version             Int                          @default(1)
+  createdAt           DateTime                     @default(now())
+  updatedAt           DateTime                     @updatedAt
+
+  plan    SafetyReportPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  project Project          @relation(fields: [projectId], references: [id], onDelete: Restrict)
+
+  @@index([planId, inspectionDate, sortOrder])
+  @@index([projectId, inspectionDate])
+}
+
+model SafetySelfAssessmentReport {
+  id                       String                     @id @default(cuid())
+  sourcePlanId             String?
+  documentYear             Int
+  sequenceNumber           Int?
+  documentNumber           String?
+  officialDocumentNumber   String?
+  documentPlace            String?                    @default("Hà Nội")
+  documentDate             DateTime?                  @db.Date
+  createdDate              DateTime                   @db.Date @default(now())
+  title                    String
+  periodStart              DateTime                   @db.Date
+  periodEnd                DateTime                   @db.Date
+  legalBases               Json?
+  recipients               Json?
+  recipientText            String?                    @default("Ban Giám đốc Công ty; Phòng kỹ thuật")
+  reporterName             String?                    @default("Phạm Xuân Quảng")
+  reporterTitle            String?                    @default("Cán bộ An toàn")
+  reporterDepartment       String?                    @default("Phòng kỹ thuật")
+  internalNote             String?                    @db.Text
+  previousWeekRemediation  String?                    @db.Text
+  reinspectionConfirmation String?                    @db.Text
+  managementRecommendation String?                    @db.Text
+  otherOpinion             String?                    @db.Text
+  status                   SafetySelfAssessmentStatus @default(DRAFT)
+  createdById              String
+  submittedById            String?
+  submittedAt              DateTime?
+  approvedById             String?
+  approvedAt               DateTime?
+  revisionReason           String?                    @db.Text
+  cancelledAt              DateTime?
+  cancellationReason       String?                    @db.Text
+  version                  Int                        @default(1)
+  deletedAt                DateTime?
+  deletedById              String?
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime                   @updatedAt
+
+  sourcePlan  SafetyReportPlan?           @relation(fields: [sourcePlanId], references: [id], onDelete: SetNull)
+  createdBy   User                        @relation("SafetyAssessmentCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  submittedBy User?                       @relation("SafetyAssessmentSubmitter", fields: [submittedById], references: [id], onDelete: Restrict)
+  approvedBy  User?                       @relation("SafetyAssessmentApprover", fields: [approvedById], references: [id], onDelete: Restrict)
+  entries     SafetySelfAssessmentEntry[]
+
+  @@unique([documentYear, sequenceNumber])
+  @@index([status, periodStart])
+  @@index([createdById, periodStart])
+}
+
+model SafetySelfAssessmentEntry {
+  id                   String            @id @default(cuid())
+  reportId             String
+  inspectionDate       DateTime          @db.Date
+  shift                SafetyReportShift
+  projectId            String?
+  projectNameSnapshot  String
+  customProjectName    String?
+  inspectionContent    String            @db.Text
+  assessment           String?           @db.Text
+  recommendation       String?           @db.Text
+  implementationResult String?           @db.Text
+  sortOrder            Int               @default(0)
+  version              Int               @default(1)
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  report  SafetySelfAssessmentReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  project Project?                    @relation(fields: [projectId], references: [id], onDelete: Restrict)
+
+  @@index([reportId, inspectionDate, sortOrder])
+  @@index([projectId, inspectionDate])
+}
+
+model SafetyReportApprovalHistory {
+  id                String   @id @default(cuid())
+  reportType        String
+  reportId          String
+  fromStatus        String?
+  toStatus          String
+  actorId           String
+  reason            String?  @db.Text
+  approvalRequestId String?
+  occurredAt        DateTime @default(now())
+
+  actor           User             @relation("SafetyReportApprovalActor", fields: [actorId], references: [id], onDelete: Restrict)
+  approvalRequest ApprovalRequest? @relation(fields: [approvalRequestId], references: [id], onDelete: SetNull)
+
+  @@index([reportType, reportId, occurredAt])
+}
+
+model SafetyReportAuditLog {
+  id            String   @id @default(cuid())
+  reportType    String
+  reportId      String
+  action        String
+  beforeData    Json?
+  afterData     Json?
+  actorId       String
+  occurredAt    DateTime @default(now())
+  correlationId String
+
+  actor User @relation("SafetyReportAuditActor", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([reportType, reportId, occurredAt])
 }

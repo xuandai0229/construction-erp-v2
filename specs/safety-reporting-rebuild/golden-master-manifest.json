@@ -1,0 +1,48 @@
+{
+  "version": "1.0.0",
+  "createdDate": "2026-07-30T07:12:00.000Z",
+  "author": "Cán bộ ATLĐ • PCCC • VSMT System",
+  "environment": "production-ready-standalone",
+  "templates": [
+    {
+      "id": "01-bao-cao-tu-danh-gia",
+      "code": "REPORT_SELF_ASSESSMENT",
+      "title": "BÁO CÁO TỰ ĐÁNH GIÁ KẾT QUẢ KIỂM TRA AT, VSLĐ",
+      "filename": "01-Bao cao tu danh gia cong tac ATLĐ-PCCC-VSMT.docx",
+      "path": "docs/official-templates/01-Bao cao tu danh gia cong tac ATLĐ-PCCC-VSMT.docx",
+      "sizeBytes": 31728,
+      "sha256": "6c6998a61c8b5ece04cdd3016c7a8d2a961bf8609915bc3743ea9c7f90ada10c",
+      "pageCount": 3,
+      "sections": [
+        "Header: Quốc hiệu & Tên Công ty",
+        "Kính gửi & Căn cứ pháp lý",
+        "Danh mục 20 nội dung kiểm tra cố định",
+        "Bảng 05 cột kết quả kiểm tra theo ngày/buổi trong tuần (Thứ 2 - Chủ nhật)",
+        "Đánh giá kết quả & xử lý tồn tại tuần trước",
+        "Kiến nghị đề xuất Ban giám đốc",
+        "Nơi nhận & Chữ ký Người lập báo cáo"
+      ]
+    },
+    {
+      "id": "02-ke-hoach-kiem-tra-tuan",
+      "code": "PLAN_WEEKLY_INSPECTION",
+      "title": "KẾ HOẠCH KIỂM TRA ATLĐ, PCCC, VSMT CÔNG TRÌNH HÀNG TUẦN",
+      "filename": "02-Ke hoach va Ket qua kiem tra ATLĐ-PCCC-VSMT hang tuan.docx",
+      "path": "docs/official-templates/02-Ke hoach va Ket qua kiem tra ATLĐ-PCCC-VSMT hang tuan.docx",
+      "sizeBytes": 33653,
+      "sha256": "1b925cc6863097fc66f643091de1b10210942e42172323ed5cf93eb26e7d7361",
+      "pageCount": 5,
+      "sections": [
+        "Header: Quốc hiệu & Tên Công ty",
+        "Kính gửi & Căn cứ pháp lý",
+        "I. Mục đích",
+        "II. Nội dung công tác kiểm tra xây lắp (Hồ sơ & Hiện trường)",
+        "III. Nội dung công tác kiểm tra thoát nước, hạ tầng (Hồ sơ & Hiện trường)",
+        "Xử phạt vi phạm lao động",
+        "Công tác huấn luyện cho công nhân",
+        "Bảng 04 cột Kế hoạch kiểm tra chi tiết theo ngày/buổi trong tuần (Thứ 2 - Chủ nhật)",
+        "Nơi nhận & Chữ ký Phòng Kỹ thuật / Người lập"
+      ]
+    }
+  ]
+}

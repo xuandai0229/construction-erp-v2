@@ -1,0 +1,55 @@
+src/app/(dashboard)/approvals/actions.ts | matches: safety
+src/app/(dashboard)/approvals/components/approval-center-client.tsx | matches: safety
+src/app/actions/material-request.ts | matches: safety
+src/app/api/reports/[reportId]/attachments/route.ts | matches: safety
+src/components/dashboard/executive/construction-hero-illustration.tsx | matches: safety
+src/lib/approvals/approval-policy.ts | matches: safety
+src/lib/dashboard/executive-action-service.ts | matches: safety
+src/lib/dashboard/operational-issue-service.ts | matches: safety
+src/lib/dashboard/tests/dashboard-invariants.test.ts | matches: safety
+src/lib/dashboard/tests/operational-issue-service.test.ts | matches: safety
+src/lib/document-folders.ts | matches: PCCC
+src/lib/documents/permissions.ts | matches: PCCC
+src/lib/notifications/notification-routing.ts | matches: safety
+src/lib/permissions/evaluate-permission-policy.ts | matches: safety
+src/lib/reports/weekly-company-summary.ts | matches: safety
+src/lib/reports/weekly-report-utils.ts | matches: safety
+prisma/migrations/0_baseline_v2_existing_product_schema/migration.sql | matches: safety
+prisma/migrations_legacy_archive_20260716/20260713093000_hard_delete_supplier_contract_payment/migration.sql | matches: safety
+prisma/schema.prisma.bak | matches: safety
+artifacts/construction-supervisor-final/rendered/docx-next-week/page-1.png | matches: PCCC
+artifacts/construction-supervisor-final/rendered/docx-next-week/page-2.png | matches: PCCC
+artifacts/construction-supervisor-final/rendered/docx-next-week-fixed/page-1.png | matches: PCCC
+artifacts/search-inventory.ts | matches: safety, ATLĐ, ATLD, PCCC, VSMT, VSLĐ, bao cao an toan, kế hoạch kiểm tra, báo cáo tự đánh giá, SafetyInspection, SafetyWeeklyReport, SafetyChecklist, SafetyFinding, SafetyCorrective, SafetyReinspection, SafetyEvidence, SAFETY_COMPANY_V1, safety.plan, safety.report, safety.session, safety.finding, safety.evidence
+scripts/audit/audit-report-attachment-decision.ts | matches: safety
+scripts/audit-report-attachment-decision.ts | matches: safety
+scripts/cleanup/dry-run-report-attachment-cleanup.ts | matches: safety
+scripts/dry-run-report-attachment-cleanup.ts | matches: safety
+scripts/qa/assert-safe-qa-database.test.ts | matches: safety
+scripts/qa/assert-safe-qa-database.ts | matches: safety
+scripts/qa/audit-dashboard-actual-progress-parity.ts | matches: safety
+scripts/qa/bootstrap-ui-ux-qa.ts | matches: safety
+scripts/qa/create-construction-supervisor-final-fixture.ts | matches: safety, kế hoạch kiểm tra
+scripts/qa/cutover-rehearsal-lib.ts | matches: safety
+scripts/qa/full-system-rbac-audit-runner.ts | matches: safety
+scripts/qa/safety-inspection-slice15.integration.ts | matches: safety, SafetyInspection, SafetyWeeklyReport, SafetyChecklist, SafetyFinding, SafetyCorrective, SafetyReinspection, SafetyEvidence
+scripts/qa/safety-migration-rehearsal.ts | matches: safety, SafetyChecklist
+scripts/qa/safety-slice2a-http.integration.ts | matches: safety, ATLD, SafetyInspection, SafetyChecklist, SAFETY_COMPANY_V1
+scripts/qa/seed-weekly-summary-stress-data.ts | matches: safety, PCCC
+scripts/qa/start-construction-supervisor-final-server.ts | matches: safety
+scripts/qa/verify-construction-supervisor-final-direct-runtime.ts | matches: safety
+scripts/qa/verify-construction-supervisor-final-source-mutations.ts | matches: safety
+scripts/qa-cleanup-pagination-data.ts | matches: safety
+scripts/qa-creatable-combobox-value-sync.ts | matches: safety
+scripts/qa-generate-pagination-data.ts | matches: safety
+scripts/qa-material-delete-sync.ts | matches: safety
+scripts/qa-material-movement-count-consistency.ts | matches: safety
+scripts/qa-reports-serialization-runtime-audit.ts | matches: safety
+scripts/qa-run-migration.ts | matches: safety
+scripts/qa-safety-guard.ts | matches: safety
+scripts/qa-users-auth-session.ts | matches: safety
+scripts/repair-material-request-approval-source-ids.ts | matches: safety
+scripts/safety/bootstrap-safety-checklist-v1.ts | matches: safety, SafetyChecklist, SAFETY_COMPANY_V1
+scripts/safety/generate-checklist-v1-artifacts.ts | matches: safety, SAFETY_COMPANY_V1
+scripts/seed-weekly-summary-qa.ts | matches: safety
+public/images/dashboard/dashboard-hero-2400x420-v4.png | matches: PCCC
