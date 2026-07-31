@@ -1,12 +1,8 @@
 {
-  "timestamp": "2026-07-27T09:47:28.132Z",
-  "scannedFilesCount": 397,
-  "summary": {
-    "criticalCount": 0,
-    "highCount": 0,
-    "mediumCount": 0,
-    "lowCount": 0,
-    "totalCount": 0
-  },
-  "issues": []
+  "timestamp": "2026-07-30T08:42:07.831Z",
+  "totalProdFindings": 0,
+  "highSeverityCount": 0,
+  "mediumSeverityCount": 0,
+  "lowSeverityCount": 0,
+  "findings": []
 }

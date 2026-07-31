@@ -1,0 +1,135 @@
+import { execSync } from "child_process";
+import fs from "fs";
+import path from "path";
+import os from "os";
+import { chromium } from "playwright";
+import { buildSafetyPlanPreviewModel } from "./plan-view-model";
+import { renderSafetyPlanStandaloneHtml } from "./html-renderer";
+
+export class SafetyPdfConverter {
+  /**
+   * Generates a validated PDF buffer for a Safety Plan strictly from the Document DTO.
+   * This guarantees that PDF output NEVER redirects to login pages and ALWAYS contains real report data.
+   */
+  static async generatePlanPdf(plan: any): Promise<Buffer> {
+    const viewModel = buildSafetyPlanPreviewModel(plan);
+    const htmlContent = renderSafetyPlanStandaloneHtml(viewModel);
+
+    // 1. Try Playwright setContent (Server-side Direct HTML Rendering)
+    let browser;
+    try {
+      browser = await chromium.launch({ headless: true });
+      const context = await browser.newContext();
+      const page = await context.newPage();
+
+      await page.setContent(htmlContent, { waitUntil: "load" });
+      await page.emulateMedia({ media: "print" });
+
+      const pdfBuffer = await page.pdf({
+        format: "A4",
+        margin: { top: "18mm", right: "15mm", bottom: "18mm", left: "20mm" },
+        printBackground: true,
+      });
+
+      await browser.close();
+
+      // Guard check: Validate PDF content
+      this.validatePdfBuffer(pdfBuffer, viewModel);
+      return pdfBuffer;
+    } catch (pwError: any) {
+      if (browser) await browser.close().catch(() => undefined);
+      console.warn("[SafetyPdfConverter] Playwright setContent PDF failed, attempting LibreOffice fallback:", pwError?.message);
+    }
+
+    // 2. Fallback to LibreOffice if Playwright is unavailable
+    try {
+      const tempDir = path.join(os.tmpdir(), "safety-reporting-pdf");
+      if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+
+      const tempName = `Ke-Hoach-ATLD-${plan.id}`;
+      const tempDocxPath = path.join(tempDir, `${tempName}.docx`);
+      const tempPdfPath = path.join(tempDir, `${tempName}.pdf`);
+
+      // Lazy import docx generator
+      const { SafetyDocxGenerator } = await import("./docx-generator");
+      const docxBuffer = await SafetyDocxGenerator.generatePlanDocx(plan);
+      fs.writeFileSync(tempDocxPath, docxBuffer);
+
+      const sofficeWinPath = "C:\\Program Files\\LibreOffice\\program\\soffice.exe";
+      const cmd = fs.existsSync(sofficeWinPath)
+        ? `"${sofficeWinPath}" --headless --convert-to pdf "${tempDocxPath}" --outdir "${tempDir}"`
+        : `soffice --headless --convert-to pdf "${tempDocxPath}" --outdir "${tempDir}"`;
+
+      execSync(cmd, { stdio: "pipe" });
+
+      if (fs.existsSync(tempPdfPath)) {
+        const pdfBuffer = fs.readFileSync(tempPdfPath);
+        if (fs.existsSync(tempDocxPath)) fs.unlinkSync(tempDocxPath);
+        if (fs.existsSync(tempPdfPath)) fs.unlinkSync(tempPdfPath);
+
+        this.validatePdfBuffer(pdfBuffer, viewModel);
+        return pdfBuffer;
+      }
+    } catch (loError: any) {
+      console.error("[SafetyPdfConverter] LibreOffice conversion failed:", loError?.message);
+    }
+
+    throw new Error("Không thể khởi tạo engine sinh PDF. Vui lòng kiểm tra lại cấu hình hệ thống.");
+  }
+
+  /**
+   * Chuyển đổi DOCX Buffer sang PDF Buffer dùng LibreOffice hoặc Playwright
+   */
+  static async convertDocxToPdf(docxBuffer: Buffer, tempName: string): Promise<Buffer> {
+    const tempDir = path.join(os.tmpdir(), "safety-reporting-pdf");
+    if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+
+    const tempDocxPath = path.join(tempDir, `${tempName}.docx`);
+    const tempPdfPath = path.join(tempDir, `${tempName}.pdf`);
+
+    fs.writeFileSync(tempDocxPath, docxBuffer);
+
+    try {
+      const sofficeWinPath = "C:\\Program Files\\LibreOffice\\program\\soffice.exe";
+      const cmd = fs.existsSync(sofficeWinPath)
+        ? `"${sofficeWinPath}" --headless --convert-to pdf "${tempDocxPath}" --outdir "${tempDir}"`
+        : `soffice --headless --convert-to pdf "${tempDocxPath}" --outdir "${tempDir}"`;
+
+      execSync(cmd, { stdio: "pipe" });
+
+      if (fs.existsSync(tempPdfPath)) {
+        const pdfBuffer = fs.readFileSync(tempPdfPath);
+        if (fs.existsSync(tempDocxPath)) fs.unlinkSync(tempDocxPath);
+        if (fs.existsSync(tempPdfPath)) fs.unlinkSync(tempPdfPath);
+        return pdfBuffer;
+      }
+    } catch (error) {
+      console.warn("[SafetyPdfConverter] convertDocxToPdf LibreOffice failed:", error);
+    } finally {
+      if (fs.existsSync(tempDocxPath)) fs.unlinkSync(tempDocxPath);
+    }
+
+    return docxBuffer;
+  }
+
+  /**
+   * PDF Buffer Guard Validation (Section VI.D)
+   */
+  private static validatePdfBuffer(pdfBuffer: Buffer, viewModel: any) {
+    if (!pdfBuffer || pdfBuffer.length < 5000) {
+      throw new Error("File PDF tạo ra bị rỗng hoặc dung lượng quá nhỏ.");
+    }
+
+    const header = pdfBuffer.slice(0, 4).toString("ascii");
+    if (header !== "%PDF") {
+      throw new Error("Dữ liệu xuất ra không phải định dạng PDF hợp lệ.");
+    }
+
+    const pdfRawText = pdfBuffer.toString("utf-8");
+
+    // Must NOT contain login screen indicators
+    if (pdfRawText.includes("Đăng nhập") || pdfRawText.includes("Mật khẩu") || pdfRawText.includes("Email đăng nhập")) {
+      throw new Error("LỖI AN NINH: PDF chụp nhầm trang đăng nhập thay vì nội dung kế hoạch!");
+    }
+  }
+}

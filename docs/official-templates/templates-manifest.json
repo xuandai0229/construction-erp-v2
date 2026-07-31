@@ -1,0 +1,21 @@
+{
+  "createdDate": "2026-07-30T07:11:30.146Z",
+  "templates": [
+    {
+      "id": "01-bao-cao-tu-danh-gia",
+      "title": "BÁO CÁO TỰ ĐÁNH GIÁ KẾT QUẢ KIỂM TRA AT, VSLĐ",
+      "filename": "01-Bao cao tu danh gia cong tac ATLĐ-PCCC-VSMT.docx",
+      "path": "docs/official-templates/01-Bao cao tu danh gia cong tac ATLĐ-PCCC-VSMT.docx",
+      "sizeBytes": 31728,
+      "sha256": "6c6998a61c8b5ece04cdd3016c7a8d2a961bf8609915bc3743ea9c7f90ada10c"
+    },
+    {
+      "id": "02-ke-hoach-kiem-tra-tuan",
+      "title": "KẾ HOẠCH KIỂM TRA ATLĐ, PCCC, VSMT CÔNG TRÌNH",
+      "filename": "02-Ke hoach va Ket qua kiem tra ATLĐ-PCCC-VSMT hang tuan.docx",
+      "path": "docs/official-templates/02-Ke hoach va Ket qua kiem tra ATLĐ-PCCC-VSMT hang tuan.docx",
+      "sizeBytes": 33653,
+      "sha256": "1b925cc6863097fc66f643091de1b10210942e42172323ed5cf93eb26e7d7361"
+    }
+  ]
+}

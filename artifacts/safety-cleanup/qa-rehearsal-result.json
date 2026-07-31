@@ -2,8 +2,8 @@
   "rehearsalDbName": "construction_erp_v2_clean_rehearsal_20260730",
   "deployPassed": true,
   "statusPassed": true,
-  "totalTables": 54,
-  "safetyTablesCount": 0,
+  "totalTables": 62,
+  "safetyTablesCount": 8,
   "supervisionTablesCount": 21,
   "databaseDropped": true
 }
