@@ -418,51 +418,20 @@ export async function createSafetyAssessmentAction(anchorDate: string) {
   const weekStart = startOfMonday(anchor);
   const weekEnd = addDays(weekStart, 6);
 
-  const defaultProject = await prisma.project.findFirst({
-    where: { deletedAt: null },
-    select: { id: true, name: true },
-  });
-
-  if (!defaultProject) {
-    throw new Error("Hệ thống chưa có công trình nào.");
-  }
-
-  const title = `BÁO CÁO TỰ ĐÁNH GIÁ KẾT QUẢ KIỂM TRA ATLĐ, PCCC, VSMT - TUẦN (${weekStart.toLocaleDateString("vi-VN")} ĐẾN ${weekEnd.toLocaleDateString("vi-VN")})`;
-
-  const entries = [];
-  for (let i = 0; i < 7; i++) {
-    const d = addDays(weekStart, i);
-    entries.push({
-      inspectionDate: d,
-      shift: SafetyReportShift.MORNING,
-      projectId: defaultProject.id,
-      inspectionContent: "Kiểm tra an toàn điện, giàn giáo, PCCC và BHO lao động",
-      assessment: "Đạt yêu cầu an toàn theo quy định",
-      recommendation: "Tiếp tục duy trì vệ sinh và biển cảnh báo",
-      implementationResult: "Đã hoàn thành kiểm tra",
-      sortOrder: i,
-    });
-  }
-
   const report = await SafetyAssessmentService.createReport(actor.id, {
-    title,
-    createdDate: new Date(),
     periodStart: weekStart,
     periodEnd: weekEnd,
-    entries,
+    officialDocumentNumber: "",
+    documentPlace: "Hà Nội",
+    recipientText: "Ban Giám đốc Công ty; Phòng kỹ thuật",
+    reporterName: "Phạm Xuân Quảng",
+    reporterTitle: "Cán bộ An toàn",
+    reporterDepartment: "Phòng kỹ thuật",
   });
 
   revalidatePath("/reports/safety");
-  return { id: report.id, status: report.status };
-}
-
-/**
- * Tạo Báo cáo tự đánh giá kế thừa từ Kế hoạch kiểm tra đã duyệt
- */
-export async function createAssessmentFromPlanAction(planId: string) {
-  const actor = await getActor();
-  const report = await SafetyAssessmentService.createFromPlan(actor.id, planId);
-  revalidatePath("/reports/safety");
+  revalidatePath("/reports/safety/reports");
+  revalidatePath("/reports/safety/self-assessments");
   return { id: report.id, status: report.status };
 }
 
@@ -506,7 +475,6 @@ export async function saveSafetyPlanAction(
     throw new Error("Hồ sơ này đã bị xóa.");
   }
 
-  // Get project names snapshot
   const projectIds = Array.from(new Set(input.entries.map((e) => e.projectId)));
   const projects = await prisma.project.findMany({
     where: { id: { in: projectIds } },
@@ -514,7 +482,6 @@ export async function saveSafetyPlanAction(
   });
   const projectMap = new Map(projects.map((p) => [p.id, p.name]));
 
-  // Build recipients JSON object
   const recipientsObj = {
     place: input.place ?? "Hà Nội",
     recipientName: input.recipientName ?? "Ban Giám đốc Công ty, Ban chỉ huy các công trình",
@@ -522,7 +489,6 @@ export async function saveSafetyPlanAction(
   };
 
   const updated = await prisma.$transaction(async (tx) => {
-    // Delete existing entries and re-create
     await tx.safetyReportPlanEntry.deleteMany({ where: { planId: id } });
 
     const plan = await tx.safetyReportPlan.update({
@@ -584,7 +550,15 @@ export async function saveSafetyAssessmentAction(
   id: string,
   input: {
     expectedLockVersion: number;
+    officialDocumentNumber?: string;
+    documentPlace?: string;
+    documentDate?: string | Date;
+    recipientText?: string;
+    reporterName?: string;
+    reporterTitle?: string;
+    reporterDepartment?: string;
     title?: string;
+    internalNote?: string;
     previousWeekRemediation?: string;
     reinspectionConfirmation?: string;
     managementRecommendation?: string;
@@ -593,7 +567,8 @@ export async function saveSafetyAssessmentAction(
       id?: string;
       inspectionDate: string;
       shift: SafetyReportShift;
-      projectId: string;
+      projectId?: string | null;
+      customProjectName?: string | null;
       inspectionContent: string;
       assessment?: string;
       recommendation?: string;
@@ -604,59 +579,82 @@ export async function saveSafetyAssessmentAction(
 ) {
   const actor = await getActor();
 
-  const existing = await prisma.safetySelfAssessmentReport.findUnique({
-    where: { id },
-  });
-
-  if (!existing) throw new Error("Không tìm thấy Báo cáo");
-  if (existing.version !== input.expectedLockVersion) {
-    throw new Error("CONFLICT: Hồ sơ trên máy chủ đã được cập nhật. Vui lòng tải lại trang.");
-  }
-  if (existing.status !== "DRAFT" && existing.status !== "REVISION_REQUIRED") {
-    throw new Error("Chỉ có thể chỉnh sửa hồ sơ ở trạng thái Bản nháp hoặc Yêu cầu sửa.");
-  }
-
-  const projectIds = Array.from(new Set(input.entries.map((e) => e.projectId)));
-  const projects = await prisma.project.findMany({
-    where: { id: { in: projectIds } },
-    select: { id: true, name: true },
-  });
-  const projectMap = new Map(projects.map((p) => [p.id, p.name]));
-
-  const updated = await prisma.$transaction(async (tx) => {
-    await tx.safetySelfAssessmentEntry.deleteMany({ where: { reportId: id } });
-
-    const report = await tx.safetySelfAssessmentReport.update({
-      where: { id },
-      data: {
-        title: input.title || existing.title,
-        previousWeekRemediation: input.previousWeekRemediation,
-        reinspectionConfirmation: input.reinspectionConfirmation,
-        managementRecommendation: input.managementRecommendation,
-        otherOpinion: input.otherOpinion,
-        version: { increment: 1 },
-        entries: {
-          create: input.entries.map((e, index) => ({
-            inspectionDate: new Date(e.inspectionDate),
-            shift: e.shift,
-            projectId: e.projectId,
-            projectNameSnapshot: projectMap.get(e.projectId) || "Công trình",
-            inspectionContent: e.inspectionContent,
-            assessment: e.assessment,
-            recommendation: e.recommendation,
-            implementationResult: e.implementationResult,
-            sortOrder: e.sortOrder ?? index,
-          })),
-        },
-      },
-    });
-
-    return report;
+  const updated = await SafetyAssessmentService.saveReport(actor.id, id, {
+    expectedLockVersion: input.expectedLockVersion,
+    officialDocumentNumber: input.officialDocumentNumber,
+    documentPlace: input.documentPlace,
+    documentDate: input.documentDate ? new Date(input.documentDate) : undefined,
+    recipientText: input.recipientText,
+    reporterName: input.reporterName,
+    reporterTitle: input.reporterTitle,
+    reporterDepartment: input.reporterDepartment,
+    title: input.title,
+    internalNote: input.internalNote,
+    previousWeekRemediation: input.previousWeekRemediation,
+    reinspectionConfirmation: input.reinspectionConfirmation,
+    managementRecommendation: input.managementRecommendation,
+    otherOpinion: input.otherOpinion,
+    entries: input.entries,
   });
 
   revalidatePath(`/reports/safety/self-assessments/${id}`);
+  revalidatePath(`/reports/safety/reports/${id}`);
   revalidatePath("/reports/safety");
-  return { lockVersion: updated.version };
+
+  return {
+    lockVersion: updated.version,
+    entries: updated.entries.map((e) => ({
+      id: e.id,
+      inspectionDate: e.inspectionDate.toISOString(),
+      shift: e.shift,
+      projectId: e.projectId,
+      customProjectName: e.customProjectName,
+      projectNameSnapshot: e.projectNameSnapshot,
+      inspectionContent: e.inspectionContent,
+      assessment: e.assessment,
+      recommendation: e.recommendation,
+      implementationResult: e.implementationResult,
+      sortOrder: e.sortOrder,
+    })),
+  };
+}
+
+/**
+ * Nạp lịch từ Kế hoạch kiểm tra vào Báo cáo
+ */
+export async function importEntriesFromPlanAction(reportId: string, planId: string) {
+  const actor = await getActor();
+  const updated = await SafetyAssessmentService.importEntriesFromPlan(actor.id, reportId, planId);
+  revalidatePath(`/reports/safety/self-assessments/${reportId}`);
+  revalidatePath(`/reports/safety/reports/${reportId}`);
+  return {
+    lockVersion: updated.version,
+    entries: updated.entries.map((e) => ({
+      id: e.id,
+      inspectionDate: e.inspectionDate.toISOString(),
+      shift: e.shift,
+      projectId: e.projectId,
+      customProjectName: e.customProjectName,
+      projectNameSnapshot: e.projectNameSnapshot,
+      inspectionContent: e.inspectionContent,
+      assessment: e.assessment,
+      recommendation: e.recommendation,
+      implementationResult: e.implementationResult,
+      sortOrder: e.sortOrder,
+    })),
+  };
+}
+
+/**
+ * Xóa Báo cáo tự đánh giá
+ */
+export async function deleteSafetyAssessmentAction(id: string) {
+  const actor = await getActor();
+  await SafetyAssessmentService.deleteReport(actor.id, id);
+  revalidatePath("/reports/safety");
+  revalidatePath("/reports/safety/reports");
+  revalidatePath("/reports/safety/self-assessments");
+  return { success: true };
 }
 
 /**

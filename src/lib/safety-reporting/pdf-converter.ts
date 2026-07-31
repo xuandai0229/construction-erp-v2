@@ -132,4 +132,73 @@ export class SafetyPdfConverter {
       throw new Error("LỖI AN NINH: PDF chụp nhầm trang đăng nhập thay vì nội dung kế hoạch!");
     }
   }
+
+  /**
+   * Generates a validated PDF buffer for a Safety Assessment Report strictly from HTML rendering.
+   */
+  static async generateAssessmentPdf(report: any): Promise<Buffer> {
+    const { buildSafetyAssessmentOutputModel } = await import("./assessment-view-model");
+    const { renderSafetyAssessmentHtml } = await import("./assessment-html-renderer");
+
+    const viewModel = buildSafetyAssessmentOutputModel(report);
+    const htmlContent = renderSafetyAssessmentHtml(report);
+
+    // 1. Try Playwright setContent
+    let browser;
+    try {
+      browser = await chromium.launch({ headless: true });
+      const context = await browser.newContext();
+      const page = await context.newPage();
+
+      await page.setContent(htmlContent, { waitUntil: "load" });
+      await page.emulateMedia({ media: "print" });
+
+      const pdfBuffer = await page.pdf({
+        format: "A4",
+        margin: { top: "18mm", right: "15mm", bottom: "18mm", left: "20mm" },
+        printBackground: true,
+      });
+
+      await browser.close();
+      this.validatePdfBuffer(pdfBuffer, viewModel);
+      return pdfBuffer;
+    } catch (pwError: any) {
+      if (browser) await browser.close().catch(() => undefined);
+      console.warn("[SafetyPdfConverter] Playwright setContent PDF for assessment failed, attempting LibreOffice fallback:", pwError?.message);
+    }
+
+    // 2. Fallback to LibreOffice
+    try {
+      const tempDir = path.join(os.tmpdir(), "safety-reporting-pdf");
+      if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+
+      const tempName = `Bao-Cao-ATLD-${report.id}`;
+      const tempDocxPath = path.join(tempDir, `${tempName}.docx`);
+      const tempPdfPath = path.join(tempDir, `${tempName}.pdf`);
+
+      const { SafetyAssessmentDocxGenerator } = await import("./assessment-docx-generator");
+      const docxBuffer = await SafetyAssessmentDocxGenerator.generateAssessmentDocx(report);
+      fs.writeFileSync(tempDocxPath, docxBuffer);
+
+      const sofficeWinPath = "C:\\Program Files\\LibreOffice\\program\\soffice.exe";
+      const cmd = fs.existsSync(sofficeWinPath)
+        ? `"${sofficeWinPath}" --headless --convert-to pdf "${tempDocxPath}" --outdir "${tempDir}"`
+        : `soffice --headless --convert-to pdf "${tempDocxPath}" --outdir "${tempDir}"`;
+
+      execSync(cmd, { stdio: "pipe" });
+
+      if (fs.existsSync(tempPdfPath)) {
+        const pdfBuffer = fs.readFileSync(tempPdfPath);
+        if (fs.existsSync(tempDocxPath)) fs.unlinkSync(tempDocxPath);
+        if (fs.existsSync(tempPdfPath)) fs.unlinkSync(tempPdfPath);
+
+        this.validatePdfBuffer(pdfBuffer, viewModel);
+        return pdfBuffer;
+      }
+    } catch (loError: any) {
+      console.error("[SafetyPdfConverter] LibreOffice conversion for assessment failed:", loError?.message);
+    }
+
+    throw new Error("Không thể khởi tạo engine sinh PDF cho Báo cáo.");
+  }
 }

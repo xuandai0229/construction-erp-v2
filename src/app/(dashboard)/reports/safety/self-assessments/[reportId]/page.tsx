@@ -1,7 +1,7 @@
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { SafetyAssessmentService } from "@/lib/safety-reporting/assessment-service";
-import { getSafetyProjectsAction } from "../../actions";
+import { getSafetyProjectsAction, getSafetyPlansListAction } from "../../actions";
 import { SafetyAssessmentEditor } from "@/components/safety/safety-assessment-editor";
 
 export const metadata = {
@@ -17,9 +17,10 @@ export default async function SafetyReportEditPage({
   if (!session) redirect("/login?reason=session_expired");
 
   const { reportId } = await params;
-  const [report, projects] = await Promise.all([
+  const [report, projects, plansRes] = await Promise.all([
     SafetyAssessmentService.getReportById(reportId),
     getSafetyProjectsAction(),
+    getSafetyPlansListAction({ pageSize: 50 }),
   ]);
 
   if (!report) redirect("/reports/safety");
@@ -28,6 +29,11 @@ export default async function SafetyReportEditPage({
     <SafetyAssessmentEditor
       report={report}
       projects={projects}
+      plans={plansRes.items.map((p) => ({
+        id: p.id,
+        documentNumber: p.documentNumber || undefined,
+        title: p.title,
+      }))}
       currentUser={{
         id: session.id,
         role: session.role,

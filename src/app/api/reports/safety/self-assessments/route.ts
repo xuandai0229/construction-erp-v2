@@ -26,16 +26,10 @@ export async function POST(request: Request) {
 
     const report = await SafetyAssessmentService.createReport(actorId, {
       sourcePlanId: body.sourcePlanId,
-      title: body.title || 'BÁO CÁO TỰ ĐÁNH GIÁ KẾT QUẢ KIỂM TRA AT, VSLĐ',
+      title: body.title || 'BÁO CÁO TỰ ĐÁNH GIÁ KẾT QUẢ KIỂM TRA ATLĐ, PCCC, VSMT',
       createdDate: new Date(body.createdDate || Date.now()),
       periodStart: new Date(body.periodStart || Date.now()),
       periodEnd: new Date(body.periodEnd || Date.now() + 6 * 86400000),
-      legalBases: body.legalBases,
-      recipients: body.recipients,
-      previousWeekRemediation: body.previousWeekRemediation,
-      reinspectionConfirmation: body.reinspectionConfirmation,
-      managementRecommendation: body.managementRecommendation,
-      otherOpinion: body.otherOpinion,
       entries: (body.entries || []).map((e: any) => ({
         inspectionDate: new Date(e.inspectionDate),
         shift: e.shift || 'MORNING',

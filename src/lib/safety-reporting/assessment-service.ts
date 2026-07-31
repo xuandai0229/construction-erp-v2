@@ -1,22 +1,28 @@
 import prisma from '@/lib/prisma';
 import { SafetySelfAssessmentStatus, SafetyReportShift } from '@prisma/client';
+import { normalizeNfc } from './date-utils';
 
-export interface CreateSelfAssessmentInput {
-  sourcePlanId?: string;
-  title: string;
-  createdDate: Date;
-  periodStart: Date;
-  periodEnd: Date;
-  legalBases?: string[];
-  recipients?: string[];
+export interface SaveSelfAssessmentInput {
+  expectedLockVersion?: number;
+  officialDocumentNumber?: string;
+  documentPlace?: string;
+  documentDate?: Date;
+  recipientText?: string;
+  reporterName?: string;
+  reporterTitle?: string;
+  reporterDepartment?: string;
+  title?: string;
+  internalNote?: string;
   previousWeekRemediation?: string;
   reinspectionConfirmation?: string;
   managementRecommendation?: string;
   otherOpinion?: string;
   entries: Array<{
-    inspectionDate: Date;
+    id?: string;
+    inspectionDate: Date | string;
     shift: SafetyReportShift;
-    projectId: string;
+    projectId?: string | null;
+    customProjectName?: string | null;
     inspectionContent: string;
     assessment?: string;
     recommendation?: string;
@@ -27,7 +33,7 @@ export interface CreateSelfAssessmentInput {
 
 export class SafetyAssessmentService {
   /**
-   * Sinh số báo cáo tự đánh giá tự động theo năm
+   * Generates sequential internal document number per year
    */
   static async generateDocumentNumber(tx: any, year: number): Promise<{ sequenceNumber: number; documentNumber: string }> {
     const seq = await tx.safetySelfAssessmentSequence.upsert({
@@ -41,72 +47,78 @@ export class SafetyAssessmentService {
   }
 
   /**
-   * Tạo Báo cáo tự đánh giá mới (có thể kế thừa từ Kế hoạch kiểm tra)
+   * Creates a new Safety Assessment Report
    */
-  static async createReport(actorId: string, input: CreateSelfAssessmentInput) {
-    const year = new Date(input.createdDate).getFullYear();
+  static async createReport(actorId: string, input: {
+    sourcePlanId?: string;
+    title?: string;
+    createdDate?: Date;
+    periodStart: Date;
+    periodEnd: Date;
+    officialDocumentNumber?: string;
+    documentPlace?: string;
+    recipientText?: string;
+    reporterName?: string;
+    reporterTitle?: string;
+    reporterDepartment?: string;
+    entries?: Array<{
+      inspectionDate: Date;
+      shift: SafetyReportShift;
+      projectId?: string | null;
+      customProjectName?: string | null;
+      inspectionContent: string;
+      assessment?: string;
+      recommendation?: string;
+      implementationResult?: string;
+      sortOrder?: number;
+    }>;
+  }) {
+    const year = new Date(input.periodStart).getFullYear();
 
     return await prisma.$transaction(async (tx) => {
       const { sequenceNumber, documentNumber } = await this.generateDocumentNumber(tx, year);
+      const titleStr = input.title || `BÁO CÁO TỰ ĐÁNH GIÁ KẾT QUẢ KIỂM TRA ATLĐ, PCCC, VSMT`;
 
-      const projectIds = Array.from(new Set(input.entries.map((e) => e.projectId)));
-      const projects = await tx.project.findMany({
-        where: { id: { in: projectIds } },
-        select: { id: true, name: true },
-      });
-      const projectMap = new Map(projects.map((p: any) => [p.id, p.name]));
+      const initialEntries = input.entries || [];
 
       const report = await tx.safetySelfAssessmentReport.create({
         data: {
-          sourcePlanId: input.sourcePlanId,
+          sourcePlanId: input.sourcePlanId || null,
           documentYear: year,
           sequenceNumber,
           documentNumber,
-          title: input.title,
-          createdDate: input.createdDate,
+          officialDocumentNumber: input.officialDocumentNumber ? normalizeNfc(input.officialDocumentNumber) : null,
+          documentPlace: input.documentPlace ? normalizeNfc(input.documentPlace) : 'Hà Nội',
+          documentDate: input.createdDate || new Date(),
+          title: normalizeNfc(titleStr),
+          createdDate: input.createdDate || new Date(),
           periodStart: input.periodStart,
           periodEnd: input.periodEnd,
-          legalBases: input.legalBases ?? [
-            'Căn cứ Quyết định giao việc của lãnh đạo Công ty.',
-            'Căn cứ kế hoạch kiểm tra công trình hàng tuần.',
-            'Căn cứ các biên bản kiểm tra an toàn, vệ sinh lao động.',
-          ],
-          recipients: input.recipients ?? ['Ban Giám đốc Công ty', 'Phòng kỹ thuật'],
-          previousWeekRemediation: input.previousWeekRemediation,
-          reinspectionConfirmation: input.reinspectionConfirmation,
-          managementRecommendation: input.managementRecommendation,
-          otherOpinion: input.otherOpinion,
+          recipientText: input.recipientText ? normalizeNfc(input.recipientText) : 'Ban Giám đốc Công ty; Phòng kỹ thuật',
+          reporterName: input.reporterName ? normalizeNfc(input.reporterName) : 'Phạm Xuân Quảng',
+          reporterTitle: input.reporterTitle ? normalizeNfc(input.reporterTitle) : 'Cán bộ An toàn',
+          reporterDepartment: input.reporterDepartment ? normalizeNfc(input.reporterDepartment) : 'Phòng kỹ thuật',
           status: SafetySelfAssessmentStatus.DRAFT,
           createdById: actorId,
+          version: 1,
           entries: {
-            create: input.entries.map((e, index) => ({
-              inspectionDate: e.inspectionDate,
+            create: initialEntries.map((e, index) => ({
+              inspectionDate: new Date(e.inspectionDate),
               shift: e.shift,
-              projectId: e.projectId,
-              projectNameSnapshot: projectMap.get(e.projectId) || 'Công trình',
-              inspectionContent: e.inspectionContent,
-              assessment: e.assessment,
-              recommendation: e.recommendation,
-              implementationResult: e.implementationResult,
+              projectId: e.projectId || null,
+              customProjectName: e.customProjectName ? normalizeNfc(e.customProjectName) : null,
+              projectNameSnapshot: 'Công trình',
+              inspectionContent: normalizeNfc(e.inspectionContent || ''),
+              assessment: e.assessment ? normalizeNfc(e.assessment) : null,
+              recommendation: e.recommendation ? normalizeNfc(e.recommendation) : null,
+              implementationResult: e.implementationResult ? normalizeNfc(e.implementationResult) : null,
               sortOrder: e.sortOrder ?? index,
             })),
           },
         },
         include: {
-          entries: { orderBy: { sortOrder: 'asc' } },
+          entries: { orderBy: [{ inspectionDate: 'asc' }, { sortOrder: 'asc' }] },
           createdBy: { select: { id: true, name: true, role: true } },
-        },
-      });
-
-      // Audit Log
-      await tx.safetyReportAuditLog.create({
-        data: {
-          reportType: 'SELF_ASSESSMENT',
-          reportId: report.id,
-          action: 'CREATE',
-          afterData: report as any,
-          actorId,
-          correlationId: `assessment-create-${report.id}`,
         },
       });
 
@@ -115,7 +127,7 @@ export class SafetyAssessmentService {
   }
 
   /**
-   * Khởi tạo Báo cáo tự đánh giá từ Kế hoạch đã duyệt
+   * Create report from approved Plan
    */
   static async createFromPlan(actorId: string, planId: string) {
     const plan = await prisma.safetyReportPlan.findUnique({
@@ -123,16 +135,12 @@ export class SafetyAssessmentService {
       include: { entries: true },
     });
     if (!plan) throw new Error('Không tìm thấy Kế hoạch kiểm tra');
-    if (plan.status !== 'APPROVED') {
-      throw new Error('Chỉ có thể tạo báo cáo từ Kế hoạch đã được duyệt');
-    }
 
     const title = `BÁO CÁO TỰ ĐÁNH GIÁ KẾT QUẢ KIỂM TRA ATLĐ, PCCC, VSMT - TUẦN (${new Date(plan.periodStart).toLocaleDateString('vi-VN')} ĐẾN ${new Date(plan.periodEnd).toLocaleDateString('vi-VN')})`;
 
     return await this.createReport(actorId, {
       sourcePlanId: plan.id,
       title,
-      createdDate: new Date(),
       periodStart: plan.periodStart,
       periodEnd: plan.periodEnd,
       entries: plan.entries.map((e) => ({
@@ -149,60 +157,146 @@ export class SafetyAssessmentService {
   }
 
   /**
-   * Danh sách Báo cáo tự đánh giá
+   * Save / Update Safety Assessment Report with Concurrency Control
    */
-  static async listReports(params?: { status?: SafetySelfAssessmentStatus; search?: string; limit?: number; offset?: number }) {
-    const where: any = {};
-    if (params?.status) {
-      where.status = params.status;
-    }
-    if (params?.search) {
-      where.OR = [
-        { documentNumber: { contains: params.search, mode: 'insensitive' } },
-        { title: { contains: params.search, mode: 'insensitive' } },
-      ];
-    }
+  static async saveReport(actorId: string, reportId: string, input: SaveSelfAssessmentInput) {
+    return await prisma.$transaction(async (tx) => {
+      const current = await tx.safetySelfAssessmentReport.findUnique({
+        where: { id: reportId },
+      });
 
-    const [items, total] = await Promise.all([
-      prisma.safetySelfAssessmentReport.findMany({
-        where,
-        take: params?.limit ?? 50,
-        skip: params?.offset ?? 0,
-        orderBy: { createdAt: 'desc' },
+      if (!current) throw new Error('Không tìm thấy Báo cáo tự đánh giá');
+      if (current.deletedAt) throw new Error('Báo cáo đã bị xóa');
+
+      if (
+        input.expectedLockVersion !== undefined &&
+        input.expectedLockVersion !== current.version
+      ) {
+        throw new Error(
+          'CONFLICT: Báo cáo đã được chỉnh sửa bởi phiên làm việc khác. Vui lòng tải lại trang.'
+        );
+      }
+
+      const validProjectIds = Array.from(
+        new Set(input.entries.map((e) => e.projectId).filter(Boolean))
+      ) as string[];
+
+      const projects = validProjectIds.length > 0
+        ? await tx.project.findMany({
+            where: { id: { in: validProjectIds } },
+            select: { id: true, name: true },
+          })
+        : [];
+      const projectMap = new Map(projects.map((p) => [p.id, p.name]));
+
+      await tx.safetySelfAssessmentEntry.deleteMany({
+        where: { reportId },
+      });
+
+      const nextVersion = current.version + 1;
+
+      const updatedReport = await tx.safetySelfAssessmentReport.update({
+        where: { id: reportId },
+        data: {
+          officialDocumentNumber: input.officialDocumentNumber !== undefined ? normalizeNfc(input.officialDocumentNumber) : current.officialDocumentNumber,
+          documentPlace: input.documentPlace !== undefined ? normalizeNfc(input.documentPlace) : current.documentPlace,
+          documentDate: input.documentDate ? new Date(input.documentDate) : current.documentDate,
+          recipientText: input.recipientText !== undefined ? normalizeNfc(input.recipientText) : current.recipientText,
+          reporterName: input.reporterName !== undefined ? normalizeNfc(input.reporterName) : current.reporterName,
+          reporterTitle: input.reporterTitle !== undefined ? normalizeNfc(input.reporterTitle) : current.reporterTitle,
+          reporterDepartment: input.reporterDepartment !== undefined ? normalizeNfc(input.reporterDepartment) : current.reporterDepartment,
+          internalNote: input.internalNote !== undefined ? normalizeNfc(input.internalNote) : current.internalNote,
+          previousWeekRemediation: input.previousWeekRemediation !== undefined ? normalizeNfc(input.previousWeekRemediation) : current.previousWeekRemediation,
+          reinspectionConfirmation: input.reinspectionConfirmation !== undefined ? normalizeNfc(input.reinspectionConfirmation) : current.reinspectionConfirmation,
+          managementRecommendation: input.managementRecommendation !== undefined ? normalizeNfc(input.managementRecommendation) : current.managementRecommendation,
+          otherOpinion: input.otherOpinion !== undefined ? normalizeNfc(input.otherOpinion) : current.otherOpinion,
+          version: nextVersion,
+          entries: {
+            create: input.entries.map((e, index) => {
+              const projName = e.customProjectName
+                ? normalizeNfc(e.customProjectName)
+                : e.projectId
+                ? projectMap.get(e.projectId) || 'Công trình'
+                : 'Công trình';
+
+              return {
+                inspectionDate: new Date(e.inspectionDate),
+                shift: e.shift,
+                projectId: e.projectId || null,
+                customProjectName: e.customProjectName ? normalizeNfc(e.customProjectName) : null,
+                projectNameSnapshot: projName,
+                inspectionContent: normalizeNfc(e.inspectionContent || ''),
+                assessment: e.assessment ? normalizeNfc(e.assessment) : null,
+                recommendation: e.recommendation ? normalizeNfc(e.recommendation) : null,
+                implementationResult: e.implementationResult ? normalizeNfc(e.implementationResult) : null,
+                sortOrder: e.sortOrder ?? index,
+              };
+            }),
+          },
+        },
         include: {
-          createdBy: { select: { id: true, name: true } },
-          approvedBy: { select: { id: true, name: true } },
-          sourcePlan: { select: { id: true, documentNumber: true } },
-          entries: { select: { id: true, projectNameSnapshot: true } },
+          entries: {
+            orderBy: [{ inspectionDate: 'asc' }, { sortOrder: 'asc' }],
+            include: { project: { select: { id: true, name: true, code: true } } },
+          },
+          createdBy: { select: { id: true, name: true, role: true } },
+          sourcePlan: { select: { id: true, documentNumber: true, title: true } },
         },
-      }),
-      prisma.safetySelfAssessmentReport.count({ where }),
-    ]);
+      });
 
-    return { items, total };
-  }
-
-  /**
-   * Chi tiết Báo cáo
-   */
-  static async getReportById(id: string) {
-    return await prisma.safetySelfAssessmentReport.findUnique({
-      where: { id },
-      include: {
-        createdBy: { select: { id: true, name: true, role: true } },
-        submittedBy: { select: { id: true, name: true } },
-        approvedBy: { select: { id: true, name: true } },
-        sourcePlan: { select: { id: true, documentNumber: true, title: true } },
-        entries: {
-          orderBy: [{ inspectionDate: 'asc' }, { sortOrder: 'asc' }],
-          include: { project: { select: { id: true, name: true, code: true } } },
-        },
-      },
+      return updatedReport;
     });
   }
 
   /**
-   * Trình duyệt Báo cáo
+   * Import schedule/entries from a Safety Plan into Safety Report
+   */
+  static async importEntriesFromPlan(actorId: string, reportId: string, planId: string) {
+    const plan = await prisma.safetyReportPlan.findUnique({
+      where: { id: planId },
+      include: { entries: { include: { project: true } } },
+    });
+
+    if (!plan) throw new Error('Không tìm thấy Kế hoạch kiểm tra');
+
+    const report = await prisma.safetySelfAssessmentReport.findUnique({
+      where: { id: reportId },
+      include: { entries: true },
+    });
+
+    if (!report) throw new Error('Không tìm thấy Báo cáo tự đánh giá');
+
+    const existingMap = new Map();
+    report.entries.forEach((e) => {
+      const key = `${new Date(e.inspectionDate).toISOString().split('T')[0]}_${e.shift}`;
+      existingMap.set(key, e);
+    });
+
+    const newEntriesPayload = plan.entries.map((pEntry, idx) => {
+      const key = `${new Date(pEntry.inspectionDate).toISOString().split('T')[0]}_${pEntry.shift}`;
+      const existing = existingMap.get(key);
+
+      return {
+        inspectionDate: pEntry.inspectionDate,
+        shift: pEntry.shift,
+        projectId: pEntry.projectId || null,
+        customProjectName: pEntry.location || null,
+        inspectionContent: pEntry.inspectionContent,
+        assessment: existing?.assessment || '',
+        recommendation: existing?.recommendation || '',
+        implementationResult: existing?.implementationResult || '',
+        sortOrder: idx,
+      };
+    });
+
+    return await this.saveReport(actorId, reportId, {
+      expectedLockVersion: report.version,
+      entries: newEntriesPayload,
+    });
+  }
+
+  /**
+   * Submit Report for Approval
    */
   static async submitReport(actorId: string, reportId: string) {
     return await prisma.$transaction(async (tx) => {
@@ -237,7 +331,7 @@ export class SafetyAssessmentService {
   }
 
   /**
-   * Duyệt hoặc Yêu cầu chỉnh sửa Báo cáo
+   * Decide Report Approval / Revision Request
    */
   static async decideReport(actorId: string, reportId: string, approve: boolean, reason?: string) {
     return await prisma.$transaction(async (tx) => {
@@ -276,7 +370,7 @@ export class SafetyAssessmentService {
   }
 
   /**
-   * Xóa bản nháp / Hủy Báo cáo
+   * Delete or Cancel Report
    */
   static async deleteOrCancelReport(actorId: string, reportId: string, cancellationReason?: string) {
     return await prisma.$transaction(async (tx) => {
@@ -310,6 +404,84 @@ export class SafetyAssessmentService {
 
         return { deleted: false, cancelled: true, report: updated };
       }
+    });
+  }
+
+  /**
+   * List Safety Assessment Reports
+   */
+  static async listReports(params?: { status?: SafetySelfAssessmentStatus; search?: string; projectId?: string; limit?: number; offset?: number }) {
+    const where: any = {
+      deletedAt: null,
+    };
+
+    if (params?.status) {
+      where.status = params.status;
+    }
+
+    if (params?.search) {
+      where.OR = [
+        { documentNumber: { contains: params.search, mode: 'insensitive' } },
+        { officialDocumentNumber: { contains: params.search, mode: 'insensitive' } },
+        { title: { contains: params.search, mode: 'insensitive' } },
+        { reporterName: { contains: params.search, mode: 'insensitive' } },
+      ];
+    }
+
+    if (params?.projectId) {
+      where.entries = {
+        some: { projectId: params.projectId },
+      };
+    }
+
+    const [items, total] = await Promise.all([
+      prisma.safetySelfAssessmentReport.findMany({
+        where,
+        take: params?.limit ?? 50,
+        skip: params?.offset ?? 0,
+        orderBy: { periodStart: 'desc' },
+        include: {
+          createdBy: { select: { id: true, name: true } },
+          sourcePlan: { select: { id: true, documentNumber: true, title: true } },
+          entries: { select: { id: true, projectNameSnapshot: true } },
+        },
+      }),
+      prisma.safetySelfAssessmentReport.count({ where }),
+    ]);
+
+    return { items, total };
+  }
+
+  /**
+   * Get Report By ID
+   */
+  static async getReportById(id: string) {
+    const report = await prisma.safetySelfAssessmentReport.findUnique({
+      where: { id },
+      include: {
+        createdBy: { select: { id: true, name: true, role: true } },
+        sourcePlan: { select: { id: true, documentNumber: true, title: true } },
+        entries: {
+          orderBy: [{ inspectionDate: 'asc' }, { sortOrder: 'asc' }],
+          include: { project: { select: { id: true, name: true, code: true } } },
+        },
+      },
+    });
+
+    if (!report || report.deletedAt) return null;
+    return report;
+  }
+
+  /**
+   * Delete Report
+   */
+  static async deleteReport(actorId: string, reportId: string) {
+    return await prisma.safetySelfAssessmentReport.update({
+      where: { id: reportId },
+      data: {
+        deletedAt: new Date(),
+        deletedById: actorId,
+      },
     });
   }
 }
