@@ -16,7 +16,7 @@ declare const globalThis: {
 
 function getPrismaClient() {
   let client = globalThis.prismaGlobal_v5;
-  if (!client) {
+  if (!client || (process.env.NODE_ENV !== 'production' && !(client as any).safetyWeeklyFile)) {
     client = prismaClientSingleton();
     if (process.env.NODE_ENV !== 'production') {
       globalThis.prismaGlobal_v5 = client;

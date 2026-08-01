@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { SafetyPlanService } from "@/lib/safety-reporting/plan-service";
 import { SafetyAssessmentService } from "@/lib/safety-reporting/assessment-service";
+import { SafetyWeeklyFileService } from "@/lib/safety-reporting/weekly-file-service";
 import { getWeekRange, formatIsoDateOnly, normalizeNfc } from "@/lib/safety-reporting/date-utils";
 import { SafetyReportPlanStatus, SafetySelfAssessmentStatus, SafetyReportShift, SafetyReportConstructionType } from "@prisma/client";
 
@@ -56,8 +57,130 @@ export async function getSafetyProjectsAction(query = "") {
 }
 
 /**
- * Lấy danh sách Kế hoạch kiểm tra (Mẫu 02) kèm Thẻ đếm trạng thái
+ * Lấy danh sách Hồ sơ ATLĐ theo tuần (Gộp Kế hoạch + Báo cáo)
  */
+export async function getSafetyWeeklyFilesListAction(params?: {
+  search?: string;
+  year?: number;
+  sort?: "updated_desc" | "updated_asc" | "week_desc" | "week_asc";
+  completionStatus?: "ALL" | "COMPLETE" | "NO_PLAN" | "NO_REPORT";
+  page?: number;
+  pageSize?: number;
+}) {
+  try {
+    const actor = await getActor();
+    const res = await SafetyWeeklyFileService.getWeeklyFilesList(actor, params);
+    return {
+      ...res,
+      currentUserId: actor.id,
+      currentUserRole: actor.role,
+    };
+  } catch (err: any) {
+    console.error("[getSafetyWeeklyFilesListAction] Error:", err);
+    return {
+      items: [],
+      totalCount: 0,
+      page: params?.page || 1,
+      pageSize: params?.pageSize || 15,
+      totalPages: 0,
+      currentUserId: "",
+      currentUserRole: "",
+      error: err.message || "Không thể tải danh sách hồ sơ.",
+    };
+  }
+}
+
+export type CreateWeeklyFileResult =
+  | {
+      ok: true;
+      weeklyFileId: string;
+      planId: string;
+      reportId: string;
+      created: boolean;
+    }
+  | {
+      ok: false;
+      code: "INVALID_DATE" | "ALREADY_EXISTS" | "FORBIDDEN" | "SCHEMA_NOT_READY" | "CREATE_FAILED";
+      message: string;
+      correlationId: string;
+    };
+
+/**
+ * Tạo mới hoặc mở Hồ sơ ATLĐ theo tuần
+ */
+export async function createSafetyWeeklyFileAction(anchorDate: string): Promise<CreateWeeklyFileResult> {
+  const correlationId = `create_wf_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+  try {
+    if (!anchorDate || isNaN(new Date(anchorDate).getTime())) {
+      return {
+        ok: false,
+        code: "INVALID_DATE",
+        message: "Ngày chọn không hợp lệ. Vui lòng chọn lại.",
+        correlationId,
+      };
+    }
+
+    const actor = await getActor();
+    const result = await SafetyWeeklyFileService.getOrCreateWeeklyFile(actor.id, anchorDate);
+    revalidatePath("/reports/safety");
+    return {
+      ok: true,
+      weeklyFileId: result.weeklyFileId,
+      planId: result.planId,
+      reportId: result.reportId,
+      created: result.created ?? false,
+    };
+  } catch (err: any) {
+    console.error(`[createSafetyWeeklyFileAction][${correlationId}] Error:`, err);
+
+    let code: "INVALID_DATE" | "ALREADY_EXISTS" | "FORBIDDEN" | "SCHEMA_NOT_READY" | "CREATE_FAILED" = "CREATE_FAILED";
+    let message = "Không thể tạo hồ sơ tuần. Vui lòng thử lại.";
+
+    if (err?.message?.includes("SCHEMA_NOT_READY")) {
+      code = "SCHEMA_NOT_READY";
+      message = "Hệ thống đang cập nhật cơ sở dữ liệu. Vui lòng thử lại sau vài giây.";
+    } else if (err?.message?.includes("Phiên đăng nhập")) {
+      code = "FORBIDDEN";
+      message = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+    }
+
+    return {
+      ok: false,
+      code,
+      message,
+      correlationId,
+    };
+  }
+}
+
+/**
+ * Lấy chi tiết Hồ sơ ATLĐ theo tuần
+ */
+export async function getSafetyWeeklyFileDetailAction(weeklyFileId: string) {
+  await getActor();
+  return SafetyWeeklyFileService.getWeeklyFileDetail(weeklyFileId);
+}
+
+/**
+ * Xóa Hồ sơ ATLĐ theo tuần
+ */
+export async function deleteSafetyWeeklyFileAction(weeklyFileId: string) {
+  try {
+    const actor = await getActor();
+    const result = await SafetyWeeklyFileService.deleteWeeklyFile(actor, weeklyFileId);
+    if (result.ok) {
+      revalidatePath("/reports/safety");
+    }
+    return result;
+  } catch (err: any) {
+    console.error("[deleteSafetyWeeklyFileAction] Correlation Error:", err);
+    return {
+      ok: false as const,
+      code: "DELETE_FAILED" as const,
+      message: err.message || "Không thể xóa hồ sơ.",
+    };
+  }
+}
 export async function getSafetyPlansListAction(params?: {
   status?: string;
   search?: string;

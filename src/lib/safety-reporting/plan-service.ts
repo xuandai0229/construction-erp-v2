@@ -46,10 +46,10 @@ export class SafetyPlanService {
   /**
    * Tạo kế hoạch kiểm tra mới
    */
-  static async createPlan(actorId: string, input: CreateSafetyPlanInput) {
+  static async createPlan(actorId: string, input: CreateSafetyPlanInput, externalTx?: any) {
     const year = new Date(input.createdDate).getFullYear();
 
-    return await prisma.$transaction(async (tx) => {
+    const execute = async (tx: any) => {
       const { sequenceNumber, documentNumber } = await this.generateDocumentNumber(tx, year);
 
       // Lấy snapshot tên công trình cho từng entry
@@ -113,7 +113,12 @@ export class SafetyPlanService {
       });
 
       return plan;
-    });
+    };
+
+    if (externalTx) {
+      return await execute(externalTx);
+    }
+    return await prisma.$transaction(async (tx) => execute(tx));
   }
 
   /**

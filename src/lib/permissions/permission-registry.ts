@@ -58,6 +58,7 @@ export const PERMISSION_REGISTRY: Record<Permission, PermissionDefinition> = {
 
   "approvals.view": { globalRoles: ALL_PROJECT_READ, projectRoles: ANY_PROJECT_MEMBER, allowOwnRecord: true, defaultScope: "ASSIGNED_PROJECTS", sourcePolicy: "approvals-least-privilege" },
   // A viewer can inspect approvals in an assigned project, but cannot initiate a workflow.
+  // A viewer can inspect approvals in an assigned project, but cannot initiate a workflow.
   "approvals.create": { globalRoles: COMPANY_WIDE, projectRoles: PROJECT_OPERATORS, defaultScope: "ASSIGNED_PROJECTS", sourcePolicy: "approvals-least-privilege" },
   "approvals.decide": { globalRoles: COMPANY_WIDE, projectRoles: PROJECT_APPROVERS, defaultScope: "ASSIGNED_PROJECTS", sourcePolicy: "approvals-project-approver" },
 
@@ -66,4 +67,7 @@ export const PERMISSION_REGISTRY: Record<Permission, PermissionDefinition> = {
   "audit.export": { globalRoles: ["ADMIN"], defaultScope: "GLOBAL", sourcePolicy: "audit-system-admin" },
   "settings.company": { globalRoles: COMPANY_WIDE, defaultScope: "GLOBAL", sourcePolicy: "settings-company" },
   "settings.system": { globalRoles: ["ADMIN"], defaultScope: "GLOBAL", sourcePolicy: "settings-system-admin" },
+
+  "safety.weekly_file.delete_any": { globalRoles: COMPANY_WIDE, defaultScope: "GLOBAL", sourcePolicy: "safety-weekly-file-delete-any" },
+  "safety.weekly_file.delete_own": { globalRoles: [...COMPANY_WIDE, "CONSTRUCTION_SUPERVISOR"], allowOwnRecord: true, defaultScope: "OWN_RECORDS", sourcePolicy: "safety-weekly-file-delete-own" },
 };

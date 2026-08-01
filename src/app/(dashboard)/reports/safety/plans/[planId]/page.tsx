@@ -17,22 +17,5 @@ export default async function SafetyPlanEditPage({
   if (!session) redirect("/login?reason=session_expired");
 
   const { planId } = await params;
-  const [plan, projects] = await Promise.all([
-    SafetyPlanService.getPlanById(planId),
-    getSafetyProjectsAction(),
-  ]);
-
-  if (!plan) redirect("/reports/safety");
-
-  return (
-    <SafetyPlanEditor
-      plan={plan}
-      projects={projects}
-      currentUser={{
-        id: session.id,
-        role: session.role,
-        name: session.name,
-      }}
-    />
-  );
+  redirect(`/reports/safety/weekly-files/${planId}?tab=plan`);
 }

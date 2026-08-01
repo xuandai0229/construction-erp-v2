@@ -86,11 +86,11 @@ export class SafetyAssessmentService {
       implementationResult?: string;
       sortOrder?: number;
     }>;
-  }) {
+  }, externalTx?: any) {
     const periodStart = input.periodStart || new Date();
     const year = periodStart.getFullYear();
 
-    return await prisma.$transaction(async (tx) => {
+    const execute = async (tx: any) => {
       const { sequenceNumber, documentNumber } = await this.generateDocumentNumber(tx, year);
 
       const title = input.title || `BÁO CÁO TỰ ĐÁNH GIÁ KẾT QUẢ KIỂM TRA ATLĐ, PCCC, VSMT`;
@@ -105,7 +105,7 @@ export class SafetyAssessmentService {
             select: { id: true, name: true },
           })
         : [];
-      const projectMap = new Map(projects.map((p) => [p.id, p.name]));
+      const projectMap = new Map<string, string>(projects.map((p: any) => [p.id, p.name]));
 
       const report = await tx.safetySelfAssessmentReport.create({
         data: {
@@ -163,7 +163,12 @@ export class SafetyAssessmentService {
       });
 
       return report;
-    });
+    };
+
+    if (externalTx) {
+      return await execute(externalTx);
+    }
+    return await prisma.$transaction(async (tx) => execute(tx));
   }
 
   /**

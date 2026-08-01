@@ -9,6 +9,7 @@ export const PERMISSIONS = [
   "approvals.view", "approvals.create", "approvals.decide",
   "audit.view_global", "audit.view_project", "audit.export",
   "settings.company", "settings.system",
+  "safety.weekly_file.delete_any", "safety.weekly_file.delete_own",
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];

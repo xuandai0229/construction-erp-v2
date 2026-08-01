@@ -17,28 +17,5 @@ export default async function SafetyReportEditPage({
   if (!session) redirect("/login?reason=session_expired");
 
   const { reportId } = await params;
-  const [report, projects, plansRes] = await Promise.all([
-    SafetyAssessmentService.getReportById(reportId),
-    getSafetyProjectsAction(),
-    getSafetyPlansListAction({ pageSize: 50 }),
-  ]);
-
-  if (!report) redirect("/reports/safety");
-
-  return (
-    <SafetyAssessmentEditor
-      report={report}
-      projects={projects}
-      plans={plansRes.items.map((p) => ({
-        id: p.id,
-        documentNumber: p.documentNumber || undefined,
-        title: p.title,
-      }))}
-      currentUser={{
-        id: session.id,
-        role: session.role,
-        name: session.name,
-      }}
-    />
-  );
+  redirect(`/reports/safety/weekly-files/${reportId}?tab=assessment`);
 }

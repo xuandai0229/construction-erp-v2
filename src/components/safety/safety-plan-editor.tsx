@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   Calendar,
+  CalendarCheck,
   ChevronDown,
   ChevronRight,
   Info,
@@ -36,6 +37,10 @@ export interface SafetyPlanEditorProps {
   plan: any;
   projects: Array<{ id: string; name: string; code?: string }>;
   currentUser: { id: string; role: string; name: string };
+  hideHeader?: boolean;
+  embedded?: boolean;
+  onRegisterSave?: (saveFn: () => Promise<boolean>) => void;
+  onSaveStateChange?: (state: AutoSaveState, lastSavedAt?: string | null) => void;
 }
 
 const shiftsList = [
@@ -155,7 +160,15 @@ const ShiftEntryRow = React.memo(function ShiftEntryRow({
   );
 });
 
-export function SafetyPlanEditor({ plan, projects, currentUser }: SafetyPlanEditorProps) {
+export function SafetyPlanEditor({
+  plan,
+  projects,
+  currentUser,
+  hideHeader,
+  embedded,
+  onRegisterSave,
+  onSaveStateChange,
+}: SafetyPlanEditorProps) {
   const router = useRouter();
 
   const [internalNote, setInternalNote] = useState(plan.note || "");
@@ -444,6 +457,15 @@ export function SafetyPlanEditor({ plan, projects, currentUser }: SafetyPlanEdit
     [plan.id, plan.title, computeSnapshotString, serializeEntriesForSave, router]
   );
 
+  // Notify parent workspace of save state
+  useEffect(() => {
+    onSaveStateChange?.(autoSaveState, lastSavedAt);
+  }, [autoSaveState, lastSavedAt, onSaveStateChange]);
+
+  useEffect(() => {
+    onRegisterSave?.(() => saveDraft({ source: "MANUAL", refreshAfter: false }));
+  }, [onRegisterSave, saveDraft]);
+
   // Keyboard Ctrl+S
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -638,25 +660,42 @@ export function SafetyPlanEditor({ plan, projects, currentUser }: SafetyPlanEdit
   return (
     <div className="w-full space-y-5 pb-24 sm:pb-20 font-sans text-slate-900">
       {/* SIMPLIFIED EDITOR HEADER */}
-      <SafetyEditorHeader
-        documentNumber={plan.documentNumber || null}
-        title="Kế hoạch kiểm tra ATLĐ, PCCC, VSMT công trình"
-        periodLabel={periodLabel}
-        autoSaveState={autoSaveState}
-        lastSavedAt={lastSavedAt}
-        canEdit={canEdit}
-        onSave={() => saveDraft({ source: "MANUAL", refreshAfter: false })}
-        onPreview={handlePreviewClick}
-        onDelete={handleDeletePlan}
-      />
+      {!hideHeader && (
+        <SafetyEditorHeader
+          documentNumber={plan.documentNumber || null}
+          title="Kế hoạch kiểm tra ATLĐ, PCCC, VSMT công trình"
+          periodLabel={periodLabel}
+          autoSaveState={autoSaveState}
+          lastSavedAt={lastSavedAt}
+          canEdit={canEdit}
+          onSave={() => saveDraft({ source: "MANUAL", refreshAfter: false })}
+          onPreview={handlePreviewClick}
+          onDelete={handleDeletePlan}
+        />
+      )}
 
-      {/* SECTION 1: THÔNG TIN CHUNG HỒ SƠ */}
+      {/* SUB METADATA BAR FOR EMBEDDED MODE */}
+      {(hideHeader || embedded) && (
+        <div className="flex items-center justify-between bg-slate-100/70 border border-slate-200/80 rounded-xl px-4 py-2 text-xs mb-3">
+          <div className="flex items-center gap-2 font-bold text-slate-800">
+            <CalendarCheck className="h-4 w-4 text-blue-600" />
+            <span>Kế hoạch kiểm tra</span>
+            {(officialDocumentNumber || plan.documentNumber) && (
+              <span className="font-mono text-[11px] font-semibold text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200">
+                {officialDocumentNumber || plan.documentNumber}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* SECTION 1: THÔNG TIN KẾ HOẠCH */}
       <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-4 font-sans">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div>
             <div className="flex items-center gap-2">
               <Info className="h-4 w-4 text-blue-600" />
-              <h2 className="font-bold text-sm text-slate-900">Thông tin chung</h2>
+              <h2 className="font-bold text-sm text-slate-900">Thông tin kế hoạch</h2>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
               Thông tin hành chính của Kế hoạch kiểm tra ATLĐ, PCCC, VSMT.
@@ -756,7 +795,7 @@ export function SafetyPlanEditor({ plan, projects, currentUser }: SafetyPlanEdit
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2">
             <Lock className="h-4 w-4 text-emerald-600" />
-            <h2 className="font-bold text-sm text-slate-900">Nội dung kiểm tra chuẩn theo quy định Công ty (Mẫu 02)</h2>
+            <h2 className="font-bold text-sm text-slate-900">Nội dung kiểm tra chuẩn theo quy định Công ty</h2>
           </div>
           <Button
             size="sm"

@@ -23,7 +23,7 @@ export interface SectionNavItem {
   label: string;
 }
 
-function SaveIndicator({
+export function SaveIndicator({
   state,
   lastSavedAt,
   onRetry,

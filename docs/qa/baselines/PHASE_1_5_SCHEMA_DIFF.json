@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-07-31T10:30:01.731Z",
+  "databaseTarget": "construction_erp_v2_qa",
+  "comparisonBasis": {
+    "sourceA": "Current QA Database Catalog (construction_erp_v2_qa)",
+    "sourceB": "Fresh Migration Rehearsal Database (from prisma/migrations/)"
+  },
+  "findings": [
+    {
+      "objectType": "TABLE",
+      "objectName": "SafetyWeeklyFile",
+      "status": "MISSING_IN_FRESH_MIGRATIONS",
+      "description": "Table 'SafetyWeeklyFile' exists in current QA database catalog (created via db push/SQL) but is MISSING from committed versioned migrations due to migration SQL error in 20260731100000_add_safety_weekly_file."
+    },
+    {
+      "objectType": "COLUMN",
+      "objectName": "SafetyReportPlan.weeklyFileId",
+      "status": "MISSING_IN_FRESH_MIGRATIONS",
+      "description": "Column 'weeklyFileId' exists in current QA DB catalog but migration 20260731100000 fails to apply on fresh database."
+    },
+    {
+      "objectType": "COLUMN",
+      "objectName": "SafetySelfAssessmentReport.weeklyFileId",
+      "status": "MISSING_IN_FRESH_MIGRATIONS",
+      "description": "Column 'weeklyFileId' exists in current QA DB catalog but migration 20260731100000 fails to apply on fresh database."
+    }
+  ],
+  "verdict": "DRIFT_FOUND",
+  "conclusion": "NO-GO PHASE 2 — MIGRATION BASELINE BLOCKED until 20260731100000_add_safety_weekly_file syntax error is corrected in follow-up migration."
+}

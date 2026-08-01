@@ -8,6 +8,7 @@ import {
   ChevronDown,
   ChevronRight,
   Download,
+  FileSpreadsheet,
   FileText,
   Info,
   Lock,
@@ -45,6 +46,10 @@ export interface SafetyAssessmentEditorProps {
   projects: Array<{ id: string; name: string; code?: string }>;
   plans?: Array<{ id: string; documentNumber?: string; title: string }>;
   currentUser: { id: string; role: string; name: string };
+  hideHeader?: boolean;
+  embedded?: boolean;
+  onRegisterSave?: (saveFn: () => Promise<boolean>) => void;
+  onSaveStateChange?: (state: AutoSaveState, lastSavedAt?: string | null) => void;
 }
 
 const shiftsList = [
@@ -207,6 +212,10 @@ export function SafetyAssessmentEditor({
   projects,
   plans = [],
   currentUser,
+  hideHeader,
+  embedded,
+  onRegisterSave,
+  onSaveStateChange,
 }: SafetyAssessmentEditorProps) {
   const router = useRouter();
 
@@ -566,6 +575,15 @@ export function SafetyAssessmentEditor({
     computeSnapshotString,
   ]);
 
+  // Notify parent workspace of save state
+  useEffect(() => {
+    onSaveStateChange?.(autoSaveState, lastSavedAt);
+  }, [autoSaveState, lastSavedAt, onSaveStateChange]);
+
+  useEffect(() => {
+    onRegisterSave?.(() => saveDraft({ source: "MANUAL" }));
+  }, [onRegisterSave, saveDraft]);
+
   // Handle Flush Before Preview
   const handlePreviewClick = async () => {
     if (dirtyRef.current || autoSaveState === "dirty" || computeSnapshotString(dataRef.current) !== lastSavedSnapshotRef.current) {
@@ -730,24 +748,41 @@ export function SafetyAssessmentEditor({
   return (
     <div className="w-full space-y-5 pb-24 sm:pb-20 font-sans text-slate-900">
       {/* SIMPLIFIED EDITOR HEADER */}
-      <SafetyEditorHeader
-        documentNumber={report.documentNumber || null}
-        title="Báo cáo tự đánh giá kết quả kiểm tra ATLĐ, PCCC, VSMT"
-        periodLabel={periodLabel}
-        autoSaveState={autoSaveState}
-        lastSavedAt={lastSavedAt}
-        canEdit={canEdit}
-        onSave={() => saveDraft({ source: "MANUAL", refreshAfter: false })}
-        onPreview={handlePreviewClick}
-        onDelete={handleDeleteReport}
-      />
+      {!hideHeader && (
+        <SafetyEditorHeader
+          documentNumber={report.documentNumber || null}
+          title="Báo cáo tự đánh giá kết quả kiểm tra ATLĐ, PCCC, VSMT"
+          periodLabel={periodLabel}
+          autoSaveState={autoSaveState}
+          lastSavedAt={lastSavedAt}
+          canEdit={canEdit}
+          onSave={() => saveDraft({ source: "MANUAL", refreshAfter: false })}
+          onPreview={handlePreviewClick}
+          onDelete={handleDeleteReport}
+        />
+      )}
 
-      {/* SECTION 1: THÔNG TIN CHUNG HỒ SƠ */}
+      {/* SUB METADATA BAR FOR EMBEDDED MODE */}
+      {(hideHeader || embedded) && (
+        <div className="flex items-center justify-between bg-slate-100/70 border border-slate-200/80 rounded-xl px-4 py-2 text-xs mb-3">
+          <div className="flex items-center gap-2 font-bold text-slate-800">
+            <FileSpreadsheet className="h-4 w-4 text-amber-600" />
+            <span>Báo cáo tự đánh giá</span>
+            {(officialDocumentNumber || report.documentNumber) && (
+              <span className="font-mono text-[11px] font-semibold text-slate-600 bg-white px-2 py-0.5 rounded border border-slate-200">
+                {officialDocumentNumber || report.documentNumber}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* SECTION 1: THÔNG TIN BÁO CÁO */}
       <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-2xs space-y-4">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2">
             <Info className="h-4 w-4 text-blue-600" />
-            <h2 className="font-bold text-sm text-slate-900">Thông tin chung (Mẫu 01)</h2>
+            <h2 className="font-bold text-sm text-slate-900">Thông tin báo cáo</h2>
           </div>
         </div>
 
@@ -833,7 +868,7 @@ export function SafetyAssessmentEditor({
             <div className="font-bold text-slate-900 mt-1.5">{periodLabel}</div>
           </div>
           <div className="space-y-1">
-            <span className="text-slate-500 font-medium">Nạp lịch từ Kế hoạch:</span>
+            <span className="text-slate-500 font-medium">Nạp từ kế hoạch:</span>
             <div className="flex gap-1.5 mt-0.5">
               <select
                 disabled={!canEdit || plans.length === 0}

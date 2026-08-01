@@ -1,0 +1,183 @@
+{
+  "timestamp": "2026-07-31T10:29:50.153Z",
+  "database": "construction_erp_v2_qa",
+  "host": "127.0.0.1",
+  "readOnlyTransactionVerified": true,
+  "totalFindings": 4,
+  "orphanDetails": {
+    "plans": [
+      {
+        "id": "cms77rylk0000hsk54gurfly4",
+        "documentNumber": "KH-ATLD-2026-0001",
+        "officialDocumentNumber": null,
+        "documentYear": 2026,
+        "sequenceNumber": 1,
+        "createdById": "cmrncgylp00001kwkab9e5qcp",
+        "creatorName": "QA Admin User 2026_07",
+        "periodStart": "2026-08-02T17:00:00.000Z",
+        "periodEnd": "2026-08-08T17:00:00.000Z",
+        "version": 9,
+        "createdAt": "2026-07-30T00:50:40.616Z",
+        "updatedAt": "2026-07-31T02:32:22.535Z",
+        "status": "CANCELLED",
+        "parentCandidate": null,
+        "candidateConfidence": "MEDIUM_NEW_FILE_REQUIRED"
+      },
+      {
+        "id": "cms77s93800002gk5ul7vmx5u",
+        "documentNumber": "KH-ATLD-2026-0002",
+        "officialDocumentNumber": null,
+        "documentYear": 2026,
+        "sequenceNumber": 2,
+        "createdById": "cmrncgylp00001kwkab9e5qcp",
+        "creatorName": "QA Admin User 2026_07",
+        "periodStart": "2026-08-02T17:00:00.000Z",
+        "periodEnd": "2026-08-08T17:00:00.000Z",
+        "version": 7,
+        "createdAt": "2026-07-30T00:50:54.212Z",
+        "updatedAt": "2026-07-31T02:32:22.547Z",
+        "status": "CANCELLED",
+        "parentCandidate": null,
+        "candidateConfidence": "MEDIUM_NEW_FILE_REQUIRED"
+      }
+    ],
+    "assessments": [
+      {
+        "id": "cms77ryo40007hsk58de3voy4",
+        "documentNumber": "BC-ATLD-2026-0003",
+        "officialDocumentNumber": null,
+        "documentYear": 2026,
+        "sequenceNumber": 3,
+        "createdById": "cmrncgylp00001kwkab9e5qcp",
+        "creatorName": "QA Admin User 2026_07",
+        "periodStart": "2026-08-02T17:00:00.000Z",
+        "periodEnd": "2026-08-08T17:00:00.000Z",
+        "version": 3,
+        "createdAt": "2026-07-30T00:50:40.708Z",
+        "updatedAt": "2026-07-31T02:32:22.550Z",
+        "status": "APPROVED",
+        "sourcePlanId": "cms77rylk0000hsk54gurfly4",
+        "parentCandidate": null,
+        "candidateConfidence": "MEDIUM_NEW_FILE_REQUIRED"
+      },
+      {
+        "id": "cms77s95400072gk5wi48yiie",
+        "documentNumber": "BC-ATLD-2026-0004",
+        "officialDocumentNumber": null,
+        "documentYear": 2026,
+        "sequenceNumber": 4,
+        "createdById": "cmrncgylp00001kwkab9e5qcp",
+        "creatorName": "QA Admin User 2026_07",
+        "periodStart": "2026-08-02T17:00:00.000Z",
+        "periodEnd": "2026-08-08T17:00:00.000Z",
+        "version": 5,
+        "createdAt": "2026-07-30T00:50:54.280Z",
+        "updatedAt": "2026-07-31T02:32:22.549Z",
+        "status": "APPROVED",
+        "sourcePlanId": "cms77s93800002gk5ul7vmx5u",
+        "parentCandidate": null,
+        "candidateConfidence": "MEDIUM_NEW_FILE_REQUIRED"
+      }
+    ]
+  },
+  "findings": [
+    {
+      "ruleCode": "SAFETY_PLAN_ORPHAN_NO_PARENT",
+      "severity": "HIGH",
+      "entityType": "SafetyReportPlan",
+      "entityId": "cms77rylk0000hsk54gurfly4",
+      "currentState": {
+        "id": "cms77rylk0000hsk54gurfly4",
+        "documentNumber": "KH-ATLD-2026-0001",
+        "officialDocumentNumber": null,
+        "documentYear": 2026,
+        "sequenceNumber": 1,
+        "createdById": "cmrncgylp00001kwkab9e5qcp",
+        "creatorName": "QA Admin User 2026_07",
+        "periodStart": "2026-08-02T17:00:00.000Z",
+        "periodEnd": "2026-08-08T17:00:00.000Z",
+        "version": 9,
+        "createdAt": "2026-07-30T00:50:40.616Z",
+        "updatedAt": "2026-07-31T02:32:22.535Z",
+        "status": "CANCELLED"
+      },
+      "expectedInvariant": "Active SafetyReportPlan must be linked to a parent SafetyWeeklyFile via weeklyFileId",
+      "suggestedAction": "Backfill: Generate or link parent SafetyWeeklyFile matching periodStart and creator in Phase 1.5 Remediation",
+      "autoRepairAllowed": false
+    },
+    {
+      "ruleCode": "SAFETY_PLAN_ORPHAN_NO_PARENT",
+      "severity": "HIGH",
+      "entityType": "SafetyReportPlan",
+      "entityId": "cms77s93800002gk5ul7vmx5u",
+      "currentState": {
+        "id": "cms77s93800002gk5ul7vmx5u",
+        "documentNumber": "KH-ATLD-2026-0002",
+        "officialDocumentNumber": null,
+        "documentYear": 2026,
+        "sequenceNumber": 2,
+        "createdById": "cmrncgylp00001kwkab9e5qcp",
+        "creatorName": "QA Admin User 2026_07",
+        "periodStart": "2026-08-02T17:00:00.000Z",
+        "periodEnd": "2026-08-08T17:00:00.000Z",
+        "version": 7,
+        "createdAt": "2026-07-30T00:50:54.212Z",
+        "updatedAt": "2026-07-31T02:32:22.547Z",
+        "status": "CANCELLED"
+      },
+      "expectedInvariant": "Active SafetyReportPlan must be linked to a parent SafetyWeeklyFile via weeklyFileId",
+      "suggestedAction": "Backfill: Generate or link parent SafetyWeeklyFile matching periodStart and creator in Phase 1.5 Remediation",
+      "autoRepairAllowed": false
+    },
+    {
+      "ruleCode": "SAFETY_ASSESSMENT_ORPHAN_NO_PARENT",
+      "severity": "HIGH",
+      "entityType": "SafetySelfAssessmentReport",
+      "entityId": "cms77ryo40007hsk58de3voy4",
+      "currentState": {
+        "id": "cms77ryo40007hsk58de3voy4",
+        "documentNumber": "BC-ATLD-2026-0003",
+        "officialDocumentNumber": null,
+        "documentYear": 2026,
+        "sequenceNumber": 3,
+        "createdById": "cmrncgylp00001kwkab9e5qcp",
+        "creatorName": "QA Admin User 2026_07",
+        "periodStart": "2026-08-02T17:00:00.000Z",
+        "periodEnd": "2026-08-08T17:00:00.000Z",
+        "version": 3,
+        "createdAt": "2026-07-30T00:50:40.708Z",
+        "updatedAt": "2026-07-31T02:32:22.550Z",
+        "status": "APPROVED",
+        "sourcePlanId": "cms77rylk0000hsk54gurfly4"
+      },
+      "expectedInvariant": "Active SafetySelfAssessmentReport must be linked to a parent SafetyWeeklyFile via weeklyFileId",
+      "suggestedAction": "Backfill: Generate or link parent SafetyWeeklyFile matching periodStart and creator in Phase 1.5 Remediation",
+      "autoRepairAllowed": false
+    },
+    {
+      "ruleCode": "SAFETY_ASSESSMENT_ORPHAN_NO_PARENT",
+      "severity": "HIGH",
+      "entityType": "SafetySelfAssessmentReport",
+      "entityId": "cms77s95400072gk5wi48yiie",
+      "currentState": {
+        "id": "cms77s95400072gk5wi48yiie",
+        "documentNumber": "BC-ATLD-2026-0004",
+        "officialDocumentNumber": null,
+        "documentYear": 2026,
+        "sequenceNumber": 4,
+        "createdById": "cmrncgylp00001kwkab9e5qcp",
+        "creatorName": "QA Admin User 2026_07",
+        "periodStart": "2026-08-02T17:00:00.000Z",
+        "periodEnd": "2026-08-08T17:00:00.000Z",
+        "version": 5,
+        "createdAt": "2026-07-30T00:50:54.280Z",
+        "updatedAt": "2026-07-31T02:32:22.549Z",
+        "status": "APPROVED",
+        "sourcePlanId": "cms77s93800002gk5ul7vmx5u"
+      },
+      "expectedInvariant": "Active SafetySelfAssessmentReport must be linked to a parent SafetyWeeklyFile via weeklyFileId",
+      "suggestedAction": "Backfill: Generate or link parent SafetyWeeklyFile matching periodStart and creator in Phase 1.5 Remediation",
+      "autoRepairAllowed": false
+    }
+  ]
+}
