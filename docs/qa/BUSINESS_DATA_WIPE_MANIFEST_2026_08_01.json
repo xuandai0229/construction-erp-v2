@@ -1,0 +1,470 @@
+{
+  "manifestSha256": "a30891c3cd8c96c73de86dffd8939396c3369c86f34dd00d12d2de9f34741049",
+  "generatedAt": "2026-08-01T02:54:09.272Z",
+  "environment": "qa_sandbox",
+  "databaseUrlMasked": "postgresql://postgres:***@127.0.0.1:5432/construction_erp_v2_qa?schema=public",
+  "preservedAdmin": {
+    "id": "cmroatu6r0000mowklk61sv56",
+    "email": "daicongtu2910@gmail.com",
+    "name": "XĐ",
+    "role": "ADMIN"
+  },
+  "users": {
+    "total": 1,
+    "usersToDelete": 0,
+    "preservedAdminId": "cmroatu6r0000mowklk61sv56"
+  },
+  "tables": [
+    {
+      "model": "User",
+      "total": 1,
+      "expectedToDelete": 0,
+      "expectedToKeep": 1,
+      "reasonToKeep": "Giữ đúng 01 tài khoản Admin duy nhất ID: cmroatu6r0000mowklk61sv56"
+    },
+    {
+      "model": "SystemSetting",
+      "total": 1,
+      "expectedToDelete": 0,
+      "expectedToKeep": 1,
+      "reasonToKeep": "Cấu hình hệ thống bắt buộc, không phải dữ liệu nghiệp vụ"
+    },
+    {
+      "model": "siteReportAttachment",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "siteReportPhoto",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "siteReportLine",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "siteReport",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "supervisionWeeklyAttachment",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "supervisionWeeklyRevision",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "supervisionWeeklyObservation",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "supervisionWeeklyProgress",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "supervisionWeeklyTransition",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "supervisionWeeklyQuantity",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "supervisionWeeklyEntry",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "supervisionWeeklyShiftSelection",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "supervisionWeeklyDossier",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "supervisionInspectionSchedule",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "supervisionWorkflowHistory",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "supervisionAttachment",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "supervisionFinding",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "supervisionPlanItem",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "supervisionProgressAssessment",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "supervisionQuantityVerification",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "supervisionRecommendation",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "supervisionTransitionCheck",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "supervisionVisit",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "supervisionWeeklyPackage",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "supervisionScopeProject",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "supervisionScope",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "safetyReportApprovalHistory",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "safetyReportAuditLog",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "safetyReportPlanEntry",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "safetySelfAssessmentEntry",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "safetyReportPlan",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "safetySelfAssessmentReport",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "safetyWeeklyFile",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "safetyReportPlanSequence",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "safetySelfAssessmentSequence",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "workTaskAction",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "workTaskOutboxMessage",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "workTaskIdempotency",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "workTask",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "fieldProgressItemAssignment",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "fieldProgressItemLocation",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "fieldProgressEntry",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "fieldMaterialRequestItem",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "fieldMaterialRequest",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "fieldProgressItem",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "fieldProgressTemplate",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "projectLocationNode",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "materialMovement",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "projectMaterialStock",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "materialRequestItem",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "materialRequest",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "materialItem",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "document",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "documentFolder",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "wBSItem",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "chatMessage",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "auditLog",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "notification",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "approvalRequest",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "projectMember",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    },
+    {
+      "model": "project",
+      "total": 0,
+      "expectedToDelete": 0,
+      "expectedToKeep": 0,
+      "reasonToKeep": "Dữ liệu nghiệp vụ / con cần xóa trắng"
+    }
+  ],
+  "storage": {
+    "provider": "Local Disk Storage",
+    "storagePath": "storage/",
+    "totalFiles": 0,
+    "totalSizeBytes": 0,
+    "totalSizeMB": "0.00"
+  },
+  "orphans": {
+    "softDeletedDocuments": 0
+  }
+}

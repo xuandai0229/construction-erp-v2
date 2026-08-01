@@ -31,7 +31,7 @@ async function main() {
     hasError = true;
   }
 
-  const manifestPath = path.join(process.cwd(), 'docs/qa/business-data-wipe-approval-manifest-2026-07-03.json');
+  const manifestPath = path.join(process.cwd(), 'docs/qa/BUSINESS_DATA_WIPE_MANIFEST_2026_08_01.json');
   if (fs.existsSync(manifestPath)) {
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'));
     if (manifest.protectedUsers && manifest.protectedUsers.length > 0) {
