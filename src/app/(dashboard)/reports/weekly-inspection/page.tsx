@@ -6,8 +6,8 @@ import { WeeklyListClient } from "@/components/supervision-weekly/weekly-list-cl
 import { getSupervisionDatabaseReadiness } from "@/lib/supervision-weekly/database-readiness";
 
 export const metadata = {
-  title: "Kiểm tra & kế hoạch tuần | Báo cáo công trình | ERP Công trình",
-  description: "Quản lý Báo cáo kết quả kiểm tra tuần & Kế hoạch tuần tiếp theo theo công trình",
+  title: "Báo cáo Giám sát công trình | ERP Công trình",
+  description: "Kế hoạch kiểm tra, kết quả giám sát và báo cáo công tác theo tuần",
 };
 
 export default async function WeeklyInspectionPage({

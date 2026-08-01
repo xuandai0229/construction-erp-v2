@@ -493,12 +493,12 @@ export function ReportsWorkspace({
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-600 transition-colors"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            <span>Báo cáo công trình</span>
+            <span>Báo cáo</span>
           </Link>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto">
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-[var(--foreground)]">Báo cáo hiện trường</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-[var(--foreground)]">Báo cáo Chỉ huy trưởng</h1>
                 <p className="hidden sm:block text-sm text-[var(--muted-foreground)] mt-0.5">
                   Quản lý nhật ký ngày, tổng hợp hiện trường tuần, phát sinh và sự cố tại công trường
                   {globalContext?.selectedProjectId && (

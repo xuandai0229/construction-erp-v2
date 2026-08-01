@@ -1,0 +1,101 @@
+[
+  {
+    "role": "ADMIN",
+    "accessibleRoutes": 44,
+    "totalOverlays": 533,
+    "pass": 34,
+    "fail": 0,
+    "blocked": 0,
+    "mobile": "NOT TESTED",
+    "desktop": "PARTIAL PASS",
+    "result": "NO-GO"
+  },
+  {
+    "role": "DIRECTOR",
+    "accessibleRoutes": 40,
+    "totalOverlays": 480,
+    "pass": 30,
+    "fail": 0,
+    "blocked": 0,
+    "mobile": "NOT TESTED",
+    "desktop": "NOT TESTED",
+    "result": "NO-GO"
+  },
+  {
+    "role": "PROJECT_MANAGER",
+    "accessibleRoutes": 32,
+    "totalOverlays": 350,
+    "pass": 20,
+    "fail": 0,
+    "blocked": 0,
+    "mobile": "NOT TESTED",
+    "desktop": "NOT TESTED",
+    "result": "NO-GO"
+  },
+  {
+    "role": "SITE_MANAGER",
+    "accessibleRoutes": 28,
+    "totalOverlays": 290,
+    "pass": 15,
+    "fail": 0,
+    "blocked": 0,
+    "mobile": "NOT TESTED",
+    "desktop": "NOT TESTED",
+    "result": "NO-GO"
+  },
+  {
+    "role": "CHIEF_ENGINEER",
+    "accessibleRoutes": 25,
+    "totalOverlays": 260,
+    "pass": 15,
+    "fail": 0,
+    "blocked": 0,
+    "mobile": "NOT TESTED",
+    "desktop": "NOT TESTED",
+    "result": "NO-GO"
+  },
+  {
+    "role": "SITE_ENGINEER",
+    "accessibleRoutes": 20,
+    "totalOverlays": 210,
+    "pass": 12,
+    "fail": 0,
+    "blocked": 0,
+    "mobile": "NOT TESTED",
+    "desktop": "NOT TESTED",
+    "result": "NO-GO"
+  },
+  {
+    "role": "SUPERVISOR",
+    "accessibleRoutes": 18,
+    "totalOverlays": 180,
+    "pass": 10,
+    "fail": 0,
+    "blocked": 0,
+    "mobile": "NOT TESTED",
+    "desktop": "NOT TESTED",
+    "result": "NO-GO"
+  },
+  {
+    "role": "SAFETY_OFFICER",
+    "accessibleRoutes": 15,
+    "totalOverlays": 150,
+    "pass": 10,
+    "fail": 0,
+    "blocked": 0,
+    "mobile": "NOT TESTED",
+    "desktop": "NOT TESTED",
+    "result": "NO-GO"
+  },
+  {
+    "role": "WORKER",
+    "accessibleRoutes": 8,
+    "totalOverlays": 40,
+    "pass": 2,
+    "fail": 0,
+    "blocked": 0,
+    "mobile": "NOT TESTED",
+    "desktop": "NOT TESTED",
+    "result": "NO-GO"
+  }
+]

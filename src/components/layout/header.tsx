@@ -1,8 +1,8 @@
 "use client";
 
-import { LogOut, User, X } from 'lucide-react';
+import { LogOut, User, X, HelpCircle } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   LayoutDashboard, Building2, FolderOpen, ClipboardCheck, 
@@ -18,6 +18,8 @@ import { GlobalSearchCommand } from './global-search-command';
 import type { GlobalProjectContext } from '@/lib/project-context';
 import { canViewNavigationItem, projectNavName } from '@/lib/navigation-permissions';
 import { getDefaultRouteForRole } from '@/lib/roles/role-workspace-policy';
+import { useClickOutside } from '@/components/ui/global-overlay-manager';
+import { UnifiedActionMenu } from '@/components/ui/unified-action-menu';
 
 const mobileNavSections = [
   {
@@ -31,7 +33,7 @@ const mobileNavSections = [
     items: [
       { name: 'Công trình', href: '/projects', icon: Building2 },
       { name: 'Tài liệu', href: '/documents', icon: FolderOpen },
-      { name: 'Báo cáo công trình', href: '/reports', icon: ClipboardCheck },
+      { name: 'Báo cáo', href: '/reports', icon: ClipboardCheck },
       { name: 'Vật tư', href: '/materials', icon: Package },
     ],
   },
@@ -65,23 +67,6 @@ function getFilteredMobileSections(role: UserRole) {
       return { ...section, items };
     })
     .filter(section => section.items.length > 0);
-
-  return mobileNavSections
-    .map(section => {
-      let items = section.items;
-      if (false) {
-        items = items
-          .filter(item => !([] as string[]).includes(item.href))
-          .map(item => {
-            if (item.href === '/projects') {
-              return { ...item, name: 'Công trình của tôi' };
-            }
-            return item;
-          });
-      }
-      return { ...section, items };
-    })
-    .filter(section => section.items.length > 0);
 }
 
 export function Header({ userName, userRole, userRoleRaw, globalContext }: { userName?: string, userRole?: string, userRoleRaw?: UserRole, globalContext?: GlobalProjectContext }) {
@@ -89,6 +74,9 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const helpButtonRef = useRef<HTMLButtonElement>(null);
+  const helpPanelRef = useRef<HTMLDivElement>(null);
+
   const resolvedRole = userRoleRaw || 'STAFF';
   const filteredSections = getFilteredMobileSections(resolvedRole);
   const homeHref = getDefaultRouteForRole(resolvedRole);
@@ -99,39 +87,52 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
     router.refresh();
   };
 
+  // Close help popover on click outside without swallowing clicks
+  useClickOutside({
+    isOpen: isHelpOpen,
+    onClose: () => setIsHelpOpen(false),
+    refs: [helpButtonRef, helpPanelRef],
+  });
+
+  // Close help popover on route change
+  useEffect(() => {
+    setIsHelpOpen(false);
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
   return (
     <>
-      <header data-app-header className="sticky top-0 z-[var(--z-app-header)] flex h-[var(--app-header-h)] shrink-0 items-center justify-between border-b border-[var(--border)] bg-white/95 px-3 backdrop-blur-md md:px-6">
+      <header data-app-header className="sticky top-0 z-[10] flex h-[var(--app-header-h)] shrink-0 items-center justify-between border-b border-[var(--border)] bg-white/95 px-3 backdrop-blur-md md:px-6">
         <div className="flex min-w-0 flex-1 items-center">
           <Link href={homeHref} className="mr-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-blue-600 text-white shadow-sm lg:hidden" aria-label="Trang chủ">
             <Building2 className="h-4 w-4" />
           </Link>
 
-        {/* Mobile page title participates in flex layout so it cannot overlap actions. */}
-        <div className="min-w-0 flex-1 pr-2 lg:hidden">
-          <span className="block truncate text-[15px] font-bold text-slate-900">
-            {pathname.startsWith('/projects') ? 'Công trình' :
-             pathname.startsWith('/documents') ? 'Tài liệu' :
-             pathname.startsWith('/reports') ? 'Báo cáo' :
-             pathname.startsWith('/materials') ? 'Vật tư' :
-             pathname.startsWith('/approvals') ? 'Phê duyệt' :
-             pathname.startsWith('/users') ? 'Tài khoản' :
-             pathname.startsWith('/settings') ? 'Cài đặt' :
-             pathname.startsWith('/tasks') ? 'Nhiệm vụ' :
-             'Tổng quan'}
-          </span>
-        </div>
-        
-        {/* Desktop Project Switcher */}
-        <div className="hidden min-w-0 flex-1 lg:flex">
-          {globalContext && (
-            <GlobalProjectContextSwitcher 
-              projects={globalContext.accessibleProjects} 
-              selectedProjectId={globalContext.selectedProjectId}
-              overviewData={globalContext.overviewData}
-            />
-          )}
-        </div>
+          {/* Mobile page title */}
+          <div className="min-w-0 flex-1 pr-2 lg:hidden">
+            <span className="block truncate text-[15px] font-bold text-slate-900">
+              {pathname.startsWith('/projects') ? 'Công trình' :
+               pathname.startsWith('/documents') ? 'Tài liệu' :
+               pathname.startsWith('/reports') ? 'Báo cáo' :
+               pathname.startsWith('/materials') ? 'Vật tư' :
+               pathname.startsWith('/approvals') ? 'Phê duyệt' :
+               pathname.startsWith('/users') ? 'Tài khoản' :
+               pathname.startsWith('/settings') ? 'Cài đặt' :
+               pathname.startsWith('/tasks') ? 'Nhiệm vụ' :
+               'Tổng quan'}
+            </span>
+          </div>
+          
+          {/* Desktop Project Switcher */}
+          <div className="hidden min-w-0 flex-1 lg:flex">
+            {globalContext && (
+              <GlobalProjectContextSwitcher 
+                projects={globalContext.accessibleProjects} 
+                selectedProjectId={globalContext.selectedProjectId}
+                overviewData={globalContext.overviewData}
+              />
+            )}
+          </div>
         </div>
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
@@ -147,73 +148,91 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
             </button>
           )}
 
-          {/* Help Icon (Desktop Only) */}
+          {/* Help Popover (Desktop Only) */}
           <div className="relative hidden lg:block">
             <button 
+              ref={helpButtonRef}
               onClick={() => setIsHelpOpen(!isHelpOpen)}
-              className="flex items-center justify-center h-10 w-10 sm:h-9 sm:w-9 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors" 
+              className="flex items-center justify-center h-10 w-10 sm:h-9 sm:w-9 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20" 
               aria-label="Trợ giúp"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+              <HelpCircle className="h-5 w-5" />
             </button>
             
             {isHelpOpen && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setIsHelpOpen(false)} />
-                <div className="fixed inset-x-2 sm:inset-x-auto sm:absolute sm:right-0 top-14 sm:top-full sm:mt-2 w-[calc(100vw-16px)] sm:w-80 rounded-xl border border-slate-200 bg-white p-4 shadow-lg z-50">
-                  <h4 className="font-bold text-slate-900 mb-3">Hướng dẫn nhanh</h4>
-                  <ol className="space-y-2 text-[13px] text-slate-600 list-decimal pl-4">
-                    <li>Chọn công trình trên thanh trên để lọc dữ liệu Dashboard và các phân hệ theo công trình.</li>
-                    <li>Chuông thông báo hiển thị các cảnh báo thật theo công trình đang chọn.</li>
-                    <li>Bấm từng thông báo để mở đúng báo cáo, hồ sơ hoặc mục cần xử lý.</li>
-                    <li>Nếu chọn Toàn hệ thống, các KPI là tổng hợp toàn bộ công trình trong phạm vi quyền.</li>
-                    <li>Nếu số liệu điều hành trống, hãy kiểm tra phạm vi công trình, tiến độ và báo cáo hiện trường.</li>
-                  </ol>
-                </div>
-              </>
+              <div 
+                ref={helpPanelRef}
+                className="fixed inset-x-2 sm:inset-x-auto sm:absolute sm:right-0 top-14 sm:top-full sm:mt-2 w-[calc(100vw-16px)] sm:w-80 rounded-xl border border-slate-200 bg-white p-4 shadow-xl z-[100] animate-in fade-in zoom-in-95 duration-100"
+              >
+                <h4 className="font-bold text-slate-900 mb-3 text-sm">Hướng dẫn nhanh</h4>
+                <ol className="space-y-2 text-[13px] text-slate-600 list-decimal pl-4 leading-relaxed">
+                  <li>Chọn công trình trên thanh trên để lọc dữ liệu Dashboard và các phân hệ theo công trình.</li>
+                  <li>Chuông thông báo hiển thị các cảnh báo thật theo công trình đang chọn.</li>
+                  <li>Bấm từng thông báo để mở đúng báo cáo, hồ sơ hoặc mục cần xử lý.</li>
+                  <li>Nếu chọn Toàn hệ thống, các KPI là tổng hợp toàn bộ công trình trong phạm vi quyền.</li>
+                  <li>Nếu số liệu điều hành trống, hãy kiểm tra phạm vi công trình, tiến độ và báo cáo hiện trường.</li>
+                </ol>
+              </div>
             )}
           </div>
 
           <div className="h-6 w-[1px] bg-slate-200 mx-1 block"></div>
 
-          {/* User Profile */}
-          <div className="flex items-center gap-3 group cursor-pointer pr-1">
-            <div className="flex h-10 w-10 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full overflow-hidden bg-gradient-to-br from-blue-100/70 to-blue-50/50 border border-blue-200/50 shadow-sm ring-2 ring-transparent group-hover:ring-blue-100/50 transition-all">
-               {userName ? (
-                 <span className="font-bold text-blue-700 text-[14px]">
-                   {userName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
-                 </span>
-               ) : (
-                 <User className="h-5 w-5 text-blue-600" />
-               )}
-            </div>
-            <div className="hidden sm:flex flex-col items-start">
-              <div className="flex items-center gap-1.5">
-                <span className="max-w-[140px] truncate font-bold text-[var(--foreground)] text-[13px] leading-tight group-hover:text-blue-600 transition-colors">
-                  {userName || userRole}
-                </span>
-                <ChevronDown className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-600 transition-colors" />
+          {/* User Profile Action Menu */}
+          <UnifiedActionMenu
+            ariaLabel="Menu tài khoản người dùng"
+            menuWidth="w-56"
+            align="right"
+            trigger={
+              <div className="flex items-center gap-2.5 group cursor-pointer pr-1 py-1 rounded-xl hover:bg-slate-100/60 transition-colors">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full overflow-hidden bg-gradient-to-br from-blue-100/70 to-blue-50/50 border border-blue-200/50 shadow-sm ring-2 ring-transparent group-hover:ring-blue-100/50 transition-all">
+                   {userName ? (
+                     <span className="font-bold text-blue-700 text-[13px]">
+                       {userName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                     </span>
+                   ) : (
+                     <User className="h-4 w-4 text-blue-600" />
+                   )}
+                </div>
+                <div className="hidden sm:flex flex-col items-start text-left">
+                  <div className="flex items-center gap-1">
+                    <span className="max-w-[130px] truncate font-bold text-slate-900 text-[13px] leading-tight">
+                      {userName || userRole}
+                    </span>
+                    <ChevronDown className="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-600 transition-colors" />
+                  </div>
+                  <span className="max-w-[130px] truncate text-[11px] font-medium text-slate-500 leading-tight mt-0.5">
+                    {userRole || 'Chưa xác định vai trò'}
+                  </span>
+                </div>
               </div>
-              <span className="max-w-[140px] truncate text-[11px] font-medium text-[var(--muted-foreground)] leading-tight mt-0.5">
-                {userRole || 'Chưa xác định vai trò'}
-              </span>
-            </div>
-          </div>
-
-          <button
-            onClick={handleLogout}
-            className="hidden lg:flex h-10 w-10 sm:h-9 sm:w-9 items-center justify-center rounded-full text-slate-500 hover:text-rose-600 hover:bg-rose-50/80 transition-colors"
-            title="Đăng xuất"
-            aria-label="Đăng xuất"
-          >
-            <LogOut className="h-5 w-5 sm:h-[18px] sm:w-[18px]" />
-          </button>
+            }
+            items={[
+              {
+                id: 'view-profile',
+                label: userName || 'Tài khoản người dùng',
+                icon: <User className="h-4 w-4 text-blue-600" />,
+                onClick: () => {
+                  if (canViewNavigationItem(resolvedRole, '/users')) {
+                    router.push('/users');
+                  }
+                },
+              },
+              {
+                id: 'logout',
+                label: 'Đăng xuất khỏi hệ thống',
+                icon: <LogOut className="h-4 w-4 text-rose-600" />,
+                variant: 'destructive',
+                onClick: handleLogout,
+              },
+            ]}
+          />
         </div>
       </header>
 
-      {/* Mobile Menu - Premium Dark Theme */}
+      {/* Mobile Drawer Navigation */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 flex lg:hidden">
+        <div className="fixed inset-0 z-[200] flex lg:hidden">
           <div 
             className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
             onClick={() => setMobileMenuOpen(false)} 

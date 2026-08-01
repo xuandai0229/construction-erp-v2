@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { AlertCircle, Info, AlertTriangle, CheckCircle } from "lucide-react";
 import { Button } from "./button";
 import { CloseButton } from "./close-button";
@@ -17,6 +18,11 @@ interface ConfirmDialogProps {
   isLoading?: boolean;
 }
 
+/**
+ * Standard ConfirmDialog.
+ * Standard Z-index: z-[300]
+ * Destructive confirm modals (variant="danger") do NOT close on backdrop click for maximum safety.
+ */
 export function ConfirmDialog({
   isOpen,
   onClose,
@@ -29,6 +35,7 @@ export function ConfirmDialog({
   isLoading = false,
 }: ConfirmDialogProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -40,9 +47,14 @@ export function ConfirmDialog({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose, isLoading]);
 
+  // Focus cancel button by default (never default-focus the destructive action)
   useEffect(() => {
-    if (isOpen && dialogRef.current) {
-      dialogRef.current.focus();
+    if (isOpen) {
+      if (cancelButtonRef.current) {
+        cancelButtonRef.current.focus();
+      } else if (dialogRef.current) {
+        dialogRef.current.focus();
+      }
     }
   }, [isOpen]);
 
@@ -69,19 +81,26 @@ export function ConfirmDialog({
     success: "default" as const,
   };
 
-  return (
+  // Safe backdrop click behavior: danger modals do NOT close on outside click
+  const handleBackdropClick = () => {
+    if (isLoading) return;
+    if (variant === "danger") return; // Do not close destructive confirm dialogs on backdrop click
+    onClose();
+  };
+
+  const content = (
     <div
-      className="fixed inset-0 z-[110] flex items-end justify-center bg-slate-950/55 p-0 backdrop-blur-sm animate-in fade-in duration-200 sm:items-center sm:p-4"
+      className="fixed inset-0 z-[300] flex items-end justify-center bg-slate-950/60 p-0 backdrop-blur-sm animate-in fade-in duration-200 sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirm-dialog-title"
       aria-describedby="confirm-dialog-desc"
-      onClick={!isLoading ? onClose : undefined}
+      onClick={handleBackdropClick}
     >
       <div
         ref={dialogRef}
         tabIndex={-1}
-        className="relative flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl shadow-slate-950/20 outline-none animate-in zoom-in-95 duration-200 sm:rounded-2xl"
+        className="relative flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl shadow-slate-950/30 outline-none animate-in zoom-in-95 duration-200 sm:rounded-2xl border border-slate-200"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex min-w-0 gap-4 overflow-y-auto px-5 py-5 sm:p-6">
@@ -93,7 +112,7 @@ export function ConfirmDialog({
               {title}
             </h3>
             {description && (
-              <div id="confirm-dialog-desc" className="text-sm text-slate-600 whitespace-pre-wrap">
+              <div id="confirm-dialog-desc" className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed">
                 {description}
               </div>
             )}
@@ -103,10 +122,11 @@ export function ConfirmDialog({
         
         <div className="flex flex-col-reverse items-stretch justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-4 sm:flex-row sm:items-center sm:gap-3 sm:px-6">
           <Button
+            ref={cancelButtonRef}
             variant="outline"
             onClick={onClose}
             disabled={isLoading}
-            className="w-full sm:w-auto mt-2 sm:mt-0"
+            className="w-full sm:w-auto mt-2 sm:mt-0 font-medium"
           >
             {cancelText}
           </Button>
@@ -114,7 +134,7 @@ export function ConfirmDialog({
             variant={buttonVariants[variant]}
             onClick={onConfirm}
             disabled={isLoading}
-            className={`w-full sm:w-auto ${
+            className={`w-full sm:w-auto font-semibold ${
               variant === 'warning' ? 'bg-amber-600 hover:bg-amber-700 text-white' : 
               variant === 'success' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 
               variant === 'info' ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''
@@ -126,4 +146,7 @@ export function ConfirmDialog({
       </div>
     </div>
   );
+
+  if (typeof document === "undefined") return null;
+  return createPortal(content, document.body);
 }

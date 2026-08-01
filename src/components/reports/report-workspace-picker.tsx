@@ -21,7 +21,7 @@ export function ReportWorkspacePicker({
     <div className="w-full max-w-[1140px] mx-auto py-2">
       <div
         className={cn(
-          "grid gap-5 sm:gap-6",
+          "grid gap-5 sm:gap-6 items-stretch",
           visibleCardsCount === 3
             ? "grid-cols-1 md:grid-cols-3"
             : visibleCardsCount === 2
@@ -29,13 +29,13 @@ export function ReportWorkspacePicker({
             : "grid-cols-1 max-w-[480px] mx-auto"
         )}
       >
-        {/* Thẻ 1: Báo cáo hiện trường */}
+        {/* Thẻ 1: Báo cáo Chỉ huy trưởng */}
         {canViewField && (
           <Link
             href="/reports/field"
             prefetch={true}
-            className="group relative flex flex-col justify-between p-6 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-blue-400/80 transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 hover:-translate-y-0.5 active:scale-[0.995]"
-            aria-label="Xem báo cáo hiện trường"
+            className="group relative flex flex-col justify-between h-full p-6 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-blue-400/80 transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 hover:-translate-y-0.5 active:scale-[0.995]"
+            aria-label="Xem Báo cáo Chỉ huy trưởng"
           >
             <div>
               <div className="flex items-center justify-between gap-4 mb-4">
@@ -44,11 +44,11 @@ export function ReportWorkspacePicker({
                 </div>
               </div>
 
-              <h2 className="text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
-                Báo cáo hiện trường
+              <h2 className="text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors leading-snug">
+                Báo cáo Chỉ huy trưởng
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                Quản lý nhật ký ngày, báo cáo tuần và tình hình tại công trình.
+                Nhật ký ngày, báo cáo tuần và tình hình thi công tại công trình.
               </p>
             </div>
 
@@ -59,13 +59,13 @@ export function ReportWorkspacePicker({
           </Link>
         )}
 
-        {/* Thẻ 2: Kiểm tra và kế hoạch tuần */}
+        {/* Thẻ 2: Báo cáo Giám sát công trình */}
         {canViewWeekly && (
           <Link
             href="/reports/weekly-inspection"
             prefetch={true}
-            className="group relative flex flex-col justify-between p-6 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-emerald-400/80 transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 hover:-translate-y-0.5 active:scale-[0.995]"
-            aria-label="Xem kiểm tra và kế hoạch tuần"
+            className="group relative flex flex-col justify-between h-full p-6 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-emerald-400/80 transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 hover:-translate-y-0.5 active:scale-[0.995]"
+            aria-label="Xem Báo cáo Giám sát công trình"
           >
             <div>
               <div className="flex items-center justify-between gap-4 mb-4">
@@ -74,28 +74,28 @@ export function ReportWorkspacePicker({
                 </div>
               </div>
 
-              <h2 className="text-lg font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">
-                Kiểm tra và kế hoạch tuần
+              <h2 className="text-lg font-bold text-slate-900 group-hover:text-emerald-600 transition-colors leading-snug">
+                Báo cáo Giám sát công trình
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                Quản lý lịch kiểm tra và kế hoạch công tác theo tuần.
+                Kế hoạch kiểm tra, kết quả giám sát và báo cáo công tác theo tuần.
               </p>
             </div>
 
             <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-emerald-600 group-hover:text-emerald-700">
-              <span>Xem kế hoạch</span>
+              <span>Xem báo cáo giám sát</span>
               <span className="text-slate-400 group-hover:text-emerald-600 transition-transform group-hover:translate-x-1">→</span>
             </div>
           </Link>
         )}
 
-        {/* Thẻ 3: ATLĐ • PCCC • VSMT */}
+        {/* Thẻ 3: Hồ sơ An toàn lao động */}
         {canViewSafety && (
           <Link
             href="/reports/safety"
             prefetch={true}
-            className="group relative flex flex-col justify-between p-6 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-amber-400/80 transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 hover:-translate-y-0.5 active:scale-[0.995]"
-            aria-label="Xem báo cáo ATLĐ PCCC VSMT"
+            className="group relative flex flex-col justify-between h-full p-6 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-amber-400/80 transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 hover:-translate-y-0.5 active:scale-[0.995]"
+            aria-label="Quản lý Hồ sơ An toàn lao động"
           >
             <div>
               <div className="flex items-center justify-between gap-4 mb-4">
@@ -104,16 +104,16 @@ export function ReportWorkspacePicker({
                 </div>
               </div>
 
-              <h2 className="text-lg font-bold text-slate-900 group-hover:text-amber-600 transition-colors">
-                ATLĐ • PCCC • VSMT
+              <h2 className="text-lg font-bold text-slate-900 group-hover:text-amber-600 transition-colors leading-snug">
+                Hồ sơ An toàn lao động
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                Kế hoạch kiểm tra và Báo cáo tự đánh giá ATLĐ, PCCC & VSMT hàng tuần.
+                Kế hoạch kiểm tra và báo cáo tự đánh giá ATLĐ, PCCC, VSMT tại công trình.
               </p>
             </div>
 
             <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-amber-600 group-hover:text-amber-700">
-              <span>Quản lý hồ sơ</span>
+              <span>Quản lý hồ sơ ATLĐ</span>
               <span className="text-slate-400 group-hover:text-amber-600 transition-transform group-hover:translate-x-1">→</span>
             </div>
           </Link>

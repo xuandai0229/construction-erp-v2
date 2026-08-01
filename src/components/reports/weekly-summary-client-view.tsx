@@ -84,7 +84,7 @@ export function WeeklySummaryClientView({ summary }: WeeklySummaryClientViewProp
               href="/reports/field?tab=weekly"
               className="text-xs font-semibold text-slate-500 hover:text-slate-800 flex items-center gap-1 transition-colors"
             >
-              <ArrowLeft className="h-3.5 w-3.5" /> Quay lại Báo cáo hiện trường
+              <ArrowLeft className="h-3.5 w-3.5" /> Quay lại Báo cáo Chỉ huy trưởng
             </a>
           </div>
           <h1 className="text-2xl font-extrabold text-slate-950 tracking-tight flex items-center gap-2">

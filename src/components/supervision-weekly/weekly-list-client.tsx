@@ -163,7 +163,6 @@ export function WeeklyListClient({
   const [statusFilter, setStatusFilter] = useState(initialStatus);
   const [projectFilter, setProjectFilter] = useState(initialProjectId);
   const [sortBy, setSortBy] = useState<"updated_desc" | "week_desc" | "week_asc" | "project_asc">(initialSort);
-  const [showQaData, setShowQaData] = useState(true);
 
   // Pagination
   const [page, setPage] = useState(1);
@@ -251,10 +250,6 @@ export function WeeklyListClient({
   const filteredRows = useMemo(() => {
     return rows
       .filter((row) => {
-        // QA data filter
-        const isYear2099 = new Date(row.weekStart).getFullYear() >= 2090;
-        if (!showQaData && isYear2099) return false;
-
         // Status filter
         if (statusFilter !== "ALL") {
           if (statusFilter === "APPROVED") {
@@ -298,7 +293,7 @@ export function WeeklyListClient({
         }
         return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
       });
-  }, [rows, statusFilter, projectFilter, search, sortBy, showQaData]);
+  }, [rows, statusFilter, projectFilter, search, sortBy]);
 
   // Paginated slice
   const totalPages = Math.ceil(filteredRows.length / pageSize) || 1;
@@ -371,7 +366,7 @@ export function WeeklyListClient({
       return;
     }
     const year = new Date(anchorDate).getFullYear();
-    if (year < 2000 || (year > 2045 && year !== 2099)) {
+    if (year < 2000 || year > 2045) {
       toast.error(`Năm ${year} không hợp lệ. Vui lòng chọn năm trong khoảng 2000 - 2045.`);
       return;
     }
@@ -429,17 +424,17 @@ export function WeeklyListClient({
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-600 transition-colors"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            <span>Báo cáo công trình</span>
+            <span>Báo cáo</span>
           </Link>
           <PageHeader>
             <PageHeading
               title={
                 <div className="flex items-center gap-2.5">
                   <FileText className="h-6 w-6 text-blue-600" />
-                  <span>Kiểm tra & kế hoạch tuần</span>
+                  <span>Báo cáo Giám sát công trình</span>
                 </div>
               }
-              description="Lập báo cáo kiểm tra toàn bộ công trình và kế hoạch công tác theo tuần."
+              description="Kế hoạch kiểm tra, kết quả giám sát và báo cáo công tác theo tuần."
               action={canCreate ? (
                 <Button
                   onClick={() => setCreateModalOpen(true)}
@@ -598,16 +593,6 @@ export function WeeklyListClient({
           <span>
             Hiển thị <strong className="text-slate-900">{filteredRows.length}</strong> / {rows.length} hồ sơ báo cáo
           </span>
-
-          <label className="flex items-center gap-1.5 cursor-pointer text-slate-600 font-medium select-none">
-            <input
-              type="checkbox"
-              checked={showQaData}
-              onChange={(e) => setShowQaData(e.target.checked)}
-              className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5"
-            />
-            <span>Hiển thị dữ liệu thử nghiệm (QA 2099)</span>
-          </label>
         </div>
       </FilterBar>
 
@@ -649,7 +634,6 @@ export function WeeklyListClient({
                     const st = STATUS_CONFIG[row.status] || STATUS_CONFIG.DRAFT;
                     const StatusIcon = st.icon;
                     const weekInfo = getWeekNumber(row.weekStart);
-                    const isYear2099 = new Date(row.weekStart).getFullYear() >= 2090;
                     const isOwner = row.createdById === currentUserId;
                     const isReviewer = ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"].includes(currentUserRole || "");
 
@@ -672,11 +656,6 @@ export function WeeklyListClient({
                                 <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
                                   v{row.version}
                                 </span>
-                                {isYear2099 && (
-                                  <span className="rounded bg-amber-100 text-amber-800 px-1.5 py-0.5 text-[10px] font-bold">
-                                    QA/Test (2099)
-                                  </span>
-                                )}
                               </div>
                               <div className="mt-0.5 flex items-center gap-1 text-xs text-slate-500 font-medium">
                                 <Calendar className="h-3.5 w-3.5 text-slate-400 shrink-0" />
@@ -873,7 +852,6 @@ export function WeeklyListClient({
                 const st = STATUS_CONFIG[row.status] || STATUS_CONFIG.DRAFT;
                 const StatusIcon = st.icon;
                 const weekInfo = getWeekNumber(row.weekStart);
-                const isYear2099 = new Date(row.weekStart).getFullYear() >= 2090;
                 const isOwner = row.createdById === currentUserId;
 
                 return (

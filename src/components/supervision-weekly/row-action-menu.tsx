@@ -1,10 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import React from "react";
 import { ArrowDown, ArrowUp, Copy, MoreVertical, Trash2 } from "lucide-react";
+import { UnifiedActionMenu, ActionMenuItem } from "@/components/ui/unified-action-menu";
 
-export function RowActionMenu({ canMoveUp, canMoveDown, onMoveUp, onMoveDown, onDuplicate, onDelete, testId }: {
+export function RowActionMenu({
+  canMoveUp,
+  canMoveDown,
+  onMoveUp,
+  onMoveDown,
+  onDuplicate,
+  onDelete,
+  testId,
+}: {
   canMoveUp: boolean;
   canMoveDown: boolean;
   onMoveUp: () => void;
@@ -13,65 +21,49 @@ export function RowActionMenu({ canMoveUp, canMoveDown, onMoveUp, onMoveDown, on
   onDelete: () => void;
   testId?: string;
 }) {
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const [open, setOpen] = useState(false);
-  const [style, setStyle] = useState<React.CSSProperties>();
+  const items: ActionMenuItem[] = [];
 
-  useEffect(() => {
-    if (!open || !triggerRef.current) return;
-    const update = () => {
-      const rect = triggerRef.current!.getBoundingClientRect();
-      const width = 160;
-      const left = Math.min(Math.max(12, rect.right - width), window.innerWidth - width - 12);
-      const openUp = window.innerHeight - rect.bottom < 220 && rect.top > 220;
-      setStyle({ position: "fixed", left, top: openUp ? undefined : rect.bottom + 6, bottom: openUp ? window.innerHeight - rect.top + 6 : undefined, width, zIndex: 105 });
-    };
-    const close = (event: PointerEvent) => {
-      const target = event.target as Node;
-      if (!triggerRef.current?.contains(target) && !menuRef.current?.contains(target)) setOpen(false);
-    };
-    update();
-    document.addEventListener("pointerdown", close);
-    window.addEventListener("resize", update);
-    window.addEventListener("scroll", update, true);
-    return () => {
-      document.removeEventListener("pointerdown", close);
-      window.removeEventListener("resize", update);
-      window.removeEventListener("scroll", update, true);
-    };
-  }, [open]);
+  if (canMoveUp) {
+    items.push({
+      id: "move-up",
+      label: "Di chuyển lên",
+      icon: <ArrowUp className="h-4 w-4" />,
+      onClick: onMoveUp,
+    });
+  }
 
-  const invoke = (action: () => void) => {
-    setOpen(false);
-    action();
-  };
+  if (canMoveDown) {
+    items.push({
+      id: "move-down",
+      label: "Di chuyển xuống",
+      icon: <ArrowDown className="h-4 w-4" />,
+      onClick: onMoveDown,
+    });
+  }
 
-  const itemClass = "flex min-h-9 w-full items-center gap-2 rounded-md px-3 text-left text-sm font-medium text-slate-700 hover:bg-slate-50";
-  const menu = open ? <div ref={menuRef} role="menu" style={style} data-testid={testId ? `${testId}-menu` : undefined} className="rounded-lg border border-slate-200 bg-white p-1 shadow-xl shadow-slate-950/15">
-    {canMoveUp && <button type="button" role="menuitem" onClick={() => invoke(onMoveUp)} className={itemClass}><ArrowUp className="h-4 w-4" />Di chuyển lên</button>}
-    {canMoveDown && <button type="button" role="menuitem" onClick={() => invoke(onMoveDown)} className={itemClass}><ArrowDown className="h-4 w-4" />Di chuyển xuống</button>}
-    <button type="button" role="menuitem" onClick={() => invoke(onDuplicate)} className={itemClass}><Copy className="h-4 w-4" />Nhân bản</button>
-    <button type="button" role="menuitem" onClick={() => invoke(onDelete)} className={`${itemClass} text-rose-700 hover:bg-rose-50`}><Trash2 className="h-4 w-4" />Xóa</button>
-  </div> : null;
+  items.push({
+    id: "duplicate",
+    label: "Nhân bản",
+    icon: <Copy className="h-4 w-4" />,
+    onClick: onDuplicate,
+  });
 
-  return <>
-    <button
-      ref={triggerRef}
-      type="button"
-      aria-label="Thao tác dòng"
-      aria-haspopup="menu"
-      aria-expanded={open}
-      title="Thao tác dòng"
-      onClick={() => setOpen((current) => !current)}
-      onKeyDown={(event) => {
-        if (event.key === "Escape") setOpen(false);
-      }}
-      data-testid={testId}
+  items.push({
+    id: "delete",
+    label: "Xóa",
+    icon: <Trash2 className="h-4 w-4 text-rose-700" />,
+    variant: "destructive",
+    onClick: onDelete,
+  });
+
+  return (
+    <UnifiedActionMenu
+      ariaLabel="Thao tác dòng"
       className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-800 outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-    >
-      <MoreVertical className="h-4 w-4" />
-    </button>
-    {menu ? createPortal(menu, document.body) : null}
-  </>;
+      trigger={<MoreVertical className="h-4 w-4" data-testid={testId} />}
+      items={items}
+      menuWidth="w-44"
+      align="right"
+    />
+  );
 }

@@ -18,16 +18,16 @@ export default function LoginPage() {
 
   useEffect(() => {
     // Autofocus email on mount if empty
-    if (emailInputRef.current && !email) {
+    if (emailInputRef.current && !emailInputRef.current.value) {
       emailInputRef.current.focus();
     }
-    
-    // Check for reason=session_expired
+
+    // Check for reason=session_expired once on mount
     const params = new URLSearchParams(window.location.search);
     if (params.get('reason') === 'session_expired') {
-      setError('Phiên đăng nhập đã hết hạn hoặc không hợp lệ, vui lòng đăng nhập lại.');
+      setError('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
     }
-  }, [email]);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,17 +47,29 @@ export default function LoginPage() {
         }),
       });
 
-      const data = await res.json();
+      let data: any = {};
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error('Hệ thống đang gặp sự cố. Vui lòng thử lại sau.');
+      }
 
       if (!res.ok) {
-        throw new Error(data.error || 'Đăng nhập thất bại');
+        throw new Error(data.error || 'Hệ thống đang gặp sự cố. Vui lòng thử lại sau.');
       }
 
       router.replace(typeof data.redirectTo === 'string' ? data.redirectTo : '/dashboard');
       router.refresh();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err));
-      // Keep email, but clear password if there's an error
+      let errorMessage = 'Hệ thống đang gặp sự cố. Vui lòng thử lại sau.';
+      if (err instanceof Error) {
+        if (err.name === 'TypeError' && err.message.includes('fetch')) {
+          errorMessage = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng và thử lại.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      setError(errorMessage);
       setPassword('');
       if (emailInputRef.current) {
         emailInputRef.current.focus();

@@ -167,7 +167,7 @@ export default async function FieldProgressDailyPage({
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
         </div>
         <div>
-          <h4 className="font-bold text-blue-900 text-sm">Dữ liệu từ Báo cáo hiện trường</h4>
+          <h4 className="font-bold text-blue-900 text-sm">Dữ liệu từ Báo cáo Chỉ huy trưởng</h4>
           <p className="text-blue-700 text-sm mt-0.5">
             Các dòng khối lượng đã duyệt từ báo cáo hiện trường sẽ bị khóa để đảm bảo tính nhất quán. Chỉ người có quyền phê duyệt mới được điều chỉnh thủ công.
           </p>

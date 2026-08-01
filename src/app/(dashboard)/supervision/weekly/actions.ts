@@ -212,7 +212,7 @@ export async function createSupervisionWeeklyDossier(
   if (Number.isNaN(anchor.getTime())) {
     throw new Error("Ngày đã chọn không hợp lệ.");
   }
-  if (year < 2000 || (year > 2045 && year !== 2099)) {
+  if (year < 2000 || year > 2045) {
     throw new Error(`Năm ${year} không hợp lệ. Vui lòng chọn ngày trong khoảng năm 2000 đến 2045.`);
   }
 

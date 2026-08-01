@@ -1,0 +1,266 @@
+[
+  {
+    "route": "/approvals",
+    "file": "src/app/(dashboard)/approvals/page.tsx",
+    "module": "Approvals & Requests",
+    "roles": "ADMIN, DIRECTOR, PROJECT_MANAGER, CHIEF_ENGINEER"
+  },
+  {
+    "route": "/audit",
+    "file": "src/app/(dashboard)/audit/page.tsx",
+    "module": "General",
+    "roles": "ALL_ROLES"
+  },
+  {
+    "route": "/dashboard/actions",
+    "file": "src/app/(dashboard)/dashboard/actions/page.tsx",
+    "module": "Dashboard & Analytics",
+    "roles": "ALL_ROLES"
+  },
+  {
+    "route": "/dashboard/projects-status",
+    "file": "src/app/(dashboard)/dashboard/projects-status/page.tsx",
+    "module": "Dashboard & Analytics",
+    "roles": "ALL_ROLES"
+  },
+  {
+    "route": "/dashboard",
+    "file": "src/app/(dashboard)/dashboard/page.tsx",
+    "module": "Dashboard & Analytics",
+    "roles": "ALL_ROLES"
+  },
+  {
+    "route": "/documents/[projectId]",
+    "file": "src/app/(dashboard)/documents/[projectId]/page.tsx",
+    "module": "Document Management",
+    "roles": "ALL_ROLES"
+  },
+  {
+    "route": "/documents",
+    "file": "src/app/(dashboard)/documents/page.tsx",
+    "module": "Document Management",
+    "roles": "ALL_ROLES"
+  },
+  {
+    "route": "/materials",
+    "file": "src/app/(dashboard)/materials/page.tsx",
+    "module": "Materials & Stock",
+    "roles": "ALL_ROLES"
+  },
+  {
+    "route": "/projects/new",
+    "file": "src/app/(dashboard)/projects/new/page.tsx",
+    "module": "Project Management",
+    "roles": "ALL_ROLES"
+  },
+  {
+    "route": "/projects/[id]/edit",
+    "file": "src/app/(dashboard)/projects/[id]/edit/page.tsx",
+    "module": "Project Management",
+    "roles": "ALL_ROLES"
+  },
+  {
+    "route": "/projects/[id]/field-progress/daily",
+    "file": "src/app/(dashboard)/projects/[id]/field-progress/daily/page.tsx",
+    "module": "Project Management",
+    "roles": "ALL_ROLES"
+  },
+  {
+    "route": "/projects/[id]/field-progress/summary",
+    "file": "src/app/(dashboard)/projects/[id]/field-progress/summary/page.tsx",
+    "module": "Project Management",
+    "roles": "ALL_ROLES"
+  },
+  {
+    "route": "/projects/[id]/field-progress",
+    "file": "src/app/(dashboard)/projects/[id]/field-progress/page.tsx",
+    "module": "Project Management",
+    "roles": "ALL_ROLES"
+  },
+  {
+    "route": "/projects/[id]/material-requests",
+    "file": "src/app/(dashboard)/projects/[id]/material-requests/page.tsx",
+    "module": "Project Management",
+    "roles": "ALL_ROLES"
+  },
+  {
+    "route": "/projects/[id]",
+    "file": "src/app/(dashboard)/projects/[id]/page.tsx",
+    "module": "Project Management",
+    "roles": "ALL_ROLES"
+  },
+  {
+    "route": "/projects",
+    "file": "src/app/(dashboard)/projects/page.tsx",
+    "module": "Project Management",
+    "roles": "ALL_ROLES"
+  },
+  {
+    "route": "/reports/field/weekly-summary",
+    "file": "src/app/(dashboard)/reports/field/weekly-summary/page.tsx",
+    "module": "Reports & Safety",
+    "roles": "ALL_ROLES"
+  },
+  {
+    "route": "/reports/field",
+    "file": "src/app/(dashboard)/reports/field/page.tsx",
+    "module": "Reports & Safety",
+    "roles": "ALL_ROLES"
+  },
+  {
+    "route": "/reports/safety/plans/new",
+    "file": "src/app/(dashboard)/reports/safety/plans/new/page.tsx",
+    "module": "Reports & Safety",
+    "roles": "ADMIN, DIRECTOR, SAFETY_OFFICER, SITE_ENGINEER"
+  },
+  {
+    "route": "/reports/safety/plans/[planId]/preview",
+    "file": "src/app/(dashboard)/reports/safety/plans/[planId]/preview/page.tsx",
+    "module": "Reports & Safety",
+    "roles": "ADMIN, DIRECTOR, SAFETY_OFFICER, SITE_ENGINEER"
+  },
+  {
+    "route": "/reports/safety/plans/[planId]",
+    "file": "src/app/(dashboard)/reports/safety/plans/[planId]/page.tsx",
+    "module": "Reports & Safety",
+    "roles": "ADMIN, DIRECTOR, SAFETY_OFFICER, SITE_ENGINEER"
+  },
+  {
+    "route": "/reports/safety/plans",
+    "file": "src/app/(dashboard)/reports/safety/plans/page.tsx",
+    "module": "Reports & Safety",
+    "roles": "ADMIN, DIRECTOR, SAFETY_OFFICER, SITE_ENGINEER"
+  },
+  {
+    "route": "/reports/safety/self-assessments/new",
+    "file": "src/app/(dashboard)/reports/safety/self-assessments/new/page.tsx",
+    "module": "Reports & Safety",
+    "roles": "ADMIN, DIRECTOR, SAFETY_OFFICER, SITE_ENGINEER"
+  },
+  {
+    "route": "/reports/safety/self-assessments/[reportId]/preview",
+    "file": "src/app/(dashboard)/reports/safety/self-assessments/[reportId]/preview/page.tsx",
+    "module": "Reports & Safety",
+    "roles": "ADMIN, DIRECTOR, SAFETY_OFFICER, SITE_ENGINEER"
+  },
+  {
+    "route": "/reports/safety/self-assessments/[reportId]",
+    "file": "src/app/(dashboard)/reports/safety/self-assessments/[reportId]/page.tsx",
+    "module": "Reports & Safety",
+    "roles": "ADMIN, DIRECTOR, SAFETY_OFFICER, SITE_ENGINEER"
+  },
+  {
+    "route": "/reports/safety/self-assessments",
+    "file": "src/app/(dashboard)/reports/safety/self-assessments/page.tsx",
+    "module": "Reports & Safety",
+    "roles": "ADMIN, DIRECTOR, SAFETY_OFFICER, SITE_ENGINEER"
+  },
+  {
+    "route": "/reports/safety/weekly-files/[weeklyFileId]",
+    "file": "src/app/(dashboard)/reports/safety/weekly-files/[weeklyFileId]/page.tsx",
+    "module": "Reports & Safety",
+    "roles": "ADMIN, DIRECTOR, SAFETY_OFFICER, SITE_ENGINEER"
+  },
+  {
+    "route": "/reports/safety",
+    "file": "src/app/(dashboard)/reports/safety/page.tsx",
+    "module": "Reports & Safety",
+    "roles": "ADMIN, DIRECTOR, SAFETY_OFFICER, SITE_ENGINEER"
+  },
+  {
+    "route": "/reports/weekly-inspection/[id]/edit",
+    "file": "src/app/(dashboard)/reports/weekly-inspection/[id]/edit/page.tsx",
+    "module": "Reports & Safety",
+    "roles": "ADMIN, DIRECTOR, SUPERVISOR, SITE_ENGINEER"
+  },
+  {
+    "route": "/reports/weekly-inspection/[id]/preview",
+    "file": "src/app/(dashboard)/reports/weekly-inspection/[id]/preview/page.tsx",
+    "module": "Reports & Safety",
+    "roles": "ADMIN, DIRECTOR, SUPERVISOR, SITE_ENGINEER"
+  },
+  {
+    "route": "/reports/weekly-inspection",
+    "file": "src/app/(dashboard)/reports/weekly-inspection/page.tsx",
+    "module": "Reports & Safety",
+    "roles": "ADMIN, DIRECTOR, SUPERVISOR, SITE_ENGINEER"
+  },
+  {
+    "route": "/reports",
+    "file": "src/app/(dashboard)/reports/page.tsx",
+    "module": "Reports & Safety",
+    "roles": "ALL_ROLES"
+  },
+  {
+    "route": "/settings",
+    "file": "src/app/(dashboard)/settings/page.tsx",
+    "module": "System Settings",
+    "roles": "ADMIN, DIRECTOR"
+  },
+  {
+    "route": "/supervision/weekly/[id]/edit",
+    "file": "src/app/(dashboard)/supervision/weekly/[id]/edit/page.tsx",
+    "module": "General",
+    "roles": "ALL_ROLES"
+  },
+  {
+    "route": "/supervision/weekly/[id]/preview",
+    "file": "src/app/(dashboard)/supervision/weekly/[id]/preview/page.tsx",
+    "module": "General",
+    "roles": "ALL_ROLES"
+  },
+  {
+    "route": "/supervision/weekly/[id]",
+    "file": "src/app/(dashboard)/supervision/weekly/[id]/page.tsx",
+    "module": "General",
+    "roles": "ALL_ROLES"
+  },
+  {
+    "route": "/supervision/weekly",
+    "file": "src/app/(dashboard)/supervision/weekly/page.tsx",
+    "module": "General",
+    "roles": "ALL_ROLES"
+  },
+  {
+    "route": "/tasks",
+    "file": "src/app/(dashboard)/tasks/page.tsx",
+    "module": "Tasks & Assignments",
+    "roles": "ALL_ROLES"
+  },
+  {
+    "route": "/users",
+    "file": "src/app/(dashboard)/users/page.tsx",
+    "module": "User & Role Management",
+    "roles": "ADMIN, DIRECTOR"
+  },
+  {
+    "route": "/login",
+    "file": "src/app/login/page.tsx",
+    "module": "Authentication",
+    "roles": "ALL_ROLES"
+  },
+  {
+    "route": "/print/reports/field/weekly-summary",
+    "file": "src/app/print/reports/field/weekly-summary/page.tsx",
+    "module": "General",
+    "roles": "ALL_ROLES"
+  },
+  {
+    "route": "/print/reports/[reportId]",
+    "file": "src/app/print/reports/[reportId]/page.tsx",
+    "module": "General",
+    "roles": "ALL_ROLES"
+  },
+  {
+    "route": "/supervision-export/[id]",
+    "file": "src/app/supervision-export/[id]/page.tsx",
+    "module": "General",
+    "roles": "ALL_ROLES"
+  },
+  {
+    "route": "/",
+    "file": "src/app/page.tsx",
+    "module": "General",
+    "roles": "ALL_ROLES"
+  }
+]

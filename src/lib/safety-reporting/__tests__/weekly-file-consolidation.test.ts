@@ -131,7 +131,9 @@ describe("SafetyWeeklyFileService Consolidation & RBAC Architecture", () => {
     const result = await SafetyWeeklyFileService.deleteWeeklyFile(strangerActor, "wf-123");
 
     expect(result.ok).toBe(false);
-    expect(result.code).toBe("FORBIDDEN");
+    if (!result.ok) {
+      expect(result.code).toBe("FORBIDDEN");
+    }
     expect(prisma.safetyWeeklyFile.update).not.toHaveBeenCalled();
   });
 });

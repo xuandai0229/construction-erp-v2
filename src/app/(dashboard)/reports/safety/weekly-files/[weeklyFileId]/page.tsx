@@ -7,7 +7,7 @@ import {
 import { SafetyWeeklyFileWorkspace } from "@/components/safety/safety-weekly-file-workspace";
 
 export const metadata = {
-  title: "Hồ sơ ATLĐ theo tuần | Hệ thống ERP",
+  title: "Hồ sơ An toàn lao động | ERP Công trình",
 };
 
 export default async function SafetyWeeklyFileEditPage({

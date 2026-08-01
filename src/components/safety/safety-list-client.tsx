@@ -232,7 +232,7 @@ export function SafetyListClient({
           className="inline-flex items-center gap-1.5 text-slate-500 hover:text-blue-600 transition-colors"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          <span>Báo cáo công trình</span>
+          <span>Báo cáo</span>
         </Link>
       </div>
 
@@ -245,10 +245,10 @@ export function SafetyListClient({
             </div>
             <div>
               <h1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900">
-                Hồ sơ ATLĐ • PCCC • VSMT theo tuần
+                Hồ sơ An toàn lao động
               </h1>
               <p className="text-xs text-slate-500 mt-0.5">
-                Quản lý kế hoạch kiểm tra và báo cáo tự đánh giá trong cùng một hồ sơ theo tuần.
+                Kế hoạch kiểm tra và báo cáo tự đánh giá ATLĐ, PCCC, VSMT tại công trình.
               </p>
             </div>
           </div>

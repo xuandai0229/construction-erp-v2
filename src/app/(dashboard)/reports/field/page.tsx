@@ -32,8 +32,8 @@ const toNumber = (value: unknown) => {
 };
 
 export const metadata = {
-  title: "Hiện trường | Báo cáo công trình | ERP Công trình",
-  description: "Quản lý, theo dõi và tổng hợp báo cáo công việc hằng ngày tại công trường",
+  title: "Báo cáo Chỉ huy trưởng | ERP Công trình",
+  description: "Nhật ký ngày, báo cáo tuần và tình hình thi công tại công trình",
 };
 
 export default async function FieldReportsPage({

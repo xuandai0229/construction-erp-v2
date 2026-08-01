@@ -12,7 +12,7 @@ import { formatVnLongDate, SAFETY_DOCUMENT_TYPOGRAPHY } from "@/lib/safety-repor
 import { SafetyDocumentPreviewShell } from "@/components/safety/safety-document-preview-shell";
 
 export const metadata = {
-  title: "Xem trước Báo cáo tự đánh giá | ATLĐ • PCCC • VSMT",
+  title: "Xem trước Báo cáo tự đánh giá | Hồ sơ An toàn lao động",
 };
 
 interface SafetyReportPreviewPageProps {

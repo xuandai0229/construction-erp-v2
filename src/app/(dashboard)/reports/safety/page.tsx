@@ -4,7 +4,8 @@ import { getSafetyWeeklyFilesListAction } from "./actions";
 import { SafetyListClient } from "@/components/safety/safety-list-client";
 
 export const metadata = {
-  title: "Hồ sơ ATLĐ theo tuần | Hệ thống ERP",
+  title: "Hồ sơ An toàn lao động | ERP Công trình",
+  description: "Kế hoạch kiểm tra và báo cáo tự đánh giá ATLĐ, PCCC, VSMT tại công trình",
 };
 
 export default async function SafetyReportsPage({

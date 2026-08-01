@@ -514,7 +514,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
             <h3 className="line-clamp-2 text-sm font-bold leading-snug text-slate-900">
               {item.name}
               {item.note && item.note.includes("[SOURCE:SITE_REPORT:") && (
-                <span className="ml-2 inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 align-middle" title="Dữ liệu đồng bộ từ Báo cáo hiện trường. Chỉ tài khoản quản lý mới có thể điều chỉnh thủ công.">Từ báo cáo hiện trường</span>
+                <span className="ml-2 inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 align-middle" title="Dữ liệu đồng bộ từ Báo cáo Chỉ huy trưởng. Chỉ tài khoản quản lý mới có thể điều chỉnh thủ công.">Từ báo cáo CHT</span>
               )}
             </h3>
             <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-600">
@@ -839,7 +839,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
                   {dateStatus}
                 </StatusBadge>
               </div>
-              <p className="text-xs font-semibold text-amber-600 mt-1">Nguồn dữ liệu ưu tiên từ Báo cáo hiện trường. Bạn chỉ nên điều chỉnh kỹ thuật tại đây.</p>
+              <p className="text-xs font-semibold text-amber-600 mt-1">Nguồn dữ liệu ưu tiên từ Báo cáo Chỉ huy trưởng. Bạn chỉ nên điều chỉnh kỹ thuật tại đây.</p>
             </div>
             <Button
               onClick={() => setShowQuickAdd(true)}
@@ -966,7 +966,7 @@ function parseVietnameseDecimalInput(raw: string | number | null | undefined): n
                     <div className="font-semibold text-slate-800 line-clamp-2 w-full leading-tight" title={item.name}>
                       {item.name}
                       {item.note && item.note.includes("[SOURCE:SITE_REPORT:") && (
-                        <span className="ml-2 inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 align-middle" title="Dữ liệu đồng bộ từ Báo cáo hiện trường. Chỉ tài khoản quản lý mới có thể điều chỉnh thủ công.">Từ báo cáo hiện trường</span>
+                        <span className="ml-2 inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 align-middle" title="Dữ liệu đồng bộ từ Báo cáo Chỉ huy trưởng. Chỉ tài khoản quản lý mới có thể điều chỉnh thủ công.">Từ báo cáo CHT</span>
                       )}
                     </div>
                     {math.isOver && (

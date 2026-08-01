@@ -21,7 +21,7 @@ export function MobileBottomNav({ userRole }: { userRole: UserRole }) {
   const primaryCandidates = [
     { name: "Tổng quan", href: "/dashboard", icon: LayoutDashboard },
     { name: "Công trình", href: "/projects", icon: Building2 },
-    { name: "Báo cáo công trình", href: "/reports", icon: ClipboardCheck },
+    { name: "Báo cáo", href: "/reports", icon: ClipboardCheck },
     { name: "Vật tư", href: "/materials", icon: Package },
   ].filter(item => canViewNavigationItem(userRole, item.href));
 

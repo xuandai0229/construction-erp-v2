@@ -207,7 +207,7 @@ export async function getGlobalProjectContext(
       type: 'REPORT',
       severity: 'HIGH',
       title: isPending ? `Báo cáo ngày ${reportDateStr} chờ duyệt` : `Báo cáo ngày ${reportDateStr} có vấn đề`,
-      message: r.summary ? `Nội dung: ${r.summary}` : 'Báo cáo hiện trường cần chú ý',
+      message: r.summary ? `Nội dung: ${r.summary}` : 'Báo cáo Chỉ huy trưởng cần chú ý',
       projectName: r.project.name,
       projectId: r.projectId,
       createdAt: r.updatedAt,

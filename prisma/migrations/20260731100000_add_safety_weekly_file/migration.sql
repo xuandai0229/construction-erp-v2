@@ -1,6 +1,3 @@
--- Delete soft-deleted temporary test rows to clear duplicate periodStarts
-DELETE FROM "SafetyWeeklyFile" WHERE "deletedAt" IS NOT NULL;
-
 -- CreateTable
 CREATE TABLE IF NOT EXISTS "SafetyWeeklyFile" (
     "id" TEXT NOT NULL,
@@ -17,6 +14,9 @@ CREATE TABLE IF NOT EXISTS "SafetyWeeklyFile" (
 
     CONSTRAINT "SafetyWeeklyFile_pkey" PRIMARY KEY ("id")
 );
+
+-- Delete soft-deleted temporary test rows to clear duplicate periodStarts
+DELETE FROM "SafetyWeeklyFile" WHERE "deletedAt" IS NOT NULL;
 
 -- AlterTable
 ALTER TABLE "SafetyReportPlan" ADD COLUMN IF NOT EXISTS "weeklyFileId" TEXT;

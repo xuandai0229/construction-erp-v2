@@ -36,13 +36,13 @@ export function ReportsWorkspaceShell({
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100 shadow-2xs">
                 <ClipboardList className="h-5 w-5" />
               </div>
-              <span>Trung tâm Báo cáo Công trình</span>
+              <span>Báo cáo</span>
             </div>
           }
           description={
             isSelectionRoute
               ? "Chọn loại báo cáo cần quản lý."
-              : "Quản lý báo cáo hiện trường, kết quả kiểm tra và kế hoạch công tác theo tuần."
+              : "Quản lý báo cáo Chỉ huy trưởng, Báo cáo Giám sát công trình và Hồ sơ An toàn lao động."
           }
         />
 
@@ -62,7 +62,7 @@ export function ReportsWorkspaceShell({
                 )}
               >
                 <ClipboardList className="h-4 w-4" />
-                <span>Hiện trường</span>
+                <span>Báo cáo Chỉ huy trưởng</span>
               </Link>
             )}
 
@@ -79,7 +79,7 @@ export function ReportsWorkspaceShell({
                 )}
               >
                 <CalendarCheck2 className="h-4 w-4" />
-                <span>Kiểm tra & kế hoạch tuần</span>
+                <span>Báo cáo Giám sát công trình</span>
               </Link>
             )}
           </div>

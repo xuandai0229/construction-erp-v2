@@ -430,7 +430,7 @@ export function SettingsWorkspace({ initialSettings }: { initialSettings: System
                 />
                 <SwitchRow
                   title="Khóa báo cáo sau khi duyệt"
-                  description="Báo cáo hiện trường đã duyệt chỉ được sửa bằng yêu cầu điều chỉnh."
+                  description="Báo cáo Chỉ huy trưởng đã duyệt chỉ được sửa bằng yêu cầu điều chỉnh."
                   checked={profile.reportLockAfterApproval}
                   onChange={(value) => updateField("reportLockAfterApproval", value)}
                   disabled={true}

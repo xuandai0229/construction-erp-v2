@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { markGlobalNotificationRead } from '@/app/actions/notifications';
 import type { NotificationTargetType } from '@/lib/notifications/notification-routing';
+import { useClickOutside } from '@/components/ui/global-overlay-manager';
 
 type NotificationItem = {
   id: string;
@@ -39,41 +40,30 @@ export function GlobalNotificationBell({ notifications }: { notifications: Notif
     setIsOpen(false);
   }, []);
 
+  // Close on route change
   useEffect(() => {
     closePopover();
   }, [pathname, searchParamsKey, closePopover]);
 
-  useEffect(() => {
-    const handleCloseOverlays = () => setIsOpen(false);
-    window.addEventListener("close-overlays", handleCloseOverlays);
-    return () => window.removeEventListener("close-overlays", handleCloseOverlays);
-  }, []);
+  // Click outside close without swallowing clicks
+  useClickOutside({
+    isOpen,
+    onClose: closePopover,
+    refs: [buttonRef, panelRef],
+  });
 
+  // Handle Escape key
   useEffect(() => {
     if (!isOpen) return;
-
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         closePopover();
+        buttonRef.current?.focus();
       }
-    };
-
-    const handleOutsideClick = (event: Event) => {
-      const target = event.target as Node;
-      if (buttonRef.current?.contains(target) || panelRef.current?.contains(target)) {
-        return;
-      }
-      closePopover();
     };
 
     window.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("mousedown", handleOutsideClick);
-    document.addEventListener("touchstart", handleOutsideClick, { passive: true });
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("mousedown", handleOutsideClick);
-      document.removeEventListener("touchstart", handleOutsideClick);
-    };
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, closePopover]);
 
   const computedNotifications = useMemo(
@@ -135,8 +125,8 @@ export function GlobalNotificationBell({ notifications }: { notifications: Notif
       <button 
         ref={buttonRef}
         type="button"
-        onClick={() => { const willOpen = !isOpen; window.dispatchEvent(new Event("close-overlays")); setIsOpen(willOpen); }}
-        className="relative flex items-center justify-center h-10 w-10 sm:h-9 sm:w-9 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="relative flex items-center justify-center h-10 w-10 sm:h-9 sm:w-9 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20"
         aria-haspopup="dialog"
         aria-expanded={isOpen}
         aria-label="Thông báo"
@@ -150,112 +140,112 @@ export function GlobalNotificationBell({ notifications }: { notifications: Notif
       </button>
 
       {isOpen && (
-          <div
-            ref={panelRef}
-            className="fixed inset-x-2 sm:inset-x-auto sm:absolute sm:right-0 top-14 sm:top-full z-[80] sm:mt-2 w-[calc(100vw-16px)] sm:w-[420px] max-w-[420px] overflow-hidden rounded-2xl border border-slate-200/60 bg-white/95 backdrop-blur-xl shadow-2xl shadow-slate-900/10 animate-in slide-in-from-top-2 fade-in duration-200"
-            role="dialog"
-            aria-label="Thông báo"
-          >
-            <div className="border-b border-slate-200/60 px-5 pt-4 flex flex-col gap-3 bg-slate-50/50">
-              <div className="flex items-center justify-between">
-                <h3 className="font-bold text-slate-900 text-[17px]">Thông báo</h3>
-                {unreadCount > 0 && (
-                  <button 
-                    type="button"
-                    className="text-[12px] font-medium text-blue-600 hover:text-blue-700 transition-colors"
-                    onClick={() => { /* TODO: mark all as read */ }}
-                  >
-                    Đánh dấu đã đọc tất cả
-                  </button>
-                )}
-              </div>
-              <div className="flex items-center gap-4 -mb-px">
-                <button
+        <div
+          ref={panelRef}
+          className="fixed inset-x-2 sm:inset-x-auto sm:absolute sm:right-0 top-14 sm:top-full z-[100] sm:mt-2 w-[calc(100vw-16px)] sm:w-[420px] max-w-[420px] overflow-hidden rounded-2xl border border-slate-200/60 bg-white/95 backdrop-blur-xl shadow-2xl shadow-slate-900/10 animate-in slide-in-from-top-2 fade-in duration-200"
+          role="dialog"
+          aria-label="Thông báo"
+        >
+          <div className="border-b border-slate-200/60 px-5 pt-4 flex flex-col gap-3 bg-slate-50/50">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-slate-900 text-[17px]">Thông báo</h3>
+              {unreadCount > 0 && (
+                <button 
                   type="button"
-                  onClick={() => setActiveTab('all')}
-                  className={cn(
-                    "px-1 pb-2 text-sm font-medium transition-colors border-b-2",
-                    activeTab === 'all' 
-                      ? "border-blue-600 text-blue-600" 
-                      : "border-transparent text-slate-500 hover:text-slate-700"
-                  )}
+                  className="text-[12px] font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                  onClick={() => { /* TODO: mark all as read */ }}
                 >
-                  Tất cả
+                  Đánh dấu đã đọc tất cả
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('unread')}
-                  className={cn(
-                    "px-1 pb-2 text-sm font-medium transition-colors border-b-2 flex items-center gap-1.5",
-                    activeTab === 'unread' 
-                      ? "border-blue-600 text-blue-600" 
-                      : "border-transparent text-slate-500 hover:text-slate-700"
-                  )}
-                >
-                  Chưa đọc
-                  {unreadCount > 0 && (
-                    <span className={cn(
-                      "rounded-full px-1.5 py-0.5 text-[10px] leading-none",
-                      activeTab === 'unread' ? "bg-blue-100 text-blue-600" : "bg-slate-100 text-slate-500"
-                    )}>
-                      {unreadCount}
-                    </span>
-                  )}
-                </button>
-              </div>
-            </div>
-            
-            <div className="max-h-[min(65vh,500px)] overflow-y-auto custom-scrollbar">
-              {visibleNotifications.length === 0 ? (
-                <div className="px-4 py-8 text-center text-sm text-slate-500">
-                  {activeTab === 'unread' ? 'Bạn không có thông báo nào chưa đọc.' : 'Bạn không có thông báo nào.'}
-                </div>
-              ) : (
-                <div className="divide-y divide-slate-100">
-                  {visibleNotifications.map((notif) => (
-                    <Link
-                      key={notif.id}
-                      href={notif.actionUrl || notif.href || '#'}
-                      onClick={(event) => handleNotificationClick(event, notif)}
-                      className={cn(
-                        "relative flex items-start gap-3 px-4 py-3.5 transition-colors hover:bg-slate-50 focus:bg-slate-50 focus:outline-none",
-                        !notif.isRead ? "bg-blue-50/30" : "bg-white"
-                      )}
-                    >
-                      <NotificationIcon type={notif.type} severity={notif.severity} />
-                      <div className="flex-1 space-y-1 overflow-hidden pr-2">
-                        <p className={cn(
-                          "text-sm line-clamp-2 leading-snug",
-                          !notif.isRead ? "font-semibold text-slate-900" : "font-medium text-slate-700"
-                        )}>
-                          {notif.title}
-                        </p>
-                        <p className={cn(
-                          "text-[13px] line-clamp-1",
-                          !notif.isRead ? "text-slate-600" : "text-slate-500"
-                        )}>
-                          {notif.message}
-                        </p>
-                        <div className={cn(
-                          "flex items-center gap-2 text-[11px] uppercase tracking-wide mt-1.5",
-                          !notif.isRead ? "font-semibold text-blue-600/80" : "font-medium text-slate-400"
-                        )}>
-                          {notif.projectName && <span className="line-clamp-1 max-w-[120px]">{notif.projectName}</span>}
-                          {notif.projectName && <span>•</span>}
-                          <span>
-                            {notif.type === 'REPORT' ? 'Cập nhật' : 'Tạo lúc'} {new Date(notif.createdAt).toLocaleDateString('vi-VN')} {new Date(notif.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-                      </div>
-                      {!notif.isRead && (
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex h-2 w-2 rounded-full bg-blue-600 shrink-0" />
-                      )}
-                    </Link>
-                  ))}
-                </div>
               )}
             </div>
+            <div className="flex items-center gap-4 -mb-px">
+              <button
+                type="button"
+                onClick={() => setActiveTab('all')}
+                className={cn(
+                  "px-1 pb-2 text-sm font-medium transition-colors border-b-2",
+                  activeTab === 'all' 
+                    ? "border-blue-600 text-blue-600" 
+                    : "border-transparent text-slate-500 hover:text-slate-700"
+                )}
+              >
+                Tất cả
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('unread')}
+                className={cn(
+                  "px-1 pb-2 text-sm font-medium transition-colors border-b-2 flex items-center gap-1.5",
+                  activeTab === 'unread' 
+                    ? "border-blue-600 text-blue-600" 
+                    : "border-transparent text-slate-500 hover:text-slate-700"
+                )}
+              >
+                Chưa đọc
+                {unreadCount > 0 && (
+                  <span className={cn(
+                    "rounded-full px-1.5 py-0.5 text-[10px] leading-none",
+                    activeTab === 'unread' ? "bg-blue-100 text-blue-600" : "bg-slate-100 text-slate-500"
+                  )}>
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
+          
+          <div className="max-h-[min(65vh,500px)] overflow-y-auto custom-scrollbar">
+            {visibleNotifications.length === 0 ? (
+              <div className="px-4 py-8 text-center text-sm text-slate-500">
+                {activeTab === 'unread' ? 'Bạn không có thông báo nào chưa đọc.' : 'Bạn không có thông báo nào.'}
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {visibleNotifications.map((notif) => (
+                  <Link
+                    key={notif.id}
+                    href={notif.actionUrl || notif.href || '#'}
+                    onClick={(event) => handleNotificationClick(event, notif)}
+                    className={cn(
+                      "relative flex items-start gap-3 px-4 py-3.5 transition-colors hover:bg-slate-50 focus:bg-slate-50 focus:outline-none",
+                      !notif.isRead ? "bg-blue-50/30" : "bg-white"
+                    )}
+                  >
+                    <NotificationIcon type={notif.type} severity={notif.severity} />
+                    <div className="flex-1 space-y-1 overflow-hidden pr-2">
+                      <p className={cn(
+                        "text-sm line-clamp-2 leading-snug",
+                        !notif.isRead ? "font-semibold text-slate-900" : "font-medium text-slate-700"
+                      )}>
+                        {notif.title}
+                      </p>
+                      <p className={cn(
+                        "text-[13px] line-clamp-1",
+                        !notif.isRead ? "text-slate-600" : "text-slate-500"
+                      )}>
+                        {notif.message}
+                      </p>
+                      <div className={cn(
+                        "flex items-center gap-2 text-[11px] uppercase tracking-wide mt-1.5",
+                        !notif.isRead ? "font-semibold text-blue-600/80" : "font-medium text-slate-400"
+                      )}>
+                        {notif.projectName && <span className="line-clamp-1 max-w-[120px]">{notif.projectName}</span>}
+                        {notif.projectName && <span>•</span>}
+                        <span>
+                          {notif.type === 'REPORT' ? 'Cập nhật' : 'Tạo lúc'} {new Date(notif.createdAt).toLocaleDateString('vi-VN')} {new Date(notif.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    </div>
+                    {!notif.isRead && (
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 flex h-2 w-2 rounded-full bg-blue-600 shrink-0" />
+                    )}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

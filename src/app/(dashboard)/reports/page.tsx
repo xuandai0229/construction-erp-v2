@@ -19,8 +19,9 @@ export default async function ReportsPage() {
   // Check RBAC permissions for report workspaces
   const canViewField = canViewNavigationItem(session.role, "/reports/field");
   const canViewWeekly = canReadSupervisionWeekly(session.role);
+  const canViewSafety = canViewNavigationItem(session.role, "/reports/safety");
 
-  if (!canViewField && !canViewWeekly) {
+  if (!canViewField && !canViewWeekly && !canViewSafety) {
     redirect(getDefaultRouteForRole(session.role));
   }
 
@@ -43,6 +44,7 @@ export default async function ReportsPage() {
       <ReportWorkspacePicker
         canViewField={canViewField}
         canViewWeekly={canViewWeekly}
+        canViewSafety={canViewSafety}
       />
     </div>
   );

@@ -53,7 +53,7 @@ export function ExecutiveSiteReportHighlights({
   return (
     <ContentCard className="flex flex-col h-full hover:shadow-md transition-shadow overflow-hidden">
       <div className="flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4 shrink-0">
-        <h3 className="font-bold text-slate-900">Báo cáo hiện trường nổi bật</h3>
+        <h3 className="font-bold text-slate-900">Báo cáo Chỉ huy trưởng nổi bật</h3>
         <Link href={viewAllHref} className="flex items-center gap-1 text-[13px] font-medium text-blue-600 hover:text-blue-700">
           Xem tất cả <ChevronRight className="h-3.5 w-3.5" />
         </Link>

@@ -210,50 +210,6 @@ function getSubmitDisabledReason({ editable, workflowPending, saveState }: {
   return undefined;
 }
 
-/* ── Sticky toolbar ── */
-function StickyToolbar({ visible, title, saveState, lastSavedAt, editable, workflowPending,
-  onSaveDraft, onSubmit, onPreview, onRetrySave }: {
-  visible: boolean; title: string; saveState: SaveState; lastSavedAt: string | null;
-  editable: boolean; workflowPending: boolean;
-  onSaveDraft: () => void; onSubmit: () => void; onPreview: () => void; onRetrySave: () => void;
-}) {
-  const submitDisabledReason = getSubmitDisabledReason({ editable, workflowPending, saveState });
-  const isSubmitDisabled = Boolean(submitDisabledReason);
-
-  if (!visible) return null;
-
-  return (
-    <div className="sticky top-[var(--app-header-h,56px)] z-20 w-full rounded-xl border border-slate-200 bg-white/95 backdrop-blur-md px-4 py-2.5 shadow-md my-2 transition-all duration-200 print:hidden hidden sm:block"
-      aria-hidden={!visible}>
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <span className="truncate text-sm font-bold text-slate-800">{title}</span>
-          <SaveIndicator state={saveState} lastSavedAt={lastSavedAt} onRetry={onRetrySave} />
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Button variant="outline" size="sm" className="h-8 hidden sm:inline-flex" onClick={onPreview}>
-            <Eye className="mr-1.5 h-3.5 w-3.5" /> Xem trước
-          </Button>
-          {editable && (
-            <Button variant="secondary" size="sm" className="h-8" onClick={onSaveDraft} disabled={saveState === "saving"}>
-              <Save className="mr-1.5 h-3.5 w-3.5" /> Lưu
-            </Button>
-          )}
-          {editable && (
-            <div title={submitDisabledReason} className="inline-block">
-              <Button size="sm" className="h-8 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
-                onClick={onSubmit} disabled={isSubmitDisabled}>
-                {workflowPending ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Send className="mr-1.5 h-3.5 w-3.5" />}
-                Gửi
-              </Button>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* ── Mobile bottom bar ── */
 function MobileBottomBar({ editable, workflowPending, saveState, onSaveDraft, onSubmit }: {
   editable: boolean; workflowPending: boolean; saveState: SaveState; onSaveDraft: () => void; onSubmit: () => void;
@@ -282,7 +238,7 @@ function MobileBottomBar({ editable, workflowPending, saveState, onSaveDraft, on
 }
 
 /* ════════════════════════════════════════════════════
-   MAIN EDITOR HEADER COMPONENT
+   MAIN EDITOR HEADER COMPONENT (Page Header Action Bar in Normal Layout Flow)
    ════════════════════════════════════════════════════ */
 export function EditorHeader(props: EditorHeaderProps) {
   const {
@@ -293,47 +249,13 @@ export function EditorHeader(props: EditorHeaderProps) {
     sections, activeSectionId, onSectionClick,
   } = props;
 
-  const headerRef = useRef<HTMLDivElement>(null);
-  const [stickyVisible, setStickyVisible] = useState(false);
   const submitDisabledReason = getSubmitDisabledReason({ editable, workflowPending, saveState });
   const isSubmitDisabled = Boolean(submitDisabledReason);
 
-  useEffect(() => {
-    const el = headerRef.current;
-    if (!el) return;
-
-    let observer: IntersectionObserver | null = null;
-
-    const setupObserver = () => {
-      if (observer) observer.disconnect();
-      const appHeader = typeof document !== "undefined"
-        ? (document.querySelector<HTMLElement>("[data-app-header]") || document.querySelector("header"))
-        : null;
-      const appHeaderHeight = appHeader?.getBoundingClientRect().height ?? 0;
-      const safeHeaderHeight = Number.isFinite(appHeaderHeight) && appHeaderHeight > 0
-        ? Math.round(appHeaderHeight)
-        : 56;
-
-      observer = new IntersectionObserver(
-        ([entry]) => setStickyVisible(!entry.isIntersecting),
-        { threshold: 0, rootMargin: `-${safeHeaderHeight}px 0px 0px 0px` }
-      );
-      observer.observe(el);
-    };
-
-    setupObserver();
-
-    window.addEventListener("resize", setupObserver);
-    return () => {
-      if (observer) observer.disconnect();
-      window.removeEventListener("resize", setupObserver);
-    };
-  }, []);
-
   return (
     <>
-      {/* ── Main header ── */}
-      <div ref={headerRef} className="space-y-0 print:hidden">
+      {/* ── Main Page Action Header (Normal Document Flow) ── */}
+      <div className="space-y-0 print:hidden">
         {/* Row A: Breadcrumb */}
         <nav className="flex items-center gap-2 px-1 py-2 text-sm" aria-label="Breadcrumb">
           <Link href="/reports/weekly-inspection"
@@ -344,9 +266,9 @@ export function EditorHeader(props: EditorHeaderProps) {
             <span className="hidden sm:inline">Danh sách</span>
           </Link>
           <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
-          <span className="text-slate-500 hidden sm:inline">Báo cáo công trình</span>
+          <span className="text-slate-500 hidden sm:inline">Báo cáo</span>
           <ChevronRight className="h-3.5 w-3.5 text-slate-300 hidden sm:inline" />
-          <span className="text-slate-500 hidden sm:inline">Kiểm tra & kế hoạch tuần</span>
+          <span className="text-slate-500 hidden sm:inline">Báo cáo Giám sát công trình</span>
           <ChevronRight className="h-3.5 w-3.5 text-slate-300 hidden sm:inline" />
           <span className="font-semibold text-slate-800">Soạn báo cáo</span>
         </nav>
@@ -387,8 +309,8 @@ export function EditorHeader(props: EditorHeaderProps) {
             </div>
           )}
 
-          {/* Row D: Action bar */}
-          <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-4 py-3 sm:px-5">
+          {/* Row D: Action bar (Normal Document Flow) */}
+          <div data-testid="weekly-editor-action-bar" className="flex items-center justify-between gap-3 border-t border-slate-100 px-4 py-3 sm:px-5">
             <div className="text-xs text-slate-400 hidden md:block">
               Nhấn Ctrl+S để lưu nhanh
             </div>
@@ -428,12 +350,6 @@ export function EditorHeader(props: EditorHeaderProps) {
           )}
         </div>
       </div>
-
-      {/* ── Sticky toolbar (appears on scroll inside main container) ── */}
-      <StickyToolbar visible={stickyVisible} title={title}
-        saveState={saveState} lastSavedAt={lastSavedAt}
-        editable={editable} workflowPending={workflowPending}
-        onSaveDraft={onSaveDraft} onSubmit={onSubmit} onPreview={onPreview} onRetrySave={onRetrySave} />
 
       {/* ── Mobile bottom bar ── */}
       <MobileBottomBar editable={editable} workflowPending={workflowPending} saveState={saveState}

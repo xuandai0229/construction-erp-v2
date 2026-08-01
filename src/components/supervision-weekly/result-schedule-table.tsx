@@ -114,7 +114,7 @@ export function ResultScheduleTable({ documentType, startDate, entries, selectio
     ? "group relative grid grid-cols-1 border-t border-slate-100 md:grid-cols-[minmax(0,30fr)_minmax(0,30fr)_minmax(0,23fr)_44px]"
     : "group relative grid grid-cols-1 border-t border-slate-100 md:grid-cols-[minmax(0,30fr)_minmax(0,30fr)_minmax(0,23fr)]";
 
-  return <section data-section="I" data-testid={`schedule-${documentType.toLocaleLowerCase()}`}>
+  return <section data-section="I" data-testid="weekly-editor-table">
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
       <div className={headerGridClass}>
         <div className="border-r border-slate-300 p-3">{documentType === "RESULT" ? "Thời gian kiểm tra" : "Ngày/thứ"}</div>
@@ -123,11 +123,11 @@ export function ResultScheduleTable({ documentType, startDate, entries, selectio
         <div className="border-r border-slate-300 p-3 text-center">{resultHeader}</div>
         {editable ? <div className="shrink-0 w-[44px]"></div> : null}
       </div>
-      {dates.map((date) => {
+      {dates.map((date, dateIndex) => {
         const activeShifts = shifts.filter((shift) => isActive(date, shift));
         const isCompact = activeShifts.length === 0;
 
-        return <div key={date} data-testid={`day-${documentType}-${date}`} className="border-t border-slate-200 first:border-t-0 md:grid md:grid-cols-[17%_83%] md:items-start">
+        return <div key={date} data-testid={dateIndex === 0 ? "weekly-editor-first-row" : `day-${documentType}-${date}`} className="border-t border-slate-200 first:border-t-0 md:grid md:grid-cols-[17%_83%] md:items-start">
           <div className={`bg-slate-50 md:border-r md:border-slate-200 md:bg-white ${isCompact ? "p-2.5 sm:p-3" : "p-3"}`}>
             <div className="font-bold text-slate-900 text-sm">{editorDateLabel(date)}</div>
             <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1.5 md:block md:space-y-1.5">

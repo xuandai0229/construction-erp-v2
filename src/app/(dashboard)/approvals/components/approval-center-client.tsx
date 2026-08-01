@@ -68,7 +68,7 @@ const TYPE_LABELS: Record<ApprovalRequestType, string> = {
 
 const SOURCE_TYPE_LABELS: Record<string, string> = {
   MATERIAL_REQUEST: "Yêu cầu vật tư",
-  SITE_REPORT: "Báo cáo hiện trường",
+  SITE_REPORT: "Báo cáo Chỉ huy trưởng",
   FIELD_PROGRESS: "Nghiệm thu khối lượng",
   CHANGE_ORDER: "Phát sinh",
   DOCUMENT: "Tài liệu",

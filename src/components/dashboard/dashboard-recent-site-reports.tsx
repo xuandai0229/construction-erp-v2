@@ -18,7 +18,7 @@ export function DashboardRecentSiteReports({ reports }: { reports: DashboardSite
     <ContentCard className="flex flex-col">
       <div className="flex flex-col gap-2 border-b border-[var(--border)] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
         <div>
-          <h2 className="text-base font-bold text-[var(--foreground)] tracking-tight">Báo cáo hiện trường gần đây</h2>
+          <h2 className="text-base font-bold text-[var(--foreground)] tracking-tight">Báo cáo Chỉ huy trưởng gần đây</h2>
           <p className="mt-1 text-sm text-[var(--muted-foreground)]">Theo phạm vi công trình được phân quyền.</p>
         </div>
         <Link href="/reports" className="inline-flex items-center gap-1 text-sm font-semibold text-blue-700 hover:text-blue-800">
@@ -27,7 +27,7 @@ export function DashboardRecentSiteReports({ reports }: { reports: DashboardSite
       </div>
       <div className="p-3 sm:p-4">
         {reports.length === 0 ? (
-          <DashboardEmptyState title="Chưa có báo cáo hiện trường" description="Khi công trường gửi báo cáo, danh sách sẽ xuất hiện tại đây." />
+          <DashboardEmptyState title="Chưa có báo cáo Chỉ huy trưởng" description="Khi công trường gửi báo cáo, danh sách sẽ xuất hiện tại đây." />
         ) : (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-1">
             {reports.map((report) => (

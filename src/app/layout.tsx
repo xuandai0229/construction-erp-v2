@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/toast-context";
 import { DevelopmentCacheReset } from "@/components/layout/development-cache-reset";
+import { GlobalOverlayProvider } from "@/components/ui/global-overlay-manager";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,10 +20,12 @@ export default function RootLayout({
   return (
     <html lang="vi">
       <body className={inter.className}>
-        <ToastProvider>
-          <DevelopmentCacheReset />
-          {children}
-        </ToastProvider>
+        <GlobalOverlayProvider>
+          <ToastProvider>
+            <DevelopmentCacheReset />
+            {children}
+          </ToastProvider>
+        </GlobalOverlayProvider>
       </body>
     </html>
   );

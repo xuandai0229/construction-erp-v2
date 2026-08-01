@@ -6,44 +6,58 @@ import { resolvePostLoginRoute } from '@/lib/roles/role-workspace-policy';
 
 export async function POST(request: Request) {
   try {
-    const { email, password, next } = await request.json();
+    const body = await request.json().catch(() => ({}));
+    const rawEmail = typeof body.email === 'string' ? body.email.trim() : '';
+    const password = typeof body.password === 'string' ? body.password : '';
+    const next = typeof body.next === 'string' ? body.next : null;
 
-    if (!email || !password) {
-      return NextResponse.json({ error: 'Email và mật khẩu không được bỏ trống' }, { status: 400 });
+    if (!rawEmail || !password) {
+      return NextResponse.json({ error: 'Email và mật khẩu không được bỏ trống.' }, { status: 400 });
     }
 
-    // Support login by email OR username
+    // Support login by email OR username (case-insensitive)
     const user = await prisma.user.findFirst({
       where: {
         OR: [
-          { email },
-          { username: email },
+          { email: { equals: rawEmail, mode: 'insensitive' } },
+          { username: { equals: rawEmail, mode: 'insensitive' } },
         ],
       },
     });
 
     if (!user) {
-      return NextResponse.json({ error: 'Email hoặc mật khẩu không đúng.' }, { status: 401 });
+      return NextResponse.json({ error: 'Email hoặc mật khẩu không chính xác.' }, { status: 401 });
     }
 
-    if (!user.isActive || user.deletedAt !== null) {
-      return NextResponse.json({ error: 'Tài khoản đã bị khóa hoặc chưa được kích hoạt.' }, { status: 403 });
+    if (user.deletedAt !== null) {
+      return NextResponse.json({ error: 'Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.' }, { status: 403 });
+    }
+
+    if (!user.isActive) {
+      return NextResponse.json({ error: 'Tài khoản hiện không được phép truy cập hệ thống.' }, { status: 403 });
+    }
+
+    if (!user.password || typeof user.password !== 'string') {
+      return NextResponse.json({ error: 'Email hoặc mật khẩu không chính xác.' }, { status: 401 });
     }
 
     const isValidPassword = await bcrypt.compare(password, user.password);
 
     if (!isValidPassword) {
-      return NextResponse.json({ error: 'Email hoặc mật khẩu không đúng.' }, { status: 401 });
+      return NextResponse.json({ error: 'Email hoặc mật khẩu không chính xác.' }, { status: 401 });
     }
 
     await setSession(user.id);
 
+    const redirectTo = resolvePostLoginRoute(user.role, next);
+
     return NextResponse.json({
       success: true,
-      redirectTo: resolvePostLoginRoute(user.role, typeof next === "string" ? next : null),
+      redirectTo,
     });
   } catch (error) {
-    console.error('Login error:', error);
-    return NextResponse.json({ error: 'Hệ thống đăng nhập đang gặp sự cố. Vui lòng thử lại hoặc liên hệ quản trị.' }, { status: 500 });
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error('Login internal error:', errorMsg);
+    return NextResponse.json({ error: 'Hệ thống đang gặp sự cố. Vui lòng thử lại sau.' }, { status: 500 });
   }
 }

@@ -150,7 +150,7 @@ export function SafetyEditorHeader({
             <div className="min-w-0 space-y-0.5">
               <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
                 <Link href="/reports/safety?tab=PLAN" className="hover:underline">
-                  Hồ sơ ATLĐ
+                  Hồ sơ An toàn lao động
                 </Link>
                 <span>/</span>
                 <span className="text-slate-700">Kế hoạch kiểm tra</span>
