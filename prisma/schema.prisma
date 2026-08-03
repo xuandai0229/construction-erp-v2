@@ -205,14 +205,6 @@ enum DocumentStatus {
   SUPERSEDED
 }
 
-// Work Management Phase 1 keeps the read projection queryable while the
-// canonical CoreTask aggregate and append-only action payloads are retained
-// as JSON snapshots. This is additive to the existing ERP schema.
-enum WorkTaskIdempotencyState {
-  IN_PROGRESS
-  COMPLETED
-}
-
 // MODELS
 
 model User {
@@ -247,11 +239,6 @@ model User {
   fieldMaterialRequests        FieldMaterialRequest[]        @relation("FieldMaterialRequester")
   updatedSettings              SystemSetting[]               @relation("SettingUpdater")
   notifications                Notification[]
-  createdWorkTasks             WorkTask[]                    @relation("WorkTaskCreator")
-  assignedWorkTasks            WorkTask[]                    @relation("WorkTaskPrimaryAssignee")
-  reviewedWorkTasks            WorkTask[]                    @relation("WorkTaskReviewer")
-  approvedWorkTasks            WorkTask[]                    @relation("WorkTaskApprover")
-  workTaskActions              WorkTaskAction[]              @relation("WorkTaskActionActor")
   createdLocationNodes         ProjectLocationNode[]         @relation("ProjectLocationNodeCreator")
   updatedLocationNodes         ProjectLocationNode[]         @relation("ProjectLocationNodeUpdater")
   fieldProgressItemAssignments FieldProgressItemAssignment[] @relation("FieldProgressItemAssignmentActor")
@@ -322,7 +309,6 @@ model Project {
   materialItems                MaterialItem[]
   approvalRequests             ApprovalRequest[]
   notifications                Notification[]
-  workTasks                    WorkTask[]
   locationNodes                ProjectLocationNode[]
   fieldProgressItemAssignments FieldProgressItemAssignment[]
   fieldProgressItemLocations   FieldProgressItemLocation[]
@@ -348,99 +334,6 @@ model Project {
   @@index([code])
   @@index([status])
   @@index([createdAt])
-}
-
-model WorkTask {
-  id                String    @id @default(cuid())
-  projectId         String
-  creatorId         String
-  primaryAssigneeId String?
-  reviewerId        String?
-  approverId        String?
-  title             String
-  description       String?
-  priority          String    @default("NORMAL")
-  confidentiality   String    @default("NORMAL")
-  lifecycle         String
-  acceptance        String
-  execution         String
-  review            String
-  handover          String
-  waitingReason     String?
-  deadlineAt        DateTime?
-  progressPercent   Int       @default(0)
-  version           Int       @default(1)
-  snapshot          Json
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-
-  project         Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  creator         User                    @relation("WorkTaskCreator", fields: [creatorId], references: [id])
-  primaryAssignee User?                   @relation("WorkTaskPrimaryAssignee", fields: [primaryAssigneeId], references: [id])
-  reviewer        User?                   @relation("WorkTaskReviewer", fields: [reviewerId], references: [id])
-  approver        User?                   @relation("WorkTaskApprover", fields: [approverId], references: [id])
-  actions         WorkTaskAction[]
-  outboxMessages  WorkTaskOutboxMessage[]
-  idempotencyRows WorkTaskIdempotency[]
-
-  @@index([projectId, updatedAt])
-  @@index([primaryAssigneeId, updatedAt])
-  @@index([creatorId, updatedAt])
-  @@index([lifecycle, updatedAt])
-}
-
-model WorkTaskAction {
-  id         String   @id @default(cuid())
-  taskId     String
-  action     String
-  actorId    String
-  version    Int
-  occurredAt DateTime
-  effects    Json
-  createdAt  DateTime @default(now())
-
-  task  WorkTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  actor User     @relation("WorkTaskActionActor", fields: [actorId], references: [id])
-
-  @@index([taskId, occurredAt])
-  @@index([actorId, occurredAt])
-}
-
-model WorkTaskOutboxMessage {
-  id               String   @id @default(cuid())
-  taskId           String
-  action           String
-  aggregateVersion Int
-  idempotencyKey   String
-  message          Json
-  occurredAt       DateTime
-  createdAt        DateTime @default(now())
-
-  task WorkTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
-
-  @@index([taskId, aggregateVersion])
-  @@index([idempotencyKey])
-}
-
-model WorkTaskIdempotency {
-  id          String                   @id @default(cuid())
-  key         String
-  scopeKey    String
-  action      String
-  actorId     String
-  projectId   String?
-  taskId      String?
-  fingerprint String
-  state       WorkTaskIdempotencyState
-  result      Json?
-  createdAt   DateTime                 @default(now())
-  completedAt DateTime?
-
-  task WorkTask? @relation(fields: [taskId], references: [id], onDelete: SetNull)
-
-  @@unique([key, scopeKey])
-  @@index([taskId])
-  @@index([actorId, projectId])
 }
 
 model ProjectMember {

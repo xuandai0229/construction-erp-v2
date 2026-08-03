@@ -13,7 +13,6 @@ export default defineConfig({
     include: ["src/**/*.test.ts"],
     exclude: [
       "**/*.spec.ts",
-      "src/lib/work-management/tests/**",
       "src/lib/documents/**",
       "src/lib/notifications/**",
       "src/lib/reports/**",

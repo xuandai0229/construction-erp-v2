@@ -333,7 +333,7 @@ async function main() {
           console.log("Current HTML:", await page.content());
         }
         
-        const routes = ["/dashboard", "/projects", "/documents", "/reports", "/materials", "/settings", "/tasks"];
+        const routes = ["/dashboard", "/projects", "/documents", "/reports", "/materials", "/settings"];
         for (const r of routes) {
           const res = await page.goto(r);
           const url = page.url();
@@ -364,40 +364,14 @@ async function main() {
       evidence.applicationSmoke = "FAIL";
     }
 
-    try {
-      const e2eOut = execSync("npx tsx scripts/qa/work-management-main-product-phase1-production-e2e.ts", { encoding: "utf-8", env: { ...process.env, DATABASE_URL: targetUrlStr } });
-      const e2eMatch = e2eOut.trim().split(/\r?\n/).find(l => l.includes('"status":"PASS"'));
-      if (e2eMatch) {
-        e2eResult = JSON.parse(e2eMatch);
-        // EXACT E2E VALIDATION
-        const orderMatch = JSON.stringify(e2eResult.exactActionOrder) === JSON.stringify(["CREATE_DRAFT", "ASSIGN", "ACCEPT", "START", "UPDATE_PROGRESS", "SUBMIT", "REQUEST_CHANGES", "SUBMIT", "APPROVE_RESULT", "CONFIRM_COMPLETION"]);
-        if (e2eResult.status === "PASS" && e2eResult.actions === 10 && orderMatch && e2eResult.outbox === 43 && e2eResult.finalState === "COMPLETED" && e2eResult.projectIsolation === "PASS" && e2eResult.outsiderDenial === "PASS" && e2eResult.fixtureCleanup === "PASS" && e2eResult.remainingFixtures === 0) {
-          evidence.workManagementE2E = "PASS";
-        } else {
-          evidence.workManagementE2E = "FAIL";
-        }
-      }
-    } catch {
-       evidence.workManagementE2E = "FAIL";
-    }
-
-    try {
-      const rt = execSync("npx tsx --test src/lib/work-management/tests/*.test.ts", { encoding: "utf-8", env: { ...process.env, DATABASE_URL: targetUrlStr } });
-      const passMatch = rt.match(/pass\s+(\d+)/);
-      const failMatch = rt.match(/fail\s+(\d+)/);
-      const skipMatch = rt.match(/skipped\s+(\d+)/);
-      const testMatch = rt.match(/tests\s+(\d+)/);
-      if (failMatch && failMatch[1] === "0" && passMatch) {
-        evidence.regression = "PASS";
-        regressionOutput = { pass: passMatch[1], fail: failMatch[1], skipped: skipMatch ? skipMatch[1] : 0, tests: testMatch ? testMatch[1] : passMatch[1] };
-      }
-    } catch {}
+    evidence.workManagementE2E = "DECOMMISSIONED";
+    evidence.regression = "NOT_APPLICABLE";
 
     try { execSync("npx prisma validate"); evidence.prismaValidate = "PASS"; } catch {}
     try { execSync("npx prisma generate"); evidence.prismaGenerate = "PASS"; } catch {}
-    try { execSync("npx tsc -p tsconfig.work-management.json"); evidence.typeScriptScoped = "PASS"; } catch {}
+    evidence.typeScriptScoped = "DECOMMISSIONED";
     try { execSync("npx tsc --noEmit"); evidence.typeScriptGlobal = "PASS"; } catch {}
-    try { execSync("npx eslint scripts/qa/database-v2-cutover-rehearsal.ts scripts/qa/cutover-rehearsal-lib.ts scripts/qa/work-management-main-product-phase1-production-e2e.ts"); evidence.scopedLint = "PASS"; } catch {}
+    try { execSync("npx eslint scripts/qa/database-v2-cutover-rehearsal.ts scripts/qa/cutover-rehearsal-lib.ts"); evidence.scopedLint = "PASS"; } catch {}
     try { execSync("git diff --check -- scripts/qa docs/qa prisma"); evidence.patchDiff = "PASS"; } catch {}
 
   } catch (e: any) {

@@ -1,5 +1,0 @@
-{
-  "extends": "./tsconfig.json",
-  "include": ["src/lib/work-management/**/*.ts"],
-  "exclude": ["node_modules", ".next"]
-}

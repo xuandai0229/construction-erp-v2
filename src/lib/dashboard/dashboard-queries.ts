@@ -589,9 +589,7 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
         ? `/reports?projectId=${item.projectId}`
         : item.targetType === "MATERIAL_REQUEST"
           ? `/projects/${item.projectId}/material-requests`
-          : item.targetType === "WORK_TASK"
-            ? `/tasks?projectId=${item.projectId}`
-            : `/projects/${item.projectId}`,
+          : `/projects/${item.projectId}`,
     reason: item.reason,
     targetType: item.targetType,
     targetId: item.targetId,

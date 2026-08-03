@@ -51,9 +51,6 @@ vi.mock("@/lib/prisma", () => ({
     fieldMaterialRequest: {
       findMany: vi.fn().mockResolvedValue([]),
     },
-    workTask: {
-      findMany: vi.fn().mockResolvedValue([]),
-    },
   },
 }));
 

@@ -37,17 +37,17 @@ describe("Auth & Session Token Security Audit Suite", () => {
     const role: UserRole = "STAFF";
     
     // External URLs must be rejected
-    expect(resolvePostLoginRoute(role, "https://malicious-site.com/steal-cookie")).toBe("/tasks?mine=1");
-    expect(resolvePostLoginRoute(role, "http://phishing.com")).toBe("/tasks?mine=1");
-    expect(resolvePostLoginRoute(role, "//evil.com/path")).toBe("/tasks?mine=1");
-    expect(resolvePostLoginRoute(role, "\\\\evil.com\\path")).toBe("/tasks?mine=1");
+    expect(resolvePostLoginRoute(role, "https://malicious-site.com/steal-cookie")).toBe("/projects");
+    expect(resolvePostLoginRoute(role, "http://phishing.com")).toBe("/projects");
+    expect(resolvePostLoginRoute(role, "//evil.com/path")).toBe("/projects");
+    expect(resolvePostLoginRoute(role, "\\\\evil.com\\path")).toBe("/projects");
 
     // Access to unauthorized routes must be redirected to role default
-    expect(resolvePostLoginRoute(role, "/dashboard")).toBe("/tasks?mine=1");
-    expect(resolvePostLoginRoute(role, "/users")).toBe("/tasks?mine=1");
+    expect(resolvePostLoginRoute(role, "/dashboard")).toBe("/projects");
+    expect(resolvePostLoginRoute(role, "/users")).toBe("/projects");
 
     // Access to valid, authorized local routes must be preserved
-    expect(resolvePostLoginRoute(role, "/tasks?mine=1")).toBe("/tasks?mine=1");
+    expect(resolvePostLoginRoute(role, "/projects")).toBe("/projects");
   });
 
   it("enforces strict role-based workspace default routes for all 9 roles", () => {
@@ -57,8 +57,8 @@ describe("Auth & Session Token Security Audit Suite", () => {
       DEPUTY_DIRECTOR: "/dashboard",
       CHIEF_COMMANDER: "/projects",
       MANAGER: "/projects",
-      ENGINEER: "/tasks?mine=1",
-      STAFF: "/tasks?mine=1",
+      ENGINEER: "/projects",
+      STAFF: "/projects",
       SUPERVISION_HEAD: "/reports/weekly-inspection",
       CONSTRUCTION_SUPERVISOR: "/reports/weekly-inspection",
     };

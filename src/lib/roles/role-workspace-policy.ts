@@ -18,8 +18,8 @@ export const ROLE_WORKSPACE_REGISTRY: Record<UserRole, RoleWorkspaceDefinition> 
   CONSTRUCTION_SUPERVISOR: { group: "OPERATIONAL_WORKSPACE", defaultRoute: "/reports/weekly-inspection", defaultNavigationHref: "/reports", dashboardEnabled: false },
   CHIEF_COMMANDER: { group: "OPERATIONAL_WORKSPACE", defaultRoute: "/projects", defaultNavigationHref: "/projects", dashboardEnabled: false },
   MANAGER: { group: "OPERATIONAL_WORKSPACE", defaultRoute: "/projects", defaultNavigationHref: "/projects", dashboardEnabled: false },
-  ENGINEER: { group: "OPERATIONAL_WORKSPACE", defaultRoute: "/tasks?mine=1", defaultNavigationHref: "/tasks", dashboardEnabled: false },
-  STAFF: { group: "OPERATIONAL_WORKSPACE", defaultRoute: "/tasks?mine=1", defaultNavigationHref: "/tasks", dashboardEnabled: false },
+  ENGINEER: { group: "OPERATIONAL_WORKSPACE", defaultRoute: "/projects", defaultNavigationHref: "/projects", dashboardEnabled: false },
+  STAFF: { group: "OPERATIONAL_WORKSPACE", defaultRoute: "/projects", defaultNavigationHref: "/projects", dashboardEnabled: false },
 };
 
 const COMPANY_WIDE = new Set<UserRole>(["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"]);
@@ -46,7 +46,7 @@ export function getDefaultNavigationHrefForRole(role: UserRole): string {
 
 export function canRoleAccessRoute(role: UserRole, pathname: string): boolean {
   if (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) return canAccessExecutiveDashboard(role);
-  if (pathname === "/projects" || pathname.startsWith("/projects/") || pathname === "/tasks" || pathname.startsWith("/tasks/")) return true;
+  if (pathname === "/projects" || pathname.startsWith("/projects/")) return true;
   if (pathname === "/documents" || pathname.startsWith("/documents/") || pathname === "/materials" || pathname.startsWith("/materials/")) {
     return COMPANY_WIDE.has(role) || OPERATIONAL_READ_ALL.has(role) || PROJECT_BUSINESS_ROLES.has(role);
   }

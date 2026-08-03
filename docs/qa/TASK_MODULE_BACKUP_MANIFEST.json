@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-08-03T08:46:50.830Z",
+  "databaseUrl": "postgresql://postgres:****@127.0.0.1:5432/construction_erp_v2_qa?schema=public",
+  "counts": {
+    "WorkTask": 0,
+    "WorkTaskAction": 0,
+    "WorkTaskOutboxMessage": 0,
+    "WorkTaskIdempotency": 0
+  },
+  "data": {
+    "tasks": [],
+    "actions": [],
+    "outbox": [],
+    "idempotency": []
+  }
+}

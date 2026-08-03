@@ -45,17 +45,17 @@ describe("role workspace policy", () => {
     expect(getDefaultNavigationHrefForRole("CONSTRUCTION_SUPERVISOR")).toBe("/reports");
     expect(getDefaultRouteForRole("CHIEF_COMMANDER")).toBe("/projects");
     expect(getDefaultRouteForRole("MANAGER")).toBe("/projects");
-    expect(getDefaultRouteForRole("ENGINEER")).toBe("/tasks?mine=1");
-    expect(getDefaultNavigationHrefForRole("ENGINEER")).toBe("/tasks");
-    expect(getDefaultRouteForRole("STAFF")).toBe("/tasks?mine=1");
-    expect(getDefaultNavigationHrefForRole("STAFF")).toBe("/tasks");
+    expect(getDefaultRouteForRole("ENGINEER")).toBe("/projects");
+    expect(getDefaultNavigationHrefForRole("ENGINEER")).toBe("/projects");
+    expect(getDefaultRouteForRole("STAFF")).toBe("/projects");
+    expect(getDefaultNavigationHrefForRole("STAFF")).toBe("/projects");
   });
 
   it("keeps authorized local callbacks and rejects unsafe or unauthorized callbacks", () => {
-    expect(resolvePostLoginRoute("ENGINEER", "/tasks?mine=1")).toBe("/tasks?mine=1");
-    expect(resolvePostLoginRoute("ENGINEER", "/users")).toBe("/tasks?mine=1");
-    expect(resolvePostLoginRoute("ENGINEER", "https://example.com/dashboard")).toBe("/tasks?mine=1");
-    expect(resolvePostLoginRoute("ENGINEER", "//example.com/dashboard")).toBe("/tasks?mine=1");
+    expect(resolvePostLoginRoute("ENGINEER", "/projects")).toBe("/projects");
+    expect(resolvePostLoginRoute("ENGINEER", "/users")).toBe("/projects");
+    expect(resolvePostLoginRoute("ENGINEER", "https://example.com/dashboard")).toBe("/projects");
+    expect(resolvePostLoginRoute("ENGINEER", "//example.com/dashboard")).toBe("/projects");
     expect(canRoleAccessRoute("DIRECTOR", "/users")).toBe(true);
     expect(canRoleAccessRoute("STAFF", "/users")).toBe(false);
   });

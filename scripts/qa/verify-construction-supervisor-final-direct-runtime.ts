@@ -50,8 +50,6 @@ async function main() {
     fixtureProjects: await prisma.project.count({ where: { id: { in: [projectA, projectB] }, deletedAt: null } }),
     reports: await prisma.siteReport.findMany({ where: { id: { in: Object.values(manifest.reports) } }, select: { id: true, status: true, updatedAt: true, deletedAt: true }, orderBy: { id: "asc" } }),
     materialStocks: await prisma.projectMaterialStock.findMany({ where: { id: { in: Object.values(manifest.materials.stocks) } }, select: { id: true, stock: true, updatedAt: true }, orderBy: { id: "asc" } }),
-    tasks: await prisma.workTask.count({ where: { id: { in: Object.values(manifest.tasks) } } }),
-    allTasks: await prisma.workTask.count(),
     documents: await prisma.document.count({ where: { id: { in: Object.values(manifest.documents.files) } } }),
     approvals: await prisma.approvalRequest.findMany({ where: { id: { in: Object.values(manifest.approvals) } }, select: { id: true, status: true, updatedAt: true }, orderBy: { id: "asc" } }),
     dossiers: await prisma.supervisionWeeklyDossier.findMany({ where: { id: { in: Object.values(manifest.dossiers) } }, select: { id: true, status: true, lockVersion: true, updatedAt: true }, orderBy: { id: "asc" } }),
@@ -92,15 +90,13 @@ async function main() {
     return result;
   }
 
-  for (const route of ["/projects", `/projects/${projectA}`, `/projects/${projectB}`, "/reports", "/materials", "/tasks", "/documents", "/approvals", "/supervision/weekly"]) {
+  for (const route of ["/projects", `/projects/${projectA}`, `/projects/${projectB}`, "/reports", "/materials", "/documents", "/approvals", "/supervision/weekly"]) {
     await requestCase({ name: `READ ${route}`, url: route, expected: [200], cookie: officerCookie });
   }
-  await requestCase({ name: "TASK LIST ALL PROJECTS", url: "/api/work-management/tasks", expected: [200], cookie: officerCookie });
   await requestCase({ name: "DOCUMENT PREVIEW", url: `/api/documents/${documentA}/download?preview=true`, expected: [200], cookie: officerCookie });
   await requestCase({ name: "DOCUMENT DOWNLOAD DENIED", url: `/api/documents/${documentA}/download`, expected: [403], cookie: officerCookie, denied: true });
   const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2n5sAAAAASUVORK5CYII=", "base64");
   await requestCase({ name: "DOCUMENT UPLOAD DENIED", url: `/api/documents/upload?projectId=${projectA}&folderId=${folderA}&fileName=${encodeURIComponent("denied.png")}`, expected: [403], cookie: officerCookie, method: "POST", headers: { "content-type": "image/png", "content-length": String(png.length) }, body: png, denied: true });
-  await requestCase({ name: "TASK CREATE DENIED", url: "/api/work-management/tasks/create", expected: [403], cookie: officerCookie, method: "POST", headers: { "content-type": "application/json", "idempotency-key": `${manifest.prefix}${randomUUID()}` }, body: JSON.stringify({ title: `${manifest.prefix}DENIED-TASK`, projectId: projectA }), denied: true });
 
   for (const documentType of ["RESULT", "NEXT_WEEK_PLAN"] as const) {
     for (const format of ["docx", "pdf"] as const) {

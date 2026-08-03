@@ -60,13 +60,6 @@ export function scopeWhereProjectId(scope: ExecutiveDashboardScope) {
   return { projectId: { in: scope.allowedProjectIds }, deletedAt: null };
 }
 
-export function scopeWhereTaskProjectId(scope: ExecutiveDashboardScope) {
-  if (scope.mode === "SINGLE_PROJECT" && scope.projectId) {
-    return { projectId: scope.projectId };
-  }
-  return { projectId: { in: scope.allowedProjectIds } };
-}
-
 export async function resolveDashboardProjectScope(
   session: SessionUser,
   rawProjectId?: string | null
