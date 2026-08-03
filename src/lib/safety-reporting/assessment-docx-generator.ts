@@ -83,46 +83,11 @@ function createSubsectionTitleParagraph(text: string): docx.Paragraph {
   });
 }
 
-function createWordHandwritingLines(options?: { leftIndent?: number; rightPosition?: number; count?: number }): docx.Paragraph[] {
-  const count = options?.count ?? 4;
-  const leftIndent = options?.leftIndent ?? 360;
-  const rightPosition = options?.rightPosition ?? USABLE_WIDTH; // 9922 DXA
-
-  return Array.from({ length: count }, (_, idx) =>
-    new docx.Paragraph({
-      keepNext: idx < count - 1, // Line 1, 2, 3 have keepNext: true to keep block together
-      keepLines: true,
-      spacing: {
-        before: 0,
-        after: 60, // 3pt spacing after each line for ~5-7mm line height
-        line: 300,
-        lineRule: docx.LineRuleType.AUTO,
-      },
-      indent: {
-        left: leftIndent,
-      },
-      tabStops: [
-        {
-          type: docx.TabStopType.RIGHT,
-          position: rightPosition,
-          leader: docx.LeaderType.DOT,
-        },
-      ],
-      children: [
-        new docx.TextRun({
-          text: "\t",
-          font: FONT_TIMES,
-          size: 26,
-          language: LANG_VI,
-        }),
-      ],
-    })
-  );
-}
+import { createWordHandwritingLines, HANDWRITING_LINE_CONFIG } from "@/lib/docx/handwriting-lines";
 
 function renderDocxSectionParagraphs(section: NarrativeSectionValue): docx.Paragraph[] {
   if (section.isEmpty) {
-    return createWordHandwritingLines({ count: 4 });
+    return createWordHandwritingLines({ count: HANDWRITING_LINE_CONFIG.defaultNarrative, leftIndent: 360, rightPosition: USABLE_WIDTH });
   }
   return createCellParagraphs(section.text, { size: 25 });
 }

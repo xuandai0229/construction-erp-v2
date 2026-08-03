@@ -3,11 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  AlertTriangle, ArrowLeft, Check, ChevronRight, Cloud, CloudOff,
-  Eye, Loader2, MoreHorizontal, RefreshCw, Save, Send,
+  ArrowLeft, ChevronRight, Cloud, CloudOff,
+  Eye, Loader2, Printer, RefreshCw, Save,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { WeeklyRevisionInfo } from "@/lib/supervision-weekly/editor-types";
 
 /* ── Types ── */
 export type SaveState = "saved" | "dirty" | "saving" | "error" | "conflict";
@@ -17,17 +16,17 @@ export type EditorHeaderProps = {
   weekLabel: string;
   dateRange: string;
   version: number;
-  status: string;
+  status?: string;
   saveState: SaveState;
   lastSavedAt: string | null;
   message?: string;
   editable: boolean;
-  canReview: boolean;
-  workflowPending: boolean;
-  latestRevision?: WeeklyRevisionInfo | null;
+  canReview?: boolean;
+  workflowPending?: boolean;
+  latestRevision?: any;
   onBackToList: () => void;
   onSaveDraft: () => void;
-  onSubmit: () => void;
+  onSubmit?: () => void;
   onPreview: () => void;
   onRetrySave: () => void;
   onRequestRevision?: () => void;
@@ -44,26 +43,6 @@ export type SectionNavItem = {
   shortLabel?: string;
   status: "complete" | "active" | "incomplete" | "error" | "empty";
 };
-
-/* ── Status config ── */
-const statusConfig: Record<string, { label: string; className: string }> = {
-  DRAFT: { label: "Bản nháp", className: "bg-slate-100 text-slate-700 border-slate-200" },
-  SUBMITTED: { label: "Đã gửi", className: "bg-blue-50 text-blue-700 border-blue-200" },
-  REVISION_REQUIRED: { label: "Yêu cầu chỉnh sửa", className: "bg-amber-50 text-amber-700 border-amber-200" },
-  APPROVED: { label: "Đã phê duyệt", className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  LOCKED: { label: "Đã khóa", className: "bg-slate-100 text-slate-600 border-slate-300" },
-};
-
-function StatusBadge({ status }: { status: string }) {
-  const cfg = statusConfig[status] ?? statusConfig.DRAFT;
-  return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${cfg.className}`}>
-      {status === "REVISION_REQUIRED" && <AlertTriangle className="h-3 w-3" />}
-      {status === "APPROVED" && <Check className="h-3 w-3" />}
-      {cfg.label}
-    </span>
-  );
-}
 
 /* ── Save status indicator ── */
 function SaveIndicator({ state, lastSavedAt, onRetry }: {
@@ -98,36 +77,6 @@ function SaveIndicator({ state, lastSavedAt, onRetry }: {
   );
 }
 
-/* ── Revision alert ── */
-function RevisionAlert({ revision }: { revision: WeeklyRevisionInfo }) {
-  const date = revision.createdAt ? new Date(revision.createdAt) : null;
-  const timeStr = date && !Number.isNaN(date.getTime())
-    ? date.toLocaleString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })
-    : "";
-  return (
-    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4" role="alert">
-      <div className="flex gap-3">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100">
-          <AlertTriangle className="h-4 w-4 text-amber-600" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-bold text-amber-900">Báo cáo cần chỉnh sửa</h3>
-          <p className="mt-1 text-sm text-amber-800">
-            <span className="font-semibold">{revision.actorName || "Người phê duyệt"}</span>
-            {timeStr ? " yêu cầu chỉnh sửa lúc " : " yêu cầu chỉnh sửa"}
-            {timeStr && <span className="font-semibold">{timeStr}</span>}
-          </p>
-          {revision.reason && (
-            <div className="mt-2 rounded-lg border border-amber-200 bg-white/60 px-3 py-2 text-sm text-amber-900">
-              {revision.reason}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* ── Section Nav ── */
 function SectionNav({ sections, activeId, onClickSection }: {
   sections: SectionNavItem[]; activeId: string | null; onClickSection: (id: string) => void;
@@ -151,112 +100,20 @@ function SectionNav({ sections, activeId, onClickSection }: {
   );
 }
 
-/* ── More actions menu ── */
-function MoreMenu({ canReview, status, onRequestRevision, onApprove, onLock }: {
-  canReview: boolean; status: string;
-  onRequestRevision?: () => void; onApprove?: () => void; onLock?: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const close = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, [open]);
-
-  const hasItems = (canReview && status === "SUBMITTED") || (canReview && status === "APPROVED");
-  if (!hasItems) return null;
-
-  return (
-    <div ref={ref} className="relative">
-      <Button variant="outline" size="sm" onClick={() => setOpen(!open)} aria-label="Thêm hành động"
-        className="h-9 w-9 p-0">
-        <MoreHorizontal className="h-4 w-4" />
-      </Button>
-      {open && (
-        <div className="absolute right-0 top-full z-50 mt-1 min-w-[200px] rounded-xl border border-slate-200 bg-white py-1 shadow-lg animate-in fade-in zoom-in-95 duration-150">
-          {canReview && status === "SUBMITTED" && (
-            <>
-              <button type="button" className="w-full px-4 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
-                onClick={() => { setOpen(false); onRequestRevision?.(); }}>
-                Yêu cầu chỉnh sửa
-              </button>
-              <button type="button" className="w-full px-4 py-2.5 text-left text-sm font-medium text-emerald-700 hover:bg-emerald-50"
-                onClick={() => { setOpen(false); onApprove?.(); }}>
-                Phê duyệt báo cáo
-              </button>
-            </>
-          )}
-          {canReview && status === "APPROVED" && (
-            <button type="button" className="w-full px-4 py-2.5 text-left text-sm font-medium text-slate-700 hover:bg-slate-50"
-              onClick={() => { setOpen(false); onLock?.(); }}>
-              Khóa hồ sơ
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function getSubmitDisabledReason({ editable, workflowPending, saveState }: {
-  editable: boolean; workflowPending: boolean; saveState: SaveState;
-}): string | undefined {
-  if (!editable) return "Báo cáo không ở trạng thái có thể chỉnh sửa.";
-  if (workflowPending) return "Đang xử lý gửi báo cáo...";
-  if (saveState === "saving") return "Đang lưu dữ liệu bản nháp...";
-  if (saveState === "error" || saveState === "conflict") return "Không thể gửi do lưu nháp đang có lỗi. Vui lòng bấm 'Thử lại'.";
-  return undefined;
-}
-
-/* ── Mobile bottom bar ── */
-function MobileBottomBar({ editable, workflowPending, saveState, onSaveDraft, onSubmit }: {
-  editable: boolean; workflowPending: boolean; saveState: SaveState; onSaveDraft: () => void; onSubmit: () => void;
-}) {
-  if (!editable) return null;
-  const submitDisabledReason = getSubmitDisabledReason({ editable, workflowPending, saveState });
-  const isSubmitDisabled = Boolean(submitDisabledReason);
-
-  return (
-    <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-slate-200 bg-white px-4 py-3 sm:hidden print:hidden safe-area-bottom"
-      style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
-      <div className="flex gap-2">
-        <Button variant="secondary" className="flex-1 h-11" onClick={onSaveDraft} disabled={saveState === "saving"}>
-          <Save className="mr-1.5 h-4 w-4" /> Lưu nháp
-        </Button>
-        <div title={submitDisabledReason} className="flex-1">
-          <Button className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50" onClick={onSubmit}
-            disabled={isSubmitDisabled}>
-            {workflowPending ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Send className="mr-1.5 h-4 w-4" />}
-            {workflowPending ? "Đang gửi..." : "Gửi báo cáo"}
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* ════════════════════════════════════════════════════
-   MAIN EDITOR HEADER COMPONENT (Page Header Action Bar in Normal Layout Flow)
+   MAIN EDITOR HEADER COMPONENT
    ════════════════════════════════════════════════════ */
 export function EditorHeader(props: EditorHeaderProps) {
   const {
-    title, weekLabel, dateRange, version, status, saveState, lastSavedAt, message,
-    editable, canReview, workflowPending, latestRevision,
-    onBackToList, onSaveDraft, onSubmit, onPreview, onRetrySave,
-    onRequestRevision, onApprove, onLock,
+    title, weekLabel, dateRange, version, saveState, lastSavedAt, message,
+    editable, onBackToList, onSaveDraft, onPreview, onRetrySave,
     sections, activeSectionId, onSectionClick,
   } = props;
 
-  const submitDisabledReason = getSubmitDisabledReason({ editable, workflowPending, saveState });
-  const isSubmitDisabled = Boolean(submitDisabledReason);
-
   return (
     <>
-      {/* ── Main Page Action Header (Normal Document Flow) ── */}
       <div className="space-y-0 print:hidden">
-        {/* Row A: Breadcrumb */}
+        {/* Breadcrumb */}
         <nav className="flex items-center gap-2 px-1 py-2 text-sm" aria-label="Breadcrumb">
           <Link href="/reports/weekly-inspection"
             onClick={() => { if (onBackToList) onBackToList(); }}
@@ -273,11 +130,9 @@ export function EditorHeader(props: EditorHeaderProps) {
           <span className="font-semibold text-slate-800">Soạn báo cáo</span>
         </nav>
 
-        {/* Row B + C + D: Main header card */}
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-          {/* Row B: Report info + status */}
+        {/* Main Header Card */}
+        <div className="rounded-xl border border-slate-200 bg-white shadow-xs">
           <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
-            {/* Left: Report info */}
             <div className="min-w-0 space-y-1">
               <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">{title}</h1>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600">
@@ -288,61 +143,37 @@ export function EditorHeader(props: EditorHeaderProps) {
                 <span>Phiên bản {version}</span>
               </div>
             </div>
-            {/* Right: Status + save */}
             <div className="flex flex-wrap items-center gap-3 shrink-0">
-              <StatusBadge status={status} />
               <SaveIndicator state={saveState} lastSavedAt={lastSavedAt} onRetry={onRetrySave} />
             </div>
           </div>
 
-          {/* Optional notification message banner */}
           {message && message !== "Đã lưu" && (
             <div className="border-t border-slate-100 bg-blue-50/50 px-4 py-2 text-xs font-medium text-blue-800 sm:px-5">
               {message}
             </div>
           )}
 
-          {/* Row C: Revision alert if needed */}
-          {status === "REVISION_REQUIRED" && latestRevision && (
-            <div className="border-t border-slate-100 px-4 pb-4 sm:px-5">
-              <RevisionAlert revision={latestRevision} />
-            </div>
-          )}
-
-          {/* Row D: Action bar (Normal Document Flow) */}
+          {/* Action bar */}
           <div data-testid="weekly-editor-action-bar" className="flex items-center justify-between gap-3 border-t border-slate-100 px-4 py-3 sm:px-5">
             <div className="text-xs text-slate-400 hidden md:block">
               Nhấn Ctrl+S để lưu nhanh
             </div>
             <div className="flex flex-wrap items-center gap-2 ml-auto">
-              <Button variant="ghost" size="sm" className="h-9 text-slate-600" onClick={onPreview}>
+              <Button variant="outline" size="sm" className="h-9 text-slate-700 border-slate-200" onClick={onPreview}>
                 <Eye className="mr-1.5 h-4 w-4" /> Xem trước
               </Button>
               {editable && (
-                <Button variant="outline" size="sm" className="h-9" onClick={onSaveDraft}
+                <Button size="sm" className="h-9 bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-xs" onClick={onSaveDraft}
                   disabled={saveState === "saving"}>
                   <Save className="mr-1.5 h-4 w-4" />
-                  {saveState === "saving" ? "Đang lưu..." : "Lưu nháp"}
+                  {saveState === "saving" ? "Đang lưu..." : "Lưu báo cáo"}
                 </Button>
               )}
-              {editable && (
-                <div title={submitDisabledReason} className="inline-block">
-                  <Button size="sm" className="h-9 bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-600/20 disabled:opacity-50"
-                    onClick={onSubmit}
-                    disabled={isSubmitDisabled}>
-                    {workflowPending
-                      ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                      : <Send className="mr-1.5 h-4 w-4" />}
-                    {workflowPending ? "Đang gửi..." : "Gửi báo cáo"}
-                  </Button>
-                </div>
-              )}
-              <MoreMenu canReview={canReview} status={status}
-                onRequestRevision={onRequestRevision} onApprove={onApprove} onLock={onLock} />
             </div>
           </div>
 
-          {/* Row E: Section navigation */}
+          {/* Section nav */}
           {sections.length > 0 && (
             <div className="border-t border-slate-100 px-4 sm:px-5">
               <SectionNav sections={sections} activeId={activeSectionId} onClickSection={onSectionClick} />
@@ -351,9 +182,14 @@ export function EditorHeader(props: EditorHeaderProps) {
         </div>
       </div>
 
-      {/* ── Mobile bottom bar ── */}
-      <MobileBottomBar editable={editable} workflowPending={workflowPending} saveState={saveState}
-        onSaveDraft={onSaveDraft} onSubmit={onSubmit} />
+      {/* Mobile Bottom Bar */}
+      {editable && (
+        <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-slate-200 bg-white px-4 py-3 sm:hidden print:hidden safe-area-bottom">
+          <Button className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold" onClick={onSaveDraft} disabled={saveState === "saving"}>
+            <Save className="mr-1.5 h-4 w-4" /> {saveState === "saving" ? "Đang lưu..." : "Lưu báo cáo"}
+          </Button>
+        </div>
+      )}
     </>
   );
 }

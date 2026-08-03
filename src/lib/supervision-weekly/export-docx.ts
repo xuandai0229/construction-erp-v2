@@ -1,6 +1,7 @@
 import * as docx from "docx";
 import type { SupervisionWeeklyPrintDto } from "./print-types";
-import { buildWeeklyDocumentModel, NEXT_WEEK_PLAN_GROUP_2_CATEGORIES } from "./document-model";
+import { buildWeeklyDocumentModel } from "./document-model";
+import { createWordHandwritingLines, HANDWRITING_LINE_CONFIG } from "@/lib/docx/handwriting-lines";
 
 const PAGE = {
   // `docx` swaps width/height when LANDSCAPE is set. Supply portrait A4
@@ -15,9 +16,16 @@ const PAGE = {
 };
 const USABLE_WIDTH = PAGE.landscapeWidth - PAGE.marginLeft - PAGE.marginRight;
 
-export async function exportSupervisionWeeklyDocx(dossier: SupervisionWeeklyPrintDto, documentType: "RESULT" | "NEXT_WEEK_PLAN"): Promise<any> {
+const CELL_MARGIN = { top: 120, bottom: 120, left: 140, right: 140 }; // ~6pt top/bottom, 7pt left/right
+
+export async function exportSupervisionWeeklyDocx(
+  dossier: SupervisionWeeklyPrintDto,
+  documentType: "RESULT" | "NEXT_WEEK_PLAN",
+  options?: { isHandwrittenForm?: boolean }
+): Promise<Buffer> {
   const model = buildWeeklyDocumentModel(dossier, documentType);
   const isResult = documentType === "RESULT";
+  const isHandwritten = options?.isHandwrittenForm ?? false;
   
   const headerTable = new docx.Table({
     width: { size: USABLE_WIDTH, type: docx.WidthType.DXA },
@@ -29,6 +37,7 @@ export async function exportSupervisionWeeklyDocx(dossier: SupervisionWeeklyPrin
         cantSplit: true,
         children: [
           new docx.TableCell({
+            margins: CELL_MARGIN,
             children: [
               new docx.Paragraph({ children: [new docx.TextRun({ text: model.metadata.companyName, bold: true })], alignment: docx.AlignmentType.CENTER }),
               new docx.Paragraph({ children: [new docx.TextRun({ text: model.metadata.companySubName, bold: true })], alignment: docx.AlignmentType.CENTER }),
@@ -36,10 +45,11 @@ export async function exportSupervisionWeeklyDocx(dossier: SupervisionWeeklyPrin
             ],
           }),
           new docx.TableCell({
+            margins: CELL_MARGIN,
             children: [
               new docx.Paragraph({ children: [new docx.TextRun({ text: model.metadata.nationalMottoLine1, bold: true })], alignment: docx.AlignmentType.CENTER }),
               new docx.Paragraph({ children: [new docx.TextRun({ text: model.metadata.nationalMottoLine2, bold: true })], alignment: docx.AlignmentType.CENTER }),
-              new docx.Paragraph({ text: `${model.metadata.place}, ngày ${model.metadata.issueDate.split("/")[0]} tháng ${model.metadata.issueDate.split("/")[1]} năm ${model.metadata.issueDate.split("/")[2]}`, alignment: docx.AlignmentType.CENTER }),
+              new docx.Paragraph({ text: model.metadata.documentDateLine, alignment: docx.AlignmentType.CENTER }),
             ],
           }),
         ]
@@ -48,17 +58,17 @@ export async function exportSupervisionWeeklyDocx(dossier: SupervisionWeeklyPrin
   });
 
   const titleSection = [
-    new docx.Paragraph({ text: "", spacing: { after: 300 } }),
+    new docx.Paragraph({ text: "", spacing: { after: 200 } }),
     new docx.Paragraph({
       children: [new docx.TextRun({ text: model.metadata.title, bold: true, size: 28 })],
       alignment: docx.AlignmentType.CENTER,
-      spacing: { after: 100 },
+      spacing: { after: 80 },
       keepNext: true,
     }),
     new docx.Paragraph({
       text: `Thời gian báo cáo: Từ ngày ${model.metadata.weekStart} đến ngày ${model.metadata.weekEnd}`,
       alignment: docx.AlignmentType.CENTER,
-      spacing: { after: 300 },
+      spacing: { after: 240 },
       keepNext: true,
     }),
     new docx.Paragraph({
@@ -75,28 +85,28 @@ export async function exportSupervisionWeeklyDocx(dossier: SupervisionWeeklyPrin
         new docx.TextRun({ text: model.metadata.recipientTitle, bold: true })
       ],
       alignment: docx.AlignmentType.LEFT,
-      spacing: { after: 300 },
+      spacing: { after: 240 },
       keepNext: true,
     }),
   ];
 
   const tableBorders = {
-    top: { style: docx.BorderStyle.SINGLE, size: 1 },
-    bottom: { style: docx.BorderStyle.SINGLE, size: 1 },
-    left: { style: docx.BorderStyle.SINGLE, size: 1 },
-    right: { style: docx.BorderStyle.SINGLE, size: 1 },
-    insideHorizontal: { style: docx.BorderStyle.SINGLE, size: 1 },
-    insideVertical: { style: docx.BorderStyle.SINGLE, size: 1 },
+    top: { style: docx.BorderStyle.SINGLE, size: 4, color: "000000" },
+    bottom: { style: docx.BorderStyle.SINGLE, size: 4, color: "000000" },
+    left: { style: docx.BorderStyle.SINGLE, size: 4, color: "000000" },
+    right: { style: docx.BorderStyle.SINGLE, size: 4, color: "000000" },
+    insideHorizontal: { style: docx.BorderStyle.SINGLE, size: 4, color: "000000" },
+    insideVertical: { style: docx.BorderStyle.SINGLE, size: 4, color: "000000" },
   };
 
   const scheduleHeaderRow = new docx.TableRow({
     tableHeader: true,
     cantSplit: true,
     children: [
-      new docx.TableCell({ children: [new docx.Paragraph({ text: isResult ? "Thời gian kiểm tra" : "Ngày/thứ", style: "TableHeader" })], shading: { fill: "EEEEEE" } }),
-      new docx.TableCell({ children: [new docx.Paragraph({ text: isResult ? "Công trình và hạng mục kiểm tra" : "Công trình", style: "TableHeader" })], shading: { fill: "EEEEEE" } }),
-      new docx.TableCell({ children: [new docx.Paragraph({ text: isResult ? "Nội dung kiểm tra" : "Phát sinh do chỉ huy công trình đề xuất", style: "TableHeader" })], shading: { fill: "EEEEEE" } }),
-      new docx.TableCell({ children: [new docx.Paragraph({ text: isResult ? "Kết quả" : "Nội dung (có phụ lục kèm theo)", style: "TableHeader" })], shading: { fill: "EEEEEE" } }),
+      new docx.TableCell({ margins: CELL_MARGIN, children: [new docx.Paragraph({ text: isResult ? "Thời gian kiểm tra" : "Ngày/thứ", style: "TableHeader" })], shading: { fill: "EEEEEE" }, verticalAlign: docx.VerticalAlign.CENTER }),
+      new docx.TableCell({ margins: CELL_MARGIN, children: [new docx.Paragraph({ text: isResult ? "Công trình và hạng mục kiểm tra" : "Công trình", style: "TableHeader" })], shading: { fill: "EEEEEE" }, verticalAlign: docx.VerticalAlign.CENTER }),
+      new docx.TableCell({ margins: CELL_MARGIN, children: [new docx.Paragraph({ text: isResult ? "Nội dung kiểm tra" : "Phát sinh do chỉ huy công trình đề xuất", style: "TableHeader" })], shading: { fill: "EEEEEE" }, verticalAlign: docx.VerticalAlign.CENTER }),
+      new docx.TableCell({ margins: CELL_MARGIN, children: [new docx.Paragraph({ text: isResult ? "Kết quả" : "Nội dung (có phụ lục kèm theo)", style: "TableHeader" })], shading: { fill: "EEEEEE" }, verticalAlign: docx.VerticalAlign.CENTER }),
     ],
   });
 
@@ -115,22 +125,22 @@ export async function exportSupervisionWeeklyDocx(dossier: SupervisionWeeklyPrin
         
         const timeText = i === 0 ? (sIdx === 0 ? `${day.weekdayLabel}:\n${shiftLabels[sIdx]}` : shiftLabels[sIdx]) : "";
         cells.push(new docx.TableCell({
+          margins: CELL_MARGIN,
           children: timeText ? timeText.split("\n").map(t => new docx.Paragraph({ children: [new docx.TextRun({ text: t, bold: true })] })) : [new docx.Paragraph("")],
           verticalAlign: docx.VerticalAlign.CENTER,
         }));
 
-        // Render Data Cells
         if (rowData) {
           cells.push(
-            new docx.TableCell({ children: rowData.sourceText.split("\n").map(t => new docx.Paragraph(t)) }),
-            new docx.TableCell({ children: rowData.content.split("\n").map(t => new docx.Paragraph(t)) }),
-            new docx.TableCell({ children: rowData.result.split("\n").map(t => new docx.Paragraph(t)) })
+            new docx.TableCell({ margins: CELL_MARGIN, children: rowData.sourceText.split("\n").map(t => new docx.Paragraph(t)), verticalAlign: docx.VerticalAlign.TOP }),
+            new docx.TableCell({ margins: CELL_MARGIN, children: rowData.content.split("\n").map(t => new docx.Paragraph(t)), verticalAlign: docx.VerticalAlign.TOP }),
+            new docx.TableCell({ margins: CELL_MARGIN, children: rowData.result.split("\n").map(t => new docx.Paragraph(t)), verticalAlign: docx.VerticalAlign.TOP })
           );
         } else {
           cells.push(
-            new docx.TableCell({ children: [new docx.Paragraph("")] }),
-            new docx.TableCell({ children: [new docx.Paragraph("")] }),
-            new docx.TableCell({ children: [new docx.Paragraph("")] })
+            new docx.TableCell({ margins: CELL_MARGIN, children: [new docx.Paragraph("")], verticalAlign: docx.VerticalAlign.TOP }),
+            new docx.TableCell({ margins: CELL_MARGIN, children: [new docx.Paragraph("")], verticalAlign: docx.VerticalAlign.TOP }),
+            new docx.TableCell({ margins: CELL_MARGIN, children: [new docx.Paragraph("")], verticalAlign: docx.VerticalAlign.TOP })
           );
         }
 
@@ -158,8 +168,8 @@ export async function exportSupervisionWeeklyDocx(dossier: SupervisionWeeklyPrin
         }),
       ],
       spacing: {
-        before: 160,
-        after: 80,
+        before: 200,
+        after: 100,
       },
       keepNext: true,
     });
@@ -175,24 +185,24 @@ export async function exportSupervisionWeeklyDocx(dossier: SupervisionWeeklyPrin
     const transitionHeader = new docx.TableRow({
       tableHeader: true, cantSplit: true,
       children: ["STT", "Công trình và hạng mục kiểm tra", "Khối lượng báo cáo", "Khối lượng kiểm tra", "Chênh lệch", "Tiến độ đề ra"].map((t: string) => 
-        new docx.TableCell({ children: [new docx.Paragraph({ text: t, style: "TableHeader" })], shading: { fill: "EEEEEE" } })
+        new docx.TableCell({ margins: CELL_MARGIN, children: [new docx.Paragraph({ text: t, style: "TableHeader" })], shading: { fill: "EEEEEE" }, verticalAlign: docx.VerticalAlign.CENTER })
       )
     });
     const transitionRowsList = model.transitionRows.map((row, idx) => {
       return new docx.TableRow({
         cantSplit: true,
         children: [
-          new docx.TableCell({ children: [new docx.Paragraph((idx + 1).toString())] }),
-          new docx.TableCell({ children: row.sourceText.split("\n").map(t => new docx.Paragraph(t)) }),
-          new docx.TableCell({ children: [new docx.Paragraph(row.reportedText)] }),
-          new docx.TableCell({ children: [new docx.Paragraph(row.verifiedText)] }),
-          new docx.TableCell({ children: [new docx.Paragraph(row.varianceText)] }),
-          new docx.TableCell({ children: row.plannedProgress.split("\n").map(t => new docx.Paragraph(t)) }),
+          new docx.TableCell({ margins: CELL_MARGIN, children: [new docx.Paragraph((idx + 1).toString())], verticalAlign: docx.VerticalAlign.CENTER }),
+          new docx.TableCell({ margins: CELL_MARGIN, children: row.sourceText.split("\n").map(t => new docx.Paragraph(t)), verticalAlign: docx.VerticalAlign.TOP }),
+          new docx.TableCell({ margins: CELL_MARGIN, children: [new docx.Paragraph(row.reportedText)], verticalAlign: docx.VerticalAlign.TOP }),
+          new docx.TableCell({ margins: CELL_MARGIN, children: [new docx.Paragraph(row.verifiedText)], verticalAlign: docx.VerticalAlign.TOP }),
+          new docx.TableCell({ margins: CELL_MARGIN, children: [new docx.Paragraph(row.varianceText)], verticalAlign: docx.VerticalAlign.TOP }),
+          new docx.TableCell({ margins: CELL_MARGIN, children: row.plannedProgress.split("\n").map(t => new docx.Paragraph(t)), verticalAlign: docx.VerticalAlign.TOP }),
         ]
       });
     });
     if (transitionRowsList.length === 0) {
-      transitionRowsList.push(new docx.TableRow({ cantSplit: true, children: Array(6).fill(new docx.TableCell({ children: [new docx.Paragraph("")] })) }));
+      transitionRowsList.push(new docx.TableRow({ cantSplit: true, children: Array(6).fill(new docx.TableCell({ margins: CELL_MARGIN, children: [new docx.Paragraph("")] })) }));
     }
     sectionsList.push(
       createSectionHeaderDocx("II. Công tác kiểm tra điều kiện chuyển bước thi công"),
@@ -209,23 +219,23 @@ export async function exportSupervisionWeeklyDocx(dossier: SupervisionWeeklyPrin
     const quantityHeader = new docx.TableRow({
       tableHeader: true, cantSplit: true,
       children: ["STT", "Công trình, hạng mục", "Khối lượng báo cáo", "Khối lượng kiểm tra", "Chênh lệch so với thực tế"].map((t: string) => 
-        new docx.TableCell({ children: [new docx.Paragraph({ text: t, style: "TableHeader" })], shading: { fill: "EEEEEE" } })
+        new docx.TableCell({ margins: CELL_MARGIN, children: [new docx.Paragraph({ text: t, style: "TableHeader" })], shading: { fill: "EEEEEE" }, verticalAlign: docx.VerticalAlign.CENTER })
       )
     });
     const quantityRowsList = model.quantityRows.map((row, idx) => {
       return new docx.TableRow({
         cantSplit: true,
         children: [
-          new docx.TableCell({ children: [new docx.Paragraph((idx + 1).toString())] }),
-          new docx.TableCell({ children: row.sourceText.split("\n").map(t => new docx.Paragraph(t)) }),
-          new docx.TableCell({ children: [new docx.Paragraph(row.reportedText)] }),
-          new docx.TableCell({ children: [new docx.Paragraph(row.verifiedText)] }),
-          new docx.TableCell({ children: [new docx.Paragraph(row.varianceText)] }),
+          new docx.TableCell({ margins: CELL_MARGIN, children: [new docx.Paragraph((idx + 1).toString())], verticalAlign: docx.VerticalAlign.CENTER }),
+          new docx.TableCell({ margins: CELL_MARGIN, children: row.sourceText.split("\n").map(t => new docx.Paragraph(t)), verticalAlign: docx.VerticalAlign.TOP }),
+          new docx.TableCell({ margins: CELL_MARGIN, children: [new docx.Paragraph(row.reportedText)], verticalAlign: docx.VerticalAlign.TOP }),
+          new docx.TableCell({ margins: CELL_MARGIN, children: [new docx.Paragraph(row.verifiedText)], verticalAlign: docx.VerticalAlign.TOP }),
+          new docx.TableCell({ margins: CELL_MARGIN, children: [new docx.Paragraph(row.varianceText)], verticalAlign: docx.VerticalAlign.TOP }),
         ]
       });
     });
     if (quantityRowsList.length === 0) {
-      quantityRowsList.push(new docx.TableRow({ cantSplit: true, children: Array(5).fill(new docx.TableCell({ children: [new docx.Paragraph("")] })) }));
+      quantityRowsList.push(new docx.TableRow({ cantSplit: true, children: Array(5).fill(new docx.TableCell({ margins: CELL_MARGIN, children: [new docx.Paragraph("")] })) }));
     }
     sectionsList.push(
       createSectionHeaderDocx("III. Công tác đo, kiểm tra khối lượng đã thi công"),
@@ -242,23 +252,23 @@ export async function exportSupervisionWeeklyDocx(dossier: SupervisionWeeklyPrin
     const progressHeader = new docx.TableRow({
       tableHeader: true, cantSplit: true,
       children: ["STT", "Công trình/hạng mục", "Tiến độ theo kế hoạch", "Chậm tiến độ\n(Tiến độ thực tế đạt được)", "Lý do chậm tiến độ"].map((t: string) => 
-        new docx.TableCell({ children: t.split("\n").map(line => new docx.Paragraph({ text: line, style: "TableHeader" })), shading: { fill: "EEEEEE" } })
+        new docx.TableCell({ margins: CELL_MARGIN, children: t.split("\n").map(line => new docx.Paragraph({ text: line, style: "TableHeader" })), shading: { fill: "EEEEEE" }, verticalAlign: docx.VerticalAlign.CENTER })
       )
     });
     const progressRowsList = model.progressRows.map((row, idx) => {
       return new docx.TableRow({
         cantSplit: true,
         children: [
-          new docx.TableCell({ children: [new docx.Paragraph((idx + 1).toString())] }),
-          new docx.TableCell({ children: row.sourceText.split("\n").map(t => new docx.Paragraph(t)) }),
-          new docx.TableCell({ children: [new docx.Paragraph(row.plannedProgress)] }),
-          new docx.TableCell({ children: [new docx.Paragraph(row.actualProgress)] }),
-          new docx.TableCell({ children: [new docx.Paragraph(row.delayReason)] }),
+          new docx.TableCell({ margins: CELL_MARGIN, children: [new docx.Paragraph((idx + 1).toString())], verticalAlign: docx.VerticalAlign.CENTER }),
+          new docx.TableCell({ margins: CELL_MARGIN, children: row.sourceText.split("\n").map(t => new docx.Paragraph(t)), verticalAlign: docx.VerticalAlign.TOP }),
+          new docx.TableCell({ margins: CELL_MARGIN, children: [new docx.Paragraph(row.plannedProgress)], verticalAlign: docx.VerticalAlign.TOP }),
+          new docx.TableCell({ margins: CELL_MARGIN, children: [new docx.Paragraph(row.actualProgress)], verticalAlign: docx.VerticalAlign.TOP }),
+          new docx.TableCell({ margins: CELL_MARGIN, children: [new docx.Paragraph(row.delayReason)], verticalAlign: docx.VerticalAlign.TOP }),
         ]
       });
     });
     if (progressRowsList.length === 0) {
-      progressRowsList.push(new docx.TableRow({ cantSplit: true, children: Array(5).fill(new docx.TableCell({ children: [new docx.Paragraph("")] })) }));
+      progressRowsList.push(new docx.TableRow({ cantSplit: true, children: Array(5).fill(new docx.TableCell({ margins: CELL_MARGIN, children: [new docx.Paragraph("")] })) }));
     }
     sectionsList.push(
       createSectionHeaderDocx("IV. Tiến độ tổng và thực tế"),
@@ -279,32 +289,27 @@ export async function exportSupervisionWeeklyDocx(dossier: SupervisionWeeklyPrin
       sectionsList.push(
         new docx.Paragraph({ 
           children: [
-            new docx.TextRun({ text: `${r.order}. `, font: "Times New Roman" }),
-            new docx.TextRun({ text: r.title, font: "Times New Roman" })
+            new docx.TextRun({ text: `${r.order}. `, font: "Times New Roman", bold: true }),
+            new docx.TextRun({ text: r.title, font: "Times New Roman", bold: true })
           ], 
-          spacing: { before: 120, after: 60 },
+          spacing: { before: 120, after: 40 },
           keepNext: true
         })
       );
 
       if (r.isEmpty) {
-        const CONTENT_INDENT = 567;
-        for (let j = 0; j < 3; j++) {
-          sectionsList.push(
-            new docx.Paragraph({
-              children: [new docx.TextRun({ text: "" })],
-              spacing: { before: 200, after: 120 },
-              indent: { left: CONTENT_INDENT },
-              border: { bottom: { color: "000000", space: 1, style: docx.BorderStyle.DOTTED, size: 18 } }
-            })
-          );
-        }
+        // Business Rule: Standardized line counts via central HANDWRITING_LINE_CONFIG
+        const lineCount = r.order === 1
+          ? HANDWRITING_LINE_CONFIG.previousWeekFollowUp
+          : HANDWRITING_LINE_CONFIG.verificationAfterCorrection;
+
+        sectionsList.push(...createWordHandwritingLines({ count: lineCount, leftIndent: 567, rightPosition: USABLE_WIDTH }));
       } else {
         sectionsList.push(
           new docx.Paragraph({
             children: r.content.split("\n").map((t, idx) => new docx.TextRun({ text: t, break: idx > 0 ? 1 : undefined, font: "Times New Roman" })),
             indent: { left: 567 },
-            spacing: { before: 60, after: 120 }
+            spacing: { before: 40, after: 80 }
           })
         );
       }
@@ -318,42 +323,29 @@ export async function exportSupervisionWeeklyDocx(dossier: SupervisionWeeklyPrin
       sectionsList.push(
         new docx.Paragraph({ 
           children: [
-            new docx.TextRun({ text: `${r.order}. ` }),
-            new docx.TextRun({ text: r.title })
+            new docx.TextRun({ text: `${r.order}. `, font: "Times New Roman", bold: true }),
+            new docx.TextRun({ text: r.title, font: "Times New Roman", bold: true })
           ], 
-          spacing: { before: 120, after: 60 },
+          spacing: { before: 120, after: 40 },
           keepNext: true
         })
       );
 
       if (r.isEmpty) {
-        // Render dotted lines using paragraph bottom border for thicker dots
-        const CONTENT_INDENT = 567; // 1cm
-        for (let j = 0; j < 3; j++) {
-          sectionsList.push(
-            new docx.Paragraph({
-              children: [new docx.TextRun({ text: "" })],
-              indent: {
-                left: CONTENT_INDENT,
-              },
-              spacing: { before: 180, after: 0 },
-              border: {
-                bottom: {
-                  color: "000000",
-                  space: 1,
-                  style: docx.BorderStyle.DOTTED,
-                  size: 18,
-                },
-              },
-            })
-          );
-        }
+        // Business Rule: Standardized line counts via central HANDWRITING_LINE_CONFIG
+        let lineCount = HANDWRITING_LINE_CONFIG.defaultNarrative;
+        if (r.order === 1) lineCount = HANDWRITING_LINE_CONFIG.manpowerAndEquipment;
+        else if (r.order === 2) lineCount = HANDWRITING_LINE_CONFIG.progressDirection;
+        else if (r.order === 3) lineCount = HANDWRITING_LINE_CONFIG.technicalMaterialIssues;
+        else if (r.order === 4) lineCount = HANDWRITING_LINE_CONFIG.otherComments;
+
+        sectionsList.push(...createWordHandwritingLines({ count: lineCount, leftIndent: 567, rightPosition: USABLE_WIDTH }));
       } else {
         sectionsList.push(
-          new docx.Paragraph({ 
-            children: r.content.split("\n").map((t, idx) => new docx.TextRun({ text: t, break: idx > 0 ? 1 : undefined })), 
+          new docx.Paragraph({
+            children: r.content.split("\n").map((t, idx) => new docx.TextRun({ text: t, break: idx > 0 ? 1 : undefined, font: "Times New Roman" })),
             indent: { left: 567 },
-            spacing: { before: 40, after: 60 }
+            spacing: { before: 40, after: 80 }
           })
         );
       }
@@ -370,11 +362,12 @@ export async function exportSupervisionWeeklyDocx(dossier: SupervisionWeeklyPrin
       new docx.TableRow({
         cantSplit: true,
         children: [
-          new docx.TableCell({ children: [new docx.Paragraph("")] }),
+          new docx.TableCell({ margins: CELL_MARGIN, children: [new docx.Paragraph("")] }),
           new docx.TableCell({
+            margins: CELL_MARGIN,
             children: [
-              new docx.Paragraph({ children: [new docx.TextRun({ text: "NGƯỜI LẬP BÁO CÁO", bold: true })], alignment: docx.AlignmentType.CENTER }),
-              new docx.Paragraph({ children: [new docx.TextRun({ text: "(Ký, ghi rõ họ tên)", italics: true })], alignment: docx.AlignmentType.CENTER, spacing: { after: 800 } }),
+              new docx.Paragraph({ children: [new docx.TextRun({ text: "NGƯỜI LẬP BÁO CÁO", bold: true })], alignment: docx.AlignmentType.CENTER, keepNext: true }),
+              new docx.Paragraph({ children: [new docx.TextRun({ text: "(Ký, ghi rõ họ tên)", italics: true })], alignment: docx.AlignmentType.CENTER, spacing: { after: 800 }, keepNext: true }),
               new docx.Paragraph({ children: [new docx.TextRun({ text: model.metadata.creatorName, bold: true })], alignment: docx.AlignmentType.CENTER }),
             ],
           }),
@@ -384,7 +377,7 @@ export async function exportSupervisionWeeklyDocx(dossier: SupervisionWeeklyPrin
   });
 
   sectionsList.push(
-    new docx.Paragraph({ text: "", spacing: { before: 400 }, keepNext: true }),
+    new docx.Paragraph({ text: "", spacing: { before: 300 }, keepNext: true }),
     signatureTable
   );
 

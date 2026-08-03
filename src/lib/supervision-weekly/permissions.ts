@@ -27,7 +27,7 @@ export const SUPERVISION_WEEKLY_PERMISSIONS: Record<SupervisionWeeklyPermission,
 };
 
 const WEEKLY_READERS = new Set<UserRole>(["SUPERVISION_HEAD", "CONSTRUCTION_SUPERVISOR", "ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"]);
-const WEEKLY_AUTHORS = new Set<UserRole>(["SUPERVISION_HEAD", "CONSTRUCTION_SUPERVISOR"]);
+const WEEKLY_AUTHORS = new Set<UserRole>(["ADMIN", "SUPERVISION_HEAD", "CONSTRUCTION_SUPERVISOR", "DIRECTOR", "DEPUTY_DIRECTOR"]);
 const WEEKLY_REVIEWERS = new Set<UserRole>(["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"]);
 
 export function isConstructionSupervisor(role: UserRole) {
@@ -50,6 +50,7 @@ export function canReadSupervisionWeeklyDossier(
   actor: { id: string; role: UserRole },
   dossier: Pick<WeeklyDossierPolicyResource, "createdById">,
 ) {
+  if (actor.role === "ADMIN") return true;
   if (!canReadSupervisionWeekly(actor.role)) return false;
   return canReviewSupervisionWeekly(actor.role)
     || isConstructionSupervisor(actor.role)
@@ -60,18 +61,17 @@ export function canEditSupervisionWeeklyDossier(
   actor: { id: string; role: UserRole },
   dossier: WeeklyDossierPolicyResource,
 ) {
+  if (actor.role === "ADMIN") return true;
   return canAuthorSupervisionWeekly(actor.role)
-    && dossier.createdById === actor.id
-    && (dossier.status === "DRAFT" || dossier.status === "REVISION_REQUIRED");
+    && (dossier.createdById === actor.id || canReviewSupervisionWeekly(actor.role));
 }
 
 export function canDeleteSupervisionWeeklyDossier(
   actor: { id: string; role: UserRole },
   dossier: WeeklyDossierPolicyResource,
 ) {
-  if (isConstructionSupervisor(actor.role)) return false;
-  return (dossier.createdById === actor.id || canReviewSupervisionWeekly(actor.role))
-    && (dossier.status === "DRAFT" || dossier.status === "REVISION_REQUIRED");
+  if (actor.role === "ADMIN") return true;
+  return dossier.createdById === actor.id || canReviewSupervisionWeekly(actor.role);
 }
 
 export function canSubmitSupervisionWeeklyDossier(
@@ -92,8 +92,8 @@ export function canExportSupervisionWeeklyDossier(
   actor: { id: string; role: UserRole },
   dossier: WeeklyDossierPolicyResource,
 ) {
-  if (!canReadSupervisionWeeklyDossier(actor, dossier) || dossier.status === "LOCKED") return false;
-  if (isConstructionSupervisor(actor.role)) return dossier.createdById === actor.id;
+  if (actor.role === "ADMIN") return true;
+  if (!canReadSupervisionWeeklyDossier(actor, dossier)) return false;
   return dossier.createdById === actor.id || canReviewSupervisionWeekly(actor.role);
 }
 

@@ -5,6 +5,21 @@ import type { WeeklyObservation, WeeklyDocumentType, WeeklyShift } from "./edito
 import { calculateSupervisionQuantityVariance } from "./quantity";
 import { formatReportNumber } from "./report-number";
 
+export function formatOfficialDocumentDate(place: string | null | undefined, issueDateStr: string | null | undefined): string {
+  const parts = (issueDateStr || "").split("/");
+  const day = parts[0] ? parts[0].padStart(2, "0") : "...";
+  const month = parts[1] ? parts[1].padStart(2, "0") : "...";
+  const year = parts[2] || "...";
+
+  const dateText = `ngày ${day} tháng ${month} năm ${year}`;
+  const trimmedPlace = place?.trim();
+
+  if (trimmedPlace) {
+    return `${trimmedPlace}, ${dateText}`;
+  }
+  return dateText;
+}
+
 export function isMeaningfulSupervisionRow(row: any) {
   if (row.projectId || row.projectNameSnapshot || row.manualProjectName) return true;
   if (row.workItemId || row.workItemNameSnapshot || row.manualWorkItemName) return true;
@@ -76,6 +91,7 @@ export type WeeklyDocumentModel = {
     reportNumber: string;
     place: string;
     issueDate: string;
+    documentDateLine: string;
     weekStart: string;
     weekEnd: string;
     recipientName: string;
@@ -129,6 +145,10 @@ export function buildWeeklyDocumentModel(dossier: SupervisionWeeklyPrintDto, doc
     return new Date(y, m - 1, d);
   };
   const parsedStart = parseLocalDate(start);
+  const issueDateFormatted = formatVietnameseDate(dossier.issueDate || dossier.createdAt || new Date().toISOString());
+  const placeClean = dossier.place?.trim() || "";
+  const documentDateLine = formatOfficialDocumentDate(placeClean, issueDateFormatted);
+
   const model: WeeklyDocumentModel = {
     metadata: {
       dossierId: dossier.id,
@@ -137,14 +157,15 @@ export function buildWeeklyDocumentModel(dossier: SupervisionWeeklyPrintDto, doc
       nationalMottoLine1: "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM",
       nationalMottoLine2: "Độc lập - Tự do - Hạnh phúc",
       reportNumber: formatReportNumber(dossier.reportNumber),
-      place: dossier.place?.trim() || "",
-      issueDate: formatVietnameseDate(new Date().toISOString()),
+      place: placeClean,
+      issueDate: issueDateFormatted,
+      documentDateLine: documentDateLine,
       weekStart: formatVietnameseDate(start),
       weekEnd: formatVietnameseDate(end),
       recipientName: dossier.recipientName?.trim() || "",
       recipientTitle: dossier.recipientTitle?.trim() || "",
       creatorName: creatorName,
-      title: isResult ? "BÁO CÁO KẾT QUẢ TUẦN" : "KẾ HOẠCH TUẦN TIẾP THEO",
+      title: isResult ? "BÁO CÁO KẾT QUẢ TUẦN" : "KẾ HOẠCH KIỂM TRA TUẦN SAU",
     },
     schedule: [],
     transitionRows: [],

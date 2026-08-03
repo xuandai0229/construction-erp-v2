@@ -181,7 +181,7 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
           {/* User Profile Action Menu */}
           <UnifiedActionMenu
             ariaLabel="Menu tài khoản người dùng"
-            menuWidth="w-56"
+            menuWidth="w-64"
             align="right"
             trigger={
               <div className="flex items-center gap-2.5 group cursor-pointer pr-1 py-1 rounded-xl hover:bg-slate-100/60 transition-colors">
@@ -207,26 +207,49 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
                 </div>
               </div>
             }
-            items={[
-              {
-                id: 'view-profile',
-                label: userName || 'Tài khoản người dùng',
-                icon: <User className="h-4 w-4 text-blue-600" />,
-                onClick: () => {
-                  if (canViewNavigationItem(resolvedRole, '/users')) {
-                    router.push('/users');
-                  }
-                },
-              },
-              {
-                id: 'logout',
-                label: 'Đăng xuất khỏi hệ thống',
-                icon: <LogOut className="h-4 w-4 text-rose-600" />,
-                variant: 'destructive',
-                onClick: handleLogout,
-              },
-            ]}
-          />
+          >
+            <div className="p-2 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-xs">
+                  {userName ? userName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'U'}
+                </div>
+                <div className="min-w-0">
+                  <div className="font-bold text-xs text-slate-900 truncate">{userName || 'Người dùng'}</div>
+                  <div className="text-[11px] text-slate-500 font-medium truncate">{userRole || 'Thành viên'}</div>
+                </div>
+              </div>
+            </div>
+            <div className="p-1 space-y-0.5">
+              {canViewNavigationItem(resolvedRole, '/users') && (
+                <button
+                  type="button"
+                  onClick={() => router.push('/users')}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs font-semibold text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
+                >
+                  <UserCog className="h-4 w-4 text-slate-500" />
+                  <span>Quản lý tài khoản</span>
+                </button>
+              )}
+              {canViewNavigationItem(resolvedRole, '/settings') && (
+                <button
+                  type="button"
+                  onClick={() => router.push('/settings')}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs font-semibold text-slate-700 rounded-lg hover:bg-slate-100 transition-colors"
+                >
+                  <Settings className="h-4 w-4 text-slate-500" />
+                  <span>Cài đặt hệ thống</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs font-semibold text-rose-600 rounded-lg hover:bg-rose-50 transition-colors"
+              >
+                <LogOut className="h-4 w-4 text-rose-600" />
+                <span>Đăng xuất khỏi hệ thống</span>
+              </button>
+            </div>
+          </UnifiedActionMenu>
         </div>
       </header>
 

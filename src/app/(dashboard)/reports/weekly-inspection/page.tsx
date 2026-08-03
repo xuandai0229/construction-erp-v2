@@ -43,7 +43,6 @@ export default async function WeeklyInspectionPage({
       currentUserRole={session.role}
       canCreate={canAuthorSupervisionWeekly(session.role)}
       initialSearch={initialSearch}
-      initialStatus={initialStatus}
       initialProjectId={initialProjectId}
       initialSort={initialSort}
       hidePageHeader={false}

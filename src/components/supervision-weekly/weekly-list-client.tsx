@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useMemo, useTransition, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   CalendarPlus,
   FileText,
@@ -15,24 +16,18 @@ import {
   AlertTriangle,
   Building2,
   Calendar,
-  Clock,
   Printer,
-  CheckCircle2,
-  XCircle,
+  Download,
   RotateCcw,
-  Layers,
-  ChevronLeft,
-  ChevronRight,
-  Info,
-  Filter,
-  Plus,
-  ExternalLink,
   ArrowLeft,
+  FolderKanban,
+  FileSpreadsheet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PageHeader, PageHeading, ContentCard, FilterBar } from "@/components/ui/enterprise";
+import { ContentCard, FilterBar } from "@/components/ui/enterprise";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast-context";
+import { UnifiedActionMenu } from "@/components/ui/unified-action-menu";
 import {
   createSupervisionWeeklyDossier,
   deleteSupervisionWeeklyDossier,
@@ -69,15 +64,6 @@ type DossierRow = {
     progressCount: number;
     totalItems: number;
   };
-};
-
-// Standardized status vocabulary across Supervision module
-const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; border: string; icon: any }> = {
-  DRAFT: { label: "Bản nháp", bg: "bg-slate-100", text: "text-slate-700", border: "border-slate-300", icon: Edit3 },
-  SUBMITTED: { label: "Chờ duyệt", bg: "bg-amber-50", text: "text-amber-800", border: "border-amber-200", icon: Clock },
-  REVISION_REQUIRED: { label: "Yêu cầu chỉnh sửa", bg: "bg-rose-50", text: "text-rose-800", border: "border-rose-200", icon: AlertTriangle },
-  APPROVED: { label: "Đã duyệt", bg: "bg-emerald-50", text: "text-emerald-800", border: "border-emerald-200", icon: CheckCircle2 },
-  LOCKED: { label: "Đã khóa", bg: "bg-indigo-50", text: "text-indigo-800", border: "border-indigo-200", icon: Layers },
 };
 
 function formatDateVN(dateStr: string) {
@@ -128,15 +114,137 @@ function getWeekNumber(dateStr: string) {
   }
 }
 
+function sanitizeUserError(msg?: string): string {
+  if (!msg) return "Đã có lỗi xảy ra. Vui lòng thử lại.";
+  if (
+    msg.includes("Prisma") ||
+    msg.includes("invocation") ||
+    msg.includes("D:\\") ||
+    msg.includes(".next") ||
+    msg.includes("node_modules")
+  ) {
+    return "Đã có lỗi hệ thống xảy ra. Vui lòng thử lại sau.";
+  }
+  return msg;
+}
+
+function ProjectPopoverPortal({
+  popoverId,
+  triggerEl,
+  displayCode,
+  weekNum,
+  year,
+  projectList,
+  onClose,
+}: {
+  popoverId: string;
+  triggerEl: HTMLElement | null;
+  displayCode: string;
+  weekNum: number;
+  year: number;
+  projectList: { id?: string; name: string }[];
+  onClose: () => void;
+}) {
+  const [coords, setCoords] = useState({ top: 0, left: 0 });
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!triggerEl) return;
+    const rect = triggerEl.getBoundingClientRect();
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+
+    let left = rect.left + scrollLeft;
+    let top = rect.bottom + scrollTop + 6;
+    const width = 270; // w-68
+
+    if (left + width > window.innerWidth - 16) {
+      left = Math.max(16, window.innerWidth - width - 16);
+    }
+    if (rect.bottom + 200 > window.innerHeight && rect.top > 200) {
+      top = rect.top + scrollTop - 180;
+    }
+
+    setCoords({ top, left });
+  }, [triggerEl]);
+
+  useEffect(() => {
+    const handleOutside = (e: MouseEvent | TouchEvent) => {
+      if (
+        popoverRef.current &&
+        !popoverRef.current.contains(e.target as Node) &&
+        triggerEl &&
+        !triggerEl.contains(e.target as Node)
+      ) {
+        onClose();
+      }
+    };
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+
+    document.addEventListener("mousedown", handleOutside);
+    document.addEventListener("touchstart", handleOutside);
+    document.addEventListener("keydown", handleEsc);
+    return () => {
+      document.removeEventListener("mousedown", handleOutside);
+      document.removeEventListener("touchstart", handleOutside);
+      document.removeEventListener("keydown", handleEsc);
+    };
+  }, [triggerEl, onClose]);
+
+  if (!triggerEl || typeof document === "undefined") return null;
+
+  return createPortal(
+    <div
+      id={popoverId}
+      ref={popoverRef}
+      role="tooltip"
+      style={{ position: "absolute", top: `${coords.top}px`, left: `${coords.left}px` }}
+      className="z-[999] w-68 rounded-xl border border-blue-200 bg-white p-3 shadow-xl text-xs space-y-2 animate-in fade-in zoom-in-95"
+    >
+      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+        <div>
+          <span className="font-bold text-slate-900 block">
+            Công trình thuộc hồ sơ
+          </span>
+          <span className="text-[10px] text-blue-600 font-mono font-semibold block">
+            {displayCode} (Tuần {weekNum}/{year})
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-100"
+          aria-label="Đóng popover"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      <div className="max-h-48 overflow-y-auto space-y-1 pr-1">
+        {projectList.map((p, idx) => (
+          <div
+            key={idx}
+            className="text-slate-700 py-1.5 px-2 rounded-lg bg-slate-50 border border-slate-100 truncate font-medium text-[11px]"
+            title={p.name}
+          >
+            {p.name}
+          </div>
+        ))}
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 export function WeeklyListClient({
-  rows = [],
+  rows,
   projects = [],
   currentUserId,
   currentUserRole,
-  canCreate = false,
+  canCreate = true,
   readiness,
   initialSearch = "",
-  initialStatus = "ALL",
   initialProjectId = "ALL",
   initialSort = "updated_desc",
   hidePageHeader = false,
@@ -148,28 +256,28 @@ export function WeeklyListClient({
   canCreate?: boolean;
   readiness?: SupervisionDatabaseReadiness;
   initialSearch?: string;
-  initialStatus?: string;
   initialProjectId?: string;
   initialSort?: "updated_desc" | "week_desc" | "week_asc" | "project_asc";
   hidePageHeader?: boolean;
 }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const toast = useToast();
   const [pending, startTransition] = useTransition();
 
   // State
   const [search, setSearch] = useState(initialSearch);
-  const [statusFilter, setStatusFilter] = useState(initialStatus);
   const [projectFilter, setProjectFilter] = useState(initialProjectId);
+  const [yearFilter, setYearFilter] = useState("ALL");
   const [sortBy, setSortBy] = useState<"updated_desc" | "week_desc" | "week_asc" | "project_asc">(initialSort);
 
   // Pagination
   const [page, setPage] = useState(1);
   const pageSize = 15;
 
-  // Active Row Menu Dropdown
-  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  // Active Row State for Menu & Popover
+  const [activeActionRowId, setActiveActionRowId] = useState<string | null>(null);
+  const [activeProjectPopover, setActiveProjectPopover] = useState<string | null>(null);
+  const [popoverTriggerEl, setPopoverTriggerEl] = useState<HTMLElement | null>(null);
 
   // Modals & Dialogs
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -186,33 +294,11 @@ export function WeeklyListClient({
   } | null>(null);
   const [checkingDuplicate, setCheckingDuplicate] = useState(false);
   const [duplicateCheckError, setDuplicateCheckError] = useState(false);
-
-  const [revisionModalDossier, setRevisionModalDossier] = useState<DossierRow | null>(null);
   const [deletingDossier, setDeletingDossier] = useState<DossierRow | null>(null);
-  const [activeProjectPopover, setActiveProjectPopover] = useState<string | null>(null);
 
-  // Sync state to URL Query Params
+  // Check duplicate dossier on anchorDate change
   useEffect(() => {
-    const params = new URLSearchParams();
-    if (search) params.set("q", search);
-    if (statusFilter !== "ALL") params.set("status", statusFilter);
-    if (projectFilter !== "ALL") params.set("projectId", projectFilter);
-    if (sortBy !== "updated_desc") params.set("sort", sortBy);
-
-    const queryStr = params.toString();
-    const basePath = typeof window !== "undefined" ? window.location.pathname : "/reports/weekly-inspection";
-    const newUrl = queryStr ? `${basePath}?${queryStr}` : basePath;
-    window.history.replaceState(null, "", newUrl);
-  }, [search, statusFilter, projectFilter, sortBy]);
-
-  // Duplicate Check effect in Modal
-  useEffect(() => {
-    if (!createModalOpen || !anchorDate) {
-      setDuplicateCheck(null);
-      setDuplicateCheckError(false);
-      setCheckingDuplicate(false);
-      return;
-    }
+    if (!createModalOpen || !anchorDate) return;
     let cancelled = false;
     setCheckingDuplicate(true);
     setDuplicateCheckError(false);
@@ -236,27 +322,39 @@ export function WeeklyListClient({
     };
   }, [createModalOpen, anchorDate]);
 
-  // Summary Counters
-  const counts = useMemo(() => {
-    const total = rows.length;
-    const draft = rows.filter((r) => r.status === "DRAFT").length;
-    const submitted = rows.filter((r) => r.status === "SUBMITTED").length;
-    const revision = rows.filter((r) => r.status === "REVISION_REQUIRED").length;
-    const approved = rows.filter((r) => r.status === "APPROVED" || r.status === "LOCKED").length;
-    return { total, draft, submitted, revision, approved };
+  // Extract unique years from rows
+  const availableYears = useMemo(() => {
+    const years = new Set<string>();
+    for (const r of rows) {
+      const y = getWeekNumber(r.weekStart).year.toString();
+      years.add(y);
+    }
+    return Array.from(years).sort().reverse();
+  }, [rows]);
+
+  // Summary KPI Counters
+  const kpiData = useMemo(() => {
+    const totalDossiers = rows.length;
+    const weeksSet = new Set(rows.map((r) => r.weekStart.slice(0, 10)));
+    const totalWeeks = weeksSet.size;
+    const projectSet = new Set<string>();
+    for (const r of rows) {
+      for (const p of r.projects) {
+        if (p.id || p.name) projectSet.add(p.id || p.name);
+      }
+    }
+    const totalProjects = projectSet.size;
+    return { totalDossiers, totalWeeks, totalProjects };
   }, [rows]);
 
   // Filtered & Sorted rows
   const filteredRows = useMemo(() => {
     return rows
       .filter((row) => {
-        // Status filter
-        if (statusFilter !== "ALL") {
-          if (statusFilter === "APPROVED") {
-            if (row.status !== "APPROVED" && row.status !== "LOCKED") return false;
-          } else if (row.status !== statusFilter) {
-            return false;
-          }
+        // Year filter
+        if (yearFilter !== "ALL") {
+          const y = getWeekNumber(row.weekStart).year.toString();
+          if (y !== yearFilter) return false;
         }
 
         // Project filter
@@ -293,7 +391,7 @@ export function WeeklyListClient({
         }
         return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
       });
-  }, [rows, statusFilter, projectFilter, search, sortBy]);
+  }, [rows, yearFilter, projectFilter, search, sortBy]);
 
   // Paginated slice
   const totalPages = Math.ceil(filteredRows.length / pageSize) || 1;
@@ -302,40 +400,30 @@ export function WeeklyListClient({
     return filteredRows.slice(start, start + pageSize);
   }, [filteredRows, page, pageSize]);
 
-  // Dynamic Week Preview in Modal
+  // Week range preview for create modal
   const createWeekPreview = useMemo(() => {
+    if (!anchorDate) return null;
     try {
       const d = new Date(anchorDate);
       if (Number.isNaN(d.getTime())) return null;
       const day = d.getDay();
-      const diffToMonday = day === 0 ? -6 : 1 - day;
-      const monday = new Date(d);
-      monday.setDate(d.getDate() + diffToMonday);
-      const sunday = new Date(monday);
-      sunday.setDate(monday.getDate() + 6);
-
-      const weekInfo = getWeekNumber(monday.toISOString());
-      const formatFullDateVN = (date: Date) =>
-        new Intl.DateTimeFormat("vi-VN", {
-          weekday: "long",
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        }).format(date);
-
+      const diffToMon = day === 0 ? -6 : 1 - day;
+      const mon = new Date(d);
+      mon.setDate(d.getDate() + diffToMon);
+      const sun = new Date(mon);
+      sun.setDate(mon.getDate() + 6);
+      const { week: weekNum, year } = getWeekNumber(mon.toISOString());
       return {
-        startStr: formatFullDateVN(monday),
-        endStr: formatFullDateVN(sunday),
-        weekNum: weekInfo.week,
-        year: monday.getFullYear(),
+        weekNum,
+        year,
+        startStr: formatDateVN(mon.toISOString()),
+        endStr: formatDateVN(sun.toISOString()),
       };
     } catch {
       return null;
     }
   }, [anchorDate]);
 
-  // Keep every hook above this conditional return so readiness failures do not
-  // change hook ordering between renders.
   if (readiness && !readiness.ready) {
     const title = {
       MIGRATION_NOT_APPLIED: "Chưa áp migration Giám sát",
@@ -344,27 +432,16 @@ export function WeeklyListClient({
       UNKNOWN: "Không thể kiểm tra cơ sở dữ liệu",
     }[readiness.reason];
     return (
-      <div className="space-y-5">
-        <PageHeader>
-          <PageHeading title="Báo cáo tuần Giám sát" description="Phân hệ chưa sẵn sàng để truy xuất dữ liệu." />
-        </PageHeader>
-        <ContentCard className="p-8">
-          <div className="flex items-center gap-3 text-rose-600 mb-2">
-            <AlertTriangle className="h-6 w-6" />
-            <h2 className="text-base font-bold">{title}</h2>
-          </div>
-          <p className="max-w-2xl text-sm leading-6 text-slate-600">{readiness.message}</p>
-          <p className="mt-3 text-xs text-slate-500">Thông tin kỹ thuật chi tiết được ghi ở server để quản trị viên chẩn đoán.</p>
-        </ContentCard>
-      </div>
+      <ContentCard className="p-6 text-center border-amber-200 bg-amber-50/50">
+        <AlertTriangle className="h-10 w-10 text-amber-500 mx-auto mb-3" />
+        <h3 className="text-base font-bold text-amber-900">{title}</h3>
+        <p className="text-xs text-amber-700 mt-1 max-w-md mx-auto">{readiness.message}</p>
+      </ContentCard>
     );
   }
 
-  const handleCreateDossier = () => {
-    if (!anchorDate) {
-      toast.error("Vui lòng chọn ngày trong tuần báo cáo.");
-      return;
-    }
+  const handleCreate = async () => {
+    if (!anchorDate) return;
     const year = new Date(anchorDate).getFullYear();
     if (year < 2000 || year > 2045) {
       toast.error(`Năm ${year} không hợp lệ. Vui lòng chọn năm trong khoảng 2000 - 2045.`);
@@ -376,18 +453,14 @@ export function WeeklyListClient({
         const result = await createSupervisionWeeklyDossier(anchorDate);
         if (result.isExisting) {
           toast.info("Chuyển đến hồ sơ hiện có cho tuần đã chọn.");
-          if (["DRAFT", "REVISION_REQUIRED"].includes(result.status)) {
-            router.push(`/reports/weekly-inspection/${result.id}/edit`);
-          } else {
-            router.push(`/reports/weekly-inspection/${result.id}/preview`);
-          }
+          router.push(`/reports/weekly-inspection/${result.id}/edit`);
         } else {
           toast.success("Tạo hồ sơ kiểm tra tuần thành công!");
           router.push(`/reports/weekly-inspection/${result.id}/edit`);
         }
         setCreateModalOpen(false);
       } catch (err: any) {
-        toast.error(err?.message || "Không thể tạo hồ sơ tuần.");
+        toast.error(sanitizeUserError(err?.message));
       }
     });
   };
@@ -397,28 +470,30 @@ export function WeeklyListClient({
     startTransition(async () => {
       try {
         await deleteSupervisionWeeklyDossier(deletingDossier.id);
-        toast.success("Đã xóa bản nháp hồ sơ tuần thành công.");
+        toast.success("Đã xóa hồ sơ tuần thành công.");
         setDeletingDossier(null);
         router.refresh();
       } catch (err: any) {
-        toast.error(err?.message || "Không thể xóa hồ sơ.");
+        toast.error(sanitizeUserError(err?.message));
       }
     });
   };
 
   const resetFilters = () => {
     setSearch("");
-    setStatusFilter("ALL");
+    setYearFilter("ALL");
     setProjectFilter("ALL");
     setSortBy("updated_desc");
     setPage(1);
   };
 
+  const isFiltered = Boolean(search || yearFilter !== "ALL" || projectFilter !== "ALL" || sortBy !== "updated_desc");
+
   return (
-    <div className="space-y-6">
-      {/* 1. Action CTA Header when in Shared Shell or Standalone PageHeader */}
+    <div className="space-y-5 min-w-0 max-w-full">
+      {/* 1. Page Header (Yêu cầu 1: CTA bên phải trên Desktop, Header gọn sạch) */}
       {!hidePageHeader ? (
-        <div className="space-y-3">
+        <div className="space-y-2">
           <Link
             href="/reports"
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-600 transition-colors"
@@ -426,85 +501,83 @@ export function WeeklyListClient({
             <ArrowLeft className="h-3.5 w-3.5" />
             <span>Báo cáo</span>
           </Link>
-          <PageHeader>
-            <PageHeading
-              title={
-                <div className="flex items-center gap-2.5">
-                  <FileText className="h-6 w-6 text-blue-600" />
-                  <span>Báo cáo Giám sát công trình</span>
-                </div>
-              }
-              description="Kế hoạch kiểm tra, kết quả giám sát và báo cáo công tác theo tuần."
-              action={canCreate ? (
-                <Button
-                  onClick={() => setCreateModalOpen(true)}
-                  className="gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm transition-all hover:shadow-md h-10 px-4"
-                >
-                  <CalendarPlus className="h-4 w-4" />
-                  <span>Tạo hồ sơ tuần mới</span>
-                </Button>
-              ) : undefined}
-            />
-          </PageHeader>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pb-1">
+            <div className="flex-1 min-w-0" data-testid="page-header-title-block">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+                Báo cáo Giám sát công trình
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                Kế hoạch kiểm tra, kết quả giám sát và báo cáo công tác theo tuần.
+              </p>
+            </div>
+            {canCreate && (
+              <Button
+                data-testid="create-dossier-cta-btn"
+                onClick={() => setCreateModalOpen(true)}
+                className="gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm transition-all hover:shadow-md h-10 px-4 shrink-0 font-semibold w-full sm:w-auto justify-center"
+              >
+                <CalendarPlus className="h-4 w-4" />
+                <span>Tạo hồ sơ tuần mới</span>
+              </Button>
+            )}
+          </div>
         </div>
       ) : (
-        <div className="flex items-center justify-between pb-2">
-          <div className="text-xs font-medium text-slate-500">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-1">
+          <div className="text-xs font-medium text-slate-500 flex-1 min-w-0">
             Hồ sơ kiểm tra kết quả tuần và đề xuất kế hoạch công tác tuần tiếp theo
           </div>
-          {canCreate && <Button
-            onClick={() => setCreateModalOpen(true)}
-            className="gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm transition-all hover:shadow-md h-10 px-4 shrink-0"
-          >
-            <CalendarPlus className="h-4 w-4" />
-            <span>Tạo hồ sơ tuần mới</span>
-          </Button>}
+          {canCreate && (
+            <Button
+              data-testid="create-dossier-cta-btn"
+              onClick={() => setCreateModalOpen(true)}
+              className="gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm transition-all hover:shadow-md h-10 px-4 shrink-0 font-semibold w-full sm:w-auto justify-center"
+            >
+              <CalendarPlus className="h-4 w-4" />
+              <span>Tạo hồ sơ tuần mới</span>
+            </Button>
+          )}
         </div>
       )}
 
-      {/* 2. Compact Status Counter KPI Cards (Height reduced 20-30%) */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        {[
-          { key: "ALL", label: "Tất cả hồ sơ", count: counts.total, color: "border-slate-200 bg-white text-slate-900" },
-          { key: "DRAFT", label: "Bản nháp", count: counts.draft, color: "border-slate-200 bg-slate-50 text-slate-700" },
-          { key: "SUBMITTED", label: "Chờ duyệt", count: counts.submitted, color: "border-amber-200 bg-amber-50/70 text-amber-800" },
-          { key: "REVISION_REQUIRED", label: "Yêu cầu chỉnh sửa", count: counts.revision, color: counts.revision > 0 ? "border-rose-300 bg-rose-50 text-rose-800 ring-2 ring-rose-200" : "border-rose-100 bg-rose-50/40 text-rose-700" },
-          { key: "APPROVED", label: "Đã duyệt", count: counts.approved, color: "border-emerald-200 bg-emerald-50/70 text-emerald-800" },
-        ].map((item) => {
-          const isActive = statusFilter === item.key;
-          return (
-            <button
-              key={item.key}
-              tabIndex={0}
-              role="button"
-              aria-pressed={isActive}
-              onClick={() => {
-                setStatusFilter(item.key);
-                setPage(1);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  setStatusFilter(item.key);
-                  setPage(1);
-                }
-              }}
-              className={`flex flex-col justify-between rounded-xl border py-2.5 px-3.5 text-left transition-all cursor-pointer outline-none focus:ring-2 focus:ring-blue-500 ${item.color} ${
-                isActive ? "ring-2 ring-blue-600 shadow-sm scale-[1.01]" : "hover:border-blue-300 hover:shadow-xs"
-              }`}
-            >
-              <div className="text-xs font-semibold text-slate-500 truncate">{item.label}</div>
-              <div className="mt-1 text-xl font-extrabold tracking-tight">{item.count}</div>
-            </button>
-          );
-        })}
+      {/* 2. Standardized KPI Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <ContentCard className="p-4 flex items-center justify-between bg-white border border-slate-200/80 shadow-2xs">
+          <div>
+            <span className="text-xs font-medium text-slate-500 block">Tổng số hồ sơ</span>
+            <span className="text-2xl font-bold text-slate-900 tracking-tight mt-0.5 block">{kpiData.totalDossiers}</span>
+          </div>
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+            <FileSpreadsheet className="h-5 w-5" />
+          </div>
+        </ContentCard>
+
+        <ContentCard className="p-4 flex items-center justify-between bg-white border border-slate-200/80 shadow-2xs">
+          <div>
+            <span className="text-xs font-medium text-slate-500 block">Số tuần báo cáo</span>
+            <span className="text-2xl font-bold text-slate-900 tracking-tight mt-0.5 block">{kpiData.totalWeeks}</span>
+          </div>
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
+            <Calendar className="h-5 w-5" />
+          </div>
+        </ContentCard>
+
+        <ContentCard className="p-4 flex items-center justify-between bg-white border border-slate-200/80 shadow-2xs">
+          <div>
+            <span className="text-xs font-medium text-slate-500 block">Công trình giám sát</span>
+            <span className="text-2xl font-bold text-slate-900 tracking-tight mt-0.5 block">{kpiData.totalProjects}</span>
+          </div>
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 border border-indigo-100">
+            <Building2 className="h-5 w-5" />
+          </div>
+        </ContentCard>
       </div>
 
       {/* 3. Search & Filter Bar */}
       <FilterBar className="bg-white">
-        <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+        <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between min-w-0 max-w-full">
           {/* Search Input */}
-          <div className="relative flex-1 min-w-[240px]">
+          <div className="relative flex-1 min-w-0 max-w-full">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input
               type="text"
@@ -513,11 +586,12 @@ export function WeeklyListClient({
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              placeholder="Tìm theo số báo cáo, tên công trình, người lập..."
-              className="w-full h-10 pl-9 pr-8 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-slate-50/50"
+              placeholder="Tìm theo số báo cáo, tên công trình..."
+              className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-9 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
             />
             {search && (
               <button
+                type="button"
                 onClick={() => {
                   setSearch("");
                   setPage(1);
@@ -529,7 +603,26 @@ export function WeeklyListClient({
             )}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 min-w-0 max-w-full">
+            {/* Year Filter */}
+            {availableYears.length > 0 && (
+              <select
+                value={yearFilter}
+                onChange={(e) => {
+                  setYearFilter(e.target.value);
+                  setPage(1);
+                }}
+                className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 outline-none focus:border-blue-500 shrink-0 max-w-[130px]"
+              >
+                <option value="ALL">Tất cả năm</option>
+                {availableYears.map((y) => (
+                  <option key={y} value={y}>
+                    Năm {y}
+                  </option>
+                ))}
+              </select>
+            )}
+
             {/* Project Filter */}
             {projects.length > 0 && (
               <select
@@ -538,39 +631,26 @@ export function WeeklyListClient({
                   setProjectFilter(e.target.value);
                   setPage(1);
                 }}
-                className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 outline-none focus:border-blue-500 min-w-[150px]"
+                className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 outline-none focus:border-blue-500 w-full sm:w-auto max-w-full sm:max-w-[260px] truncate"
               >
                 <option value="ALL">Tất cả công trình</option>
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.code} - {p.name}
-                  </option>
-                ))}
+                {projects.map((p) => {
+                  const label = `${p.code} - ${p.name}`;
+                  const truncated = label.length > 42 ? label.slice(0, 39) + "..." : label;
+                  return (
+                    <option key={p.id} value={p.id} title={label}>
+                      {truncated}
+                    </option>
+                  );
+                })}
               </select>
             )}
-
-            {/* Status Filter */}
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setPage(1);
-              }}
-              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 outline-none focus:border-blue-500 min-w-[140px]"
-            >
-              <option value="ALL">Tất cả trạng thái</option>
-              <option value="DRAFT">Bản nháp</option>
-              <option value="SUBMITTED">Chờ duyệt</option>
-              <option value="REVISION_REQUIRED">Yêu cầu chỉnh sửa</option>
-              <option value="APPROVED">Đã duyệt</option>
-              <option value="LOCKED">Đã khóa</option>
-            </select>
 
             {/* Sort Filter */}
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 outline-none focus:border-blue-500"
+              className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 outline-none focus:border-blue-500 shrink-0 max-w-[170px]"
             >
               <option value="updated_desc">Mới cập nhật</option>
               <option value="week_desc">Tuần mới nhất</option>
@@ -579,36 +659,38 @@ export function WeeklyListClient({
             </select>
 
             {/* Reset Filter Button */}
-            {(search || statusFilter !== "ALL" || projectFilter !== "ALL" || sortBy !== "updated_desc") && (
-              <Button onClick={resetFilters} variant="outline" size="sm" className="h-10 text-xs gap-1 border-slate-200 hover:bg-slate-100">
-                <RotateCcw className="h-3.5 w-3.5" />
+            {isFiltered && (
+              <Button onClick={resetFilters} variant="outline" size="sm" className="h-10 text-xs gap-1.5 border-slate-200 hover:bg-slate-100 rounded-xl font-medium shrink-0">
+                <RotateCcw className="h-3.5 w-3.5 text-slate-400" />
                 Xóa bộ lọc
               </Button>
             )}
           </div>
         </div>
 
-        {/* Results summary counter & QA Data Toggle */}
-        <div className="mt-2.5 flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
+        {/* Results summary counter */}
+        <div className="mt-2.5 flex items-center justify-between text-[11px] font-medium text-slate-500 pt-2 border-t border-slate-100">
           <span>
-            Hiển thị <strong className="text-slate-900">{filteredRows.length}</strong> / {rows.length} hồ sơ báo cáo
+            Hiển thị <strong className="text-slate-900">{filteredRows.length}</strong> / <strong>{rows.length}</strong> hồ sơ báo cáo tuần
           </span>
         </div>
       </FilterBar>
 
-      {/* 4. Desktop Table View & Mobile Cards */}
-      <ContentCard className="overflow-hidden">
+      {/* 4. Main Data Table */}
+      <ContentCard className="p-0 border border-slate-200/80 shadow-2xs min-w-0 max-w-full">
         {filteredRows.length === 0 ? (
-          <div className="p-12 text-center text-slate-500">
-            <FileText className="mx-auto mb-3 h-10 w-10 text-slate-300" />
-            <h3 className="text-base font-semibold text-slate-900 mb-1">Không tìm thấy hồ sơ báo cáo tuần</h3>
-            <p className="text-xs text-slate-500 max-w-md mx-auto mb-4">
-              {search || statusFilter !== "ALL" || projectFilter !== "ALL"
-                ? "Không có báo cáo tuần nào phù hợp với bộ lọc hiện tại. Hãy thử thay đổi bộ lọc hoặc từ khóa tìm kiếm."
-                : "Chưa có báo cáo tuần nào được khởi tạo trong phạm vi làm việc của bạn."}
+          <div className="py-10 text-center px-4">
+            <FolderKanban className="h-10 w-10 text-slate-300 mx-auto mb-2.5" />
+            <h3 className="text-sm font-semibold text-slate-800">
+              Không tìm thấy Hồ sơ Giám sát tuần nào
+            </h3>
+            <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+              {isFiltered
+                ? "Thử thay đổi từ khóa tìm kiếm, bộ lọc hoặc nhấn nút \"Xóa bộ lọc\"."
+                : "Nhấn nút \"Tạo hồ sơ tuần mới\" để bắt đầu lập báo cáo."}
             </p>
-            {(search || statusFilter !== "ALL" || projectFilter !== "ALL") && (
-              <Button onClick={resetFilters} variant="outline" size="sm" className="gap-1.5">
+            {isFiltered && (
+              <Button onClick={resetFilters} variant="outline" size="sm" className="mt-4 gap-1.5 text-xs rounded-xl">
                 <RotateCcw className="h-3.5 w-3.5" />
                 Đặt lại bộ lọc
               </Button>
@@ -617,121 +699,128 @@ export function WeeklyListClient({
         ) : (
           <>
             {/* Desktop Table View */}
-            <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full text-left text-sm border-collapse">
+            <div className="hidden sm:block overflow-x-auto min-w-0 max-w-full">
+              <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50/80 text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    <th className="px-4 py-3.5">Hồ sơ & Tuần báo cáo</th>
-                    <th className="px-4 py-3.5">Công trình</th>
-                    <th className="px-4 py-3.5">Trạng thái</th>
-                    <th className="px-4 py-3.5">Người lập & Cập nhật</th>
-                    <th className="px-4 py-3.5 text-center">Nội dung</th>
-                    <th className="px-4 py-3.5 text-right">Thao tác</th>
+                  <tr className="bg-slate-50/90 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
+                    <th className="py-3.5 px-4 w-44">Mã hồ sơ</th>
+                    <th className="py-3.5 px-4 w-44">Tuần kiểm tra</th>
+                    <th className="py-3.5 px-4 min-w-[180px]">Phạm vi công trình</th>
+                    <th className="py-3.5 px-4 w-44">Nội dung giám sát</th>
+                    <th className="py-3.5 px-4 w-40">Người cập nhật</th>
+                    <th className="py-3.5 px-4 w-36 text-right">Thao tác</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 text-slate-700">
                   {paginatedRows.map((row) => {
-                    const st = STATUS_CONFIG[row.status] || STATUS_CONFIG.DRAFT;
-                    const StatusIcon = st.icon;
                     const weekInfo = getWeekNumber(row.weekStart);
                     const isOwner = row.createdById === currentUserId;
                     const isReviewer = ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"].includes(currentUserRole || "");
+                    const displayCode = row.reportNumber || `BCGS-${weekInfo.year}-W${weekInfo.week}`;
+                    const projectList = row.projects || [];
+                    const projectCount = projectList.length;
 
-                    const primaryProjects = row.projects.slice(0, 2);
-                    const extraProjects = row.projects.slice(2);
+                    const isActionOpen = activeActionRowId === row.id;
+                    const isPopoverOpen = activeProjectPopover === row.id;
+                    const isRowHighlighted = isActionOpen || isPopoverOpen;
 
                     return (
-                      <tr key={row.id} className="hover:bg-slate-50/80 transition-colors group">
-                        {/* Hồ sơ & Tuần */}
-                        <td className="px-4 py-4 min-w-[220px]">
-                          <div className="flex items-start gap-3">
-                            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700 font-bold text-xs border border-blue-100">
-                              T{weekInfo.week}
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
-                                  {row.reportNumber || `Tuần ${weekInfo.week}/${weekInfo.year}`}
-                                </span>
-                                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
-                                  v{row.version}
-                                </span>
-                              </div>
-                              <div className="mt-0.5 flex items-center gap-1 text-xs text-slate-500 font-medium">
-                                <Calendar className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                                <span>{formatDateVN(row.weekStart)} – {formatDateVN(row.weekEnd)}</span>
-                              </div>
-                            </div>
+                      <tr
+                        key={row.id}
+                        data-row-id={row.id}
+                        data-dossier-code={displayCode}
+                        data-state={isActionOpen ? "action-open" : isPopoverOpen ? "popover-open" : "idle"}
+                        data-active-row={isRowHighlighted ? "true" : "false"}
+                        className={`transition-colors ${
+                          isActionOpen
+                            ? "bg-blue-50/90 border-l-4 border-l-blue-600"
+                            : isPopoverOpen
+                            ? "bg-slate-100/90 border-l-4 border-l-blue-400"
+                            : "hover:bg-slate-50/80"
+                        }`}
+                      >
+                        {/* Mã hồ sơ */}
+                        <td className="py-3.5 px-4">
+                          <span className="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md text-[11px] inline-block border border-slate-200">
+                            {displayCode}
+                          </span>
+                        </td>
+
+                        {/* Tuần kiểm tra */}
+                        <td className="py-3.5 px-4">
+                          <div className="font-bold text-slate-800">
+                            Tuần {weekInfo.week} / {weekInfo.year}
+                          </div>
+                          <div className="text-[11px] text-slate-500 font-medium">
+                            {formatDateVN(row.weekStart)} – {formatDateVN(row.weekEnd)}
                           </div>
                         </td>
 
-                        {/* Công trình (Max 2 projects + popover for extra) */}
-                        <td className="px-4 py-4 min-w-[200px] relative">
-                          {row.projects.length > 0 ? (
-                            <div className="space-y-1">
-                              {primaryProjects.map((p, idx) => (
-                                <div key={idx} className="flex items-center gap-1.5 text-xs font-semibold text-slate-800">
-                                  <Building2 className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-                                  <span className="truncate max-w-[220px]" title={p.name}>{p.name}</span>
-                                </div>
-                              ))}
-
-                              {extraProjects.length > 0 && (
-                                <div className="relative inline-block">
-                                  <button
-                                    onClick={() => setActiveProjectPopover(activeProjectPopover === row.id ? null : row.id)}
-                                    className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 underline flex items-center gap-1"
-                                  >
-                                    +{extraProjects.length} công trình khác
-                                  </button>
-
-                                  {activeProjectPopover === row.id && (
-                                    <div className="absolute left-0 top-6 z-30 w-64 rounded-xl border border-slate-200 bg-white p-3 shadow-lg text-xs space-y-1.5 animate-in fade-in zoom-in-95">
-                                      <div className="font-bold text-slate-900 pb-1 border-b border-slate-100 flex justify-between items-center">
-                                        <span>Tất cả công trình ({row.projects.length})</span>
-                                        <button onClick={() => setActiveProjectPopover(null)} className="text-slate-400 hover:text-slate-600">
-                                          <X className="h-3.5 w-3.5" />
-                                        </button>
-                                      </div>
-                                      <div className="max-h-40 overflow-y-auto space-y-1">
-                                        {row.projects.map((p, idx) => (
-                                          <div key={idx} className="text-slate-700 py-0.5 border-b border-slate-50 last:border-0 truncate">
-                                            {p.name}
-                                          </div>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
+                        {/* Phạm vi công trình */}
+                        <td className="py-3.5 px-4">
+                          {projectCount === 0 || projectCount > 3 ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-200/80 font-bold text-[11px]">
+                              <Building2 className="h-3 w-3 text-blue-600" />
+                              <span>Toàn hệ thống</span>
+                            </span>
+                          ) : projectCount === 1 ? (
+                            <div className="font-medium text-slate-800 truncate max-w-[200px]" title={projectList[0].name}>
+                              {projectList[0].name}
                             </div>
                           ) : (
-                            <span className="text-xs italic text-slate-400">Chưa chọn công trình</span>
+                            <div className="inline-block">
+                              <button
+                                type="button"
+                                aria-expanded={isPopoverOpen}
+                                aria-controls={`project-popover-${row.id}`}
+                                onClick={(e) => {
+                                  if (isPopoverOpen) {
+                                    setActiveProjectPopover(null);
+                                    setPopoverTriggerEl(null);
+                                  } else {
+                                    setActiveProjectPopover(row.id);
+                                    setPopoverTriggerEl(e.currentTarget);
+                                  }
+                                }}
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-colors text-[11px] font-semibold ${
+                                  isPopoverOpen
+                                    ? "bg-blue-100 text-blue-900 border-blue-400 ring-2 ring-blue-500/20 font-bold"
+                                    : "bg-blue-50 text-blue-800 border-blue-200/80 hover:bg-blue-100"
+                                }`}
+                              >
+                                <Building2 className="h-3.5 w-3.5 text-blue-600" />
+                                <span>{projectCount} công trình</span>
+                              </button>
+
+                              {isPopoverOpen && (
+                                <ProjectPopoverPortal
+                                  popoverId={`project-popover-${row.id}`}
+                                  triggerEl={popoverTriggerEl}
+                                  displayCode={displayCode}
+                                  weekNum={weekInfo.week}
+                                  year={weekInfo.year}
+                                  projectList={projectList}
+                                  onClose={() => {
+                                    setActiveProjectPopover(null);
+                                    setPopoverTriggerEl(null);
+                                  }}
+                                />
+                              )}
+                            </div>
                           )}
                         </td>
 
-                        {/* Trạng thái */}
-                        <td className="px-4 py-4 whitespace-nowrap">
-                          <div className="space-y-1">
-                            <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${st.bg} ${st.text} ${st.border}`}>
-                              <StatusIcon className="h-3.5 w-3.5" />
-                              <span>{st.label}</span>
-                            </span>
-                            {row.status === "REVISION_REQUIRED" && row.latestRevision?.reason && (
-                              <button
-                                onClick={() => setRevisionModalDossier(row)}
-                                className="block text-[11px] text-rose-600 hover:text-rose-700 underline font-medium"
-                              >
-                                Xem lý do chỉnh sửa
-                              </button>
-                            )}
-                          </div>
+                        {/* Nội dung giám sát */}
+                        <td className="py-3.5 px-4">
+                          <span className="inline-flex items-center rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
+                            {row.stats.totalItems > 0 ? `${row.stats.totalItems} mục nội dung` : "Chưa nhập nội dung"}
+                          </span>
                         </td>
 
-                        {/* Người lập & Thời gian */}
-                        <td className="px-4 py-4 whitespace-nowrap">
+                        {/* Người cập nhật */}
+                        <td className="py-3.5 px-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
-                            <div className="h-7 w-7 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs">
+                            <div className="h-7 w-7 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
                               {row.createdBy.name.charAt(0)}
                             </div>
                             <div className="text-xs">
@@ -741,102 +830,114 @@ export function WeeklyListClient({
                           </div>
                         </td>
 
-                        {/* Khối lượng dữ liệu */}
-                        <td className="px-4 py-4 text-center whitespace-nowrap">
-                          <span className="inline-flex items-center rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
-                            {row.stats.totalItems > 0 ? `${row.stats.totalItems} mục` : "Chưa nhập nội dung"}
-                          </span>
-                        </td>
-
-                        {/* Thao tác (Primary Button + 3-Dot Contextual Dropdown) */}
-                        <td className="px-4 py-4 text-right whitespace-nowrap relative">
+                        {/* Thao tác */}
+                        <td className="py-3.5 px-4 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-1.5">
-                            {/* Primary Action Button based on status */}
-                            {isOwner && ["DRAFT", "REVISION_REQUIRED"].includes(row.status) ? (
-                              <Button
-                                size="sm"
-                                onClick={() => router.push(`/reports/weekly-inspection/${row.id}/edit`)}
-                                className="h-8 text-xs gap-1 bg-blue-600 text-white hover:bg-blue-700"
-                              >
-                                <Edit3 className="h-3.5 w-3.5" />
-                                <span>{row.status === "REVISION_REQUIRED" ? "Chỉnh sửa" : "Tiếp tục soạn"}</span>
-                              </Button>
-                            ) : (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => router.push(`/reports/weekly-inspection/${row.id}/preview`)}
-                                className="h-8 text-xs gap-1 border-slate-200 text-slate-700 hover:bg-slate-100"
-                              >
-                                <Eye className="h-3.5 w-3.5" />
-                                <span>Xem hồ sơ</span>
-                              </Button>
-                            )}
+                            {/* Nút thao tác chính: Soạn/Sửa */}
+                            <Button
+                              size="sm"
+                              onClick={() => router.push(`/reports/weekly-inspection/${row.id}/edit`)}
+                              className="h-8 text-xs gap-1 bg-blue-600 text-white hover:bg-blue-700 font-medium"
+                            >
+                              <Edit3 className="h-3.5 w-3.5" />
+                              <span>Soạn/Sửa</span>
+                            </Button>
 
-                            {/* 3-Dot Context Menu */}
-                            <div className="relative">
-                              <button
-                                onClick={() => setActiveMenuId(activeMenuId === row.id ? null : row.id)}
-                                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100"
-                                aria-label="Menu thao tác phụ"
-                              >
-                                <MoreVertical className="h-4 w-4" />
-                              </button>
-
-                              {activeMenuId === row.id && (
-                                <div className="absolute right-0 top-9 z-40 w-44 rounded-xl border border-slate-200 bg-white p-1 shadow-lg text-xs space-y-0.5 animate-in fade-in zoom-in-95">
-                                  <button
-                                    onClick={() => {
-                                      setActiveMenuId(null);
-                                      router.push(`/reports/weekly-inspection/${row.id}/preview`);
-                                    }}
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-left rounded-lg text-slate-700 hover:bg-slate-100 font-medium"
-                                  >
-                                    <Eye className="h-3.5 w-3.5 text-slate-500" />
-                                    <span>Xem trước</span>
-                                  </button>
-
-                                  {(isOwner || isReviewer) && ["SUBMITTED", "APPROVED"].includes(row.status) && (
-                                    <button
-                                      onClick={() => {
-                                        setActiveMenuId(null);
-                                        router.push(`/reports/weekly-inspection/${row.id}/preview?print=1`);
-                                      }}
-                                      className="w-full flex items-center gap-2 px-3 py-2 text-left rounded-lg text-slate-700 hover:bg-slate-100 font-medium"
-                                    >
-                                      <Printer className="h-3.5 w-3.5 text-slate-500" />
-                                      <span>In / Xuất PDF</span>
-                                    </button>
-                                  )}
-
-                                  {row.status === "REVISION_REQUIRED" && (
-                                    <button
-                                      onClick={() => {
-                                        setActiveMenuId(null);
-                                        setRevisionModalDossier(row);
-                                      }}
-                                      className="w-full flex items-center gap-2 px-3 py-2 text-left rounded-lg text-rose-700 hover:bg-rose-50 font-medium"
-                                    >
-                                      <AlertTriangle className="h-3.5 w-3.5 text-rose-600" />
-                                      <span>Xem lý do sửa</span>
-                                    </button>
-                                  )}
-
-                                  {(isReviewer || (isOwner && currentUserRole !== "CONSTRUCTION_SUPERVISOR")) && ["DRAFT", "REVISION_REQUIRED"].includes(row.status) && (
-                                    <button
-                                      onClick={() => {
-                                        setActiveMenuId(null);
-                                        setDeletingDossier(row);
-                                      }}
-                                      className="w-full flex items-center gap-2 px-3 py-2 text-left rounded-lg text-rose-600 hover:bg-rose-50 font-medium"
-                                    >
-                                      <Trash2 className="h-3.5 w-3.5" />
-                                      <span>Xóa bản nháp</span>
-                                    </button>
-                                  )}
-                                </div>
+                            {/* Unified Action Menu (3-dots) với Context Header rõ ràng */}
+                            <UnifiedActionMenu
+                              align="right"
+                              menuWidth="w-56"
+                              ariaLabel={`Mở thao tác hồ sơ ${displayCode}`}
+                              onOpenChange={(isOpen) => {
+                                if (isOpen) {
+                                  setActiveActionRowId(row.id);
+                                } else {
+                                  setActiveActionRowId((prev) => (prev === row.id ? null : prev));
+                                }
+                              }}
+                              trigger={({ isOpen, toggle }) => (
+                                <button
+                                  type="button"
+                                  onClick={toggle}
+                                  aria-expanded={isOpen}
+                                  aria-haspopup="menu"
+                                  aria-label={`Mở thao tác hồ sơ ${displayCode}`}
+                                  className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-all ${
+                                    isOpen || isActionOpen
+                                      ? "bg-blue-100 text-blue-700 border-blue-400 ring-2 ring-blue-500/20 font-bold"
+                                      : "border-slate-200 text-slate-600 hover:bg-slate-100"
+                                  }`}
+                                >
+                                  <MoreVertical className="h-4 w-4" />
+                                </button>
                               )}
-                            </div>
+                            >
+                              {/* Yêu cầu 3: Context Header trực quan ở đầu menu */}
+                              <div className="px-3 py-2 bg-slate-50/90 rounded-t-lg border-b border-slate-100 mb-1 pointer-events-none">
+                                <div className="font-bold text-slate-900 text-xs font-mono">
+                                  Hồ sơ {displayCode}
+                                </div>
+                                <div className="text-[11px] text-slate-500 font-medium mt-0.5">
+                                  Tuần {weekInfo.week} / {weekInfo.year} • {formatDateVN(row.weekStart)} – {formatDateVN(row.weekEnd)}
+                                </div>
+                              </div>
+
+                              {/* Action items không bị lặp nút Soạn/Sửa */}
+                              <div className="space-y-0.5 p-1">
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  onClick={() => router.push(`/reports/weekly-inspection/${row.id}/preview`)}
+                                  className="w-full flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-medium rounded-lg text-slate-700 hover:bg-slate-100 transition-colors text-left"
+                                >
+                                  <Eye className="h-4 w-4 text-slate-500 shrink-0" />
+                                  <span>Xem trước HTML</span>
+                                </button>
+
+                                <a
+                                  href={`/api/supervision/weekly/${row.id}/export?format=pdf&disposition=inline&document=RESULT`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="w-full flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-medium rounded-lg text-slate-700 hover:bg-slate-100 transition-colors text-left"
+                                >
+                                  <Printer className="h-4 w-4 text-slate-500 shrink-0" />
+                                  <span>Xem PDF (In sạch)</span>
+                                </a>
+
+                                <a
+                                  href={`/api/supervision/weekly/${row.id}/export?format=pdf&disposition=attachment&document=RESULT`}
+                                  download
+                                  className="w-full flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-medium rounded-lg text-slate-700 hover:bg-slate-100 transition-colors text-left"
+                                >
+                                  <Download className="h-4 w-4 text-blue-600 shrink-0" />
+                                  <span>Tải PDF</span>
+                                </a>
+
+                                <a
+                                  href={`/api/supervision/weekly/${row.id}/export?format=docx&document=RESULT`}
+                                  download
+                                  className="w-full flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-medium rounded-lg text-slate-700 hover:bg-slate-100 transition-colors text-left"
+                                >
+                                  <FileText className="h-4 w-4 text-slate-500 shrink-0" />
+                                  <span>Tải DOCX</span>
+                                </a>
+
+                                {(isReviewer || isOwner) && (
+                                  <>
+                                    <div className="my-1 border-t border-slate-100" />
+                                    <button
+                                      type="button"
+                                      role="menuitem"
+                                      onClick={() => setDeletingDossier(row)}
+                                      className="w-full flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg text-red-600 hover:bg-red-50 active:bg-red-100 transition-colors text-left"
+                                    >
+                                      <Trash2 className="h-4 w-4 text-red-500 shrink-0" />
+                                      <span>Xóa hồ sơ</span>
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </UnifiedActionMenu>
                           </div>
                         </td>
                       </tr>
@@ -846,426 +947,261 @@ export function WeeklyListClient({
               </table>
             </div>
 
-            {/* Mobile Card View */}
+            {/* Mobile View Cards */}
             <div className="block sm:hidden divide-y divide-slate-100">
               {paginatedRows.map((row) => {
-                const st = STATUS_CONFIG[row.status] || STATUS_CONFIG.DRAFT;
-                const StatusIcon = st.icon;
                 const weekInfo = getWeekNumber(row.weekStart);
                 const isOwner = row.createdById === currentUserId;
+                const isReviewer = ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"].includes(currentUserRole || "");
+                const displayCode = row.reportNumber || `BCGS-${weekInfo.year}-W${weekInfo.week}`;
+                const projectList = row.projects || [];
+                const projectCount = projectList.length;
+                const isActionOpen = activeActionRowId === row.id;
 
                 return (
-                  <div key={row.id} className="p-4 space-y-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-700 font-bold text-xs">
-                          T{weekInfo.week}
-                        </div>
-                        <div>
-                          <div className="font-bold text-sm text-slate-900">
-                            {row.reportNumber || `Tuần ${weekInfo.week}/${weekInfo.year}`}
-                          </div>
-                          <div className="text-xs text-slate-500 font-medium">
-                            {formatDateVN(row.weekStart)} – {formatDateVN(row.weekEnd)}
-                          </div>
-                        </div>
-                      </div>
-                      <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${st.bg} ${st.text} ${st.border}`}>
-                        <StatusIcon className="h-3 w-3" />
-                        <span>{st.label}</span>
+                  <div
+                    key={row.id}
+                    data-row-id={row.id}
+                    data-dossier-code={displayCode}
+                    className={`p-4 space-y-3 transition-colors ${
+                      isActionOpen ? "bg-blue-50/90 border-l-4 border-l-blue-600" : "bg-white hover:bg-slate-50/50"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded text-xs border border-slate-200">
+                        {displayCode}
+                      </span>
+                      <span className="text-xs font-bold text-slate-800">
+                        Tuần {weekInfo.week} / {weekInfo.year}
                       </span>
                     </div>
 
-                    {/* Công trình & Tình trạng */}
-                    {row.projects.length > 0 && (
-                      <div className="text-xs font-semibold text-slate-700 flex items-center gap-1.5 bg-slate-50 p-2 rounded-lg">
-                        <Building2 className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-                        <span className="truncate">{row.projects.map((p) => p.name).join(", ")}</span>
-                      </div>
-                    )}
+                    <div className="flex items-center justify-between text-xs text-slate-600">
+                      <span>Phạm vi:</span>
+                      <span className="font-semibold text-slate-900">
+                        {projectCount === 0 || projectCount > 3
+                          ? "Toàn hệ thống"
+                          : projectCount === 1
+                          ? projectList[0].name
+                          : `${projectCount} công trình`}
+                      </span>
+                    </div>
 
-                    {row.status === "REVISION_REQUIRED" && row.latestRevision?.reason && (
-                      <div className="rounded-lg bg-rose-50 p-2.5 border border-rose-200 text-xs text-rose-800">
-                        <div className="font-bold flex items-center gap-1 mb-0.5">
-                          <AlertTriangle className="h-3.5 w-3.5" />
-                          <span>Yêu cầu chỉnh sửa:</span>
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                      <div className="flex items-center gap-2">
+                        <div className="h-6 w-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-[11px]">
+                          {row.createdBy.name.charAt(0)}
                         </div>
-                        <p className="line-clamp-2">{row.latestRevision.reason}</p>
-                      </div>
-                    )}
-
-                    {/* Footer info & Action buttons */}
-                    <div className="flex items-center justify-between pt-1 text-xs">
-                      <div className="text-slate-500">
-                        <span>{row.createdBy.name}</span> · <span>{formatTimeAgo(row.updatedAt)}</span>
+                        <span className="text-xs font-medium text-slate-700">{row.createdBy.name}</span>
                       </div>
 
                       <div className="flex items-center gap-2">
-                        {isOwner && ["DRAFT", "REVISION_REQUIRED"].includes(row.status) && (
-                          <Button
-                            size="sm"
-                            onClick={() => router.push(`/reports/weekly-inspection/${row.id}/edit`)}
-                            className="h-8 text-xs gap-1 bg-blue-600 text-white hover:bg-blue-700"
-                          >
-                            <Edit3 className="h-3.5 w-3.5" />
-                            Soạn
-                          </Button>
-                        )}
                         <Button
                           size="sm"
-                          variant="outline"
-                          onClick={() => router.push(`/reports/weekly-inspection/${row.id}/preview`)}
-                          className="h-8 text-xs gap-1 border-slate-200"
+                          onClick={() => router.push(`/reports/weekly-inspection/${row.id}/edit`)}
+                          className="h-8 text-xs gap-1 bg-blue-600 text-white hover:bg-blue-700 font-medium"
                         >
-                          <Eye className="h-3.5 w-3.5" />
-                          Xem
+                          <Edit3 className="h-3.5 w-3.5" />
+                          <span>Sửa</span>
                         </Button>
+                        <UnifiedActionMenu
+                          align="right"
+                          menuWidth="w-52"
+                          ariaLabel={`Mở thao tác hồ sơ ${displayCode}`}
+                          onOpenChange={(isOpen) => {
+                            if (isOpen) {
+                              setActiveActionRowId(row.id);
+                            } else {
+                              setActiveActionRowId((prev) => (prev === row.id ? null : prev));
+                            }
+                          }}
+                          trigger={({ isOpen, toggle }) => (
+                            <button
+                              type="button"
+                              onClick={toggle}
+                              aria-expanded={isOpen}
+                              aria-haspopup="menu"
+                              aria-label={`Mở thao tác hồ sơ ${displayCode}`}
+                              className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-all ${
+                                isOpen || isActionOpen
+                                  ? "bg-blue-100 text-blue-700 border-blue-400 font-bold"
+                                  : "border-slate-200 text-slate-600 hover:bg-slate-100"
+                              }`}
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </button>
+                          )}
+                        >
+                          <div className="px-3 py-2 bg-slate-50/90 rounded-t-lg border-b border-slate-100 mb-1 pointer-events-none">
+                            <div className="font-bold text-slate-900 text-xs font-mono">
+                              Hồ sơ {displayCode}
+                            </div>
+                            <div className="text-[11px] text-slate-500 font-medium mt-0.5">
+                              Tuần {weekInfo.week}/{weekInfo.year}
+                            </div>
+                          </div>
+                          <div className="space-y-0.5 p-1">
+                            <button
+                              type="button"
+                              role="menuitem"
+                              onClick={() => router.push(`/reports/weekly-inspection/${row.id}/preview`)}
+                              className="w-full flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-medium rounded-lg text-slate-700 hover:bg-slate-100 text-left"
+                            >
+                              <Eye className="h-4 w-4 text-slate-500 shrink-0" />
+                              <span>Xem chi tiết</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              role="menuitem"
+                              onClick={() => router.push(`/reports/weekly-inspection/${row.id}/preview?autoPrint=1`)}
+                              className="w-full flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-medium rounded-lg text-slate-700 hover:bg-slate-100 text-left"
+                            >
+                              <Printer className="h-4 w-4 text-slate-500 shrink-0" />
+                              <span>In / PDF</span>
+                            </button>
+
+                            {(isReviewer || isOwner) && (
+                              <>
+                                <div className="my-1 border-t border-slate-100" />
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  onClick={() => setDeletingDossier(row)}
+                                  className="w-full flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg text-red-600 hover:bg-red-50 text-left"
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-500 shrink-0" />
+                                  <span>Xóa hồ sơ</span>
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </UnifiedActionMenu>
                       </div>
                     </div>
                   </div>
                 );
               })}
             </div>
-
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between px-4 py-3 bg-slate-50/50 border-t border-slate-200 text-xs text-slate-600">
-                <div>
-                  Trang <strong>{page}</strong> / <strong>{totalPages}</strong>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={page <= 1}
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    className="h-8 px-2"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={page >= totalPages}
-                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    className="h-8 px-2"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
           </>
         )}
       </ContentCard>
 
-      {/* 5. Create Report Modal with Real-time Duplicate Check */}
+      {/* Modal 1: Create Weekly Dossier */}
       {createModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-start justify-between">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl space-y-5 animate-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
-                <h3 className="text-lg font-bold text-slate-900">Tạo hồ sơ kiểm tra tuần</h3>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  Chọn một ngày thuộc tuần cần lập hồ sơ. Công trình và hạng mục kiểm tra sẽ được bổ sung khi soạn báo cáo.
+                <h3 className="text-base font-bold text-slate-900">Tạo hồ sơ kiểm tra tuần</h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Chọn một ngày thuộc tuần cần lập hồ sơ.
                 </p>
               </div>
-              <button onClick={() => setCreateModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+              <button
+                type="button"
+                onClick={() => setCreateModalOpen(false)}
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             <div className="space-y-4">
-              {/* Date Selection */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Ngày thuộc tuần báo cáo <span className="text-rose-500">*</span>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Ngày thuộc tuần báo cáo <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="date"
                   value={anchorDate}
                   onChange={(e) => setAnchorDate(e.target.value)}
-                  className="w-full h-10 rounded-xl border border-slate-300 px-3 text-sm focus:outline-none focus:border-blue-500"
+                  className="w-full h-11 rounded-xl border border-slate-300 px-3 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium"
                 />
               </div>
 
-              {/* Week Range Preview */}
               {createWeekPreview && (
-                <div className="rounded-xl bg-blue-50/70 p-3.5 border border-blue-100 text-xs text-blue-900 space-y-1.5">
-                  <div className="font-bold flex items-center gap-1.5 text-blue-800">
+                <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3 text-xs space-y-1">
+                  <div className="flex items-center gap-1.5 text-blue-900 font-bold">
                     <Calendar className="h-4 w-4 text-blue-600" />
-                    <span>Phạm vi tuần báo cáo</span>
+                    <span>
+                      Phạm vi tuần báo cáo: Tuần {createWeekPreview.weekNum}/{createWeekPreview.year}
+                    </span>
                   </div>
-                  <div className="font-semibold text-sm text-blue-950">
-                    Tuần {createWeekPreview.weekNum}/{createWeekPreview.year}
-                  </div>
-                  <div className="text-slate-600 capitalize">
-                    Từ {createWeekPreview.startStr} đến {createWeekPreview.endStr}
+                  <div className="text-slate-600 pl-5">
+                    Từ {createWeekPreview.startStr} Đến {createWeekPreview.endStr}
                   </div>
                 </div>
               )}
 
-              {/* Duplicate check states */}
-              {checkingDuplicate && (
-                <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-200 text-xs text-slate-500 italic flex items-center gap-2">
-                  <Clock className="h-4 w-4 animate-spin text-blue-500 shrink-0" />
-                  <span>Đang kiểm tra hồ sơ tuần...</span>
+              {/* Duplicate warning / action status */}
+              {checkingDuplicate ? (
+                <div className="text-xs text-slate-500 flex items-center gap-2 italic">
+                  <div className="h-3 w-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                  <span>Đang kiểm tra hồ sơ hiện có...</span>
                 </div>
-              )}
-
-              {duplicateCheckError && (
-                <div className="rounded-xl bg-rose-50 p-3.5 border border-rose-200 text-xs text-rose-800 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0" />
-                    <span>Không thể kiểm tra hồ sơ của tuần này.</span>
+              ) : duplicateCheck ? (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs space-y-2 text-amber-900">
+                  <div className="flex items-center gap-2 font-bold text-amber-800">
+                    <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
+                    <span>Tuần này đã có hồ sơ báo cáo</span>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setCheckingDuplicate(true);
-                      setDuplicateCheckError(false);
-                      checkSupervisionWeeklyDuplicate(anchorDate)
-                        .then((res) => {
-                          setDuplicateCheck(res);
-                          setCheckingDuplicate(false);
-                        })
-                        .catch(() => {
-                          setCheckingDuplicate(false);
-                          setDuplicateCheckError(true);
-                        });
-                    }}
-                    className="h-7 text-xs border-rose-200 text-rose-700 hover:bg-rose-100"
-                  >
-                    Thử lại
-                  </Button>
+                  <p className="text-[11px] text-amber-800/90 leading-relaxed">
+                    Hồ sơ <strong>{duplicateCheck.reportNumber || `BCGS-W${duplicateCheck.version}`}</strong> đã được tạo bởi <strong>{duplicateCheck.createdByName}</strong>. Nút bấm bên dưới sẽ chuyển trực tiếp đến hồ sơ hiện có.
+                  </p>
                 </div>
-              )}
-
-              {duplicateCheck && !checkingDuplicate && (
-                <div className="space-y-3">
-                  {duplicateCheck.status === "DRAFT" && (
-                    <div className="rounded-xl bg-amber-50 p-4 border border-amber-200 text-xs text-amber-900 space-y-3">
-                      <div className="font-bold flex items-center gap-1.5 text-amber-800 text-sm">
-                        <AlertTriangle className="h-4.5 w-4.5 text-amber-600 shrink-0" />
-                        <span>Tuần này đã có một hồ sơ đang soạn</span>
-                      </div>
-                      <p className="text-amber-800 leading-relaxed">
-                        Tuần này đã có một hồ sơ đang soạn. Bạn không cần tạo thêm hồ sơ mới.
-                      </p>
-                      <div className="p-2.5 bg-white/80 rounded-lg border border-amber-200 text-slate-700 space-y-1">
-                        <div>Mã/Số: <strong>{duplicateCheck.reportNumber || `Hồ sơ v${duplicateCheck.version}`}</strong></div>
-                        <div>Cập nhật gần nhất: <strong>{formatTimeAgo(duplicateCheck.updatedAt)}</strong> bởi <strong>{duplicateCheck.createdByName}</strong></div>
-                      </div>
-                      <div className="pt-1">
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            setCreateModalOpen(false);
-                            router.push(`/reports/weekly-inspection/${duplicateCheck.id}/edit`);
-                          }}
-                          className="w-full h-9 text-xs font-semibold bg-amber-600 text-white hover:bg-amber-700 gap-1.5"
-                        >
-                          <Edit3 className="h-3.5 w-3.5" />
-                          Tiếp tục soạn
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {duplicateCheck.status === "REVISION_REQUIRED" && (
-                    <div className="rounded-xl bg-rose-50 p-4 border border-rose-200 text-xs text-rose-900 space-y-3">
-                      <div className="font-bold flex items-center gap-1.5 text-rose-800 text-sm">
-                        <AlertTriangle className="h-4.5 w-4.5 text-rose-600 shrink-0" />
-                        <span>Hồ sơ tuần này đang được yêu cầu chỉnh sửa</span>
-                      </div>
-                      <p className="text-rose-800 leading-relaxed">
-                        Hồ sơ tuần này đang được yêu cầu chỉnh sửa. Hãy mở hồ sơ hiện có để cập nhật và gửi lại.
-                      </p>
-                      <div className="p-2.5 bg-white/80 rounded-lg border border-rose-200 text-slate-700 space-y-1">
-                        <div>Mã/Số: <strong>{duplicateCheck.reportNumber || `Hồ sơ v${duplicateCheck.version}`}</strong></div>
-                        <div>Cập nhật gần nhất: <strong>{formatTimeAgo(duplicateCheck.updatedAt)}</strong> bởi <strong>{duplicateCheck.createdByName}</strong></div>
-                      </div>
-                      <div className="pt-1">
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            setCreateModalOpen(false);
-                            router.push(`/reports/weekly-inspection/${duplicateCheck.id}/edit`);
-                          }}
-                          className="w-full h-9 text-xs font-semibold bg-rose-600 text-white hover:bg-rose-700 gap-1.5"
-                        >
-                          <Edit3 className="h-3.5 w-3.5" />
-                          Mở hồ sơ để chỉnh sửa
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {duplicateCheck.status === "SUBMITTED" && (
-                    <div className="rounded-xl bg-blue-50 p-4 border border-blue-200 text-xs text-blue-900 space-y-3">
-                      <div className="font-bold flex items-center gap-1.5 text-blue-800 text-sm">
-                        <Clock className="h-4.5 w-4.5 text-blue-600 shrink-0" />
-                        <span>Đang chờ duyệt</span>
-                      </div>
-                      <p className="text-blue-800 leading-relaxed">
-                        Hồ sơ tuần này đã được gửi và đang chờ duyệt.
-                      </p>
-                      <div className="p-2.5 bg-white/80 rounded-lg border border-blue-200 text-slate-700 space-y-1">
-                        <div>Mã/Số: <strong>{duplicateCheck.reportNumber || `Hồ sơ v${duplicateCheck.version}`}</strong></div>
-                        <div>Cập nhật gần nhất: <strong>{formatTimeAgo(duplicateCheck.updatedAt)}</strong> bởi <strong>{duplicateCheck.createdByName}</strong></div>
-                      </div>
-                      <div className="pt-1">
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            setCreateModalOpen(false);
-                            router.push(`/reports/weekly-inspection/${duplicateCheck.id}/preview`);
-                          }}
-                          className="w-full h-9 text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 gap-1.5"
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                          Xem hồ sơ
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {(duplicateCheck.status === "APPROVED" || duplicateCheck.status === "LOCKED") && (
-                    <div className="rounded-xl bg-emerald-50 p-4 border border-emerald-200 text-xs text-emerald-900 space-y-3">
-                      <div className="font-bold flex items-center gap-1.5 text-emerald-800 text-sm">
-                        <CheckCircle2 className="h-4.5 w-4.5 text-emerald-600 shrink-0" />
-                        <span>Đã phê duyệt</span>
-                      </div>
-                      <p className="text-emerald-800 leading-relaxed">
-                        Hồ sơ tuần này đã được phê duyệt.
-                      </p>
-                      <div className="p-2.5 bg-white/80 rounded-lg border border-emerald-200 text-slate-700 space-y-1">
-                        <div>Mã/Số: <strong>{duplicateCheck.reportNumber || `Hồ sơ v${duplicateCheck.version}`}</strong></div>
-                        <div>Cập nhật gần nhất: <strong>{formatTimeAgo(duplicateCheck.updatedAt)}</strong> bởi <strong>{duplicateCheck.createdByName}</strong></div>
-                      </div>
-                      <div className="pt-1">
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            setCreateModalOpen(false);
-                            router.push(`/reports/weekly-inspection/${duplicateCheck.id}/preview`);
-                          }}
-                          className="w-full h-9 text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 gap-1.5"
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                          Xem hồ sơ
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {duplicateCheck.status === "REJECTED" && (
-                    <div className="rounded-xl bg-rose-50 p-4 border border-rose-200 text-xs text-rose-900 space-y-3">
-                      <div className="font-bold flex items-center gap-1.5 text-rose-800 text-sm">
-                        <XCircle className="h-4.5 w-4.5 text-rose-600 shrink-0" />
-                        <span>Đã bị từ chối</span>
-                      </div>
-                      <p className="text-rose-800 leading-relaxed">
-                        Hồ sơ tuần này đã bị từ chối. Hãy mở hồ sơ để xem lý do và xử lý theo quy trình.
-                      </p>
-                      <div className="p-2.5 bg-white/80 rounded-lg border border-rose-200 text-slate-700 space-y-1">
-                        <div>Mã/Số: <strong>{duplicateCheck.reportNumber || `Hồ sơ v${duplicateCheck.version}`}</strong></div>
-                        <div>Cập nhật gần nhất: <strong>{formatTimeAgo(duplicateCheck.updatedAt)}</strong> bởi <strong>{duplicateCheck.createdByName}</strong></div>
-                      </div>
-                      <div className="pt-1">
-                        <Button
-                          size="sm"
-                          onClick={() => {
-                            setCreateModalOpen(false);
-                            router.push(`/reports/weekly-inspection/${duplicateCheck.id}/preview`);
-                          }}
-                          className="w-full h-9 text-xs font-semibold bg-rose-600 text-white hover:bg-rose-700 gap-1.5"
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                          Xem lý do và chỉnh sửa
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
+              ) : null}
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-              <Button variant="outline" onClick={() => setCreateModalOpen(false)} disabled={pending}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setCreateModalOpen(false)}
+                className="rounded-xl text-xs font-semibold"
+              >
                 Hủy
               </Button>
-              {!duplicateCheck && (
-                <Button
-                  onClick={handleCreateDossier}
-                  disabled={pending || checkingDuplicate || duplicateCheckError}
-                  className="bg-blue-600 text-white hover:bg-blue-700 gap-1.5"
-                >
-                  <CalendarPlus className="h-4 w-4" />
-                  {pending ? "Đang khởi tạo..." : "Tạo hồ sơ"}
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* 6. Revision Reason Dialog */}
-      {revisionModalDossier && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl space-y-4">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-2 text-rose-600">
-                <AlertTriangle className="h-5 w-5 shrink-0" />
-                <h3 className="text-base font-bold text-slate-900">Yêu cầu chỉnh sửa báo cáo</h3>
-              </div>
-              <button onClick={() => setRevisionModalDossier(null)} className="text-slate-400 hover:text-slate-600">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="rounded-xl bg-slate-50 p-4 border border-slate-200 text-xs space-y-2">
-              <div className="flex justify-between text-slate-500 font-medium">
-                <span>Người duyệt yêu cầu: <strong>{revisionModalDossier.latestRevision?.actorName || "Cấp quản lý"}</strong></span>
-                <span>{formatDateVN(revisionModalDossier.latestRevision?.createdAt || "")}</span>
-              </div>
-              <div className="p-3 bg-white rounded-lg border border-rose-200 text-slate-800 text-sm font-normal whitespace-pre-wrap">
-                {revisionModalDossier.latestRevision?.reason || "Chưa có nội dung lý do chi tiết."}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setRevisionModalDossier(null)}>
-                Đóng
-              </Button>
               <Button
-                onClick={() => {
-                  const id = revisionModalDossier.id;
-                  setRevisionModalDossier(null);
-                  router.push(`/reports/weekly-inspection/${id}/edit`);
-                }}
-                className="bg-blue-600 text-white hover:bg-blue-700 gap-1.5"
+                type="button"
+                disabled={pending || checkingDuplicate}
+                onClick={handleCreate}
+                className="gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold px-5"
               >
-                <Edit3 className="h-4 w-4" />
-                Mở màn hình sửa
+                {pending ? (
+                  <>
+                    <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Đang xử lý...</span>
+                  </>
+                ) : duplicateCheck ? (
+                  <>
+                    <Eye className="h-4 w-4" />
+                    <span>Mở hồ sơ hiện có</span>
+                  </>
+                ) : (
+                  <>
+                    <CalendarPlus className="h-4 w-4" />
+                    <span>Tạo hồ sơ</span>
+                  </>
+                )}
               </Button>
             </div>
           </div>
         </div>
       )}
 
-      {/* 7. Confirm Delete Dialog */}
+      {/* Modal 2: Delete Confirm Dialog */}
       {deletingDossier && (
         <ConfirmDialog
-          isOpen={true}
+          isOpen={Boolean(deletingDossier)}
           onClose={() => setDeletingDossier(null)}
-          title="Xác nhận xóa bản nháp báo cáo tuần"
-          description={`Bạn có chắc chắn muốn xóa bản nháp báo cáo ${deletingDossier.reportNumber || "tuần này"} không? Hành động này sẽ loại bỏ hồ sơ khỏi hệ thống.`}
-          confirmText="Xóa bản nháp"
-          variant="danger"
           onConfirm={handleDeleteDossier}
-          isLoading={pending}
+          title="Xác nhận xóa hồ sơ giám sát"
+          description={`Bạn có chắc chắn muốn xóa hồ sơ báo cáo tuần ${getWeekNumber(deletingDossier.weekStart).week}/${getWeekNumber(deletingDossier.weekStart).year} (${deletingDossier.reportNumber || 'BCGS'})? Hành động này sẽ xóa dữ liệu và không thể hoàn tác.`}
+          confirmText="Xóa hồ sơ"
+          cancelText="Hủy"
+          variant="danger"
         />
       )}
     </div>

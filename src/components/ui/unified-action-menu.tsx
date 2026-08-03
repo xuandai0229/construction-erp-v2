@@ -66,6 +66,7 @@ export interface UnifiedActionMenuProps {
   className?: string;
   menuWidth?: string;
   ariaLabel?: string;
+  onOpenChange?: (isOpen: boolean) => void;
 }
 
 export function UnifiedActionMenu({
@@ -76,6 +77,7 @@ export function UnifiedActionMenu({
   className = "",
   menuWidth = "w-48",
   ariaLabel,
+  onOpenChange,
 }: UnifiedActionMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [coords, setCoords] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
@@ -91,32 +93,54 @@ export function UnifiedActionMenu({
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
     const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
 
+    let numericWidth = 224;
+    if (menuRef.current) {
+      numericWidth = menuRef.current.offsetWidth || menuRef.current.getBoundingClientRect().width || 224;
+    } else {
+      const val = parseInt(menuWidth.replace(/\D/g, ""), 10);
+      if (val) {
+        numericWidth = val <= 100 ? val * 4 : val;
+      }
+    }
+
+    const viewportWidth = window.innerWidth;
+
     let left =
       align === "right" || align === "end"
-        ? rect.right + scrollLeft - (parseInt(menuWidth.replace(/\D/g, "") || "192", 10) || 192)
+        ? rect.right + scrollLeft - numericWidth
         : rect.left + scrollLeft;
 
-    // Viewport overflow prevention (Flip / Clamp)
-    const viewportWidth = window.innerWidth;
-    if (left + 200 > viewportWidth) {
-      left = Math.max(10, viewportWidth - 210);
+    // Viewport overflow prevention (Clamp inside screen with 12px margin)
+    if (left + numericWidth > viewportWidth - 12) {
+      left = Math.max(12, viewportWidth - numericWidth - 12);
     }
-    if (left < 10) left = 10;
+    if (left < 12) left = 12;
 
     let top = rect.bottom + scrollTop + 4;
     // Check if bottom of viewport is reached
     if (rect.bottom + 250 > window.innerHeight && rect.top > 250) {
-      top = rect.top + scrollTop - 200; // flip upward
+      top = rect.top + scrollTop - 215; // flip upward cleanly
     }
 
     setCoords({ top, left });
   }, [align, menuWidth]);
 
+  // Recalculate position on mount after portal renders
+  useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(() => updatePosition(), 0);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, updatePosition]);
+
   // Enforce single active overlay system-wide
   useTransientOverlay({
     id: menuId,
     isOpen,
-    onClose: () => setIsOpen(false),
+    onClose: () => {
+      setIsOpen(false);
+      onOpenChange?.(false);
+    },
     refs: [triggerRef, menuRef],
   });
 
@@ -127,14 +151,16 @@ export function UnifiedActionMenu({
         updatePosition();
         notifyOverlayOpen(menuId);
       }
+      onOpenChange?.(next);
       return next;
     });
-  }, [menuId, updatePosition]);
+  }, [menuId, updatePosition, onOpenChange]);
 
   const handleMenuContentClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     if (target.closest("button") || target.closest('[role="menuitem"]')) {
       setIsOpen(false);
+      onOpenChange?.(false);
     }
   };
 

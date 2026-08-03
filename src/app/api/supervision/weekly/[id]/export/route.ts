@@ -1,112 +1,109 @@
-import { NextRequest, NextResponse } from "next/server";
-import { chromium, type Browser, type BrowserContext } from "playwright";
+import { NextResponse } from "next/server";
+import { chromium } from "playwright";
 import { getSession } from "@/lib/auth";
 import { getSupervisionWeeklyPrintData } from "@/app/(dashboard)/supervision/weekly/actions";
 import { exportSupervisionWeeklyDocx } from "@/lib/supervision-weekly/export-docx";
+import { buildSupervisionExportFilename } from "@/lib/supervision-weekly/export-filename";
 
-export const runtime = "nodejs";
-
-function getPdfRenderOrigin() {
-  const rawOrigin = process.env.SUPERVISION_PDF_RENDER_ORIGIN?.trim();
-  if (!rawOrigin) throw new Error("PDF_RENDER_ORIGIN_NOT_CONFIGURED");
-  const origin = new URL(rawOrigin);
-  if (!/^https?:$/.test(origin.protocol) || origin.pathname !== "/" || origin.search || origin.hash) {
-    throw new Error("PDF_RENDER_ORIGIN_INVALID");
-  }
-  return origin.origin;
-}
-
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  let dossierId: string | undefined;
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const session = await getSession();
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
     const { id } = await params;
-    dossierId = id;
-    const url = new URL(req.url);
-    const documentParam = url.searchParams.get("document") || "RESULT";
-    if (documentParam !== "RESULT" && documentParam !== "NEXT_WEEK_PLAN") {
-      return NextResponse.json({ error: "Unsupported document type" }, { status: 400 });
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: "Chưa đăng nhập." }, { status: 401 });
     }
-    const documentType = documentParam;
-    const format = url.searchParams.get("format") || "pdf";
-    const filename = url.searchParams.get("filename") || `export.${format}`;
+
     const dossier = await getSupervisionWeeklyPrintData(id, "EXPORT");
+    if (!dossier) {
+      return NextResponse.json({ error: "Không tìm thấy hồ sơ báo cáo." }, { status: 404 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const format = (searchParams.get("format") || "pdf").toLowerCase() as "pdf" | "docx";
+    const documentType = (searchParams.get("document") || "RESULT") as "RESULT" | "NEXT_WEEK_PLAN";
+    const requestedDisposition = searchParams.get("disposition")?.toLowerCase();
+    const disposition = requestedDisposition === "inline" ? "inline" : "attachment";
+
+    const filename = buildSupervisionExportFilename({
+      reportNumber: dossier.reportNumber,
+      weekStart: dossier.weekStart,
+      documentType,
+      extension: format,
+    });
+    const encodedFilename = encodeURIComponent(filename);
+    const contentDispositionHeader = `${disposition}; filename="${filename}"; filename*=UTF-8''${encodedFilename}`;
 
     if (format === "docx") {
-      const buffer = await exportSupervisionWeeklyDocx(dossier, documentType);
-      return new NextResponse(buffer as any, {
+      const docxBuffer = await exportSupervisionWeeklyDocx(dossier, documentType);
+
+      return new NextResponse(new Uint8Array(docxBuffer), {
+        status: 200,
         headers: {
           "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-          "Content-Disposition": `attachment; filename="${encodeURIComponent(filename)}"`,
+          "Content-Disposition": contentDispositionHeader,
+          "Cache-Control": "no-store, max-age=0",
         },
       });
     }
 
-    if (format !== "pdf") {
-      return NextResponse.json({ error: "Unsupported format" }, { status: 400 });
-    }
-
-    let renderOrigin: string;
-    try {
-      renderOrigin = getPdfRenderOrigin();
-    } catch {
-      return NextResponse.json({ error: "PDF export is not configured on this server." }, { status: 503 });
-    }
-
-    let browser: Browser | undefined;
-    let context: BrowserContext | undefined;
+    // PDF generation via Headless Playwright page navigation
+    let browser;
     try {
       browser = await chromium.launch({ headless: true });
-      context = await browser.newContext();
-      const page = await context.newPage();
-      const authCookie = req.cookies.get("auth_session");
-      if (authCookie) {
-        await context.addCookies([{
-          name: "auth_session",
-          value: authCookie.value,
-          domain: new URL(renderOrigin).hostname,
-          path: "/",
-          httpOnly: true,
-        }]);
+      const context = await browser.newContext({ viewport: { width: 1600, height: 1200 } });
+
+      // Forward request cookies for authentication
+      const reqCookie = request.headers.get("cookie") || "";
+      const parsedCookies = reqCookie
+        .split(";")
+        .map((c) => {
+          const [name, ...val] = c.trim().split("=");
+          return { name, value: val.join("="), domain: "localhost", path: "/" };
+        })
+        .filter((c) => c.name && c.value);
+
+      if (parsedCookies.length > 0) {
+        await context.addCookies(parsedCookies);
       }
-      const targetUrl = new URL(`/supervision-export/${encodeURIComponent(id)}`, renderOrigin);
-      targetUrl.searchParams.set("document", documentType);
-      const response = await page.goto(targetUrl.toString(), { waitUntil: "networkidle" });
-      if (!response?.ok()) throw new Error(`PDF_RENDER_HTTP_${response?.status() ?? "UNKNOWN"}`);
-      await page.evaluate(() => document.fonts.ready);
+
+      const page = await context.newPage();
+      const origin = new URL(request.url).origin;
+      const previewUrl = `${origin}/reports/weekly-inspection/${id}/preview?exportMode=pdf&document=${documentType}`;
+
+      console.log(`[Export PDF] Navigating to preview URL: ${previewUrl}`);
+      await page.goto(previewUrl, { waitUntil: "networkidle" });
+      await page.evaluate(() => document.fonts.ready).catch(() => undefined);
       await page.emulateMedia({ media: "print" });
+
       const pdfBuffer = await page.pdf({
         format: "A4",
         landscape: true,
-        margin: { top: "15mm", right: "15mm", bottom: "15mm", left: "15mm" },
         printBackground: true,
+        preferCSSPageSize: true,
+        displayHeaderFooter: false,
+        margin: { top: "0", right: "0", bottom: "0", left: "0" },
       });
-      return new NextResponse(pdfBuffer as any, {
+
+      await browser.close();
+
+      return new NextResponse(new Uint8Array(pdfBuffer), {
+        status: 200,
         headers: {
           "Content-Type": "application/pdf",
-          "Content-Disposition": `attachment; filename="${encodeURIComponent(filename)}"`,
+          "Content-Disposition": contentDispositionHeader,
+          "Cache-Control": "no-store, max-age=0",
         },
       });
-    } catch (error) {
-      console.error("[supervision-weekly] PDF export failed", {
-        dossierId: id,
-        operation: "export-pdf",
-        message: error instanceof Error ? error.message : "Unknown error",
-      });
-      return NextResponse.json({ error: "Không thể tạo PDF trên server. Vui lòng thử lại hoặc dùng nút In để lưu PDF." }, { status: 501 });
-    } finally {
-      await context?.close().catch(() => undefined);
-      await browser?.close().catch(() => undefined);
+    } catch (pwError: any) {
+      if (browser) await browser.close().catch(() => undefined);
+      console.error("[Export API] Playwright PDF generation error:", pwError?.message);
+      return NextResponse.json({ error: "Lỗi tạo tập tin PDF. Vui lòng thử lại sau." }, { status: 500 });
     }
-  } catch (error) {
-    console.error("[supervision-weekly] Export failed", {
-      dossierId,
-      operation: "export",
-      message: error instanceof Error ? error.message : "Unknown error",
-    });
-    const denied = error instanceof Error && error.message.includes("không có quyền");
-    return NextResponse.json({ error: denied ? "Forbidden" : "Lỗi hệ thống khi xuất file" }, { status: denied ? 403 : 500 });
+  } catch (error: any) {
+    console.error("[Export API] General error:", error?.message);
+    return NextResponse.json({ error: error?.message || "Lỗi máy chủ nội bộ." }, { status: 500 });
   }
 }

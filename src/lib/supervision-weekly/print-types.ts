@@ -31,6 +31,8 @@ export type SupervisionWeeklyPrintDto = {
   place: string | null;
   recipientName: string | null;
   recipientTitle: string | null;
+  createdAt?: string;
+  issueDate?: string;
   
   creator: {
     id: string;

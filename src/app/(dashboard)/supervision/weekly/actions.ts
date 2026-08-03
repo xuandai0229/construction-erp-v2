@@ -202,62 +202,77 @@ export async function checkSupervisionWeeklyDuplicate(anchorDate: string) {
 export async function createSupervisionWeeklyDossier(
   anchorDate: string
 ) {
-  const actor = await getActor();
-  if (!canAuthorSupervisionWeekly(actor.role)) {
-    await writeSecurityAuditEvent({ eventType: "AUTHORIZATION_DENIED", actorId: actor.id, role: actor.role, action: "supervision.weekly.create", resourceType: "SupervisionWeeklyDossier", resourceId: "NEW", reasonCode: "WEEKLY_AUTHOR_REQUIRED" });
-    throw new Error("Bạn không có quyền tạo hồ sơ tuần.");
-  }
-  const anchor = toDateInput(anchorDate);
-  const year = anchor.getFullYear();
-  if (Number.isNaN(anchor.getTime())) {
-    throw new Error("Ngày đã chọn không hợp lệ.");
-  }
-  if (year < 2000 || year > 2045) {
-    throw new Error(`Năm ${year} không hợp lệ. Vui lòng chọn ngày trong khoảng năm 2000 đến 2045.`);
-  }
+  try {
+    const actor = await getActor();
+    if (!canAuthorSupervisionWeekly(actor.role)) {
+      await writeSecurityAuditEvent({ eventType: "AUTHORIZATION_DENIED", actorId: actor.id, role: actor.role, action: "supervision.weekly.create", resourceType: "SupervisionWeeklyDossier", resourceId: "NEW", reasonCode: "WEEKLY_AUTHOR_REQUIRED" });
+      throw new Error("Bạn không có quyền tạo hồ sơ tuần.");
+    }
+    const anchor = toDateInput(anchorDate);
+    const year = anchor.getFullYear();
+    if (Number.isNaN(anchor.getTime())) {
+      throw new Error("Ngày đã chọn không hợp lệ.");
+    }
+    if (year < 2000 || year > 2045) {
+      throw new Error(`Năm ${year} không hợp lệ. Vui lòng chọn ngày trong khoảng năm 2000 đến 2045.`);
+    }
 
-  const weekStart = startOfMonday(anchor);
-  const weekEnd = addDays(weekStart, 6);
-  const nextWeekStart = addDays(weekStart, 7);
-  const nextWeekEnd = addDays(weekStart, 13);
+    const weekStart = startOfMonday(anchor);
+    const weekEnd = addDays(weekStart, 6);
+    const nextWeekStart = addDays(weekStart, 7);
+    const nextWeekEnd = addDays(weekStart, 13);
 
-  // Check if a non-deleted dossier already exists for this week
-  const existing = await prisma.supervisionWeeklyDossier.findFirst({
-    where: { weekStart, createdById: actor.id, deletedAt: null },
-    orderBy: { version: "desc" },
-    select: { id: true, status: true },
-  });
-
-  if (existing) {
-    return { id: existing.id, isExisting: true, status: existing.status };
-  }
-
-  const dossier = await prisma.$transaction(async (tx) => {
-    // Re-check inside transaction to prevent race condition / double submit
-    const txExisting = await tx.supervisionWeeklyDossier.findFirst({
+    // Check if a non-deleted dossier already exists for this week
+    const existing = await prisma.supervisionWeeklyDossier.findFirst({
       where: { weekStart, createdById: actor.id, deletedAt: null },
       orderBy: { version: "desc" },
       select: { id: true, status: true },
     });
-    if (txExisting) {
-      return { id: txExisting.id, isExisting: true, status: txExisting.status };
+
+    if (existing) {
+      return { id: existing.id, isExisting: true, status: existing.status };
     }
 
-    const version = 1;
-    const created = await tx.supervisionWeeklyDossier.create({
-      data: { weekStart, weekEnd, nextWeekStart, nextWeekEnd, place: null, createdById: actor.id, version },
-    });
-    await tx.supervisionWeeklyRevision.create({
-      data: { dossierId: created.id, actorId: actor.id, action: "CREATE", toStatus: "DRAFT", version, changedFields: "Khởi tạo hồ sơ tuần" },
-    });
-    return { id: created.id, isExisting: false, status: "DRAFT" };
-  });
+    const dossier = await prisma.$transaction(async (tx) => {
+      // Re-check inside transaction to prevent race condition / double submit
+      const txExisting = await tx.supervisionWeeklyDossier.findFirst({
+        where: { weekStart, createdById: actor.id, deletedAt: null },
+        orderBy: { version: "desc" },
+        select: { id: true, status: true },
+      });
+      if (txExisting) {
+        return { id: txExisting.id, isExisting: true, status: txExisting.status };
+      }
 
-  revalidatePath("/supervision/weekly");
-  revalidatePath("/reports/weekly-inspection");
-  revalidatePath("/reports");
-  await writeAuditLog({ userId: actor.id, action: "CREATE_SUPERVISION_WEEKLY_DOSSIER", entityType: "SupervisionWeeklyDossier", entityId: dossier.id, afterData: { status: dossier.status } });
-  return dossier;
+      // Determine highest existing version for (createdById, weekStart), including soft-deleted ones
+      const latestAny = await tx.supervisionWeeklyDossier.findFirst({
+        where: { weekStart, createdById: actor.id },
+        orderBy: { version: "desc" },
+        select: { version: true },
+      });
+      const version = (latestAny?.version || 0) + 1;
+
+      const created = await tx.supervisionWeeklyDossier.create({
+        data: { weekStart, weekEnd, nextWeekStart, nextWeekEnd, place: null, createdById: actor.id, version },
+      });
+      await tx.supervisionWeeklyRevision.create({
+        data: { dossierId: created.id, actorId: actor.id, action: "CREATE", toStatus: "DRAFT", version, changedFields: "Khởi tạo hồ sơ tuần" },
+      });
+      return { id: created.id, isExisting: false, status: "DRAFT" };
+    });
+
+    revalidatePath("/supervision/weekly");
+    revalidatePath("/reports/weekly-inspection");
+    revalidatePath("/reports");
+    await writeAuditLog({ userId: actor.id, action: "CREATE_SUPERVISION_WEEKLY_DOSSIER", entityType: "SupervisionWeeklyDossier", entityId: dossier.id, afterData: { status: dossier.status } });
+    return dossier;
+  } catch (err: any) {
+    console.error("[createSupervisionWeeklyDossier Error]", err);
+    if (err?.message && !err.message.includes("invocation") && !err.message.includes("Prisma") && !err.message.includes("D:\\")) {
+      throw err;
+    }
+    throw new Error("Không thể khởi tạo hồ sơ tuần do xung đột dữ liệu. Vui lòng mở lại hồ sơ hiện có.");
+  }
 }
 
 export async function deleteSupervisionWeeklyDossier(id: string) {
@@ -318,7 +333,7 @@ export async function saveSupervisionWeeklyDossier(id: string, rawInput: Supervi
 
   const updated = await prisma.$transaction(async (tx) => {
     const update = await tx.supervisionWeeklyDossier.updateMany({
-      where: { id, lockVersion: input.expectedLockVersion, status: { in: ["DRAFT", "REVISION_REQUIRED"] } },
+      where: { id, lockVersion: input.expectedLockVersion, deletedAt: null },
       data: {
         reportNumber: input.reportNumber || null, place: input.place || null,
         recipientName: input.recipientName || null, recipientTitle: input.recipientTitle || null,
