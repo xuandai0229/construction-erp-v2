@@ -15,6 +15,13 @@ describe("assertSafeDatabaseAudit Guard Logic", () => {
     );
   });
 
+  it("should FAIL when only the schema differs on the same host, port, and database", () => {
+    expect(() => validateDatabaseSafety(
+      "postgresql://postgres:secret@localhost:5432/construction_erp_v2_qa?schema=e2e",
+      "postgresql://postgres:secret@localhost:5432/construction_erp_v2_qa?schema=public",
+    )).toThrow(/points to the exact same target/);
+  });
+
   it("should FAIL when QA database name contains production keyword (even on localhost)", () => {
     const qaUrl = "postgresql://postgres:secret@localhost:5432/my_production_db";
     const mainUrl = "postgresql://postgres:secret@localhost:5432/other_db";
@@ -38,5 +45,13 @@ describe("assertSafeDatabaseAudit Guard Logic", () => {
     expect(info.isSafe).toBe(true);
     expect(info.database).toBe("construction_erp_v2_qa");
     expect(info.maskedUser).toBe("po****");
+  });
+
+  it("should PASS when a distinct database is explicitly named E2E", () => {
+    const info = validateDatabaseSafety(
+      "postgresql://postgres:secret@127.0.0.1:5432/construction_erp_v2_settings_e2e_20260803",
+      "postgresql://postgres:secret@127.0.0.1:5432/construction_erp_v2_qa",
+    );
+    expect(info.isSafe).toBe(true);
   });
 });

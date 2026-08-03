@@ -1,322 +1,60 @@
-import { SystemSettingsInput } from "./settings-validation";
+import type { SystemSettingsInput } from "./settings-validation";
 
-export type SettingCategory = "company" | "system" | "documents" | "approvals" | "security" | "notifications" | "data";
+export type SettingCategory =
+  | "company"
+  | "documents"
+  | "system"
+  | "security"
+  | "approvals"
+  | "notifications"
+  | "data";
+export type SettingLifecycle = "active" | "deferred";
 
 export type SettingDefinition = {
   key: keyof SystemSettingsInput;
   category: SettingCategory;
   label: string;
-  description: string;
-  editable: boolean;
-  implemented: boolean;
-  readOnlyReason?: string;
-  adminOnly: boolean;
-  usedBy: string[];
+  lifecycle: SettingLifecycle;
+  runtimeConsumer: string | null;
+  owner: string;
+  reason?: string;
 };
 
-export const SETTINGS_REGISTRY: SettingDefinition[] = [
-  // Organization / Company
-  {
-    key: "companyName",
-    category: "company",
-    label: "Tên doanh nghiệp",
-    description: "Tên hiển thị trên các báo cáo và hệ thống",
-    editable: true,
-    implemented: true,
-    adminOnly: false, // DIRECTOR can edit
-    usedBy: ["UI"],
-  },
-  {
-    key: "taxCode",
-    category: "company",
-    label: "Mã số thuế",
-    description: "Mã số thuế công ty",
-    editable: true,
-    implemented: true,
-    adminOnly: false,
-    usedBy: ["UI"],
-  },
-  {
-    key: "hotline",
-    category: "company",
-    label: "Hotline nội bộ",
-    description: "Số điện thoại liên hệ nội bộ",
-    editable: true,
-    implemented: true,
-    adminOnly: false,
-    usedBy: ["UI"],
-  },
+/**
+ * Contract register, not a UI menu. Only `active` fields may appear on /settings.
+ * Deferred columns are retained for compatibility but deliberately have no editor.
+ */
+export const SETTINGS_REGISTRY: readonly SettingDefinition[] = [
+  { key: "companyName", category: "company", label: "Tên doanh nghiệp", lifecycle: "active", runtimeConsumer: "Company profile service (export integration in progress)", owner: "Settings" },
+  { key: "taxCode", category: "company", label: "Mã số thuế", lifecycle: "active", runtimeConsumer: "Company profile service", owner: "Settings" },
+  { key: "hotline", category: "company", label: "Hotline nội bộ", lifecycle: "active", runtimeConsumer: "Company profile service", owner: "Settings" },
+  { key: "maxUploadSizeMb", category: "documents", label: "Dung lượng tải lên tối đa", lifecycle: "active", runtimeConsumer: "POST /api/documents/upload", owner: "Documents" },
+  { key: "allowedExtensions", category: "documents", label: "Định dạng tệp cho phép", lifecycle: "active", runtimeConsumer: "POST /api/documents/upload", owner: "Documents" },
+  { key: "enforceNamingConvention", category: "documents", label: "Quy tắc đặt tên", lifecycle: "active", runtimeConsumer: "POST /api/documents/upload", owner: "Documents" },
+  { key: "autoVersioning", category: "documents", label: "Tự động tạo phiên bản", lifecycle: "active", runtimeConsumer: "POST /api/documents/upload", owner: "Documents" },
 
-  // System
-  {
-    key: "timezone",
-    category: "system",
-    label: "Múi giờ",
-    description: "Múi giờ hệ thống",
-    editable: false,
-    implemented: false,
-    readOnlyReason: "Đã có cấu hình nhưng module nghiệp vụ chưa đọc setting này ở runtime.",
-    adminOnly: true,
-    usedBy: [],
-  },
-  {
-    key: "currency",
-    category: "system",
-    label: "Tiền tệ mặc định",
-    description: "Tiền tệ tham chiếu cho dự toán công trình",
-    editable: false,
-    implemented: false,
-    readOnlyReason: "Đã có cấu hình nhưng module nghiệp vụ chưa đọc setting này ở runtime.",
-    adminOnly: true,
-    usedBy: [],
-  },
-
-  // Security
-  {
-    key: "requireTwoFactorForAdmins",
-    category: "security",
-    label: "Bắt buộc 2FA cho quản trị",
-    description: "Yêu cầu 2FA đối với admin",
-    editable: false,
-    implemented: false,
-    readOnlyReason: "Tính năng quét/bảo mật 2FA chưa có trong Phase 1",
-    adminOnly: true,
-    usedBy: [],
-  },
-  {
-    key: "sessionTimeoutMinutes",
-    category: "security",
-    label: "Hết phiên sau",
-    description: "Thời gian hết hạn phiên đăng nhập",
-    editable: false,
-    implemented: false,
-    readOnlyReason: "Đã có cấu hình nhưng module nghiệp vụ chưa đọc setting này ở runtime.",
-    adminOnly: true,
-    usedBy: [],
-  },
-  {
-    key: "passwordRotationDays",
-    category: "security",
-    label: "Đổi mật khẩu sau",
-    description: "Bắt buộc đổi mật khẩu sau số ngày",
-    editable: false,
-    implemented: false,
-    readOnlyReason: "Chưa có luồng 강 chế đổi mật khẩu",
-    adminOnly: true,
-    usedBy: [],
-  },
-  {
-    key: "allowedIpMode",
-    category: "security",
-    label: "Chế độ IP truy cập",
-    description: "Chỉ cho phép các IP tin cậy (Phase 2)",
-    editable: false,
-    implemented: false,
-    readOnlyReason: "Chưa có cấu hình danh sách IP tin cậy",
-    adminOnly: true,
-    usedBy: [],
-  },
-  {
-    key: "trustedDeviceReviewDays",
-    category: "security",
-    label: "Rà soát thiết bị",
-    description: "Số ngày rà soát thiết bị",
-    editable: false,
-    implemented: false,
-    readOnlyReason: "Chưa có bảng theo dõi thiết bị tin cậy",
-    adminOnly: true,
-    usedBy: [],
-  },
-  {
-    key: "auditSensitiveActions",
-    category: "security",
-    label: "Ghi audit",
-    description: "Ghi lại thay đổi quan trọng",
-    editable: false,
-    implemented: false,
-    readOnlyReason: "Đã có cấu hình nhưng module nghiệp vụ chưa đọc setting này ở runtime.",
-    adminOnly: true,
-    usedBy: [],
-  },
-
-  // Workflow
-  {
-    key: "materialRequestApproval",
-    category: "approvals",
-    label: "Vật tư phải duyệt",
-    description: "Yêu cầu vật tư phải có phê duyệt",
-    editable: false,
-    implemented: false,
-    readOnlyReason: "Đã có cấu hình nhưng module nghiệp vụ chưa đọc setting này ở runtime.",
-    adminOnly: true,
-    usedBy: [],
-  },
-  {
-    key: "reportLockAfterApproval",
-    category: "approvals",
-    label: "Khóa báo cáo sau duyệt",
-    description: "Báo cáo duyệt xong không thể sửa",
-    editable: false,
-    implemented: false,
-    readOnlyReason: "Đã có cấu hình nhưng module nghiệp vụ chưa đọc setting này ở runtime.",
-    adminOnly: true,
-    usedBy: [],
-  },
-
-  // Documents
-  {
-    key: "enforceNamingConvention",
-    category: "documents",
-    label: "Chuẩn đặt tên hồ sơ",
-    description: "Bắt buộc định dạng tên khi tải lên",
-    editable: true,
-    implemented: true,
-    adminOnly: true,
-    usedBy: ["Upload API"],
-  },
-  {
-    key: "autoVersioning",
-    category: "documents",
-    label: "Tự động tạo phiên bản",
-    description: "Tài liệu trùng tên thành version mới",
-    editable: true,
-    implemented: true,
-    adminOnly: true,
-    usedBy: ["Upload API"],
-  },
-  {
-    key: "allowedExtensions",
-    category: "documents",
-    label: "Định dạng được phép",
-    description: "Các đuôi tệp cho phép upload",
-    editable: true,
-    implemented: true,
-    adminOnly: true,
-    usedBy: ["Upload API"],
-  },
-  {
-    key: "documentRetentionYears",
-    category: "documents",
-    label: "Lưu hồ sơ",
-    description: "Số năm lưu trữ hồ sơ công trình",
-    editable: false,
-    implemented: false,
-    readOnlyReason: "Chưa có Cron Job dọn dẹp hồ sơ quá hạn",
-    adminOnly: true,
-    usedBy: [],
-  },
-
-  // Notifications
-  {
-    key: "emailDailyDigest",
-    category: "notifications",
-    label: "Gửi tổng hợp email",
-    description: "Email tổng hợp cuối ngày",
-    editable: false,
-    implemented: false,
-    readOnlyReason: "Chưa có Cron Job và cấu hình SMTP Server",
-    adminOnly: true,
-    usedBy: [],
-  },
-  {
-    key: "approvalEscalation",
-    category: "notifications",
-    label: "Leo thang quá hạn",
-    description: "Tự động nhắc/leo thang duyệt",
-    editable: false,
-    implemented: false,
-    readOnlyReason: "Chưa có Job theo dõi deadline phê duyệt",
-    adminOnly: true,
-    usedBy: [],
-  },
-  {
-    key: "fieldReportReminder",
-    category: "notifications",
-    label: "Nhắc báo cáo hiện trường",
-    description: "Gửi push nhắc nộp báo cáo",
-    editable: false,
-    implemented: false,
-    readOnlyReason: "Chưa có Push Notification service",
-    adminOnly: true,
-    usedBy: [],
-  },
-  {
-    key: "reminderTime",
-    category: "notifications",
-    label: "Giờ nhắc",
-    description: "Thời điểm nhắc trong ngày",
-    editable: false,
-    implemented: false,
-    readOnlyReason: "Cấu hình đi kèm tính năng Nhắc báo cáo chưa hoàn thiện",
-    adminOnly: true,
-    usedBy: [],
-  },
-  {
-    key: "escalationHours",
-    category: "notifications",
-    label: "Giờ leo thang",
-    description: "Thời gian chờ trước khi leo thang",
-    editable: false,
-    implemented: false,
-    readOnlyReason: "Cấu hình đi kèm tính năng Leo thang chưa hoàn thiện",
-    adminOnly: true,
-    usedBy: [],
-  },
-
-  // Data
-  {
-    key: "automaticBackup",
-    category: "data",
-    label: "Sao lưu tự động",
-    description: "Backup DB tự động",
-    editable: false,
-    implemented: false,
-    readOnlyReason: "Chưa tích hợp Backup Service (AWS S3, pg_dump job)",
-    adminOnly: true,
-    usedBy: [],
-  },
-  {
-    key: "backupFrequency",
-    category: "data",
-    label: "Tần suất sao lưu",
-    description: "Chu kỳ sao lưu dữ liệu",
-    editable: false,
-    implemented: false,
-    readOnlyReason: "Đi kèm với tính năng Backup chưa hoàn thiện",
-    adminOnly: true,
-    usedBy: [],
-  },
-  {
-    key: "retentionYears",
-    category: "data",
-    label: "Lưu dữ liệu hệ thống",
-    description: "Thời gian lưu trữ dữ liệu DB",
-    editable: false,
-    implemented: false,
-    readOnlyReason: "Chưa có job xóa dữ liệu DB quá hạn",
-    adminOnly: true,
-    usedBy: [],
-  },
-  {
-    key: "exportRequiresApproval",
-    category: "data",
-    label: "Xuất dữ liệu cần duyệt",
-    description: "Export toàn hệ thống cần phê duyệt",
-    editable: false,
-    implemented: false,
-    readOnlyReason: "Luồng phê duyệt Export hiện tại chưa hỗ trợ",
-    adminOnly: true,
-    usedBy: [],
-  },
-  {
-    key: "maintenanceWindow",
-    category: "data",
-    label: "Cửa sổ bảo trì",
-    description: "Khung giờ bảo trì dự kiến",
-    editable: false,
-    implemented: false,
-    readOnlyReason: "Hệ thống chưa có khái niệm ngắt kết nối giờ bảo trì",
-    adminOnly: true,
-    usedBy: [],
-  },
+  { key: "timezone", category: "system", label: "Múi giờ", lifecycle: "deferred", runtimeConsumer: null, owner: "Architecture", reason: "Chưa có consumer nghiệp vụ toàn hệ thống." },
+  { key: "currency", category: "system", label: "Tiền tệ", lifecycle: "deferred", runtimeConsumer: null, owner: "Architecture", reason: "Chưa có consumer nghiệp vụ toàn hệ thống." },
+  { key: "requireTwoFactorForAdmins", category: "security", label: "Bắt buộc MFA", lifecycle: "deferred", runtimeConsumer: null, owner: "Identity & Security", reason: "Không có flow MFA để thực thi." },
+  { key: "sessionTimeoutMinutes", category: "security", label: "Thời hạn phiên", lifecycle: "deferred", runtimeConsumer: null, owner: "Identity & Security", reason: "Session không đọc cột này." },
+  { key: "passwordRotationDays", category: "security", label: "Chu kỳ mật khẩu", lifecycle: "deferred", runtimeConsumer: null, owner: "Identity & Security", reason: "Không có password rotation." },
+  { key: "allowedIpMode", category: "security", label: "Giới hạn IP", lifecycle: "deferred", runtimeConsumer: null, owner: "Identity & Security", reason: "Không có IP allowlist enforcement." },
+  { key: "trustedDeviceReviewDays", category: "security", label: "Rà soát thiết bị", lifecycle: "deferred", runtimeConsumer: null, owner: "Identity & Security", reason: "Không có device registry." },
+  { key: "auditSensitiveActions", category: "security", label: "Audit hành động nhạy cảm", lifecycle: "deferred", runtimeConsumer: null, owner: "Identity & Security", reason: "Không được dùng làm feature flag." },
+  { key: "materialRequestApproval", category: "approvals", label: "Duyệt yêu cầu vật tư", lifecycle: "deferred", runtimeConsumer: null, owner: "Approval Center", reason: "Approval Center là chủ sở hữu nghiệp vụ." },
+  { key: "reportLockAfterApproval", category: "approvals", label: "Khóa báo cáo sau duyệt", lifecycle: "deferred", runtimeConsumer: null, owner: "Approval Center", reason: "Approval Center là chủ sở hữu nghiệp vụ." },
+  { key: "documentRetentionYears", category: "documents", label: "Thời hạn lưu hồ sơ", lifecycle: "deferred", runtimeConsumer: null, owner: "Documents", reason: "Chưa có job retention." },
+  { key: "emailDailyDigest", category: "notifications", label: "Email tổng hợp", lifecycle: "deferred", runtimeConsumer: null, owner: "Notifications", reason: "Chưa có delivery job/SMTP contract." },
+  { key: "approvalEscalation", category: "notifications", label: "Leo thang phê duyệt", lifecycle: "deferred", runtimeConsumer: null, owner: "Approval Center", reason: "Chưa có scheduler enforcement." },
+  { key: "fieldReportReminder", category: "notifications", label: "Nhắc báo cáo hiện trường", lifecycle: "deferred", runtimeConsumer: null, owner: "Notifications", reason: "Chưa có delivery job." },
+  { key: "reminderTime", category: "notifications", label: "Giờ nhắc", lifecycle: "deferred", runtimeConsumer: null, owner: "Notifications", reason: "Phụ thuộc tính năng reminder chưa thực thi." },
+  { key: "escalationHours", category: "notifications", label: "Thời gian leo thang", lifecycle: "deferred", runtimeConsumer: null, owner: "Approval Center", reason: "Phụ thuộc scheduler chưa thực thi." },
+  { key: "automaticBackup", category: "data", label: "Backup tự động", lifecycle: "deferred", runtimeConsumer: null, owner: "Platform", reason: "Không có backup provider/job." },
+  { key: "backupFrequency", category: "data", label: "Chu kỳ backup", lifecycle: "deferred", runtimeConsumer: null, owner: "Platform", reason: "Không có backup provider/job." },
+  { key: "retentionYears", category: "data", label: "Lưu giữ backup", lifecycle: "deferred", runtimeConsumer: null, owner: "Platform", reason: "Không có backup provider/job." },
+  { key: "exportRequiresApproval", category: "data", label: "Duyệt xuất dữ liệu", lifecycle: "deferred", runtimeConsumer: null, owner: "Platform", reason: "Không có export approval enforcement." },
+  { key: "maintenanceWindow", category: "data", label: "Khung bảo trì", lifecycle: "deferred", runtimeConsumer: null, owner: "Platform", reason: "Không có maintenance scheduler." },
 ];
+
+export const ACTIVE_SETTINGS = SETTINGS_REGISTRY.filter((setting) => setting.lifecycle === "active");
+export const DEFERRED_SETTINGS = SETTINGS_REGISTRY.filter((setting) => setting.lifecycle === "deferred");

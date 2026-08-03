@@ -19,7 +19,7 @@ describe("construction supervisor canonical permission matrix", () => {
     "documents.upload", "documents.update", "documents.delete", "documents.download",
     "reports.create", "reports.update", "reports.submit", "reports.approve", "reports.reject", "reports.export",
     "materials.request", "materials.update", "materials.approve", "materials.receive", "materials.issue",
-    "approvals.create", "approvals.decide", "users.view", "settings.company",
+    "approvals.create", "approvals.decide", "users.view", "settings.company.manage",
   ] as const)("denies %s without a mutation grant", (permission) => {
     const result = evaluatePermissionPolicy({ ...actor, permission, membership: null });
     expect(result.allowed).toBe(false);

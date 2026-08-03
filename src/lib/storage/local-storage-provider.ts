@@ -6,7 +6,9 @@ import { pipeline } from 'stream/promises';
 import { randomUUID, createHash } from 'crypto';
 import { DocumentStorageProvider, SaveFileInput, StoredFileResult } from './types';
 
-const STORAGE_ROOT = process.env.STORAGE_ROOT || path.join(/*turbopackIgnore: true*/ process.cwd(), 'storage');
+export function getStorageRoot(): string {
+  return process.env.STORAGE_ROOT || path.join(process.cwd(), 'storage');
+}
 
 export function validateSafePath(inputPath: string): boolean {
   if (!inputPath || typeof inputPath !== 'string') return false;
@@ -46,9 +48,10 @@ export class LocalStorageProvider implements DocumentStorageProvider {
 
     const storedName = createStoredFileName(originalName);
     const relativePath = path.join('projects', projectCode, 'documents', folderId, storedName);
-    const absolutePath = path.resolve(STORAGE_ROOT, relativePath);
+    const storageRoot = getStorageRoot();
+    const absolutePath = path.resolve(storageRoot, relativePath);
 
-    const root = path.resolve(STORAGE_ROOT);
+    const root = path.resolve(storageRoot);
     const rel = path.relative(root, absolutePath);
 
     // Verify the absolutePath does not escape STORAGE_ROOT
@@ -93,7 +96,7 @@ export class LocalStorageProvider implements DocumentStorageProvider {
   }
 
   private resolvePath(objectKeyOrPath: string): string {
-    const root = path.resolve(STORAGE_ROOT);
+    const root = path.resolve(getStorageRoot());
     const target = path.isAbsolute(objectKeyOrPath) 
       ? path.resolve(objectKeyOrPath) 
       : path.resolve(root, objectKeyOrPath);

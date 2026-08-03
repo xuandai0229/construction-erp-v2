@@ -132,7 +132,11 @@ export const NEXT_WEEK_PLAN_GROUP_3_CATEGORIES = [
   { order: 4 as const, key: "OTHER" as const, title: "Ý kiến khác", category: "Ý kiến khác" },
 ];
 
-export function buildWeeklyDocumentModel(dossier: SupervisionWeeklyPrintDto, documentType: WeeklyDocumentType): WeeklyDocumentModel {
+export function buildWeeklyDocumentModel(
+  dossier: SupervisionWeeklyPrintDto,
+  documentType: WeeklyDocumentType,
+  company?: { companyName?: string | null },
+): WeeklyDocumentModel {
   const isResult = documentType === "RESULT";
   
   // Safe extraction
@@ -149,11 +153,16 @@ export function buildWeeklyDocumentModel(dossier: SupervisionWeeklyPrintDto, doc
   const placeClean = dossier.place?.trim() || "";
   const documentDateLine = formatOfficialDocumentDate(placeClean, issueDateFormatted);
 
+  const companyName = company?.companyName?.trim() || "CHƯA CẤU HÌNH DOANH NGHIỆP";
+  const companyDivider = companyName.toLocaleUpperCase("vi-VN").indexOf(" VÀ ");
+  const companySubName = companyDivider < 0 ? "" : companyName.slice(companyDivider + 3).trim();
+  const companyHeader = companyDivider < 0 ? companyName : companyName.slice(0, companyDivider).trim();
+
   const model: WeeklyDocumentModel = {
     metadata: {
       dossierId: dossier.id,
-      companyName: "CÔNG TY CỔ PHẦN XÂY DỰNG",
-      companySubName: "VÀ THƯƠNG MẠI SỐ 2 HÀ NỘI",
+      companyName: companyHeader,
+      companySubName,
       nationalMottoLine1: "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM",
       nationalMottoLine2: "Độc lập - Tự do - Hạnh phúc",
       reportNumber: formatReportNumber(dossier.reportNumber),

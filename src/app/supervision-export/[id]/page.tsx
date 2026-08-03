@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { getSupervisionWeeklyPrintData } from "@/app/(dashboard)/supervision/weekly/actions";
 import { WeeklyPrintTemplate } from "@/components/supervision-weekly/weekly-print-template";
+import { getCompanyProfile } from "@/lib/settings/company-profile";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -14,12 +15,12 @@ export default async function SupervisionWeeklyExportViewPage({ params, searchPa
   const session = await getSession();
   if (!session) redirect("/login?reason=session_expired");
   
-  const dossier = await getSupervisionWeeklyPrintData(id, "EXPORT");
+  const [dossier, company] = await Promise.all([getSupervisionWeeklyPrintData(id, "EXPORT"), getCompanyProfile()]);
   if (!dossier) notFound();
   
   return (
     <div className="print-export-container">
-      <WeeklyPrintTemplate dossier={dossier} activeDocument={activeDocument} hidePrintButton={true} />
+      <WeeklyPrintTemplate dossier={dossier} activeDocument={activeDocument} hidePrintButton={true} companyName={company.companyName} />
     </div>
   );
 }

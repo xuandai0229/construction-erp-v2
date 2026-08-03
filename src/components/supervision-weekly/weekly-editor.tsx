@@ -13,7 +13,7 @@ import { EditorHeader, type SaveState, type SectionNavItem } from "./editor-head
 import type { WeeklyDocumentType, WeeklyEditorDossier, WeeklyObservation, WeeklyProject } from "@/lib/supervision-weekly/editor-types";
 import type { SupervisionWeeklyPrintDto } from "@/lib/supervision-weekly/print-types";
 import { NEXT_WEEK_PLAN_GROUP_2_CATEGORIES, NEXT_WEEK_PLAN_GROUP_3_CATEGORIES } from "@/lib/supervision-weekly/document-model";
-import { FileText, File, Printer, Eye } from "lucide-react";
+import { FileText, Eye } from "lucide-react";
 import { InAppPdfViewer } from "@/components/ui/in-app-pdf-viewer";
 import { buildSupervisionExportFilename } from "@/lib/supervision-weekly/export-filename";
 
@@ -31,7 +31,7 @@ function cleanActionError(error: unknown) {
   return message.replace(/^Error:\s*/i, "").replace(/^CONFLICT:\s*/i, "");
 }
 
-export function WeeklyEditor({ initial, projects, canReview, canEditPolicy, canExport, isOwner }: { initial: WeeklyEditorDossier; projects: WeeklyProject[]; canReview: boolean; canEditPolicy: boolean; canExport: boolean; isOwner: boolean }) {
+export function WeeklyEditor({ initial, projects, canReview, canEditPolicy, canExport, isOwner, companyName }: { initial: WeeklyEditorDossier; projects: WeeklyProject[]; canReview: boolean; canEditPolicy: boolean; canExport: boolean; isOwner: boolean; companyName?: string | null }) {
   const [dossier, setDossier] = useState(initial);
   const [activeDocument, setActiveDocument] = useState<WeeklyDocumentType>("RESULT");
   const [saveState, setSaveState] = useState<SaveState>("saved");
@@ -368,6 +368,7 @@ export function WeeklyEditor({ initial, projects, canReview, canEditPolicy, canE
       onClose={() => setPreviewOpen(false)} 
       dossier={previewData}
       canExport={canExport}
+      companyName={companyName}
     />
     {revisionDialogOpen && <div className="fixed inset-0 z-[130] flex items-center justify-center bg-slate-900/60 p-4" role="dialog" aria-modal="true" aria-labelledby="revision-reason-title">
       <div className="w-full max-w-lg rounded-xl bg-white p-5 shadow-xl">
@@ -398,7 +399,7 @@ export function WeeklyEditor({ initial, projects, canReview, canEditPolicy, canE
   </div>;
 }
 
-function PreviewDialog({ isOpen, onClose, dossier, canExport }: { isOpen: boolean; onClose: () => void; dossier: SupervisionWeeklyPrintDto | null; canExport: boolean }) {
+function PreviewDialog({ isOpen, onClose, dossier, canExport, companyName }: { isOpen: boolean; onClose: () => void; dossier: SupervisionWeeklyPrintDto | null; canExport: boolean; companyName?: string | null }) {
   const [activeDocument, setActiveDocument] = useState<"RESULT" | "NEXT_WEEK_PLAN">("RESULT");
   const [showPdfViewer, setShowPdfViewer] = useState(false);
 
@@ -453,7 +454,7 @@ function PreviewDialog({ isOpen, onClose, dossier, canExport }: { isOpen: boolea
         </div>
         <div className="flex-1 overflow-auto p-0 sm:p-4 bg-slate-200 flex justify-center print:bg-white print:p-0 print:block">
           <div className="bg-white shadow-md sm:rounded-md origin-top-left print:shadow-none print:m-0 print:rounded-none">
-            <WeeklyPrintTemplate dossier={dossier} activeDocument={activeDocument} hidePrintButton={true} onDocumentTypeChange={setActiveDocument} />
+            <WeeklyPrintTemplate dossier={dossier} activeDocument={activeDocument} hidePrintButton={true} onDocumentTypeChange={setActiveDocument} companyName={companyName} />
           </div>
         </div>
       </div>

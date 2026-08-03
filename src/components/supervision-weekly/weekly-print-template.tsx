@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Download, Eye, FileText, Loader2, Printer } from "lucide-react";
+import { ArrowLeft, Eye, FileText, Loader2 } from "lucide-react";
 import type { SupervisionWeeklyPrintDto } from "@/lib/supervision-weekly/print-types";
 import { buildWeeklyDocumentModel, type WeeklyDocumentModel } from "@/lib/supervision-weekly/document-model";
 import { formatReportNumber } from "@/lib/supervision-weekly/report-number";
@@ -314,11 +314,13 @@ export function WeeklyPrintTemplate({
   activeDocument: initialActiveDocument = "RESULT",
   hidePrintButton = false,
   onDocumentTypeChange,
+  companyName,
 }: {
   dossier: SupervisionWeeklyPrintDto;
   activeDocument?: "RESULT" | "NEXT_WEEK_PLAN";
   hidePrintButton?: boolean;
   onDocumentTypeChange?: (type: "RESULT" | "NEXT_WEEK_PLAN") => void;
+  companyName?: string | null;
 }) {
   const [docType, setDocType] = useState<"RESULT" | "NEXT_WEEK_PLAN">(initialActiveDocument);
   const [exportingType, setExportingType] = useState<string | null>(null);
@@ -333,7 +335,7 @@ export function WeeklyPrintTemplate({
     onDocumentTypeChange?.(type);
   };
 
-  const model = buildWeeklyDocumentModel(dossier, docType);
+  const model = buildWeeklyDocumentModel(dossier, docType, { companyName });
 
   const pdfDownloadUrl = `/api/supervision/weekly/${dossier.id}/export?format=pdf&disposition=attachment&document=${docType}`;
   const pdfViewUrl = `/api/supervision/weekly/${dossier.id}/export?format=pdf&disposition=inline&document=${docType}`;

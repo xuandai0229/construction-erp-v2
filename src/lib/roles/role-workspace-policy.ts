@@ -1,4 +1,5 @@
 import type { UserRole } from "@prisma/client";
+import { canAccessSettings } from "@/lib/settings/settings-permissions";
 
 export type RoleWorkspaceGroup = "EXECUTIVE_DASHBOARD" | "OPERATIONAL_WORKSPACE";
 
@@ -58,7 +59,8 @@ export function canRoleAccessRoute(role: UserRole, pathname: string): boolean {
   if (pathname === "/approvals" || pathname.startsWith("/approvals/")) {
     return COMPANY_WIDE.has(role) || OPERATIONAL_READ_ALL.has(role) || role === "CHIEF_COMMANDER" || role === "MANAGER";
   }
-  if (pathname === "/users" || pathname.startsWith("/users/") || pathname === "/settings" || pathname.startsWith("/settings/")) {
+  if (pathname === "/settings" || pathname.startsWith("/settings/")) return canAccessSettings(role);
+  if (pathname === "/users" || pathname.startsWith("/users/")) {
     return COMPANY_WIDE.has(role);
   }
   return false;

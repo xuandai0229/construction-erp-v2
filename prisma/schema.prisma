@@ -1129,7 +1129,8 @@ model FieldMaterialRequestItem {
 }
 
 model SystemSetting {
-  id String @id @default(cuid())
+  id           String @id @default(cuid())
+  singletonKey String @unique @default("DEFAULT_SETTINGS")
 
   // Organization
   companyName String

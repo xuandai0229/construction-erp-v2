@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { canExportSupervisionWeeklyDossier, canReadSupervisionWeekly } from "@/lib/supervision-weekly/permissions";
 import { getSupervisionWeeklyPrintData } from "@/app/(dashboard)/supervision/weekly/actions";
 import { WeeklyPrintTemplate } from "@/components/supervision-weekly/weekly-print-template";
+import { getCompanyProfile } from "@/lib/settings/company-profile";
 
 export const metadata = { title: "Xem trước báo cáo tuần | ERP Công trình" };
 
@@ -21,7 +22,7 @@ export default async function WeeklyInspectionPreviewPage({
   const session = await getSession();
   if (!session) redirect("/login?reason=session_expired");
   if (!canReadSupervisionWeekly(session.role)) redirect("/reports");
-  const dossier = await getSupervisionWeeklyPrintData(id);
+  const [dossier, company] = await Promise.all([getSupervisionWeeklyPrintData(id), getCompanyProfile()]);
   if (!dossier) notFound();
   const canPrint = canExportSupervisionWeeklyDossier(session, {
     createdById: dossier.creator?.id || "",
@@ -31,7 +32,7 @@ export default async function WeeklyInspectionPreviewPage({
   return (
     <div className="p-8 bg-slate-200 min-h-screen print:p-0 print:bg-white">
       <div className="mx-auto max-w-[297mm] bg-white shadow-2xl print:max-w-none print:shadow-none">
-        <WeeklyPrintTemplate dossier={dossier} activeDocument={activeDocument} hidePrintButton={hidePrintButton || !canPrint} />
+        <WeeklyPrintTemplate dossier={dossier} activeDocument={activeDocument} hidePrintButton={hidePrintButton || !canPrint} companyName={company.companyName} />
       </div>
     </div>
   );

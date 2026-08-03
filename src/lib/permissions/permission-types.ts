@@ -8,7 +8,7 @@ export const PERMISSIONS = [
   "materials.view", "materials.request", "materials.update", "materials.approve", "materials.receive", "materials.issue",
   "approvals.view", "approvals.create", "approvals.decide",
   "audit.view_global", "audit.view_project", "audit.export",
-  "settings.company", "settings.system",
+  "settings.view", "settings.company.view", "settings.company.manage", "settings.documents.view", "settings.documents.manage", "settings.administration.view",
   "safety.weekly_file.delete_any", "safety.weekly_file.delete_own",
 ] as const;
 

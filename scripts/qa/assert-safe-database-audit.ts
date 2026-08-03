@@ -60,8 +60,7 @@ export function validateDatabaseSafety(
     if (
       isSameHost &&
       qaParsed.port === prodParsed.port &&
-      qaParsed.database === prodParsed.database &&
-      qaParsed.schema === prodParsed.schema
+      qaParsed.database === prodParsed.database
     ) {
       throw new Error(
         `SECURITY GUARD REJECTED: QA_DATABASE_URL points to the exact same target (${qaParsed.host}:${qaParsed.port}/${qaParsed.database}) as DATABASE_URL.`
@@ -79,11 +78,11 @@ export function validateDatabaseSafety(
     }
   }
 
-  const safeKeywords = ["qa", "test", "sandbox", "ci", "dev"];
+  const safeKeywords = ["qa", "e2e", "test", "sandbox", "ci", "dev"];
   const hasSafeKeyword = safeKeywords.some((kw) => dbLower.includes(kw));
   if (!hasSafeKeyword) {
     throw new Error(
-      `SECURITY GUARD REJECTED: QA database name '${qaParsed.database}' must contain a recognized test identifier ('qa', 'test', 'sandbox', 'ci', or 'dev').`
+      `SECURITY GUARD REJECTED: QA database name '${qaParsed.database}' must contain a recognized test identifier ('qa', 'e2e', 'test', 'sandbox', 'ci', or 'dev').`
     );
   }
 

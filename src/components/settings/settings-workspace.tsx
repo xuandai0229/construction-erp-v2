@@ -1,814 +1,263 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import type { LucideIcon } from "lucide-react";
-import {
-  Bell,
-  Building2,
-  CheckCircle2,
-  Clock3,
-  DatabaseBackup,
-  FileText,
-  LockKeyhole,
-  RotateCcw,
-  Save,
-  Search,
-  Settings2,
-  ShieldCheck,
-  SlidersHorizontal,
-  Workflow,
-  AlertTriangle
-} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Building2, FileText, History, Save, X } from "lucide-react";
 import { useToast } from "@/components/ui/toast-context";
 import { cn } from "@/lib/utils";
-import type { SystemSettingsInput } from "@/lib/settings/settings-validation";
-import { updateSystemSettings } from "@/app/(dashboard)/settings/actions";
-import { DEFAULT_SYSTEM_SETTINGS } from "@/lib/settings/settings-validation";
-import { ContentCard } from "@/components/ui/enterprise";
+import {
+  companyProfileSchema,
+  documentPolicySchema,
+  type CompanyProfileInput,
+  type DocumentPolicyInput,
+} from "@/lib/settings/settings-validation";
+import type { SettingsAccess } from "@/lib/settings/settings-permissions";
+import type { SettingsSnapshot } from "@/lib/settings/system-settings";
+import { updateCompanyProfile, updateDocumentPolicies } from "@/app/(dashboard)/settings/actions";
+import { getSettingsFieldLabel, parseSettingsAuditPayload } from "@/lib/settings/settings-audit";
 
-type SettingsSectionId = "organization" | "system" | "security" | "workflow" | "documents" | "notifications" | "data";
+type SectionId = "company" | "documents" | "administration";
+type FieldErrors = Record<string, string | undefined>;
 
-const sectionMeta: {
-  id: SettingsSectionId;
-  title: string;
-  description: string;
-  icon: LucideIcon;
-}[] = [
-  {
-    id: "organization",
-    title: "Doanh nghiệp",
-    description: "Thông tin nhận diện công ty/tổ chức.",
-    icon: Building2,
-  },
-  {
-    id: "system",
-    title: "Hệ thống",
-    description: "Tiền tệ, múi giờ và cấu hình hệ thống chung.",
-    icon: Settings2,
-  },
-  {
-    id: "security",
-    title: "Bảo mật",
-    description: "Phiên đăng nhập, xác thực quản trị và nhật ký nhạy cảm.",
-    icon: ShieldCheck,
-  },
-  {
-    id: "workflow",
-    title: "Quy trình",
-    description: "Luồng phê duyệt cho vật tư, hồ sơ kỹ thuật và báo cáo.",
-    icon: Workflow,
-  },
-  {
-    id: "documents",
-    title: "Tài liệu",
-    description: "Chuẩn đặt tên, phiên bản hồ sơ và giới hạn tải lên.",
-    icon: FileText,
-  },
-  {
-    id: "notifications",
-    title: "Thông báo",
-    description: "Nhắc việc hiện trường, tổng hợp email và leo thang phê duyệt.",
-    icon: Bell,
-  },
-  {
-    id: "data",
-    title: "Dữ liệu",
-    description: "Sao lưu, xuất dữ liệu, lưu trữ và cửa sổ bảo trì.",
-    icon: DatabaseBackup,
-  },
-];
+type RecentChange = {
+  id: string;
+  action: string;
+  beforeData: string | null;
+  afterData: string | null;
+  createdAt: string;
+  actorName: string;
+  actorRole: string | null;
+};
 
-function formatSavedAt(value: Date | string | undefined) {
-  if (!value) return "Chưa có";
-  return new Intl.DateTimeFormat("vi-VN", {
-    dateStyle: "short",
-    timeStyle: "short",
-  }).format(new Date(value));
+const SECTION_META: Record<SectionId, { label: string; description: string; icon: typeof Building2 }> = {
+  company: { label: "Thông tin doanh nghiệp", description: "Thông tin nhận diện dùng chung trên các đầu ra có hỗ trợ.", icon: Building2 },
+  documents: { label: "Chính sách tài liệu", description: "Áp dụng cho mọi tệp được tải lên hệ thống.", icon: FileText },
+  administration: { label: "Quản trị hệ thống", description: "Nhật ký thay đổi cấu hình gần đây.", icon: History },
+};
+
+function isEqual(left: unknown, right: unknown) {
+  return JSON.stringify(left) === JSON.stringify(right);
 }
 
-// Flat system settings type + some metadata from Prisma
-type SystemSettingsData = SystemSettingsInput & { id?: string; updatedAt?: Date; updatedById?: string | null };
+function formatSavedAt(value: string | Date | null, actor: { name: string } | null) {
+  if (!value) return "Chưa có cấu hình nào được lưu.";
+  const date = new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+  return `Đã lưu lúc ${date}${actor ? ` bởi ${actor.name}` : ""}.`;
+}
 
-export function SettingsWorkspace({ initialSettings }: { initialSettings: SystemSettingsData }) {
+function decodeChange(change: RecentChange) {
+  const payload = parseSettingsAuditPayload(change.afterData);
+  if (payload?.section) {
+    const section = payload.section === "documents" ? "Chính sách tài liệu" : "Thông tin doanh nghiệp";
+    const fields = (payload.changedFields ?? []).map(getSettingsFieldLabel);
+    return { section, fields: fields.length ? `${fields.length} nội dung đã thay đổi: ${fields.join(", ")}` : "Khởi tạo cấu hình" };
+  }
+  try {
+    const value = JSON.parse(change.afterData || "{}");
+    const section = value.section === "documents" ? "Chính sách tài liệu" : "Thông tin doanh nghiệp";
+    const fields = Array.isArray(value.changedFields) ? value.changedFields : [];
+    return { section, fields: fields.join(", ") || "Khởi tạo cấu hình" };
+  } catch {
+    return { section: "Cài đặt hệ thống", fields: "Đã cập nhật cấu hình" };
+  }
+}
+
+export function SettingsWorkspace({
+  initialSettings,
+  initialSection,
+  access,
+  recentChanges,
+}: {
+  initialSettings: SettingsSnapshot;
+  initialSection: SectionId;
+  access: SettingsAccess;
+  recentChanges: RecentChange[];
+}) {
+  const router = useRouter();
   const toast = useToast();
-  const [activeSection, setActiveSection] = useState<SettingsSectionId>("organization");
-  const [query, setQuery] = useState("");
-  
-  // The state being edited
-  const [profile, setProfile] = useState<SystemSettingsData>(initialSettings);
-  
-  // The last confirmed saved state from server
-  const [savedSnapshot, setSavedSnapshot] = useState<SystemSettingsData>(initialSettings);
-  
+  const [activeSection, setActiveSection] = useState<SectionId>(initialSection);
+  const [snapshot, setSnapshot] = useState(initialSettings);
+  const [company, setCompany] = useState<CompanyProfileInput>(initialSettings.company);
+  const [documents, setDocuments] = useState<DocumentPolicyInput>(initialSettings.documents);
+  const [companyErrors, setCompanyErrors] = useState<FieldErrors>({});
+  const [documentErrors, setDocumentErrors] = useState<FieldErrors>({});
   const [isPending, startTransition] = useTransition();
 
-  const isDirty = useMemo(() => {
-    // Basic deep compare avoiding dates
-    const current = { ...profile, updatedAt: null, id: null, updatedById: null };
-    const saved = { ...savedSnapshot, updatedAt: null, id: null, updatedById: null };
-    return JSON.stringify(current) !== JSON.stringify(saved);
-  }, [profile, savedSnapshot]);
+  const sections = useMemo(() => {
+    const available: SectionId[] = [];
+    if (access.canViewCompany) available.push("company");
+    if (access.canViewDocuments) available.push("documents");
+    if (access.canViewAdministration) available.push("administration");
+    return available;
+  }, [access]);
+  const companyDirty = !isEqual(company, snapshot.company);
+  const documentsDirty = !isEqual(documents, snapshot.documents);
+  const isCompanyIncomplete = !company.companyName.trim();
 
-  const visibleSections = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    if (!normalized) return sectionMeta;
-    return sectionMeta.filter((section) =>
-      `${section.title} ${section.description}`.toLowerCase().includes(normalized),
-    );
-  }, [query]);
-
-  const updateField = <K extends keyof SystemSettingsInput>(
-    field: K,
-    value: SystemSettingsInput[K],
-  ) => {
-    setProfile((current) => ({
-      ...current,
-      [field]: value,
-    }));
+  const selectSection = (section: SectionId) => {
+    setActiveSection(section);
+    router.replace(`/settings?section=${section}`);
   };
 
-  const handleSave = () => {
+  const saveCompany = () => {
+    const parsed = companyProfileSchema.safeParse(company);
+    if (!parsed.success) {
+      setCompanyErrors(Object.fromEntries(parsed.error.issues.map((issue) => [String(issue.path[0]), issue.message])));
+      return;
+    }
+    setCompanyErrors({});
     startTransition(async () => {
       try {
-        const result = await updateSystemSettings(profile);
-        setProfile(result);
-        setSavedSnapshot(result);
-        toast.success("Đã lưu cấu hình cài đặt vào cơ sở dữ liệu hệ thống.");
-      } catch (error: any) {
-        toast.error(error.message || "Lỗi khi lưu cấu hình.");
+        const result = await updateCompanyProfile({ ...parsed.data, expectedVersion: snapshot.version });
+        if (!result.ok) {
+          toast.error(result.message);
+          return;
+        }
+        setSnapshot(result.snapshot);
+        setCompany(result.snapshot.company);
+        toast.success("Đã lưu thông tin doanh nghiệp.");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Không thể lưu thông tin doanh nghiệp.");
       }
     });
   };
 
-  const handleRestoreSaved = () => {
-    setProfile(savedSnapshot);
-    toast.info("Đã hoàn tác về cấu hình hiện tại trên server.");
+  const saveDocuments = () => {
+    const parsed = documentPolicySchema.safeParse(documents);
+    if (!parsed.success) {
+      setDocumentErrors(Object.fromEntries(parsed.error.issues.map((issue) => [String(issue.path[0]), issue.message])));
+      return;
+    }
+    setDocumentErrors({});
+    startTransition(async () => {
+      try {
+        const result = await updateDocumentPolicies({ ...parsed.data, expectedVersion: snapshot.version });
+        if (!result.ok) {
+          toast.error(result.message);
+          return;
+        }
+        setSnapshot(result.snapshot);
+        setDocuments(result.snapshot.documents);
+        toast.success("Đã lưu chính sách tài liệu. Chính sách mới áp dụng cho các lần tải lên tiếp theo.");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Không thể lưu chính sách tài liệu.");
+      }
+    });
   };
-
-  const handleResetDefaults = () => {
-    setProfile(prev => ({
-        ...prev,
-        ...DEFAULT_SYSTEM_SETTINGS
-    }) as SystemSettingsData);
-    toast.warning("Đã đưa màn hình về cấu hình mặc định. Nhấn Lưu để áp dụng.");
-  };
-
-  // Tính toán số metrics trung thực
-  const enabledControls = [
-    profile.requireTwoFactorForAdmins,
-    profile.auditSensitiveActions,
-    profile.materialRequestApproval,
-    profile.reportLockAfterApproval,
-    profile.enforceNamingConvention,
-    profile.autoVersioning,
-    profile.exportRequiresApproval,
-  ].filter(Boolean).length;
 
   return (
-    <div className="app-page mx-auto max-w-[1440px] space-y-5">
-      <ContentCard className="overflow-hidden p-0 sm:p-0">
-        <div className="grid gap-5 p-5 lg:grid-cols-[1fr_auto] lg:items-start lg:p-6">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-              <Settings2 className="h-3.5 w-3.5" />
-              Trung tâm cấu hình ERP
-            </div>
-            <h1 className="mt-3 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
-              Cài đặt hệ thống
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-              Điều chỉnh các tiêu chuẩn vận hành dùng chung cho bảo mật, phê duyệt, tài liệu,
-              thông báo và dữ liệu của ERP công trình. (Dữ liệu đang được liên kết thực tế với DB).
-            </p>
-          </div>
+    <div className="app-page mx-auto max-w-[1400px] space-y-6 pb-24 lg:pb-8">
+      <header className="border-b border-slate-200 pb-5">
+        <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Cài đặt hệ thống</h1>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Quản lý thông tin doanh nghiệp và các chính sách dùng chung đang được hệ thống áp dụng.</p>
+        <p className="mt-3 break-words text-xs font-medium text-slate-500">{formatSavedAt(snapshot.updatedAt, snapshot.updatedBy)}</p>
+      </header>
 
-          <div className="flex flex-col gap-2 sm:flex-row lg:justify-end">
-            <button
-              type="button"
-              onClick={handleRestoreSaved}
-              disabled={!isDirty || isPending}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm shadow-slate-950/[0.03] transition hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <RotateCcw className="h-4 w-4" />
-              Hoàn tác
-            </button>
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={!isDirty || isPending}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm shadow-blue-950/10 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Save className={cn("h-4 w-4", isPending && "animate-spin")} />
-              {isPending ? "Đang lưu..." : "Lưu cài đặt"}
-            </button>
-          </div>
-        </div>
-
-        <div className="grid border-t border-slate-200 bg-slate-50/80 sm:grid-cols-2 xl:grid-cols-4">
-          <MetricTile
-            label="Kiểm soát đang bật"
-            value={`${enabledControls}/9`}
-            description="Các guardrail vận hành quan trọng"
-            icon={CheckCircle2}
-            tone="success"
-          />
-          <MetricTile
-            label="Trạng thái Bảo mật"
-            value="Chưa liên kết"
-            description="Tính năng quét bảo mật sẽ ra mắt ở Phase 2"
-            icon={AlertTriangle}
-            tone="neutral"
-          />
-          <MetricTile
-            label="Hệ thống Backup"
-            value="Chưa liên kết"
-            description="Chưa có Backup Job tự động"
-            icon={DatabaseBackup}
-            tone="neutral"
-          />
-          <MetricTile
-            label="Lần cập nhật gần nhất"
-            value={formatSavedAt(savedSnapshot.updatedAt)}
-            description="Từ cơ sở dữ liệu thật"
-            icon={Clock3}
-            tone="success"
-          />
-        </div>
-      </ContentCard>
-
-      <div className="grid gap-5 lg:grid-cols-[280px_minmax(0,1fr)]">
-        <aside className="space-y-3 lg:sticky lg:top-20 lg:self-start">
-          <div className="surface-panel p-3">
-            <label htmlFor="settings-search" className="sr-only">
-              Tìm nhóm cài đặt
-            </label>
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
-                id="settings-search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                className="h-10 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                placeholder="Tìm cài đặt..."
-                type="search"
-              />
-            </div>
-          </div>
-
-          <nav className="surface-panel overflow-hidden p-2" aria-label="Nhóm cài đặt">
-            {visibleSections.map((section) => {
-              const Icon = section.icon;
-              const isActive = activeSection === section.id;
+      <div className="lg:grid lg:grid-cols-[252px_minmax(0,1fr)] lg:gap-8">
+        <aside className="hidden lg:block">
+          <nav aria-label="Nhóm cài đặt" className="sticky top-20 space-y-1 border-l border-slate-200 pl-3">
+            {sections.map((section) => {
+              const meta = SECTION_META[section];
+              const Icon = meta.icon;
+              const active = activeSection === section;
               return (
                 <button
-                  key={section.id}
+                  key={section}
                   type="button"
-                  onClick={() => {
-                    setActiveSection(section.id);
-                    if (window.innerWidth < 1024) {
-                      setTimeout(() => {
-                        const el = document.getElementById("settings-form-container");
-                        if (el) el.scrollIntoView({ behavior: "smooth" });
-                      }, 10);
-                    }
-                  }}
-                  className={cn(
-                    "flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left transition",
-                    isActive
-                      ? "bg-blue-50 text-blue-700"
-                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-950",
-                  )}
+                  onClick={() => selectSection(section)}
+                  className={cn("flex w-full items-start gap-3 rounded-r-xl px-3 py-3 text-left transition", active ? "bg-blue-50 text-blue-800" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950")}
                 >
-                  <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", isActive ? "text-blue-600" : "text-slate-400")} />
-                  <span className="min-w-0">
-                    <span className="block text-sm font-semibold">{section.title}</span>
-                    <span className="mt-0.5 block text-xs leading-5 text-slate-500">{section.description}</span>
+                  <Icon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                  <span>
+                    <span className="block text-sm font-semibold">{meta.label}</span>
+                    <span className="mt-0.5 block text-xs leading-5 text-slate-500">{meta.description}</span>
                   </span>
                 </button>
               );
             })}
           </nav>
-
-          <div className="surface-panel p-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-              <SlidersHorizontal className="h-4 w-4 text-blue-600" />
-              Trạng thái chỉnh sửa
-            </div>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              {isDirty
-                ? "Có thay đổi chưa lưu. Hãy lưu trước khi rời trang."
-                : "Cấu hình đang khớp với dữ liệu trên máy chủ."}
-            </p>
-            <button
-              type="button"
-              onClick={handleResetDefaults}
-              className="mt-3 inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
-            >
-              <RotateCcw className="h-3.5 w-3.5" />
-              Đưa về mặc định
-            </button>
-          </div>
         </aside>
 
-        <main id="settings-form-container" className="min-w-0 space-y-5 scroll-mt-24">
-          <SectionShell meta={sectionMeta.find((section) => section.id === activeSection) ?? sectionMeta[0]}>
-            {activeSection === "organization" && (
-              <div className="grid gap-4 md:grid-cols-2">
-                <TextField
-                  label="Tên doanh nghiệp"
-                  value={profile.companyName}
-                  onChange={(value) => updateField("companyName", value)}
-                />
-                <TextField
-                  label="Mã số thuế"
-                  value={profile.taxCode || ""}
-                  onChange={(value) => updateField("taxCode", value)}
-                />
-                <TextField
-                  label="Hotline nội bộ"
-                  value={profile.hotline || ""}
-                  onChange={(value) => updateField("hotline", value)}
-                />
-              </div>
-            )}
+        <div className="lg:hidden">
+          <label htmlFor="settings-section" className="sr-only">Chọn nhóm cài đặt</label>
+          <select id="settings-section" value={activeSection} onChange={(event) => selectSection(event.target.value as SectionId)} className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100">
+            {sections.map((section) => <option key={section} value={section}>{SECTION_META[section].label}</option>)}
+          </select>
+        </div>
 
-            {activeSection === "system" && (
-              <div className="grid gap-4 md:grid-cols-2">
-                <SelectField
-                  label="Múi giờ"
-                  value={profile.timezone}
-                  onChange={(value) => updateField("timezone", value)}
-                  disabled={true}
-                  badge="Chưa kích hoạt"
-                  options={[
-                    ["Asia/Bangkok", "Việt Nam, Thái Lan"],
-                    ["Asia/Singapore", "Singapore"],
-                    ["UTC", "UTC"],
-                  ]}
-                />
-                <SelectField
-                  label="Tiền tệ mặc định"
-                  value={profile.currency}
-                  onChange={(value) => updateField("currency", value)}
-                  disabled={true}
-                  badge="Chưa kích hoạt"
-                  options={[
-                    ["VND", "VND"],
-                    ["USD", "USD"],
-                  ]}
-                />
-              </div>
-            )}
-
-            {activeSection === "security" && (
-              <div className="space-y-4">
-                <SwitchRow
-                  title="Bắt buộc 2FA cho quản trị"
-                  description="Sẽ yêu cầu Admin xác thực 2 bước."
-                  checked={profile.requireTwoFactorForAdmins}
-                  onChange={(value) => updateField("requireTwoFactorForAdmins", value)}
-                  disabled={true}
-                  badge="Chưa kích hoạt"
-                />
-                <SwitchRow
-                  title="Ghi audit cho thao tác nhạy cảm"
-                  description="Ghi lại thay đổi quyền, xuất dữ liệu, duyệt hồ sơ và xóa mềm."
-                  checked={profile.auditSensitiveActions}
-                  onChange={(value) => updateField("auditSensitiveActions", value)}
-                  disabled={true}
-                  badge="Chưa kích hoạt"
-                />
-                <div className="grid gap-4 md:grid-cols-3">
-                  <NumberField
-                    label="Hết phiên sau"
-                    suffix="phút"
-                    value={profile.sessionTimeoutMinutes}
-                    onChange={(value) => updateField("sessionTimeoutMinutes", value)}
-                    disabled={true}
-                    badge="Chưa kích hoạt"
-                  />
-                  <NumberField
-                    label="Đổi mật khẩu sau"
-                    suffix="ngày"
-                    value={profile.passwordRotationDays}
-                    onChange={(value) => updateField("passwordRotationDays", value)}
-                    disabled={true}
-                    badge="Chỉ hiển thị"
-                  />
-                  <NumberField
-                    label="Rà soát thiết bị tin cậy"
-                    suffix="ngày"
-                    value={profile.trustedDeviceReviewDays}
-                    onChange={(value) => updateField("trustedDeviceReviewDays", value)}
-                    disabled={true}
-                    badge="Chỉ hiển thị"
-                  />
-                </div>
-                <SelectField
-                  label="Chế độ IP truy cập"
-                  value={profile.allowedIpMode}
-                  onChange={(value) => updateField("allowedIpMode", value as any)}
-                  disabled={true}
-                  badge="Chưa kích hoạt"
-                  options={[
-                    ["restricted", "Giới hạn theo danh sách tin cậy"],
-                    ["open", "Mở cho mọi IP"],
-                  ]}
-                />
-              </div>
-            )}
-
-            {activeSection === "workflow" && (
-              <div className="space-y-4">
-                <SwitchRow
-                  title="Vật tư phải qua phê duyệt"
-                  description="Đề xuất vật tư từ hiện trường cần được duyệt trước khi nhập kho tự động."
-                  checked={profile.materialRequestApproval}
-                  onChange={(value) => updateField("materialRequestApproval", value)}
-                  disabled={true}
-                  badge="Chưa kích hoạt"
-                />
-                <SwitchRow
-                  title="Khóa báo cáo sau khi duyệt"
-                  description="Báo cáo Chỉ huy trưởng đã duyệt chỉ được sửa bằng yêu cầu điều chỉnh."
-                  checked={profile.reportLockAfterApproval}
-                  onChange={(value) => updateField("reportLockAfterApproval", value)}
-                  disabled={true}
-                  badge="Chưa kích hoạt"
-                />
-              </div>
-            )}
-
-            {activeSection === "documents" && (
-              <div className="space-y-4">
-                <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4">
-                  <div className="flex items-start gap-3">
-                    <AlertTriangle className="mt-0.5 h-5 w-5 text-blue-600" />
-                    <div>
-                      <h3 className="text-sm font-semibold text-blue-900">Giới hạn dung lượng tải lên</h3>
-                      <p className="mt-1 text-sm leading-6 text-blue-700">
-                        Hệ thống không đặt giới hạn dung lượng ở tầng ứng dụng. Dung lượng thực tế phụ thuộc máy chủ trung gian, dịch vụ lưu trữ và hệ thống lưu trữ tệp.
-                      </p>
-                    </div>
+        <main className="mt-5 min-w-0 lg:mt-0">
+          {activeSection === "company" && (
+            <section aria-labelledby="company-heading" className="max-w-3xl">
+              <SectionHeading title="Thông tin doanh nghiệp" description="Các đầu ra đã tích hợp đọc thông tin này từ cùng một nguồn cấu hình." />
+              {isCompanyIncomplete && <div role="status" className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">Thông tin doanh nghiệp chưa hoàn tất. Hãy nhập tên doanh nghiệp trước khi lưu để tránh dùng dữ liệu nhận diện không chính xác.</div>}
+              {access.canManageCompany ? (
+                <form onSubmit={(event) => { event.preventDefault(); saveCompany(); }} className="space-y-5">
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    <TextField label="Tên doanh nghiệp" name="companyName" value={company.companyName} error={companyErrors.companyName} required onChange={(value) => setCompany((current) => ({ ...current, companyName: value }))} />
+                    <TextField label="Mã số thuế" name="taxCode" value={company.taxCode} error={companyErrors.taxCode} onChange={(value) => setCompany((current) => ({ ...current, taxCode: value }))} />
                   </div>
-                </div>
-                <SwitchRow
-                  title="Bắt buộc chuẩn đặt tên hồ sơ"
-                  description="Cảnh báo tên file camera, chat hoặc tên quá chung."
-                  checked={profile.enforceNamingConvention}
-                  onChange={(value) => updateField("enforceNamingConvention", value)}
-                />
-                <SwitchRow
-                  title="Tự động tạo phiên bản"
-                  description="Tài liệu trùng tên được lưu thành phiên bản mới."
-                  checked={profile.autoVersioning}
-                  onChange={(value) => updateField("autoVersioning", value)}
-                />
-                <div className="grid gap-4 md:grid-cols-2">
-                  <NumberField
-                    label="Lưu hồ sơ tối thiểu"
-                    suffix="năm"
-                    value={profile.documentRetentionYears}
-                    onChange={(value) => updateField("documentRetentionYears", value)}
-                    disabled={true}
-                    badge="Chỉ hiển thị"
-                  />
-                </div>
-                <TextField
-                  label="Định dạng được phép"
-                  value={profile.allowedExtensions}
-                  onChange={(value) => updateField("allowedExtensions", value)}
-                />
-              </div>
-            )}
+                  <TextField label="Hotline nội bộ" name="hotline" value={company.hotline} error={companyErrors.hotline} onChange={(value) => setCompany((current) => ({ ...current, hotline: value }))} />
+                  <SectionActions dirty={companyDirty} pending={isPending} onCancel={() => { setCompany(snapshot.company); setCompanyErrors({}); }} />
+                </form>
+              ) : <ReadOnlyFields fields={[['Tên doanh nghiệp', company.companyName], ['Mã số thuế', company.taxCode], ['Hotline nội bộ', company.hotline]]} />}
+            </section>
+          )}
 
-            {activeSection === "notifications" && (
-              <div className="space-y-4">
-                <SwitchRow
-                  title="Gửi tổng hợp email hằng ngày"
-                  description="Email tổng hợp cuối ngày"
-                  checked={profile.emailDailyDigest}
-                  onChange={(value) => updateField("emailDailyDigest", value)}
-                  disabled={true}
-                  badge="Chưa kích hoạt"
-                />
-                <SwitchRow
-                  title="Leo thang phê duyệt quá hạn"
-                  description="Tự động nhắc/leo thang duyệt"
-                  checked={profile.approvalEscalation}
-                  onChange={(value) => updateField("approvalEscalation", value)}
-                  disabled={true}
-                  badge="Chưa kích hoạt"
-                />
-                <SwitchRow
-                  title="Nhắc báo cáo hiện trường"
-                  description="Gửi push nhắc nộp báo cáo."
-                  checked={profile.fieldReportReminder}
-                  onChange={(value) => updateField("fieldReportReminder", value)}
-                  disabled={true}
-                  badge="Chưa kích hoạt"
-                />
-                <div className="grid gap-4 md:grid-cols-2">
-                  <TextField
-                    label="Giờ nhắc báo cáo"
-                    value={profile.reminderTime}
-                    onChange={(value) => updateField("reminderTime", value)}
-                    disabled={true}
-                    badge="Chỉ hiển thị"
-                  />
-                  <NumberField
-                    label="Leo thang sau"
-                    suffix="giờ"
-                    value={profile.escalationHours}
-                    onChange={(value) => updateField("escalationHours", value)}
-                    disabled={true}
-                    badge="Chỉ hiển thị"
-                  />
-                </div>
-              </div>
-            )}
+          {activeSection === "documents" && (
+            <section aria-labelledby="documents-heading" className="max-w-3xl">
+              <SectionHeading title="Chính sách tài liệu" description="Áp dụng cho tất cả tệp được tải lên hệ thống từ thời điểm lưu thay đổi." />
+              {access.canManageDocuments ? (
+                <form onSubmit={(event) => { event.preventDefault(); saveDocuments(); }} className="space-y-5">
+                  <NumberField label="Dung lượng tải lên tối đa" name="maxUploadSizeMb" value={documents.maxUploadSizeMb} error={documentErrors.maxUploadSizeMb} suffix="MB" onChange={(value) => setDocuments((current) => ({ ...current, maxUploadSizeMb: value }))} />
+                  <TextField label="Định dạng tệp được phép" name="allowedExtensions" value={documents.allowedExtensions} error={documentErrors.allowedExtensions} description="Nhập các đuôi tệp, cách nhau bằng dấu phẩy. Ví dụ: pdf, docx, xlsx." onChange={(value) => setDocuments((current) => ({ ...current, allowedExtensions: value }))} />
+                  <SwitchField label="Bắt buộc chuẩn đặt tên hồ sơ" description="Từ chối các tên tệp quá ngắn, quá chung chung hoặc có dấu hiệu đường dẫn không hợp lệ." checked={documents.enforceNamingConvention} onChange={(value) => setDocuments((current) => ({ ...current, enforceNamingConvention: value }))} />
+                  <SwitchField label="Tự động tạo phiên bản" description="Khi tải tệp trùng tên trong cùng thư mục và công trình, hệ thống lưu thành phiên bản mới." checked={documents.autoVersioning} onChange={(value) => setDocuments((current) => ({ ...current, autoVersioning: value }))} />
+                  <SectionActions dirty={documentsDirty} pending={isPending} onCancel={() => { setDocuments(snapshot.documents); setDocumentErrors({}); }} />
+                </form>
+              ) : <ReadOnlyFields fields={[['Dung lượng tải lên tối đa', `${documents.maxUploadSizeMb} MB`], ['Định dạng tệp được phép', documents.allowedExtensions], ['Chuẩn đặt tên hồ sơ', documents.enforceNamingConvention ? 'Có áp dụng' : 'Không áp dụng'], ['Tự động tạo phiên bản', documents.autoVersioning ? 'Có áp dụng' : 'Không áp dụng']]} />}
+            </section>
+          )}
 
-            {activeSection === "data" && (
-              <div className="space-y-4">
-                <SwitchRow
-                  title="Sao lưu tự động"
-                  description="Backup DB tự động"
-                  checked={profile.automaticBackup}
-                  onChange={(value) => updateField("automaticBackup", value)}
-                  disabled={true}
-                  badge="Chưa kích hoạt"
-                />
-                <SwitchRow
-                  title="Xuất dữ liệu cần phê duyệt"
-                  description="Giảm rủi ro rò rỉ dữ liệu khi tải hàng loạt."
-                  checked={profile.exportRequiresApproval}
-                  onChange={(value) => updateField("exportRequiresApproval", value)}
-                  disabled={true}
-                  badge="Chưa kích hoạt"
-                />
-                <div className="grid gap-4 md:grid-cols-2">
-                  <SelectField
-                    label="Tần suất sao lưu"
-                    value={profile.backupFrequency}
-                    onChange={(value) => updateField("backupFrequency", value as any)}
-                    disabled={true}
-                    badge="Chỉ hiển thị"
-                    options={[
-                      ["daily", "Hằng ngày"],
-                      ["weekly", "Hằng tuần"],
-                    ]}
-                  />
-                  <NumberField
-                    label="Lưu dữ liệu tối thiểu"
-                    suffix="năm"
-                    value={profile.retentionYears}
-                    onChange={(value) => updateField("retentionYears", value)}
-                    disabled={true}
-                    badge="Chỉ hiển thị"
-                  />
-                </div>
-                <TextField
-                  label="Cửa sổ bảo trì"
-                  value={profile.maintenanceWindow}
-                  onChange={(value) => updateField("maintenanceWindow", value)}
-                  disabled={true}
-                  badge="Chỉ hiển thị"
-                />
+          {activeSection === "administration" && access.canViewAdministration && (
+            <section aria-labelledby="administration-heading" className="max-w-4xl">
+              <SectionHeading title="Quản trị hệ thống" description="Theo dõi các thay đổi cấu hình gần đây từ dữ liệu nhật ký hệ thống." />
+              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                {recentChanges.length === 0 ? <p className="px-5 py-8 text-sm text-slate-600">Chưa có thay đổi cấu hình nào được ghi nhận.</p> : recentChanges.map((change) => {
+                  const detail = decodeChange(change);
+                  return <article key={change.id} className="border-b border-slate-100 px-5 py-4 last:border-b-0"><div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1"><h3 className="text-sm font-semibold text-slate-900">{detail.section}</h3><time className="text-xs text-slate-500">{new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(change.createdAt))}</time></div><p className="mt-1 text-sm text-slate-600">{detail.fields}</p><p className="mt-2 text-xs text-slate-500">Người thực hiện: {change.actorName}{change.actorRole ? ` · ${change.actorRole}` : ""}</p></article>;
+                })}
               </div>
-            )}
-          </SectionShell>
+            </section>
+          )}
         </main>
       </div>
     </div>
   );
 }
 
-function MetricTile({
-  label,
-  value,
-  description,
-  icon: Icon,
-  tone,
-}: {
-  label: string;
-  value: string;
-  description: string;
-  icon: LucideIcon;
-  tone: "success" | "warning" | "neutral";
-}) {
-  const iconClass = {
-    success: "bg-emerald-50 text-emerald-700",
-    warning: "bg-amber-50 text-amber-700",
-    neutral: "bg-slate-100 text-slate-700",
-  }[tone];
-
-  return (
-    <div className="border-b border-slate-200 p-4 sm:border-r sm:last:border-r-0 xl:border-b-0">
-      <div className="flex items-start gap-3">
-        <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", iconClass)}>
-          <Icon className="h-5 w-5" />
-        </div>
-        <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
-          <p className="mt-1 truncate text-xl font-bold text-slate-950">{value}</p>
-          <p className="mt-0.5 text-xs leading-5 text-slate-500">{description}</p>
-        </div>
-      </div>
-    </div>
-  );
+function SectionHeading({ title, description }: { title: string; description: string }) {
+  return <div className="mb-6"><h2 className="text-xl font-bold tracking-tight text-slate-950">{title}</h2><p className="mt-2 text-sm leading-6 text-slate-600">{description}</p></div>;
 }
 
-function SectionShell({
-  meta,
-  children,
-}: {
-  meta: (typeof sectionMeta)[number];
-  children: React.ReactNode;
-}) {
-  const Icon = meta.icon;
-
-  return (
-    <section className="surface-panel overflow-hidden">
-      <div className="border-b border-slate-200 bg-white p-5">
-        <div className="flex items-start gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
-            <Icon className="h-5 w-5" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-slate-950">{meta.title}</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600">{meta.description}</p>
-          </div>
-        </div>
-      </div>
-      <div className="p-5 sm:p-6">{children}</div>
-    </section>
-  );
+function SectionActions({ dirty, pending, onCancel }: { dirty: boolean; pending: boolean; onCancel: () => void }) {
+  return <div className="flex flex-col-reverse gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:justify-end"><button type="button" disabled={!dirty || pending} onClick={onCancel} className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"><X className="h-4 w-4" />Hủy thay đổi chưa lưu</button><button type="submit" disabled={!dirty || pending} className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-blue-700 px-4 text-sm font-semibold text-white transition hover:bg-blue-800 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50"><Save className={cn("h-4 w-4", pending && "animate-spin")} />{pending ? "Đang lưu..." : "Lưu thay đổi"}</button></div>;
 }
 
-function SwitchRow({
-  title,
-  description,
-  checked,
-  onChange,
-  disabled,
-  badge,
-}: {
-  title: string;
-  description: string;
-  checked: boolean;
-  onChange: (value: boolean) => void;
-  disabled?: boolean;
-  badge?: string;
-}) {
-  return (
-    <div className={cn("flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 sm:flex-row sm:items-center sm:justify-between", disabled && "opacity-75")}>
-      <div className="min-w-0">
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-semibold text-slate-950">{title}</p>
-          {badge && (
-            <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-700 uppercase tracking-wide">
-              {badge}
-            </span>
-          )}
-        </div>
-        <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>
-      </div>
-      <button
-        type="button"
-        disabled={disabled}
-        aria-pressed={checked}
-        onClick={() => onChange(!checked)}
-        className={cn(
-          "relative h-7 w-12 shrink-0 rounded-full border transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2",
-          checked ? "border-blue-600 bg-blue-600" : "border-slate-300 bg-white",
-          disabled && "cursor-not-allowed opacity-50"
-        )}
-      >
-        <span
-          className={cn(
-            "absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition",
-            checked ? "left-6" : "left-1",
-          )}
-        />
-        <span className="sr-only">{checked ? "Đang bật" : "Đang tắt"}</span>
-      </button>
-    </div>
-  );
+function TextField({ label, name, value, error, description, required, onChange }: { label: string; name: string; value: string; error?: string; description?: string; required?: boolean; onChange: (value: string) => void }) {
+  const descriptionId = `${name}-description`;
+  const errorId = `${name}-error`;
+  return <div className="space-y-2"><label htmlFor={name} className="block text-sm font-semibold text-slate-800">{label}{required && <span className="ml-1 text-rose-700" aria-hidden="true">*</span>}</label>{description && <p id={descriptionId} className="text-xs leading-5 text-slate-500">{description}</p>}<input id={name} name={name} type="text" value={value} required={required} onChange={(event) => onChange(event.target.value)} aria-invalid={Boolean(error)} aria-describedby={cn(description && descriptionId, error && errorId) || undefined} className={cn("h-11 w-full rounded-lg border bg-white px-3 text-sm text-slate-950 outline-none transition placeholder:text-slate-400 focus:ring-2", error ? "border-rose-500 focus:border-rose-600 focus:ring-rose-100" : "border-slate-300 focus:border-blue-600 focus:ring-blue-100")} />{error && <p id={errorId} className="text-xs font-medium text-rose-700">{error}</p>}</div>;
 }
 
-function TextField({
-  label,
-  value,
-  onChange,
-  disabled,
-  badge,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  disabled?: boolean;
-  badge?: string;
-}) {
-  return (
-    <label className={cn("block", disabled && "opacity-75")}>
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-semibold text-slate-700">{label}</span>
-        {badge && (
-          <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-700 uppercase tracking-wide">
-            {badge}
-          </span>
-        )}
-      </div>
-      <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
-        value={value}
-        disabled={disabled}
-        onChange={(event) => onChange(event.target.value)}
-        className="mt-1 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50"
-        type="text"
-      />
-    </label>
-  );
+function NumberField({ label, name, value, error, suffix, onChange }: { label: string; name: string; value: number; error?: string; suffix: string; onChange: (value: number) => void }) {
+  const errorId = `${name}-error`;
+  return <div className="max-w-xs space-y-2"><label htmlFor={name} className="block text-sm font-semibold text-slate-800">{label}</label><div className="relative"><input id={name} name={name} type="number" min={1} value={value} onChange={(event) => onChange(Number(event.target.value))} aria-invalid={Boolean(error)} aria-describedby={error ? errorId : undefined} className={cn("h-11 w-full rounded-lg border bg-white px-3 pr-12 text-sm text-slate-950 outline-none transition focus:ring-2", error ? "border-rose-500 focus:border-rose-600 focus:ring-rose-100" : "border-slate-300 focus:border-blue-600 focus:ring-blue-100")} /><span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-medium text-slate-500">{suffix}</span></div>{error && <p id={errorId} className="text-xs font-medium text-rose-700">{error}</p>}</div>;
 }
 
-function NumberField({
-  label,
-  value,
-  suffix,
-  onChange,
-  disabled,
-  badge,
-}: {
-  label: string;
-  value: number;
-  suffix: string;
-  onChange: (value: number) => void;
-  disabled?: boolean;
-  badge?: string;
-}) {
-  return (
-    <label className={cn("block", disabled && "opacity-75")}>
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-semibold text-slate-700">{label}</span>
-        {badge && (
-          <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-700 uppercase tracking-wide">
-            {badge}
-          </span>
-        )}
-      </div>
-      <div className={cn("mt-1 flex overflow-hidden rounded-lg border border-slate-300 bg-white shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100", disabled && "bg-slate-50")}>
-        <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
-          value={value}
-          min={0}
-          disabled={disabled}
-          onChange={(event) => onChange(Number(event.target.value))}
-          className="h-10 min-w-0 flex-1 border-0 bg-transparent px-3 text-sm text-slate-900 outline-none disabled:cursor-not-allowed"
-          type="number"
-        />
-        <span className="flex max-w-[55%] items-center border-l border-slate-200 bg-slate-50 px-3 text-xs font-medium text-slate-500">
-          {suffix}
-        </span>
-      </div>
-    </label>
-  );
+function SwitchField({ label, description, checked, onChange }: { label: string; description: string; checked: boolean; onChange: (value: boolean) => void }) {
+  return <div className="flex items-start justify-between gap-5 rounded-xl border border-slate-200 p-4"><div><h3 className="text-sm font-semibold text-slate-900">{label}</h3><p className="mt-1 text-sm leading-6 text-slate-600">{description}</p></div><button type="button" role="switch" aria-checked={checked} aria-label={label} onClick={() => onChange(!checked)} className={cn("relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2", checked ? "bg-blue-700" : "bg-slate-300")}><span className={cn("absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition", checked ? "left-5" : "left-0.5")} /></button></div>;
 }
 
-function SelectField({
-  label,
-  value,
-  options,
-  onChange,
-  disabled,
-  badge,
-}: {
-  label: string;
-  value: string;
-  options: [string, string][];
-  onChange: (value: string) => void;
-  disabled?: boolean;
-  badge?: string;
-}) {
-  return (
-    <label className={cn("block", disabled && "opacity-75")}>
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-semibold text-slate-700">{label}</span>
-        {badge && (
-          <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-700 uppercase tracking-wide">
-            {badge}
-          </span>
-        )}
-      </div>
-      <select
-        value={value}
-        disabled={disabled}
-        onChange={(event) => onChange(event.target.value)}
-        className="mt-1 h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50"
-      >
-        {options.map(([optionValue, labelText]) => (
-          <option key={optionValue} value={optionValue}>
-            {labelText}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
+function ReadOnlyFields({ fields }: { fields: [string, string][] }) {
+  return <dl className="divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white px-5">{fields.map(([label, value]) => <div key={label} className="grid gap-1 py-4 sm:grid-cols-[minmax(0,180px)_1fr] sm:gap-6"><dt className="text-sm font-medium text-slate-500">{label}</dt><dd className="text-sm text-slate-900">{value || "Chưa thiết lập"}</dd></div>)}</dl>;
 }

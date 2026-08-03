@@ -54,6 +54,7 @@ function validateFileSignature(buffer: Buffer, extension: string): boolean {
 async function createValidatedUploadStream(
   body: ReadableStream<Uint8Array>,
   extension: string,
+  maxBytes: number,
 ): Promise<NodeJS.ReadableStream> {
   const reader = body.getReader();
   const initialChunks: Uint8Array[] = [];
@@ -79,12 +80,21 @@ async function createValidatedUploadStream(
   }
 
   async function* replayBody() {
+    let bytesRead = 0;
     for (const chunk of initialChunks) {
+      bytesRead += chunk.byteLength;
+      if (bytesRead > maxBytes) {
+        throw new Error("Tệp vượt quá dung lượng tối đa cho phép.");
+      }
       yield Buffer.from(chunk);
     }
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
+      bytesRead += value.byteLength;
+      if (bytesRead > maxBytes) {
+        throw new Error("Tệp vượt quá dung lượng tối đa cho phép.");
+      }
       yield Buffer.from(value);
     }
   }
@@ -177,7 +187,11 @@ export async function POST(req: NextRequest) {
 
     let stream: NodeJS.ReadableStream;
     try {
-      stream = await createValidatedUploadStream(req.body, extension);
+      stream = await createValidatedUploadStream(
+        req.body,
+        extension,
+        settings.maxUploadSizeMb * 1024 * 1024,
+      );
     } catch (error) {
       return json(
         { error: error instanceof Error ? error.message : "Tệp tải lên không hợp lệ" },

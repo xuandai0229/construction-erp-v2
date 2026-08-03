@@ -2,6 +2,7 @@ import * as docx from "docx";
 import type { SupervisionWeeklyPrintDto } from "./print-types";
 import { buildWeeklyDocumentModel } from "./document-model";
 import { createWordHandwritingLines, HANDWRITING_LINE_CONFIG } from "@/lib/docx/handwriting-lines";
+import { getCompanyProfile } from "@/lib/settings/company-profile";
 
 const PAGE = {
   // `docx` swaps width/height when LANDSCAPE is set. Supply portrait A4
@@ -21,11 +22,10 @@ const CELL_MARGIN = { top: 120, bottom: 120, left: 140, right: 140 }; // ~6pt to
 export async function exportSupervisionWeeklyDocx(
   dossier: SupervisionWeeklyPrintDto,
   documentType: "RESULT" | "NEXT_WEEK_PLAN",
-  options?: { isHandwrittenForm?: boolean }
 ): Promise<Buffer> {
-  const model = buildWeeklyDocumentModel(dossier, documentType);
+  const company = await getCompanyProfile();
+  const model = buildWeeklyDocumentModel(dossier, documentType, company);
   const isResult = documentType === "RESULT";
-  const isHandwritten = options?.isHandwrittenForm ?? false;
   
   const headerTable = new docx.Table({
     width: { size: USABLE_WIDTH, type: docx.WidthType.DXA },

@@ -26,8 +26,8 @@ async function main() {
     process.exit(1);
   }
 
-  if (newPassword.length < 8) {
-    console.error('❌ ERROR: Mật khẩu phải có ít nhất 8 ký tự.');
+  if (newPassword.length < 20 || !/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword) || !/[^A-Za-z0-9]/.test(newPassword)) {
+    console.error('❌ ERROR: Mật khẩu phải có ít nhất 20 ký tự và đủ chữ hoa, chữ thường, số, ký tự đặc biệt.');
     process.exit(1);
   }
 

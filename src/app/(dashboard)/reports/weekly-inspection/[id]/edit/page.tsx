@@ -4,6 +4,7 @@ import { canEditSupervisionWeeklyDossier, canExportSupervisionWeeklyDossier, can
 import { getSupervisionWeeklyDossier, getSupervisionWeeklyProjects } from "@/app/(dashboard)/supervision/weekly/actions";
 import { WeeklyEditor } from "@/components/supervision-weekly/weekly-editor";
 import { isoDate } from "@/lib/supervision-weekly/date";
+import { getCompanyProfile } from "@/lib/settings/company-profile";
 
 export const metadata = { title: "Soạn báo cáo tuần Giám sát | ERP Công trình" };
 
@@ -12,7 +13,11 @@ export default async function WeeklyInspectionEditPage({ params }: { params: Pro
   const session = await getSession();
   if (!session) redirect("/login?reason=session_expired");
   if (!canReadSupervisionWeekly(session.role)) redirect("/reports");
-  const [dossier, projects] = await Promise.all([getSupervisionWeeklyDossier(id), getSupervisionWeeklyProjects()]);
+  const [dossier, projects, company] = await Promise.all([
+    getSupervisionWeeklyDossier(id),
+    getSupervisionWeeklyProjects(),
+    getCompanyProfile(),
+  ]);
   if (!dossier) notFound();
   const revisionEntry = dossier.status === "REVISION_REQUIRED"
     ? dossier.revisions.find((r) => r.action === "REQUEST_REVISION")
@@ -23,6 +28,7 @@ export default async function WeeklyInspectionEditPage({ params }: { params: Pro
     canExport={canExportSupervisionWeeklyDossier(session, dossier)}
     isOwner={dossier.createdById === session.id}
     projects={projects}
+    companyName={company.companyName}
     initial={{
       id: dossier.id, reportNumber: dossier.reportNumber, weekStart: isoDate(dossier.weekStart), weekEnd: isoDate(dossier.weekEnd), nextWeekStart: isoDate(dossier.nextWeekStart), nextWeekEnd: isoDate(dossier.nextWeekEnd), place: dossier.place, recipientName: dossier.recipientName, recipientTitle: dossier.recipientTitle, authorName: dossier.createdBy?.name ?? "", status: dossier.status, version: dossier.version, lockVersion: dossier.lockVersion,
       latestRevision: revisionEntry ? { actorName: revisionEntry.actor?.name ?? "", reason: revisionEntry.reason, createdAt: revisionEntry.createdAt.toISOString() } : null,

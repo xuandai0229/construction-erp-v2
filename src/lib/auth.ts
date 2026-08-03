@@ -38,10 +38,12 @@ export async function getSession(): Promise<SessionUser | null> {
         phone: true,
         isActive: true,
         deletedAt: true,
+        updatedAt: true,
       }
     });
     
     if (!user || !user.isActive || user.deletedAt !== null) return null;
+    if (sessionData.credentialVersion !== user.updatedAt.toISOString()) return null;
     
     return {
       id: user.id,
@@ -59,7 +61,9 @@ export async function getSession(): Promise<SessionUser | null> {
 
 export async function setSession(userId: string) {
   const cookieStore = await cookies();
-  const token = createSessionToken(userId);
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { updatedAt: true } });
+  if (!user) throw new Error("Không thể tạo phiên cho tài khoản không tồn tại.");
+  const token = createSessionToken(userId, undefined, user.updatedAt.toISOString());
   
   cookieStore.set('auth_session', token, {
     httpOnly: true,

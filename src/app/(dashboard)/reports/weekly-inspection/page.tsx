@@ -13,7 +13,7 @@ export const metadata = {
 export default async function WeeklyInspectionPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ [key: string]: string | string[] | undefined }> | { [key: string]: string | string[] | undefined };
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const session = await getSession();
   if (!session) redirect("/login?reason=session_expired");
@@ -24,9 +24,8 @@ export default async function WeeklyInspectionPage({
     return <WeeklyListClient rows={[]} projects={[]} readiness={readiness} hidePageHeader={true} />;
   }
 
-  const resolvedParams = searchParams ? await Promise.resolve(searchParams) : {};
+  const resolvedParams = (await searchParams) ?? {};
   const initialSearch = typeof resolvedParams.q === "string" ? resolvedParams.q : "";
-  const initialStatus = typeof resolvedParams.status === "string" ? resolvedParams.status : "ALL";
   const initialProjectId = typeof resolvedParams.projectId === "string" ? resolvedParams.projectId : "ALL";
   const initialSort = typeof resolvedParams.sort === "string" ? (resolvedParams.sort as any) : "updated_desc";
 

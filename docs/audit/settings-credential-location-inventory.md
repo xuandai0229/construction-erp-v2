@@ -1,0 +1,343 @@
+# Settings release credential location inventory
+
+Generated: 2026-08-03T08:35:34.673Z
+
+This inventory contains paths and commit identifiers only. It does not contain matched values.
+
+## Summary
+
+- Working-tree heuristic candidates: 207
+- Git-history path/commit entries: 81
+- Screenshot/trace artefacts requiring visual review: 23
+- CI log files found in repository: 0
+- Repository terminal transcript files matched: 1
+
+Heuristic matches include examples and intentionally fake sanitizer test values. Each path still requires classification; candidate count is not a confirmed-secret count.
+
+## Working tree paths
+
+- `.\.agents\skills\design-taste-frontend\SKILL.md`
+- `.\.env`
+- `.\.env.cutover.local`
+- `.\.env.e2e.local`
+- `.\.env.example`
+- `.\.venv\Lib\site-packages\git_filter_repo-2.47.0.dist-info\METADATA`
+- `.\.venv\Lib\site-packages\git_filter_repo.py`
+- `.\.venv\Lib\site-packages\pip\_internal\network\auth.py`
+- `.\.venv\Lib\site-packages\pip\_internal\utils\filesystem.py`
+- `.\.venv\Lib\site-packages\pip\_internal\utils\misc.py`
+- `.\.venv\Lib\site-packages\pip\_internal\utils\temp_dir.py`
+- `.\.venv\Lib\site-packages\pip\_internal\vcs\subversion.py`
+- `.\.venv\Lib\site-packages\pip\_internal\vcs\versioncontrol.py`
+- `.\.venv\Lib\site-packages\pip\_vendor\distlib\util.py`
+- `.\.venv\Lib\site-packages\pip\_vendor\packaging\direct_url.py`
+- `.\.venv\Lib\site-packages\pip\_vendor\packaging\version.py`
+- `.\.venv\Lib\site-packages\pip\_vendor\requests\adapters.py`
+- `.\.venv\Lib\site-packages\pip\_vendor\requests\auth.py`
+- `.\.venv\Lib\site-packages\pip\_vendor\requests\sessions.py`
+- `.\.venv\Lib\site-packages\pip\_vendor\requests\utils.py`
+- `.\.venv\Lib\site-packages\pip\_vendor\rich\console.py`
+- `.\.venv\Lib\site-packages\pip\_vendor\rich\highlighter.py`
+- `.\.venv\Lib\site-packages\pip\_vendor\rich\prompt.py`
+- `.\.venv\Lib\site-packages\pip\_vendor\tomli\_parser.py`
+- `.\.venv\Lib\site-packages\pip\_vendor\tomli_w\_writer.py`
+- `.\.venv\Lib\site-packages\pip\_vendor\truststore\_api.py`
+- `.\.venv\Lib\site-packages\pip\_vendor\urllib3\connection.py`
+- `.\.venv\Lib\site-packages\pip\_vendor\urllib3\connectionpool.py`
+- `.\.venv\Lib\site-packages\pip\_vendor\urllib3\contrib\emscripten\connection.py`
+- `.\.venv\Lib\site-packages\pip\_vendor\urllib3\contrib\pyopenssl.py`
+- `.\.venv\Lib\site-packages\pip\_vendor\urllib3\contrib\socks.py`
+- `.\.venv\Lib\site-packages\pip\_vendor\urllib3\util\url.py`
+- `.\artifacts\run-qa-rehearsal.ts`
+- `.\artifacts\supervision-weekly-e2e\server\qa-server.stdout.log`
+- `.\backups\2026-06-22-1715\.env`
+- `.\backups\before-safe-baseline-reset\20260623_154700\backup-manifest.json`
+- `.\backups\before-uat-demo-seed\20260623_155810\backup-manifest.json`
+- `.\backups\business-data-wipe\json-export-2026-07-03T10-10-06-694Z\metadata.json`
+- `.\backups\business-data-wipe\json-export-2026-07-03T10-25-31-887Z\metadata.json`
+- `.\docs\audit\settings-release-claim-correction-report.md`
+- `.\docs\import\REAL_PROJECTS_AND_SITE_COMMANDERS_IMPORT_REPORT.md`
+- `.\docs\qa\BUSINESS_DATA_WIPE_DRY_RUN_2026_08_01.md`
+- `.\docs\qa\BUSINESS_DATA_WIPE_MANIFEST_2026_08_01.json`
+- `.\docs\qa\FULL_AUTH_SESSION_RBAC_AUDIT_REPORT_2026_08_01.md`
+- `.\docs\qa\FULL_SYSTEM_DATA_CLEANUP_AUDIT_AND_INPUT_REQUIREMENTS_2026_07_03.md`
+- `.\docs\qa\HARD_DELETE_SUPPLIER_CONTRACT_PAYMENT_REPORT_PHASE2.md`
+- `.\docs\qa\POST_WIPE_RECONCILIATION_REPORT_2026_08_01.md`
+- `.\docs\qa\RUNTIME_DATA_INTEGRITY_DRY_RUN.md`
+- `.\docs\qa\archive\BACKUP_MULTI_USER_AND_DATA_PERSISTENCE_UAT_REPORT.md`
+- `.\docs\qa\archive\CLEAN_REPOSITORY_REINIT_REPORT.md`
+- `.\docs\qa\archive\FIELD_PROGRESS_PHASE3_0B_WRITE_PATH_AND_REAL_DB_AUDIT_REPORT.md`
+- `.\docs\qa\archive\FIELD_PROGRESS_PHASE3_0C_DB_CONNECTION_AND_REAL_AUDIT_REPORT.md`
+- `.\docs\qa\archive\FIELD_PROGRESS_PHASE3_1A_VERIFY_RECONCILE_REPORT.md`
+- `.\docs\qa\archive\FIELD_PROGRESS_SYNC_AND_UI_TEST_REPORT.md`
+- `.\docs\qa\archive\FINAL_PRE_BUILD_SYSTEM_HARDENING_REPORT.md`
+- `.\docs\qa\archive\GO_NO_GO_FINAL_SAFETY_REVIEW_REPORT.md`
+- `.\docs\qa\archive\MATERIALS_RBAC_TEST_ACCOUNTS.md`
+- `.\docs\qa\archive\PHASE2A_DATABASE_FOUNDATION_REPORT.md`
+- `.\docs\qa\archive\PHASE2B_LAYOUT_AUTH_DASHBOARD_REPORT.md`
+- `.\docs\qa\archive\PHASE3B_DOCUMENTS_MODULE_REPORT.md`
+- `.\docs\qa\archive\PRE_BUILD_MULTI_USER_STABILITY_UX_AUDIT_REPORT.md`
+- `.\docs\qa\archive\PRE_BUILD_SECURITY_REQUESTNO_ROUTE_GUARD_FIX_REPORT.md`
+- `.\docs\qa\archive\PRE_PRODUCTION_READINESS_CHECK_REPORT.md`
+- `.\docs\qa\archive\SAFE_TEST_DATA_CLEANUP_DRY_RUN_REPORT.md`
+- `.\docs\qa\archive\SAFE_TEST_DATA_CLEANUP_EXECUTE_REPORT.md`
+- `.\docs\qa\archive\TEST_UAT_DATA_INVENTORY_AUDIT_REPORT.md`
+- `.\docs\qa\archive\USERS_MODULE_P0_P1_FIX_REPORT.md`
+- `.\docs\qa\archive\cleanup-2026-06\test-data-cleanup-dry-run-results.json`
+- `.\prisma\seed.ts`
+- `.\scratch\check_databases.ts`
+- `.\scratch\check_enum_user_role.ts`
+- `.\scratch\check_enum_user_role_qa.ts`
+- `.\scratch\check_users_in_dbs.ts`
+- `.\scratch\inspect_and_reset_qa_passwords.ts`
+- `.\scratch\seed_construction_supervisor_qa.ts`
+- `.\scratch\sync_qa_admin_password.ts`
+- `.\scratch\test_all_9_roles_login_live.ts`
+- `.\scratch\test_auth_flow.ts`
+- `.\scratch\test_login_api_live.ts`
+- `.\scratch\test_password_check.ts`
+- `.\scripts\admin\post-wipe-reconciliation.ts`
+- `.\scripts\admin\rotate-admin-password.ts`
+- `.\scripts\backup-before-safe-baseline-reset.ps1`
+- `.\scripts\backup-before-uat-demo-seed.ps1`
+- `.\scripts\backup-current-uat-data.ps1`
+- `.\scripts\backups\backup-before-safe-baseline-reset.ps1`
+- `.\scripts\backups\backup-before-uat-demo-seed.ps1`
+- `.\scripts\backups\backup-current-uat-data.ps1`
+- `.\scripts\capture-dashboard-qa.js`
+- `.\scripts\cleanup\reset-users.ts`
+- `.\scripts\import\import-real-projects-from-google-sheet.ts`
+- `.\scripts\import\verify-real-projects-import.ts`
+- `.\scripts\maintenance\screenshot.js`
+- `.\scripts\playwright-uat.ts`
+- `.\scripts\qa-auth-session-security-test.ts`
+- `.\scripts\qa-daily-report-duplicate-guards.ts`
+- `.\scripts\qa-daily-report-ui-submit-print.ts`
+- `.\scripts\qa-daily-report-volume-balance.ts`
+- `.\scripts\qa-dashboard-screenshots.ts`
+- `.\scripts\qa-documents-project-rbac.ts`
+- `.\scripts\qa-field-progress-evidence.js`
+- `.\scripts\qa-final-production-smoke-test.ts`
+- `.\scripts\qa-full-browser-uat.ts`
+- `.\scripts\qa-go-no-go-fix-static-regression.ts`
+- `.\scripts\qa-go-no-go-rbac-direct-url.js`
+- `.\scripts\qa-login-screenshots.ts`
+- `.\scripts\qa-material-request-approve-merge-existing.ts`
+- `.\scripts\qa-material-request-approve-to-catalog.ts`
+- `.\scripts\qa-material-request-simple-flow-audit.ts`
+- `.\scripts\qa-popup-volume-balance.ts`
+- `.\scripts\qa-project-final-evidence.js`
+- `.\scripts\qa-project-logic.js`
+- `.\scripts\qa-projects-detail-playwright.ts`
+- `.\scripts\qa-rbac-direct-url-access-test.ts`
+- `.\scripts\qa-rbac-e2e-probe.ts`
+- `.\scripts\qa-rbac-project-scope-audit.ts`
+- `.\scripts\qa-reports-playwright-smoke.ts`
+- `.\scripts\qa-reports-project-rbac-guard.ts`
+- `.\scripts\qa-reports-project-rbac-post-fix-test.ts`
+- `.\scripts\qa-reports-project-rbac-test.ts`
+- `.\scripts\qa-user-management-edit-detail-test.ts`
+- `.\scripts\qa-user-management-soft-delete-restore-test.ts`
+- `.\scripts\qa-users-audit.ts`
+- `.\scripts\qa-users-auth-session.ts`
+- `.\scripts\qa-users-password-reset-static.ts`
+- `.\scripts\qa-weekly-report-uat.ts`
+- `.\scripts\qa-weekly-report-ui-submit-print.ts`
+- `.\scripts\qa\__tests__\assert-safe-database-audit.test.ts`
+- `.\scripts\qa\assert-safe-qa-database.test.ts`
+- `.\scripts\qa\authenticated-route-smoke.ts`
+- `.\scripts\qa\bootstrap-ui-ux-qa.ts`
+- `.\scripts\qa\capture-settings-e2e-screenshots.ts`
+- `.\scripts\qa\check_enums.ts`
+- `.\scripts\qa\check_enums2.ts`
+- `.\scripts\qa\configure-supervision-e2e-qa-env.ts`
+- `.\scripts\qa\create-construction-supervisor-final-fixture.ts`
+- `.\scripts\qa\create-supervision-weekly-e2e-fixture.ts`
+- `.\scripts\qa\cutover-rehearsal-lib.ts`
+- `.\scripts\qa\database-v2-cutover-rehearsal.ts`
+- `.\scripts\qa\documents-e2e.spec.ts`
+- `.\scripts\qa\documents-runtime-regression.spec.ts`
+- `.\scripts\qa\download-supervision-weekly-e2e-exports.ts`
+- `.\scripts\qa\drop.ts`
+- `.\scripts\qa\full-system-rbac-audit-runner.ts`
+- `.\scripts\qa\global-overlay-interaction-e2e.spec.ts`
+- `.\scripts\qa\global-setup.ts`
+- `.\scripts\qa\inventory-approval-request.ts`
+- `.\scripts\qa\project-duration-overflow.spec.ts`
+- `.\scripts\qa\provision-settings-e2e-secrets.ts`
+- `.\scripts\qa\qa-auth-session-security-test.ts`
+- `.\scripts\qa\rehearse-fresh-migration.ts`
+- `.\scripts\qa\restore.ts`
+- `.\scripts\qa\role-dashboard-removal.spec.ts`
+- `.\scripts\qa\rotate-settings-e2e-credentials.ts`
+- `.\scripts\qa\rotate-supervision-e2e-credential.ts`
+- `.\scripts\qa\run-pdf-audit-and-screenshots.ts`
+- `.\scripts\qa\scan-settings-release-credential-paths.ts`
+- `.\scripts\qa\seed-settings-e2e-fixtures.ts`
+- `.\scripts\qa\system-performance-audit.ts`
+- `.\scripts\qa\test-full-supervision-weekly-exports.ts`
+- `.\scripts\qa\test-weekly-document-type-and-print.ts`
+- `.\scripts\qa\verify-construction-supervisor-final-direct-runtime.ts`
+- `.\scripts\qa\verify-construction-supervisor-final-role-regression.ts`
+- `.\scripts\qa\verify-construction-supervisor-final-row-injection.ts`
+- `.\scripts\qa\verify-construction-supervisor-final-source-mutations.ts`
+- `.\scripts\qa\weekly-inspection-editor-ui.spec.ts`
+- `.\scripts\qa\weekly-inspection-pdf-verification.spec.ts`
+- `.\scripts\qa\work-management-main-product-phase1-production-e2e.ts`
+- `.\scripts\qa\work-management-main-product-phase1-runtime.ts`
+- `.\scripts\qa_evidence.js`
+- `.\scripts\qa_smoke_test.js`
+- `.\scripts\reset-users.ts`
+- `.\scripts\screenshots\capture-screenshots.js`
+- `.\scripts\screenshots\capture.js`
+- `.\scripts\screenshots\take-screenshots-field-material-full-uat.ts`
+- `.\scripts\screenshots\take-screenshots-global-ui-responsive-audit.ts`
+- `.\scripts\screenshots\take-screenshots-material-requests.ts`
+- `.\scripts\seed-materials-rbac-test-accounts.ts`
+- `.\scripts\seed\seed-materials-rbac-test-accounts.ts`
+- `.\scripts\setup-admin.ts`
+- `.\scripts\take-screenshots-field-material-full-uat.ts`
+- `.\scripts\take-screenshots-global-ui-responsive-audit.ts`
+- `.\scripts\take-screenshots-material-requests.ts`
+- `.\scripts\test-input-flow.ts`
+- `.\scripts\test-reports-r1-4c-attachment-real-upload.ts`
+- `.\scripts\test-reports-r3b-admin-actions.ts`
+- `.\scripts\test-reports-r3b-role-policy.ts`
+- `.\scripts\test-upload-errors.mjs`
+- `.\scripts\test\smoke-financial-hard-delete.ts`
+- `.\scripts\test\test-input-flow.ts`
+- `.\scripts\test\test-reports-r1-4c-attachment-real-upload.ts`
+- `.\scripts\test\test-reports-r3b-admin-actions.ts`
+- `.\scripts\test\test-reports-r3b-role-policy.ts`
+- `.\scripts\test\test-upload-errors.mjs`
+- `.\scripts\update-admin-pass.ts`
+- `.\scripts\verify-chart-and-actions-runtime.js`
+- `.\scripts\verify-executive-dashboard-runtime.js`
+- `.\scripts\verify-executive-dashboard-scope-and-kpis.js`
+- `.\src\app\(dashboard)\users\actions.ts`
+- `.\src\app\api\auth\login\route.ts`
+- `.\src\components\users\user-management-client.tsx`
+- `.\src\lib\__tests__\auth-session-security.test.ts`
+- `.\src\lib\qa\assert-safe-database-audit.test.ts`
+- `.\src\lib\qa\qa-db-guard-utils.test.ts`
+- `.\src\lib\settings\settings-audit-integration.test.ts`
+- `.\src\lib\settings\settings-audit.test.ts`
+- `.\src\lib\settings\settings-readonly-preflight.test.ts`
+
+## Git history entries
+
+- `.env.example`
+- `COMMIT 08828aaf11dbd53840cd3f4a5dfb70fe8f87f4da`
+- `COMMIT 20a00fe19c765bd53eb585bb2b1c66448848d1fb`
+- `COMMIT 233d9ecd4903b121433091dcf66f5bf9c6c1c78e`
+- `COMMIT 30b45ab0bfc35596f43b34db0b50b038dc050fd1`
+- `COMMIT 43acecfd5c491a81882aa69d3ef97eecfcd54b24`
+- `COMMIT 45bbdaa2393f77d1097479f61061f29869f5e8dd`
+- `COMMIT 4d21e277385e446b7970ea3696eb93b72f3c2331`
+- `COMMIT 692d222bf3253170a80dbe5c6f5fef93435282d3`
+- `COMMIT 698b830e2292e6a152ecb676a4d2927103af6197`
+- `COMMIT 6fdb79413563d18dc26e4b579b85981f43e5eac8`
+- `COMMIT 7e9e988e76b3ee362befcf3bb4bf763ff8b00f62`
+- `COMMIT 9960bf9b488fd80aa8289025074054e9ddc2a6fc`
+- `COMMIT 9aa1f8313a7dccfe5568f8805f59fd960db2f78e`
+- `COMMIT aa76aa35b8f2bb2f031e0a0fc2a1d3a56dab8310`
+- `COMMIT ac657c761d3908dfa286382255aba0f642535cb8`
+- `COMMIT c331e82c61fb8300891ee2adb2ccba1ec2356bc9`
+- `COMMIT c462834fb279b9d1d7db9ab8e66512d39ba3734b`
+- `COMMIT c8956151a3031ec5897779d09a45848e2f5f6aad`
+- `COMMIT c988828d51fdaad5f2e1bbe481bff1f834734808`
+- `COMMIT d096cb35dc6a04350dfe9bb657fa850e378fb50b`
+- `COMMIT e55ff3c0c502fe02c5db2187799f64c9f9d0b04f`
+- `COMMIT ed1a2c95ea39c8af1987af3cbd8ddda1f74be52e`
+- `artifacts/run-qa-rehearsal.ts`
+- `docs/import/REAL_PROJECTS_AND_SITE_COMMANDERS_IMPORT_REPORT.md`
+- `docs/qa/BUSINESS_DATA_WIPE_DRY_RUN_2026_08_01.md`
+- `docs/qa/BUSINESS_DATA_WIPE_MANIFEST_2026_08_01.json`
+- `docs/qa/CONTROLLED_BUSINESS_DATA_WIPE_REPORT_2026_08_01.md`
+- `docs/qa/FULL_AUTH_SESSION_RBAC_AUDIT_REPORT_2026_08_01.md`
+- `docs/qa/FULL_SYSTEM_DATA_CLEANUP_AUDIT_AND_INPUT_REQUIREMENTS_2026_07_03.md`
+- `docs/qa/HARD_DELETE_SUPPLIER_CONTRACT_PAYMENT_REPORT_PHASE2.md`
+- `docs/qa/RUNTIME_DATA_INTEGRITY_DRY_RUN.md`
+- `docs/qa/archive/CONTRACTS_MONEY_INPUT_LONG_NUMBER_FIX_REPORT.md`
+- `scratch/ui_string_candidates.json`
+- `screenshot.js`
+- `scripts/audit-finance-context-consistency.js`
+- `scripts/audit/audit-finance-context-consistency.js`
+- `scripts/capture-dashboard-qa.js`
+- `scripts/import/import-real-projects-from-google-sheet.ts`
+- `scripts/maintenance/audit-ui.js`
+- `scripts/playwright-uat.ts`
+- `scripts/qa-cleanup-pagination-data.ts`
+- `scripts/qa-generate-pagination-data.ts`
+- `scripts/qa-material-delete-sync.ts`
+- `scripts/qa-material-movement-count-consistency.ts`
+- `scripts/qa-suppliers-crud-rbac.ts`
+- `scripts/qa-suppliers-validation.ts`
+- `scripts/qa-test-data-cleanup-dry-run.ts`
+- `scripts/qa-weekly-report-uat.ts`
+- `scripts/qa/__tests__/assert-safe-database-audit.test.ts`
+- `scripts/qa/assert-safe-qa-database.test.ts`
+- `scripts/qa/check_enums.ts`
+- `scripts/qa/check_enums2.ts`
+- `scripts/qa/drop.ts`
+- `scripts/qa/full-system-rbac-audit-runner.ts`
+- `scripts/qa/global-setup.ts`
+- `scripts/qa/project-duration-overflow.spec.ts`
+- `scripts/qa/qa-auth-session-security-test.ts`
+- `scripts/qa/rehearse-fresh-migration.ts`
+- `scripts/qa/run-pdf-audit-and-screenshots.ts`
+- `scripts/qa/system-performance-audit.ts`
+- `scripts/qa/test-full-supervision-weekly-exports.ts`
+- `scripts/qa/test-weekly-document-type-and-print.ts`
+- `scripts/qa/weekly-inspection-editor-ui.spec.ts`
+- `scripts/qa/weekly-inspection-pdf-verification.spec.ts`
+- `scripts/repair-material-request-approval-source-ids.ts`
+- `scripts/seed-accounting-payments-uat.ts`
+- `scripts/seed-approvals-uat.ts`
+- `scripts/seed/seed-accounting-payments-uat.ts`
+- `scripts/seed/seed-approvals-uat.ts`
+- `scripts/seed/seed-materials-rbac-test-accounts.ts`
+- `scripts/test/smoke-financial-hard-delete.ts`
+- `scripts/update-admin-pass.ts`
+- `scripts/verify-chart-and-actions-runtime.js`
+- `scripts/verify-executive-dashboard-runtime.js`
+- `scripts/verify-executive-dashboard-scope-and-kpis.js`
+- `scripts/verify-restored-backup-db.ts`
+- `scripts/verify/verify-restored-backup-db.ts`
+- `src/components/users/user-management-client.tsx`
+- `src/lib/qa/assert-safe-database-audit.test.ts`
+- `src/lib/safety-inspection/__tests__/http-boundary.test.ts`
+
+## Screenshot and trace paths
+
+- `test-results\weekly-inspection-ux-requi-52f0a-Tablet-and-Mobile-viewports-chromium\test-failed-1.png`
+- `docs/audit\settings-runtime-evidence\staff-settings-blocked.png`
+- `docs/audit\settings-runtime-evidence\director-company-read-write.png`
+- `docs/audit\settings-runtime-evidence\deputy-company-documents-read-only.png`
+- `docs/audit\settings-runtime-evidence\admin-tablet-company.png`
+- `docs/audit\settings-runtime-evidence\admin-production-settings.png`
+- `docs/audit\settings-runtime-evidence\admin-mobile-company.png`
+- `docs/audit\settings-runtime-evidence\admin-laptop-company.png`
+- `docs/audit\settings-runtime-evidence\admin-documents-save-success.png`
+- `docs/audit\settings-runtime-evidence\admin-documents-before.png`
+- `docs/audit\settings-runtime-evidence\admin-desktop-company-before.png`
+- `docs/audit\settings-runtime-evidence\admin-company-validation-error.png`
+- `docs/audit\settings-runtime-evidence\admin-company-stale-update-conflict.png`
+- `docs/audit\settings-runtime-evidence\admin-company-save-success.png`
+- `docs/audit\settings-runtime-evidence\admin-company-dirty.png`
+- `docs/audit\settings-runtime-evidence\admin-administration-audit.png`
+- `docs/audit\settings-release-runtime-evidence\unauthenticated-settings-redirect.png`
+- `test-results\settings-e2e\screenshots\06-settings-conflict-dialog.png`
+- `test-results\settings-e2e\screenshots\05-settings-error-state.png`
+- `test-results\settings-e2e\screenshots\04-settings-mobile-viewport.png`
+- `test-results\settings-e2e\screenshots\03-settings-administration-audit-tab.png`
+- `test-results\settings-e2e\screenshots\02-settings-documents-tab.png`
+- `test-results\settings-e2e\screenshots\01-settings-company-tab.png`
+
+## External locations not scrubbed by repository changes
+
+- Codex/terminal transcript retained by the host application.
+- CI provider logs outside this checkout.
+- Browser password managers, cookies, and external screenshots outside this checkout.
+
+Those locations require owner/platform-side retention and rotation handling. Repository edits cannot prove their deletion.
