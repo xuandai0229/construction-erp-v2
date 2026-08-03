@@ -24,8 +24,8 @@ export default async function globalSetup(config: FullConfig) {
     process.env.PLAYWRIGHT_BASE_URL ??
     "http://127.0.0.1:3000";
 
-  let email = process.env.QA_ADMIN_EMAIL || "qa.admin.tuhiep@example.test";
-  let password = process.env.QA_ADMIN_PASSWORD || "R_CSs9EW06iHTDY4aiMG28Y6hpzh1DAr_E-3FA7A0dk";
+  let email = process.env.QA_ADMIN_EMAIL || "daicongtu2910@gmail.com";
+  let password = process.env.QA_ADMIN_PASSWORD || "123456";
 
   await fs.mkdir(path.dirname(authPath), { recursive: true });
 

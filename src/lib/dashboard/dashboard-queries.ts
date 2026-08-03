@@ -55,6 +55,7 @@ export type DashboardProjectOverview = {
   id: string;
   code: string;
   name: string;
+  displayName: string | null;
   location: string | null;
   identityQualifier: string | null;
   status: ProjectStatus;
@@ -310,6 +311,7 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
         id: true,
         code: true,
         name: true,
+        displayName: true,
         location: true,
         status: true,
         startDate: true,
@@ -503,6 +505,7 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
       id: project.id,
       code: project.code,
       name: project.name,
+      displayName: project.displayName,
       location: project.location,
       identityQualifier: duplicateProjectNames.has(project.name.trim().toLocaleLowerCase("vi-VN"))
         ? project.location?.trim() || null

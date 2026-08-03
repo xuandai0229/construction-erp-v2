@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { markGlobalNotificationRead } from '@/app/actions/notifications';
 import type { NotificationTargetType } from '@/lib/notifications/notification-routing';
-import { useClickOutside } from '@/components/ui/global-overlay-manager';
+import { useTransientOverlay, notifyOverlayOpen } from '@/components/ui/global-overlay-manager';
 
 type NotificationItem = {
   id: string;
@@ -32,39 +32,17 @@ export function GlobalNotificationBell({ notifications }: { notifications: Notif
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const searchParamsKey = searchParams.toString();
 
   const closePopover = useCallback(() => {
     setIsOpen(false);
   }, []);
 
-  // Close on route change
-  useEffect(() => {
-    closePopover();
-  }, [pathname, searchParamsKey, closePopover]);
-
-  // Click outside close without swallowing clicks
-  useClickOutside({
+  useTransientOverlay({
+    id: "global-notification-bell",
     isOpen,
     onClose: closePopover,
     refs: [buttonRef, panelRef],
   });
-
-  // Handle Escape key
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        closePopover();
-        buttonRef.current?.focus();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, closePopover]);
 
   const computedNotifications = useMemo(
     () => notifications.map((notification) => ({
@@ -125,7 +103,13 @@ export function GlobalNotificationBell({ notifications }: { notifications: Notif
       <button 
         ref={buttonRef}
         type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={() => {
+          setIsOpen((prev) => {
+            const next = !prev;
+            if (next) notifyOverlayOpen("global-notification-bell");
+            return next;
+          });
+        }}
         className="relative flex items-center justify-center h-10 w-10 sm:h-9 sm:w-9 rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20"
         aria-haspopup="dialog"
         aria-expanded={isOpen}

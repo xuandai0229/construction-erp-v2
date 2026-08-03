@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { ArrowDownRight, ClipboardList, Factory, Package } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageHeader } from "@/components/ui/enterprise";
+import { PageHeader, EnterpriseTabs } from "@/components/ui/enterprise";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MaterialsOverview } from "./materials-overview";
 import { MaterialsStockTable } from "./materials-stock-table";
@@ -16,9 +16,10 @@ import { MaterialRequestList } from "@/components/material-request/material-requ
 import { createMaterialItem, updateMaterialItem, deleteMaterialItem, restoreMaterialItem, createMaterialTransaction } from "@/app/(dashboard)/materials/actions";
 import type { MaterialItemDto, MaterialMovementDto, ProjectStockDto } from "@/app/(dashboard)/materials/actions";
 import { useToast } from "@/components/ui/toast-context";
+import { ProjectIdentity } from "@/components/projects/project-identity";
 
 interface MaterialsWorkspaceProps {
-  projects: { id: string; name: string; code: string }[];
+  projects: { id: string; name: string; code: string; status: string; investor: string | null; location: string | null; sourceMetadata: unknown }[];
   materialItems: MaterialItemDto[];
   initialStocks: ProjectStockDto[];
   initialTransactions: MaterialMovementDto[];
@@ -225,34 +226,17 @@ export function MaterialsWorkspace({
             Theo dõi danh mục, tồn kho, yêu cầu và nhập/xuất vật tư.
           </p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-[var(--muted-foreground)] bg-[var(--surface-subtle)] border border-[var(--border)] rounded-full px-3 py-1.5 w-max">
-          <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-          Đang xem: <span className="font-semibold text-[var(--foreground)]">{projects.find(p => p.id === projectId)?.name || "—"}</span>
-        </div>
+        {(() => {
+          const currentProject = projects.find((project) => project.id === projectId);
+          return currentProject ? <ProjectIdentity name={currentProject.name} code={currentProject.code} status={currentProject.status} investor={currentProject.investor} location={currentProject.location} executionUnit={typeof currentProject.sourceMetadata === "object" && currentProject.sourceMetadata && "unit" in currentProject.sourceMetadata ? String((currentProject.sourceMetadata as { unit?: unknown }).unit ?? "") : null} variant="header" className="max-w-[min(32rem,100%)] rounded-xl border border-[var(--border)] bg-[var(--surface-subtle)] px-3 py-2" /> : null;
+        })()}
       </PageHeader>
 
-      <nav className="sticky top-0 z-30 -mx-3 px-3 sm:mx-0 sm:px-0 bg-[var(--surface-subtle)] backdrop-blur-md overflow-x-auto border-b border-[var(--border)]" aria-label="Tabs quản lý vật tư">
-        <div className="flex min-w-max gap-1">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = currentTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => updateUrl(tab.id)}
-                className={`flex items-center gap-2 rounded-t-lg border-b-2 px-4 py-3 text-sm font-semibold whitespace-nowrap transition-colors ${
-                  isActive
-                    ? "border-blue-600 bg-blue-50/50 text-blue-700"
-                    : "border-transparent text-[var(--muted-foreground)] hover:bg-[var(--border)]/50 hover:text-[var(--foreground)]"
-                }`}
-              >
-                <Icon className={`h-4 w-4 ${isActive ? "text-blue-600" : "text-[var(--muted-foreground)] opacity-70"}`} />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-      </nav>
+      <EnterpriseTabs
+        tabs={tabs}
+        activeTab={currentTab}
+        onChange={(tabId) => updateUrl(tabId)}
+      />
 
       {!projectId ? (
         <EmptyState

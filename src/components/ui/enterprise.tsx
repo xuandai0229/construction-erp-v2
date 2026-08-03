@@ -420,3 +420,56 @@ export function ActionGroup({
     </div>
   );
 }
+
+/* ---- Enterprise Tabs Component ---- */
+export interface TabItem {
+  id: string;
+  label: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  count?: number;
+  badge?: React.ReactNode;
+}
+
+export function EnterpriseTabs({
+  tabs,
+  activeTab,
+  onChange,
+  className,
+}: {
+  tabs: TabItem[];
+  activeTab: string;
+  onChange: (tabId: string) => void;
+  className?: string;
+}) {
+  return (
+    <nav className={cn("sticky top-0 z-30 -mx-3 px-3 sm:mx-0 sm:px-0 bg-white/90 backdrop-blur-md overflow-x-auto border-b border-slate-200", className)} aria-label="Tab navigation">
+      <div className="flex min-w-max gap-1">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => onChange(tab.id)}
+              className={cn(
+                "flex items-center gap-2 rounded-t-lg border-b-2 px-4 py-3 text-sm whitespace-nowrap transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20",
+                isActive
+                  ? "border-blue-600 bg-blue-50/60 text-blue-700 font-bold"
+                  : "border-transparent text-slate-600 hover:bg-slate-100/70 hover:text-slate-900 font-medium"
+              )}
+            >
+              {Icon && <Icon className={cn("h-4 w-4 shrink-0", isActive ? "text-blue-600" : "text-slate-400")} />}
+              <span>{tab.label}</span>
+              {typeof tab.count === "number" && (
+                <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-bold", isActive ? "bg-blue-100 text-blue-800" : "bg-slate-100 text-slate-600")}>
+                  {tab.count}
+                </span>
+              )}
+              {tab.badge}
+            </button>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}

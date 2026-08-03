@@ -12,6 +12,7 @@ function projectFixture(overrides: Partial<DashboardProjectOverview> = {}): Dash
     id: "project-1",
     code: "QA-1",
     name: "Nhà văn phòng điều hành 5 tầng – Khu công nghiệp Từ Hiệp và hạ tầng kỹ thuật phụ trợ",
+    displayName: null,
     location: null,
     identityQualifier: null,
     status: "ACTIVE",

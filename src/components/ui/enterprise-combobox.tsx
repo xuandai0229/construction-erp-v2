@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, ChevronDown, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTransientOverlay, notifyOverlayOpen } from "@/components/ui/global-overlay-manager";
 
 export interface EnterpriseComboboxOption {
   value: string;
@@ -164,6 +165,13 @@ export function EnterpriseCombobox({
     onChangeRef.current = onChange;
     onCreateOptionRef.current = onCreateOption;
     optionsRef.current = options;
+  });
+
+  useTransientOverlay({
+    id: buttonId,
+    isOpen,
+    onClose: () => setIsOpen(false),
+    refs: [rootRef, panelRef],
   });
 
   useEffect(() => {
@@ -366,7 +374,13 @@ export function EnterpriseCombobox({
         aria-controls={listboxId}
         aria-label={ariaLabel}
         disabled={disabled}
-        onClick={() => setIsOpen((open) => !open)}
+        onClick={() => {
+          setIsOpen((open) => {
+            const next = !open;
+            if (next) notifyOverlayOpen(buttonId);
+            return next;
+          });
+        }}
         data-testid={testId}
         className={cn(
           "flex h-10 w-full min-w-0 items-center justify-between gap-2 overflow-hidden rounded-lg border border-slate-300 bg-white px-3 pr-10 text-left text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/25 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500",

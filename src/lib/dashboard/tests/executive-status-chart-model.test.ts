@@ -7,6 +7,7 @@ function projectFixture(overrides: Partial<DashboardProjectOverview> = {}): Dash
     id: "p-1",
     code: "PRJ-1",
     name: "Công trình kiểm thử",
+    displayName: null,
     location: null,
     identityQualifier: null,
     status: "ACTIVE",

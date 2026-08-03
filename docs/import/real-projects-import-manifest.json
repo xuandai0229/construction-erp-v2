@@ -1,0 +1,226 @@
+{
+  "sourceHash": "3b6fb90c492f55cd3fd5fa78edf35d9e971362644a6a2cbe4808cef133d890e3",
+  "sourceType": "approved-xlsx",
+  "fileName": "CÁC CT CÁC BAN.xlsx",
+  "fileSize": 25829,
+  "readAt": "2026-08-01T04:48:44.530Z",
+  "spreadsheetId": "1RQMU9no_Q52i5Nt6HyVr7YUNbPLsd37PlhUgBjrRwyM",
+  "sheetName": "2HN và PTN (3)",
+  "projects": [
+    {
+      "name": "Kế hoạch lựa chọn nhà thầu thực hiện nhiệm vụ quản lý bảo trì kết cấu hạ tầng giao thông đường bộ giai đoạn 2026-2030 trên địa bàn phường Thanh Xuân",
+      "externalSourceKey": "94e70da643005e614537ac3888bdf0cac39b9f028285b58749193b11349c32d1",
+      "action": "UNCHANGED",
+      "projectId": "cms9tyddq0000n4k5mvu9wdrt",
+      "projectCode": "CT-2026-0001",
+      "fieldDiff": []
+    },
+    {
+      "name": "Dự án: Đầu tư xây dựng phân kỳ 1 (giai đoạn 1) Quảng trường – công viên phía Đông hồ Hoàn Kiếm",
+      "externalSourceKey": "5305450111e83d41a768a753d2206f249ca82664cd7afce6be777118b5ddecf7",
+      "action": "UNCHANGED",
+      "projectId": "cms9tyde50001n4k53e221ea6",
+      "projectCode": "CT-2026-0002",
+      "fieldDiff": []
+    },
+    {
+      "name": "Xây dựng trường THCS Lệ Chi",
+      "externalSourceKey": "6c9267e0272c84bc096cad6beaf1053ed7c4af914aed5ea93db4dd26f97158ee",
+      "action": "UNCHANGED",
+      "projectId": "cms9tydgm0004n4k5luf4qn5n",
+      "projectCode": "CT-2026-0003",
+      "fieldDiff": []
+    },
+    {
+      "name": "Xây dựng trường mầm non Kim Sơn, huyện Gia Lâm",
+      "externalSourceKey": "4dbc22c86d66ef0fbde02001d1e9211466fb6a29d8ebb05edecc70ef47b70121",
+      "action": "UNCHANGED",
+      "projectId": "cms9tydia0007n4k563f6j0g7",
+      "projectCode": "CT-2026-0004",
+      "fieldDiff": []
+    },
+    {
+      "name": "Xây dựng trường MN Hoa Hồng",
+      "externalSourceKey": "3d2026c40563d4ee4ddc83eb03dfc73e190fbc051814848af4104495080b9c8a",
+      "action": "UNCHANGED",
+      "projectId": "cms9tydic0009n4k57z419qjm",
+      "projectCode": "CT-2026-0005",
+      "fieldDiff": []
+    },
+    {
+      "name": "Hoàn thiện và đầu tư trang thiết bị trường Mầm non Minh Khai",
+      "externalSourceKey": "87a1ac092a774db617f7acbe277813003563dd979997d1e4bfa4733b8fb8f5ce",
+      "action": "UNCHANGED",
+      "projectId": "cms9tydif000bn4k56ypfqjxw",
+      "projectCode": "CT-2026-0006",
+      "fieldDiff": []
+    },
+    {
+      "name": "Cải tạo, sửa chữa và mua sắm trang thiết bị tại một số trường học trên địa bàn phường Tây Hồ- 15 trường",
+      "externalSourceKey": "2e7104ba4dab9a2a33d47d9c203f355328b6576a834b4dcd6b22ccd316fd6788",
+      "action": "UNCHANGED",
+      "projectId": "cms9tydk2000en4k56itvgc7a",
+      "projectCode": "CT-2026-0007",
+      "fieldDiff": []
+    },
+    {
+      "name": "Cải tạo, sửa chữa và mua sắm trang thiết bị tại một số trường học trên địa bàn phường Tây Hồ- 13 trường",
+      "externalSourceKey": "b67b852ba8645ee94c105ab0133949f95dcc474919fba7cfa28920738655d3c2",
+      "action": "UNCHANGED",
+      "projectId": "cms9tydlp000hn4k5s8402dhe",
+      "projectCode": "CT-2026-0008",
+      "fieldDiff": []
+    },
+    {
+      "name": "Dự án: Trung tâm giao dịch công nghệ thường xuyên Hà Nội - Khu liên cơ Võ Chí Công (điều chỉnh)",
+      "externalSourceKey": "a997a7b0a6ca5beb13d7c0b8869572895a7a1ed1d7009944802cd14d5e931db3",
+      "action": "UNCHANGED",
+      "projectId": "cms9tydlu000jn4k5itd0vzcd",
+      "projectCode": "CT-2026-0009",
+      "fieldDiff": []
+    },
+    {
+      "name": "Sửa chữa, cải tạo tấm đan cống hộp thoát nước đường Nguyễn Chí Thanh ( đoạn từ Học viện Phụ nữ đến chân cầu vượt Nguyễn Chí Thanh",
+      "externalSourceKey": "162f01258a0ab0687d387ea4e04cd831a06dc433fd5442392f840f59f5916c8b",
+      "action": "UNCHANGED",
+      "projectId": "cms9tydnk000mn4k5azfl2w64",
+      "projectCode": "CT-2026-0010",
+      "fieldDiff": []
+    },
+    {
+      "name": "Cải tạo sửa chữa ĐNN phường Vĩnh Tuy năm 2026, các ngõ 477,487,325 Kim Ngưu, ngách 325/135, 121/48, 121/95, hẻm ngách 121/3 Kim Ngưu",
+      "externalSourceKey": "aa52d62a5e5a31710519577f26b5173e096d28c3718ec40bc3232cf7cd47376a",
+      "action": "UNCHANGED",
+      "projectId": "cms9tydp8000pn4k5tuwqq9ga",
+      "projectCode": "CT-2026-0011",
+      "fieldDiff": []
+    },
+    {
+      "name": "Xây dựng, cải tạo trường Mầm non 20 -10, quận Hoàn Kiếm",
+      "externalSourceKey": "08d71141fca3b582c8b59f4e09ea63f22fb7a4c010381177fbb4c76bc3335931",
+      "action": "UNCHANGED",
+      "projectId": "cms9tydqx000sn4k5sz6q6wfj",
+      "projectCode": "CT-2026-0012",
+      "fieldDiff": []
+    },
+    {
+      "name": "Cải tạo đường và hệ thống thoát nước ngõ 718,1008 đường Láng, ngách 1150/1 đường Láng, ngõ 1194, ngách 1194/19, 1194/63,1194/67,1194/73,1194/91 đường Láng, ngõ 67 phố chùa Láng, ngõ 10 pháo đài Láng, ngách 45/25,14/31 Pháo Đài Láng, ngõ 74,100, ngách 76/3 Nguyễn Chí Thanh",
+      "externalSourceKey": "7b83c4e3f5e140d8a89074dd1063942a3bbc396f78ddc4d2ffbcd8c7fad0c280",
+      "action": "UNCHANGED",
+      "projectId": "cms9tydsm000vn4k5t0z7fhsx",
+      "projectCode": "CT-2026-0013",
+      "fieldDiff": []
+    },
+    {
+      "name": "Xây dựng tuyến đường đoạn từ nút giao ngõ 612 Lạc Long Quân- phố Vũ Tuấn Chiêu đến phố Nhật Chiêu, lắp đặt tuyến ống bổ cập nước Hồ Tây",
+      "externalSourceKey": "1b887a2ae28399d3b7e3e9ebe2a3b981df8736221f032f5c79c4bea72baba18e",
+      "action": "UNCHANGED",
+      "projectId": "cms9tydsp000xn4k5286p44ty",
+      "projectCode": "CT-2026-0014",
+      "fieldDiff": []
+    },
+    {
+      "name": "Bảo trì, kết cấu hạ tầng giao thông đường bộ trên địa bàn phường Xuân Phương theo phân cấp 2026-2028",
+      "externalSourceKey": "10c93f7dca33cf3a8d016a698e32b1bc3aab6e198b31477ed814af43bc0bd76d",
+      "action": "UNCHANGED",
+      "projectId": "cms9tydud0010n4k5w2hmqjmh",
+      "projectCode": "CT-2026-0015",
+      "fieldDiff": []
+    },
+    {
+      "name": "Cải tạo, chỉnh trang hạ tầng kỹ thuật khu vực hè phố Trần Nhân Tông và cổng công viên Thống Nhất",
+      "externalSourceKey": "af664237d495df63d0466bd7cd17e6f70d546b78295fe11a824c88e4079d8cb8",
+      "action": "UNCHANGED",
+      "projectId": "cms9tydw00013n4k5sjjtouul",
+      "projectCode": "CT-2026-0016",
+      "fieldDiff": []
+    },
+    {
+      "name": "Cải tạo,chỉnh trang hè, đường, hạ tầng kỹ thuật và vườn hoa thuộc khu đô thị mới Trung Văn, phường Đại Mỗ, TP Hà Nội",
+      "externalSourceKey": "686545a2367431d5579f4e72bc83f0043ddb87eab031dc6cb8d7a28b56dc3685",
+      "action": "UNCHANGED",
+      "projectId": "cms9tydxt0016n4k5rx9hikdj",
+      "projectCode": "CT-2026-0017",
+      "fieldDiff": []
+    },
+    {
+      "name": "Cải tạo,chỉnh trang hè, đường, hạ tầng kỹ thuật và vườn hoa thuộc khu đô thị mới Trung Văn, phường Đại Mỗ, TP Hà Nội",
+      "externalSourceKey": "8b5aca03fd274b6e8059b6960b714c83fb026d479291c4f61699f79eb5ddd1f7",
+      "action": "UNCHANGED",
+      "projectId": "cms9tydxx0018n4k5xsmxehmz",
+      "projectCode": "CT-2026-0018",
+      "fieldDiff": []
+    },
+    {
+      "name": "Quản lý, duy tu, duy trì vận hành hệ thống công viên hồ Phùng Khoang theo phân cấp trên địa bàn phường Đại Mỗ giai đoạn 2026-2028",
+      "externalSourceKey": "4a94ce26640715620ada7f6371dcf3b699a14d089581830e23d9460abcc3eb00",
+      "action": "UNCHANGED",
+      "projectId": "cms9tydy1001an4k52iepe45t",
+      "projectCode": "CT-2026-0019",
+      "fieldDiff": []
+    },
+    {
+      "name": "Quản lý duy tu duy trì hạ tầng giao thông( bao gồm lắp biển chỉ dẫn đường, sơn kẻ vạch) theo phân cấp trên địa bàn phường Đại Mỗ năm 2026",
+      "externalSourceKey": "ba1683fbc368762ac3626c5984771af927cc6c8000825c59b930b31d61e98cbc",
+      "action": "UNCHANGED",
+      "projectId": "cms9tydy2001bn4k58evaixfi",
+      "projectCode": "CT-2026-0020",
+      "fieldDiff": []
+    },
+    {
+      "name": "Duy tu hè tuyến phố Dương Văn Bé đọan lối vào ao cá bác Hồ",
+      "externalSourceKey": "5d70d2e394a478efc0f8c2e2b677c10d9c029f7df97f54ba43873a0edf0afbb2",
+      "action": "UNCHANGED",
+      "projectId": "cms9tydy4001dn4k58iib1ob9",
+      "projectCode": "CT-2026-0021",
+      "fieldDiff": []
+    }
+  ],
+  "commanders": [
+    {
+      "name": "Lê Mạnh Hùng",
+      "email": "lemanhhung@gmail.com"
+    },
+    {
+      "name": "Đoàn Văn Giang",
+      "email": "doanvangiang@gmail.com"
+    },
+    {
+      "name": "Lê Trọng Hạ",
+      "email": "letrongha@gmail.com"
+    },
+    {
+      "name": "Trần Quốc Dũng",
+      "email": "tranquocdung@gmail.com"
+    },
+    {
+      "name": "Nguyễn Văn Hưng",
+      "email": "nguyenvanhung@gmail.com"
+    },
+    {
+      "name": "Phạm Anh Tuấn",
+      "email": "phamanhtuan@gmail.com"
+    },
+    {
+      "name": "Nguyễn Đức Mùi",
+      "email": "nguyenducmui@gmail.com"
+    },
+    {
+      "name": "Nguyễn Tư Mạnh",
+      "email": "nguyentumanh@gmail.com"
+    },
+    {
+      "name": "Lương Văn Công",
+      "email": "luongvancong@gmail.com"
+    },
+    {
+      "name": "Vũ Hưng",
+      "email": "vuhung@gmail.com"
+    },
+    {
+      "name": "Nguyễn Minh Hùng",
+      "email": "nguyenminhhung@gmail.com"
+    }
+  ],
+  "assignments": 18
+}

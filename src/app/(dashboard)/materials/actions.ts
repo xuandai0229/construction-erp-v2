@@ -276,7 +276,7 @@ export async function getActiveProjects() {
 
   return prisma.project.findMany({
     where: whereClause,
-    select: { id: true, name: true, code: true },
+    select: { id: true, name: true, code: true, status: true, investor: true, location: true, sourceMetadata: true },
     orderBy: [{ name: "asc" }, { createdAt: "desc" }],
   });
 }

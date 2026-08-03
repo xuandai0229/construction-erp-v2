@@ -22,6 +22,24 @@ interface GlobalOverlayContextType {
 
 const GlobalOverlayContext = createContext<GlobalOverlayContextType | null>(null);
 
+/**
+ * Dispatch global signal when any non-modal overlay opens
+ */
+export function notifyOverlayOpen(id: string) {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('app-overlay-open', { detail: { id } }));
+  }
+}
+
+/**
+ * Dispatch global signal to close all non-modal overlays
+ */
+export function closeAllOverlays() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('app-overlay-close-all'));
+  }
+}
+
 export function GlobalOverlayProvider({ children }: { children: React.ReactNode }) {
   const [activeStack, setActiveStack] = useState<OverlayConfig[]>([]);
   const pathname = usePathname();
@@ -29,6 +47,7 @@ export function GlobalOverlayProvider({ children }: { children: React.ReactNode 
   // Close transient overlays on route change
   useEffect(() => {
     setActiveStack((prev) => prev.filter((item) => item.type !== 'transient'));
+    closeAllOverlays();
   }, [pathname]);
 
   // Global Escape key listener (Closes topmost overlay layer)
@@ -73,7 +92,6 @@ export function GlobalOverlayProvider({ children }: { children: React.ReactNode 
   }, []);
 
   const openOverlay = useCallback((id: string) => {
-    // If opening a transient overlay, close existing transient overlays first to avoid stacking multiple non-nested menus
     setActiveStack((prev) => {
       const target = prev.find((item) => item.id === id);
       if (!target) return prev;
@@ -97,6 +115,7 @@ export function GlobalOverlayProvider({ children }: { children: React.ReactNode 
 
   const closeAllTransient = useCallback(() => {
     setActiveStack((prev) => prev.filter((item) => item.type !== 'transient'));
+    closeAllOverlays();
   }, []);
 
   const activeOverlayId = activeStack.length > 0 ? activeStack[activeStack.length - 1].id : null;
@@ -127,7 +146,6 @@ export function useGlobalOverlay() {
 
 /**
  * Universal Click Outside hook supporting non-swallowing single-click interaction switches.
- * Does NOT call stopPropagation so clicking external triggers opens them in 1 click!
  */
 export function useClickOutside({
   isOpen,
@@ -152,16 +170,77 @@ export function useClickOutside({
 
       if (!isInside) {
         onClose();
-        // CRITICAL: Do NOT stop propagation or prevent default!
-        // This allows the pointer event to naturally hit whatever new button/trigger was clicked,
-        // closing this overlay AND opening/triggering the new component in a SINGLE click!
       }
     };
 
-    // Use capture phase for pointerdown to react early before DOM mutations
     document.addEventListener('pointerdown', handlePointerDown, true);
     return () => {
       document.removeEventListener('pointerdown', handlePointerDown, true);
     };
   }, [isOpen, onClose, refs]);
+}
+
+/**
+ * Universal Transient Overlay Hook enforcing Single Active Non-Modal Overlay System-Wide.
+ */
+export function useTransientOverlay({
+  id,
+  isOpen,
+  onClose,
+  refs = [],
+}: {
+  id: string;
+  isOpen: boolean;
+  onClose: () => void;
+  refs?: (React.RefObject<HTMLElement | null> | HTMLElement | null)[];
+}) {
+  const pathname = usePathname();
+
+  // 1. Mutual exclusion: Close when another transient overlay opens
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleOverlayOpen = (event: Event) => {
+      const customEvent = event as CustomEvent<{ id?: string }>;
+      if (customEvent.detail && customEvent.detail.id !== id) {
+        onClose();
+      }
+    };
+
+    const handleCloseAll = () => {
+      onClose();
+    };
+
+    window.addEventListener('app-overlay-open', handleOverlayOpen);
+    window.addEventListener('app-overlay-close-all', handleCloseAll);
+    window.addEventListener('close-overlays', handleCloseAll);
+
+    return () => {
+      window.removeEventListener('app-overlay-open', handleOverlayOpen);
+      window.removeEventListener('app-overlay-close-all', handleCloseAll);
+      window.removeEventListener('close-overlays', handleCloseAll);
+    };
+  }, [id, isOpen, onClose]);
+
+  // 2. Close on route change
+  useEffect(() => {
+    if (isOpen) {
+      onClose();
+    }
+  }, [pathname]);
+
+  // 3. Close on Escape key
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [isOpen, onClose]);
+
+  // 4. Non-swallowing pointerdown outside click dismissal
+  useClickOutside({ isOpen, onClose, refs });
 }

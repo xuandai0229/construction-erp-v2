@@ -1,0 +1,34 @@
+{
+  "createdAt": "2026-08-01T04:41:07.024Z",
+  "sourceHash": "3b6fb90c492f55cd3fd5fa78edf35d9e971362644a6a2cbe4808cef133d890e3",
+  "projects": [
+    {
+      "id": "cms9tydy1001an4k52iepe45t",
+      "code": "CT-2026-0019",
+      "name": "Quản lý, duy tu, duy trì vận hành hệ thống công viên hồ Phùng Khoang theo phân cấp trên địa bàn phường Đại Mỗ giai đoạn 2026-2028",
+      "status": "ACTIVE",
+      "endDate": null,
+      "externalSourceKey": "4a94ce26640715620ada7f6371dcf3b699a14d089581830e23d9460abcc3eb00",
+      "plannedDurationValue": null,
+      "plannedDurationUnit": null,
+      "plannedDurationRaw": "ngày",
+      "sourceMetadata": {
+        "area": null,
+        "unit": null,
+        "guard": null,
+        "officer": null,
+        "engineer": null,
+        "rawValue": "1,971,964,000",
+        "rawPeriod": "từ T6/2026-31/12/2028",
+        "sheetName": "2HN và PTN (3)",
+        "sourceRow": 88,
+        "parsedValue": 1971964000,
+        "rawDuration": "ngày",
+        "spreadsheetId": "1RQMU9no_Q52i5Nt6HyVr7YUNbPLsd37PlhUgBjrRwyM"
+      },
+      "members": []
+    }
+  ],
+  "users": [],
+  "projectMembers": []
+}

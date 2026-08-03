@@ -9,6 +9,7 @@ import { ArrowLeft, FolderOpen } from "lucide-react";
 import { getEnforcedSystemSettings } from "@/lib/settings/system-settings";
 import { Suspense } from "react";
 import type { Prisma } from "@prisma/client";
+import { ProjectIdentity } from "@/components/projects/project-identity";
 
 const FOLDER_PAGE_SIZE = 100;
 const FILE_PAGE_SIZE = 200;
@@ -270,12 +271,10 @@ export default async function ProjectDocumentsPage({
           <span className="mx-2">/</span>
           <span className="text-[var(--foreground)]">Tài liệu</span>
         </nav>
-        <div className="flex items-center justify-between">
-          <div className="min-w-0">
-            <h1 className="page-heading flex items-center gap-2">
-              <FolderOpen className="h-5 w-5 sm:h-6 sm:w-6 text-blue-500 shrink-0" />
-              <span className="truncate">{project.name}</span>
-            </h1>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex min-w-0 items-start gap-2">
+            <FolderOpen className="mt-1 h-5 w-5 shrink-0 text-blue-500 sm:h-6 sm:w-6" />
+            <ProjectIdentity name={project.name} displayName={project.displayName} code={project.code} status={project.status} location={project.location} executionUnit={typeof project.sourceMetadata === "object" && project.sourceMetadata && "unit" in project.sourceMetadata ? String((project.sourceMetadata as { unit?: unknown }).unit ?? "") : null} variant="full" />
           </div>
         </div>
       </div>

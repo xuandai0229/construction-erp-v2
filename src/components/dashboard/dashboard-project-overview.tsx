@@ -4,10 +4,9 @@ import type { DashboardProjectOverview } from "@/lib/dashboard/dashboard-queries
 import { formatDateVNShort, formatPercentVN } from "@/lib/dashboard/dashboard-formatters";
 import { StatusBadge, type StatusBadgeVariant } from "@/components/ui/status-badge";
 import { DashboardEmptyState } from "./dashboard-empty-state";
-import { getProjectStatusMeta } from "@/lib/project-status";
-import { ProjectName } from "@/components/project/project-name";
 import { ProgressBar } from "@/components/ui/progress-bar";
 import { getActualProgressDataLabel } from "@/lib/dashboard/dashboard-project-presentation";
+import { ProjectIdentity } from "@/components/projects/project-identity";
 
 const healthMeta: Record<DashboardProjectOverview["health"], { label: string; variant: StatusBadgeVariant }> = {
   ON_TRACK: { label: "Đúng tiến độ", variant: "success" },
@@ -38,19 +37,22 @@ export function DashboardProjectOverviewList({ projects }: { projects: Dashboard
         <div className="flex flex-col gap-2.5 sm:gap-3">
           {projects.map((project) => {
             const meta = healthMeta[project.health];
-            const statusMeta = getProjectStatusMeta(project.status);
             return (
-              <Link key={project.id} href={`/projects/${project.id}`} className="group block rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-3.5 sm:p-4 shadow-[var(--shadow-card)] transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-[var(--shadow-elevated)] active:scale-[0.98]">
+              <div key={project.id} className="group block rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-3.5 sm:p-4 shadow-[var(--shadow-card)] transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-[var(--shadow-elevated)]">
                 <div className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1.5">
-                      <span className="rounded-[var(--radius-sm)] bg-slate-100 px-1.5 py-0.5 text-[11px] font-bold text-slate-700 tracking-wide border border-slate-200">{project.code}</span>
+                    <ProjectIdentity
+                      name={project.name}
+                      displayName={project.displayName}
+                      code={project.code}
+                      status={project.status}
+                      location={project.location}
+                      variant="dashboard"
+                      href={`/projects/${project.id}`}
+                    />
+                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] sm:text-[12.5px] font-medium text-[var(--muted-foreground)]">
                       <StatusBadge variant={meta.variant} size="sm">{meta.label}</StatusBadge>
-                      <StatusBadge variant={statusMeta.variant} size="sm">{statusMeta.label}</StatusBadge>
-                    </div>
-                    <ProjectName name={project.name} className="text-[14px] leading-snug text-[var(--foreground)] transition-colors sm:text-[15px]" />
-                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] sm:text-[12.5px] font-medium text-[var(--muted-foreground)]">
-                      <span className="inline-flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" />Cập nhật {formatDateVNShort(project.updatedAt)}</span>
+                      <span className="inline-flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5 text-slate-400" />Cập nhật {formatDateVNShort(project.updatedAt)}</span>
                     </div>
                   </div>
                   <div className="w-full lg:w-56 mt-2 lg:mt-0">
@@ -62,7 +64,7 @@ export function DashboardProjectOverviewList({ projects }: { projects: Dashboard
                       <ProgressBar
                         value={project.actualProgressPercent}
                         tone={project.health === "DELAYED" ? "rose" : project.health === "AT_RISK" ? "amber" : "emerald"}
-                        label={`Tiến độ thực tế ${project.name}`}
+                        label={`Tiến độ thực tế ${project.displayName || project.name}`}
                       />
                     ) : null}
                     <p className="mt-1.5 text-[11px] sm:text-[12px] font-medium text-[var(--muted-foreground)]">
@@ -70,7 +72,7 @@ export function DashboardProjectOverviewList({ projects }: { projects: Dashboard
                     </p>
                   </div>
                 </div>
-              </Link>
+              </div>
             );
           })}
         </div>

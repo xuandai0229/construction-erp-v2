@@ -15,7 +15,13 @@ export type GlobalProjectContext = {
     id: string;
     code: string;
     name: string;
+    displayName: string | null;
     status: string;
+    investor: string | null;
+    location: string | null;
+    commanderName: string | null;
+    executionUnit: string | null;
+    durationLabel: string;
   }[];
   overviewData: {
     health: "ON_TRACK" | "AT_RISK" | "DELAYED" | "COMPLETED" | "NO_DATA";
@@ -58,15 +64,42 @@ export async function getGlobalProjectContext(
     }
   }
 
-  // 3. Fetch light list of all accessible projects
+  // 3. Fetch list of all accessible projects with full identity context
   const allAccessibleProjectWhere = { deletedAt: null, ...projectScopeWhere(accessScope) };
 
   const accessibleProjects = await prisma.project.findMany({
     where: allAccessibleProjectWhere,
-    select: { id: true, code: true, name: true, status: true },
+    select: { 
+      id: true, 
+      code: true, 
+      name: true, 
+      displayName: true, 
+      status: true, 
+      investor: true, 
+      location: true, 
+      sourceMetadata: true, 
+      plannedDurationValue: true, 
+      plannedDurationUnit: true,
+      members: {
+        where: { role: "CHIEF_COMMANDER", isActive: true, deletedAt: null },
+        select: { user: { select: { name: true } } },
+        take: 1
+      }
+    },
     orderBy: { updatedAt: "desc" },
     take: 50,
-  });
+  }).then((projects) => projects.map((project) => ({
+    id: project.id,
+    code: project.code,
+    name: project.name,
+    displayName: project.displayName,
+    status: project.status,
+    investor: project.investor,
+    location: project.location,
+    commanderName: project.members[0]?.user?.name || null,
+    executionUnit: typeof project.sourceMetadata === "object" && project.sourceMetadata && "unit" in project.sourceMetadata ? String((project.sourceMetadata as { unit?: unknown }).unit ?? "") : null,
+    durationLabel: project.plannedDurationValue && project.plannedDurationUnit ? `${project.plannedDurationValue} ${project.plannedDurationUnit === "MONTH" ? "tháng" : "ngày"}` : "Chưa cập nhật"
+  })));
 
   // 4. Fetch overview data for the selected project (for the topbar badge)
   let overviewData = null;
@@ -117,12 +150,11 @@ export async function getGlobalProjectContext(
 
       overviewData = { health, warning };
     } else {
-      // If project was not found, invalid
       selectedProjectId = null;
     }
   }
 
-  // 5. Compute global notifications (Phase A - computed from data)
+  // 5. Compute global notifications
   const notifications: GlobalProjectContext['notifications'] = [];
 
   // Pending Approvals
@@ -175,7 +207,7 @@ export async function getGlobalProjectContext(
       ],
     },
     orderBy: { updatedAt: "desc" },
-    take: 20, // Fetch a bit more to account for JS filtering
+    take: 20,
     include: { project: { select: { name: true } } },
   });
 
@@ -190,7 +222,7 @@ export async function getGlobalProjectContext(
     if (cleanIssues.startsWith("không có") || cleanIssues.startsWith("khong co")) return false;
 
     return true;
-  }).slice(0, 3); // Apply limit after filtering
+  }).slice(0, 3);
 
   issueReports.forEach(r => {
     const isPending = r.status === "SUBMITTED";
@@ -229,7 +261,6 @@ export async function getGlobalProjectContext(
     if (!uniqueNotificationsMap.has(dedupeKey)) {
       uniqueNotificationsMap.set(dedupeKey, notification);
     } else {
-      // If same key exists, keep the one with higher severity or newer date
       const existing = uniqueNotificationsMap.get(dedupeKey)!;
       if (notification.severity === 'HIGH' && existing.severity !== 'HIGH') {
         uniqueNotificationsMap.set(dedupeKey, notification);
@@ -243,7 +274,7 @@ export async function getGlobalProjectContext(
 
   const uniqueNotifications = Array.from(uniqueNotificationsMap.values());
   uniqueNotifications.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-  const visibleNotifications = uniqueNotifications.slice(0, 5); // Limit to 5 max in search popup
+  const visibleNotifications = uniqueNotifications.slice(0, 5);
   const readRows = visibleNotifications.length > 0
     ? await prisma.notification.findMany({
       where: {

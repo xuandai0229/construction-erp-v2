@@ -14,13 +14,19 @@ const projectSchema = z.object({
     .max(50, "Mã công trình không được vượt quá 50 ký tự"),
   name: z.string()
     .min(1, "Tên công trình là bắt buộc")
-    .max(200, "Tên công trình không được vượt quá 200 ký tự"),
+    .max(500, "Tên công trình không được vượt quá 500 ký tự"),
+  displayName: z.string()
+    .max(120, "Tên hiển thị không được vượt quá 120 ký tự")
+    .optional()
+    .or(z.literal('')),
   investor: z.string().max(200, "Chủ đầu tư không được vượt quá 200 ký tự").optional().or(z.literal('')),
   location: z.string().max(200, "Địa điểm không được vượt quá 200 ký tự").optional().or(z.literal('')),
   description: z.string().max(1000, "Mô tả không được vượt quá 1000 ký tự").optional().or(z.literal('')),
   status: z.enum(["PLANNING", "ACTIVE", "ON_HOLD", "COMPLETED", "CANCELLED"]).default("PLANNING"),
   startDate: z.string().optional().transform(val => val ? new Date(val) : null),
   endDate: z.string().optional().transform(val => val ? new Date(val) : null),
+  plannedDurationValue: z.preprocess((value) => value === "" || value == null ? null : Number(value), z.number().int().positive("Thời lượng phải là số nguyên dương").nullable()),
+  plannedDurationUnit: z.enum(["DAY", "MONTH"]).nullable().or(z.literal("")),
 });
 
 const DEFAULT_FOLDERS = [
@@ -45,6 +51,11 @@ export async function createProject(prevState: unknown, formData: FormData) {
   
   try {
     const validatedData = projectSchema.parse(rawData);
+    const projectData = {
+      ...validatedData,
+      displayName: validatedData.displayName || null,
+      plannedDurationUnit: validatedData.plannedDurationValue ? (validatedData.plannedDurationUnit || "DAY") : null
+    };
 
     // Kiểm tra tính hợp lệ của ngày (Ngày bắt đầu phải <= Ngày kết thúc, cho phép bằng nhau)
     if (validatedData.startDate && validatedData.endDate && validatedData.startDate > validatedData.endDate) {
@@ -58,7 +69,7 @@ export async function createProject(prevState: unknown, formData: FormData) {
 
     const project = await prisma.$transaction(async (tx) => {
       const newProject = await tx.project.create({
-        data: validatedData as any,
+        data: projectData as any,
       });
 
       await Promise.all(
@@ -108,6 +119,11 @@ export async function updateProject(id: string, prevState: unknown, formData: Fo
 
   try {
     const validatedData = projectSchema.parse(rawData);
+    const projectData = {
+      ...validatedData,
+      displayName: validatedData.displayName || null,
+      plannedDurationUnit: validatedData.plannedDurationValue ? (validatedData.plannedDurationUnit || "DAY") : null
+    };
     
     // Kiểm tra tính hợp lệ của ngày (Ngày bắt đầu phải <= Ngày kết thúc, cho phép bằng nhau)
     if (validatedData.startDate && validatedData.endDate && validatedData.startDate > validatedData.endDate) {
@@ -129,7 +145,7 @@ export async function updateProject(id: string, prevState: unknown, formData: Fo
 
     const updated = await prisma.project.update({
       where: { id },
-      data: validatedData as any,
+      data: projectData as any,
     });
 
     await writeAuditLog({

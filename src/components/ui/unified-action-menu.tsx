@@ -2,8 +2,7 @@
 
 import React, { useState, useRef, useEffect, useId, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { useClickOutside } from "./global-overlay-manager";
-import { usePathname } from "next/navigation";
+import { useTransientOverlay, notifyOverlayOpen } from "./global-overlay-manager";
 
 export interface ActionMenuItemProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   id?: string;
@@ -82,13 +81,7 @@ export function UnifiedActionMenu({
   const [coords, setCoords] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const triggerRef = useRef<HTMLDivElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
-  const pathname = usePathname();
   const menuId = useId();
-
-  // Close menu on route change
-  useEffect(() => {
-    setIsOpen(false);
-  }, [pathname]);
 
   // Recalculate position for Portal
   const updatePosition = useCallback(() => {
@@ -119,37 +112,24 @@ export function UnifiedActionMenu({
     setCoords({ top, left });
   }, [align, menuWidth]);
 
-  const handleToggle = useCallback(() => {
-    setIsOpen((prev) => {
-      if (!prev) {
-        updatePosition();
-      }
-      return !prev;
-    });
-  }, [updatePosition]);
-
-  // Single-click outside close without event swallowing
-  useClickOutside({
+  // Enforce single active overlay system-wide
+  useTransientOverlay({
+    id: menuId,
     isOpen,
     onClose: () => setIsOpen(false),
     refs: [triggerRef, menuRef],
   });
 
-  // Handle Escape key
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setIsOpen(false);
-        if (triggerRef.current) {
-          const btn = triggerRef.current.querySelector("button") || triggerRef.current;
-          btn.focus();
-        }
+  const handleToggle = useCallback(() => {
+    setIsOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        updatePosition();
+        notifyOverlayOpen(menuId);
       }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen]);
+      return next;
+    });
+  }, [menuId, updatePosition]);
 
   const handleMenuContentClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -185,7 +165,7 @@ export function UnifiedActionMenu({
               top: `${coords.top}px`,
               left: `${coords.left}px`,
             }}
-            className={`z-[100] ${menuWidth} rounded-xl bg-white p-1.5 shadow-xl border border-slate-200/90 backdrop-blur-md animate-in fade-in-50 zoom-in-95 duration-100 focus:outline-none`}
+            className={`z-[50] ${menuWidth} rounded-xl bg-white p-1.5 shadow-xl border border-slate-200 backdrop-blur-md animate-in fade-in-50 zoom-in-95 duration-100 focus:outline-none`}
           >
             {children ? (
               children

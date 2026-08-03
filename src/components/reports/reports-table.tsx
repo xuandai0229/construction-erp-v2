@@ -123,7 +123,7 @@ export function ReportsTable({
               <th className="text-center py-3 px-3 font-semibold text-[var(--muted-foreground)] text-xs uppercase tracking-wider w-[10%]">
                 Hình ảnh
               </th>
-              <th className="text-right py-3 px-4 font-semibold text-[var(--muted-foreground)] text-xs uppercase tracking-wider w-[80px]">
+              <th className="text-right py-3 px-4 font-semibold text-[var(--muted-foreground)] text-xs uppercase tracking-wider w-[140px] min-w-[140px]">
                 Tác vụ
               </th>
             </tr>
@@ -256,8 +256,8 @@ export function ReportsTable({
                               )}
                             </div>
                           </td>
-                          <td className="py-2.5 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center justify-end gap-0.5">
+                          <td className="w-[140px] min-w-[140px] py-2.5 px-4 text-right whitespace-nowrap shrink-0" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-end gap-0.5 shrink-0">
                               {/* Edit & Delete Buttons */}
                               {currentUser && (
                                 <>

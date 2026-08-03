@@ -1,13 +1,13 @@
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { ArrowLeft, Building2, Calendar, MapPin, User, ListTree, FolderOpen, ClipboardCheck, BarChart2, Package, ChevronRight, CalendarCheck, MoreVertical, Search, Plus, Pencil } from "lucide-react";
+import { ArrowLeft, Building2, Calendar, MapPin, User, ListTree, FolderOpen, ClipboardCheck, BarChart2, ChevronRight, CalendarCheck, MoreVertical, Pencil, ShieldCheck } from "lucide-react";
 import { DeleteProjectButton } from "@/components/projects/delete-project-button";
 import Link from "next/link";
 import { formatDateVN } from "@/lib/utils";
 import { requireProjectAccessOrRedirect, canManageProjects } from "@/lib/rbac";
-import { getProjectStatusMeta } from "@/lib/project-status";
 import { type ElementType, type ReactNode } from "react";
+import { SmartOverflowText } from "@/components/ui/smart-overflow-text";
+import { ProjectIdentity } from "@/components/projects/project-identity";
 
 const folderPrefixMap: Record<string, string> = {
   "01": "01. Hồ sơ pháp lý công trình",
@@ -32,8 +32,8 @@ function InfoTile({ label, value, icon: Icon }: { label: string, value: ReactNod
         <Icon className="w-3.5 h-3.5 text-[var(--muted-foreground)] opacity-70" />
         {label}
       </span>
-      <div className="text-[13.5px] font-semibold text-[var(--foreground)] truncate" title={typeof value === 'string' ? value : undefined}>
-        {value || <span className="text-[var(--muted-foreground)] opacity-70 font-normal">—</span>}
+      <div className="text-[13.5px] font-semibold text-[var(--foreground)] break-words">
+        {typeof value === "string" ? <SmartOverflowText value={value} lines={3} /> : value || <span className="text-[var(--muted-foreground)] opacity-70 font-normal">—</span>}
       </div>
     </div>
   );
@@ -53,6 +53,11 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
         where: { parentId: null, deletedAt: null },
         orderBy: { name: 'asc' }
       },
+      members: {
+        where: { role: "CHIEF_COMMANDER", isActive: true, deletedAt: null },
+        select: { user: { select: { name: true } } },
+        take: 1
+      },
       _count: {
         select: {
           fieldProgressTemplates: {
@@ -67,11 +72,11 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
     notFound();
   }
 
-  const getStatusBadge = (status: string) => {
-    const meta = getProjectStatusMeta(status);
-    return <StatusBadge variant={meta.variant}>{meta.label}</StatusBadge>;
-  };
+  const executionUnit = typeof project.sourceMetadata === "object" && project.sourceMetadata && "unit" in project.sourceMetadata 
+    ? String((project.sourceMetadata as { unit?: unknown }).unit ?? "") 
+    : null;
 
+  const commanderName = project.members[0]?.user?.name || null;
   const hasWbs = project._count.fieldProgressTemplates > 0;
 
   return (
@@ -86,30 +91,49 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
           MOBILE LAYOUT
           ========================================= */}
       <div className="sm:hidden space-y-6 px-1">
-        
-        {/* 10.1 PROJECT HERO & 10.2 PROJECT SNAPSHOT */}
         <div>
           <div className="flex items-center justify-between mb-2">
             <span className="text-[12px] font-black text-[var(--muted-foreground)] uppercase tracking-widest">{project.code}</span>
-            <div className="flex items-center gap-2">
-              {getStatusBadge(project.status)}
-              {canManage && <div className="w-8 h-8 rounded-full bg-[var(--border)] flex items-center justify-center text-slate-600">
-                <MoreVertical className="w-4 h-4" />
-              </div>}
-            </div>
+            {canManage && (
+              <Link href={`/projects/${project.id}/edit`} className="p-1.5 rounded-full bg-slate-100 text-slate-700">
+                <Pencil className="w-4 h-4" />
+              </Link>
+            )}
           </div>
-          <h1 className="text-[20px] font-black text-[var(--foreground)] leading-snug line-clamp-2">
-            {project.name}
-          </h1>
+          
+          <ProjectIdentity
+            name={project.name}
+            displayName={project.displayName}
+            code={project.code}
+            status={project.status}
+            location={project.location}
+            commanderName={commanderName}
+            executionUnit={executionUnit}
+            variant="full"
+          />
 
           <div className="mt-5 flex flex-col gap-3">
             <div className="flex justify-between items-center border-b border-dashed border-[var(--border)] pb-3">
+              <span className="text-[13px] text-[var(--muted-foreground)] font-medium">Chỉ huy trưởng</span>
+              <span className="text-right text-[13px] font-bold text-[var(--foreground)]">{commanderName || "Chưa phân công"}</span>
+            </div>
+            {executionUnit && (
+              <div className="flex justify-between items-center border-b border-dashed border-[var(--border)] pb-3">
+                <span className="text-[13px] text-[var(--muted-foreground)] font-medium">Đơn vị thực hiện</span>
+                <span className="text-right text-[13px] font-bold text-[var(--foreground)]">{executionUnit}</span>
+              </div>
+            )}
+            <div className="flex justify-between items-center border-b border-dashed border-[var(--border)] pb-3">
               <span className="text-[13px] text-[var(--muted-foreground)] font-medium">Chủ đầu tư</span>
-              <span className="text-[13px] font-bold text-[var(--foreground)] truncate max-w-[65%] text-right">{project.investor || "—"}</span>
+              <SmartOverflowText value={project.investor || "—"} lines={2} className="max-w-[65%] text-right text-[13px] font-bold text-[var(--foreground)]" />
+            </div>
+            <div className="flex justify-between items-center border-b border-dashed border-[var(--border)] pb-3">
+              <span className="text-[13px] text-[var(--muted-foreground)] font-medium">Thời lượng thi công</span>
+              <span className="text-right text-[13px] font-bold text-[var(--foreground)]">{project.plannedDurationValue && project.plannedDurationUnit ? `${project.plannedDurationValue} ${project.plannedDurationUnit === "MONTH" ? "tháng" : "ngày"}` : "Chưa cập nhật"}</span>
             </div>
             <div className="flex justify-between items-center border-b border-dashed border-[var(--border)] pb-3">
               <span className="text-[13px] text-[var(--muted-foreground)] font-medium">Địa điểm</span>
-              <span className="text-[13px] font-bold text-[var(--foreground)] truncate max-w-[65%] text-right">{project.location || "—"}</span>
+              <SmartOverflowText value={project.location || "—"} lines={2} className="max-w-[65%] text-right text-[13px] font-bold text-[var(--foreground)]" />
             </div>
             <div className="flex justify-between items-center border-b border-dashed border-[var(--border)] pb-3">
               <span className="text-[13px] text-[var(--muted-foreground)] font-medium">Khởi công</span>
@@ -122,7 +146,7 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
           </div>
         </div>
 
-        {/* 10.3 MODULE NAVIGATION */}
+        {/* MODULE NAVIGATION */}
         <div className="flex flex-col gap-3 pt-2">
           <Link href={`/projects/${project.id}/field-progress`} className="flex items-center bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] p-3.5 shadow-[var(--shadow-card)] active:scale-[0.98] transition-transform">
             <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 mr-3">
@@ -182,7 +206,7 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
           )}
         </div>
 
-        {/* 10.4 DOCUMENT SUMMARY */}
+        {/* DOCUMENT SUMMARY */}
         <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[var(--radius-lg)] p-4 shadow-[var(--shadow-card)]">
           <div className="flex items-center justify-between mb-3 border-b border-[var(--border)] pb-3">
             <div className="flex items-center gap-2">
@@ -210,32 +234,36 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
       {/* =========================================
           DESKTOP LAYOUT (Hidden on mobile)
           ========================================= */}
-      <div className="hidden min-h-[76px] items-center gap-3 rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] px-5 py-4 shadow-[var(--shadow-card)] sm:flex">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--primary-soft)] text-[var(--primary)]">
-          <Building2 className="h-5 w-5" />
-        </div>
-        <div className="flex min-w-0 flex-1 items-center gap-2.5">
-          <h1 className="min-w-0 truncate text-[22px] font-bold leading-tight tracking-tight text-[var(--foreground)] xl:text-2xl">{project.name}</h1>
-          <span className="hidden shrink-0 rounded-md border border-[var(--border)] bg-[var(--surface-subtle)] px-2.5 py-1 text-xs font-semibold text-[var(--muted-foreground)] lg:inline-flex">
-            {project.code}
-          </span>
-          <span className="shrink-0">{getStatusBadge(project.status)}</span>
-        </div>
+      <div className="hidden rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[var(--shadow-card)] sm:block space-y-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <ProjectIdentity
+              name={project.name}
+              displayName={project.displayName}
+              code={project.code}
+              status={project.status}
+              location={project.location}
+              commanderName={commanderName}
+              executionUnit={executionUnit}
+              variant="full"
+            />
+          </div>
 
-        <div className="flex shrink-0 items-center gap-2">
-          <Link href="/projects" aria-label="Danh sách công trình" className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-subtle)] focus:outline-none">
-            <ArrowLeft className="h-4 w-4" />
-            <span className="hidden xl:inline">Danh sách</span>
-          </Link>
-          {canManage && (
-            <Link href={`/projects/${project.id}/edit`} className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3.5 text-sm font-semibold text-white shadow-[var(--shadow-button)] transition-colors hover:bg-blue-700 focus:outline-none">
-              <Pencil className="h-4 w-4" />
-              Sửa
+          <div className="flex shrink-0 items-center gap-2">
+            <Link href="/projects" aria-label="Danh sách công trình" className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-sm font-semibold text-[var(--foreground)] transition-colors hover:bg-[var(--surface-subtle)] focus:outline-none">
+              <ArrowLeft className="h-4 w-4" />
+              <span>Danh sách</span>
             </Link>
-          )}
-          {canManage && (
-            <DeleteProjectButton id={project.id} projectName={project.name} className="h-9 px-3 text-sm bg-transparent border-rose-100 text-rose-500 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 transition-colors" />
-          )}
+            {canManage && (
+              <Link href={`/projects/${project.id}/edit`} className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3.5 text-sm font-semibold text-white shadow-[var(--shadow-button)] transition-colors hover:bg-blue-700 focus:outline-none">
+                <Pencil className="h-4 w-4" />
+                Sửa
+              </Link>
+            )}
+            {canManage && (
+              <DeleteProjectButton id={project.id} projectName={project.name} className="h-9 px-3 text-sm bg-transparent border-rose-100 text-rose-500 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 transition-colors" />
+            )}
+          </div>
         </div>
       </div>
       
@@ -252,13 +280,16 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
             </div>
             <div className="p-5 flex-1 flex flex-col">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <InfoTile label="Chủ đầu tư" value={project.investor} icon={User} />
+                <InfoTile label="Chỉ huy trưởng" value={commanderName || "Chưa phân công"} icon={ShieldCheck} />
+                <InfoTile label="Đơn vị thực hiện" value={executionUnit || "—"} icon={Building2} />
+                <InfoTile label="Chủ đầu tư / Ban QLDA" value={project.investor} icon={User} />
                 <InfoTile label="Địa điểm" value={project.location} icon={MapPin} />
                 <InfoTile label="Ngày bắt đầu" value={project.startDate ? formatDateVN(project.startDate) : null} icon={Calendar} />
                 <InfoTile label="Ngày dự kiến hoàn thành" value={project.endDate ? formatDateVN(project.endDate) : null} icon={CalendarCheck} />
+                <InfoTile label="Thời lượng thi công" value={project.plannedDurationValue && project.plannedDurationUnit ? `${project.plannedDurationValue} ${project.plannedDurationUnit === "MONTH" ? "tháng" : "ngày"}` : null} icon={CalendarCheck} />
 
                 <div className="sm:col-span-2 pt-3 mt-1 border-t border-[var(--border)]">
-                  <span className="text-[12px] font-medium text-[var(--muted-foreground)] mb-1.5 block">Ghi chú</span>
+                  <span className="text-[12px] font-medium text-[var(--muted-foreground)] mb-1.5 block">Ghi chú & Mô tả</span>
                   {project.description ? (
                     <p className="text-[13.5px] text-[var(--foreground)] whitespace-pre-wrap leading-relaxed" title={project.description}>{project.description}</p>
                   ) : (
@@ -292,9 +323,7 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
                       <div className="w-8 h-8 rounded-lg bg-amber-50/50 flex items-center justify-center shrink-0 group-hover:bg-amber-100 transition-colors">
                         <FolderOpen className="w-4 h-4 text-amber-500 group-hover:text-amber-600 transition-colors" />
                       </div>
-                      <span className="text-[13.5px] font-medium text-[var(--foreground)] group-hover:text-[var(--foreground)] truncate" title={formatFolderName(folder.name)}>
-                        {formatFolderName(folder.name)}
-                      </span>
+                      <SmartOverflowText value={formatFolderName(folder.name)} lines={2} className="text-[13.5px] font-medium text-[var(--foreground)] group-hover:text-[var(--foreground)]" />
                     </Link>
                   ))}
                   {project.documentFolders.length > 5 && (
@@ -403,7 +432,6 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
               </div>
             </div>
           )}
-
 
         </div>
       </div>

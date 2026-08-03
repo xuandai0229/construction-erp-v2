@@ -17,7 +17,7 @@ export default async function UsersPage() {
       projectMembers: {
         where: { deletedAt: null, isActive: true },
         include: {
-          project: { select: { id: true, code: true, name: true } },
+          project: { select: { id: true, code: true, name: true, displayName: true, location: true } },
         },
       },
       supervisionScope: {
@@ -29,7 +29,7 @@ export default async function UsersPage() {
 
   const projects = await prisma.project.findMany({
     where: { deletedAt: null },
-    select: { id: true, code: true, name: true, status: true },
+    select: { id: true, code: true, name: true, displayName: true, location: true, status: true },
     orderBy: { code: "asc" },
   });
 
@@ -55,8 +55,10 @@ export default async function UsersPage() {
       id: pm.project.id,
       code: pm.project.code,
       name: pm.project.name,
+      displayName: pm.project.displayName || pm.project.name,
+      location: pm.project.location || null,
       role: pm.role,
-      roleDisplay: PROJECT_ROLE_DISPLAY_NAMES[pm.role],
+      roleDisplay: PROJECT_ROLE_DISPLAY_NAMES[pm.role] || pm.role,
     })),
     supervisionScopeType: u.supervisionScope?.scopeType || null,
     supervisionProjectIds: u.supervisionScope?.projects.map(p => p.projectId) || [],

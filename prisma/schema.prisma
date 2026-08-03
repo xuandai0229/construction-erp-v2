@@ -39,6 +39,11 @@ enum ProjectStatus {
   CANCELLED
 }
 
+enum ProjectDurationUnit {
+  DAY
+  MONTH
+}
+
 enum MaterialMovementType {
   IMPORT
   EXPORT
@@ -283,6 +288,7 @@ model Project {
   id          String        @id @default(cuid())
   code        String        @unique
   name        String
+  displayName String?
   description String?
   investor    String?
   location    String?
@@ -290,6 +296,12 @@ model Project {
   startDate   DateTime?
   endDate     DateTime?
   budget      Decimal?      @db.Decimal(19, 4)
+  plannedDurationValue Int?
+  plannedDurationUnit ProjectDurationUnit?
+  plannedDurationRaw   String?
+  externalSource    String?
+  externalSourceKey String?      @unique
+  sourceMetadata    Json?
   deletedAt   DateTime?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt

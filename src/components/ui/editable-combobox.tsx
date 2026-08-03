@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, ChevronDown, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTransientOverlay, notifyOverlayOpen } from "@/components/ui/global-overlay-manager";
 
 export interface EditableComboboxOption {
   value: string;
@@ -132,6 +133,13 @@ export function EditableCombobox({
   useEffect(() => {
     inputValueRef.current = inputValue;
     onChangeRef.current = onChange;
+  });
+
+  useTransientOverlay({
+    id: inputId,
+    isOpen,
+    onClose: () => setIsOpen(false),
+    refs: [rootRef, panelRef],
   });
 
   useEffect(() => {

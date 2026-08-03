@@ -8,7 +8,7 @@ import { ProjectsKPISummary } from "@/components/projects/projects-kpi-summary";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { canViewAllProjects, canManageProjects, getProjectAccessScope, projectScopeWhere } from "@/lib/rbac";
-import { PageHeading, FilterBar, ContentCard, Pagination } from "@/components/ui/enterprise";
+import { Pagination } from "@/components/ui/enterprise";
 import { Button } from "@/components/ui/button";
 
 const ITEMS_PER_PAGE = 15;
@@ -48,6 +48,8 @@ export default async function ProjectsPage({
     whereCondition.OR = [
       { code: { contains: q, mode: 'insensitive' } },
       { name: { contains: q, mode: 'insensitive' } },
+      { displayName: { contains: q, mode: 'insensitive' } },
+      { location: { contains: q, mode: 'insensitive' } },
       { investor: { contains: q, mode: 'insensitive' } },
     ];
   }
@@ -73,30 +75,64 @@ export default async function ProjectsPage({
     orderBy: { createdAt: 'desc' },
     take: ITEMS_PER_PAGE,
     skip: skip,
+    select: {
+      id: true,
+      code: true,
+      name: true,
+      displayName: true,
+      investor: true,
+      location: true,
+      status: true,
+      startDate: true,
+      endDate: true,
+      plannedDurationValue: true,
+      plannedDurationUnit: true,
+      sourceMetadata: true,
+      members: {
+        where: { role: "CHIEF_COMMANDER", isActive: true, deletedAt: null },
+        select: { user: { select: { name: true } } },
+        take: 1
+      }
+    }
   });
 
   const projectRows = projects.map((project) => {
-    let dateRangeLabel = "Chưa cập nhật";
-    if (project.startDate || project.endDate) {
-      const startStr = project.startDate ? formatDateVN(project.startDate) : "—";
-      const endStr = project.endDate ? formatDateVN(project.endDate) : "—";
-      dateRangeLabel = `${startStr} → ${endStr}`;
+    const executionUnit = typeof project.sourceMetadata === "object" && project.sourceMetadata && "unit" in project.sourceMetadata 
+      ? String((project.sourceMetadata as { unit?: unknown }).unit ?? "") 
+      : null;
+
+    const commanderName = project.members[0]?.user?.name || null;
+
+    let dateRangeLabel: string | null = null;
+    if (project.startDate && project.endDate) {
+      dateRangeLabel = `${formatDateVN(project.startDate)} – ${formatDateVN(project.endDate)}`;
+    } else if (!project.startDate && project.endDate) {
+      dateRangeLabel = `Hoàn thành dự kiến: ${formatDateVN(project.endDate)}`;
+    } else if (project.startDate && !project.endDate) {
+      dateRangeLabel = `Bắt đầu: ${formatDateVN(project.startDate)}`;
+    }
+
+    let durationLabel: string | null = null;
+    if (project.plannedDurationValue && project.plannedDurationUnit) {
+      durationLabel = `${project.plannedDurationValue} ${project.plannedDurationUnit === "MONTH" ? "tháng" : "ngày"}`;
     }
 
     return {
       id: project.id,
       code: project.code,
       name: project.name,
+      displayName: project.displayName,
       investor: project.investor ?? null,
       location: project.location ?? null,
+      executionUnit,
+      commanderName,
       status: project.status,
       dateRangeLabel,
+      durationLabel,
     };
   });
 
   const pageTitle = isCommander ? "Công trình của tôi" : "Quản lý Công trình";
-  
-  // Base URL for pagination links
   const baseUrl = `/projects?q=${encodeURIComponent(q)}&status=${encodeURIComponent(statusFilter)}`;
 
   return (
@@ -136,7 +172,7 @@ export default async function ProjectsPage({
               id="project-search"
               autoComplete="off"
               defaultValue={q}
-              placeholder="Tìm mã, tên công trình..."
+              placeholder="Tìm mã, tên, địa điểm..."
               className="w-full h-11 pl-10 pr-4 rounded-[var(--radius-md)] bg-[var(--surface-subtle)] border-[var(--border)] outline-none focus:border-blue-400 focus:bg-[var(--surface)] text-[14px] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)]"
             />
           </div>

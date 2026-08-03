@@ -165,7 +165,6 @@
 }
 .navIconActive {
   color: #3b82f6 !important;
-  filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.4));
 }
 
 /* Nav Label */
