@@ -1,0 +1,36 @@
+{
+  "timestamp": "2026-08-04T03:01:28.899Z",
+  "currentDb": "construction_erp_v2_qa",
+  "replayDb": "construction_erp_v2_phase1_replay_20260804",
+  "isEqual": true,
+  "tableDiff": {
+    "currentCount": 70,
+    "replayCount": 70,
+    "missingInReplay": [],
+    "extraInReplay": []
+  },
+  "colDiff": {
+    "currentCount": 1019,
+    "replayCount": 1019,
+    "missingInReplay": [],
+    "extraInReplay": []
+  },
+  "enumDiff": {
+    "currentCount": 236,
+    "replayCount": 232
+  },
+  "currentSchemaSummary": {
+    "tableCount": 70,
+    "columnCount": 1019,
+    "enumCount": 236,
+    "constraintCount": 225,
+    "indexCount": 255
+  },
+  "replaySchemaSummary": {
+    "tableCount": 70,
+    "columnCount": 1019,
+    "enumCount": 232,
+    "constraintCount": 231,
+    "indexCount": 251
+  }
+}

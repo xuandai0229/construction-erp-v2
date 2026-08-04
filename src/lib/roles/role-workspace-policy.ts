@@ -63,6 +63,9 @@ export function canRoleAccessRoute(role: UserRole, pathname: string): boolean {
   if (pathname === "/users" || pathname.startsWith("/users/")) {
     return COMPANY_WIDE.has(role);
   }
+  if (pathname === "/hr" || pathname.startsWith("/hr/")) {
+    return true; // Fine-grained permission resolution handled by HR Auth Guard at page/layout/action level
+  }
   return false;
 }
 

@@ -53,3 +53,69 @@ export function sanitizeAuditData(value: unknown, depth = 0, seen = new WeakSet<
   const entries = Object.entries(value as Record<string, unknown>).slice(0, MAX_COLLECTION_ITEMS);
   return Object.fromEntries(entries.map(([key, item]) => [key, isSensitiveAuditKey(key) ? "[REDACTED]" : sanitizeAuditData(item, depth + 1, seen)]));
 }
+
+/** Utility to pick only explicitly allowlisted keys into a clean new object */
+function pickAllowlist(raw: unknown, allowlist: string[]): Record<string, unknown> {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return {};
+  }
+  const result: Record<string, unknown> = {};
+  const src = raw as Record<string, unknown>;
+
+  for (const key of allowlist) {
+    if (key in src && src[key] !== undefined) {
+      const val = src[key];
+      if (val instanceof Date) {
+        result[key] = val.toISOString();
+      } else if (typeof val === "object" && val !== null) {
+        // Redact any nested objects unless explicitly handled
+        result[key] = sanitizeAuditData(val);
+      } else {
+        result[key] = val;
+      }
+    }
+  }
+  return result;
+}
+
+/** Allowlist sanitizer for Organization Unit Audit Payload */
+export function sanitizeOrganizationUnitAudit(raw: unknown): Record<string, unknown> {
+  const allowlist = ["id", "code", "name", "parentId", "orderIndex", "isActive", "description", "result"];
+  return pickAllowlist(raw, allowlist);
+}
+
+/** Allowlist sanitizer for Position Audit Payload */
+export function sanitizePositionAudit(raw: unknown): Record<string, unknown> {
+  const allowlist = ["id", "code", "title", "description", "level", "isActive", "result"];
+  return pickAllowlist(raw, allowlist);
+}
+
+/** Allowlist sanitizer for Manager Assignment Audit Payload */
+export function sanitizeManagerAssignmentAudit(raw: unknown): Record<string, unknown> {
+  const allowlist = [
+    "id",
+    "organizationUnitId",
+    "employeeId",
+    "startDate",
+    "endDate",
+    "isPrimary",
+    "decisionNo",
+    "result",
+  ];
+  return pickAllowlist(raw, allowlist);
+}
+
+/** Allowlist sanitizer for Employee Transfer Audit Payload */
+export function sanitizeEmployeeTransferAudit(raw: unknown): Record<string, unknown> {
+  const allowlist = [
+    "employeeId",
+    "previousOrganizationUnitId",
+    "newOrganizationUnitId",
+    "previousPositionId",
+    "newPositionId",
+    "effectiveDate",
+    "decisionNumber",
+    "result",
+  ];
+  return pickAllowlist(raw, allowlist);
+}

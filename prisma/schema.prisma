@@ -266,6 +266,18 @@ model User {
   safetyWeeklyFilesUpdated       SafetyWeeklyFile[]            @relation("SafetyWeeklyFileUpdater")
   safetyWeeklyFilesDeleted       SafetyWeeklyFile[]            @relation("SafetyWeeklyFileDeleter")
 
+  // HR Module Relations
+  employee                            Employee?                            @relation("UserEmployee")
+  employeesCreated                    Employee[]                           @relation("EmployeeCreatedBy")
+  employeesUpdated                    Employee[]                           @relation("EmployeeUpdatedBy")
+  employeeOrgAssignmentsCreated       EmployeeOrganizationAssignment[]     @relation("EmployeeOrgAssignmentCreator")
+  unitManagerAssignmentsAppointed     OrganizationUnitManagerAssignment[] @relation("UnitManagerAssignmentAppointer")
+  employeeProjectAssignmentsCreated   EmployeeProjectAssignment[]          @relation("EmployeeProjectAssignmentCreator")
+  accessGrantsTarget                  UserAccessGrant[]                    @relation("UserAccessGrantTarget")
+  accessGrantsGiven                   UserAccessGrant[]                    @relation("UserAccessGrantGranter")
+  accessGrantsRevoked                 UserAccessGrant[]                    @relation("UserAccessGrantRevoker")
+  employeeChangeHistoriesPerformed    EmployeeChangeHistory[]              @relation("EmployeeChangeHistoryActor")
+
   @@index([email])
   @@index([username])
   @@index([createdAt])
@@ -330,6 +342,10 @@ model Project {
 
   safetyPlanEntries           SafetyReportPlanEntry[]
   safetySelfAssessmentEntries SafetySelfAssessmentEntry[]
+
+  // HR Module Relations
+  employeeProjectAssignments EmployeeProjectAssignment[]
+  userAccessGrants          UserAccessGrant[]
 
   @@index([code])
   @@index([status])
@@ -2012,4 +2028,275 @@ model SafetyWeeklyFile {
 
   @@index([deletedAt, periodStart])
   @@index([createdById, periodStart])
+}
+
+// ==========================================
+// HR MODULE PHASE 1 MODELS & ENUMS
+// ==========================================
+
+enum EmployeeStatus {
+  PROBATION
+  ACTIVE
+  SUSPENDED
+  RESIGNED
+  RETIRED
+}
+
+enum EmployeeProjectAssignmentStatus {
+  ACTIVE
+  COMPLETED
+  RELEASED
+  CANCELLED
+}
+
+enum GrantEffect {
+  ALLOW
+  DENY
+}
+
+enum HrDataScope {
+  ALL_EMPLOYEES
+  OWN_ORGANIZATION_UNIT
+  OWN_PROJECTS
+  SELF_ONLY
+  NONE
+}
+
+enum SensitiveFieldPolicy {
+  BASIC_ONLY
+  CONTACT
+  IDENTITY
+  CONTRACT
+  BANKING
+  FULL
+}
+
+enum EmployeeChangeType {
+  EMPLOYEE_CREATED
+  EMPLOYEE_PROFILE_UPDATED
+  EMPLOYEE_ORGANIZATION_TRANSFERRED
+  EMPLOYEE_POSITION_CHANGED
+  EMPLOYEE_PROJECT_ASSIGNED
+  EMPLOYEE_PROJECT_RELEASED
+  EMPLOYMENT_STATUS_CHANGED
+  ACCESS_GRANTED
+  ACCESS_REVOKED
+}
+
+model OrganizationUnit {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  parentId    String?
+  description String?
+  orderIndex  Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  parent              OrganizationUnit?                   @relation("OrgUnitHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children            OrganizationUnit[]                  @relation("OrgUnitHierarchy")
+  employeeAssignments EmployeeOrganizationAssignment[]
+  managerAssignments  OrganizationUnitManagerAssignment[]
+  userAccessGrants    UserAccessGrant[]
+
+  @@index([parentId])
+  @@index([code])
+}
+
+model Position {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  title       String
+  description String?
+  level       Int?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  employeeAssignments EmployeeOrganizationAssignment[]
+
+  @@index([code])
+}
+
+model Employee {
+  id                       String         @id @default(cuid())
+  code                     String         @unique
+  userId                   String?        @unique
+  fullName                 String
+  gender                   String?
+  dateOfBirth              DateTime?
+  phoneNumber              String?
+  personalEmail            String?
+  joinedDate               DateTime
+  resignedDate             DateTime?
+  status                   EmployeeStatus @default(ACTIVE)
+  identityNumberEncrypted  String?
+  identityNumberBlindIndex String?        @unique
+  identityNumberLastDigits String?
+  encryptionKeyVersion     Int            @default(1)
+  createdById              String?
+  updatedById              String?
+  createdAt                DateTime       @default(now())
+  updatedAt                DateTime       @updatedAt
+
+  user               User?                                 @relation("UserEmployee", fields: [userId], references: [id], onDelete: SetNull)
+  createdBy          User?                                 @relation("EmployeeCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy          User?                                 @relation("EmployeeUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  orgAssignments     EmployeeOrganizationAssignment[]
+  managedOrgUnits    OrganizationUnitManagerAssignment[]
+  projectAssignments EmployeeProjectAssignment[]
+  changeHistories    EmployeeChangeHistory[]
+
+  @@index([code])
+  @@index([userId])
+  @@index([status])
+}
+
+model EmployeeOrganizationAssignment {
+  id                 String    @id @default(cuid())
+  employeeId         String
+  organizationUnitId String
+  positionId         String
+  startDate          DateTime
+  endDate            DateTime?
+  isPrimary          Boolean   @default(true)
+  decisionNo         String?
+  notes              String?
+  createdById        String?
+  createdAt          DateTime  @default(now())
+
+  employee         Employee         @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  organizationUnit OrganizationUnit @relation(fields: [organizationUnitId], references: [id], onDelete: Restrict)
+  position         Position         @relation(fields: [positionId], references: [id], onDelete: Restrict)
+  createdBy        User?            @relation("EmployeeOrgAssignmentCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([employeeId])
+  @@index([organizationUnitId])
+  @@index([positionId])
+  @@index([startDate, endDate])
+}
+
+model OrganizationUnitManagerAssignment {
+  id                 String    @id @default(cuid())
+  organizationUnitId String
+  employeeId         String
+  startDate          DateTime
+  endDate            DateTime?
+  isPrimary          Boolean   @default(true)
+  appointedById      String?
+  decisionNo         String?
+  createdAt          DateTime  @default(now())
+
+  organizationUnit OrganizationUnit @relation(fields: [organizationUnitId], references: [id], onDelete: Restrict)
+  employee         Employee         @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  appointedBy      User?            @relation("UnitManagerAssignmentAppointer", fields: [appointedById], references: [id], onDelete: SetNull)
+
+  @@index([organizationUnitId])
+  @@index([employeeId])
+}
+
+model ProjectPersonnelRole {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String?
+  orderIndex  Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  employeeAssignments EmployeeProjectAssignment[]
+
+  @@index([code])
+}
+
+model EmployeeProjectAssignment {
+  id                     String                          @id @default(cuid())
+  employeeId             String
+  projectId              String
+  projectPersonnelRoleId String
+  startDate              DateTime
+  expectedEndDate        DateTime?
+  endDate                DateTime?
+  allocationPercentage   Int                             @default(100)
+  status                 EmployeeProjectAssignmentStatus @default(ACTIVE)
+  assignmentDecisionNo   String?
+  notes                  String?
+  overrideReason         String?
+  createdById            String?
+  createdAt              DateTime                        @default(now())
+  updatedAt              DateTime                        @updatedAt
+
+  employee             Employee             @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  project              Project              @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  projectPersonnelRole ProjectPersonnelRole @relation(fields: [projectPersonnelRoleId], references: [id], onDelete: Restrict)
+  createdBy            User?                @relation("EmployeeProjectAssignmentCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([employeeId])
+  @@index([projectId])
+  @@index([projectPersonnelRoleId])
+  @@index([startDate, endDate])
+}
+
+model HrPermissionDefinition {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  module      String   @default("HR")
+  description String?
+  createdAt   DateTime @default(now())
+
+  @@index([code])
+}
+
+model UserAccessGrant {
+  id                   String               @id @default(cuid())
+  userId               String
+  permissionCode       String
+  effect               GrantEffect          @default(ALLOW)
+  scope                HrDataScope          @default(OWN_ORGANIZATION_UNIT)
+  sensitiveFieldPolicy SensitiveFieldPolicy @default(BASIC_ONLY)
+  organizationUnitId   String?
+  projectId            String?
+  validFrom            DateTime?
+  validUntil           DateTime?
+  grantedById          String
+  reason               String
+  revokedAt            DateTime?
+  revokedById          String?
+  createdAt            DateTime             @default(now())
+
+  user             User              @relation("UserAccessGrantTarget", fields: [userId], references: [id], onDelete: Cascade)
+  grantedBy        User              @relation("UserAccessGrantGranter", fields: [grantedById], references: [id], onDelete: Restrict)
+  revokedBy        User?             @relation("UserAccessGrantRevoker", fields: [revokedById], references: [id], onDelete: SetNull)
+  organizationUnit OrganizationUnit? @relation(fields: [organizationUnitId], references: [id], onDelete: SetNull)
+  project          Project?          @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([permissionCode])
+  @@index([organizationUnitId])
+  @@index([projectId])
+}
+
+model EmployeeCodeSequence {
+  year            Int      @id
+  currentSequence Int      @default(0)
+  updatedAt       DateTime @updatedAt
+}
+
+model EmployeeChangeHistory {
+  id            String             @id @default(cuid())
+  employeeId    String
+  changeType    EmployeeChangeType
+  performedById String
+  reason        String?
+  details       Json?
+  createdAt     DateTime           @default(now())
+
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Restrict)
+  performedBy User     @relation("EmployeeChangeHistoryActor", fields: [performedById], references: [id], onDelete: Restrict)
+
+  @@index([employeeId])
+  @@index([performedById])
 }

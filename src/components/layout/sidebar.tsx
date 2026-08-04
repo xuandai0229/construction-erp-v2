@@ -12,6 +12,7 @@ import {
   Settings,
   UserCog,
   ShieldCheck,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@prisma/client";
@@ -28,7 +29,12 @@ const navigationSections = [
     label: null,
     items: [{ name: "Tổng quan", href: "/dashboard", icon: LayoutDashboard }],
   },
-
+  {
+    label: "NHÂN SỰ",
+    items: [
+      { name: "Quản lý nhân sự", href: "/hr", icon: Users },
+    ],
+  },
   {
     label: "QUẢN LÝ",
     items: [
@@ -53,11 +59,11 @@ const navigationSections = [
   },
 ];
 
-function getFilteredSections(role: UserRole) {
+function getFilteredSections(role: UserRole, canAccessHr: boolean) {
   const sections = navigationSections
     .map((section) => {
       const items = section.items
-        .filter((item) => canViewNavigationItem(role, item.href))
+        .filter((item) => (item.href !== "/hr" || canAccessHr) && canViewNavigationItem(role, item.href))
         .map((item) => ({ ...item, name: projectNavName(role, item.href, item.name) }));
       return { ...section, items };
     })
@@ -80,9 +86,9 @@ function getFilteredSections(role: UserRole) {
     });
 }
 
-export function Sidebar({ userRole }: { userRole: UserRole }) {
+export function Sidebar({ userRole, canAccessHr }: { userRole: UserRole; canAccessHr: boolean }) {
   const pathname = usePathname();
-  const filteredSections = getFilteredSections(userRole);
+  const filteredSections = getFilteredSections(userRole, canAccessHr);
   const homeHref = getDefaultRouteForRole(userRole);
 
   return (

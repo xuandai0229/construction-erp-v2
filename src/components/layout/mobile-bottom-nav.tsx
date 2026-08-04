@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Building2, ClipboardCheck, Package, Menu, X, FolderOpen, CheckSquare, Settings, UserCog, LogOut, ListTodo, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, Building2, ClipboardCheck, Package, Menu, X, FolderOpen, CheckSquare, Settings, UserCog, LogOut, ListTodo, ShieldCheck, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import type { UserRole } from "@prisma/client";
@@ -13,7 +13,7 @@ import {
   getDefaultNavigationHrefForRole,
 } from "@/lib/roles/role-workspace-policy";
 
-export function MobileBottomNav({ userRole }: { userRole: UserRole }) {
+export function MobileBottomNav({ userRole, canAccessHr }: { userRole: UserRole; canAccessHr: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
@@ -23,14 +23,15 @@ export function MobileBottomNav({ userRole }: { userRole: UserRole }) {
     { name: "Công trình", href: "/projects", icon: Building2 },
     { name: "Báo cáo", href: "/reports", icon: ClipboardCheck },
     { name: "Vật tư", href: "/materials", icon: Package },
-  ].filter(item => canViewNavigationItem(userRole, item.href));
+  ].filter(item => (item.href !== "/hr" || canAccessHr) && canViewNavigationItem(userRole, item.href));
 
   const secondaryCandidates = [
+    { name: 'Nhân sự', href: '/hr', icon: Users },
     { name: 'Tài liệu', href: '/documents', icon: FolderOpen },
     { name: 'Phê duyệt', href: '/approvals', icon: CheckSquare },
     { name: 'Tài khoản', href: '/users', icon: UserCog },
     { name: 'Cài đặt', href: '/settings', icon: Settings },
-  ].filter(item => canViewNavigationItem(userRole, item.href));
+  ].filter(item => (item.href !== "/hr" || canAccessHr) && canViewNavigationItem(userRole, item.href));
 
   const defaultHref = getDefaultNavigationHrefForRole(userRole);
   const orderedOperationalItems = [...primaryCandidates, ...secondaryCandidates].toSorted((left, right) => {

@@ -1,0 +1,42 @@
+import { test, expect } from "@playwright/test";
+
+const hrRoutes = [
+  "/hr",
+  "/hr/employees",
+  "/hr/employees/new",
+  "/hr/contracts",
+  "/hr/certificates",
+  "/hr/organization",
+  "/hr/project-assignments",
+  "/hr/alerts",
+];
+
+test.describe("HR Phase 2 runtime smoke", () => {
+  for (const route of hrRoutes) {
+    test(`${route} renders without server errors`, async ({ page }) => {
+      const response = await page.goto(route, { waitUntil: "networkidle" });
+      expect(response?.status()).toBeLessThan(500);
+      await expect(page.locator("body")).not.toContainText("Application error");
+    });
+  }
+
+  for (const viewport of [
+    { name: "desktop", width: 1440, height: 900 },
+    { name: "tablet", width: 768, height: 1024 },
+    { name: "mobile", width: 390, height: 844 },
+  ]) {
+    test(`/hr dashboard and employee list fit ${viewport.name}`, async ({ page }) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.goto("/hr", { waitUntil: "networkidle" });
+      await expect(page.getByRole("heading", { name: /Tổng quan nhân sự/i })).toBeVisible();
+      const dashboardOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+      expect(dashboardOverflow).toBe(false);
+      await page.screenshot({ path: `artifacts/hr-phase2-dashboard-${viewport.name}.png`, fullPage: true });
+
+      await page.goto("/hr/employees", { waitUntil: "networkidle" });
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+      expect(overflow).toBe(false);
+      await page.screenshot({ path: `artifacts/hr-phase2-${viewport.name}.png`, fullPage: true });
+    });
+  }
+});
