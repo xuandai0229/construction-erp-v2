@@ -59,6 +59,8 @@ export function ActionMenuItem({
 }
 
 export interface UnifiedActionMenuProps {
+  open?: boolean;
+  defaultOpen?: boolean;
   trigger: React.ReactNode | ((props: { isOpen: boolean; toggle: () => void }) => React.ReactNode);
   items?: ActionMenuItemProps[];
   children?: React.ReactNode;
@@ -70,6 +72,8 @@ export interface UnifiedActionMenuProps {
 }
 
 export function UnifiedActionMenu({
+  open: controlledOpen,
+  defaultOpen = false,
   trigger,
   items,
   children,
@@ -79,11 +83,25 @@ export function UnifiedActionMenu({
   ariaLabel,
   onOpenChange,
 }: UnifiedActionMenuProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
+  const isControlled = controlledOpen !== undefined;
+  const isOpen = isControlled ? Boolean(controlledOpen) : uncontrolledOpen;
+
   const [coords, setCoords] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const triggerRef = useRef<HTMLDivElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const menuId = useId();
+
+  // Helper to change open state and safely trigger callback without setState-in-render
+  const setOpenState = useCallback(
+    (nextState: boolean) => {
+      if (!isControlled) {
+        setUncontrolledOpen(nextState);
+      }
+      onOpenChange?.(nextState);
+    },
+    [isControlled, onOpenChange]
+  );
 
   // Recalculate position for Portal
   const updatePosition = useCallback(() => {
@@ -125,42 +143,45 @@ export function UnifiedActionMenu({
     setCoords({ top, left });
   }, [align, menuWidth]);
 
-  // Recalculate position on mount after portal renders
+  // Recalculate position on mount after portal renders or when open state changes
   useEffect(() => {
     if (isOpen) {
-      const timer = setTimeout(() => updatePosition(), 0);
-      return () => clearTimeout(timer);
+      updatePosition();
+      const handleScroll = () => updatePosition();
+      window.addEventListener("scroll", handleScroll, true);
+      window.addEventListener("resize", handleScroll);
+      return () => {
+        window.removeEventListener("scroll", handleScroll, true);
+        window.removeEventListener("resize", handleScroll);
+      };
     }
   }, [isOpen, updatePosition]);
+
+  const handleTransientClose = useCallback(() => {
+    setOpenState(false);
+  }, [setOpenState]);
 
   // Enforce single active overlay system-wide
   useTransientOverlay({
     id: menuId,
     isOpen,
-    onClose: () => {
-      setIsOpen(false);
-      onOpenChange?.(false);
-    },
+    onClose: handleTransientClose,
     refs: [triggerRef, menuRef],
   });
 
   const handleToggle = useCallback(() => {
-    setIsOpen((prev) => {
-      const next = !prev;
-      if (next) {
-        updatePosition();
-        notifyOverlayOpen(menuId);
-      }
-      onOpenChange?.(next);
-      return next;
-    });
-  }, [menuId, updatePosition, onOpenChange]);
+    const nextState = !isOpen;
+    if (nextState) {
+      updatePosition();
+      notifyOverlayOpen(menuId);
+    }
+    setOpenState(nextState);
+  }, [isOpen, menuId, updatePosition, setOpenState]);
 
   const handleMenuContentClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     if (target.closest("button") || target.closest('[role="menuitem"]')) {
-      setIsOpen(false);
-      onOpenChange?.(false);
+      setOpenState(false);
     }
   };
 

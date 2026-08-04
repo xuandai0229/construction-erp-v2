@@ -1,5 +1,10 @@
 import prisma from "@/lib/prisma";
 import { DEFAULT_COMPANY_PROFILE, type CompanyProfileInput } from "./settings-validation";
+import { DEFAULT_CANONICAL_COMPANY_NAME } from "./company-name-utils";
+
+// Re-export pure client-safe utilities so existing server-side callers
+// of company-profile.ts continue to work without import changes.
+export { DEFAULT_CANONICAL_COMPANY_NAME, splitCompanyNameForDocument } from "./company-name-utils";
 
 /**
  * Read-only source for company identity used by server-side report and document
@@ -11,20 +16,11 @@ export async function getCompanyProfile(): Promise<CompanyProfileInput> {
     select: { companyName: true, taxCode: true, hotline: true },
   });
 
-  return setting
-    ? {
-        companyName: setting.companyName,
-        taxCode: setting.taxCode,
-        hotline: setting.hotline,
-      }
-    : { ...DEFAULT_COMPANY_PROFILE };
-}
+  const companyName = setting?.companyName?.trim() || DEFAULT_CANONICAL_COMPANY_NAME;
 
-export function splitCompanyNameForDocument(companyName: string): [string, string] {
-  const normalized = companyName.trim();
-  if (!normalized) return ["CHƯA CẤU HÌNH DOANH NGHIỆP", ""];
-
-  const divider = normalized.toLocaleUpperCase("vi-VN").indexOf(" VÀ ");
-  if (divider < 0) return [normalized, ""];
-  return [normalized.slice(0, divider).trim(), normalized.slice(divider + 3).trim()];
+  return {
+    companyName,
+    taxCode: setting?.taxCode || DEFAULT_COMPANY_PROFILE.taxCode,
+    hotline: setting?.hotline || DEFAULT_COMPANY_PROFILE.hotline,
+  };
 }

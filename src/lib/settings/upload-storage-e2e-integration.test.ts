@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import path from "path";
 import { existsSync } from "fs";

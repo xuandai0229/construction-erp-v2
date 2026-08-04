@@ -11,43 +11,78 @@ export function sanitizeFilenameToken(input: string): string {
     .replace(/^_+|_+$/g, "");
 }
 
+function formatDateToken(dateStr?: string | null): string {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr.replace(/[^0-9-]/g, "-");
+  const day = d.getDate().toString().padStart(2, "0");
+  const month = (d.getMonth() + 1).toString().padStart(2, "0");
+  const year = d.getFullYear();
+  return `${day}-${month}-${year}`;
+}
+
 export function buildSupervisionExportFilename({
   reportNumber,
   weekStart,
+  weekEnd,
+  nextWeekStart,
+  nextWeekEnd,
   documentType,
   extension,
 }: {
   reportNumber?: string | null;
   weekStart?: string | null;
+  weekEnd?: string | null;
+  nextWeekStart?: string | null;
+  nextWeekEnd?: string | null;
   documentType: WeeklyDocumentType;
   extension: "pdf" | "docx";
 }): string {
-  let code = (reportNumber || "").trim();
+  const docPrefix = documentType === "RESULT" ? "Bao-cao-ket-qua-tuan" : "Ke-hoach-kiem-tra-tuan-sau";
 
-  // If report number is missing or contains internal fallback prefix, construct a clean display code
-  if (!code || /^bcgs-w[a-z0-9]+/i.test(code)) {
-    if (weekStart) {
-      const d = new Date(weekStart);
-      if (!isNaN(d.getTime())) {
-        const year = d.getFullYear();
-        const target = new Date(d.valueOf());
-        const dayNr = (d.getDay() + 6) % 7;
-        target.setDate(target.getDate() - dayNr + 3);
-        const firstThursday = target.valueOf();
-        target.setMonth(0, 1);
-        if (target.getDay() !== 4) {
-          target.setMonth(0, 1 + ((4 - target.getDay() + 7) % 7));
-        }
-        const weekNum = 1 + Math.round((firstThursday - target.valueOf()) / 604800000);
-        code = `BCGS-${year}-W${weekNum.toString().padStart(2, "0")}`;
+  let sStart = weekStart;
+  let sEnd = weekEnd;
+
+  if (documentType === "NEXT_WEEK_PLAN") {
+    if (nextWeekStart && nextWeekEnd) {
+      sStart = nextWeekStart;
+      sEnd = nextWeekEnd;
+    } else if (weekStart) {
+      const parseLocal = (str: string) => {
+        const [y, m, d] = str.split("T")[0].split("-").map(Number);
+        return new Date(y, m - 1, d);
+      };
+      const dStart = parseLocal(weekStart);
+      dStart.setDate(dStart.getDate() + 7);
+      
+      const yStart = dStart.getFullYear();
+      const mStart = (dStart.getMonth() + 1).toString().padStart(2, "0");
+      const dayStart = dStart.getDate().toString().padStart(2, "0");
+      sStart = `${yStart}-${mStart}-${dayStart}`;
+
+      if (weekEnd) {
+        const dEnd = parseLocal(weekEnd);
+        dEnd.setDate(dEnd.getDate() + 7);
+        const yEnd = dEnd.getFullYear();
+        const mEnd = (dEnd.getMonth() + 1).toString().padStart(2, "0");
+        const dayEnd = dEnd.getDate().toString().padStart(2, "0");
+        sEnd = `${yEnd}-${mEnd}-${dayEnd}`;
       }
-    }
-    if (!code || /^bcgs-w[a-z0-9]+/i.test(code)) {
-      code = "BCGS-2026-W01";
     }
   }
 
+  const startToken = formatDateToken(sStart);
+  const endToken = formatDateToken(sEnd);
+
+  if (startToken && endToken) {
+    return `${docPrefix}_${startToken}_${endToken}.${extension}`;
+  }
+
+  let code = (reportNumber || "").trim();
+  if (!code || /^bcgs-w[a-z0-9]+/i.test(code)) {
+    code = "2026";
+  }
+
   const cleanCode = sanitizeFilenameToken(code);
-  const docLabel = documentType === "RESULT" ? "Ket-qua" : "Ke-hoach-tuan-sau";
-  return `Bao-cao-giam-sat-tuan_${cleanCode}_${docLabel}.${extension}`;
+  return `${docPrefix}_${cleanCode}.${extension}`;
 }

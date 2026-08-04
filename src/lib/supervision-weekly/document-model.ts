@@ -3,7 +3,8 @@ import type { SupervisionWeeklyPrintDto } from "./print-types";
 import { formatSupervisionSourceLines } from "./source-formatter";
 import type { WeeklyObservation, WeeklyDocumentType, WeeklyShift } from "./editor-types";
 import { calculateSupervisionQuantityVariance } from "./quantity";
-import { formatReportNumber } from "./report-number";
+
+import { splitCompanyNameForDocument, DEFAULT_CANONICAL_COMPANY_NAME } from "@/lib/settings/company-name-utils";
 
 export function formatOfficialDocumentDate(place: string | null | undefined, issueDateStr: string | null | undefined): string {
   const parts = (issueDateStr || "").split("/");
@@ -86,6 +87,7 @@ export type WeeklyDocumentModel = {
     dossierId: string;
     companyName: string;
     companySubName: string;
+    companyNameLines: string[];
     nationalMottoLine1: string;
     nationalMottoLine2: string;
     reportNumber: string;
@@ -94,6 +96,8 @@ export type WeeklyDocumentModel = {
     documentDateLine: string;
     weekStart: string;
     weekEnd: string;
+    currentWeekRange: string;
+    nextWeekRange: string;
     recipientName: string;
     recipientTitle: string;
     creatorName: string;
@@ -153,24 +157,31 @@ export function buildWeeklyDocumentModel(
   const placeClean = dossier.place?.trim() || "";
   const documentDateLine = formatOfficialDocumentDate(placeClean, issueDateFormatted);
 
-  const companyName = company?.companyName?.trim() || "CHƯA CẤU HÌNH DOANH NGHIỆP";
-  const companyDivider = companyName.toLocaleUpperCase("vi-VN").indexOf(" VÀ ");
-  const companySubName = companyDivider < 0 ? "" : companyName.slice(companyDivider + 3).trim();
-  const companyHeader = companyDivider < 0 ? companyName : companyName.slice(0, companyDivider).trim();
+  const rawCompanyName = (company?.companyName || "").trim() || DEFAULT_CANONICAL_COMPANY_NAME;
+  const [companyHeader, companySubName] = splitCompanyNameForDocument(rawCompanyName);
+  const companyNameLines = [companyHeader, companySubName].filter(Boolean);
+
+  const currentWeekStartFormatted = formatVietnameseDate(dossier.weekStart);
+  const currentWeekEndFormatted = formatVietnameseDate(dossier.weekEnd);
+  const nextWeekStartFormatted = formatVietnameseDate(dossier.nextWeekStart);
+  const nextWeekEndFormatted = formatVietnameseDate(dossier.nextWeekEnd);
 
   const model: WeeklyDocumentModel = {
     metadata: {
       dossierId: dossier.id,
       companyName: companyHeader,
-      companySubName,
+      companySubName: companySubName,
+      companyNameLines: companyNameLines,
       nationalMottoLine1: "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM",
       nationalMottoLine2: "Độc lập - Tự do - Hạnh phúc",
-      reportNumber: formatReportNumber(dossier.reportNumber),
+      reportNumber: dossier.reportNumber?.trim() || "",
       place: placeClean,
       issueDate: issueDateFormatted,
       documentDateLine: documentDateLine,
       weekStart: formatVietnameseDate(start),
       weekEnd: formatVietnameseDate(end),
+      currentWeekRange: `Từ ngày ${currentWeekStartFormatted} đến ngày ${currentWeekEndFormatted}`,
+      nextWeekRange: `Từ ngày ${nextWeekStartFormatted} đến ngày ${nextWeekEndFormatted}`,
       recipientName: dossier.recipientName?.trim() || "",
       recipientTitle: dossier.recipientTitle?.trim() || "",
       creatorName: creatorName,

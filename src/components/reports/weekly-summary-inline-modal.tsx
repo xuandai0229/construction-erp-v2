@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect, useCallback, useRef } from "react";
+import React, { useEffect, useCallback, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { FileText, Download, Printer, X, Building2 } from "lucide-react";
+import { FileText, Download, Printer, X, Building2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { WeeklyCompanySummary } from "@/lib/reports/weekly-company-summary";
+import { printDocument, downloadDocument } from "@/lib/document-export/document-export-client";
 
 function formatDateShortVN(ymd: string): string {
   if (!ymd) return "";
@@ -57,31 +58,47 @@ export function WeeklySummaryInlineModal({
     };
   }, [isOpen, onClose]);
 
-  const handleDownloadDocx = useCallback(() => {
-    window.open(`/api/reports/weekly-summary/export?weekStart=${week.weekStartDate}`, "_blank");
-  }, [week.weekStartDate]);
+  const [isPrinting, setIsPrinting] = useState(false);
 
-  const handleDownloadPdf = useCallback(() => {
-    window.open(`/api/reports/weekly-summary/export-pdf?weekStart=${week.weekStartDate}`, "_blank");
-  }, [week.weekStartDate]);
-
-  const handlePrintCleanPdf = useCallback(() => {
-    // Open clean PDF export in iframe or new window for printing
-    const iframe = printIframeRef.current;
-    if (iframe) {
-      iframe.src = `/api/reports/weekly-summary/export-pdf?weekStart=${week.weekStartDate}&inline=1`;
-      iframe.onload = () => {
-        try {
-          iframe.contentWindow?.focus();
-          iframe.contentWindow?.print();
-        } catch {
-          window.open(`/api/reports/weekly-summary/export-pdf?weekStart=${week.weekStartDate}`, "_blank");
-        }
-      };
-    } else {
-      window.open(`/api/reports/weekly-summary/export-pdf?weekStart=${week.weekStartDate}`, "_blank");
+  const handleDownloadDocx = useCallback(async () => {
+    const url = `/api/reports/weekly-summary/export?weekStart=${week.weekStartDate}`;
+    const filename = `Tong-hop-bao-cao-tuan-${week.weekNumber}.docx`;
+    try {
+      await downloadDocument({ url, filename });
+    } catch (err: any) {
+      alert(err?.message || "Không thể tải file Word.");
     }
-  }, [week.weekStartDate]);
+  }, [week.weekStartDate, week.weekNumber]);
+
+  const handleDownloadPdf = useCallback(async () => {
+    const url = `/api/reports/weekly-summary/export-pdf?weekStart=${week.weekStartDate}`;
+    const filename = `Tong-hop-bao-cao-tuan-${week.weekNumber}.pdf`;
+    try {
+      await downloadDocument({ url, filename });
+    } catch (err: any) {
+      alert(err?.message || "Không thể tải file PDF.");
+    }
+  }, [week.weekStartDate, week.weekNumber]);
+
+  const executePrint = useCallback(async () => {
+    if (isPrinting) return;
+    setIsPrinting(true);
+
+    try {
+      const url = `/api/reports/weekly-summary/export-pdf?weekStart=${week.weekStartDate}&inline=1`;
+      await printDocument({
+        url,
+        title: `Tổng hợp báo cáo tuần ${week.weekNumber}`,
+        preferredMode: "same-tab",
+      });
+    } catch (err: any) {
+      if (err?.code !== "ABORTED") {
+        alert(err?.message || "Không thể in PDF tổng hợp.");
+      }
+    } finally {
+      setIsPrinting(false);
+    }
+  }, [week.weekStartDate, week.weekNumber, isPrinting]);
 
   if (!isOpen) return null;
 
@@ -125,11 +142,16 @@ export function WeeklySummaryInlineModal({
 
           <Button
             size="sm"
-            onClick={handlePrintCleanPdf}
-            className="gap-1.5 bg-blue-600 font-semibold text-white shadow-sm hover:bg-blue-700"
+            onClick={executePrint}
+            disabled={isPrinting}
+            className="gap-1.5 bg-blue-600 font-semibold text-white shadow-sm hover:bg-blue-700 disabled:opacity-50"
           >
-            <Printer className="h-4 w-4" />
-            In
+            {isPrinting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Printer className="h-4 w-4" />
+            )}
+            <span>{isPrinting ? "Đang chuẩn bị..." : "In"}</span>
           </Button>
 
           <div className="h-5 w-[1px] bg-slate-700 mx-1" />

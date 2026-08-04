@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import type { WeeklyCompanySummary } from "@/lib/reports/weekly-company-summary";
 import { WeeklySummaryInlineModal } from "./weekly-summary-inline-modal";
+import { downloadDocument } from "@/lib/document-export/document-export-client";
 
 function formatDateShortVN(ymd: string): string {
   if (!ymd) return "";
@@ -102,7 +103,16 @@ export function WeeklySummaryClientView({ summary }: WeeklySummaryClientViewProp
           <Button
             variant="outline"
             size="sm"
-            onClick={() => window.open(`/api/reports/weekly-summary/export?weekStart=${week.weekStartDate}`, "_blank")}
+            onClick={async () => {
+              try {
+                await downloadDocument({
+                  url: `/api/reports/weekly-summary/export?weekStart=${week.weekStartDate}`,
+                  filename: `Tong-hop-bao-cao-tuan-${week.weekNumber}.docx`,
+                });
+              } catch (err: any) {
+                alert(err?.message || "Không thể tải tập tin Word.");
+              }
+            }}
             className="gap-1.5 border-emerald-600 bg-emerald-50 text-emerald-900 hover:bg-emerald-100 font-bold shadow-xs"
           >
             <FileText className="h-4 w-4 text-emerald-700" />

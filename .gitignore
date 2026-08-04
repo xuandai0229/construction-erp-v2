@@ -66,6 +66,7 @@ storageState.json
 
 # Local DB backups / sensitive dumps
 backups/
+docs/qa/backups/
 .local-audit-quarantine/
 *.dump
 *.sql

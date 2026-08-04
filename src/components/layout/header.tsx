@@ -50,12 +50,6 @@ const mobileNavSections = [
       { name: 'Cài đặt', href: '/settings', icon: Settings },
     ],
   },
-  {
-    label: 'CÔNG VIỆC',
-    items: [
-      { name: 'Nhiệm vụ', href: '/tasks', icon: ListTodo },
-    ],
-  },
 ];
 
 function getFilteredMobileSections(role: UserRole) {
@@ -118,7 +112,6 @@ export function Header({ userName, userRole, userRoleRaw, globalContext }: { use
                pathname.startsWith('/approvals') ? 'Phê duyệt' :
                pathname.startsWith('/users') ? 'Tài khoản' :
                pathname.startsWith('/settings') ? 'Cài đặt' :
-               pathname.startsWith('/tasks') ? 'Nhiệm vụ' :
                'Tổng quan'}
             </span>
           </div>

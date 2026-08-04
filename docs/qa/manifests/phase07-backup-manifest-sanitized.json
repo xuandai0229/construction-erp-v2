@@ -1,0 +1,135 @@
+{
+  "title": "Phase 0.7 Sanitized Database Backup Manifest",
+  "generatedAt": "2026-08-03T10:09:36.713Z",
+  "externalSecureStorageStatus": "SECURED_OUTSIDE_REPO",
+  "connectionStringPresent": false,
+  "piiDataPresent": false,
+  "backups": [
+    {
+      "logicalName": "approval-requests-before-forensic",
+      "filename": "approval-requests-before-forensic.json",
+      "timestamp": "2026-08-03T09:31:26.630Z",
+      "sizeBytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "obfuscatedDatabaseName": "co***_qa (User: po***)",
+      "sensitiveDataStatus": "REDACTED_AND_EXTRACTED_OUTSIDE_REPO"
+    },
+    {
+      "logicalName": "audit-logs-before-forensic",
+      "filename": "audit-logs-before-forensic.json",
+      "timestamp": "2026-08-03T09:31:26.621Z",
+      "sizeBytes": 142450,
+      "sha256": "cd36076688e2279df38ac96a32f95c870706d99d6ea15f444462a764d408c594",
+      "obfuscatedDatabaseName": "co***_qa (User: po***)",
+      "sensitiveDataStatus": "REDACTED_AND_EXTRACTED_OUTSIDE_REPO"
+    },
+    {
+      "logicalName": "database-full-before-forensic-20260803",
+      "filename": "database-full-before-forensic-20260803.sql",
+      "timestamp": "2026-08-03T09:31:26.347Z",
+      "sizeBytes": 350352,
+      "sha256": "cc54ae6577048bc608f28d4e168e8abbe19bb21d4dbec23d4442eddfb4afeb61",
+      "obfuscatedDatabaseName": "co***_qa (User: po***)",
+      "sensitiveDataStatus": "REDACTED_AND_EXTRACTED_OUTSIDE_REPO"
+    },
+    {
+      "logicalName": "database-object-manifest-before-forensic",
+      "filename": "database-object-manifest-before-forensic.json",
+      "timestamp": "2026-08-03T09:31:26.657Z",
+      "sizeBytes": 51494,
+      "sha256": "07db495696fe7c952f73cc1a6627b6c8faf2795b1155c5f3bfa46e3ce0a870a3",
+      "obfuscatedDatabaseName": "co***_qa (User: po***)",
+      "sensitiveDataStatus": "REDACTED_AND_EXTRACTED_OUTSIDE_REPO"
+    },
+    {
+      "logicalName": "database-schema-before-forensic-20260803",
+      "filename": "database-schema-before-forensic-20260803.sql",
+      "timestamp": "2026-08-03T09:31:26.547Z",
+      "sizeBytes": 193853,
+      "sha256": "605fcc7429841cfa2f388ce0d0be619436f614a23c29f864f152db507156cb63",
+      "obfuscatedDatabaseName": "co***_qa (User: po***)",
+      "sensitiveDataStatus": "REDACTED_AND_EXTRACTED_OUTSIDE_REPO"
+    },
+    {
+      "logicalName": "notifications-before-forensic",
+      "filename": "notifications-before-forensic.json",
+      "timestamp": "2026-08-03T09:31:26.624Z",
+      "sizeBytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "obfuscatedDatabaseName": "co***_qa (User: po***)",
+      "sensitiveDataStatus": "REDACTED_AND_EXTRACTED_OUTSIDE_REPO"
+    },
+    {
+      "logicalName": "phase07-all-table-row-counts",
+      "filename": "phase07-all-table-row-counts.json",
+      "timestamp": "2026-08-03T09:33:35.797Z",
+      "sizeBytes": 1731,
+      "sha256": "5776781397a3fe35f11b6336653e541b14a62e482fe8fedac925da8b72316a5e",
+      "obfuscatedDatabaseName": "co***_qa (User: po***)",
+      "sensitiveDataStatus": "REDACTED_AND_EXTRACTED_OUTSIDE_REPO"
+    },
+    {
+      "logicalName": "prisma-migrations-before-forensic",
+      "filename": "prisma-migrations-before-forensic.json",
+      "timestamp": "2026-08-03T09:31:26.595Z",
+      "sizeBytes": 25170,
+      "sha256": "99c169859a978f912469ef0574d145ba1d5c20c998529b8f6d9319df8873c0c6",
+      "obfuscatedDatabaseName": "co***_qa (User: po***)",
+      "sensitiveDataStatus": "REDACTED_AND_EXTRACTED_OUTSIDE_REPO"
+    },
+    {
+      "logicalName": "project-members-before-forensic",
+      "filename": "project-members-before-forensic.json",
+      "timestamp": "2026-08-03T09:31:26.612Z",
+      "sizeBytes": 7796,
+      "sha256": "2fcc733f3b5394fd1086ee050bd33e317ff511bde31d1548add1c4eaae8147ef",
+      "obfuscatedDatabaseName": "co***_qa (User: po***)",
+      "sensitiveDataStatus": "REDACTED_AND_EXTRACTED_OUTSIDE_REPO"
+    },
+    {
+      "logicalName": "projects-before-forensic",
+      "filename": "projects-before-forensic.json",
+      "timestamp": "2026-08-03T09:31:26.608Z",
+      "sizeBytes": 27413,
+      "sha256": "857aba40c225850d032922d74eaca2266d2a91be1af16e8dd86a471253ff26e8",
+      "obfuscatedDatabaseName": "co***_qa (User: po***)",
+      "sensitiveDataStatus": "REDACTED_AND_EXTRACTED_OUTSIDE_REPO"
+    },
+    {
+      "logicalName": "runtime-auth-evidence",
+      "filename": "runtime-auth-evidence.json",
+      "timestamp": "2026-08-03T09:38:28.821Z",
+      "sizeBytes": 742,
+      "sha256": "8088c51394b0b36f88f82ed2c351f45f4f0fa91e5d7722df3b3d4462a921f78b",
+      "obfuscatedDatabaseName": "co***_qa (User: po***)",
+      "sensitiveDataStatus": "REDACTED_AND_EXTRACTED_OUTSIDE_REPO"
+    },
+    {
+      "logicalName": "schema-reproducibility-analysis",
+      "filename": "schema-reproducibility-analysis.json",
+      "timestamp": "2026-08-03T09:36:24.242Z",
+      "sizeBytes": 776,
+      "sha256": "5fa7fc67a2c28bee0a50e43941ba71524d1a8221157b628702b95b4383cd2779",
+      "obfuscatedDatabaseName": "co***_qa (User: po***)",
+      "sensitiveDataStatus": "REDACTED_AND_EXTRACTED_OUTSIDE_REPO"
+    },
+    {
+      "logicalName": "system-setting-before-forensic",
+      "filename": "system-setting-before-forensic.json",
+      "timestamp": "2026-08-03T09:31:26.599Z",
+      "sizeBytes": 1230,
+      "sha256": "ca9b4ec47400e08990626a0f3cea9f338603f980d9d2158f85c5d61027232ab0",
+      "obfuscatedDatabaseName": "co***_qa (User: po***)",
+      "sensitiveDataStatus": "REDACTED_AND_EXTRACTED_OUTSIDE_REPO"
+    },
+    {
+      "logicalName": "users-before-forensic",
+      "filename": "users-before-forensic.json",
+      "timestamp": "2026-08-03T09:31:26.603Z",
+      "sizeBytes": 5519,
+      "sha256": "88710c97bd24d5e2e2aebeb38a4b542bfcbcad1ac664cabfd37233b629b88be0",
+      "obfuscatedDatabaseName": "co***_qa (User: po***)",
+      "sensitiveDataStatus": "REDACTED_AND_EXTRACTED_OUTSIDE_REPO"
+    }
+  ]
+}

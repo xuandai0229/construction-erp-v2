@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Download, Printer, X, Loader2 } from "lucide-react";
 import { saveSupervisionWeeklyDossier, transitionSupervisionWeeklyDossier, getSupervisionWeeklyPrintData } from "@/app/(dashboard)/supervision/weekly/actions";
 import { Button } from "@/components/ui/button";
 import { ContentCard, SectionHeader } from "@/components/ui/enterprise";
@@ -13,9 +13,9 @@ import { EditorHeader, type SaveState, type SectionNavItem } from "./editor-head
 import type { WeeklyDocumentType, WeeklyEditorDossier, WeeklyObservation, WeeklyProject } from "@/lib/supervision-weekly/editor-types";
 import type { SupervisionWeeklyPrintDto } from "@/lib/supervision-weekly/print-types";
 import { NEXT_WEEK_PLAN_GROUP_2_CATEGORIES, NEXT_WEEK_PLAN_GROUP_3_CATEGORIES } from "@/lib/supervision-weekly/document-model";
-import { FileText, Eye } from "lucide-react";
-import { InAppPdfViewer } from "@/components/ui/in-app-pdf-viewer";
+import { FileText } from "lucide-react";
 import { buildSupervisionExportFilename } from "@/lib/supervision-weekly/export-filename";
+import { printDocument, downloadDocument } from "@/lib/document-export/document-export-client";
 
 const editableStates = new Set(["DRAFT", "REVISION_REQUIRED"]);
 
@@ -401,72 +401,120 @@ export function WeeklyEditor({ initial, projects, canReview, canEditPolicy, canE
 
 function PreviewDialog({ isOpen, onClose, dossier, canExport, companyName }: { isOpen: boolean; onClose: () => void; dossier: SupervisionWeeklyPrintDto | null; canExport: boolean; companyName?: string | null }) {
   const [activeDocument, setActiveDocument] = useState<"RESULT" | "NEXT_WEEK_PLAN">("RESULT");
-  const [showPdfViewer, setShowPdfViewer] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
 
-  const handleExport = (format: "pdf" | "docx") => {
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const printAbortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    if (canvasContainerRef.current) {
+      canvasContainerRef.current.scrollTop = 0;
+    }
+  }, [activeDocument]);
+
+  const handleExport = async (format: "pdf" | "docx") => {
     if (!dossier) return;
     const filename = buildSupervisionExportFilename({
       reportNumber: dossier.reportNumber,
       weekStart: dossier.weekStart,
+      weekEnd: dossier.weekEnd,
+      nextWeekStart: dossier.nextWeekStart,
+      nextWeekEnd: dossier.nextWeekEnd,
       documentType: activeDocument,
       extension: format,
     });
     const url = `/api/supervision/weekly/${dossier.id}/export?format=${format}&document=${activeDocument}&filename=${encodeURIComponent(filename)}`;
-    window.location.href = url;
+    try {
+      await downloadDocument({ url, filename });
+    } catch (err: any) {
+      alert(err?.message || "Không thể tải tập tin.");
+    }
+  };
+
+  const executePrint = async () => {
+    if (!dossier || isPrinting) return;
+    
+    if (printAbortRef.current) {
+      printAbortRef.current.abort();
+    }
+    const abortController = new AbortController();
+    printAbortRef.current = abortController;
+
+    setIsPrinting(true);
+
+    try {
+      const url = `/api/supervision/weekly/${dossier.id}/export?format=pdf&document=${activeDocument}&disposition=inline`;
+      await printDocument({
+        url,
+        title: `In báo cáo - ${dossier.reportNumber || "Báo cáo tuần"}`,
+        preferredMode: "same-tab",
+        signal: abortController.signal,
+      });
+    } catch (err: any) {
+      if (err?.code !== "ABORTED") {
+        alert(err?.message || "Không thể thực hiện in PDF.");
+      }
+    } finally {
+      setIsPrinting(false);
+    }
   };
 
   if (!isOpen || !dossier) return null;
 
-  const pdfViewUrl = `/api/supervision/weekly/${dossier.id}/export?format=pdf&disposition=inline&document=${activeDocument}`;
-  const pdfFileName = buildSupervisionExportFilename({
-    reportNumber: dossier.reportNumber,
-    weekStart: dossier.weekStart,
-    documentType: activeDocument,
-    extension: "pdf",
-  });
-
   return (
-    <>
-      <div className="fixed inset-0 z-[120] flex flex-col bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200" role="dialog" aria-modal="true">
-        <div className="flex h-14 flex-none items-center justify-between border-b border-slate-200 bg-white px-4 shadow-sm print:hidden">
-          <div className="flex items-center gap-4">
-            <h2 className="hidden font-bold text-slate-800 sm:block">Xem trước báo cáo tuần</h2>
-            <div className="flex rounded-md bg-slate-100 p-1">
-              <button onClick={() => setActiveDocument("RESULT")} className={`rounded px-3 py-1 text-sm font-semibold transition ${activeDocument === "RESULT" ? "bg-white text-blue-700 shadow-sm" : "text-slate-600 hover:text-slate-900"}`}>1. Kết quả kiểm tra</button>
-              <button onClick={() => setActiveDocument("NEXT_WEEK_PLAN")} className={`rounded px-3 py-1 text-sm font-semibold transition ${activeDocument === "NEXT_WEEK_PLAN" ? "bg-white text-blue-700 shadow-sm" : "text-slate-600 hover:text-slate-900"}`}>2. Kế hoạch tuần sau</button>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {canExport && (
-              <>
-                <Button variant="outline" size="sm" onClick={() => handleExport("docx")} className="h-8 text-xs font-bold gap-1.5 border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg">
-                  <FileText className="h-4 w-4 text-blue-600" />
-                  <span>Tải Word (.docx)</span>
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => setShowPdfViewer(true)} className="h-8 text-xs font-bold gap-1.5 border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-lg">
-                  <Eye className="h-4 w-4 text-rose-600" />
-                  <span>Xem / In PDF</span>
-                </Button>
-              </>
-            )}
-            <Button variant="outline" size="sm" onClick={onClose} className="h-8 text-xs font-bold rounded-lg">Đóng</Button>
+    <div className="fixed inset-0 z-[120] flex flex-col bg-slate-900/80 backdrop-blur-sm animate-in fade-in duration-200" role="dialog" aria-modal="true" data-weekly-preview-version="v2-runtime-fix">
+      <div className="flex h-14 flex-none items-center justify-between border-b border-slate-200 bg-white px-4 shadow-sm print:hidden">
+        <div className="flex items-center gap-3">
+          <button type="button" onClick={onClose} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors">
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>Quay lại chỉnh sửa</span>
+          </button>
+          {dossier.reportNumber && (
+            <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
+              {dossier.reportNumber}
+            </span>
+          )}
+          <div className="flex rounded-xl bg-slate-100 p-1 text-xs font-bold text-slate-600">
+            <button type="button" onClick={() => setActiveDocument("RESULT")} className={`rounded-lg px-3 py-1.5 transition-all ${activeDocument === "RESULT" ? "bg-white text-blue-700 shadow-sm" : "hover:text-slate-900"}`}>
+              1. Kết quả kiểm tra
+            </button>
+            <button type="button" onClick={() => setActiveDocument("NEXT_WEEK_PLAN")} className={`rounded-lg px-3 py-1.5 transition-all ${activeDocument === "NEXT_WEEK_PLAN" ? "bg-white text-blue-700 shadow-sm" : "hover:text-slate-900"}`}>
+              2. Kế hoạch tuần sau
+            </button>
           </div>
         </div>
-        <div className="flex-1 overflow-auto p-0 sm:p-4 bg-slate-200 flex justify-center print:bg-white print:p-0 print:block">
-          <div className="bg-white shadow-md sm:rounded-md origin-top-left print:shadow-none print:m-0 print:rounded-none">
-            <WeeklyPrintTemplate dossier={dossier} activeDocument={activeDocument} hidePrintButton={true} onDocumentTypeChange={setActiveDocument} companyName={companyName} />
-          </div>
+        <div className="flex items-center gap-2">
+          {canExport && (
+            <>
+              <Button variant="outline" size="sm" onClick={() => handleExport("docx")} className="h-8 text-xs font-bold gap-1.5 border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg">
+                <FileText className="h-4 w-4 text-blue-600" />
+                <span>Tải Word (.docx)</span>
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => handleExport("pdf")} className="h-8 text-xs font-bold gap-1.5 border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-lg">
+                <Download className="h-4 w-4 text-rose-600" />
+                <span>Tải PDF</span>
+              </Button>
+              <Button variant="outline" size="sm" onClick={executePrint} disabled={isPrinting} className="h-8 text-xs font-bold gap-1.5 border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg disabled:opacity-50">
+                {isPrinting ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-slate-600" />
+                ) : (
+                  <Printer className="h-4 w-4 text-slate-600" />
+                )}
+                <span>{isPrinting ? "Đang chuẩn bị..." : "In"}</span>
+              </Button>
+            </>
+          )}
+          <button type="button" onClick={onClose} className="inline-flex items-center justify-center rounded-xl p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors" title="Đóng xem trước">
+            <X className="h-4 w-4" />
+          </button>
         </div>
       </div>
-
-      <InAppPdfViewer
-        isOpen={showPdfViewer}
-        onClose={() => setShowPdfViewer(false)}
-        pdfUrl={pdfViewUrl}
-        title={activeDocument === "RESULT" ? "Báo cáo Kết quả Tuần (PDF)" : "Kế hoạch Kiểm tra Tuần sau (PDF)"}
-        fileName={pdfFileName}
-      />
-    </>
+      <div ref={canvasContainerRef} className="flex-1 overflow-auto p-0 sm:p-4 bg-slate-200 flex justify-center print:bg-white print:p-0 print:block">
+        <div className="bg-white shadow-md sm:rounded-md origin-top-left print:shadow-none print:m-0 print:rounded-none">
+          <WeeklyPrintTemplate dossier={dossier} activeDocument={activeDocument} hidePrintButton={true} onDocumentTypeChange={setActiveDocument} companyName={companyName} />
+        </div>
+      </div>
+    </div>
   );
 }
 

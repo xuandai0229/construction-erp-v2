@@ -22,7 +22,7 @@ interface SafetyReportPreviewPageProps {
 const HANDWRITING_DOTS =
   "................................................................................................................................................................................................................................";
 
-export function HandwritingLines({ count = 4, className = "" }: { count?: number; className?: string }) {
+function HandwritingLines({ count = 4, className = "" }: { count?: number; className?: string }) {
   return (
     <div
       className={`assessment-handwriting-lines ${className}`}

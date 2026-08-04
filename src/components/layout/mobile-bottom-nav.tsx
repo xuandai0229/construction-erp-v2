@@ -30,7 +30,6 @@ export function MobileBottomNav({ userRole }: { userRole: UserRole }) {
     { name: 'Phê duyệt', href: '/approvals', icon: CheckSquare },
     { name: 'Tài khoản', href: '/users', icon: UserCog },
     { name: 'Cài đặt', href: '/settings', icon: Settings },
-    { name: 'Nhiệm vụ', href: '/tasks', icon: ListTodo },
   ].filter(item => canViewNavigationItem(userRole, item.href));
 
   const defaultHref = getDefaultNavigationHrefForRole(userRole);

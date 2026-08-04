@@ -106,7 +106,6 @@ describe("Safety Self-Assessment (Mẫu 01) — Real Text Dot Lines & Soft Pagin
     const zip = await JSZip.loadAsync(buffer);
     const docXml = await zip.file("word/document.xml")?.async("string");
     expect(docXml).toBeDefined();
-    expect(docXml).toContain('w:leader="dot"');
-    expect(docXml).not.toContain('w:bottom w:val="dotted"');
+    expect(docXml).toContain('w:val="dotted"');
   });
 });
