@@ -25,7 +25,7 @@ describe("HR Phase 4.1 Integration & 2-Connection Concurrency Suite (Isolated QA
     if (!qaDbUrl) {
       throw new Error("QA_DATABASE_URL is required for integration testing");
     }
-    assertSafeQaDatabase({ QA_DATABASE_URL: qaDbUrl, DATABASE_URL: process.env.DATABASE_URL });
+    await assertSafeQaDatabase({ ...process.env, QA_DATABASE_URL: qaDbUrl });
 
     poolA = new Pool({ connectionString: qaDbUrl });
     clientA = new PrismaClient({ adapter: new PrismaPg(poolA) });

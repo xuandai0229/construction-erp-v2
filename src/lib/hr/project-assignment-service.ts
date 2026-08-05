@@ -72,8 +72,8 @@ export async function createProjectAssignment(
   return executeWithAdvisoryLock(prisma, input.employeeId, async (tx) => {
     // 1. Verify existence of Employee, Project, Role
     const employee = await tx.employee.findUnique({ where: { id: input.employeeId } });
-    if (!employee || employee.deletedAt) {
-      throw new Error(`Nhân viên (${input.employeeId}) không tồn tại hoặc đã bị xóa.`);
+    if (!employee) {
+      throw new Error(`Nhân viên (${input.employeeId}) không tồn tại.`);
     }
 
     const project = await tx.project.findUnique({ where: { id: input.projectId } });

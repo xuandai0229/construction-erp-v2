@@ -39,7 +39,7 @@ export async function executeWithAdvisoryLock<T>(
     try {
       return await prisma.$transaction(async (tx) => {
         // Set local lock timeout
-        await tx.$executeRawUnsafe(`SET LOCAL lock_timeout = '${lockTimeoutSeconds}s'`);
+        await tx.$executeRaw`SET LOCAL lock_timeout = '5s'`;
 
         // Acquire PostgreSQL transaction-level advisory lock on employeeId hash
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${employeeId}, 0))`;

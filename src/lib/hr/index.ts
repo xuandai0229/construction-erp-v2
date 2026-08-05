@@ -43,9 +43,9 @@ export {
 
 // Project Assignment Service
 export {
-  assignEmployeeToProject,
+  createProjectAssignment,
   releaseEmployeeFromProject,
-  type AssignEmployeeProjectInput,
+  type CreateAssignmentInput,
 } from "./project-assignment-service";
 
 // Permission Service

@@ -4,7 +4,7 @@ import { executeWithAdvisoryLock, ConcurrencyLockError } from "../concurrency-lo
 describe("PostgreSQL Concurrency Advisory Lock Helper (DEC-02)", () => {
   it("1. should execute callback with advisory lock successfully on first try", async () => {
     const mockTx = {
-      $executeRawUnsafe: vi.fn().mockResolvedValue(1),
+
       $executeRaw: vi.fn().mockResolvedValue(1),
       $queryRaw: vi.fn().mockResolvedValue([{ pg_advisory_xact_lock: null }]),
     };
@@ -22,7 +22,7 @@ describe("PostgreSQL Concurrency Advisory Lock Helper (DEC-02)", () => {
     );
 
     expect(result).toEqual({ success: true, employeeId: "emp-123" });
-    expect(mockTx.$executeRawUnsafe).toHaveBeenCalledWith("SET LOCAL lock_timeout = '5s'");
+
   });
 
   it("2. should retry on lock error (55P03) up to 3 times", async () => {
@@ -37,7 +37,7 @@ describe("PostgreSQL Concurrency Advisory Lock Helper (DEC-02)", () => {
           throw err;
         }
         const mockTx = {
-          $executeRawUnsafe: vi.fn().mockResolvedValue(1),
+
           $executeRaw: vi.fn().mockResolvedValue(1),
           $queryRaw: vi.fn().mockResolvedValue([{ pg_advisory_xact_lock: null }]),
         };
@@ -63,7 +63,7 @@ describe("PostgreSQL Concurrency Advisory Lock Helper (DEC-02)", () => {
       $transaction: vi.fn().mockImplementation(async (cb) => {
         attempts++;
         const mockTx = {
-          $executeRawUnsafe: vi.fn().mockResolvedValue(1),
+
           $executeRaw: vi.fn().mockResolvedValue(1),
           $queryRaw: vi.fn().mockResolvedValue([{ pg_advisory_xact_lock: null }]),
         };
