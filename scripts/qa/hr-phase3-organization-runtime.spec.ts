@@ -12,7 +12,9 @@ test.describe("HR Phase 3 Organization Management & Route Stability", () => {
     // Authenticate as global admin
     await page.goto("/login");
     await page.fill('input[name="email"]', "admin@construction.local");
-    await page.fill('input[name="password"]', process.env.E2E_ADMIN_PASSWORD || "REDACTED");
+    const password = process.env.E2E_ADMIN_PASSWORD;
+    if (!password) throw new Error("BLOCKED: Missing E2E_ADMIN_PASSWORD environment variable.");
+    await page.fill('input[name="password"]', password);
     await page.click('button[type="submit"]');
     
     try {

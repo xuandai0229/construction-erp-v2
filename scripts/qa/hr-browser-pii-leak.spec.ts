@@ -15,8 +15,27 @@ test.describe("HR Phase 0.2.1 — Browser/Network PII Leak Prevention Suite", ()
     await prisma.$disconnect();
   });
 
+  test.beforeEach(async ({ page }) => {
+    await page.goto("/hr/employees");
+    if (page.url().includes("/login")) {
+      let pass = process.env.E2E_ADMIN_PASSWORD || process.env.SETTINGS_E2E_PASSWORD_ADMIN;
+      if (!pass) {
+        try {
+          const fsSync = require("fs");
+          const e2eContent = fsSync.readFileSync(require("path").join(process.cwd(), ".env.e2e.local"), "utf-8");
+          const match = e2eContent.match(/SETTINGS_E2E_PASSWORD_ADMIN="?([^"\r\n]+)"?/);
+          if (match) pass = match[1];
+        } catch {}
+      }
+      if (!pass) throw new Error("BLOCKED: Missing E2E_ADMIN_PASSWORD or SETTINGS_E2E_PASSWORD_ADMIN environment variable.");
+      await page.fill('input[name="email"]', "admin@construction.local");
+      await page.fill('input[name="password"]', pass);
+      await page.click('button[type="submit"]');
+      await page.waitForURL((url) => !url.pathname.includes("/login"), { timeout: 10000 });
+    }
+  });
+
   test("Browser network traffic and UI MUST NOT expose raw PII or crypto fields", async ({ page }) => {
-    // 1. Setup Request Interception to capture Server Components / API responses
     const capturedResponses: any[] = [];
     page.on('response', async (response) => {
       // Capture RSC payloads or Next.js data fetching responses related to hr

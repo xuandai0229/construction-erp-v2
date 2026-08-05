@@ -24,8 +24,16 @@ export default async function globalSetup(config: FullConfig) {
     process.env.PLAYWRIGHT_BASE_URL ??
     "http://127.0.0.1:3000";
 
-  const email = process.env.E2E_ADMIN_USERNAME || process.env.QA_ADMIN_EMAIL;
-  const password = process.env.E2E_ADMIN_PASSWORD || process.env.QA_ADMIN_PASSWORD;
+  const email = process.env.E2E_ADMIN_USERNAME || process.env.QA_ADMIN_EMAIL || "admin@construction.local";
+  let password = process.env.E2E_ADMIN_PASSWORD || process.env.SETTINGS_E2E_PASSWORD_ADMIN || process.env.QA_ADMIN_PASSWORD;
+  if (!password) {
+    try {
+      const fsSync = require("fs");
+      const e2eContent = fsSync.readFileSync(path.join(process.cwd(), ".env.e2e.local"), "utf-8");
+      const match = e2eContent.match(/SETTINGS_E2E_PASSWORD_ADMIN="?([^"\r\n]+)"?/);
+      if (match) password = match[1];
+    } catch {}
+  }
 
   if (!email || !password) {
     console.warn(

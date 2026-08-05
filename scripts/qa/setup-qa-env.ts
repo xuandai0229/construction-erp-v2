@@ -94,10 +94,11 @@ export function validateQaDatabaseOrThrow(qaUrlInput?: string, mainUrlInput?: st
         qaTarget.host === mainTarget.host &&
         qaTarget.port === mainTarget.port &&
         qaTarget.database === mainTarget.database &&
-        qaTarget.schema === mainTarget.schema
+        qaTarget.schema === mainTarget.schema &&
+        !hasQaSafetyKeyword(mainTarget.database)
       ) {
         throw new Error(
-          "SAFETY VIOLATION: QA_DATABASE_URL targets the exact same canonical database & schema as DATABASE_URL. Mutation tests cannot run on primary database."
+          "SAFETY VIOLATION: QA_DATABASE_URL targets the exact same canonical database & schema as non-QA DATABASE_URL. Mutation tests cannot run on production database."
         );
       }
     } catch (err: any) {

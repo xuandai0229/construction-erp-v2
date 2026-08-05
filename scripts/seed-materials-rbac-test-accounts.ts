@@ -3,8 +3,10 @@ import * as bcrypt from "bcryptjs";
 import prisma from "../src/lib/prisma";
 
 async function main() {
-  console.log("Đang băm mật khẩu chung...");
-  const commonPassword = "process.env.E2E_ADMIN_PASSWORD || "REDACTED"";
+  const commonPassword = process.env.E2E_ADMIN_PASSWORD || process.env.SEED_DEV_ADMIN_PASSWORD;
+  if (!commonPassword) {
+    throw new Error("BLOCKED: Missing E2E_ADMIN_PASSWORD or SEED_DEV_ADMIN_PASSWORD environment variable.");
+  }
   const hashedPassword = await bcrypt.hash(commonPassword, 10);
 
   console.log("Đang khởi tạo hoặc tìm project test...");

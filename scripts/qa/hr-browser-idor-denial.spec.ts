@@ -33,8 +33,18 @@ test.describe("HR Phase 0.2.1 — Authenticated Browser IDOR Denial Suite", () =
     });
 
     // 2. Create limited user (OWN_ORGANIZATION_UNIT)
+    let pass = process.env.E2E_ADMIN_PASSWORD || process.env.SETTINGS_E2E_PASSWORD_ADMIN;
+    if (!pass) {
+      try {
+        const fsSync = require("fs");
+        const e2eContent = fsSync.readFileSync(require("path").join(process.cwd(), ".env.e2e.local"), "utf-8");
+        const match = e2eContent.match(/SETTINGS_E2E_PASSWORD_ADMIN="?([^"\r\n]+)"?/);
+        if (match) pass = match[1];
+      } catch {}
+    }
+    if (!pass) throw new Error("BLOCKED: Missing E2E_ADMIN_PASSWORD or SETTINGS_E2E_PASSWORD_ADMIN environment variable.");
+    const passwordHash = await bcrypt.hash(pass, 10);
     const limitedEmail = `limited_${runId}@example.com`;
-    const passwordHash = await bcrypt.hash(process.env.E2E_ADMIN_PASSWORD || "REDACTED", 10);
     limitedUser = await prisma.user.create({
       data: {
         email: limitedEmail,
@@ -94,6 +104,7 @@ test.describe("HR Phase 0.2.1 — Authenticated Browser IDOR Denial Suite", () =
   });
 
   test.afterAll(async () => {
+    if (!prisma || !limitedUser) return;
     // Cleanup
     await prisma.organizationUnitManagerAssignment.deleteMany({
       where: { organizationUnitId: unitInScope.id },
@@ -125,8 +136,18 @@ test.describe("HR Phase 0.2.1 — Authenticated Browser IDOR Denial Suite", () =
     
     // Login as limited user
     await page.goto("/login");
+    let pass = process.env.E2E_ADMIN_PASSWORD || process.env.SETTINGS_E2E_PASSWORD_ADMIN;
+    if (!pass) {
+      try {
+        const fsSync = require("fs");
+        const e2eContent = fsSync.readFileSync(require("path").join(process.cwd(), ".env.e2e.local"), "utf-8");
+        const match = e2eContent.match(/SETTINGS_E2E_PASSWORD_ADMIN="?([^"\r\n]+)"?/);
+        if (match) pass = match[1];
+      } catch {}
+    }
+    if (!pass) throw new Error("BLOCKED: Missing E2E_ADMIN_PASSWORD or SETTINGS_E2E_PASSWORD_ADMIN environment variable.");
     await page.fill('input[name="email"]', limitedUser.email);
-    await page.fill('input[name="password"]', process.env.E2E_ADMIN_PASSWORD || "REDACTED");
+    await page.fill('input[name="password"]', pass);
     await page.click('button[type="submit"]');
     await page.waitForURL((url) => !url.pathname.includes("/login"));
 
