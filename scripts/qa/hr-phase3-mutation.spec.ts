@@ -292,10 +292,10 @@ test.describe("HR Phase 3.3 — Mutation Integration Suite", () => {
 
   test("5. Post-Test Zero Orphan Cleanup Verification", async () => {
     const orphanUnits = await prisma.organizationUnit.count({
-      where: { code: { contains: runId.substring(0, 8) } },
+      where: { code: { contains: runId.substring(0, 6) } },
     });
     const orphanPositions = await prisma.position.count({
-      where: { code: { contains: runId.substring(0, 8) } },
+      where: { code: { contains: runId.substring(0, 6) } },
     });
     const orphanEmployees = await prisma.employee.count({
       where: { code: { contains: runId.substring(0, 6) } },
