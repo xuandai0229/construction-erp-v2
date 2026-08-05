@@ -19,10 +19,10 @@ test.describe("HR Route Transition & Tab Navigation Stability Suite", () => {
     await page.goto("/hr/organization");
     await page.waitForSelector("#hr-tab-organization-tree");
 
-    const treeTab = page.locator("#hr-tab-organization-tree");
-    const positionsTab = page.locator("#hr-tab-positions");
-    const managersTab = page.locator("#hr-tab-unit-managers");
-    const chartTab = page.locator("#hr-tab-org-chart");
+    const treeTab = page.locator("#hr-tab-organization-tree").first();
+    const positionsTab = page.locator("#hr-tab-positions").first();
+    const managersTab = page.locator("#hr-tab-unit-managers").first();
+    const chartTab = page.locator("#hr-tab-org-chart").first();
 
     await expect(treeTab).toBeVisible();
     await expect(positionsTab).toBeVisible();
@@ -36,29 +36,29 @@ test.describe("HR Route Transition & Tab Navigation Stability Suite", () => {
     // Click positions tab
     await page.click("#hr-tab-positions");
     await page.waitForURL("/hr/organization/positions");
-    await expect(page.locator("h1")).toContainText("Danh mục chức danh", { timeout: 10000 });
+    await expect(page.locator("h1").first()).toContainText("Danh mục chức danh", { timeout: 10000 });
 
     // Click managers tab
     await page.click("#hr-tab-unit-managers");
     await page.waitForURL("/hr/organization/managers");
-    await expect(page.locator("h1")).toContainText("Người quản lý", { timeout: 10000 });
+    await expect(page.locator("h1").first()).toContainText("Người quản lý", { timeout: 10000 });
 
     // Click org chart tab
     await page.click("#hr-tab-org-chart");
     await page.waitForURL("/hr/organization/chart");
-    await expect(page.locator("h1")).toContainText("Sơ đồ", { timeout: 10000 });
+    await expect(page.locator("h1").first()).toContainText("Sơ đồ", { timeout: 10000 });
 
     // Click tree tab
     await page.click("#hr-tab-organization-tree");
     await page.waitForURL("/hr/organization");
-    await expect(page.locator("h1")).toContainText("Cơ cấu tổ chức", { timeout: 10000 });
+    await expect(page.locator("h1").first()).toContainText("Cơ cấu tổ chức", { timeout: 10000 });
   });
 
   test("3. Responsive mobile layout verification (390x844)", async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/hr/organization");
 
-    const treeTab = page.locator("#hr-tab-organization-tree");
+    const treeTab = page.locator("#hr-tab-organization-tree").first();
     await expect(treeTab).toBeVisible();
 
     // Check no horizontal scrollbar on body

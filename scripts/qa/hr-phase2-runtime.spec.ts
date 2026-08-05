@@ -17,6 +17,7 @@ test.describe("HR Phase 2 runtime smoke", () => {
     await page.goto("/login");
     const password = process.env.E2E_ADMIN_PASSWORD;
     if (!password) throw new Error("BLOCKED: Missing E2E_ADMIN_PASSWORD environment variable.");
+    await page.fill('input[name="email"]', "admin@construction.local");
     await page.fill('input[name="password"]', password);
     await page.click('button[type="submit"]');
     
