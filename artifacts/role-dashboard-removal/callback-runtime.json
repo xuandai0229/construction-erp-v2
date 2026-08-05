@@ -1,5 +1,0 @@
-{
-  "invalidCallbackUrl": "http://127.0.0.1:3100/tasks?mine=1",
-  "validCallbackUrl": "http://127.0.0.1:3100/reports",
-  "consoleIssues": 0
-}

@@ -12,6 +12,22 @@ const hrRoutes = [
 ];
 
 test.describe("HR Phase 2 runtime smoke", () => {
+  test.beforeEach(async ({ page }) => {
+    // Authenticate as global admin
+    await page.goto("/login");
+    await page.fill('input[name="email"]', "admin@construction.local");
+    await page.fill('input[name="password"]', process.env.E2E_ADMIN_PASSWORD || "REDACTED");
+    await page.click('button[type="submit"]');
+    
+    try {
+      await page.waitForURL((url) => !url.pathname.includes("/login"), { timeout: 10000 });
+    } catch (e) {
+      console.log("Login failed! Current URL:", page.url());
+      console.log("Body text:", await page.textContent('body'));
+      throw e;
+    }
+  });
+
   for (const route of hrRoutes) {
     test(`${route} renders without server errors`, async ({ page }) => {
       const response = await page.goto(route, { waitUntil: "networkidle" });

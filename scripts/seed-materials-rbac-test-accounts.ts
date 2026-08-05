@@ -4,7 +4,7 @@ import prisma from "../src/lib/prisma";
 
 async function main() {
   console.log("Đang băm mật khẩu chung...");
-  const commonPassword = "Test@123456";
+  const commonPassword = "process.env.E2E_ADMIN_PASSWORD || "REDACTED"";
   const hashedPassword = await bcrypt.hash(commonPassword, 10);
 
   console.log("Đang khởi tạo hoặc tìm project test...");
@@ -170,3 +170,4 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+

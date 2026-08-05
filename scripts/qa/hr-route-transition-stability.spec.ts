@@ -5,8 +5,8 @@ test.describe("HR Route Transition & Tab Navigation Stability Suite", () => {
     await page.goto("/hr/organization");
     // If redirected to login (e.g. state missing), perform login fallback
     if (page.url().includes("/login")) {
-      const email = process.env.QA_ADMIN_EMAIL || "daicongtu2910@gmail.com";
-      const password = process.env.QA_ADMIN_PASSWORD || "123456";
+      const email = "admin@construction.local";
+      const password = process.env.E2E_ADMIN_PASSWORD || "REDACTED";
       await page.fill('input[name="email"]', email);
       await page.fill('input[name="password"]', password);
       await page.click('button[type="submit"]');
