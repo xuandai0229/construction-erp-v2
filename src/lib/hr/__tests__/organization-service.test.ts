@@ -19,11 +19,19 @@ describe("Organization & Position Hierarchy Service", () => {
   let adapter: PrismaPg;
   let prisma: PrismaClient;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     const connectionString = process.env.QA_DATABASE_URL || process.env.DATABASE_URL;
     pool = new Pool({ connectionString });
     adapter = new PrismaPg(pool);
     prisma = new PrismaClient({ adapter });
+
+    // Clean up any leftover test data from prior aborted test runs
+    await prisma.employeeOrganizationAssignment.deleteMany({ where: { employee: { code: "NV-TEST-ORG-001" } } });
+    await prisma.organizationUnitManagerAssignment.deleteMany({ where: { employee: { code: "NV-TEST-ORG-001" } } });
+    await prisma.employeeChangeHistory.deleteMany({ where: { employee: { code: "NV-TEST-ORG-001" } } });
+    await prisma.employee.deleteMany({ where: { code: "NV-TEST-ORG-001" } });
+    await prisma.position.deleteMany({ where: { code: { in: ["POS_TP_TEST", "POS_CV_TEST"] } } });
+    await prisma.organizationUnit.deleteMany({ where: { code: { in: ["PKT_TEST", "BGD_TEST", "ORG_TEST_A", "ORG_TEST_B"] } } });
   });
 
   afterAll(async () => {
@@ -113,9 +121,21 @@ describe("Organization & Position Hierarchy Service", () => {
     expect(assign1.isPrimary).toBe(true);
     expect(assign1.endDate).toBeNull();
 
-    // Perform employee transfer to parentOrg & pos2
-    const userActor = await prisma.user.findFirst({ select: { id: true } });
-    const actorId = userActor?.id || emp.id;
+    // Ensure a valid User exists for FK references in audit/change history
+    let userActor = await prisma.user.findFirst({ select: { id: true } });
+    if (!userActor) {
+      userActor = await prisma.user.create({
+        data: {
+          email: `org_actor_${Date.now()}@example.com`,
+          username: `org_actor_${Date.now()}`,
+          password: "dummy",
+          name: "Org Actor Test",
+          role: "STAFF",
+        },
+        select: { id: true },
+      });
+    }
+    const actorId = userActor.id;
 
     const transferResult = await transferEmployee(prisma, {
       employeeId: emp.id,

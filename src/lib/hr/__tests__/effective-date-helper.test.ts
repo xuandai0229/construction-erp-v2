@@ -1,72 +1,101 @@
 import { describe, it, expect } from "vitest";
 import {
-  isCurrentlyEffective,
-  getVietnamTodayDateString,
-  validateEffectiveDateRange,
-  validateTransferEffectiveDate,
-  buildEffectiveDateWhere,
+  isEffectiveAt,
+  intervalsOverlap,
+  getAllocationEffectiveEnd,
+  INFINITY_DATE,
 } from "../effective-date-helper";
+import { parseVietnamDateOnly } from "../vietnam-date-helper";
 
-describe("HR Effective-Date Helper Unit Tests", () => {
-  it("evaluates [startDate, endDate) boundaries correctly", () => {
-    const startDate = new Date("2026-01-01T00:00:00.000Z");
-    const endDate = new Date("2026-07-01T00:00:00.000Z");
+describe("HR Effective-Date Utilities (DEC-01)", () => {
+  const d2026_01_01 = parseVietnamDateOnly("2026-01-01");
+  const d2026_06_01 = parseVietnamDateOnly("2026-06-01");
+  const d2026_12_31 = parseVietnamDateOnly("2026-12-31");
 
-    const beforeStart = new Date("2025-12-31T23:59:59.999Z");
-    const atStart = new Date("2026-01-01T00:00:00.000Z");
-    const insideRange = new Date("2026-03-15T12:00:00.000Z");
-    const beforeEnd = new Date("2026-06-30T23:59:59.999Z");
-    const atEnd = new Date("2026-07-01T00:00:00.000Z");
-    const afterEnd = new Date("2026-07-01T00:00:00.001Z");
+  describe("isEffectiveAt [startDate, endDate)", () => {
+    it("should be effective when at = startDate (inclusive)", () => {
+      expect(isEffectiveAt(d2026_01_01, d2026_06_01, d2026_01_01)).toBe(true);
+    });
 
-    expect(isCurrentlyEffective(startDate, endDate, beforeStart)).toBe(false);
-    expect(isCurrentlyEffective(startDate, endDate, atStart)).toBe(true);
-    expect(isCurrentlyEffective(startDate, endDate, insideRange)).toBe(true);
-    expect(isCurrentlyEffective(startDate, endDate, beforeEnd)).toBe(true);
-    expect(isCurrentlyEffective(startDate, endDate, atEnd)).toBe(false); // Exclusive end
-    expect(isCurrentlyEffective(startDate, endDate, afterEnd)).toBe(false);
+    it("should NOT be effective when at < startDate", () => {
+      const beforeStart = parseVietnamDateOnly("2025-12-31");
+      expect(isEffectiveAt(d2026_01_01, d2026_06_01, beforeStart)).toBe(false);
+    });
+
+    it("should NOT be effective when at = endDate (exclusive)", () => {
+      expect(isEffectiveAt(d2026_01_01, d2026_06_01, d2026_06_01)).toBe(false);
+    });
+
+    it("should be effective infinitely when endDate is null", () => {
+      expect(isEffectiveAt(d2026_01_01, null, d2026_12_31)).toBe(true);
+    });
+
+    it("should NOT overlap when assignment A ends at date D and assignment B starts at date D", () => {
+      // Assignment A: [2026-01-01, 2026-06-01)
+      // Assignment B: [2026-06-01, 2026-12-31)
+      expect(intervalsOverlap(d2026_01_01, d2026_06_01, d2026_06_01, d2026_12_31)).toBe(false);
+    });
   });
 
-  it("handles null endDate as indefinitely effective", () => {
-    const startDate = new Date("2026-01-01T00:00:00.000Z");
-    const farFuture = new Date("2099-12-31T23:59:59.999Z");
+  describe("getAllocationEffectiveEnd rules (DEC-01)", () => {
+    const referenceAt = parseVietnamDateOnly("2026-05-01"); // Reference point
 
-    expect(isCurrentlyEffective(startDate, null, startDate)).toBe(true);
-    expect(isCurrentlyEffective(startDate, null, farFuture)).toBe(true);
-  });
+    it("1. Started assignment with expectedEndDate passed & endDate null -> returns Infinity", () => {
+      // Started at 2026-01-01, expectedEndDate was 2026-04-01 (passed), endDate is null
+      const startDate = parseVietnamDateOnly("2026-01-01");
+      const expectedEndDate = parseVietnamDateOnly("2026-04-01");
 
-  it("formats date in Asia/Ho_Chi_Minh timezone", () => {
-    const date = new Date("2026-08-04T00:00:00.000Z");
-    const str = getVietnamTodayDateString(date);
-    expect(str).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-  });
+      const result = getAllocationEffectiveEnd({
+        startDate,
+        expectedEndDate,
+        endDate: null,
+        referenceAt,
+      });
 
-  it("validates date range boundaries and throws error when endDate < startDate", () => {
-    const start = new Date("2026-07-01");
-    const endInvalid = new Date("2026-06-30");
-    const endValid = new Date("2026-07-02");
+      expect(result.getTime()).toBe(INFINITY_DATE.getTime());
+    });
 
-    expect(() => validateEffectiveDateRange(start, endInvalid)).toThrow();
-    expect(() => validateEffectiveDateRange(start, endValid)).not.toThrow();
-  });
+    it("2. Unstarted assignment with expectedEndDate -> returns expectedEndDate", () => {
+      // Unstarted: starts at 2026-06-01 (future), expectedEndDate 2026-09-01
+      const startDate = parseVietnamDateOnly("2026-06-01");
+      const expectedEndDate = parseVietnamDateOnly("2026-09-01");
 
-  it("validates transfer date against current start date", () => {
-    const currentStart = new Date("2026-01-01");
-    const newEffectiveInvalid = new Date("2025-12-31");
-    const newEffectiveValid = new Date("2026-02-01");
+      const result = getAllocationEffectiveEnd({
+        startDate,
+        expectedEndDate,
+        endDate: null,
+        referenceAt,
+      });
 
-    expect(() => validateTransferEffectiveDate(currentStart, newEffectiveInvalid)).toThrow();
-    expect(() => validateTransferEffectiveDate(currentStart, newEffectiveValid)).not.toThrow();
-  });
+      expect(result.getTime()).toBe(expectedEndDate.getTime());
+    });
 
-  it("constructs correct Prisma where clause for effective date", () => {
-    const now = new Date("2026-08-04T00:00:00.000Z");
-    const where = buildEffectiveDateWhere(now);
+    it("3. Unstarted assignment without expectedEndDate & endDate -> returns Infinity", () => {
+      const startDate = parseVietnamDateOnly("2026-06-01");
 
-    expect(where.startDate).toEqual({ lte: now });
-    expect(where.OR).toEqual([
-      { endDate: null },
-      { endDate: { gt: now } },
-    ]);
+      const result = getAllocationEffectiveEnd({
+        startDate,
+        expectedEndDate: null,
+        endDate: null,
+        referenceAt,
+      });
+
+      expect(result.getTime()).toBe(INFINITY_DATE.getTime());
+    });
+
+    it("4. Assignment with explicit endDate -> ALWAYS returns endDate", () => {
+      const startDate = parseVietnamDateOnly("2026-01-01");
+      const endDate = parseVietnamDateOnly("2026-05-15");
+      const expectedEndDate = parseVietnamDateOnly("2026-08-01");
+
+      const result = getAllocationEffectiveEnd({
+        startDate,
+        expectedEndDate,
+        endDate,
+        referenceAt,
+      });
+
+      expect(result.getTime()).toBe(endDate.getTime());
+    });
   });
 });

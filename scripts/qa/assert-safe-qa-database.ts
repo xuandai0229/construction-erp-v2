@@ -71,8 +71,8 @@ export function evaluateQaDatabaseSafety(environment: NodeJS.ProcessEnv = proces
     ) {
       throw new Error("QA_DATABASE_URL must identify a database distinct from DATABASE_URL");
     }
-    if (!/(qa|test|ci|sandbox)/.test(normalized)) {
-      throw new Error("QA database name must contain qa, test, ci, or sandbox");
+    if (!/(qa|test|e2e|ci|sandbox)/.test(normalized)) {
+      throw new Error("QA database name must contain qa, test, e2e, ci, or sandbox");
     }
   } catch (error) {
     return {

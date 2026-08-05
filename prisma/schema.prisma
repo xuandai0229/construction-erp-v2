@@ -2049,6 +2049,14 @@ enum EmployeeProjectAssignmentStatus {
   CANCELLED
 }
 
+enum EmployeeProjectAssignmentEndReason {
+  COMPLETED
+  EARLY_RELEASE
+  ROLE_TRANSFER
+  ALLOCATION_CHANGE
+  PROJECT_TRANSFER
+}
+
 enum GrantEffect {
   ALLOW
   DENY
@@ -2212,21 +2220,22 @@ model ProjectPersonnelRole {
 }
 
 model EmployeeProjectAssignment {
-  id                     String                          @id @default(cuid())
+  id                     String                              @id @default(cuid())
   employeeId             String
   projectId              String
   projectPersonnelRoleId String
   startDate              DateTime
   expectedEndDate        DateTime?
   endDate                DateTime?
-  allocationPercentage   Int                             @default(100)
-  status                 EmployeeProjectAssignmentStatus @default(ACTIVE)
+  allocationPercentage   Int                                 @default(100)
+  status                 EmployeeProjectAssignmentStatus     @default(ACTIVE)
+  endReason              EmployeeProjectAssignmentEndReason?
   assignmentDecisionNo   String?
   notes                  String?
   overrideReason         String?
   createdById            String?
-  createdAt              DateTime                        @default(now())
-  updatedAt              DateTime                        @updatedAt
+  createdAt              DateTime                            @default(now())
+  updatedAt              DateTime                            @updatedAt
 
   employee             Employee             @relation(fields: [employeeId], references: [id], onDelete: Restrict)
   project              Project              @relation(fields: [projectId], references: [id], onDelete: Restrict)
@@ -2237,6 +2246,8 @@ model EmployeeProjectAssignment {
   @@index([projectId])
   @@index([projectPersonnelRoleId])
   @@index([startDate, endDate])
+  @@index([employeeId, status, startDate])
+  @@index([projectId, status, startDate])
 }
 
 model HrPermissionDefinition {
