@@ -86,7 +86,7 @@
 
 ## 17. Cách Test Thủ Công
 1. Chạy `npm run dev` ở terminal.
-2. Trình duyệt vào `http://localhost:3000/login` -> Đăng nhập bằng `admin@construction.local / 123456`.
+2. Trình duyệt vào `http://localhost:3000/login` -> Đăng nhập bằng `admin@construction.local / [REDACTED]`.
 3. Bấm Tab **Tài liệu** bên tay trái (hoặc click vào nút Tài liệu trong một dự án bất kỳ).
 4. Bạn sẽ thấy 08 thư mục mặc định. Nhấp vào `01_Hợp đồng`.
 5. Bấm **Tải tệp lên**, chọn thử một file PDF hoặc Ảnh (< 50MB).

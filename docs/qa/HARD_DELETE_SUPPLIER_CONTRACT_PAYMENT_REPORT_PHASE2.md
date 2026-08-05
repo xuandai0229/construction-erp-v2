@@ -70,7 +70,7 @@ Sau migration, không còn tồn tại:
 - Kết luận `src/proxy.ts`: Hoạt động đúng yêu cầu thiết kế ban đầu để cô lập triệt để request mà không import module, Next.js Middleware guard vẫn cần thiết để tránh Auth Redirect.
 
 ## 14. Dữ Liệu QA Tạo Ra & Cleanup
-- Để phục vụ đăng nhập test, các password của user seed đã được gán lại thành `123456` qua bcrypt update trực tiếp trên Database QA.
+- Để phục vụ đăng nhập test, các password của user seed đã được gán lại thành `[REDACTED]` qua bcrypt update trực tiếp trên Database QA.
 - Không phát sinh mutation mới từ ứng dụng ERP; vì vậy không cần dọn dẹp các bản ghi business data.
 
 ## 15. Rủi Ro Còn Lại

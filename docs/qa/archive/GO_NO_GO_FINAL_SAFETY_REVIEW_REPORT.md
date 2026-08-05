@@ -2,13 +2,13 @@
 
 ## 1. Mật khẩu và Script Tạm (Password Reset Check)
 - **Script Khôi phục Mật khẩu:** 
-  - Trong quá trình kiểm thử, script `scripts/qa-reset-passwords.ts` đã được tạo để thiết lập lại mật khẩu thành `Test@123456`.
+  - Trong quá trình kiểm thử, script `scripts/qa-reset-passwords.ts` đã được tạo để thiết lập lại mật khẩu thành `[REDACTED]`.
   - **Trạng thái hiện tại:** File này đã bị **XÓA HOÀN TOÀN** khỏi thư mục làm việc (worktree) và không bị lưu vết trong Git.
 - **Hardcode Password:** 
-  - Đã rà soát lại toàn bộ repo. Chuỗi fallback `Test@123456` đã được gỡ bỏ khỏi `scripts/qa-playwright-regression.ts`.
+  - Đã rà soát lại toàn bộ repo. Chuỗi fallback `[REDACTED]` đã được gỡ bỏ khỏi `scripts/qa-playwright-regression.ts`.
   - Không còn password tĩnh/mặc định nào tồn tại trong thư mục `src/`, `prisma/`, hoặc `scripts/`.
 - **Đánh giá User Database & Rủi Ro (HIGH SECURITY RISK):**
-  - Thời gian cập nhật (`updatedAt`) của các tài khoản `admin@construction.local` và `commander1@construction.local` xác nhận mật khẩu của các tài khoản này trên DB hiện tại đã bị thay đổi (hiện đang là `Test@123456` dưới dạng bcrypt hash).
+  - Thời gian cập nhật (`updatedAt`) của các tài khoản `admin@construction.local` và `commander1@construction.local` xác nhận mật khẩu của các tài khoản này trên DB hiện tại đã bị thay đổi (hiện đang là `[REDACTED]` dưới dạng bcrypt hash).
   - **Khuyến nghị BẮT BUỘC:** Mọi tài khoản đang tồn tại trong Database này BẮT BUỘC phải thực hiện **Rotate Credential** (xoay vòng/đặt lại mật khẩu mạnh ngẫu nhiên) NGAY LẬP TỨC bởi chủ hệ thống. KHÔNG ĐƯỢC MANG DATABASE NÀY LÊN PRODUCTION NẾU CHƯA THAY MẬT KHẨU.
 
 ## 2. Phân loại Git Status Trước Khi Commit

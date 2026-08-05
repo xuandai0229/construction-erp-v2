@@ -69,7 +69,7 @@
 
 ### USR-BUG-001 — Lỗ hổng nâng quyền (Privilege Escalation)
 
-* **Trước**: `DEPUTY_DIRECTOR` gọi `updateUser(self, {role: "ADMIN"})` → thành công. `DIRECTOR` gọi `resetUserPassword(adminId, "123456")` → thành công.
+* **Trước**: `DEPUTY_DIRECTOR` gọi `updateUser(self, {role: "ADMIN"})` → thành công. `DIRECTOR` gọi `resetUserPassword(adminId, "[REDACTED]")` → thành công.
 * **Sau**: `assertRoleHierarchy` ném lỗi server-side. UI ẩn nút. Double layer defense.
 * **File sửa**: `rbac.ts`, `actions.ts`
 * **Test xác minh**: `qa-users-rbac-static.ts` → PASS

@@ -14,8 +14,8 @@
 **Solution:** Changed DATABASE_URL from `localhost` to `127.0.0.1` (IPv4 loopback).
 
 ```diff
-- DATABASE_URL="postgresql://postgres:123456@localhost:5432/..."
-+ DATABASE_URL="postgresql://postgres:123456@127.0.0.1:5432/..."
+- DATABASE_URL="postgresql://postgres:[REDACTED]@localhost:5432/..."
++ DATABASE_URL="postgresql://postgres:[REDACTED]@127.0.0.1:5432/..."
 ```
 
 **Result:** ✅ Prisma connects successfully; audit script runs to completion.

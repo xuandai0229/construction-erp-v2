@@ -8,7 +8,7 @@
 - **Biến môi trường (.env)**:
   - Có khai báo `DATABASE_URL` (trỏ vào localhost PostgreSQL).
   - Có khai báo `AUTH_SECRET` cho NextAuth/Session.
-  - ⚠️ **Rủi ro nhỏ**: `DATABASE_URL` hiện đang dùng user `postgres` và pass `123456`, rất dễ bị đoán nếu server public cổng 5432 ra ngoài. Khi lên Production cần một User DB với mật khẩu random và giới hạn Role an toàn hơn.
+  - ⚠️ **Rủi ro nhỏ**: `DATABASE_URL` hiện đang dùng user `postgres` và pass `[REDACTED]`, rất dễ bị đoán nếu server public cổng 5432 ra ngoài. Khi lên Production cần một User DB với mật khẩu random và giới hạn Role an toàn hơn.
 - **Git Ignore**:
   - File `.env`, `.env.local` đã được add vào `.gitignore` thành công (Chữ ký `!` cho phép `.env.example` commit lên được nhưng chặn các file nhạy cảm).
   - Đã có ignore thư mục `backups/`, `.dump`, `.sql` và các file `npm-debug.log`.

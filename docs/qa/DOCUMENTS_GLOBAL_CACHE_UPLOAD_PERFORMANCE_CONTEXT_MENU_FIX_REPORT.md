@@ -99,7 +99,7 @@ Script: `npx tsx scripts/qa/documents-runtime-f5-context-menu-upload.ts`
 
 Kết quả:
 
-- User: `daicongtu2910@gmail.com`
+- User: `admin@example.com`
 - Project: `test ct`
 - Folder: `01_Hợp đồng`
 - Routes test: `/`, `/documents`, `/documents/cmr005gog0000a4wka3dnsjwa`, `/documents/cmr005gog0000a4wka3dnsjwa?folder=cmr005gow0001a4wk1hpje5gm`

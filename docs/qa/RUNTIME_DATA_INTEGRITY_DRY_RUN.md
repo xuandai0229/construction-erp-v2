@@ -1,7 +1,7 @@
 # RUNTIME DATA INTEGRITY DRY-RUN & RECONCILIATION REPORT
 
 **Repository**: `construction-erp-v2`  
-**Database URL**: `postgresql://postgres:123456@127.0.0.1:5432/construction_erp_v2_qa`  
+**Database URL**: `postgresql://postgres:[REDACTED]@127.0.0.1:5432/construction_erp_v2_qa`  
 **Date**: August 1, 2026  
 **Audit Execution Mode**: `READ-ONLY DRY-RUN`
 
@@ -21,7 +21,7 @@
 
 | User Name | User Email | System Role | Assigned Projects Count | Assigned Project Codes & Titles | DB Integrity Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **XĐ** | `daicongtu2910@gmail.com` | `ADMIN` | 0 | *(No direct project assignments)* | `EXACT` |
+| **XĐ** | `admin@example.com` | `ADMIN` | 0 | *(No direct project assignments)* | `EXACT` |
 | **Đoàn Văn Giang** | `doanvangiang@gmail.com` | `CHIEF_COMMANDER` | 3 | • `CT-2026-0004` Xây dựng trường Mầm non Kim Sơn<br>• `CT-2026-0003` Xây dựng trường THCS Lệ Chi<br>• `CT-2026-0005` Mầm non Hoa Hồng — Yên Thường | `EXACT` |
 | **Lê Trọng Hạ** | `letrongha@gmail.com` | `CHIEF_COMMANDER` | 1 | • `CT-2026-0006` Mầm non Minh Khai | `EXACT` |
 | **Trần Quốc Dũng** | `tranquocdung@gmail.com` | `CHIEF_COMMANDER` | 2 | • `CT-2026-0007` 15 trường học Tây Hồ<br>• `CT-2026-0008` 13 trường học Tây Hồ | `EXACT` |

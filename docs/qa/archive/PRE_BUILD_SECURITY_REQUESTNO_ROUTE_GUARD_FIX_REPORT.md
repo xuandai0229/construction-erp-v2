@@ -8,7 +8,7 @@
 ## 1. Hiện trạng trước fix
 
 - **Session (C1):** Dùng chuỗi JSON mã hóa Base64 thuần túy trong cookie `auth_session`. Bất kỳ ai cũng có thể giải mã, sửa `userId` và encode lại để chiếm quyền.
-- **Login Hardcode (C4):** Trang login mặc định điền email `admin@construction.local` và password `123456`, đồng thời hiển thị chữ "Môi trường Development".
+- **Login Hardcode (C4):** Trang login mặc định điền email `admin@construction.local` và password `[REDACTED]`, đồng thời hiển thị chữ "Môi trường Development".
 - **Material RequestNo (C2):** Sinh mã theo format `MR-YYYYMM-XXXX` trong đó `XXXX` là `count + 1`. Không an toàn khi nhiều thao tác tạo diễn ra đồng thời.
 - **Route Guard (C3):** `src/proxy.ts` đã có kiểm tra sự tồn tại của session cookie và chuyển hướng tới `/login` nếu chưa đăng nhập, hoặc tới `/dashboard` nếu đã đăng nhập mà lại truy cập `/login`. 
 

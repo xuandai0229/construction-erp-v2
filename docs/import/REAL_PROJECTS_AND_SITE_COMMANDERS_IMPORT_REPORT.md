@@ -28,7 +28,7 @@ Mỗi project có `externalSourceKey` ổn định từ spreadsheet, sheet, tên
 
 - 11 tài khoản `CHIEF_COMMANDER` đã được tạo hoặc đối chiếu.
 - 18 `ProjectMember` đã được tạo/đối chiếu, không trùng.
-- Mật khẩu khởi tạo tài khoản mới: `123456`; lưu bằng bcrypt, không ghi hash vào báo cáo.
+- Mật khẩu khởi tạo tài khoản mới: `[REDACTED]`; lưu bằng bcrypt, không ghi hash vào báo cáo.
 - Không có trường `mustChangePassword` trong schema hiện tại; đây là rủi ro cần migration riêng nếu muốn bắt đổi mật khẩu lần đầu.
 - Không tự động tạo tài khoản cho cán bộ ban, kỹ thuật hoặc bảo vệ.
 

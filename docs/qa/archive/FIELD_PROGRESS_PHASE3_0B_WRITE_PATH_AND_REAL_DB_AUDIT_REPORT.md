@@ -15,7 +15,7 @@ Error: PrismaClientKnownRequestError
 Code: P1001 - DatabaseNotReachable
 Details: Can't reach database server at base
 Service: postgresql-x64-16 is Running but not accepting connections
-Connection String: postgresql://postgres:123456@localhost:5432/construction_erp_v2
+Connection String: postgresql://postgres:[REDACTED]@localhost:5432/construction_erp_v2
 ```
 
 **Impact on Phase 3.0B:**

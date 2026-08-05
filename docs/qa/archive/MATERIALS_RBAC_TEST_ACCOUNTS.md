@@ -11,7 +11,7 @@ Thời gian tạo: 25/06/2026
 - Mã: `TEST-MATERIALS-RBAC`
 
 **Mật khẩu chung:**
-- `Test@123456`
+- `[REDACTED]`
 
 ---
 
@@ -19,18 +19,18 @@ Thời gian tạo: 25/06/2026
 
 | Email | Mật khẩu | Chức vụ tiếng Việt | Quyền kỳ vọng |
 | ----- | -------- | ------------------ | ------------- |
-| `admin.materials@test.local` | Test@123456 | Quản trị hệ thống | Toàn quyền vật tư |
-| `pm.materials@test.local` | Test@123456 | Quản lý dự án | Toàn quyền vật tư |
-| `sitecmd.materials@test.local` | Test@123456 | Chỉ huy công trường | Toàn quyền vật tư |
-| `chief.materials@test.local` | Test@123456 | Chỉ huy trưởng công trình | Toàn quyền vật tư |
-| `assistant.materials@test.local` | Test@123456 | Chỉ huy phó | Toàn quyền vật tư |
-| `qaqc.materials@test.local` | Test@123456 | QA/QC | Chỉ xem |
-| `hse.materials@test.local` | Test@123456 | An toàn lao động | Chỉ xem |
-| `supervisor.materials@test.local` | Test@123456 | Giám sát | Chỉ xem |
-| `viewer.materials@test.local` | Test@123456 | Chỉ xem | Chỉ xem |
-| `guest.materials@test.local` | Test@123456 | User không thuộc công trình | Không thuộc công trình, bị chặn |
-| `director.materials@test.local` | Test@123456 | Giám đốc chưa gán công trình | Giám đốc chưa gán công trình, bị chặn |
-| `accountant.materials@test.local` | Test@123456 | Kế toán được gán chỉ xem | Kế toán chỉ xem |
+| `admin.materials@test.local` | [REDACTED] | Quản trị hệ thống | Toàn quyền vật tư |
+| `pm.materials@test.local` | [REDACTED] | Quản lý dự án | Toàn quyền vật tư |
+| `sitecmd.materials@test.local` | [REDACTED] | Chỉ huy công trường | Toàn quyền vật tư |
+| `chief.materials@test.local` | [REDACTED] | Chỉ huy trưởng công trình | Toàn quyền vật tư |
+| `assistant.materials@test.local` | [REDACTED] | Chỉ huy phó | Toàn quyền vật tư |
+| `qaqc.materials@test.local` | [REDACTED] | QA/QC | Chỉ xem |
+| `hse.materials@test.local` | [REDACTED] | An toàn lao động | Chỉ xem |
+| `supervisor.materials@test.local` | [REDACTED] | Giám sát | Chỉ xem |
+| `viewer.materials@test.local` | [REDACTED] | Chỉ xem | Chỉ xem |
+| `guest.materials@test.local` | [REDACTED] | User không thuộc công trình | Không thuộc công trình, bị chặn |
+| `director.materials@test.local` | [REDACTED] | Giám đốc chưa gán công trình | Giám đốc chưa gán công trình, bị chặn |
+| `accountant.materials@test.local` | [REDACTED] | Kế toán được gán chỉ xem | Kế toán chỉ xem |
 
 ---
 

@@ -12,13 +12,13 @@
 Người dùng bị văng khỏi phiên đăng nhập, trình duyệt điều hướng về URL:
 `/login?reason=session_expired`
 
-Sau đó nhập đúng tài khoản (`daicongtu2910@gmail.com`) và mật khẩu nhưng giao diện lập tức phản hồi thông báo lỗi chung:
+Sau đó nhập đúng tài khoản (`admin@example.com`) và mật khẩu nhưng giao diện lập tức phản hồi thông báo lỗi chung:
 > *"Hệ thống đăng nhập đang gặp sự cố. Vui lòng thử lại hoặc liên hệ quản trị."*
 
 ### 1.2 Kết quả điều tra nguyên nhân gốc rễ (Root Causes)
 
 1. **Nguyên nhân 1: Sai lệch cấu hình Database URL giữa môi trường hệ thống và `.env`**
-   - Cấu hình trong `.env` chỉ định `DATABASE_URL="postgresql://postgres:123456@127.0.0.1:5432/construction_erp_v2_dev?schema=public"`.
+   - Cấu hình trong `.env` chỉ định `DATABASE_URL="postgresql://postgres:[REDACTED]@127.0.0.1:5432/construction_erp_v2_dev?schema=public"`.
    - Tuy nhiên, trên máy chủ PostgreSQL local, cơ sở dữ liệu `construction_erp_v2_dev` **không hề tồn tại** (P1003 DatabaseDoesNotExist). Database chuẩn của sản phẩm đã chạy full 16 migrations là `construction_erp_v2_qa`.
    - Mỗi khi người dùng bấm "Đăng nhập", Prisma Client gửi truy vấn tới DB không tồn tại, phát sinh lỗi kết nối cơ sở dữ liệu (500 Error).
 
@@ -40,8 +40,8 @@ Sau đó nhập đúng tài khoản (`daicongtu2910@gmail.com`) và mật khẩu
 ### 2.1 Cấu hình môi trường `.env`
 Đã cập nhật `.env` kết nối chính xác tới cơ sở dữ liệu `construction_erp_v2_qa`:
 ```env
-DATABASE_URL="postgresql://postgres:123456@127.0.0.1:5432/construction_erp_v2_qa?schema=public"
-QA_DATABASE_URL="postgresql://postgres:123456@127.0.0.1:5432/construction_erp_v2_qa?schema=public"
+DATABASE_URL="postgresql://postgres:[REDACTED]@127.0.0.1:5432/construction_erp_v2_qa?schema=public"
+QA_DATABASE_URL="postgresql://postgres:[REDACTED]@127.0.0.1:5432/construction_erp_v2_qa?schema=public"
 AUTH_SECRET="7d0df714335ae7d984444d9791ecb19ca384d31289fcba2f0ed3b5bbc5d2c4db"
 ```
 

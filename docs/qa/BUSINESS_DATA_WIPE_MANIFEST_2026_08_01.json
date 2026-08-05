@@ -5,7 +5,7 @@
   "databaseUrlMasked": "postgresql://postgres:***@127.0.0.1:5432/construction_erp_v2_qa?schema=public",
   "preservedAdmin": {
     "id": "cmroatu6r0000mowklk61sv56",
-    "email": "daicongtu2910@gmail.com",
+    "email": "admin@example.com",
     "name": "XĐ",
     "role": "ADMIN"
   },

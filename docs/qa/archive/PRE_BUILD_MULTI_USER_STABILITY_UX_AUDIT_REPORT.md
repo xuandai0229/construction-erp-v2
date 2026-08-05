@@ -208,7 +208,7 @@ Script `qa-material-requests-crud-test.ts`: KHÔNG chạy (tạo rác, không cl
 | # | Lỗi |
 |---|------|
 | L1 | Login text "Môi trường Development" |
-| L2 | Default password "Test@123456" trong form tạo TK |
+| L2 | Default password "[REDACTED]" trong form tạo TK |
 
 ---
 

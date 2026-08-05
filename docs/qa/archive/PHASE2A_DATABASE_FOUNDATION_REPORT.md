@@ -34,7 +34,7 @@
 ## 5. Seed Database & Tài Khoản Admin Dev
 - Đã tạo seed script tại `prisma/seed.ts`.
 - Lệnh cấu hình trong `prisma.config.ts` để gọi via `npx tsx`.
-- **Admin**: `admin@construction.local` / Mật khẩu: `123456` (đã hash qua `bcryptjs`).
+- **Admin**: `admin@construction.local` / Mật khẩu: `[REDACTED]` (đã hash qua `bcryptjs`).
 - Chạy seed thành công vào CSDL.
 
 ## 6. Các Thư Viện Nền Tảng (Core Libs)

@@ -318,7 +318,7 @@ Tạo một thư mục ẩn ở root là `.cleanup-quarantine/2026-07-03/`. Mọ
 92. Danh sách cần loại bỏ khỏi production:
 93. Bất kỳ email nào chứa `@test.com` hoặc `@demo.com`.
 94. Bất kỳ tên user nào chứa từ "Admin Dev".
-95. Bất kỳ mật khẩu nào set thành `123456` (Nên force đổi mật khẩu).
+95. Bất kỳ mật khẩu nào set thành `[REDACTED]` (Nên force đổi mật khẩu).
 96. Tổng hợp chi tiết về cách Prisma xử lý xóa mềm:
 97. Các bảng có trường `deletedAt` DateTime?.
 98. Các truy vấn `.findMany` trong code phải luôn có `where: { deletedAt: null }`.

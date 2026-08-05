@@ -17,7 +17,7 @@
 
 ## 3. Xác Thực (Auth Dev)
 - **Cơ chế**: Sử dụng bcryptjs để verify mật khẩu từ bảng User và gán Cookie (`auth_session`) để lưu vết session đơn giản.
-- **Tài khoản test**: `admin@construction.local` / Mật khẩu: `123456`.
+- **Tài khoản test**: `admin@construction.local` / Mật khẩu: `[REDACTED]`.
 - **Pages & APIs**: 
   - `src/app/login/page.tsx`: Trang đăng nhập UI tối giản, hiện đại.
   - `src/app/api/auth/login/route.ts` & `logout/route.ts`: Xử lý session.

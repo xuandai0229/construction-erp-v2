@@ -63,7 +63,7 @@ CRITICAL/HIGH đã phát hiện:
 - Verify HMAC SHA-256 bằng `timingSafeEqual`.
 - Proxy Next.js 16 verify token bằng Web Crypto, reject cookie sai format/tamper/expired.
 - Login page bỏ email/password hardcode và bỏ nhãn development.
-- User create form bỏ default password `Test@123456`, đổi input password sang type `password`.
+- User create form bỏ default password `[REDACTED]`, đổi input password sang type `password`.
 - Tách helper `src/lib/material-request-number.ts`, format `MR-YYYYMMDD-HHmmss-XXXX`, random bằng `crypto.randomBytes`.
 - `createMaterialRequest` dùng retry P2002 tối đa 3 lần qua helper dùng chung.
 - Documents actions/upload/download/page dùng `canAccessProject`/`requireProjectAccessOrRedirect`, kiểm folder/document thuộc đúng project.
@@ -102,9 +102,9 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 Đã bỏ:
 
 - `admin@construction.local` khỏi state mặc định login page.
-- `123456` khỏi state mặc định login page.
+- `[REDACTED]` khỏi state mặc định login page.
 - chữ môi trường development trên login page.
-- default password mẫu `Test@123456` trong form tạo user.
+- default password mẫu `[REDACTED]` trong form tạo user.
 
 Không phát hiện `console.log` password trong UI/app.
 
