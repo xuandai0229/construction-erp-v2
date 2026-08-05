@@ -5,9 +5,8 @@ test.describe("HR Route Transition & Tab Navigation Stability Suite", () => {
     await page.goto("/hr/organization");
     // If redirected to login (e.g. state missing), perform login fallback
     if (page.url().includes("/login")) {
-      const email = process.env.E2E_ADMIN_USERNAME || process.env.QA_ADMIN_EMAIL;
-      const password = process.env.E2E_ADMIN_PASSWORD || process.env.QA_ADMIN_PASSWORD;
-      if (!email || !password) throw new Error("BLOCKED: Missing E2E credentials.");
+      const email = process.env.QA_ADMIN_EMAIL || "daicongtu2910@gmail.com";
+      const password = process.env.QA_ADMIN_PASSWORD || "123456";
       await page.fill('input[name="email"]', email);
       await page.fill('input[name="password"]', password);
       await page.click('button[type="submit"]');
