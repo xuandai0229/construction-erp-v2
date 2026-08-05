@@ -6,7 +6,8 @@ test.describe("HR Route Transition & Tab Navigation Stability Suite", () => {
     // If redirected to login (e.g. state missing), perform login fallback
     if (page.url().includes("/login")) {
       const email = "admin@construction.local";
-      const password = process.env.E2E_ADMIN_PASSWORD || "REDACTED";
+      const password = process.env.E2E_ADMIN_PASSWORD;
+      if (!password) throw new Error("BLOCKED: Missing E2E_ADMIN_PASSWORD environment variable.");
       await page.fill('input[name="email"]', email);
       await page.fill('input[name="password"]', password);
       await page.click('button[type="submit"]');

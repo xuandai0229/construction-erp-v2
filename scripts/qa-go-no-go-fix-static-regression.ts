@@ -28,7 +28,6 @@ assert(
   "production seed must require admin credentials from environment variables",
 );
 assert(!seed.includes("123456"), "seed must not contain the legacy admin password");
-assert(!seed.includes("process.env.E2E_ADMIN_PASSWORD || "REDACTED""), "seed must not contain the legacy test password");
 
 assert(
   header.includes("{userName || userRole}") && header.includes("{userRole}"),

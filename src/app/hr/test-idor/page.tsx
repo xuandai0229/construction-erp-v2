@@ -5,7 +5,8 @@ import TestIdorClient from "./test-idor-client";
 export const dynamic = "force-dynamic";
 
 export default function TestIdorPage() {
-  if (process.env.ENABLE_QA_ROUTES !== "true") {
+  const isQaEnabled = process.env["ENABLE_QA_ROUTES"] === "true";
+  if (!isQaEnabled) {
     notFound();
   }
 

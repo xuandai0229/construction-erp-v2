@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 import * as dotenv from 'dotenv';
-dotenv.config();
+dotenv.config({ path: '.env.e2e.local' });
+dotenv.config(); // fallback to .env for missing vars
 
 export default defineConfig({
   testDir: './scripts/qa',

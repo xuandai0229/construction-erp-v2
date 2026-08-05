@@ -24,8 +24,8 @@ export default async function globalSetup(config: FullConfig) {
     process.env.PLAYWRIGHT_BASE_URL ??
     "http://127.0.0.1:3000";
 
-  const email = process.env.E2E_ADMIN_USERNAME || process.env.QA_ADMIN_EMAIL;
-  const password = process.env.E2E_ADMIN_PASSWORD || process.env.QA_ADMIN_PASSWORD;
+  const email = process.env.E2E_ADMIN_USERNAME || process.env.QA_ADMIN_EMAIL || "admin@construction.local";
+  const password = process.env.E2E_ADMIN_PASSWORD || process.env.SETTINGS_E2E_PASSWORD_ADMIN || process.env.QA_ADMIN_PASSWORD;
 
   if (!email || !password) {
     console.warn(

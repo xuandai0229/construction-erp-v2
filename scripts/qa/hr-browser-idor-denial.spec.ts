@@ -33,8 +33,9 @@ test.describe("HR Phase 0.2.1 — Authenticated Browser IDOR Denial Suite", () =
     });
 
     // 2. Create limited user (OWN_ORGANIZATION_UNIT)
-    const limitedEmail = `limited_${runId}@example.com`;
-    const passwordHash = await bcrypt.hash(process.env.E2E_ADMIN_PASSWORD || "REDACTED", 10);
+    const pass = process.env.E2E_ADMIN_PASSWORD;
+    if (!pass) throw new Error("BLOCKED: Missing E2E_ADMIN_PASSWORD environment variable.");
+    const passwordHash = await bcrypt.hash(pass, 10);
     limitedUser = await prisma.user.create({
       data: {
         email: limitedEmail,
@@ -125,8 +126,9 @@ test.describe("HR Phase 0.2.1 — Authenticated Browser IDOR Denial Suite", () =
     
     // Login as limited user
     await page.goto("/login");
-    await page.fill('input[name="email"]', limitedUser.email);
-    await page.fill('input[name="password"]', process.env.E2E_ADMIN_PASSWORD || "REDACTED");
+    const pass = process.env.E2E_ADMIN_PASSWORD;
+    if (!pass) throw new Error("BLOCKED: Missing E2E_ADMIN_PASSWORD environment variable.");
+    await page.fill('input[name="password"]', pass);
     await page.click('button[type="submit"]');
     await page.waitForURL((url) => !url.pathname.includes("/login"));
 
