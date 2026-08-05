@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import { test } from "vitest";
 import { assertSafeQaDatabase, evaluateQaDatabaseSafety } from "./assert-safe-qa-database";
 import { assertQaDatabaseCreationTarget } from "./create-isolated-qa-database";
 

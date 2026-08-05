@@ -30,6 +30,20 @@ describe("Phase 3 — True Raw HTTP Upload & Storage E2E Test Suite (21 Criteria
     adapter = new PrismaPg(pool);
     prisma = new PrismaClient({ adapter });
     storage = new LocalStorageProvider();
+
+    // Ensure test project and document folder exist
+    let proj = await prisma.project.findFirst();
+    if (!proj) {
+      proj = await prisma.project.create({
+        data: { name: `Test Project ${testRunId}`, code: `PRJ_${Date.now()}` },
+      });
+    }
+    let folder = await prisma.documentFolder.findFirst({ where: { projectId: proj.id } });
+    if (!folder) {
+      await prisma.documentFolder.create({
+        data: { name: `Test Folder ${testRunId}`, projectId: proj.id },
+      });
+    }
   });
 
   afterAll(async () => {

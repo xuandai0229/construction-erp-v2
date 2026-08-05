@@ -30,6 +30,20 @@ describe("Phase 7 — Storage & Upload E2E Integration Tests", () => {
     adapter = new PrismaPg(pool);
     prisma = new PrismaClient({ adapter });
     storage = new LocalStorageProvider();
+
+    // Ensure test project and document folder exist
+    let proj = await prisma.project.findFirst();
+    if (!proj) {
+      proj = await prisma.project.create({
+        data: { name: `Test Project ${Date.now()}`, code: `PRJ_${Date.now()}` },
+      });
+    }
+    let folder = await prisma.documentFolder.findFirst({ where: { projectId: proj.id } });
+    if (!folder) {
+      await prisma.documentFolder.create({
+        data: { name: `Test Folder ${Date.now()}`, projectId: proj.id },
+      });
+    }
   });
 
   afterAll(async () => {

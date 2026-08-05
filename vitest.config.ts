@@ -10,13 +10,12 @@ export default defineConfig({
   test: {
     environment: "node",
     globals: true,
-    include: ["src/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "scripts/qa/**/*.test.ts"],
     exclude: [
       "**/*.spec.ts",
       "src/lib/documents/**",
       "src/lib/notifications/**",
       "src/lib/reports/**",
-      "scripts/**",
       "tests/**",
       "node_modules/**",
       "dist/**",

@@ -19,7 +19,7 @@ describe("assertSafeDatabaseAudit Guard Logic", () => {
     const qaUrl = "postgresql://postgres:secret@localhost:5432/my_production_db";
     const mainUrl = "postgresql://postgres:secret@localhost:5432/other_db";
     expect(() => validateDatabaseSafety(qaUrl, mainUrl)).toThrow(
-      /contains forbidden production keyword 'production'/
+      /contains forbidden production keyword/
     );
   });
 

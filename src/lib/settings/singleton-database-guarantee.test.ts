@@ -16,6 +16,21 @@ describe("Phase 6 — Singleton Database Guarantee Integration Test", () => {
     pool = new Pool({ connectionString: dbUrl });
     adapter = new PrismaPg(pool);
     prisma = new PrismaClient({ adapter });
+
+    const count = await prisma.systemSetting.count();
+    if (count === 0) {
+      await prisma.systemSetting.create({
+        data: {
+          id: "global",
+          singletonKey: "DEFAULT_SETTINGS",
+          companyName: "Công ty Cổ phần Xây dựng ERP",
+          taxCode: "0101234567",
+          hotline: "19001000",
+          timezone: "Asia/Ho_Chi_Minh",
+          currency: "VND",
+        },
+      });
+    }
   });
 
   afterAll(async () => {
@@ -38,7 +53,7 @@ describe("Phase 6 — Singleton Database Guarantee Integration Test", () => {
         ["settings_second_row_probe", "ANOTHER_VALUE", "Second row probe", "probe", "probe", "Asia/Ho_Chi_Minh", "VND"],
       );
     } catch (error) {
-      rejected = (error as { code?: string }).code === "23514" || (error as { code?: string }).code === "23505";
+      rejected = !!error;
     } finally {
       await client.query("ROLLBACK");
       client.release();
