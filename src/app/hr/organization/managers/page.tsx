@@ -9,19 +9,25 @@ import {
   UnitOption,
   EmployeeOption,
 } from "@/components/hr/unit-manager-management-client";
-import { checkHrPermission } from "@/lib/hr/hr-auth-guard";
+import {
+  checkHrPermission,
+  buildManagerAssignmentScopeWhereClause,
+  buildOrganizationUnitScopeWhereClause,
+  buildEmployeeScopeWhereClause,
+} from "@/lib/hr/hr-auth-guard";
 import prisma from "@/lib/prisma";
+import { HrDataScope } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
 export default async function OrganizationManagersPage() {
   const permCheck = await checkHrPermission("hr:employee:read");
-  if (!permCheck.allowed) {
+  if (!permCheck.allowed || permCheck.scope === HrDataScope.NONE) {
     return (
       <HrWorkspaceShell>
         <HrPageHeader
           title="Người quản lý đơn vị"
-          description="Quản lý Trưởng đơn vị, phụ trách phòng ban và lịch sử nhiệm kỳ"
+          description="Quản lý người đứng đầu phòng ban/đơn vị và lịch sử hiệu lực nhiệm kỳ"
         />
         <HrWorkspaceTabs />
         <HrAccessDenied requiredPermission="hr:employee:read" />
@@ -31,8 +37,17 @@ export default async function OrganizationManagersPage() {
 
   const managePerm = await checkHrPermission("hr:organization:manage");
 
+  // Build scoped where clauses
+  const mgrScopeWhere = await buildManagerAssignmentScopeWhereClause(permCheck.context, permCheck.scope);
+  const unitScopeWhere = await buildOrganizationUnitScopeWhereClause(permCheck.context, permCheck.scope);
+  const empScopeWhere = await buildEmployeeScopeWhereClause(permCheck.context, permCheck.scope);
+
+  // If SELF_ONLY, do not load company-wide employee dropdown
+  const isSelfOnly = permCheck.scope === HrDataScope.SELF_ONLY;
+
   const [rawAssignments, rawUnits, rawEmployees] = await Promise.all([
     prisma.organizationUnitManagerAssignment.findMany({
+      where: mgrScopeWhere,
       orderBy: { startDate: "desc" },
       include: {
         organizationUnit: { select: { id: true, name: true, code: true } },
@@ -40,15 +55,23 @@ export default async function OrganizationManagersPage() {
       },
     }),
     prisma.organizationUnit.findMany({
-      where: { isActive: true },
+      where: {
+        ...unitScopeWhere,
+        isActive: true,
+      },
       select: { id: true, code: true, name: true },
       orderBy: { name: "asc" },
     }),
-    prisma.employee.findMany({
-      where: { status: { in: ["ACTIVE", "PROBATION"] } },
-      select: { id: true, code: true, fullName: true },
-      orderBy: { fullName: "asc" },
-    }),
+    isSelfOnly
+      ? Promise.resolve([])
+      : prisma.employee.findMany({
+          where: {
+            ...empScopeWhere,
+            status: { in: ["ACTIVE", "PROBATION"] },
+          },
+          select: { id: true, code: true, fullName: true },
+          orderBy: { fullName: "asc" },
+        }),
   ]);
 
   const assignments: ManagerAssignmentItem[] = rawAssignments.map((a) => ({
@@ -81,7 +104,7 @@ export default async function OrganizationManagersPage() {
         assignments={assignments}
         units={units}
         employees={employees}
-        canManage={managePerm.allowed}
+        canManage={managePerm.allowed && !isSelfOnly}
       />
     </HrWorkspaceShell>
   );

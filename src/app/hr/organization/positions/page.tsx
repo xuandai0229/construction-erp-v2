@@ -15,9 +15,10 @@ export default async function OrganizationPositionsPage() {
     return (
       <HrWorkspaceShell>
         <HrPageHeader
-          title="Danh mục Chức danh"
+          title="Danh mục chức danh"
           description="Quản lý hệ thống chức danh, cấp bậc và định mức vị trí công việc"
         />
+
         <HrWorkspaceTabs />
         <HrAccessDenied requiredPermission="hr:employee:read" />
       </HrWorkspaceShell>
@@ -49,9 +50,10 @@ export default async function OrganizationPositionsPage() {
   return (
     <HrWorkspaceShell>
       <HrPageHeader
-        title="Danh mục Chức danh"
+        title="Danh mục chức danh"
         description="Quản lý hệ thống chức danh, cấp bậc và định mức vị trí công việc trong doanh nghiệp"
       />
+
 
       <HrWorkspaceTabs />
       <OrganizationSubTabs />

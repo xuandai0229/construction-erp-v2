@@ -15,7 +15,7 @@ export default async function globalSetup(config: FullConfig) {
     if (existing && existing.includes("auth_session")) {
       return; // Already authenticated
     }
-  } catch (e) {
+  } catch {
     // Proceed to login
   }
 
@@ -24,8 +24,15 @@ export default async function globalSetup(config: FullConfig) {
     process.env.PLAYWRIGHT_BASE_URL ??
     "http://127.0.0.1:3000";
 
-  let email = process.env.QA_ADMIN_EMAIL || "daicongtu2910@gmail.com";
-  let password = process.env.QA_ADMIN_PASSWORD || "123456";
+  const email = process.env.E2E_ADMIN_USERNAME || process.env.QA_ADMIN_EMAIL;
+  const password = process.env.E2E_ADMIN_PASSWORD || process.env.QA_ADMIN_PASSWORD;
+
+  if (!email || !password) {
+    console.warn(
+      "[QA Setup Warning] E2E_ADMIN_USERNAME / E2E_ADMIN_PASSWORD environment variables are missing. Global setup authentication skipped."
+    );
+    return;
+  }
 
   await fs.mkdir(path.dirname(authPath), { recursive: true });
 
@@ -39,9 +46,11 @@ export default async function globalSetup(config: FullConfig) {
 
     if (response.status() === 200) {
       await context.storageState({ path: authPath });
+    } else {
+      console.warn(`Global setup authentication failed with status ${response.status()}`);
     }
   } catch (err) {
-    console.warn("Global setup login warning:", err);
+    console.warn("Global setup login error:", err);
   } finally {
     await browser.close();
   }

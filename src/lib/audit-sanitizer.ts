@@ -21,6 +21,22 @@ const SENSITIVE_AUDIT_KEYS = [
   "credentials",
   "setcookie",
   "proxyauthorization",
+  // PII & Encrypted Field Keys
+  "identitynumber",
+  "identitynumberencrypted",
+  "identitynumberblindindex",
+  "identitynumberlastdigits",
+  "phone",
+  "phonenumber",
+  "personalemail",
+  "address",
+  "taxcode",
+  "bankaccountnumber",
+
+  "ciphertext",
+  "authtag",
+  "keyversion",
+  "iv",
 ];
 const MAX_DEPTH = 8;
 const MAX_COLLECTION_ITEMS = 100;
@@ -38,7 +54,7 @@ function redactSensitiveString(value: string) {
   return credentialRedacted.length > MAX_STRING_LENGTH ? `${credentialRedacted.slice(0, MAX_STRING_LENGTH)}[TRUNCATED]` : credentialRedacted;
 }
 
-/** Redacts credentials recursively before an audit JSON payload is persisted. Does not mutate its input. */
+/** Redacts credentials and PII recursively before an audit JSON payload is persisted. Does not mutate its input. */
 export function sanitizeAuditData(value: unknown, depth = 0, seen = new WeakSet<object>()): unknown {
   if (value === null || value === undefined) return value;
   if (typeof value === "string") return redactSensitiveString(value);
@@ -68,7 +84,6 @@ function pickAllowlist(raw: unknown, allowlist: string[]): Record<string, unknow
       if (val instanceof Date) {
         result[key] = val.toISOString();
       } else if (typeof val === "object" && val !== null) {
-        // Redact any nested objects unless explicitly handled
         result[key] = sanitizeAuditData(val);
       } else {
         result[key] = val;
@@ -100,6 +115,7 @@ export function sanitizeManagerAssignmentAudit(raw: unknown): Record<string, unk
     "endDate",
     "isPrimary",
     "decisionNo",
+    "decisionNumber",
     "result",
   ];
   return pickAllowlist(raw, allowlist);
@@ -114,6 +130,7 @@ export function sanitizeEmployeeTransferAudit(raw: unknown): Record<string, unkn
     "previousPositionId",
     "newPositionId",
     "effectiveDate",
+    "decisionNo",
     "decisionNumber",
     "result",
   ];

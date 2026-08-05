@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import {
@@ -25,18 +26,79 @@ import { EmployeeTransferDialog } from "@/components/hr/employee-transfer-dialog
 import { cn } from "@/lib/utils";
 import { EmployeeStatus } from "@prisma/client";
 
+export interface EmployeeDto {
+  id: string;
+  code: string;
+  fullName: string;
+  joinedDate: string | Date;
+  status: EmployeeStatus | string;
+  phoneNumber?: string | null;
+  personalEmail?: string | null;
+  address?: string | null;
+  dateOfBirth?: string | Date | null;
+  gender?: string | null;
+  maskedIdentityNumber?: string | null;
+  identityNumberLastDigits?: string | null;
+  resignedDate?: string | Date | null;
+  notes?: string | null;
+  user?: {
+    id: string;
+    name: string;
+    email: string | null;
+    username?: string | null;
+    role: string;
+  } | null;
+}
+
+export interface OrganizationAssignmentDto {
+  id: string;
+  organizationUnitId: string;
+  positionId: string;
+  startDate: string | Date;
+  endDate?: string | Date | null;
+  isPrimary: boolean;
+  decisionNo?: string | null;
+  organizationUnit?: { id: string; code: string; name: string };
+  position?: { id: string; code: string; title: string };
+}
+
+export interface ProjectAssignmentDto {
+  id: string;
+  projectId: string;
+  projectPersonnelRoleId?: string;
+  roleId?: string;
+  startDate: string | Date;
+  endDate?: string | Date | null;
+  allocationPercentage?: number;
+  status: string;
+  project?: { id: string; code: string; name: string };
+  projectPersonnelRole?: { id: string; code: string; name: string };
+  role?: { id: string; name: string };
+}
+
+export interface ChangeHistoryDto {
+  id: string;
+  changeType: string;
+  createdAt: string | Date;
+  effectiveDate?: string | Date;
+  decisionNo?: string | null;
+  reason?: string | null;
+  performedBy?: { id?: string; name: string; email: string | null } | null;
+}
+
 interface EmployeeDetailViewProps {
-  employee: any;
-  organizationAssignments: any[];
-  projectAssignments: any[];
-  changeHistory: any[];
-  unlinkedUsers: { id: string; name: string; email: string }[];
+  employee: EmployeeDto;
+  organizationAssignments: OrganizationAssignmentDto[];
+  projectAssignments: ProjectAssignmentDto[];
+  changeHistory: ChangeHistoryDto[];
+  unlinkedUsers: { id: string; name: string; email: string | null }[];
   allUnits?: { id: string; code: string; name: string }[];
   allPositions?: { id: string; code: string; title: string }[];
   canUpdate: boolean;
   canArchive: boolean;
   canReadSensitive: boolean;
 }
+
 
 const STATUS_CONFIG: Record<string, { label: string; style: string }> = {
   ACTIVE: { label: "Đang làm việc", style: "bg-emerald-50 text-emerald-700 border-emerald-200" },
@@ -65,9 +127,11 @@ export function EmployeeDetailView({
   canArchive,
   canReadSensitive,
 }: EmployeeDetailViewProps) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<
     "info" | "org_history" | "projects" | "history" | "user_link" | "unimplemented"
   >("info");
+
   const [unimplementedTitle, setUnimplementedTitle] = useState("");
   const [showTransferModal, setShowTransferModal] = useState(false);
 
@@ -96,8 +160,15 @@ export function EmployeeDetailView({
   const [linking, setLinking] = useState(false);
   const [linkError, setLinkError] = useState<string | null>(null);
 
-  const statusCfg = STATUS_CONFIG[employee.status] || { label: employee.status, style: "bg-slate-100 text-slate-700 border-slate-200" };
-  const primaryAssignment = organizationAssignments.find((a) => a.isPrimary && !a.endDate) || organizationAssignments[0];
+  const now = new Date();
+  const primaryAssignment =
+    organizationAssignments.find(
+      (a) =>
+        a.isPrimary &&
+        new Date(a.startDate) <= now &&
+        (!a.endDate || new Date(a.endDate) > now)
+    ) || organizationAssignments[0];
+
 
   const handleRevealIdentity = async () => {
     if (revealedIdentity) {
@@ -134,7 +205,7 @@ export function EmployeeDetailView({
     }
 
     setShowArchiveModal(false);
-    window.location.reload();
+    router.refresh();
   };
 
   const handleLinkSubmit = async (e: React.FormEvent) => {
@@ -150,12 +221,60 @@ export function EmployeeDetailView({
     }
 
     setShowLinkModal(false);
-    window.location.reload();
+    router.refresh();
   };
 
   const openUnimplementedTab = (title: string) => {
     setUnimplementedTitle(title);
     setActiveTab("unimplemented");
+  };
+
+  useEffect(() => {
+    if (revealedIdentity) {
+      const timer = setTimeout(() => {
+        setRevealedIdentity(null);
+      }, 30000);
+      return () => clearTimeout(timer);
+    }
+  }, [revealedIdentity]);
+
+  useEffect(() => {
+    setRevealedIdentity(null);
+  }, [activeTab]);
+
+  const mapChangeTypeToVietnamese = (type: string) => {
+    const map: Record<string, string> = {
+      EMPLOYEE_CREATED: "Tạo mới hồ sơ",
+      EMPLOYEE_PROFILE_UPDATED: "Cập nhật hồ sơ",
+      EMPLOYEE_ORGANIZATION_TRANSFERRED: "Điều chuyển phòng ban",
+      EMPLOYEE_POSITION_CHANGED: "Thay đổi chức danh",
+      EMPLOYEE_PROJECT_ASSIGNED: "Phân công dự án",
+      EMPLOYEE_PROJECT_RELEASED: "Rút khỏi dự án",
+      EMPLOYMENT_STATUS_CHANGED: "Thay đổi trạng thái làm việc",
+      ACCESS_GRANTED: "Cấp quyền truy cập",
+      ACCESS_REVOKED: "Thu hồi quyền truy cập",
+    };
+    return map[type] || type;
+  };
+
+  const mapRoleToVietnamese = (role: string) => {
+    const map: Record<string, string> = {
+      ADMIN: "Quản trị viên hệ thống",
+      DIRECTOR: "Giám đốc",
+      DEPUTY_DIRECTOR: "Phó Giám đốc",
+      CHIEF_COMMANDER: "Chỉ huy trưởng",
+      MANAGER: "Trưởng phòng / Quản lý",
+      ENGINEER: "Kỹ sư",
+      STAFF: "Nhân viên",
+      SUPERVISION_HEAD: "Trưởng đoàn giám sát",
+      CONSTRUCTION_SUPERVISOR: "Giám sát viên",
+    };
+    return map[role] || role;
+  };
+
+  const statusCfg = STATUS_CONFIG[employee.status] || {
+    label: employee.status,
+    style: "bg-slate-100 text-slate-700 border-slate-200",
   };
 
   return (
@@ -193,7 +312,7 @@ export function EmployeeDetailView({
                 <div className="flex items-center gap-1.5">
                   <Link2 className="w-3.5 h-3.5 text-slate-400" />
                   <span>
-                    Tài khoản: {employee.user?.name ? `${employee.user.name} (${employee.user.email})` : "Chưa liên kết"}
+                    Tài khoản: {employee.user?.name ? `${employee.user.name} (${employee.user.email || ""})` : "Chưa liên kết"}
                   </span>
                 </div>
               </div>
@@ -432,7 +551,7 @@ export function EmployeeDetailView({
 
               <div className="p-3 bg-slate-50 rounded-lg text-xs text-slate-500 space-y-1 border border-slate-100">
                 <p className="font-semibold text-slate-700">
-                  Chính sách bảo mật PII và Nhật ký an ninh:
+                  Chính sách bảo vệ thông tin cá nhân và Nhật ký an ninh:
                 </p>
                 <p>
                   • Thông tin nhận dạng được mã hóa và bảo vệ trong hệ thống.
@@ -455,7 +574,7 @@ export function EmployeeDetailView({
 
           <div className="relative border-l-2 border-slate-200 ml-4 pl-6 space-y-6">
             {organizationAssignments.map((assign) => {
-              const isActive = !assign.endDate;
+              const isActive = !assign.endDate || new Date(assign.endDate) > new Date();
               return (
                 <div key={assign.id} className="relative">
                   <div
@@ -562,7 +681,7 @@ export function EmployeeDetailView({
       {activeTab === "history" && (
         <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-4">
           <h3 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">
-            Nhật ký biến động hồ sơ nhân viên (Audit History)
+            Nhật ký thay đổi hồ sơ
           </h3>
 
           <div className="space-y-3">
@@ -572,7 +691,7 @@ export function EmployeeDetailView({
                 className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-1"
               >
                 <div className="flex items-center justify-between font-semibold text-slate-900">
-                  <span>{log.changeType}</span>
+                  <span>{mapChangeTypeToVietnamese(log.changeType)}</span>
                   <span className="text-slate-400 font-mono text-[11px]">
                     {format(new Date(log.createdAt), "dd/MM/yyyy HH:mm:ss")}
                   </span>
@@ -594,7 +713,7 @@ export function EmployeeDetailView({
         <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <Link2 className="w-4 h-4 text-purple-600" /> Tài khoản người dùng liên kết (System Account)
+              <Link2 className="w-4 h-4 text-purple-600" /> Tài khoản hệ thống liên kết
             </h3>
             {canUpdate && (
               <button
@@ -614,7 +733,7 @@ export function EmployeeDetailView({
                   {employee.user.name}
                 </span>
                 <span className="px-2 py-0.5 bg-purple-100 text-purple-800 rounded font-semibold text-[10px]">
-                  Vai trò: {employee.user.role}
+                  Vai trò: {mapRoleToVietnamese(employee.user.role)}
                 </span>
               </div>
               <p className="text-slate-600">Email: {employee.user.email}</p>

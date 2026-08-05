@@ -11,11 +11,12 @@ export const CANONICAL_HR_PERMISSIONS = [
   { code: "hr:employee:update", name: "Cập nhật nhân viên", description: "Quyền chỉnh sửa thông tin nhân viên" },
   { code: "hr:employee:delete", name: "Xóa / Lưu trữ nhân viên", description: "Quyền xóa hoặc vô hiệu hóa nhân viên" },
   { code: "hr:employee:read_sensitive", name: "Xem thông tin nhạy cảm (CCCD/CMND)", description: "Quyền giải mã và xem PII nhạy cảm" },
-  { code: "hr:org_unit:manage", name: "Quản lý sơ đồ tổ chức", description: "Quyền tạo/sửa phòng ban đơn vị" },
+  { code: "hr:organization:manage", name: "Quản lý sơ đồ tổ chức", description: "Quyền tạo/sửa phòng ban đơn vị" },
   { code: "hr:position:manage", name: "Quản lý danh mục chức danh", description: "Quyền cấu hình chức danh" },
   { code: "hr:project_role:manage", name: "Quản lý vai trò dự án", description: "Quyền định nghĩa vai trò nhân sự dự án" },
   { code: "hr:access_grant:manage", name: "Cấp phát phân quyền HR", description: "Quyền ủy quyền và cấp phép HR" },
 ] as const;
+
 
 export interface HrPermissionCheckResult {
   allowed: boolean;
@@ -82,16 +83,22 @@ export async function resolveUserHrPermission(
     };
   }
 
-  // Query all active grants for user and permissionCode
+  const permCodes =
+    permissionCode === "hr:organization:manage" || permissionCode === "hr:org_unit:manage"
+      ? ["hr:organization:manage", "hr:org_unit:manage"]
+      : [permissionCode];
+
+  // Query all active grants for user and permissionCode (including aliases)
   const grants = await prisma.userAccessGrant.findMany({
     where: {
       userId,
-      permissionCode,
+      permissionCode: { in: permCodes },
       revokedAt: null,
       OR: [{ validFrom: null }, { validFrom: { lte: checkTime } }],
       AND: [{ OR: [{ validUntil: null }, { validUntil: { gte: checkTime } }] }],
     },
   });
+
 
   // Explicit DENY overrides everything
   const denyGrant = grants.find((g) => g.effect === GrantEffect.DENY);

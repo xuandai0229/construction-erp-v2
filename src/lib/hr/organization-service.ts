@@ -1,4 +1,9 @@
 import { PrismaClient } from "@prisma/client";
+import {
+  buildEffectiveDateWhere,
+  validateEffectiveDateRange,
+  validateTransferEffectiveDate,
+} from "./effective-date-helper";
 
 export interface CreateOrgUnitInput {
   code: string;
@@ -92,11 +97,14 @@ export async function validateOrgUnitHierarchy(
     }
     visited.add(currId);
 
-    const parentUnit: { parentId: string | null } | null = await prisma.organizationUnit.findUnique({
+    const parentUnit: { parentId: string | null; isActive: boolean } | null = await prisma.organizationUnit.findUnique({
       where: { id: currId },
-      select: { parentId: true },
+      select: { parentId: true, isActive: true },
     });
-    currId = parentUnit?.parentId ?? null;
+    if (!parentUnit || !parentUnit.isActive) {
+      throw new Error("Đơn vị cha không tồn tại hoặc đã bị vô hiệu hóa.");
+    }
+    currId = parentUnit.parentId ?? null;
   }
 }
 
@@ -108,6 +116,12 @@ export async function createOrganizationUnit(
   input: CreateOrgUnitInput
 ) {
   const codeNormalized = input.code.trim().toUpperCase();
+  const nameTrimmed = input.name.trim();
+
+  if (!codeNormalized || !nameTrimmed) {
+    throw new Error("Mã và tên đơn vị tổ chức không được để rỗng.");
+  }
+
   const existingCode = await prisma.organizationUnit.findUnique({
     where: { code: codeNormalized },
   });
@@ -122,9 +136,9 @@ export async function createOrganizationUnit(
   return prisma.organizationUnit.create({
     data: {
       code: codeNormalized,
-      name: input.name.trim(),
+      name: nameTrimmed,
       parentId: input.parentId || null,
-      description: input.description || null,
+      description: input.description?.trim() || null,
       orderIndex: input.orderIndex ?? 0,
     },
   });
@@ -138,6 +152,11 @@ export async function updateOrganizationUnit(
   input: UpdateOrgUnitInput
 ) {
   const codeNormalized = input.code.trim().toUpperCase();
+  const nameTrimmed = input.name.trim();
+
+  if (!codeNormalized || !nameTrimmed) {
+    throw new Error("Mã và tên đơn vị tổ chức không được để rỗng.");
+  }
 
   const currentUnit = await prisma.organizationUnit.findUnique({
     where: { id: input.id },
@@ -168,9 +187,9 @@ export async function updateOrganizationUnit(
     where: { id: input.id },
     data: {
       code: codeNormalized,
-      name: input.name.trim(),
+      name: nameTrimmed,
       parentId: input.parentId || null,
-      description: input.description || null,
+      description: input.description?.trim() || null,
       orderIndex: input.orderIndex ?? currentUnit.orderIndex,
       isActive: input.isActive ?? currentUnit.isActive,
     },
@@ -184,6 +203,7 @@ export async function validateOrgUnitDeactivation(
   prisma: PrismaLike,
   unitId: string
 ): Promise<void> {
+  const now = new Date();
   const activeChildrenCount = await prisma.organizationUnit.count({
     where: { parentId: unitId, isActive: true },
   });
@@ -192,14 +212,20 @@ export async function validateOrgUnitDeactivation(
   }
 
   const activeEmployeesCount = await prisma.employeeOrganizationAssignment.count({
-    where: { organizationUnitId: unitId, endDate: null },
+    where: {
+      organizationUnitId: unitId,
+      ...buildEffectiveDateWhere(now),
+    },
   });
   if (activeEmployeesCount > 0) {
     throw new Error("Không thể vô hiệu hóa đơn vị vì vẫn còn nhân viên đang làm việc.");
   }
 
   const activeManagersCount = await prisma.organizationUnitManagerAssignment.count({
-    where: { organizationUnitId: unitId, endDate: null },
+    where: {
+      organizationUnitId: unitId,
+      ...buildEffectiveDateWhere(now),
+    },
   });
   if (activeManagersCount > 0) {
     throw new Error("Không thể vô hiệu hóa đơn vị vì vẫn còn người quản lý đang đương nhiệm.");
@@ -214,6 +240,18 @@ export async function createPosition(
   input: CreatePositionInput
 ) {
   const codeNormalized = input.code.trim().toUpperCase();
+  const titleTrimmed = input.title.trim();
+
+  if (!codeNormalized || !titleTrimmed) {
+    throw new Error("Mã và tên chức danh không được để rỗng.");
+  }
+
+  if (input.level !== undefined && input.level !== null) {
+    if (input.level < 1 || input.level > 10) {
+      throw new Error("Cấp bậc chức danh (level) phải từ 1 đến 10.");
+    }
+  }
+
   const existing = await prisma.position.findUnique({
     where: { code: codeNormalized },
   });
@@ -224,8 +262,8 @@ export async function createPosition(
   return prisma.position.create({
     data: {
       code: codeNormalized,
-      title: input.title.trim(),
-      description: input.description || null,
+      title: titleTrimmed,
+      description: input.description?.trim() || null,
       level: input.level ?? null,
       isActive: true,
     },
@@ -240,6 +278,18 @@ export async function updatePosition(
   input: UpdatePositionInput
 ) {
   const codeNormalized = input.code.trim().toUpperCase();
+  const titleTrimmed = input.title.trim();
+
+  if (!codeNormalized || !titleTrimmed) {
+    throw new Error("Mã và tên chức danh không được để rỗng.");
+  }
+
+  if (input.level !== undefined && input.level !== null) {
+    if (input.level < 1 || input.level > 10) {
+      throw new Error("Cấp bậc chức danh (level) phải từ 1 đến 10.");
+    }
+  }
+
   const current = await prisma.position.findUnique({
     where: { id: input.id },
   });
@@ -256,16 +306,39 @@ export async function updatePosition(
     }
   }
 
+  if (input.isActive === false && current.isActive === true) {
+    await validatePositionDeactivation(prisma, input.id);
+  }
+
   return prisma.position.update({
     where: { id: input.id },
     data: {
       code: codeNormalized,
-      title: input.title.trim(),
-      description: input.description || null,
+      title: titleTrimmed,
+      description: input.description?.trim() || null,
       level: input.level ?? current.level,
       isActive: input.isActive ?? current.isActive,
     },
   });
+}
+
+/**
+ * Validates whether a Position can be deactivated.
+ */
+export async function validatePositionDeactivation(
+  prisma: PrismaLike,
+  positionId: string
+): Promise<void> {
+  const now = new Date();
+  const activeCount = await prisma.employeeOrganizationAssignment.count({
+    where: {
+      positionId,
+      ...buildEffectiveDateWhere(now),
+    },
+  });
+  if (activeCount > 0) {
+    throw new Error("Không thể vô hiệu hóa chức danh đang được phân công cho nhân viên active.");
+  }
 }
 
 /**
@@ -276,6 +349,9 @@ export async function assignUnitManager(
   input: AssignUnitManagerInput
 ) {
   const executeManagerAssignment = async (tx: PrismaTransactionClient) => {
+    // Row lock on OrganizationUnit to prevent concurrent appointments
+    await tx.$queryRaw`SELECT id FROM "OrganizationUnit" WHERE id = ${input.organizationUnitId} FOR UPDATE`;
+
     const employee = await tx.employee.findUnique({
       where: { id: input.employeeId },
       select: { id: true, fullName: true, status: true },
@@ -294,12 +370,12 @@ export async function assignUnitManager(
     const isPrimary = input.isPrimary ?? true;
 
     if (isPrimary) {
-      // Close previous active primary manager for this unit by setting endDate, preserving isPrimary
+      // Close previous active primary manager for this unit by setting endDate = input.startDate
       await tx.organizationUnitManagerAssignment.updateMany({
         where: {
           organizationUnitId: input.organizationUnitId,
           isPrimary: true,
-          endDate: null,
+          ...buildEffectiveDateWhere(input.startDate),
         },
         data: {
           endDate: input.startDate,
@@ -313,7 +389,7 @@ export async function assignUnitManager(
         employeeId: input.employeeId,
         startDate: input.startDate,
         isPrimary,
-        decisionNo: input.decisionNo || null,
+        decisionNo: input.decisionNo?.trim() || null,
         appointedById: input.appointedById || null,
       },
       include: {
@@ -326,7 +402,7 @@ export async function assignUnitManager(
   };
 
   if (!("$transaction" in prisma)) {
-    return executeManagerAssignment(prisma);
+    return executeManagerAssignment(prisma as any);
   }
   return (prisma as PrismaClient).$transaction(executeManagerAssignment);
 }
@@ -346,6 +422,8 @@ export async function endUnitManagerTerm(
     throw new Error("Lịch sử phân công quản lý không tồn tại.");
   }
 
+  validateEffectiveDateRange(assignment.startDate, endDate, "Ngày kết thúc nhiệm kỳ");
+
   return prisma.organizationUnitManagerAssignment.update({
     where: { id: assignmentId },
     data: {
@@ -362,6 +440,9 @@ export async function transferEmployee(
   input: TransferEmployeeOrgInput
 ) {
   const executeTransfer = async (tx: PrismaTransactionClient) => {
+    // Row lock on Employee to prevent race conditions during transfers
+    await tx.$queryRaw`SELECT id FROM "Employee" WHERE id = ${input.employeeId} FOR UPDATE`;
+
     const employee = await tx.employee.findUnique({
       where: { id: input.employeeId },
       select: { id: true, fullName: true, status: true },
@@ -384,12 +465,12 @@ export async function transferEmployee(
       throw new Error("Chức danh mới không khả dụng.");
     }
 
-    // Get current active primary assignment to record changes
+    // Get current active primary assignment
     const currentPrimary = await tx.employeeOrganizationAssignment.findFirst({
       where: {
         employeeId: input.employeeId,
         isPrimary: true,
-        endDate: null,
+        ...buildEffectiveDateWhere(input.effectiveDate),
       },
       include: {
         organizationUnit: true,
@@ -397,15 +478,27 @@ export async function transferEmployee(
       },
     });
 
+    if (
+      currentPrimary &&
+      currentPrimary.organizationUnitId === input.organizationUnitId &&
+      currentPrimary.positionId === input.positionId
+    ) {
+      throw new Error("Không thể điều chuyển vào chính đơn vị và chức danh hiện tại mà không có thay đổi.");
+    }
+
+    if (currentPrimary) {
+      validateTransferEffectiveDate(currentPrimary.startDate, input.effectiveDate);
+    }
+
     const isOrgUnitChanged = !currentPrimary || currentPrimary.organizationUnitId !== input.organizationUnitId;
     const isPositionChanged = !currentPrimary || currentPrimary.positionId !== input.positionId;
 
-    // Close previous active primary assignment by setting endDate (preserving historical isPrimary)
+    // Close previous active primary assignment by setting endDate = input.effectiveDate
     await tx.employeeOrganizationAssignment.updateMany({
       where: {
         employeeId: input.employeeId,
         isPrimary: true,
-        endDate: null,
+        ...buildEffectiveDateWhere(input.effectiveDate),
       },
       data: {
         endDate: input.effectiveDate,
@@ -420,8 +513,8 @@ export async function transferEmployee(
         positionId: input.positionId,
         startDate: input.effectiveDate,
         isPrimary: true,
-        decisionNo: input.decisionNo || null,
-        notes: input.notes || null,
+        decisionNo: input.decisionNo?.trim() || null,
+        notes: input.notes?.trim() || null,
         createdById: input.performedById,
       },
       include: {
@@ -430,21 +523,29 @@ export async function transferEmployee(
       },
     });
 
-    // Record change history
+    // Correct operator precedence for transfer history reason
+    const transferReason =
+      input.reason?.trim() ||
+      (input.decisionNo ? `Quyết định: ${input.decisionNo.trim()}` : "Điều chuyển phòng ban");
+
+    const positionReason =
+      input.reason?.trim() ||
+      (input.decisionNo ? `Quyết định: ${input.decisionNo.trim()}` : "Thay đổi chức danh");
+
     if (isOrgUnitChanged) {
       await tx.employeeChangeHistory.create({
         data: {
           employeeId: input.employeeId,
           changeType: "EMPLOYEE_ORGANIZATION_TRANSFERRED",
           performedById: input.performedById,
-          reason: input.reason || input.decisionNo ? `Quyết định: ${input.decisionNo || ""}` : "Điều chuyển phòng ban",
+          reason: transferReason,
           details: {
             fromUnitId: currentPrimary?.organizationUnitId || null,
             fromUnitName: currentPrimary?.organizationUnit.name || null,
             toUnitId: input.organizationUnitId,
             toUnitName: targetUnit.name,
             effectiveDate: input.effectiveDate.toISOString(),
-            decisionNo: input.decisionNo || null,
+            decisionNo: input.decisionNo?.trim() || null,
           },
         },
       });
@@ -456,14 +557,14 @@ export async function transferEmployee(
           employeeId: input.employeeId,
           changeType: "EMPLOYEE_POSITION_CHANGED",
           performedById: input.performedById,
-          reason: input.reason || input.decisionNo ? `Quyết định: ${input.decisionNo || ""}` : "Thay đổi chức danh",
+          reason: positionReason,
           details: {
             fromPositionId: currentPrimary?.positionId || null,
             fromPositionTitle: currentPrimary?.position.title || null,
             toPositionId: input.positionId,
             toPositionTitle: targetPosition.title,
             effectiveDate: input.effectiveDate.toISOString(),
-            decisionNo: input.decisionNo || null,
+            decisionNo: input.decisionNo?.trim() || null,
           },
         },
       });
@@ -473,7 +574,7 @@ export async function transferEmployee(
   };
 
   if (!("$transaction" in prisma)) {
-    return executeTransfer(prisma);
+    return executeTransfer(prisma as any);
   }
   return (prisma as PrismaClient).$transaction(executeTransfer);
 }
@@ -491,7 +592,7 @@ export async function assignEmployeeToOrganization(
         where: {
           employeeId: input.employeeId,
           isPrimary: true,
-          endDate: null,
+          ...buildEffectiveDateWhere(input.startDate),
         },
         data: {
           endDate: input.startDate,
@@ -506,8 +607,8 @@ export async function assignEmployeeToOrganization(
         positionId: input.positionId,
         startDate: input.startDate,
         isPrimary: input.isPrimary ?? true,
-        decisionNo: input.decisionNo || null,
-        notes: input.notes || null,
+        decisionNo: input.decisionNo?.trim() || null,
+        notes: input.notes?.trim() || null,
         createdById: input.createdById || null,
       },
     });
@@ -518,7 +619,7 @@ export async function assignEmployeeToOrganization(
           employeeId: input.employeeId,
           changeType: "EMPLOYEE_ORGANIZATION_TRANSFERRED",
           performedById: input.createdById,
-          reason: input.decisionNo ? `Quyết định: ${input.decisionNo}` : "Tạo phân công phòng ban",
+          reason: input.decisionNo ? `Quyết định: ${input.decisionNo.trim()}` : "Tạo phân công phòng ban",
           details: {
             organizationUnitId: input.organizationUnitId,
             positionId: input.positionId,
@@ -532,7 +633,7 @@ export async function assignEmployeeToOrganization(
   };
 
   if (!("$transaction" in prisma)) {
-    return executeAssignment(prisma);
+    return executeAssignment(prisma as any);
   }
   return (prisma as PrismaClient).$transaction(executeAssignment);
 }

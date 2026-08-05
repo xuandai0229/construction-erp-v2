@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createEmployeeAction } from "@/app/hr/employees/actions/employee-actions";
+import { getVietnamTodayDateString } from "@/lib/hr/effective-date-helper";
 import {
   User,
   Shield,
@@ -12,6 +13,8 @@ import {
   ArrowLeft,
   AlertCircle,
   Loader2,
+  PlusCircle,
+  Briefcase,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -31,22 +34,26 @@ export function EmployeeCreateForm({
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const todayStr = getVietnamTodayDateString();
+
   const [formData, setFormData] = useState({
     fullName: "",
     gender: "NAM",
     dateOfBirth: "",
     phoneNumber: "",
     personalEmail: "",
-    joinedDate: new Date().toISOString().split("T")[0],
+    joinedDate: todayStr,
     status: "ACTIVE",
     identityNumber: "",
     organizationUnitId: organizationUnits[0]?.id || "",
     positionId: positions[0]?.id || "",
-    assignmentStartDate: new Date().toISOString().split("T")[0],
+    assignmentStartDate: todayStr,
     decisionNo: "",
     notes: "",
     userId: "",
   });
+
+  const missingPrerequisites = organizationUnits.length === 0 || positions.length === 0;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -55,6 +62,8 @@ export function EmployeeCreateForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (missingPrerequisites) return;
+
     setSubmitting(true);
     setErrorMsg(null);
 
@@ -70,12 +79,48 @@ export function EmployeeCreateForm({
     router.refresh();
   };
 
-  // Check form completion status for summary panel
   const isNameFilled = formData.fullName.trim().length > 0;
   const isUnitFilled = !!formData.organizationUnitId;
   const isPositionFilled = !!formData.positionId;
   const selectedUnitName = organizationUnits.find((u) => u.id === formData.organizationUnitId)?.name || "Chưa chọn";
   const selectedPositionTitle = positions.find((p) => p.id === formData.positionId)?.title || "Chưa chọn";
+
+  if (missingPrerequisites) {
+    return (
+      <div className="bg-white border border-amber-200 rounded-xl p-6 shadow-xs text-center space-y-4 max-w-2xl mx-auto my-8">
+        <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
+          <AlertCircle className="w-6 h-6" />
+        </div>
+        <div className="space-y-2">
+          <h3 className="text-lg font-bold text-slate-900">Yêu cầu khởi tạo danh mục trước khi tiếp tục</h3>
+          <p className="text-sm text-slate-600">
+            Hệ thống cần có ít nhất một <strong>Đơn vị / Phòng ban</strong> và một <strong>Chức danh chuyên môn</strong> đang hoạt động để gán phân công ban đầu cho nhân viên.
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+          {organizationUnits.length === 0 && (
+            <Link
+              href="/hr/organization"
+              className="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
+            >
+              <Building2 className="w-4 h-4" />
+              <span>Khởi tạo Đơn vị / Phòng ban</span>
+            </Link>
+          )}
+          {positions.length === 0 && (
+            <Link
+              href="/hr/organization/positions"
+              className="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
+            >
+              <Briefcase className="w-4 h-4" />
+              <span>Khởi tạo Danh mục Chức danh</span>
+            </Link>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="relative space-y-6">
@@ -104,10 +149,11 @@ export function EmployeeCreateForm({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label htmlFor="fullName" className="block text-xs font-bold text-slate-700 mb-1">
                   Họ và tên <span className="text-rose-500">*</span>
                 </label>
                 <input
+                  id="fullName"
                   type="text"
                   name="fullName"
                   required
@@ -119,10 +165,11 @@ export function EmployeeCreateForm({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label htmlFor="gender" className="block text-xs font-bold text-slate-700 mb-1">
                   Giới tính
                 </label>
                 <select
+                  id="gender"
                   name="gender"
                   value={formData.gender}
                   onChange={handleChange}
@@ -135,10 +182,11 @@ export function EmployeeCreateForm({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label htmlFor="dateOfBirth" className="block text-xs font-bold text-slate-700 mb-1">
                   Ngày sinh
                 </label>
                 <input
+                  id="dateOfBirth"
                   type="date"
                   name="dateOfBirth"
                   value={formData.dateOfBirth}
@@ -148,10 +196,26 @@ export function EmployeeCreateForm({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label htmlFor="joinedDate" className="block text-xs font-bold text-slate-700 mb-1">
+                  Ngày vào công ty <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  id="joinedDate"
+                  type="date"
+                  name="joinedDate"
+                  required
+                  value={formData.joinedDate}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="phoneNumber" className="block text-xs font-bold text-slate-700 mb-1">
                   Số điện thoại
                 </label>
                 <input
+                  id="phoneNumber"
                   type="text"
                   name="phoneNumber"
                   value={formData.phoneNumber}
@@ -162,10 +226,11 @@ export function EmployeeCreateForm({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label htmlFor="personalEmail" className="block text-xs font-bold text-slate-700 mb-1">
                   Email cá nhân
                 </label>
                 <input
+                  id="personalEmail"
                   type="email"
                   name="personalEmail"
                   value={formData.personalEmail}
@@ -176,10 +241,11 @@ export function EmployeeCreateForm({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label htmlFor="status" className="block text-xs font-bold text-slate-700 mb-1">
                   Trạng thái làm việc
                 </label>
                 <select
+                  id="status"
                   name="status"
                   value={formData.status}
                   onChange={handleChange}
@@ -204,18 +270,20 @@ export function EmployeeCreateForm({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
+              <label htmlFor="identityNumber" className="block text-xs font-bold text-slate-700 mb-1">
                 Số CCCD / CMND
               </label>
               <input
+                id="identityNumber"
                 type="text"
                 name="identityNumber"
+                aria-describedby="identityNumber-help"
                 value={formData.identityNumber}
                 onChange={handleChange}
                 placeholder="Nhập 9 hoặc 12 số CCCD / CMND..."
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
               />
-              <p className="text-xs text-slate-500 mt-1">
+              <p id="identityNumber-help" className="text-xs text-slate-500 mt-1">
                 Thông tin nhận dạng được mã hóa và bảo vệ trong hệ thống.
               </p>
             </div>
@@ -232,10 +300,11 @@ export function EmployeeCreateForm({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label htmlFor="organizationUnitId" className="block text-xs font-bold text-slate-700 mb-1">
                   Đơn vị / Phòng ban <span className="text-rose-500">*</span>
                 </label>
                 <select
+                  id="organizationUnitId"
                   name="organizationUnitId"
                   required
                   value={formData.organizationUnitId}
@@ -251,10 +320,11 @@ export function EmployeeCreateForm({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label htmlFor="positionId" className="block text-xs font-bold text-slate-700 mb-1">
                   Chức danh ban đầu <span className="text-rose-500">*</span>
                 </label>
                 <select
+                  id="positionId"
                   name="positionId"
                   required
                   value={formData.positionId}
@@ -270,10 +340,11 @@ export function EmployeeCreateForm({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label htmlFor="assignmentStartDate" className="block text-xs font-bold text-slate-700 mb-1">
                   Ngày bắt đầu phân công
                 </label>
                 <input
+                  id="assignmentStartDate"
                   type="date"
                   name="assignmentStartDate"
                   value={formData.assignmentStartDate}
@@ -283,10 +354,11 @@ export function EmployeeCreateForm({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label htmlFor="decisionNo" className="block text-xs font-bold text-slate-700 mb-1">
                   Số quyết định tiếp nhận
                 </label>
                 <input
+                  id="decisionNo"
                   type="text"
                   name="decisionNo"
                   value={formData.decisionNo}
@@ -308,10 +380,11 @@ export function EmployeeCreateForm({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">
+              <label htmlFor="userId" className="block text-xs font-bold text-slate-700 mb-1">
                 Chọn tài khoản hệ thống chưa liên kết
               </label>
               <select
+                id="userId"
                 name="userId"
                 value={formData.userId}
                 onChange={handleChange}
@@ -333,7 +406,7 @@ export function EmployeeCreateForm({
 
         {/* Right Column (4 cols): Summary Card & Completion Checklist */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="sticky top-6 bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-4">
+          <div className="static lg:sticky lg:top-6 bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-4">
             <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3">
               Tóm tắt hồ sơ tạo mới
             </h3>
@@ -370,7 +443,7 @@ export function EmployeeCreateForm({
               <div className="flex justify-between items-center py-1">
                 <span className="text-slate-500">Mã NV tự động:</span>
                 <span className="font-mono text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded text-[11px] font-bold">
-                  NV-2026-XXXX
+                  Mã được tạo tự động sau khi lưu
                 </span>
               </div>
             </div>
@@ -399,10 +472,10 @@ export function EmployeeCreateForm({
       </div>
 
       {/* Sticky Bottom Action Bar */}
-      <div className="sticky bottom-4 z-30 bg-white/95 backdrop-blur-xs border border-slate-200 p-4 rounded-xl shadow-lg flex items-center justify-between gap-4">
+      <div className="sticky bottom-4 z-30 bg-white/95 backdrop-blur-xs border border-slate-200 p-4 rounded-xl shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
         <Link
           href="/hr/employees"
-          className="px-4 py-2 border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 shrink-0"
+          className="w-full sm:w-auto px-4 py-2 border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 shrink-0"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Hủy bỏ</span>
@@ -411,8 +484,8 @@ export function EmployeeCreateForm({
         <button
           type="submit"
           id="btn-submit-employee-form"
-          disabled={submitting}
-          className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-xs transition-colors flex items-center gap-2 disabled:opacity-50 shrink-0"
+          disabled={submitting || missingPrerequisites}
+          className="w-full sm:w-auto px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-xs transition-colors flex items-center justify-center gap-2 disabled:opacity-50 shrink-0"
         >
           {submitting ? (
             <>

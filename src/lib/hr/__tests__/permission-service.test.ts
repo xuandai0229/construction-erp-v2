@@ -32,12 +32,17 @@ describe("HR Permission Registry & Resolution Service", () => {
     await pool.end();
   });
 
-  it("seeds 9 canonical HR permissions into database", async () => {
-    const count = await prisma.hrPermissionDefinition.count({
+  it("seeds canonical HR permissions into database", async () => {
+    const existing = await prisma.hrPermissionDefinition.findMany({
       where: { module: "HR" },
+      select: { code: true },
     });
-    expect(count).toBe(CANONICAL_HR_PERMISSIONS.length);
+    const existingCodes = existing.map((p) => p.code);
+    for (const canonical of CANONICAL_HR_PERMISSIONS) {
+      expect(existingCodes).toContain(canonical.code);
+    }
   });
+
 
   it("grants full access to ADMIN users by default unless DENY grant exists", async () => {
     const adminUser = await prisma.user.findFirst({

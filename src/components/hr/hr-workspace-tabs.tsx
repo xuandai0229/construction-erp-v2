@@ -50,15 +50,19 @@ export function HrWorkspaceTabs() {
           return (
             <Link
               key={tab.id}
+              id={`hr-tab-${tab.id}`}
               ref={isActive ? activeTabRef : null}
               href={tab.href}
+              aria-current={isActive ? "page" : undefined}
               onFocus={(e) => {
+
                 e.currentTarget.scrollIntoView({
                   behavior: "smooth",
                   block: "nearest",
                   inline: "nearest",
                 });
               }}
+
               className={cn(
                 "flex min-h-10 shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold whitespace-nowrap scroll-mx-2 transition-colors focus:outline-hidden focus:ring-2 focus:ring-blue-500",
                 isActive
