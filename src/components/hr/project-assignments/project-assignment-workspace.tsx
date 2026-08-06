@@ -115,7 +115,7 @@ export function ProjectAssignmentWorkspace({
     <HrWorkspaceShell>
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-4 right-4 z-50 bg-emerald-700 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 text-xs font-semibold animate-in slide-in-from-top-2 duration-200">
+        <div className="fixed top-4 right-4 z-50 bg-emerald-700 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 text-sm font-semibold animate-in slide-in-from-top-2 duration-200">
           <CheckCircle className="w-4 h-4 text-emerald-200" />
           <span>{toastMessage}</span>
         </div>
@@ -186,7 +186,9 @@ export function ProjectAssignmentWorkspace({
           </div>
           <div className="flex items-center gap-2">
             <button
+              type="button"
               disabled={currentPage <= 1 || isPending}
+              aria-label="Trang trước"
               onClick={() => {
                 const params = new URLSearchParams(window.location.search);
                 params.set("page", String(currentPage - 1));
@@ -197,7 +199,9 @@ export function ProjectAssignmentWorkspace({
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
+              type="button"
               disabled={currentPage >= totalPages || isPending}
+              aria-label="Trang sau"
               onClick={() => {
                 const params = new URLSearchParams(window.location.search);
                 params.set("page", String(currentPage + 1));

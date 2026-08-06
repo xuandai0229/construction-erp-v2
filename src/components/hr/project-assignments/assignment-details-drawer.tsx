@@ -54,7 +54,9 @@ export function AssignmentDetailsDrawer({
               <h3 className="text-sm font-bold tracking-tight">Chi tiết điều động nhân sự</h3>
             </div>
             <button
+              type="button"
               onClick={onClose}
+              aria-label="Đóng chi tiết điều động"
               className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
             >
               <X className="w-5 h-5" />

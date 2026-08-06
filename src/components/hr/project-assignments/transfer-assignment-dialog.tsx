@@ -108,6 +108,7 @@ export function TransferAssignmentDialog({
             <button
               onClick={onClose}
               type="button"
+              aria-label="Đóng biểu mẫu thay đổi điều động"
               className="text-purple-100 hover:text-white text-lg font-bold leading-none p-1 rounded-lg hover:bg-purple-700 transition"
             >
               &times;
@@ -117,19 +118,19 @@ export function TransferAssignmentDialog({
           {/* Form */}
           <form onSubmit={(e) => handleSubmit(e, false)} className="p-6 space-y-4 overflow-y-auto">
             {errorMessage && (
-              <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-start gap-2">
+              <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700 flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                 <span>{errorMessage}</span>
               </div>
             )}
 
-            <div className="p-3.5 bg-purple-50 border border-purple-100 rounded-xl text-xs text-purple-900 space-y-1">
+            <div className="p-3.5 bg-purple-50 border border-purple-100 rounded-xl text-sm text-purple-900 space-y-1">
               <p className="font-semibold">{assignment.employeeName} ({assignment.employeeCode})</p>
               <p className="text-purple-700">Công trình: {assignment.projectCode} - {assignment.projectName}</p>
               <p className="text-purple-700">Vai trò hiện tại: {assignment.projectPersonnelRoleName} ({assignment.allocationPercentage}%)</p>
             </div>
 
-            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-start gap-2">
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800 flex items-start gap-2">
               <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <span>
                 Thao tác này sẽ đóng đợt điều động hiện tại tại ngày hiệu lực và tự động tạo đợt điều động mới. Lịch sử phân công được bảo lưu vết đầy đủ.
@@ -138,26 +139,26 @@ export function TransferAssignmentDialog({
 
             {/* Effective Date */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-800">
+              <label className="block text-sm font-semibold text-slate-800">
                 Ngày bắt đầu hiệu lực mới <span className="text-rose-500">*</span>
               </label>
               <input
                 type="date"
                 value={effectiveDate}
                 onChange={(e) => setEffectiveDate(e.target.value)}
-                className="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-hidden"
+                className="w-full text-sm p-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-hidden"
               />
             </div>
 
             {/* Reason */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-800">
+              <label className="block text-sm font-semibold text-slate-800">
                 Lý do điều chỉnh <span className="text-rose-500">*</span>
               </label>
               <select
                 value={endReason}
                 onChange={(e) => setEndReason(e.target.value as EmployeeProjectAssignmentEndReason)}
-                className="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-hidden"
+                className="w-full text-sm p-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-hidden"
               >
                 <option value={EmployeeProjectAssignmentEndReason.ROLE_TRANSFER}>Thay đổi vai trò công trường</option>
                 <option value={EmployeeProjectAssignmentEndReason.ALLOCATION_CHANGE}>Điều chỉnh tỷ lệ phân bổ</option>
@@ -168,7 +169,7 @@ export function TransferAssignmentDialog({
             {/* Grid for New Role and Allocation */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-800">
+                <label className="block text-sm font-semibold text-slate-800">
                   Vai trò mới
                 </label>
                 <EnterpriseCombobox
@@ -183,7 +184,7 @@ export function TransferAssignmentDialog({
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-800">
+                <label className="block text-sm font-semibold text-slate-800">
                   Tỷ lệ phân bổ mới (%)
                 </label>
                 <input
@@ -192,14 +193,14 @@ export function TransferAssignmentDialog({
                   max={100}
                   value={newAllocation}
                   onChange={(e) => setNewAllocation(parseInt(e.target.value, 10) || 0)}
-                  className="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-hidden"
+                  className="w-full text-sm p-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-hidden"
                 />
               </div>
             </div>
 
             {/* Decision Number */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-800">
+              <label className="block text-sm font-semibold text-slate-800">
                 Số quyết định / Văn bản
               </label>
               <input
@@ -207,13 +208,13 @@ export function TransferAssignmentDialog({
                 value={decisionNumber}
                 onChange={(e) => setDecisionNumber(e.target.value)}
                 placeholder="Ví dụ: QĐ-2026/ĐC-02"
-                className="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-hidden"
+                className="w-full text-sm p-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-hidden"
               />
             </div>
 
             {/* Notes */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-800">
+              <label className="block text-sm font-semibold text-slate-800">
                 Ghi chú điều chỉnh
               </label>
               <textarea
@@ -221,7 +222,7 @@ export function TransferAssignmentDialog({
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Ghi chú chi tiết nguyên nhân điều chuyển..."
                 rows={2}
-                className="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-hidden"
+                className="w-full text-sm p-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-hidden"
               />
             </div>
 
@@ -231,14 +232,14 @@ export function TransferAssignmentDialog({
                 type="button"
                 onClick={onClose}
                 disabled={isSubmitting}
-                className="px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 rounded-xl transition"
+                className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-xl transition"
               >
                 Hủy bỏ
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-4 py-2 text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-xs transition flex items-center gap-1.5"
+                className="px-4 py-2 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-xs transition flex items-center gap-1.5"
               >
                 {isSubmitting && (
                   <span className="inline-block animate-spin border-2 border-white border-t-transparent rounded-full w-3.5 h-3.5" />

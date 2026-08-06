@@ -1,11 +1,12 @@
 import { describe, it, expect, beforeAll } from 'vitest';
+import { randomBytes } from 'node:crypto';
 import { createSessionToken, verifySessionToken } from '@/lib/session-token';
 import { resolvePostLoginRoute, getDefaultRouteForRole, canRoleAccessRoute } from '@/lib/roles/role-workspace-policy';
 import type { UserRole } from '@prisma/client';
 
 describe("Auth & Session Token Security Audit Suite", () => {
   beforeAll(() => {
-    process.env.AUTH_SECRET = "7d0df714335ae7d984444d9791ecb19ca384d31289fcba2f0ed3b5bbc5d2c4db";
+    process.env.AUTH_SECRET = process.env.AUTH_SECRET || randomBytes(32).toString('hex');
   });
 
   it("generates and verifies valid session tokens", () => {

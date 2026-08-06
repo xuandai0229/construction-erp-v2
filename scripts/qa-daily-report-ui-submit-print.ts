@@ -10,8 +10,6 @@ import { Pool } from "pg";
 const BASE_URL = process.env.QA_BASE_URL || "http://localhost:3000";
 const PROJECT_CODE = "CT-TAYHO-2026-001";
 const QA_TAG = "QA_DAILY_REPORT_FULL_CLEAN_SUBMIT_PRINT_VERIFY_2026_07_04";
-const PASSWORD = process.env.QA_REPORT_PASSWORD || "xuandai0229";
-const EMAIL = process.env.QA_REPORT_USER || "daicongtu2910@gmail.com";
 const DOC_PATH = path.join(process.cwd(), "docs", "qa", "DAILY_REPORT_UI_SUBMIT_PRINT_VERIFY_2026_07_04.md");
 
 function requireEnv(name: string) {
@@ -19,6 +17,9 @@ function requireEnv(name: string) {
   if (!value) throw new Error(`Missing required environment variable: ${name}`);
   return value;
 }
+
+const PASSWORD = requireEnv("QA_REPORT_PASSWORD");
+const EMAIL = requireEnv("QA_REPORT_USER");
 
 const pool = new Pool({ connectionString: requireEnv("DATABASE_URL") });
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });

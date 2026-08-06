@@ -53,7 +53,7 @@ export function ProjectAssignmentToolbar({
   const statusOptions: EnterpriseComboboxOption[] = [
     { value: "ALL", label: "Tất cả trạng thái" },
     { value: "ACTIVE", label: "Đang hiệu lực" },
-    { value: "PLANNED", label: "Kế hoạch (Tương lai)" },
+    { value: "PLANNED", label: "Kế hoạch" },
     { value: "COMPLETED", label: "Hoàn thành" },
     { value: "RELEASED", label: "Đã rút nhân sự" },
     { value: "CANCELLED", label: "Đã hủy" },
@@ -71,11 +71,13 @@ export function ProjectAssignmentToolbar({
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Tìm theo mã NV, tên nhân sự hoặc số quyết định..."
-            className="w-full text-xs pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-hidden transition"
+            className="w-full text-sm pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-hidden transition"
           />
           {searchQuery && (
             <button
+              type="button"
               onClick={() => onSearchChange("")}
+              aria-label="Xóa nội dung tìm kiếm"
               className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
             >
               <X className="w-3.5 h-3.5" />
@@ -87,8 +89,11 @@ export function ProjectAssignmentToolbar({
         <div className="flex items-center gap-2 shrink-0 justify-between sm:justify-end">
           {/* Mobile Filter Toggle */}
           <button
+            type="button"
             onClick={() => setIsMobileFiltersOpen(!isMobileFiltersOpen)}
-            className="sm:hidden inline-flex items-center gap-1.5 text-xs text-slate-700 bg-slate-100 px-3 py-2 rounded-xl"
+            aria-expanded={isMobileFiltersOpen}
+            aria-controls="hr-assignment-filters"
+            className="sm:hidden inline-flex items-center gap-1.5 text-sm text-slate-700 bg-slate-100 px-3 py-2 rounded-xl"
           >
             <Filter className="w-4 h-4 text-slate-500" />
             <span>Bộ lọc</span>
@@ -102,7 +107,7 @@ export function ProjectAssignmentToolbar({
           {activeFiltersCount > 0 && (
             <button
               onClick={onResetFilters}
-              className="hidden sm:inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-2.5 py-2 rounded-xl transition"
+              className="hidden sm:inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-2.5 py-2 rounded-xl transition"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Xóa bộ lọc ({activeFiltersCount})</span>
@@ -112,7 +117,7 @@ export function ProjectAssignmentToolbar({
           {canCreate && onCreateClick && (
             <button
               onClick={onCreateClick}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2.5 rounded-xl shadow-xs transition shrink-0"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2.5 rounded-xl shadow-xs transition shrink-0"
             >
               <Plus className="w-4 h-4" />
               <span>Tạo điều động</span>
@@ -123,6 +128,7 @@ export function ProjectAssignmentToolbar({
 
       {/* Filter Row (Desktop & Expanded Mobile) */}
       <div
+        id="hr-assignment-filters"
         className={`${
           isMobileFiltersOpen ? "block" : "hidden sm:block"
         } pt-2 border-t border-slate-100 space-y-3`}
@@ -130,7 +136,7 @@ export function ProjectAssignmentToolbar({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {/* Project Combobox */}
           <div>
-            <label className="block text-[11px] font-medium text-slate-500 mb-1">
+            <label className="block text-xs font-semibold text-slate-500 mb-1">
               Công trình / Dự án
             </label>
             <EnterpriseCombobox
@@ -147,7 +153,7 @@ export function ProjectAssignmentToolbar({
 
           {/* Status Combobox */}
           <div>
-            <label className="block text-[11px] font-medium text-slate-500 mb-1">
+            <label className="block text-xs font-semibold text-slate-500 mb-1">
               Trạng thái điều động
             </label>
             <EnterpriseCombobox
@@ -162,7 +168,7 @@ export function ProjectAssignmentToolbar({
             />
           </div>
 
-          <div className="flex items-end justify-between sm:justify-start lg:justify-end text-xs text-slate-500 pb-1">
+          <div className="flex items-end justify-between sm:justify-start lg:justify-end text-sm text-slate-500 pb-1">
             <span>
               Tổng số bản ghi: <strong className="text-slate-900 font-bold">{totalRecords}</strong>
             </span>
@@ -174,7 +180,7 @@ export function ProjectAssignmentToolbar({
           <div className="sm:hidden pt-2 border-t border-slate-100 flex justify-end">
             <button
               onClick={onResetFilters}
-              className="inline-flex items-center gap-1 text-xs text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg"
+              className="inline-flex items-center gap-1 text-sm text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Xóa tất cả bộ lọc ({activeFiltersCount})</span>

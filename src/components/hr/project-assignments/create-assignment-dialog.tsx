@@ -144,6 +144,7 @@ export function CreateAssignmentDialog({
             <button
               onClick={onClose}
               type="button"
+              aria-label="Đóng biểu mẫu tạo điều động"
               className="text-blue-100 hover:text-white text-lg font-bold leading-none p-1 rounded-lg hover:bg-blue-700 transition"
             >
               &times;
@@ -153,7 +154,7 @@ export function CreateAssignmentDialog({
           {/* Form */}
           <form onSubmit={(e) => handleFormSubmit(e, false)} className="p-6 space-y-4 overflow-y-auto">
             {errorMessage && (
-              <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 flex items-start gap-2">
+              <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700 flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                 <span>{errorMessage}</span>
               </div>
@@ -161,7 +162,7 @@ export function CreateAssignmentDialog({
 
             {/* Employee Combobox */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-800">
+              <label className="block text-sm font-semibold text-slate-800">
                 Nhân sự điều động <span className="text-rose-500">*</span>
               </label>
               <EnterpriseCombobox
@@ -178,7 +179,7 @@ export function CreateAssignmentDialog({
             {/* Project & Role Comboboxes */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-800">
+                <label className="block text-sm font-semibold text-slate-800">
                   Công trình / Dự án <span className="text-rose-500">*</span>
                 </label>
                 <EnterpriseCombobox
@@ -193,7 +194,7 @@ export function CreateAssignmentDialog({
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-800">
+                <label className="block text-sm font-semibold text-slate-800">
                   Vai trò công trường <span className="text-rose-500">*</span>
                 </label>
                 <EnterpriseCombobox
@@ -211,31 +212,31 @@ export function CreateAssignmentDialog({
             {/* Dates & Allocation Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-800">
+                <label className="block text-sm font-semibold text-slate-800">
                   Ngày bắt đầu <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-hidden"
+                  className="w-full text-sm p-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-hidden"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-800">
+                <label className="block text-sm font-semibold text-slate-800">
                   Dự kiến kết thúc
                 </label>
                 <input
                   type="date"
                   value={expectedEndDate}
                   onChange={(e) => setExpectedEndDate(e.target.value)}
-                  className="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-hidden"
+                  className="w-full text-sm p-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-hidden"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-slate-800">
+                <label className="block text-sm font-semibold text-slate-800">
                   Tỷ lệ phân bổ (%) <span className="text-rose-500">*</span>
                 </label>
                 <input
@@ -244,14 +245,14 @@ export function CreateAssignmentDialog({
                   max={100}
                   value={allocationPercentage}
                   onChange={(e) => setAllocationPercentage(parseInt(e.target.value, 10) || 0)}
-                  className="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-hidden"
+                  className="w-full text-sm p-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-hidden"
                 />
               </div>
             </div>
 
             {/* Decision Number */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-800">
+              <label className="block text-sm font-semibold text-slate-800">
                 Số quyết định điều động / Văn bản
               </label>
               <input
@@ -259,13 +260,13 @@ export function CreateAssignmentDialog({
                 value={decisionNumber}
                 onChange={(e) => setDecisionNumber(e.target.value)}
                 placeholder="Ví dụ: QĐ-2026/ĐĐ-CT01"
-                className="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-hidden"
+                className="w-full text-sm p-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-hidden"
               />
             </div>
 
             {/* Notes */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-800">
+              <label className="block text-sm font-semibold text-slate-800">
                 Ghi chú bổ sung
               </label>
               <textarea
@@ -273,7 +274,7 @@ export function CreateAssignmentDialog({
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Nhập chi tiết nhiệm vụ hoặc yêu cầu công tác..."
                 rows={2}
-                className="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-hidden"
+                className="w-full text-sm p-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-hidden"
               />
             </div>
 
@@ -283,14 +284,14 @@ export function CreateAssignmentDialog({
                 type="button"
                 onClick={onClose}
                 disabled={isSubmitting}
-                className="px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 rounded-xl transition"
+                className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-xl transition"
               >
                 Hủy bỏ
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs transition flex items-center gap-1.5"
+                className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs transition flex items-center gap-1.5"
               >
                 {isSubmitting && (
                   <span className="inline-block animate-spin border-2 border-white border-t-transparent rounded-full w-3.5 h-3.5" />

@@ -7,14 +7,14 @@ import { Pool } from "pg";
 
 const BASE_URL = process.env.QA_BASE_URL || "http://localhost:3000";
 const PROJECT_CODE = "CT-TAYHO-2026-001";
-const EMAIL = process.env.QA_REPORT_USER || "daicongtu2910@gmail.com";
-const PASSWORD = process.env.QA_REPORT_PASSWORD || "xuandai0229";
-
 function requireEnv(name: string) {
   const value = process.env[name]?.trim();
   if (!value) throw new Error(`Missing required environment variable: ${name}`);
   return value;
 }
+
+const EMAIL = requireEnv("QA_REPORT_USER");
+const PASSWORD = requireEnv("QA_REPORT_PASSWORD");
 
 const pool = new Pool({ connectionString: requireEnv("DATABASE_URL") });
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });

@@ -65,7 +65,7 @@ export function AllocationOverlapDialog({
             <h3 className="text-base font-bold text-amber-950">
               Cảnh báo Vượt Định mức Phân bổ (Allocation Overlap)
             </h3>
-            <p className="text-xs text-amber-800 mt-1">
+            <p className="text-sm text-amber-800 mt-1">
               Tổng tỷ lệ phân bổ của nhân sự trong thời gian công tác vượt quá 100%.
             </p>
           </div>
@@ -78,7 +78,7 @@ export function AllocationOverlapDialog({
           </div>
 
           {!canOverride ? (
-            <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-3 text-rose-800 text-xs">
+            <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-3 text-rose-800 text-sm">
               <Lock className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
               <div>
                 <p className="font-semibold text-rose-900">Không có quyền ghi đè ngoại lệ</p>
@@ -92,11 +92,11 @@ export function AllocationOverlapDialog({
               <div className="flex items-center justify-between">
                 <label
                   htmlFor="overrideReasonInput"
-                  className="block text-xs font-semibold text-slate-800 uppercase tracking-wider"
+                  className="block text-sm font-semibold text-slate-800 uppercase tracking-wider"
                 >
                   Lý do giải trình phê duyệt ngoại lệ <span className="text-rose-500">*</span>
                 </label>
-                <span className="text-xs text-slate-500">Tối thiểu 10 ký tự</span>
+                <span className="text-sm text-slate-500">Tối thiểu 10 ký tự</span>
               </div>
               <textarea
                 id="overrideReasonInput"
@@ -107,10 +107,10 @@ export function AllocationOverlapDialog({
                 }}
                 placeholder="Ví dụ: Phê duyệt phân công 120% cho Dự án khẩn cấp quốc gia theo Quyết định số QD-2026/PĐ..."
                 rows={3}
-                className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-hidden transition"
+                className="w-full text-sm p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-hidden transition"
               />
               {validationError && (
-                <p className="text-xs font-medium text-rose-600 flex items-center gap-1">
+                <p className="text-sm font-medium text-rose-600 flex items-center gap-1">
                   <XCircle className="w-3.5 h-3.5 shrink-0" />
                   {validationError}
                 </p>
@@ -124,7 +124,7 @@ export function AllocationOverlapDialog({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 rounded-xl transition"
+              className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-xl transition"
             >
               Quay lại chỉnh sửa
             </button>
@@ -133,7 +133,7 @@ export function AllocationOverlapDialog({
                 type="submit"
                 disabled={isSubmitting || overrideReason.trim().length < 10}
                 className={cn(
-                  "px-4 py-2 text-xs font-semibold text-white rounded-xl shadow-xs transition flex items-center gap-1.5",
+                  "px-4 py-2 text-sm font-semibold text-white rounded-xl shadow-xs transition flex items-center gap-1.5",
                   overrideReason.trim().length >= 10
                     ? "bg-amber-600 hover:bg-amber-700"
                     : "bg-slate-300 cursor-not-allowed"

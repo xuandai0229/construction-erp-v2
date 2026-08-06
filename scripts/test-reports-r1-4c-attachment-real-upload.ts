@@ -3,6 +3,8 @@ import fs from 'fs/promises';
 import path from 'path';
 
 async function runTest() {
+  const password = process.env.QA_REPORT_PASSWORD;
+  if (!password) throw new Error("QA_REPORT_PASSWORD is required; hardcoded credentials are prohibited.");
   console.log('--- BẮT ĐẦU TEST UPLOAD QUA HTTP ---');
   try {
     const project = await prisma.project.findFirst({ where: { deletedAt: null } });
@@ -41,7 +43,7 @@ async function runTest() {
     const loginRes = await fetch('http://localhost:3000/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'daicongtu2910@gmail.com', password: 'xuandai0229' })
+      body: JSON.stringify({ email: process.env.QA_REPORT_USER, password })
     });
     
     if (!loginRes.ok) throw new Error("Login failed");

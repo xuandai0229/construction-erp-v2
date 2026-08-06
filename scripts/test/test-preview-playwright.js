@@ -3,6 +3,8 @@ const fs = require('fs');
 const path = require('path');
 
 (async () => {
+  const password = process.env.QA_REPORT_PASSWORD;
+  if (!password) throw new Error('QA_REPORT_PASSWORD is required; hardcoded credentials are prohibited.');
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -10,7 +12,7 @@ const path = require('path');
   console.log("Navigating to login...");
   await page.goto('http://localhost:3000/login');
   await page.fill('input[type="email"]', 'daicongtu2910@gmail.com');
-  await page.fill('input[type="password"]', 'xuandai0229');
+  await page.fill('input[type="password"]', password);
   await page.click('button[type="submit"]');
   await page.waitForURL('**/reports');
 

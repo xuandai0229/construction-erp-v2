@@ -10,8 +10,9 @@ import { Pool } from "pg";
 const BASE_URL = process.env.QA_BASE_URL || "http://localhost:3000";
 const PROJECT_CODE = "CT-TAYHO-2026-001";
 const QA_TAG = "QA_DAILY_REPORT_FULL_CLEAN_SUBMIT_PRINT_VERIFY_2026_07_04";
-const EMAIL = process.env.QA_REPORT_USER || "daicongtu2910@gmail.com";
-const PASSWORD = process.env.QA_REPORT_PASSWORD || "xuandai0229";
+const EMAIL = process.env.QA_REPORT_USER;
+const PASSWORD = process.env.QA_REPORT_PASSWORD;
+if (!EMAIL || !PASSWORD) throw new Error("QA_REPORT_USER and QA_REPORT_PASSWORD are required; hardcoded credentials are prohibited.");
 const DOC_PATH = path.join(process.cwd(), "docs", "qa", "WEEKLY_REPORT_UI_SUBMIT_PRINT_VERIFY_2026_07_04.md");
 
 function requireEnv(name: string) {
