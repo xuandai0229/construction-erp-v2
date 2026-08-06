@@ -10,6 +10,7 @@ import {
 } from "@/app/hr/project-assignments/actions/project-assignment-actions";
 import { AllocationOverlapDialog } from "./allocation-overlap-dialog";
 import { EnterpriseCombobox, EnterpriseComboboxOption } from "@/components/ui/enterprise-combobox";
+import { HrDialogShell } from "../hr-dialog-shell";
 
 interface CreateAssignmentDialogProps {
   isOpen: boolean;
@@ -35,7 +36,7 @@ export function CreateAssignmentDialog({
   const [roleId, setRoleId] = useState("");
   const [startDate, setStartDate] = useState(new Date().toISOString().split("T")[0]);
   const [expectedEndDate, setExpectedEndDate] = useState("");
-  const [allocationPercentage, setAllocationPercentage] = useState<number>(100);
+  const [allocationPercentage, setAllocationPercentage] = useState<number | "">("");
   const [decisionNumber, setDecisionNumber] = useState("");
   const [notes, setNotes] = useState("");
 
@@ -90,7 +91,8 @@ export function CreateAssignmentDialog({
     if (!projectId) return setErrorMessage("Vui lòng chọn công trình / dự án");
     if (!roleId) return setErrorMessage("Vui lòng chọn vai trò công trường");
     if (!startDate) return setErrorMessage("Vui lòng chọn ngày bắt đầu điều động");
-    if (allocationPercentage < 1 || allocationPercentage > 100) {
+    const allocation = Number(allocationPercentage);
+    if (!Number.isInteger(allocation) || allocation < 1 || allocation > 100) {
       return setErrorMessage("Tỷ lệ phân bổ phải từ 1% đến 100%");
     }
     if (expectedEndDate && expectedEndDate < startDate) {
@@ -105,7 +107,7 @@ export function CreateAssignmentDialog({
         projectPersonnelRoleId: roleId,
         startDate,
         expectedEndDate: expectedEndDate || undefined,
-        allocationPercentage,
+        allocationPercentage: allocation,
         decisionNumber: decisionNumber || undefined,
         notes: notes || undefined,
         allowOverlapOverride: allowOverride,
@@ -133,23 +135,7 @@ export function CreateAssignmentDialog({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
-        <div className="bg-white rounded-2xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
-          {/* Header */}
-          <div className="bg-blue-600 px-6 py-4 flex items-center justify-between text-white shrink-0">
-            <div className="flex items-center gap-2.5">
-              <UserPlus className="w-5 h-5 text-blue-100" />
-              <h3 className="text-base font-bold">Tạo điều động nhân sự</h3>
-            </div>
-            <button
-              onClick={onClose}
-              type="button"
-              aria-label="Đóng biểu mẫu tạo điều động"
-              className="text-blue-100 hover:text-white text-lg font-bold leading-none p-1 rounded-lg hover:bg-blue-700 transition"
-            >
-              &times;
-            </button>
-          </div>
+      <HrDialogShell isOpen={isOpen} onClose={onClose} title="Tạo điều động nhân sự" icon={<UserPlus className="h-5 w-5" />} maxWidth="max-w-xl">
 
           {/* Form */}
           <form onSubmit={(e) => handleFormSubmit(e, false)} className="p-6 space-y-4 overflow-y-auto">
@@ -244,7 +230,8 @@ export function CreateAssignmentDialog({
                   min={1}
                   max={100}
                   value={allocationPercentage}
-                  onChange={(e) => setAllocationPercentage(parseInt(e.target.value, 10) || 0)}
+                  onChange={(e) => setAllocationPercentage(e.target.value === "" ? "" : Number(e.target.value))}
+                  placeholder="Nhập tỷ lệ từ 1 đến 100"
                   className="w-full text-sm p-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-hidden"
                 />
               </div>
@@ -300,8 +287,7 @@ export function CreateAssignmentDialog({
               </button>
             </div>
           </form>
-        </div>
-      </div>
+      </HrDialogShell>
 
       {/* Allocation Overlap Dialog */}
       <AllocationOverlapDialog

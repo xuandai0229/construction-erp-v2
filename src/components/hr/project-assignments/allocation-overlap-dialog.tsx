@@ -9,6 +9,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { HrDialogShell } from "../hr-dialog-shell";
 
 interface AllocationOverlapDialogProps {
   isOpen: boolean;
@@ -54,22 +55,7 @@ export function AllocationOverlapDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-amber-200 overflow-hidden">
-        {/* Header */}
-        <div className="bg-amber-50 px-6 py-4 border-b border-amber-200 flex items-start gap-3">
-          <div className="p-2 bg-amber-100 rounded-xl text-amber-700 shrink-0 mt-0.5">
-            <AlertTriangle className="w-6 h-6" />
-          </div>
-          <div>
-            <h3 className="text-base font-bold text-amber-950">
-              Cảnh báo Vượt Định mức Phân bổ (Allocation Overlap)
-            </h3>
-            <p className="text-sm text-amber-800 mt-1">
-              Tổng tỷ lệ phân bổ của nhân sự trong thời gian công tác vượt quá 100%.
-            </p>
-          </div>
-        </div>
+    <HrDialogShell isOpen={isOpen} onClose={onClose} title="Cảnh báo vượt định mức phân bổ" icon={<AlertTriangle className="h-5 w-5" />} maxWidth="max-w-lg">
 
         {/* Content */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -149,7 +135,6 @@ export function AllocationOverlapDialog({
             )}
           </div>
         </form>
-      </div>
-    </div>
+    </HrDialogShell>
   );
 }

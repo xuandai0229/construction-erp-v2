@@ -7,6 +7,8 @@ import { OrgChartView } from "@/components/hr/org-chart-view";
 import { OrgTreeNode } from "@/components/hr/organization-tree-view";
 import { checkHrPermission } from "@/lib/hr/hr-auth-guard";
 import prisma from "@/lib/prisma";
+import Link from "next/link";
+import { Plus } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +44,8 @@ export default async function OrganizationChartPage() {
       },
     },
   });
+
+  const managePerm = await checkHrPermission("hr:organization:manage");
 
   const unitMap = new Map<string, OrgTreeNode>();
   units.forEach((u) => {
@@ -82,6 +86,14 @@ export default async function OrganizationChartPage() {
       <HrPageHeader
         title="Sơ đồ cây tổ chức trực quan"
         description="Biểu diễn sơ đồ cây phân cấp công ty, người phụ trách và quy mô nhân sự trực thuộc"
+        action={
+          managePerm.allowed ? (
+            <Link href="/hr/organization?create=1" className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-blue-700">
+              <Plus className="h-4 w-4" />
+              <span>Thêm đơn vị cấp cao nhất</span>
+            </Link>
+          ) : undefined
+        }
       />
 
       <HrWorkspaceTabs />

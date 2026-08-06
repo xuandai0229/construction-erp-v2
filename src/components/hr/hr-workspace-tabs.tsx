@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -28,6 +28,17 @@ export function HrWorkspaceTabs() {
   const pathname = usePathname();
   const activeTabRef = useRef<HTMLAnchorElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [hasHiddenTabs, setHasHiddenTabs] = useState(false);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const updateOverflow = () => setHasHiddenTabs(container.scrollWidth > container.clientWidth + 1);
+    updateOverflow();
+    const observer = new ResizeObserver(updateOverflow);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (activeTabRef.current) {
@@ -40,10 +51,12 @@ export function HrWorkspaceTabs() {
   }, [pathname]);
 
   return (
-    <div className="relative mb-6 rounded-xl border border-slate-200 bg-white shadow-xs">
+    <div className="relative mb-6 min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
       <div
         ref={containerRef}
-        className="hide-scrollbar flex w-full min-w-0 items-center gap-1 overflow-x-auto p-1.5 pr-6 scroll-smooth"
+        role="tablist"
+        aria-label="Không gian làm việc Nhân sự"
+        className="hide-scrollbar flex w-full min-w-0 items-center gap-1 overflow-x-auto overscroll-x-contain p-1.5 pr-8 scroll-smooth"
       >
         {HR_TABS.map((tab) => {
           const isActive = tab.href === "/hr" ? pathname === "/hr" : pathname.startsWith(tab.href);
@@ -51,6 +64,7 @@ export function HrWorkspaceTabs() {
             <Link
               key={tab.id}
               id={`hr-tab-${tab.id}`}
+              role="tab"
               ref={isActive ? activeTabRef : null}
               href={tab.href}
               aria-current={isActive ? "page" : undefined}
@@ -81,6 +95,12 @@ export function HrWorkspaceTabs() {
           );
         })}
       </div>
+      {hasHiddenTabs && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white via-white/90 to-transparent"
+        />
+      )}
     </div>
   );
 }

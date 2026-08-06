@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useEffect, useState, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   ShieldCheck,
   Plus,
@@ -34,6 +35,7 @@ interface PositionManagementClientProps {
 }
 
 export function PositionManagementClient({ positions, canManage }: PositionManagementClientProps) {
+  const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
@@ -47,6 +49,10 @@ export function PositionManagementClient({ positions, canManage }: PositionManag
 
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (canManage && searchParams.get("create") === "1") handleOpenCreate();
+  }, [canManage, searchParams]);
 
   const handleOpenCreate = () => {
     setEditingPosition(null);
@@ -158,15 +164,6 @@ export function PositionManagementClient({ positions, canManage }: PositionManag
           </select>
         </div>
 
-        {canManage && (
-          <button
-            onClick={handleOpenCreate}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Thêm chức danh mới</span>
-          </button>
-        )}
       </div>
 
       {/* Positions Table / Empty State */}

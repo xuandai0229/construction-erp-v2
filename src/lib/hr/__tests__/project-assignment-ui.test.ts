@@ -1,12 +1,19 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import prisma from "@/lib/prisma";
 import { assertSafeQaDatabase } from "../../../../scripts/qa/assert-safe-qa-database";
+import { createQaPrismaClient } from "../../../../scripts/qa/setup-qa-env";
+import { PrismaClient } from "@prisma/client";
+import { Pool } from "pg";
 
 describe("HR Phase 4.3 — Project Assignment UI Data & Security Integration Suite", () => {
   const runId = `HR_PHASE_4_3_${Date.now()}`;
+  let prisma: PrismaClient;
+  let pool: Pool;
 
   beforeAll(async () => {
     await assertSafeQaDatabase(process.env);
+    const qaSetup = createQaPrismaClient();
+    prisma = qaSetup.prisma;
+    pool = qaSetup.pool;
 
     // Create Admin User fixture for query testing
     await prisma.user.create({
@@ -22,10 +29,14 @@ describe("HR Phase 4.3 — Project Assignment UI Data & Security Integration Sui
   });
 
   afterAll(async () => {
-    // Zero-Residue Cleanup
-    await prisma.user.deleteMany({
-      where: { username: { contains: runId } },
-    });
+    if (prisma) {
+      // Zero-Residue Cleanup
+      await prisma.user.deleteMany({
+        where: { username: { contains: runId } },
+      });
+      await prisma.$disconnect();
+    }
+    if (pool) await pool.end();
   });
 
   it("1. Database query loads active employees, projects and roles for UI selectors", async () => {

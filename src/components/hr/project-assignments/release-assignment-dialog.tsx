@@ -5,6 +5,7 @@ import { LogOut, AlertCircle } from "lucide-react";
 import { releaseEmployeeFromProjectAction } from "@/app/hr/project-assignments/actions/project-assignment-actions";
 import { ProjectAssignmentDTO } from "@/lib/hr/project-assignment-dto";
 import { EmployeeProjectAssignmentEndReason } from "@prisma/client";
+import { HrDialogShell } from "../hr-dialog-shell";
 
 interface ReleaseAssignmentDialogProps {
   isOpen: boolean;
@@ -62,23 +63,7 @@ export function ReleaseAssignmentDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="bg-amber-600 px-6 py-4 flex items-center justify-between text-white shrink-0">
-          <div className="flex items-center gap-2.5">
-            <LogOut className="w-5 h-5 text-amber-100" />
-            <h3 className="text-base font-bold">Rút nhân sự khỏi công trình</h3>
-          </div>
-            <button
-              onClick={onClose}
-              type="button"
-              aria-label="Đóng biểu mẫu rút nhân sự"
-            className="text-amber-100 hover:text-white text-lg font-bold leading-none p-1 rounded-lg hover:bg-amber-700 transition"
-          >
-            &times;
-          </button>
-        </div>
+    <HrDialogShell isOpen={isOpen} onClose={onClose} title="Rút nhân sự khỏi công trình" icon={<LogOut className="h-5 w-5" />} maxWidth="max-w-md">
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -169,7 +154,6 @@ export function ReleaseAssignmentDialog({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </HrDialogShell>
   );
 }

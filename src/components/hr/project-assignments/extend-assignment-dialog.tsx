@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Calendar, AlertCircle } from "lucide-react";
 import { extendProjectAssignmentAction } from "@/app/hr/project-assignments/actions/project-assignment-actions";
 import { ProjectAssignmentDTO } from "@/lib/hr/project-assignment-dto";
+import { HrDialogShell } from "../hr-dialog-shell";
 
 interface ExtendAssignmentDialogProps {
   isOpen: boolean;
@@ -57,23 +58,7 @@ export function ExtendAssignmentDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="bg-sky-600 px-6 py-4 flex items-center justify-between text-white shrink-0">
-          <div className="flex items-center gap-2.5">
-            <Calendar className="w-5 h-5 text-sky-100" />
-            <h3 className="text-base font-bold">Gia hạn điều động</h3>
-          </div>
-            <button
-              onClick={onClose}
-              type="button"
-              aria-label="Đóng biểu mẫu gia hạn điều động"
-            className="text-sky-100 hover:text-white text-lg font-bold leading-none p-1 rounded-lg hover:bg-sky-700 transition"
-          >
-            &times;
-          </button>
-        </div>
+    <HrDialogShell isOpen={isOpen} onClose={onClose} title="Gia hạn điều động" icon={<Calendar className="h-5 w-5" />} maxWidth="max-w-md">
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -136,7 +121,6 @@ export function ExtendAssignmentDialog({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </HrDialogShell>
   );
 }

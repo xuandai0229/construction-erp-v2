@@ -30,7 +30,7 @@ export default async function HrProjectAssignmentsPage(props: PageProps) {
   const status = searchParams.status && searchParams.status !== "ALL" ? (searchParams.status as any) : undefined;
 
   const [listRes, optionsRes] = await Promise.all([
-    getProjectAssignmentsQuery({ page, pageSize: 20, projectId, employeeId, status }),
+    getProjectAssignmentsQuery({ page, pageSize: 100, projectId, employeeId, status }),
     getAssignmentFormOptionsQuery(),
   ]);
 

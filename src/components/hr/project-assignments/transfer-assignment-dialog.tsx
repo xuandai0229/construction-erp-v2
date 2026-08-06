@@ -10,6 +10,7 @@ import { ProjectAssignmentDTO } from "@/lib/hr/project-assignment-dto";
 import { EmployeeProjectAssignmentEndReason } from "@prisma/client";
 import { AllocationOverlapDialog } from "./allocation-overlap-dialog";
 import { EnterpriseCombobox, EnterpriseComboboxOption } from "@/components/ui/enterprise-combobox";
+import { HrDialogShell } from "../hr-dialog-shell";
 
 interface TransferAssignmentDialogProps {
   isOpen: boolean;
@@ -97,23 +98,7 @@ export function TransferAssignmentDialog({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
-        <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
-          {/* Header */}
-          <div className="bg-purple-600 px-6 py-4 flex items-center justify-between text-white shrink-0">
-            <div className="flex items-center gap-2.5">
-              <RefreshCw className="w-5 h-5 text-purple-100" />
-              <h3 className="text-base font-bold">Thay đổi vai trò hoặc tỷ lệ</h3>
-            </div>
-            <button
-              onClick={onClose}
-              type="button"
-              aria-label="Đóng biểu mẫu thay đổi điều động"
-              className="text-purple-100 hover:text-white text-lg font-bold leading-none p-1 rounded-lg hover:bg-purple-700 transition"
-            >
-              &times;
-            </button>
-          </div>
+      <HrDialogShell isOpen={isOpen} onClose={onClose} title="Thay đổi vai trò hoặc tỷ lệ" icon={<RefreshCw className="h-5 w-5" />} maxWidth="max-w-lg">
 
           {/* Form */}
           <form onSubmit={(e) => handleSubmit(e, false)} className="p-6 space-y-4 overflow-y-auto">
@@ -248,8 +233,7 @@ export function TransferAssignmentDialog({
               </button>
             </div>
           </form>
-        </div>
-      </div>
+      </HrDialogShell>
 
       <AllocationOverlapDialog
         isOpen={showOverlapDialog}

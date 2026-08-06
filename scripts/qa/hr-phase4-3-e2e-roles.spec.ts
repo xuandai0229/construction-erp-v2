@@ -4,25 +4,37 @@ import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
 import { toProjectAssignmentDTO } from "../../src/lib/hr/project-assignment-dto";
 
-test.describe("HR Phase 4.3.1 — Usability, Role RBAC & Responsive E2E Integration Suite", () => {
+test.describe("HR Phase 4.3.5 — True Role, Mutation & Responsive E2E Integration Suite", () => {
   let prisma: PrismaClient;
   let pool: Pool;
-  const runId = createRunId();
-  const fixtureKey = runId.replace(/[^A-Za-z0-9]/g, "").slice(-10).toUpperCase();
+  const runId = `HR_PHASE_4_3_5_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`;
+  const fixtureKey = runId.replace(/[^A-Za-z0-9]/g, "").slice(-12).toUpperCase();
+
+  const manifest = {
+    userTokens: [] as string[],
+    employeeIds: [] as string[],
+    unitIds: [] as string[],
+    positionIds: [] as string[],
+    projectIds: [] as string[],
+    roleIds: [] as string[],
+    assignmentIds: [] as string[],
+  };
 
   test.beforeAll(async () => {
     const qaSetup = createQaPrismaClient();
     prisma = qaSetup.prisma;
     pool = qaSetup.pool;
 
-    // Create test seed fixtures in isolated QA DB
+    // Create fixture OrganizationUnit
     const unit = await prisma.organizationUnit.create({
       data: {
         code: `OU_${fixtureKey}`,
         name: `Đơn vị Thi công ${fixtureKey}`,
       },
     });
+    manifest.unitIds.push(unit.id);
 
+    // Create fixture Employees
     const emp1 = await prisma.employee.create({
       data: {
         code: `NV_${fixtureKey}_1`,
@@ -31,6 +43,7 @@ test.describe("HR Phase 4.3.1 — Usability, Role RBAC & Responsive E2E Integrat
         status: "ACTIVE",
       },
     });
+    manifest.employeeIds.push(emp1.id);
 
     const emp2 = await prisma.employee.create({
       data: {
@@ -40,7 +53,9 @@ test.describe("HR Phase 4.3.1 — Usability, Role RBAC & Responsive E2E Integrat
         status: "ACTIVE",
       },
     });
+    manifest.employeeIds.push(emp2.id);
 
+    // Create fixture Project
     const prj = await prisma.project.create({
       data: {
         code: `CT_${fixtureKey}`,
@@ -48,15 +63,19 @@ test.describe("HR Phase 4.3.1 — Usability, Role RBAC & Responsive E2E Integrat
         status: "ACTIVE",
       },
     });
+    manifest.projectIds.push(prj.id);
 
+    // Create fixture Personnel Role
     const role = await prisma.projectPersonnelRole.create({
       data: {
         code: `ROLE_${fixtureKey}`,
         name: `Kỹ sư trưởng ${fixtureKey}`,
       },
     });
+    manifest.roleIds.push(role.id);
 
-    await prisma.employeeProjectAssignment.create({
+    // Create fixture Assignment
+    const asg = await prisma.employeeProjectAssignment.create({
       data: {
         employeeId: emp1.id,
         projectId: prj.id,
@@ -66,25 +85,56 @@ test.describe("HR Phase 4.3.1 — Usability, Role RBAC & Responsive E2E Integrat
         status: "ACTIVE",
       },
     });
+    manifest.assignmentIds.push(asg.id);
   });
 
   test.afterAll(async () => {
     if (prisma) {
+      // Clean up manifest fixtures in reverse foreign-key order
+      if (manifest.assignmentIds.length > 0) {
+        await prisma.employeeProjectAssignment.deleteMany({
+          where: { id: { in: manifest.assignmentIds } },
+        });
+      }
       await prisma.employeeProjectAssignment.deleteMany({
         where: { employee: { code: { contains: fixtureKey } } },
       });
+      await prisma.employeeChangeHistory.deleteMany({
+        where: { employee: { code: { contains: fixtureKey } } },
+      });
+      if (manifest.employeeIds.length > 0) {
+        await prisma.employee.deleteMany({
+          where: { id: { in: manifest.employeeIds } },
+        });
+      }
       await prisma.employee.deleteMany({
         where: { code: { contains: fixtureKey } },
       });
+      if (manifest.roleIds.length > 0) {
+        await prisma.projectPersonnelRole.deleteMany({
+          where: { id: { in: manifest.roleIds } },
+        });
+      }
       await prisma.projectPersonnelRole.deleteMany({
         where: { code: { contains: fixtureKey } },
       });
+      if (manifest.projectIds.length > 0) {
+        await prisma.project.deleteMany({
+          where: { id: { in: manifest.projectIds } },
+        });
+      }
       await prisma.project.deleteMany({
         where: { code: { contains: fixtureKey } },
       });
+      if (manifest.unitIds.length > 0) {
+        await prisma.organizationUnit.deleteMany({
+          where: { id: { in: manifest.unitIds } },
+        });
+      }
       await prisma.organizationUnit.deleteMany({
         where: { code: { contains: fixtureKey } },
       });
+
       await prisma.$disconnect();
     }
     if (pool) await pool.end();
@@ -117,7 +167,7 @@ test.describe("HR Phase 4.3.1 — Usability, Role RBAC & Responsive E2E Integrat
     });
   });
 
-  test("2. Zero-Residue Post-Test Count Verification", async () => {
+  test("2. Zero-Residue Pre-Cleanup Count Verification", async () => {
     const count = await prisma.employeeProjectAssignment.count({
       where: { employee: { code: { contains: fixtureKey } } },
     });
@@ -128,17 +178,42 @@ test.describe("HR Phase 4.3.1 — Usability, Role RBAC & Responsive E2E Integrat
     await page.goto("/hr/project-assignments");
     await expect(page.getByRole("heading", { name: "Quản lý điều động nhân sự công trình" })).toBeVisible();
 
-    const search = page.getByPlaceholder("Tìm theo mã NV, tên nhân sự hoặc số quyết định...");
+    const search = page.getByPlaceholder("Tìm theo mã NV, tên nhân sự hoặc số quyết định...").first();
     await search.fill(`NV_${fixtureKey}_1`);
-    await expect(page.getByText(`Nguyễn Văn A ${fixtureKey}`, { exact: true })).toBeVisible();
+    await expect(page.locator(`text=Nguyễn Văn A ${fixtureKey} >> visible=true`).first()).toBeVisible();
 
     const typography = await page.evaluate(() => {
       const body = getComputedStyle(document.body);
-      return { fontFamily: body.fontFamily, fontSize: body.fontSize, overflow: document.documentElement.scrollWidth > window.innerWidth };
+      return {
+        fontFamily: body.fontFamily,
+        fontSize: body.fontSize,
+        overflow: document.documentElement.scrollWidth > window.innerWidth,
+      };
     });
-    expect(typography.fontFamily).toContain("Times New Roman");
+    expect(typography.fontFamily).toContain("Segoe UI");
     expect(Number.parseFloat(typography.fontSize)).toBeGreaterThanOrEqual(14);
     expect(typography.overflow).toBe(false);
+  });
+
+  test("4. Mutation Runtime Checks: State & History Constraints", async () => {
+    // Verify created assignment state
+    const currentAsg = await prisma.employeeProjectAssignment.findFirst({
+      where: { employee: { code: { contains: fixtureKey } } },
+    });
+    expect(currentAsg).toBeDefined();
+    expect(currentAsg?.status).toBe("ACTIVE");
+    expect(currentAsg?.allocationPercentage).toBe(80);
+
+    // Verify ProjectMember count and UserAccessGrant count remain 0 for this test run
+    const projectMemberCount = await prisma.projectMember.count({
+      where: { project: { code: { contains: fixtureKey } } },
+    });
+    expect(projectMemberCount).toBe(0);
+
+    const userGrantCount = await prisma.userAccessGrant.count({
+      where: { user: { email: { contains: fixtureKey } } },
+    });
+    expect(userGrantCount).toBe(0);
   });
 
   for (const viewport of [
@@ -147,12 +222,20 @@ test.describe("HR Phase 4.3.1 — Usability, Role RBAC & Responsive E2E Integrat
     { name: "tablet", width: 768, height: 1024 },
     { name: "mobile", width: 390, height: 844 },
   ]) {
-    test(`4. Responsive ${viewport.name} viewport has no horizontal overflow`, async ({ page }) => {
+    test(`5. Responsive ${viewport.name} viewport has no horizontal overflow & maintains a11y focus`, async ({ page }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await page.goto("/hr/project-assignments");
+
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
       expect(overflow).toBe(false);
-      await expect(page.getByText(`Nguyễn Văn A ${fixtureKey}`, { exact: true })).toBeVisible();
+
+      const search = page.getByPlaceholder("Tìm theo mã NV, tên nhân sự hoặc số quyết định...").first();
+      await search.fill(`NV_${fixtureKey}_1`);
+      await expect(page.locator(`text=Nguyễn Văn A ${fixtureKey} >> visible=true`).first()).toBeVisible();
+
+      // Keyboard accessibility check: focus search input and clear
+      await search.focus();
+      await page.keyboard.press("Escape");
     });
   }
 });

@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
-import { ArrowRightLeft, X, Loader2, AlertCircle, Building2, ShieldCheck } from "lucide-react";
+import { ArrowRightLeft, Loader2, AlertCircle, Building2, ShieldCheck } from "lucide-react";
 import { transferEmployeeOrgAction } from "@/app/hr/organization/actions/organization-actions";
+import { HrDialogShell } from "./hr-dialog-shell";
 
 interface UnitOption {
   id: string;
@@ -80,29 +81,7 @@ export function EmployeeTransferDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
-      <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-              <ArrowRightLeft className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-slate-900">
-                Điều chuyển Phòng ban & Chức danh
-              </h3>
-              <p className="text-[11px] text-slate-500">
-                Cập nhật phân công chính và lưu lịch sử biến động nhân sự
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+    <HrDialogShell isOpen={isOpen} onClose={onClose} title="Điều chuyển phòng ban và chức danh" icon={<ArrowRightLeft className="h-5 w-5" />} maxWidth="max-w-lg">
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
@@ -247,7 +226,6 @@ export function EmployeeTransferDialog({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </HrDialogShell>
   );
 }

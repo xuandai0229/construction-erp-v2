@@ -6,6 +6,8 @@ import { OrganizationSubTabs } from "@/components/hr/organization-sub-tabs";
 import { OrganizationTreeView, OrgTreeNode } from "@/components/hr/organization-tree-view";
 import { checkHrPermission } from "@/lib/hr/hr-auth-guard";
 import prisma from "@/lib/prisma";
+import Link from "next/link";
+import { Plus } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -92,6 +94,14 @@ export default async function OrganizationPage() {
       <HrPageHeader
         title="Cơ cấu tổ chức và phòng ban"
         description="Quản lý cây phòng ban nhiều cấp, chức năng nhiệm vụ và người phụ trách đơn vị"
+        action={
+          managePerm.allowed ? (
+            <Link href="/hr/organization?create=1" className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-blue-700">
+              <Plus className="h-4 w-4" />
+              <span>Thêm đơn vị cấp cao nhất</span>
+            </Link>
+          ) : undefined
+        }
       />
 
       <HrWorkspaceTabs />

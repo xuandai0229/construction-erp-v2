@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useEffect, useState, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   UserCheck,
   Plus,
@@ -56,6 +57,7 @@ export function UnitManagerManagementClient({
   employees,
   canManage,
 }: UnitManagerManagementClientProps) {
+  const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [unitFilter, setUnitFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("active");
@@ -72,6 +74,10 @@ export function UnitManagerManagementClient({
 
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (canManage && searchParams.get("create") === "1") handleOpenAppoint();
+  }, [canManage, searchParams]);
 
   const handleOpenAppoint = (defaultUnitId?: string) => {
     setUnitId(defaultUnitId || units[0]?.id || "");
@@ -186,15 +192,6 @@ export function UnitManagerManagementClient({
           </select>
         </div>
 
-        {canManage && (
-          <button
-            onClick={() => handleOpenAppoint()}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Bổ nhiệm người quản lý đơn vị</span>
-          </button>
-        )}
       </div>
 
       {/* Table / Empty State */}

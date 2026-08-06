@@ -76,6 +76,11 @@ export function ProjectAssignmentToolbar({
     { value: "CANCELLED", label: "Đã hủy" },
   ];
 
+  const sourceUnitOptions: EnterpriseComboboxOption[] = [
+    { value: "", label: "Tất cả đơn vị nguồn" },
+    ...orgUnits.map((unit) => ({ value: unit.id, label: unit.name, name: unit.name })),
+  ];
+
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs space-y-3">
       {/* Top Main Row */}
@@ -161,14 +166,16 @@ export function ProjectAssignmentToolbar({
 
           <div>
             <label className="mb-1 block text-sm font-semibold text-slate-600">Đơn vị nguồn</label>
-            <select
+            <EnterpriseCombobox
+              options={sourceUnitOptions}
               value={selectedOrgUnitId}
-              onChange={(event) => onOrgUnitChange(event.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Tất cả đơn vị nguồn</option>
-              {orgUnits.map((unit) => <option key={unit.id} value={unit.id}>{unit.name}</option>)}
-            </select>
+              onChange={(value) => onOrgUnitChange(value)}
+              placeholder="Tất cả đơn vị nguồn"
+              searchPlaceholder="Tìm đơn vị nguồn..."
+              density="compact"
+              maxPanelHeight={260}
+              testId="filter-org-unit-combobox"
+            />
           </div>
 
           <div>
