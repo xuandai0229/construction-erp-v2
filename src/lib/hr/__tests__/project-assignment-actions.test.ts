@@ -43,6 +43,10 @@ describe("HR Phase 4.2 Server Actions & PII-Safe DTO Test Suite", () => {
   let testProjectId: string;
   let testRoleId: string;
 
+  const runId = `HR_PHASE_4_2_${Date.now()}`;
+  let initialProjectMemberCount = 0;
+  let initialUserAccessGrantCount = 0;
+
   beforeAll(async () => {
     const connectionString = process.env.QA_DATABASE_URL || process.env.DATABASE_URL;
     pool = new Pool({ connectionString });
@@ -51,13 +55,14 @@ describe("HR Phase 4.2 Server Actions & PII-Safe DTO Test Suite", () => {
 
     await seedHrPermissions(qaPrismaClient);
 
-    const timestamp = Date.now();
+    initialProjectMemberCount = await qaPrismaClient.projectMember.count();
+    initialUserAccessGrantCount = await qaPrismaClient.userAccessGrant.count();
 
     // Create Admin User & Staff User sequentially
     const admin = await qaPrismaClient.user.create({
       data: {
-        email: `admin_act_${timestamp}@example.com`,
-        username: `admin_act_${timestamp}`,
+        email: `admin_act_${runId}@example.com`,
+        username: `admin_act_${runId}`,
         password: "dummy_password",
         name: "Admin Actions Test",
         role: "ADMIN",
@@ -66,8 +71,8 @@ describe("HR Phase 4.2 Server Actions & PII-Safe DTO Test Suite", () => {
 
     const staff = await qaPrismaClient.user.create({
       data: {
-        email: `staff_act_${timestamp}@example.com`,
-        username: `staff_act_${timestamp}`,
+        email: `staff_act_${runId}@example.com`,
+        username: `staff_act_${runId}`,
         password: "dummy_password",
         name: "Staff Actions Test",
         role: "STAFF",
@@ -80,12 +85,12 @@ describe("HR Phase 4.2 Server Actions & PII-Safe DTO Test Suite", () => {
     // Create Employee with PII data (CCCD, personalEmail, etc.)
     const emp = await qaPrismaClient.employee.create({
       data: {
-        code: `NV-ACT-${timestamp}`,
+        code: `NV-ACT-${runId}`,
         fullName: "Nguyen Van Actions Test",
         personalEmail: "sensitive_personal@example.com",
         phoneNumber: "0901234567",
         identityNumberEncrypted: "ENCRYPTED_CCCD_PAYLOAD_HEADER.PAYLOAD.TAG",
-        identityNumberBlindIndex: `BLIND_${timestamp}`,
+        identityNumberBlindIndex: `BLIND_${runId}`,
         identityNumberLastDigits: "9999",
         joinedDate: new Date("2024-01-01"),
         status: "ACTIVE",
@@ -96,8 +101,8 @@ describe("HR Phase 4.2 Server Actions & PII-Safe DTO Test Suite", () => {
     // Create Project
     const prj = await qaPrismaClient.project.create({
       data: {
-        code: `PRJ-ACT-${timestamp}`,
-        name: `Duan Testing Actions ${timestamp}`,
+        code: `PRJ-ACT-${runId}`,
+        name: `Duan Testing Actions ${runId}`,
         status: "ACTIVE",
       },
     });
@@ -106,14 +111,37 @@ describe("HR Phase 4.2 Server Actions & PII-Safe DTO Test Suite", () => {
     // Create Role
     const role = await qaPrismaClient.projectPersonnelRole.create({
       data: {
-        code: `ROLE-ACT-${timestamp}`,
-        name: `Kysu Cong trinh ${timestamp}`,
+        code: `ROLE-ACT-${runId}`,
+        name: `Kysu Cong trinh ${runId}`,
       },
     });
     testRoleId = role.id;
   });
 
   afterAll(async () => {
+    // Zero-residue cleanup
+    await qaPrismaClient.employeeProjectAssignment.deleteMany({
+      where: { employeeId: testEmployeeId },
+    });
+    await qaPrismaClient.employeeChangeHistory.deleteMany({
+      where: { employeeId: testEmployeeId },
+    });
+    await qaPrismaClient.auditLog.deleteMany({
+      where: { entityId: testEmployeeId },
+    });
+    await qaPrismaClient.employee.deleteMany({
+      where: { id: testEmployeeId },
+    });
+    await qaPrismaClient.projectPersonnelRole.deleteMany({
+      where: { id: testRoleId },
+    });
+    await qaPrismaClient.project.deleteMany({
+      where: { id: testProjectId },
+    });
+    await qaPrismaClient.user.deleteMany({
+      where: { email: { contains: runId } },
+    });
+
     await qaPrismaClient.$disconnect();
     await pool.end();
   });
@@ -156,15 +184,41 @@ describe("HR Phase 4.2 Server Actions & PII-Safe DTO Test Suite", () => {
       expect(dto.status).toBe("ACTIVE");
       expect(dto.decisionNumber).toBe("QD-1001");
 
-      // Verify PII Protection: NO sensitive employee fields present on DTO
+      // Verify PII Protection: NO sensitive employee fields present on DTO or JSON
       const rawDto = (dto as unknown) as Record<string, unknown>;
-      expect(rawDto.identityNumberEncrypted).toBeUndefined();
-      expect(rawDto.identityNumberBlindIndex).toBeUndefined();
-      expect(rawDto.personalEmail).toBeUndefined();
-      expect(rawDto.phoneNumber).toBeUndefined();
-      expect(rawDto.salary).toBeUndefined();
-      expect(rawDto.bankAccount).toBeUndefined();
+      const forbiddenKeys = [
+        "identityNumberEncrypted",
+        "identityNumberBlindIndex",
+        "identityNumberLastDigits",
+        "personalEmail",
+        "phoneNumber",
+        "salary",
+        "bankAccount",
+        "address",
+        "ciphertext",
+        "iv",
+        "authTag",
+        "password",
+        "token",
+      ];
+
+      for (const key of forbiddenKeys) {
+        expect(rawDto[key]).toBeUndefined();
+      }
+
+      const jsonStr = JSON.stringify(dto);
+      for (const key of forbiddenKeys) {
+        expect(jsonStr).not.toContain(`"${key}"`);
+      }
     }
+  });
+
+  it("verifies side-effect safety: ProjectMember and UserAccessGrant counts remain unchanged", async () => {
+    const currentProjectMemberCount = await qaPrismaClient.projectMember.count();
+    const currentUserAccessGrantCount = await qaPrismaClient.userAccessGrant.count();
+
+    expect(currentProjectMemberCount).toBe(initialProjectMemberCount);
+    expect(currentUserAccessGrantCount).toBe(initialUserAccessGrantCount);
   });
 
   it("blocks allocation exceeding 100% without override privilege and returns ALLOCATION_OVERLAP_EXCEEDED", async () => {
@@ -202,7 +256,7 @@ describe("HR Phase 4.2 Server Actions & PII-Safe DTO Test Suite", () => {
     }
   });
 
-  it("transfers assignment role and allocation via transferProjectRoleOrAllocationAction", async () => {
+  it("transfers assignment role and allocation via transferProjectRoleOrAllocationAction and creates EmployeeChangeHistory", async () => {
     mockSessionUser = adminUser;
 
     // Get active assignment created earlier
@@ -229,6 +283,12 @@ describe("HR Phase 4.2 Server Actions & PII-Safe DTO Test Suite", () => {
     expect(transferRes.success).toBe(true);
     if (transferRes.success) {
       expect(transferRes.data.allocationPercentage).toBe(70);
+
+      // Verify Audit & History
+      const historyLogs = await qaPrismaClient.employeeChangeHistory.findMany({
+        where: { employeeId: testEmployeeId },
+      });
+      expect(historyLogs.length).toBeGreaterThan(0);
     }
   });
 

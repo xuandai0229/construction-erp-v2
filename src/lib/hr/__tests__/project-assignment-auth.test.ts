@@ -24,9 +24,14 @@ describe("HR Phase 4.2 Security Guards & Authorization Resolver", () => {
 
   let managedEmployeeId: string;
   let unmanagedEmployeeId: string;
+  let managerEmployeeId: string;
+  let orgUnitId: string;
+  let positionId: string;
   let activeProjectId: string;
   let closedProjectId: string;
   let activeProjectPersonnelRoleId: string;
+
+  const runId = `AUTH_${Date.now()}`;
 
   beforeAll(async () => {
     const connectionString = process.env.QA_DATABASE_URL || process.env.DATABASE_URL;
@@ -36,21 +41,20 @@ describe("HR Phase 4.2 Security Guards & Authorization Resolver", () => {
 
     await seedHrPermissions(prisma);
 
-    const timestamp = Date.now();
-
     // 1. Create position
     const position = await prisma.position.create({
       data: {
-        code: `POS-AUTH-${timestamp}`,
-        title: `Chuc Danh Auth ${timestamp}`,
+        code: `POS-${runId}`,
+        title: `Chuc Danh Auth ${runId}`,
       },
     });
+    positionId = position.id;
 
     // 2. Create test users sequentially
     const admin = await prisma.user.create({
       data: {
-        email: `admin_auth_${timestamp}@example.com`,
-        username: `admin_auth_${timestamp}`,
+        email: `admin_${runId}@example.com`,
+        username: `admin_${runId}`,
         password: "dummy_password",
         name: "Admin User Auth",
         role: "ADMIN",
@@ -59,8 +63,8 @@ describe("HR Phase 4.2 Security Guards & Authorization Resolver", () => {
 
     const director = await prisma.user.create({
       data: {
-        email: `director_auth_${timestamp}@example.com`,
-        username: `director_auth_${timestamp}`,
+        email: `director_${runId}@example.com`,
+        username: `director_${runId}`,
         password: "dummy_password",
         name: "Director User Auth",
         role: "DIRECTOR",
@@ -69,8 +73,8 @@ describe("HR Phase 4.2 Security Guards & Authorization Resolver", () => {
 
     const deputy = await prisma.user.create({
       data: {
-        email: `deputy_auth_${timestamp}@example.com`,
-        username: `deputy_auth_${timestamp}`,
+        email: `deputy_${runId}@example.com`,
+        username: `deputy_${runId}`,
         password: "dummy_password",
         name: "Deputy Director Auth",
         role: "DEPUTY_DIRECTOR",
@@ -79,8 +83,8 @@ describe("HR Phase 4.2 Security Guards & Authorization Resolver", () => {
 
     const manager = await prisma.user.create({
       data: {
-        email: `manager_auth_${timestamp}@example.com`,
-        username: `manager_auth_${timestamp}`,
+        email: `manager_${runId}@example.com`,
+        username: `manager_${runId}`,
         password: "dummy_password",
         name: "Manager User Auth",
         role: "MANAGER",
@@ -89,8 +93,8 @@ describe("HR Phase 4.2 Security Guards & Authorization Resolver", () => {
 
     const chief = await prisma.user.create({
       data: {
-        email: `chief_auth_${timestamp}@example.com`,
-        username: `chief_auth_${timestamp}`,
+        email: `chief_${runId}@example.com`,
+        username: `chief_${runId}`,
         password: "dummy_password",
         name: "Chief Commander Auth",
         role: "CHIEF_COMMANDER",
@@ -99,8 +103,8 @@ describe("HR Phase 4.2 Security Guards & Authorization Resolver", () => {
 
     const viewer = await prisma.user.create({
       data: {
-        email: `viewer_auth_${timestamp}@example.com`,
-        username: `viewer_auth_${timestamp}`,
+        email: `viewer_${runId}@example.com`,
+        username: `viewer_${runId}`,
         password: "dummy_password",
         name: "Viewer User Auth",
         role: "STAFF",
@@ -134,20 +138,22 @@ describe("HR Phase 4.2 Security Guards & Authorization Resolver", () => {
     // 3. Create Org Unit & Manager Employee
     const orgUnit = await prisma.organizationUnit.create({
       data: {
-        code: `OU-AUTH-${timestamp}`,
-        name: `Phong Ban Auth ${timestamp}`,
+        code: `OU-${runId}`,
+        name: `Phong Ban Auth ${runId}`,
       },
     });
+    orgUnitId = orgUnit.id;
 
     const managerEmp = await prisma.employee.create({
       data: {
-        code: `NV-MGR-${timestamp}`,
+        code: `NV-MGR-${runId}`,
         fullName: "Employee Manager Auth",
         joinedDate: new Date("2024-01-01"),
         status: "ACTIVE",
         userId: managerUserId,
       },
     });
+    managerEmployeeId = managerEmp.id;
 
     // Assign manager as manager of orgUnit
     await prisma.organizationUnitManagerAssignment.create({
@@ -161,7 +167,7 @@ describe("HR Phase 4.2 Security Guards & Authorization Resolver", () => {
     // Managed employee inside orgUnit
     const managedEmp = await prisma.employee.create({
       data: {
-        code: `NV-IN-${timestamp}`,
+        code: `NV-IN-${runId}`,
         fullName: "Employee Managed",
         joinedDate: new Date("2024-01-01"),
         status: "ACTIVE",
@@ -182,7 +188,7 @@ describe("HR Phase 4.2 Security Guards & Authorization Resolver", () => {
     // Unmanaged employee outside orgUnit
     const unmanagedEmp = await prisma.employee.create({
       data: {
-        code: `NV-OUT-${timestamp}`,
+        code: `NV-OUT-${runId}`,
         fullName: "Employee Unmanaged",
         joinedDate: new Date("2024-01-01"),
         status: "ACTIVE",
@@ -193,8 +199,8 @@ describe("HR Phase 4.2 Security Guards & Authorization Resolver", () => {
     // 4. Projects: Active & Closed
     const activeProject = await prisma.project.create({
       data: {
-        code: `PRJ-ACT-${timestamp}`,
-        name: `Duan Active Auth ${timestamp}`,
+        code: `PRJ-ACT-${runId}`,
+        name: `Duan Active Auth ${runId}`,
         status: "ACTIVE",
       },
     });
@@ -202,8 +208,8 @@ describe("HR Phase 4.2 Security Guards & Authorization Resolver", () => {
 
     const closedProject = await prisma.project.create({
       data: {
-        code: `PRJ-CLO-${timestamp}`,
-        name: `Duan Closed Auth ${timestamp}`,
+        code: `PRJ-CLO-${runId}`,
+        name: `Duan Closed Auth ${runId}`,
         status: "COMPLETED",
       },
     });
@@ -212,14 +218,43 @@ describe("HR Phase 4.2 Security Guards & Authorization Resolver", () => {
     // Role
     const role = await prisma.projectPersonnelRole.create({
       data: {
-        code: `ROLE-AUTH-${timestamp}`,
-        name: `Vai tro Auth ${timestamp}`,
+        code: `ROLE-AUTH-${runId}`,
+        name: `Vai tro Auth ${runId}`,
       },
     });
     activeProjectPersonnelRoleId = role.id;
   });
 
   afterAll(async () => {
+    // Clean up created fixtures for zero residue
+    await prisma.employeeOrganizationAssignment.deleteMany({
+      where: { employeeId: { in: [managedEmployeeId, unmanagedEmployeeId, managerEmployeeId] } },
+    });
+    await prisma.organizationUnitManagerAssignment.deleteMany({
+      where: { organizationUnitId: orgUnitId },
+    });
+    await prisma.userAccessGrant.deleteMany({
+      where: { userId: managerUserId },
+    });
+    await prisma.employee.deleteMany({
+      where: { id: { in: [managedEmployeeId, unmanagedEmployeeId, managerEmployeeId] } },
+    });
+    await prisma.organizationUnit.deleteMany({
+      where: { id: orgUnitId },
+    });
+    await prisma.position.deleteMany({
+      where: { id: positionId },
+    });
+    await prisma.projectPersonnelRole.deleteMany({
+      where: { id: activeProjectPersonnelRoleId },
+    });
+    await prisma.project.deleteMany({
+      where: { id: { in: [activeProjectId, closedProjectId] } },
+    });
+    await prisma.user.deleteMany({
+      where: { email: { contains: runId } },
+    });
+
     await prisma.$disconnect();
     await pool.end();
   });
