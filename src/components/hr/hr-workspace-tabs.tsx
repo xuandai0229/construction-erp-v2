@@ -64,16 +64,16 @@ export function HrWorkspaceTabs() {
               }}
 
               className={cn(
-                "flex min-h-10 shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold whitespace-nowrap scroll-mx-2 transition-colors focus:outline-hidden focus:ring-2 focus:ring-blue-500",
+                "flex min-h-10 shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold whitespace-nowrap scroll-mx-2 transition-colors focus:outline-hidden focus:ring-2 focus:ring-blue-500",
                 isActive
-                  ? "bg-blue-50 text-blue-700 font-bold shadow-2xs"
+                  ? "bg-blue-50 text-blue-700 shadow-2xs"
                   : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
               )}
             >
               <tab.icon className={cn("h-4 w-4 shrink-0", isActive ? "text-blue-600" : "text-slate-400")} />
               <span>{tab.label}</span>
               {!tab.implemented && (
-                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500 shrink-0">
+                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-600 shrink-0">
                   Sắp có
                 </span>
               )}

@@ -119,7 +119,7 @@ export function ReportPrintTemplate({ report }: ReportPrintTemplateProps) {
   const getNextSection = () => sectionCounter++;
 
   return (
-    <div className="print-area bg-white text-black font-serif text-[14px] leading-relaxed mx-auto w-full max-w-[210mm] p-4 sm:p-8" style={{ fontFamily: '"Times New Roman", Times, serif', textRendering: 'optimizeLegibility', fontKerning: 'normal' }}>
+    <div className="print-area bg-white text-black font-sans text-[14px] leading-relaxed mx-auto w-full max-w-[210mm] p-4 sm:p-8" style={{ fontFamily: '"Segoe UI Variable", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif', textRendering: 'optimizeLegibility', fontKerning: 'normal' }}>
       {/* CSS specific for print */}
       <style dangerouslySetInnerHTML={{__html: `
         @media print {
@@ -132,7 +132,7 @@ export function ReportPrintTemplate({ report }: ReportPrintTemplateProps) {
             color: black !important;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
-            font-family: "Times New Roman", Times, serif !important;
+            font-family: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif !important;
             text-rendering: optimizeLegibility !important;
             font-kerning: normal !important;
           }

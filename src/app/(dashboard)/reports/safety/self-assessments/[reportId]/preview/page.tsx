@@ -39,7 +39,7 @@ function HandwritingLines({ count = 4, className = "" }: { count?: number; class
             height: "6mm",
             overflow: "hidden",
             whiteSpace: "nowrap",
-            fontFamily: '"Times New Roman", Times, serif',
+            fontFamily: '"Segoe UI Variable", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif',
             fontSize: "12pt",
             fontWeight: 400,
             fontStyle: "normal",

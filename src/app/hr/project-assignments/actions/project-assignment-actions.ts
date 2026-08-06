@@ -831,6 +831,7 @@ export interface AssignmentFormOptionEmployee {
   id: string;
   code: string;
   fullName: string;
+  orgUnitId: string | null;
   orgUnitName: string | null;
 }
 
@@ -888,7 +889,7 @@ export async function getAssignmentFormOptionsQuery(): Promise<
           fullName: true,
           orgAssignments: {
             where: { isPrimary: true, endDate: null },
-            select: { organizationUnit: { select: { name: true } } },
+            select: { organizationUnit: { select: { id: true, name: true } } },
             take: 1,
           },
         },
@@ -909,6 +910,7 @@ export async function getAssignmentFormOptionsQuery(): Promise<
       id: e.id,
       code: e.code,
       fullName: e.fullName,
+      orgUnitId: e.orgAssignments[0]?.organizationUnit?.id || null,
       orgUnitName: e.orgAssignments[0]?.organizationUnit?.name || null,
     }));
 
@@ -935,4 +937,3 @@ export async function getAssignmentFormOptionsQuery(): Promise<
     };
   }
 }
-

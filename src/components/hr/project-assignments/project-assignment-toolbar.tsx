@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { Search, Filter, X, Plus, RotateCcw } from "lucide-react";
-import { AssignmentFormOptionProject } from "@/app/hr/project-assignments/actions/project-assignment-actions";
+import { Search, Filter, X, RotateCcw } from "lucide-react";
+import { AssignmentFormOptionProject, AssignmentFormOptionRole } from "@/app/hr/project-assignments/actions/project-assignment-actions";
 import { EnterpriseCombobox, EnterpriseComboboxOption } from "@/components/ui/enterprise-combobox";
 
 interface ProjectAssignmentToolbarProps {
@@ -10,12 +10,20 @@ interface ProjectAssignmentToolbarProps {
   onSearchChange: (q: string) => void;
   selectedProjectId: string;
   onProjectChange: (id: string) => void;
+  selectedOrgUnitId: string;
+  onOrgUnitChange: (id: string) => void;
+  selectedRoleId: string;
+  onRoleChange: (id: string) => void;
+  dateFrom: string;
+  onDateFromChange: (value: string) => void;
+  dateTo: string;
+  onDateToChange: (value: string) => void;
   selectedStatus: string;
   onStatusChange: (status: string) => void;
   projects: AssignmentFormOptionProject[];
+  orgUnits: { id: string; name: string }[];
+  roles: AssignmentFormOptionRole[];
   onResetFilters: () => void;
-  onCreateClick?: () => void;
-  canCreate: boolean;
   totalRecords: number;
 }
 
@@ -24,18 +32,27 @@ export function ProjectAssignmentToolbar({
   onSearchChange,
   selectedProjectId,
   onProjectChange,
+  selectedOrgUnitId,
+  onOrgUnitChange,
+  selectedRoleId,
+  onRoleChange,
+  dateFrom,
+  onDateFromChange,
+  dateTo,
+  onDateToChange,
   selectedStatus,
   onStatusChange,
   projects,
+  orgUnits,
+  roles,
   onResetFilters,
-  onCreateClick,
-  canCreate,
   totalRecords,
 }: ProjectAssignmentToolbarProps) {
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
   const activeFiltersCount =
-    (searchQuery ? 1 : 0) + (selectedProjectId ? 1 : 0) + (selectedStatus !== "ALL" ? 1 : 0);
+    [searchQuery, selectedProjectId, selectedOrgUnitId, selectedRoleId, dateFrom, dateTo].filter(Boolean).length +
+    (selectedStatus !== "ALL" ? 1 : 0);
 
   const projectOptions: EnterpriseComboboxOption[] = useMemo(
     () => [
@@ -98,7 +115,7 @@ export function ProjectAssignmentToolbar({
             <Filter className="w-4 h-4 text-slate-500" />
             <span>Bộ lọc</span>
             {activeFiltersCount > 0 && (
-              <span className="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+              <span className="bg-blue-600 text-white text-xs font-semibold px-1.5 py-0.5 rounded-full">
                 {activeFiltersCount}
               </span>
             )}
@@ -114,15 +131,6 @@ export function ProjectAssignmentToolbar({
             </button>
           )}
 
-          {canCreate && onCreateClick && (
-            <button
-              onClick={onCreateClick}
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2.5 rounded-xl shadow-xs transition shrink-0"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Tạo điều động</span>
-            </button>
-          )}
         </div>
       </div>
 
@@ -133,10 +141,10 @@ export function ProjectAssignmentToolbar({
           isMobileFiltersOpen ? "block" : "hidden sm:block"
         } pt-2 border-t border-slate-100 space-y-3`}
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {/* Project Combobox */}
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">
+            <label className="block text-sm font-semibold text-slate-600 mb-1">
               Công trình / Dự án
             </label>
             <EnterpriseCombobox
@@ -151,9 +159,35 @@ export function ProjectAssignmentToolbar({
             />
           </div>
 
+          <div>
+            <label className="mb-1 block text-sm font-semibold text-slate-600">Đơn vị nguồn</label>
+            <select
+              value={selectedOrgUnitId}
+              onChange={(event) => onOrgUnitChange(event.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Tất cả đơn vị nguồn</option>
+              {orgUnits.map((unit) => <option key={unit.id} value={unit.id}>{unit.name}</option>)}
+            </select>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-semibold text-slate-600">Vai trò công trường</label>
+            <EnterpriseCombobox
+              options={roles.map((role) => ({ value: role.id, label: role.name, code: role.code, name: role.name }))}
+              value={selectedRoleId}
+              onChange={(value) => onRoleChange(value)}
+              placeholder="Tất cả vai trò"
+              searchPlaceholder="Tìm vai trò công trường..."
+              density="compact"
+              maxPanelHeight={240}
+              testId="filter-role-combobox"
+            />
+          </div>
+
           {/* Status Combobox */}
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">
+            <label className="block text-sm font-semibold text-slate-600 mb-1">
               Trạng thái điều động
             </label>
             <EnterpriseCombobox
@@ -166,6 +200,16 @@ export function ProjectAssignmentToolbar({
               maxPanelHeight={240}
               testId="filter-status-combobox"
             />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-semibold text-slate-600">Từ ngày</label>
+            <input type="date" value={dateFrom} onChange={(event) => onDateFromChange(event.target.value)} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500" />
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-semibold text-slate-600">Đến ngày</label>
+            <input type="date" value={dateTo} onChange={(event) => onDateToChange(event.target.value)} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500" />
           </div>
 
           <div className="flex items-end justify-between sm:justify-start lg:justify-end text-sm text-slate-500 pb-1">

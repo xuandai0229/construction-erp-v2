@@ -6,6 +6,7 @@ export interface ProjectAssignmentDTO {
   employeeId: string;
   employeeCode: string;
   employeeName: string;
+  orgUnitId: string | null;
   orgUnitName: string | null;
   projectId: string;
   projectCode: string;
@@ -47,7 +48,7 @@ export const projectAssignmentDTOSelect = Prisma.validator<Prisma.EmployeeProjec
         where: { isPrimary: true, endDate: null },
         select: {
           organizationUnit: {
-            select: { name: true },
+            select: { id: true, name: true },
           },
         },
         take: 1,
@@ -76,13 +77,15 @@ type RawAssignmentRecord = Prisma.EmployeeProjectAssignmentGetPayload<{
  * Explicitly excludes identity numbers, bank info, salary, address, personal email, keys, IVs.
  */
 export function toProjectAssignmentDTO(record: RawAssignmentRecord): ProjectAssignmentDTO {
-  const orgUnitName = record.employee.orgAssignments[0]?.organizationUnit?.name || null;
+  const orgUnit = record.employee.orgAssignments[0]?.organizationUnit;
+  const orgUnitName = orgUnit?.name || null;
 
   return {
     id: record.id,
     employeeId: record.employeeId,
     employeeCode: record.employee.code,
     employeeName: record.employee.fullName,
+    orgUnitId: orgUnit?.id || null,
     orgUnitName,
     projectId: record.projectId,
     projectCode: record.project.code,

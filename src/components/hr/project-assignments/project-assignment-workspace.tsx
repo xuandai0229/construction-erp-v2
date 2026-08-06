@@ -23,6 +23,7 @@ import { ReleaseAssignmentDialog } from "./release-assignment-dialog";
 import { CancelAssignmentDialog } from "./cancel-assignment-dialog";
 import { AssignmentDetailsDrawer } from "./assignment-details-drawer";
 import { CheckCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus } from "lucide-react";
 
 interface ProjectAssignmentWorkspaceProps {
   initialItems: ProjectAssignmentDTO[];
@@ -51,6 +52,10 @@ export function ProjectAssignmentWorkspace({
   // Filters State
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProjectId, setSelectedProjectId] = useState("");
+  const [selectedOrgUnitId, setSelectedOrgUnitId] = useState("");
+  const [selectedRoleId, setSelectedRoleId] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("ALL");
 
   // Selected item for dialogs
@@ -78,7 +83,17 @@ export function ProjectAssignmentWorkspace({
     });
   };
 
-  const hasActiveFilters = Boolean(searchQuery || selectedProjectId || selectedStatus !== "ALL");
+  const hasActiveFilters = Boolean(
+    searchQuery || selectedProjectId || selectedOrgUnitId || selectedRoleId || dateFrom || dateTo || selectedStatus !== "ALL"
+  );
+
+  const orgUnits = Array.from(
+    new Map(
+      employees
+        .filter((employee) => employee.orgUnitId && employee.orgUnitName)
+        .map((employee) => [employee.orgUnitId!, { id: employee.orgUnitId!, name: employee.orgUnitName! }])
+    ).values()
+  );
 
   // Client-side filtering on current items
   const filteredItems = initialItems.filter((item) => {
@@ -95,6 +110,11 @@ export function ProjectAssignmentWorkspace({
     if (selectedProjectId && item.projectId !== selectedProjectId) {
       return false;
     }
+
+    if (selectedOrgUnitId && item.orgUnitId !== selectedOrgUnitId) return false;
+    if (selectedRoleId && item.projectPersonnelRoleId !== selectedRoleId) return false;
+    if (dateFrom && item.startDate < dateFrom) return false;
+    if (dateTo && item.startDate > dateTo) return false;
 
     // Status
     const todayStr = new Date().toISOString().split("T")[0];
@@ -121,14 +141,26 @@ export function ProjectAssignmentWorkspace({
         </div>
       )}
 
-      {/* Workspace Tabs */}
-      <HrWorkspaceTabs />
-
       {/* Header */}
       <HrPageHeader
         title="Quản lý điều động nhân sự công trình"
         description="Theo dõi kế hoạch phân bổ, điều chuyển vai trò và lịch sử công tác nhân sự tại các dự án."
+        action={
+          capabilities.canCreate ? (
+            <button
+              type="button"
+              onClick={() => setIsCreateOpen(true)}
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-blue-700"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Tạo điều động</span>
+            </button>
+          ) : undefined
+        }
       />
+
+      {/* Workspace Tabs */}
+      <HrWorkspaceTabs />
 
       {/* Toolbar & Filters */}
       <ProjectAssignmentToolbar
@@ -136,16 +168,28 @@ export function ProjectAssignmentWorkspace({
         onSearchChange={setSearchQuery}
         selectedProjectId={selectedProjectId}
         onProjectChange={setSelectedProjectId}
+        selectedOrgUnitId={selectedOrgUnitId}
+        onOrgUnitChange={setSelectedOrgUnitId}
+        selectedRoleId={selectedRoleId}
+        onRoleChange={setSelectedRoleId}
+        dateFrom={dateFrom}
+        onDateFromChange={setDateFrom}
+        dateTo={dateTo}
+        onDateToChange={setDateTo}
         selectedStatus={selectedStatus}
         onStatusChange={setSelectedStatus}
         projects={projects}
+        orgUnits={orgUnits}
+        roles={roles}
         onResetFilters={() => {
           setSearchQuery("");
           setSelectedProjectId("");
+          setSelectedOrgUnitId("");
+          setSelectedRoleId("");
+          setDateFrom("");
+          setDateTo("");
           setSelectedStatus("ALL");
         }}
-        onCreateClick={() => setIsCreateOpen(true)}
-        canCreate={capabilities.canCreate}
         totalRecords={filteredItems.length}
       />
 

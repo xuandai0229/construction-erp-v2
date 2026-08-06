@@ -8,7 +8,7 @@ interface HrWorkspaceShellProps {
 
 export function HrWorkspaceShell({ children, className }: HrWorkspaceShellProps) {
   return (
-    <div className={cn("space-y-6 max-w-7xl mx-auto w-full", className)}>
+    <div className={cn("mx-auto w-full max-w-7xl space-y-6", className)}>
       {children}
     </div>
   );
@@ -31,10 +31,10 @@ export function HrPageHeader({
   return (
     <div className={cn("flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between min-w-0", className)}>
       <div className="min-w-0">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+        <h1 className="text-2xl font-bold leading-tight tracking-tight text-slate-900 sm:text-[1.75rem]">
           {title}
         </h1>
-        <p className="mt-1 text-sm leading-5 text-slate-600">
+        <p className="mt-1 text-[0.9375rem] leading-6 text-slate-600">
           {description}
         </p>
       </div>

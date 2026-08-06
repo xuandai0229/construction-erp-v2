@@ -175,9 +175,9 @@ export function WeeklySummaryInlineModal({
 
         {/* Paper A4 Sheet */}
         <div
-          className="w-full max-w-[210mm] min-h-[297mm] bg-white text-black font-serif text-[13px] leading-relaxed p-8 sm:p-12 shadow-2xl rounded-xs my-auto"
+          className="w-full max-w-[210mm] min-h-[297mm] bg-white text-black font-sans text-[13px] leading-relaxed p-8 sm:p-12 shadow-2xl rounded-xs my-auto"
           style={{
-            fontFamily: '"Times New Roman", Times, serif',
+            fontFamily: '"Segoe UI Variable", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif',
             textRendering: "optimizeLegibility",
           }}
         >

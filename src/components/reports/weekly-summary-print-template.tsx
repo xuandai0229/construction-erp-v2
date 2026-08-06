@@ -29,9 +29,9 @@ export function WeeklySummaryPrintTemplate({
 
   return (
     <div
-      className="print-area bg-white text-black font-serif text-[13px] leading-relaxed mx-auto w-full max-w-[210mm] p-6 sm:p-10"
+      className="print-area bg-white text-black font-sans text-[13px] leading-relaxed mx-auto w-full max-w-[210mm] p-6 sm:p-10"
       style={{
-        fontFamily: '"Times New Roman", Times, serif',
+        fontFamily: '"Segoe UI Variable", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif',
         textRendering: "optimizeLegibility",
       }}
     >

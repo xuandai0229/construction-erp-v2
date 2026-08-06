@@ -429,7 +429,7 @@ export function WeeklyPrintTemplate({
           padding: 20mm 15mm 20mm 20mm;
           background: #ffffff;
           color: #0f172a;
-          font-family: "Times New Roman", Times, serif;
+          font-family: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
           font-size: 13pt;
           line-height: 1.35;
           box-sizing: border-box;
@@ -441,7 +441,7 @@ export function WeeklyPrintTemplate({
           table-layout: fixed;
           margin-top: 4px;
           margin-bottom: 12px;
-          font-family: "Times New Roman", Times, serif;
+          font-family: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
           font-size: 12pt;
         }
 
@@ -476,7 +476,7 @@ export function WeeklyPrintTemplate({
         }
 
         .section-title {
-          font-family: "Times New Roman", Times, serif;
+          font-family: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
           font-size: 13pt;
           font-weight: bold;
           text-transform: uppercase;

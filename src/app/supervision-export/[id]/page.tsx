@@ -31,7 +31,7 @@ export default async function SupervisionWeeklyExportViewPage({
     <main
       data-weekly-document-root="true"
       data-document-ready="true"
-      className="w-full bg-white text-black font-serif"
+      className="w-full bg-white text-black font-sans"
     >
       <style>{`
         @page {
