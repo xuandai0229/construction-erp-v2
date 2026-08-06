@@ -207,7 +207,7 @@ export async function getHrReportCharts(
   const scopeWhere = await buildEmployeeScopeWhereClause(ctx, scope, prismaClient);
   const targetDate = filters.dateStart ? new Date(filters.dateStart) : new Date();
 
-  // 1. Fetch active assignments with relationships
+  // Fetch active assignments with relationships
   const assignments = await prismaClient.employeeProjectAssignment.findMany({
     where: {
       status: filters.assignmentStatus ? (filters.assignmentStatus as any) : "ACTIVE",
@@ -240,19 +240,14 @@ export async function getHrReportCharts(
     },
   });
 
-  // Org unit breakdown
   const orgMap = new Map<string, { unitId: string; unitCode: string; unitName: string; count: number }>();
-  // Project breakdown
   const projMap = new Map<string, { projectId: string; projectCode: string; projectName: string; count: number; totalAllocation: number }>();
-  // Role breakdown
   const roleMap = new Map<string, { roleId: string; roleCode: string; roleName: string; count: number }>();
-  // Status breakdown
   const statusMap = new Map<string, number>();
 
   const total = assignments.length;
 
   for (const a of assignments) {
-    // Org Unit
     const org = a.employee?.orgAssignments?.[0]?.organizationUnit;
     const orgId = org?.id || "UNASSIGNED_ORG";
     const orgCode = org?.code || "N/A";
@@ -262,7 +257,6 @@ export async function getHrReportCharts(
     }
     orgMap.get(orgId)!.count++;
 
-    // Project
     const pId = a.projectId;
     const pCode = a.project?.code || "N/A";
     const pName = a.project?.name || "Công trình";
@@ -273,7 +267,6 @@ export async function getHrReportCharts(
     pEntry.count++;
     pEntry.totalAllocation += a.allocationPercentage;
 
-    // Role
     const rId = a.projectPersonnelRoleId;
     const rCode = a.projectPersonnelRole?.code || "N/A";
     const rName = a.projectPersonnelRole?.name || "Vai trò";
@@ -282,7 +275,6 @@ export async function getHrReportCharts(
     }
     roleMap.get(rId)!.count++;
 
-    // Status
     const st = a.status;
     statusMap.set(st, (statusMap.get(st) || 0) + 1);
   }
@@ -351,7 +343,6 @@ export async function getHrReportDetailsTable(
     ...(filters.projectRoleId ? { projectPersonnelRoleId: filters.projectRoleId } : {}),
   };
 
-  // Date range filter
   if (filters.dateStart || filters.dateEnd) {
     const dStart = filters.dateStart ? new Date(filters.dateStart) : undefined;
     const dEnd = filters.dateEnd ? new Date(filters.dateEnd) : undefined;
@@ -365,7 +356,6 @@ export async function getHrReportDetailsTable(
     }
   }
 
-  // Handle drill-down KPI filter
   if (filters.kpiFilter === "expiring_30d") {
     const thirtyDays = new Date(targetDate.getTime() + 30 * 24 * 60 * 60 * 1000);
     whereClause.status = "ACTIVE";
@@ -401,7 +391,6 @@ export async function getHrReportDetailsTable(
     prismaClient.employeeProjectAssignment.count({ where: whereClause }),
   ]);
 
-  // Filter orgUnitId in code if specified
   let itemsFiltered = rawItems;
   if (filters.orgUnitId) {
     itemsFiltered = rawItems.filter((a: any) =>
@@ -459,28 +448,27 @@ export async function generateHrExcelReportBuffer(
   const [kpis, charts, detailsResult] = await Promise.all([
     getHrReportKpis(ctx, scope, filters, prismaClient),
     getHrReportCharts(ctx, scope, filters, prismaClient),
-    getHrReportDetailsTable(ctx, scope, filters, 1, 10000, prismaClient), // All matching items for export
+    getHrReportDetailsTable(ctx, scope, filters, 1, 10000, prismaClient),
   ]);
 
   const workbook = new Workbook.Workbook();
   workbook.creator = "Construction ERP v2 - HR System";
   workbook.created = new Date();
 
-  // Color Constants
   const HEADER_FILL_COLOR = "1E3A8A"; // Dark Blue
-  const SUBHEADER_FILL_COLOR = "F1F5F9"; // Light Gray
 
   // ----------------------------------------------------
   // SHEET 1: TỔNG QUAN (Summary & KPIs)
   // ----------------------------------------------------
   const sheet1 = workbook.addWorksheet("Tổng quan", {
+    pageSetup: { orientation: "landscape", fitToPage: true, fitToWidth: 1 },
     views: [{ showGridLines: true }],
   });
 
-  sheet1.mergeCells("A1:E1");
+  sheet1.mergeCells("A1:D1");
   const titleCell = sheet1.getCell("A1");
   titleCell.value = "BÁO CÁO TỔNG QUAN VÀ CHỈ SỐ KPI NHÂN SỰ CÔNG TRÌNH";
-  titleCell.font = { name: "Segoe UI", size: 16, bold: true, color: { argb: "FFFFFFFF" } };
+  titleCell.font = { name: "Segoe UI", size: 15, bold: true, color: { argb: "FFFFFFFF" } };
   titleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: HEADER_FILL_COLOR } };
   titleCell.alignment = { horizontal: "center", vertical: "middle" };
   sheet1.getRow(1).height = 35;
@@ -494,7 +482,7 @@ export async function generateHrExcelReportBuffer(
   sheet1.getCell("A4").font = { name: "Segoe UI", bold: true };
 
   // KPI Table Header
-  sheet1.getRow(6).values = ["Mã KPI", "Tên chỉ số KPI", "Giá trị", "Đơn vị tính", "Ghi chú công thức"];
+  sheet1.getRow(6).values = ["Tên chỉ số KPI", "Giá trị", "Đơn vị tính", "Ghi chú công thức"];
   const kpiHeaderRow = sheet1.getRow(6);
   kpiHeaderRow.font = { name: "Segoe UI", bold: true, color: { argb: "FFFFFFFF" } };
   kpiHeaderRow.height = 24;
@@ -504,37 +492,37 @@ export async function generateHrExcelReportBuffer(
   });
 
   const kpiRows = [
-    ["KPI_TOTAL_ON_SITE", "Tổng nhân sự cắm tại công trường", kpis.totalOnSite, "Nhân sự", "Đếm số nhân sự duy nhất đang có phân công ACTIVE"],
-    ["KPI_ACTIVE_PROJECTS_STAFFED", "Số công trình đã có nhân sự điều động", kpis.activeProjectsStaffed, "Công trình", "Đếm số công trình duy nhất có nhân lực đang cắm"],
-    ["KPI_EXPIRING_ASSIGNMENTS_30D", "Số điều động sắp hết hạn (30 ngày)", kpis.expiringAssignments30d, "Bản ghi", "ExpectedEndDate trong vòng 30 ngày tới"],
-    ["KPI_UNASSIGNED_EMPLOYEES", "Số nhân sự chưa có điều động", kpis.unassignedEmployees, "Nhân sự", "Nhân sự ACTIVE có 0 phân công công trình"],
-    ["KPI_EMPLOYEES_WITH_AVAILABLE_CAPACITY", "Số nhân sự còn dung lượng phân bổ", kpis.availableCapacityEmployees, "Nhân sự", "Tổng phân bổ thời gian < 100%"],
-    ["KPI_OVERALLOCATED_EMPLOYEES", "Số nhân sự vượt ngưỡng 100% phân bổ", kpis.overallocatedEmployees, "Nhân sự", "Tổng phân bổ thời gian giao thoa > 100%"],
-    ["KPI_TOTAL_ACTIVE_ASSIGNMENTS", "Tổng số bản ghi điều động hiệu lực", kpis.totalActiveAssignments, "Bản ghi", "Tổng bản ghi phân công ACTIVE"],
-    ["KPI_AVERAGE_ALLOCATION", "Tỷ lệ phân bổ trung bình", kpis.averageAllocation / 100, "Phần trăm", "Trung bình % phân bổ trên các bản ghi"],
+    ["Nhân sự tại công trình", kpis.totalOnSite, "Nhân sự", "Đếm số nhân sự duy nhất đang có phân công đang hoạt động"],
+    ["Công trình có nhân sự", kpis.activeProjectsStaffed, "Công trình", "Đếm số công trình duy nhất có nhân lực đang cắm"],
+    ["Sắp kết thúc trong 30 ngày", kpis.expiringAssignments30d, "Bản ghi", "Ngày dự kiến kết thúc trong vòng 30 ngày tới"],
+    ["Nhân sự chưa được điều động", kpis.unassignedEmployees, "Nhân sự", "Nhân sự đang hoạt động có 0 phân công công trình"],
+    ["Còn khả năng phân bổ", kpis.availableCapacityEmployees, "Nhân sự", "Tổng phân bổ thời gian dưới 100%"],
+    ["Vượt 100% phân bổ", kpis.overallocatedEmployees, "Nhân sự", "Tổng phân bổ thời gian giao thoa vượt 100%"],
+    ["Tổng số bản ghi điều động hiệu lực", kpis.totalActiveAssignments, "Bản ghi", "Tổng bản ghi phân công đang hiệu lực"],
+    ["Tỷ lệ phân bổ trung bình", kpis.averageAllocation / 100, "Phần trăm", "Trung bình % phân bổ trên các bản ghi điều động"],
   ];
 
-  kpiRows.forEach((row, idx) => {
+  kpiRows.forEach((row) => {
     const r = sheet1.addRow(row);
     r.font = { name: "Segoe UI", size: 10 };
-    r.getCell(3).font = { name: "Segoe UI", size: 11, bold: true };
-    if (row[0] === "KPI_AVERAGE_ALLOCATION") {
-      r.getCell(3).numFmt = "0%";
+    r.getCell(2).font = { name: "Segoe UI", size: 11, bold: true };
+    if (row[0] === "Tỷ lệ phân bổ trung bình") {
+      r.getCell(2).numFmt = "0%";
     }
   });
 
   sheet1.columns = [
-    { width: 35 },
-    { width: 45 },
+    { width: 42 },
     { width: 18 },
     { width: 18 },
-    { width: 55 },
+    { width: 60 },
   ];
 
   // ----------------------------------------------------
   // SHEET 2: CHI TIẾT ĐIỀU ĐỘNG (Staffing Details)
   // ----------------------------------------------------
   const sheet2 = workbook.addWorksheet("Chi tiết điều động", {
+    pageSetup: { orientation: "landscape", fitToWidth: 1, printTitlesRow: "1:1" },
     views: [{ state: "frozen", xSplit: 0, ySplit: 1, showGridLines: true }],
   });
 
@@ -581,36 +569,45 @@ export async function generateHrExcelReportBuffer(
     PROJECT_TRANSFER: "Điều chuyển công trình",
   };
 
-  detailsResult.items.forEach((item, idx) => {
-    const row = sheet2.addRow([
-      idx + 1,
-      item.employeeCode,
-      item.employeeFullName,
-      item.orgUnitName || "Chưa thuộc phòng ban",
-      item.positionTitle || "Chưa xếp vị trí",
-      item.projectCode,
-      item.projectName,
-      item.projectRoleName,
-      item.startDate,
-      item.expectedEndDate || "-",
-      item.endDate || "-",
-      item.allocationPercentage / 100, // format as percentage
-      item.assignmentDecisionNo || "-",
-      statusLabelMap[item.status] || item.status,
-      item.endReason ? endReasonLabelMap[item.endReason] || item.endReason : "-",
-    ]);
+  if (detailsResult.items.length === 0) {
+    sheet2.mergeCells("A2:O2");
+    const emptyCell = sheet2.getCell("A2");
+    emptyCell.value = "Không có dữ liệu phù hợp với phạm vi và bộ lọc đã chọn.";
+    emptyCell.font = { name: "Segoe UI", italic: true, color: { argb: "FF64748B" } };
+    emptyCell.alignment = { horizontal: "center", vertical: "middle" };
+    sheet2.getRow(2).height = 30;
+  } else {
+    detailsResult.items.forEach((item, idx) => {
+      const row = sheet2.addRow([
+        idx + 1,
+        item.employeeCode,
+        item.employeeFullName,
+        item.orgUnitName || "Chưa thuộc phòng ban",
+        item.positionTitle || "Chưa xếp vị trí",
+        item.projectCode,
+        item.projectName,
+        item.projectRoleName,
+        item.startDate,
+        item.expectedEndDate || "-",
+        item.endDate || "-",
+        item.allocationPercentage / 100,
+        item.assignmentDecisionNo || "-",
+        statusLabelMap[item.status] || item.status,
+        item.endReason ? endReasonLabelMap[item.endReason] || item.endReason : "-",
+      ]);
 
-    row.font = { name: "Segoe UI", size: 10 };
-    row.getCell(1).alignment = { horizontal: "center" };
-    row.getCell(2).alignment = { horizontal: "center" };
-    row.getCell(6).alignment = { horizontal: "center" };
-    row.getCell(9).alignment = { horizontal: "center" };
-    row.getCell(10).alignment = { horizontal: "center" };
-    row.getCell(11).alignment = { horizontal: "center" };
-    row.getCell(12).alignment = { horizontal: "right" };
-    row.getCell(12).numFmt = "0%";
-    row.getCell(14).alignment = { horizontal: "center" };
-  });
+      row.font = { name: "Segoe UI", size: 10 };
+      row.getCell(1).alignment = { horizontal: "center" };
+      row.getCell(2).alignment = { horizontal: "center" };
+      row.getCell(6).alignment = { horizontal: "center" };
+      row.getCell(9).alignment = { horizontal: "center" };
+      row.getCell(10).alignment = { horizontal: "center" };
+      row.getCell(11).alignment = { horizontal: "center" };
+      row.getCell(12).alignment = { horizontal: "right" };
+      row.getCell(12).numFmt = "0%";
+      row.getCell(14).alignment = { horizontal: "center" };
+    });
+  }
 
   sheet2.autoFilter = {
     from: { row: 1, column: 1 },
@@ -639,6 +636,7 @@ export async function generateHrExcelReportBuffer(
   // SHEET 3: CƠ CẤU THEO ĐƠN VỊ (Unit Structural Breakdown)
   // ----------------------------------------------------
   const sheet3 = workbook.addWorksheet("Cơ cấu theo đơn vị", {
+    pageSetup: { orientation: "landscape", fitToWidth: 1, printTitlesRow: "1:1" },
     views: [{ state: "frozen", xSplit: 0, ySplit: 1, showGridLines: true }],
   });
 
@@ -652,21 +650,30 @@ export async function generateHrExcelReportBuffer(
     cell.alignment = { horizontal: "center", vertical: "middle" };
   });
 
-  charts.orgUnitDistribution.forEach((org, idx) => {
-    const row = sheet3.addRow([
-      idx + 1,
-      org.unitCode,
-      org.unitName,
-      org.count,
-      org.percentage / 100,
-    ]);
-    row.font = { name: "Segoe UI", size: 10 };
-    row.getCell(1).alignment = { horizontal: "center" };
-    row.getCell(2).alignment = { horizontal: "center" };
-    row.getCell(4).alignment = { horizontal: "right" };
-    row.getCell(5).alignment = { horizontal: "right" };
-    row.getCell(5).numFmt = "0%";
-  });
+  if (charts.orgUnitDistribution.length === 0) {
+    sheet3.mergeCells("A2:E2");
+    const emptyCell3 = sheet3.getCell("A2");
+    emptyCell3.value = "Không có dữ liệu phù hợp với phạm vi và bộ lọc đã chọn.";
+    emptyCell3.font = { name: "Segoe UI", italic: true, color: { argb: "FF64748B" } };
+    emptyCell3.alignment = { horizontal: "center", vertical: "middle" };
+    sheet3.getRow(2).height = 30;
+  } else {
+    charts.orgUnitDistribution.forEach((org, idx) => {
+      const row = sheet3.addRow([
+        idx + 1,
+        org.unitCode,
+        org.unitName,
+        org.count,
+        org.percentage / 100,
+      ]);
+      row.font = { name: "Segoe UI", size: 10 };
+      row.getCell(1).alignment = { horizontal: "center" };
+      row.getCell(2).alignment = { horizontal: "center" };
+      row.getCell(4).alignment = { horizontal: "right" };
+      row.getCell(5).alignment = { horizontal: "right" };
+      row.getCell(5).numFmt = "0%";
+    });
+  }
 
   sheet3.columns = [
     { width: 8 },

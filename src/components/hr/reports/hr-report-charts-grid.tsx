@@ -121,7 +121,7 @@ export function HrReportChartsGrid({ charts }: HrReportChartsGridProps) {
               </div>
               <div>
                 <h3 className="text-sm font-bold text-slate-900">Phân bổ nhân sự theo công trình</h3>
-                <p className="text-xs text-slate-500">Số lượng nhân lực cắm tại từng dự án</p>
+                <p className="text-xs text-slate-500">Số nhân sự đang được phân công tại từng công trình</p>
               </div>
             </div>
             {charts.projectDistribution.length > 0 && (

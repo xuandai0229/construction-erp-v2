@@ -16,10 +16,10 @@ test.describe("HR Phase 4.4 — Comprehensive Reporting, KPI & Excel E2E Suite",
     await page.waitForLoadState("networkidle");
 
     // Header title
-    await expect(page.locator("h1")).toContainText("Báo cáo và phân tích nhân sự");
+    await expect(page.locator("h1").first()).toContainText("Báo cáo và phân tích nhân sự");
 
     // KPI Group Title
-    await expect(page.getByText("Chỉ số điều hành nhân sự")).toBeVisible();
+    await expect(page.getByText("Chỉ số điều hành nhân sự").first()).toBeVisible();
 
     // Verify 0 technical English codes on UI
     const bodyText = await page.innerText("body");
@@ -30,16 +30,16 @@ test.describe("HR Phase 4.4 — Comprehensive Reporting, KPI & Excel E2E Suite",
     expect(bodyText).not.toContain("PLANNING");
 
     // Primary KPI Cards
-    await expect(page.getByText("Nhân sự tại công trình")).toBeVisible();
-    await expect(page.getByText("Công trình có nhân sự")).toBeVisible();
-    await expect(page.getByText("Điều động đang hiệu lực")).toBeVisible();
-    await expect(page.getByText("Nhân sự chưa được điều động")).toBeVisible();
+    await expect(page.getByText("Nhân sự tại công trình").first()).toBeVisible();
+    await expect(page.getByText("Công trình có nhân sự").first()).toBeVisible();
+    await expect(page.getByText("Điều động đang hiệu lực").first()).toBeVisible();
+    await expect(page.getByText("Nhân sự chưa được điều động").first()).toBeVisible();
 
     // Secondary KPI Cards
-    await expect(page.getByText("Sắp kết thúc trong 30 ngày")).toBeVisible();
-    await expect(page.getByText("Còn khả năng phân bổ")).toBeVisible();
-    await expect(page.getByText("Vượt 100% phân bổ")).toBeVisible();
-    await expect(page.getByText("Tỷ lệ phân bổ trung bình")).toBeVisible();
+    await expect(page.getByText("Sắp kết thúc trong 30 ngày").first()).toBeVisible();
+    await expect(page.getByText("Còn khả năng phân bổ").first()).toBeVisible();
+    await expect(page.getByText("Vượt 100% phân bổ").first()).toBeVisible();
+    await expect(page.getByText("Tỷ lệ phân bổ trung bình").first()).toBeVisible();
 
     // Export button
     await expect(page.getByRole("button", { name: /Xuất báo cáo Excel/i })).toBeVisible();
@@ -55,16 +55,17 @@ test.describe("HR Phase 4.4 — Comprehensive Reporting, KPI & Excel E2E Suite",
     await page.goto("/hr/reports");
     await page.waitForLoadState("networkidle");
 
-    // Click "Nhân sự tại công trình" KPI card
-    await page.getByRole("button", { name: /Nhân sự tại công trình/i }).click();
-    await page.waitForLoadState("networkidle");
+    // Click "Nhân sự tại công trình" card button
+    const cardButton = page.locator("button").filter({ hasText: "Nhân sự tại công trình" }).first();
+    await cardButton.click();
+    await page.waitForURL((url) => url.searchParams.get("kpiFilter") === "on_site", { timeout: 10000 }).catch(() => {});
 
     expect(page.url()).toContain("kpiFilter=on_site");
     await expect(page.getByText(/Đang lọc: Nhân sự tại công trình/i)).toBeVisible();
 
     // Clear KPI filter
     await page.getByRole("button", { name: /Bỏ lọc KPI/i }).click();
-    await page.waitForLoadState("networkidle");
+    await page.waitForURL((url) => !url.searchParams.has("kpiFilter"), { timeout: 10000 }).catch(() => {});
     expect(page.url()).not.toContain("kpiFilter=");
   });
 
@@ -75,15 +76,15 @@ test.describe("HR Phase 4.4 — Comprehensive Reporting, KPI & Excel E2E Suite",
     // Enter search query matching nothing
     const searchInput = page.getByPlaceholder("Mã NV hoặc họ tên...");
     await searchInput.fill("NON_EXISTENT_EMPLOYEE_XYZ_999");
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(600);
 
     // Verify empty state messages
-    await expect(page.getByText("Không tìm thấy bản ghi điều động nào.")).toBeVisible();
-    await expect(page.getByText("Chưa có dữ liệu điều động phù hợp với bộ lọc.")).toBeVisible();
+    await expect(page.getByText("Không tìm thấy bản ghi điều động nào.").first()).toBeVisible();
+    await expect(page.getByText("Chưa có dữ liệu điều động phù hợp với bộ lọc.").first()).toBeVisible();
 
     // Clear all filters
     await page.getByRole("button", { name: /Xóa bộ lọc/i }).click();
-    await page.waitForLoadState("networkidle");
+    await page.waitForURL((url) => !url.searchParams.has("searchQuery"), { timeout: 10000 }).catch(() => {});
     expect(page.url()).not.toContain("searchQuery=");
   });
 
@@ -118,17 +119,17 @@ test.describe("HR Phase 4.4 — Comprehensive Reporting, KPI & Excel E2E Suite",
     // Desktop 1440px
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/hr/reports");
-    await expect(page.locator("h1")).toBeVisible();
+    await expect(page.locator("h1").first()).toBeVisible();
 
     // Tablet 768px
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.reload();
-    await expect(page.locator("h1")).toBeVisible();
+    await expect(page.locator("h1").first()).toBeVisible();
 
     // Mobile 375px
     await page.setViewportSize({ width: 375, height: 667 });
     await page.reload();
-    await expect(page.locator("h1")).toBeVisible();
-    await expect(page.getByText("Bộ lọc")).toBeVisible();
+    await expect(page.locator("h1").first()).toBeVisible();
+    await expect(page.getByRole("button", { name: /Bộ lọc/i })).toBeVisible();
   });
 });

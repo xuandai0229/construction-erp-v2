@@ -13,7 +13,6 @@ import {
   Briefcase,
   Percent,
   XCircle,
-  HelpCircle,
 } from "lucide-react";
 
 interface HrReportKpiCardsProps {
@@ -52,7 +51,7 @@ export function HrReportKpiCards({ kpis }: HrReportKpiCardsProps) {
       title: "Nhân sự tại công trình",
       count: kpis.totalOnSite,
       unit: "nhân sự",
-      description: "Nhân viên đang cắm thực tế tại các dự án",
+      description: "Nhân sự đang làm việc tại các công trình",
       icon: Users,
       color: "border-blue-500 text-blue-600 bg-blue-50",
       activeBg: "bg-blue-50 border-blue-600 ring-2 ring-blue-500",
@@ -62,7 +61,7 @@ export function HrReportKpiCards({ kpis }: HrReportKpiCardsProps) {
       title: "Công trình có nhân sự",
       count: kpis.activeProjectsStaffed,
       unit: "công trình",
-      description: "Công trình có ít nhất 1 điều động hiệu lực",
+      description: "Công trình có ít nhất một nhân sự được điều động",
       icon: Building2,
       color: "border-emerald-500 text-emerald-600 bg-emerald-50",
       activeBg: "bg-emerald-50 border-emerald-600 ring-2 ring-emerald-500",
@@ -72,7 +71,7 @@ export function HrReportKpiCards({ kpis }: HrReportKpiCardsProps) {
       title: "Điều động đang hiệu lực",
       count: kpis.totalActiveAssignments,
       unit: "bản ghi",
-      description: "Tổng số phân công công trình đang hoạt động",
+      description: "Tổng số quyết định phân công công trình đang hoạt động",
       icon: Briefcase,
       color: "border-indigo-500 text-indigo-600 bg-indigo-50",
       activeBg: "bg-indigo-50 border-indigo-600 ring-2 ring-indigo-500",
@@ -82,7 +81,7 @@ export function HrReportKpiCards({ kpis }: HrReportKpiCardsProps) {
       title: "Nhân sự chưa được điều động",
       count: kpis.unassignedEmployees,
       unit: "nhân sự",
-      description: "Nhân viên đang làm việc nhưng chưa cắm dự án",
+      description: "Nhân sự đang hoạt động nhưng chưa phân công dự án",
       icon: UserX,
       color: "border-slate-400 text-slate-600 bg-slate-100",
       activeBg: "bg-slate-100 border-slate-600 ring-2 ring-slate-500",
@@ -96,7 +95,7 @@ export function HrReportKpiCards({ kpis }: HrReportKpiCardsProps) {
       title: "Sắp kết thúc trong 30 ngày",
       count: kpis.expiringAssignments30d,
       unit: "bản ghi",
-      description: "Dự kiến hoàn thành trong 30 ngày tới",
+      description: "Điều động dự kiến hoàn thành trong 30 ngày tới",
       icon: AlertTriangle,
       color: "border-amber-500 text-amber-600 bg-amber-50",
       activeBg: "bg-amber-50 border-amber-600 ring-2 ring-amber-500",
@@ -106,7 +105,7 @@ export function HrReportKpiCards({ kpis }: HrReportKpiCardsProps) {
       title: "Còn khả năng phân bổ",
       count: kpis.availableCapacityEmployees,
       unit: "nhân sự",
-      description: "Nhân sự có tổng phân bổ thời gian dưới 100%",
+      description: "Nhân sự có tổng thời gian phân bổ dưới 100%",
       icon: UserCheck,
       color: "border-teal-500 text-teal-600 bg-teal-50",
       activeBg: "bg-teal-50 border-teal-600 ring-2 ring-teal-500",
@@ -116,7 +115,7 @@ export function HrReportKpiCards({ kpis }: HrReportKpiCardsProps) {
       title: "Vượt 100% phân bổ",
       count: kpis.overallocatedEmployees,
       unit: "nhân sự",
-      description: "Nhân sự bị gán thời gian giao thoa vượt 100%",
+      description: "Nhân sự bị gán thời gian điều động giao thoa vượt 100%",
       icon: Zap,
       color: "border-rose-500 text-rose-600 bg-rose-50",
       activeBg: "bg-rose-50 border-rose-600 ring-2 ring-rose-500",
@@ -126,7 +125,7 @@ export function HrReportKpiCards({ kpis }: HrReportKpiCardsProps) {
       title: "Tỷ lệ phân bổ trung bình",
       count: `${kpis.averageAllocation}%`,
       unit: "mức phân bổ",
-      description: "Tỷ lệ thời gian phân bổ trung bình trên các bản ghi",
+      description: "Tỷ lệ phân bổ thời gian trung bình trên các điều động",
       icon: Percent,
       color: "border-purple-500 text-purple-600 bg-purple-50",
       activeBg: "bg-purple-50 border-purple-600 ring-2 ring-purple-500",
@@ -138,7 +137,7 @@ export function HrReportKpiCards({ kpis }: HrReportKpiCardsProps) {
   return (
     <div className="mb-6 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-bold text-slate-900 tracking-wide">
+        <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
           Chỉ số điều hành nhân sự
         </h2>
         {activeKpiFilter && (
@@ -150,7 +149,7 @@ export function HrReportKpiCards({ kpis }: HrReportKpiCardsProps) {
             <button
               type="button"
               onClick={clearKpiFilter}
-              className="text-xs font-medium text-rose-600 hover:text-rose-800 hover:underline flex items-center gap-1"
+              className="text-xs font-semibold text-rose-600 hover:text-rose-800 hover:underline flex items-center gap-1"
             >
               <XCircle className="w-3.5 h-3.5" />
               Bỏ lọc KPI
@@ -168,7 +167,7 @@ export function HrReportKpiCards({ kpis }: HrReportKpiCardsProps) {
               type="button"
               key={card.key}
               onClick={() => handleCardClick(card.key)}
-              title={`${card.title} — Bấm để lọc chi tiết`}
+              title={`${card.title} — Bấm để lọc danh sách chi tiết`}
               className={`group flex min-h-28 flex-col justify-between rounded-xl border p-4 text-left shadow-xs transition-all hover:border-blue-400 hover:shadow-sm focus:outline-hidden ${
                 isActive ? card.activeBg : "border-slate-200 bg-white"
               }`}
@@ -205,7 +204,7 @@ export function HrReportKpiCards({ kpis }: HrReportKpiCardsProps) {
               type="button"
               key={card.key}
               onClick={() => handleCardClick(card.key)}
-              title={`${card.title} — Bấm để lọc chi tiết`}
+              title={`${card.title} — Bấm để lọc danh sách chi tiết`}
               className={`group flex min-h-28 flex-col justify-between rounded-xl border p-4 text-left shadow-xs transition-all hover:border-blue-400 hover:shadow-sm focus:outline-hidden ${
                 isActive ? card.activeBg : "border-slate-200 bg-white"
               }`}

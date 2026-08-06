@@ -249,8 +249,8 @@ describe("HR Phase 4.4 — Enterprise Reporting & Excel Export Complete Validati
     expect(sheet1).toBeDefined();
 
     // Check Sheet 1 KPI Total On Site row value
-    const totalOnSiteRow = sheet1?.getRow(7); // Row 7 = KPI_TOTAL_ON_SITE
-    const cellValue = totalOnSiteRow?.getCell(3).value;
+    const totalOnSiteRow = sheet1?.getRow(7); // Row 7 = Total On Site
+    const cellValue = totalOnSiteRow?.getCell(2).value;
     expect(cellValue).toBe(kpis.totalOnSite);
 
     // Sheet 2: Details
