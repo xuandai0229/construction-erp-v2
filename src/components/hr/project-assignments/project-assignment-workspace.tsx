@@ -78,6 +78,8 @@ export function ProjectAssignmentWorkspace({
     });
   };
 
+  const hasActiveFilters = Boolean(searchQuery || selectedProjectId || selectedStatus !== "ALL");
+
   // Client-side filtering on current items
   const filteredItems = initialItems.filter((item) => {
     // Search
@@ -124,7 +126,7 @@ export function ProjectAssignmentWorkspace({
 
       {/* Header */}
       <HrPageHeader
-        title="Quản lý Điều động Nhân sự Công trình"
+        title="Quản lý điều động nhân sự công trình"
         description="Theo dõi kế hoạch phân bổ, điều chuyển vai trò và lịch sử công tác nhân sự tại các dự án."
       />
 
@@ -152,6 +154,8 @@ export function ProjectAssignmentWorkspace({
         assignments={filteredItems}
         capabilities={capabilities}
         isLoading={isPending}
+        hasFilters={hasActiveFilters}
+        onCreateClick={() => setIsCreateOpen(true)}
         onViewDetails={(item) => {
           setSelectedItem(item);
           setIsDetailsOpen(true);
@@ -212,7 +216,7 @@ export function ProjectAssignmentWorkspace({
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         onSuccess={() => {
-          showToast("Tạo đợt điều động nhân sự mới thành công");
+          showToast("Tạo điều động nhân sự thành công");
           handleRefresh();
         }}
         employees={employees}
@@ -226,7 +230,7 @@ export function ProjectAssignmentWorkspace({
         isOpen={isTransferOpen}
         onClose={() => setIsTransferOpen(false)}
         onSuccess={() => {
-          showToast("Cập nhật / chuyển đổi vai trò phân công thành công");
+          showToast("Thay đổi vai trò hoặc tỷ lệ thành công");
           handleRefresh();
         }}
         assignment={selectedItem}
@@ -239,7 +243,7 @@ export function ProjectAssignmentWorkspace({
         isOpen={isExtendOpen}
         onClose={() => setIsExtendOpen(false)}
         onSuccess={() => {
-          showToast("Gia hạn đợt công tác công trình thành công");
+          showToast("Gia hạn điều động thành công");
           handleRefresh();
         }}
         assignment={selectedItem}
@@ -261,7 +265,7 @@ export function ProjectAssignmentWorkspace({
         isOpen={isCancelOpen}
         onClose={() => setIsCancelOpen(false)}
         onSuccess={() => {
-          showToast("Hủy bỏ đợt phân công kế hoạch thành công");
+          showToast("Hủy điều động thành công");
           handleRefresh();
         }}
         assignment={selectedItem}

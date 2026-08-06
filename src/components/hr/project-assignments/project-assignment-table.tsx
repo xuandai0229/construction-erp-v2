@@ -9,6 +9,7 @@ import {
   LogOut,
   Ban,
   Layers,
+  Plus,
 } from "lucide-react";
 import { ProjectAssignmentDTO } from "@/lib/hr/project-assignment-dto";
 import { AssignmentStatusBadge } from "./assignment-status-badge";
@@ -23,6 +24,8 @@ interface ProjectAssignmentTableProps {
   onRelease: (item: ProjectAssignmentDTO) => void;
   onCancel: (item: ProjectAssignmentDTO) => void;
   isLoading?: boolean;
+  hasFilters?: boolean;
+  onCreateClick?: () => void;
 }
 
 export function ProjectAssignmentTable({
@@ -34,6 +37,8 @@ export function ProjectAssignmentTable({
   onRelease,
   onCancel,
   isLoading,
+  hasFilters,
+  onCreateClick,
 }: ProjectAssignmentTableProps) {
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
@@ -48,14 +53,27 @@ export function ProjectAssignmentTable({
 
   if (assignments.length === 0) {
     return (
-      <div className="bg-white border border-slate-200 rounded-xl p-12 text-center text-xs space-y-3">
-        <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400">
-          <Layers className="w-6 h-6" />
+      <div className="bg-white border border-slate-200 rounded-xl p-8 sm:p-10 text-center text-xs space-y-3 shadow-xs">
+        <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400">
+          <Layers className="w-5 h-5" />
         </div>
-        <p className="font-semibold text-slate-700">Không tìm thấy bản ghi phân công phù hợp</p>
+        <p className="font-bold text-slate-800 text-sm">Chưa có điều động phù hợp</p>
         <p className="text-slate-500 max-w-sm mx-auto">
-          Thử thay đổi từ khóa tìm kiếm, điều kiện lọc trạng thái hoặc tạo mới đợt phân công công tác.
+          {hasFilters
+            ? "Thử thay đổi từ khóa hoặc xóa bớt bộ lọc."
+            : "Chưa có nhân sự nào được điều động đến công trình."}
         </p>
+        {!hasFilters && capabilities.canCreate && onCreateClick && (
+          <div className="pt-2">
+            <button
+              onClick={onCreateClick}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-xl shadow-xs transition"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Tạo điều động đầu tiên</span>
+            </button>
+          </div>
+        )}
       </div>
     );
   }
@@ -93,7 +111,7 @@ export function ProjectAssignmentTable({
                         {item.employeeName.charAt(0)}
                       </div>
                       <div className="min-w-0">
-                        <div className="truncate font-semibold text-slate-900">
+                        <div className="truncate font-semibold text-slate-900" title={item.employeeName}>
                           {item.employeeName}
                         </div>
                         <div className="text-[11px] text-slate-500 font-mono">
@@ -157,6 +175,7 @@ export function ProjectAssignmentTable({
                       <button
                         onClick={() => setActiveMenuId(activeMenuId === item.id ? null : item.id)}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                        title="Thao tác"
                       >
                         <MoreHorizontal className="w-4 h-4" />
                       </button>
@@ -167,7 +186,7 @@ export function ProjectAssignmentTable({
                             className="fixed inset-0 z-10"
                             onClick={() => setActiveMenuId(null)}
                           />
-                          <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-xl border border-slate-200 z-20 py-1 text-xs text-slate-700 animate-in fade-in zoom-in-95 duration-100">
+                          <div className="absolute right-0 mt-1 w-52 bg-white rounded-xl shadow-xl border border-slate-200 z-20 py-1 text-xs text-slate-700 animate-in fade-in zoom-in-95 duration-100">
                             {/* View Details */}
                             <button
                               onClick={() => {
@@ -190,7 +209,7 @@ export function ProjectAssignmentTable({
                                 className="w-full px-3 py-2 text-left hover:bg-slate-50 flex items-center gap-2"
                               >
                                 <RefreshCw className="w-3.5 h-3.5 text-purple-600" />
-                                <span>Thay đổi vai trò / Tỷ lệ</span>
+                                <span>Thay đổi vai trò hoặc tỷ lệ</span>
                               </button>
                             )}
 
@@ -204,7 +223,7 @@ export function ProjectAssignmentTable({
                                 className="w-full px-3 py-2 text-left hover:bg-slate-50 flex items-center gap-2"
                               >
                                 <Calendar className="w-3.5 h-3.5 text-sky-600" />
-                                <span>Gia hạn đợt công tác</span>
+                                <span>Gia hạn điều động</span>
                               </button>
                             )}
 
@@ -218,7 +237,7 @@ export function ProjectAssignmentTable({
                                 className="w-full px-3 py-2 text-left hover:bg-slate-50 flex items-center gap-2 text-amber-700"
                               >
                                 <LogOut className="w-3.5 h-3.5 text-amber-600" />
-                                <span>Rút nhân sự sớm</span>
+                                <span>Rút nhân sự</span>
                               </button>
                             )}
 
@@ -232,7 +251,7 @@ export function ProjectAssignmentTable({
                                 className="w-full px-3 py-2 text-left hover:bg-slate-50 flex items-center gap-2 text-rose-600"
                               >
                                 <Ban className="w-3.5 h-3.5 text-rose-600" />
-                                <span>Hủy phân công tương lai</span>
+                                <span>Hủy điều động</span>
                               </button>
                             )}
                           </div>
@@ -282,12 +301,12 @@ export function ProjectAssignmentTable({
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-500">Thời gian:</span>
-                  <span className="text-slate-700">{item.startDate} → {item.expectedEndDate || "Tương lai"}</span>
+                  <span className="text-slate-700">{item.startDate} → {item.expectedEndDate || "Không giới hạn"}</span>
                 </div>
               </div>
 
               {/* Mobile Actions */}
-              <div className="flex items-center justify-end gap-2 pt-1">
+              <div className="flex items-center justify-end gap-2 pt-1 flex-wrap">
                 <button
                   onClick={() => onViewDetails(item)}
                   className="px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition flex items-center gap-1"

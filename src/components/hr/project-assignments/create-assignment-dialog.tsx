@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { UserPlus, Calendar, Building2, Briefcase, FileText, AlertCircle } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { UserPlus, AlertCircle } from "lucide-react";
 import {
   assignEmployeeToProjectAction,
   AssignmentFormOptionEmployee,
@@ -9,6 +9,7 @@ import {
   AssignmentFormOptionRole,
 } from "@/app/hr/project-assignments/actions/project-assignment-actions";
 import { AllocationOverlapDialog } from "./allocation-overlap-dialog";
+import { EnterpriseCombobox, EnterpriseComboboxOption } from "@/components/ui/enterprise-combobox";
 
 interface CreateAssignmentDialogProps {
   isOpen: boolean;
@@ -45,18 +46,55 @@ export function CreateAssignmentDialog({
   const [showOverlapDialog, setShowOverlapDialog] = useState(false);
   const [overlapErrorMessage, setOverlapErrorMessage] = useState("");
 
+  const employeeOptions: EnterpriseComboboxOption[] = useMemo(
+    () =>
+      employees.map((emp) => ({
+        value: emp.id,
+        label: `[${emp.code}] ${emp.fullName}`,
+        code: emp.code,
+        name: emp.fullName,
+        description: emp.orgUnitName || "Chưa thuộc đơn vị",
+      })),
+    [employees]
+  );
+
+  const projectOptions: EnterpriseComboboxOption[] = useMemo(
+    () =>
+      projects.map((prj) => ({
+        value: prj.id,
+        label: `[${prj.code}] ${prj.name}`,
+        code: prj.code,
+        name: prj.name,
+      })),
+    [projects]
+  );
+
+  const roleOptions: EnterpriseComboboxOption[] = useMemo(
+    () =>
+      roles.map((r) => ({
+        value: r.id,
+        label: r.name,
+        code: r.code,
+        name: r.name,
+      })),
+    [roles]
+  );
+
   if (!isOpen) return null;
 
-  const handleFormSubmit = async (e: React.FormEvent, allowOverride = false, overrideReason?: string) => {
+  const handleFormSubmit = async (e: React.FormEvent | null, allowOverride = false, overrideReason?: string) => {
     if (e) e.preventDefault();
     setErrorMessage(null);
 
-    if (!employeeId) return setErrorMessage("Vui lòng chọn nhân viên điều động");
+    if (!employeeId) return setErrorMessage("Vui lòng chọn nhân sự điều động");
     if (!projectId) return setErrorMessage("Vui lòng chọn công trình / dự án");
     if (!roleId) return setErrorMessage("Vui lòng chọn vai trò công trường");
-    if (!startDate) return setErrorMessage("Vui lòng chọn ngày bắt đầu phân công");
+    if (!startDate) return setErrorMessage("Vui lòng chọn ngày bắt đầu điều động");
     if (allocationPercentage < 1 || allocationPercentage > 100) {
       return setErrorMessage("Tỷ lệ phân bổ phải từ 1% đến 100%");
+    }
+    if (expectedEndDate && expectedEndDate < startDate) {
+      return setErrorMessage("Ngày dự kiến kết thúc không thể trước ngày bắt đầu");
     }
 
     setIsSubmitting(true);
@@ -87,7 +125,7 @@ export function CreateAssignmentDialog({
       onSuccess();
       onClose();
     } catch (err: any) {
-      setErrorMessage(err?.message || "Lỗi không xác định khi tạo phân công");
+      setErrorMessage(err?.message || "Lỗi không xác định khi tạo điều động");
     } finally {
       setIsSubmitting(false);
     }
@@ -101,7 +139,7 @@ export function CreateAssignmentDialog({
           <div className="bg-blue-600 px-6 py-4 flex items-center justify-between text-white shrink-0">
             <div className="flex items-center gap-2.5">
               <UserPlus className="w-5 h-5 text-blue-100" />
-              <h3 className="text-base font-bold">Phân công nhân sự công trình</h3>
+              <h3 className="text-base font-bold">Tạo điều động nhân sự</h3>
             </div>
             <button
               onClick={onClose}
@@ -121,61 +159,52 @@ export function CreateAssignmentDialog({
               </div>
             )}
 
-            {/* Employee */}
+            {/* Employee Combobox */}
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold text-slate-800">
                 Nhân sự điều động <span className="text-rose-500">*</span>
               </label>
-              <select
+              <EnterpriseCombobox
+                options={employeeOptions}
                 value={employeeId}
-                onChange={(e) => setEmployeeId(e.target.value)}
-                className="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-hidden"
-              >
-                <option value="">-- Chọn nhân viên --</option>
-                {employees.map((emp) => (
-                  <option key={emp.id} value={emp.id}>
-                    [{emp.code}] {emp.fullName} {emp.orgUnitName ? `(${emp.orgUnitName})` : ""}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setEmployeeId(val)}
+                placeholder="-- Chọn nhân sự --"
+                searchPlaceholder="Tìm theo tên hoặc mã nhân viên..."
+                maxPanelHeight={320}
+                testId="create-assignment-employee-combobox"
+              />
             </div>
 
-            {/* Project & Role Grid */}
+            {/* Project & Role Comboboxes */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <label className="block text-xs font-semibold text-slate-800">
                   Công trình / Dự án <span className="text-rose-500">*</span>
                 </label>
-                <select
+                <EnterpriseCombobox
+                  options={projectOptions}
                   value={projectId}
-                  onChange={(e) => setProjectId(e.target.value)}
-                  className="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-hidden"
-                >
-                  <option value="">-- Chọn công trình --</option>
-                  {projects.map((prj) => (
-                    <option key={prj.id} value={prj.id}>
-                      [{prj.code}] {prj.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setProjectId(val)}
+                  placeholder="-- Chọn công trình --"
+                  searchPlaceholder="Tìm theo mã hoặc tên công trình..."
+                  maxPanelHeight={320}
+                  testId="create-assignment-project-combobox"
+                />
               </div>
 
               <div className="space-y-1.5">
                 <label className="block text-xs font-semibold text-slate-800">
                   Vai trò công trường <span className="text-rose-500">*</span>
                 </label>
-                <select
+                <EnterpriseCombobox
+                  options={roleOptions}
                   value={roleId}
-                  onChange={(e) => setRoleId(e.target.value)}
-                  className="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-hidden"
-                >
-                  <option value="">-- Chọn vai trò --</option>
-                  {roles.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setRoleId(val)}
+                  placeholder="-- Chọn vai trò --"
+                  searchPlaceholder="Tìm vai trò..."
+                  maxPanelHeight={260}
+                  testId="create-assignment-role-combobox"
+                />
               </div>
             </div>
 
@@ -266,7 +295,7 @@ export function CreateAssignmentDialog({
                 {isSubmitting && (
                   <span className="inline-block animate-spin border-2 border-white border-t-transparent rounded-full w-3.5 h-3.5" />
                 )}
-                Tạo phân công
+                Tạo điều động
               </button>
             </div>
           </form>
@@ -280,7 +309,7 @@ export function CreateAssignmentDialog({
         canOverride={canOverride}
         errorMessage={overlapErrorMessage}
         onConfirmOverride={async (reason) => {
-          await handleFormSubmit(null as any, true, reason);
+          await handleFormSubmit(null, true, reason);
         }}
       />
     </>

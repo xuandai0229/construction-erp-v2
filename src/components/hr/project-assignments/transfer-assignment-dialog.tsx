@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { RefreshCw, AlertCircle, Info } from "lucide-react";
 import {
   transferProjectRoleOrAllocationAction,
@@ -9,6 +9,7 @@ import {
 import { ProjectAssignmentDTO } from "@/lib/hr/project-assignment-dto";
 import { EmployeeProjectAssignmentEndReason } from "@prisma/client";
 import { AllocationOverlapDialog } from "./allocation-overlap-dialog";
+import { EnterpriseCombobox, EnterpriseComboboxOption } from "@/components/ui/enterprise-combobox";
 
 interface TransferAssignmentDialogProps {
   isOpen: boolean;
@@ -44,7 +45,18 @@ export function TransferAssignmentDialog({
   const [showOverlapDialog, setShowOverlapDialog] = useState(false);
   const [overlapErrorMessage, setOverlapErrorMessage] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent, allowOverride = false, overrideReason?: string) => {
+  const roleOptions: EnterpriseComboboxOption[] = useMemo(
+    () =>
+      roles.map((r) => ({
+        value: r.id,
+        label: r.name,
+        code: r.code,
+        name: r.name,
+      })),
+    [roles]
+  );
+
+  const handleSubmit = async (e: React.FormEvent | null, allowOverride = false, overrideReason?: string) => {
     if (e) e.preventDefault();
     setErrorMessage(null);
 
@@ -77,7 +89,7 @@ export function TransferAssignmentDialog({
       onSuccess();
       onClose();
     } catch (err: any) {
-      setErrorMessage(err?.message || "Lỗi không xác định khi chuyển đổi vai trò");
+      setErrorMessage(err?.message || "Lỗi không xác định khi thay đổi vai trò hoặc tỷ lệ");
     } finally {
       setIsSubmitting(false);
     }
@@ -91,7 +103,7 @@ export function TransferAssignmentDialog({
           <div className="bg-purple-600 px-6 py-4 flex items-center justify-between text-white shrink-0">
             <div className="flex items-center gap-2.5">
               <RefreshCw className="w-5 h-5 text-purple-100" />
-              <h3 className="text-base font-bold">Thay đổi vai trò / Tỷ lệ phân bổ</h3>
+              <h3 className="text-base font-bold">Thay đổi vai trò hoặc tỷ lệ</h3>
             </div>
             <button
               onClick={onClose}
@@ -120,7 +132,7 @@ export function TransferAssignmentDialog({
             <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-start gap-2">
               <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <span>
-                Thao tác này sẽ đóng bản ghi phân công hiện tại tại ngày hiệu lực và tự động tạo đợt phân công mới từ ngày hiệu lực. Lịch sử phân công được lưu vết đầy đủ.
+                Thao tác này sẽ đóng đợt điều động hiện tại tại ngày hiệu lực và tự động tạo đợt điều động mới. Lịch sử phân công được bảo lưu vết đầy đủ.
               </span>
             </div>
 
@@ -159,17 +171,15 @@ export function TransferAssignmentDialog({
                 <label className="block text-xs font-semibold text-slate-800">
                   Vai trò mới
                 </label>
-                <select
+                <EnterpriseCombobox
+                  options={roleOptions}
                   value={newRoleId}
-                  onChange={(e) => setNewRoleId(e.target.value)}
-                  className="w-full text-xs p-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-hidden"
-                >
-                  {roles.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setNewRoleId(val)}
+                  placeholder="-- Chọn vai trò --"
+                  searchPlaceholder="Tìm vai trò..."
+                  maxPanelHeight={240}
+                  testId="transfer-assignment-role-combobox"
+                />
               </div>
 
               <div className="space-y-1.5">
@@ -246,7 +256,7 @@ export function TransferAssignmentDialog({
         canOverride={canOverride}
         errorMessage={overlapErrorMessage}
         onConfirmOverride={async (reason) => {
-          await handleSubmit(null as any, true, reason);
+          await handleSubmit(null, true, reason);
         }}
       />
     </>
