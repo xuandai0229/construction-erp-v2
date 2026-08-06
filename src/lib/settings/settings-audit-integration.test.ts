@@ -14,22 +14,50 @@ describe("Phase 6 — Settings Audit Integration Tests", () => {
   let adapter: PrismaPg;
   let prisma: PrismaClient;
 
+  let testRunId = `HR_PHASE_4_1_3_${Date.now()}`;
+  let adminUser: any;
+  let setting: any;
+
   beforeAll(async () => {
     process.env.DATABASE_URL = dbUrl;
     pool = new Pool({ connectionString: dbUrl });
     adapter = new PrismaPg(pool);
     prisma = new PrismaClient({ adapter });
+
+    adminUser = await prisma.user.create({
+      data: {
+        email: `admin_${testRunId}@qa-e2e.local`,
+        name: "Admin User",
+        password: "hashed_password",
+        role: "ADMIN",
+      }
+    });
+
+    setting = await prisma.systemSetting.findFirst();
+    if (!setting) {
+      setting = await prisma.systemSetting.create({
+        data: {
+          companyName: "QA Company",
+          taxCode: "1234567890",
+          hotline: "1900 1234",
+          maxUploadSizeMb: 50,
+          allowedExtensions: ".pdf,.docx",
+          timezone: "Asia/Ho_Chi_Minh",
+          currency: "VND",
+        }
+      });
+    }
   });
 
   afterAll(async () => {
+    await prisma.auditLog.deleteMany({ where: { userId: adminUser.id } });
+    if (setting) await prisma.systemSetting.delete({ where: { id: setting.id } });
+    await prisma.user.delete({ where: { id: adminUser.id } });
     await prisma.$disconnect();
     await pool.end();
   });
 
   it("1 & 2. ADMIN changes hotline - audit stores actor snapshot, metadata, before & after", async () => {
-    const adminUser = await prisma.user.findFirstOrThrow({ where: { role: "ADMIN" } });
-    const setting = await prisma.systemSetting.findFirstOrThrow();
-
     const batchId = "batch_test_01";
     const beforeVal = { hotline: setting.hotline };
     const afterVal = { hotline: "1900 9999" };
@@ -84,9 +112,6 @@ describe("Phase 6 — Settings Audit Integration Tests", () => {
   });
 
   it("3. Multiple fields changed in one save share batchId", async () => {
-    const adminUser = await prisma.user.findFirstOrThrow({ where: { role: "ADMIN" } });
-    const setting = await prisma.systemSetting.findFirstOrThrow();
-
     const batchId = "batch_multi_field_02";
     const beforeVal = { companyName: setting.companyName, hotline: "1900 8888" };
     const afterVal = { companyName: "Công ty Mới", hotline: "1900 9999" };
@@ -181,7 +206,6 @@ describe("Phase 6 — Settings Audit Integration Tests", () => {
   });
 
   it("5. Audit automation source filtering (AUTOMATED_TEST vs USER_INTERFACE)", async () => {
-    const adminUser = await prisma.user.findFirstOrThrow({ where: { role: "ADMIN" } });
     process.env.SETTINGS_AUDIT_ENVIRONMENT = "QA";
     process.env.SETTINGS_AUDIT_SOURCE = "AUTOMATED_TEST";
 

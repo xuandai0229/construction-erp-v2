@@ -18,6 +18,10 @@ describe("Phase 7 — Storage & Upload E2E Integration Tests", () => {
   let adapter: PrismaPg;
   let prisma: PrismaClient;
   let storage: LocalStorageProvider;
+  let testRunId: string;
+  let adminUser: any;
+  let proj: any;
+  let folder: any;
 
   beforeAll(async () => {
     process.env.DATABASE_URL = dbUrl;
@@ -31,22 +35,30 @@ describe("Phase 7 — Storage & Upload E2E Integration Tests", () => {
     prisma = new PrismaClient({ adapter });
     storage = new LocalStorageProvider();
 
+    testRunId = `HR_PHASE_4_1_3_${Date.now()}`;
+
     // Ensure test project and document folder exist
-    let proj = await prisma.project.findFirst();
-    if (!proj) {
-      proj = await prisma.project.create({
-        data: { name: `Test Project ${Date.now()}`, code: `PRJ_${Date.now()}` },
-      });
-    }
-    let folder = await prisma.documentFolder.findFirst({ where: { projectId: proj.id } });
-    if (!folder) {
-      await prisma.documentFolder.create({
-        data: { name: `Test Folder ${Date.now()}`, projectId: proj.id },
-      });
-    }
+    adminUser = await prisma.user.create({
+      data: {
+        email: `admin_${testRunId}@qa-e2e.local`,
+        name: "Admin User",
+        password: "hashed_password",
+        role: "ADMIN",
+      }
+    });
+    proj = await prisma.project.create({
+      data: { name: `Test Project ${testRunId}`, code: `PRJ_${testRunId}` },
+    });
+    folder = await prisma.documentFolder.create({
+      data: { name: `Test Folder ${testRunId}`, projectId: proj.id },
+    });
   });
 
   afterAll(async () => {
+    await prisma.document.deleteMany({ where: { originalName: { contains: testRunId } } });
+    await prisma.documentFolder.deleteMany({ where: { id: folder.id } });
+    await prisma.project.deleteMany({ where: { id: proj.id } });
+    await prisma.user.deleteMany({ where: { id: adminUser.id } });
     await prisma.$disconnect();
     await pool.end();
   });
@@ -139,16 +151,12 @@ describe("Phase 7 — Storage & Upload E2E Integration Tests", () => {
   });
 
   it("6. Auto-versioning increments version when autoVersioning=true", async () => {
-    const adminUser = await prisma.user.findFirstOrThrow({ where: { role: "ADMIN" } });
-    const project = await prisma.project.findFirstOrThrow();
-    const folder = await prisma.documentFolder.findFirstOrThrow();
-
-    const docName = `Tailieu_E2E_${Date.now()}.pdf`;
+    const docName = `Tailieu_E2E_${testRunId}.pdf`;
 
     // Create v1
     const doc1 = await prisma.document.create({
       data: {
-        projectId: project.id,
+        projectId: proj.id,
         folderId: folder.id,
         originalName: docName,
         storedName: "stored_v1.pdf",
@@ -163,7 +171,7 @@ describe("Phase 7 — Storage & Upload E2E Integration Tests", () => {
 
     // Check existing for auto-versioning
     const existing = await prisma.document.findFirst({
-      where: { folderId: folder.id, projectId: project.id, originalName: docName, deletedAt: null },
+      where: { folderId: folder.id, projectId: proj.id, originalName: docName, deletedAt: null },
       orderBy: { version: "desc" },
     });
     const nextVersion = existing ? existing.version + 1 : 1;
@@ -173,7 +181,7 @@ describe("Phase 7 — Storage & Upload E2E Integration Tests", () => {
     // Create v2
     const doc2 = await prisma.document.create({
       data: {
-        projectId: project.id,
+        projectId: proj.id,
         folderId: folder.id,
         originalName: docName,
         storedName: "stored_v2.pdf",

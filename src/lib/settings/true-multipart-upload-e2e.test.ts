@@ -20,6 +20,9 @@ describe("Phase 3 — True Raw HTTP Upload & Storage E2E Test Suite (21 Criteria
   let prisma: PrismaClient;
   let storage: LocalStorageProvider;
   let testRunId: string;
+  let adminUser: any;
+  let proj: any;
+  let folder: any;
 
   beforeAll(async () => {
     process.env.DATABASE_URL = dbUrl;
@@ -32,18 +35,20 @@ describe("Phase 3 — True Raw HTTP Upload & Storage E2E Test Suite (21 Criteria
     storage = new LocalStorageProvider();
 
     // Ensure test project and document folder exist
-    let proj = await prisma.project.findFirst();
-    if (!proj) {
-      proj = await prisma.project.create({
-        data: { name: `Test Project ${testRunId}`, code: `PRJ_${Date.now()}` },
-      });
-    }
-    let folder = await prisma.documentFolder.findFirst({ where: { projectId: proj.id } });
-    if (!folder) {
-      await prisma.documentFolder.create({
-        data: { name: `Test Folder ${testRunId}`, projectId: proj.id },
-      });
-    }
+    adminUser = await prisma.user.create({
+      data: {
+        email: `admin_${testRunId}@qa-e2e.local`,
+        name: "Admin User",
+        password: "hashed_password",
+        role: "ADMIN",
+      }
+    });
+    proj = await prisma.project.create({
+      data: { name: `Test Project ${testRunId}`, code: `PRJ_${testRunId}` },
+    });
+    folder = await prisma.documentFolder.create({
+      data: { name: `Test Folder ${testRunId}`, projectId: proj.id },
+    });
   });
 
   afterAll(async () => {
@@ -51,6 +56,9 @@ describe("Phase 3 — True Raw HTTP Upload & Storage E2E Test Suite (21 Criteria
     await prisma.document.deleteMany({
       where: { originalName: { contains: testRunId } },
     });
+    await prisma.documentFolder.deleteMany({ where: { id: folder.id } });
+    await prisma.project.deleteMany({ where: { id: proj.id } });
+    await prisma.user.deleteMany({ where: { id: adminUser.id } });
     await prisma.$disconnect();
     await pool.end();
   });
@@ -142,14 +150,11 @@ describe("Phase 3 — True Raw HTTP Upload & Storage E2E Test Suite (21 Criteria
   });
 
   it("13. Auto-versioning ON increments version on name collision", async () => {
-    const adminUser = await prisma.user.findFirstOrThrow({ where: { role: "ADMIN" } });
-    const project = await prisma.project.findFirstOrThrow();
-    const folder = await prisma.documentFolder.findFirstOrThrow();
     const fileName = `AutoVer_On_${testRunId}.pdf`;
 
     const doc1 = await prisma.document.create({
       data: {
-        projectId: project.id,
+        projectId: proj.id,
         folderId: folder.id,
         originalName: fileName,
         storedName: "stored_1.pdf",
@@ -163,7 +168,7 @@ describe("Phase 3 — True Raw HTTP Upload & Storage E2E Test Suite (21 Criteria
     });
 
     const existing = await prisma.document.findFirst({
-      where: { folderId: folder.id, projectId: project.id, originalName: fileName, deletedAt: null },
+      where: { folderId: folder.id, projectId: proj.id, originalName: fileName, deletedAt: null },
       orderBy: { version: "desc" },
     });
     const nextVersion = existing ? existing.version + 1 : 1;
