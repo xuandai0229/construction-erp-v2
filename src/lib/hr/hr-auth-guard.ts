@@ -71,6 +71,7 @@ export async function checkUserHasAnyHrPermission(userId: string, role: string):
     "hr:employee:update",
     "hr:organization:manage",
     "hr:project_role:manage",
+    "hr:project_assignment:read",
     "hr:access_grant:manage",
   ];
   const checks = await Promise.all(

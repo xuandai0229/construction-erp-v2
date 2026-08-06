@@ -50,6 +50,12 @@ export interface TransferAssignmentInput {
   performedById?: string;
 }
 
+export interface CancelAssignmentInput {
+  assignmentId: string;
+  reason?: string;
+  updatedById?: string;
+}
+
 type TransactionClient = Parameters<Parameters<PrismaClient["$transaction"]>[0]>[0];
 
 /**
@@ -403,5 +409,57 @@ export async function transferProjectRoleOrAllocation(
     });
 
     return newAssignment;
+  });
+}
+
+/**
+ * Cancels a future or current active project assignment.
+ */
+export async function cancelFutureProjectAssignment(
+  prisma: PrismaClient,
+  input: CancelAssignmentInput
+): Promise<EmployeeProjectAssignment> {
+  const current = await prisma.employeeProjectAssignment.findUnique({
+    where: { id: input.assignmentId },
+  });
+  if (!current) throw new Error("Bản ghi điều động không tồn tại.");
+  if (current.status !== EmployeeProjectAssignmentStatus.ACTIVE) {
+    throw new Error("Bản ghi điều động đã kết thúc hoặc bị hủy trước đó.");
+  }
+
+  return executeWithAdvisoryLock(prisma, current.employeeId, async (tx) => {
+    const updated = await tx.employeeProjectAssignment.update({
+      where: { id: input.assignmentId },
+      data: {
+        status: EmployeeProjectAssignmentStatus.CANCELLED,
+        endReason: EmployeeProjectAssignmentEndReason.EARLY_RELEASE,
+        notes: input.reason ? `Đã hủy: ${input.reason}` : current.notes,
+      },
+    });
+
+    if (input.updatedById) {
+      await tx.employeeChangeHistory.create({
+        data: {
+          employeeId: current.employeeId,
+          changeType: "EMPLOYEE_PROJECT_RELEASED",
+          performedById: input.updatedById,
+          reason: input.reason || "Hủy bỏ đợt điều động công trình",
+          details: { assignmentId: current.id, projectId: current.projectId, cancelled: true },
+        },
+      });
+    }
+
+    await tx.auditLog.create({
+      data: {
+        userId: (input.updatedById && input.updatedById !== "SYSTEM") ? input.updatedById : null,
+        projectId: current.projectId,
+        action: "PROJECT_ASSIGNMENT_CANCELLED",
+        entityType: "EmployeeProjectAssignment",
+        entityId: updated.id,
+        afterData: JSON.stringify({ reason: input.reason, status: updated.status }),
+      },
+    });
+
+    return updated;
   });
 }

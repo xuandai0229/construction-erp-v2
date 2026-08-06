@@ -14,6 +14,11 @@ export const CANONICAL_HR_PERMISSIONS = [
   { code: "hr:organization:manage", name: "Quản lý sơ đồ tổ chức", description: "Quyền tạo/sửa phòng ban đơn vị" },
   { code: "hr:position:manage", name: "Quản lý danh mục chức danh", description: "Quyền cấu hình chức danh" },
   { code: "hr:project_role:manage", name: "Quản lý vai trò dự án", description: "Quyền định nghĩa vai trò nhân sự dự án" },
+  { code: "hr:project_assignment:read", name: "Xem phân công dự án", description: "Quyền xem danh sách và chi tiết phân công công trình" },
+  { code: "hr:project_assignment:create", name: "Tạo mới phân công dự án", description: "Quyền điều động nhân viên vào dự án" },
+  { code: "hr:project_assignment:update", name: "Cập nhật phân công dự án", description: "Quyền điều chỉnh / gia hạn phân công dự án" },
+  { code: "hr:project_assignment:release", name: "Giải phóng phân công dự án", description: "Quyền kết thúc / rút nhân sự khỏi dự án" },
+  { code: "hr:project_allocation:override", name: "Ghi đè định mức phân bổ", description: "Quyền ghi đè tổng tỷ lệ phân bổ vượt 100%" },
   { code: "hr:access_grant:manage", name: "Cấp phát phân quyền HR", description: "Quyền ủy quyền và cấp phép HR" },
 ] as const;
 
