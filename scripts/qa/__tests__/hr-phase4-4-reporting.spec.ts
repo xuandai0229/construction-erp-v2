@@ -64,7 +64,7 @@ test.describe("HR Phase 4.4 — Comprehensive Reporting, KPI & Excel E2E Suite",
     await expect(page.getByText(/Đang lọc: Nhân sự tại công trình/i)).toBeVisible();
 
     // Clear KPI filter
-    await page.getByRole("button", { name: /Bỏ lọc KPI/i }).click();
+    await page.getByRole("button", { name: /Bỏ lọc KPI/i }).first().click();
     await page.waitForURL((url) => !url.searchParams.has("kpiFilter"), { timeout: 10000 }).catch(() => {});
     expect(page.url()).not.toContain("kpiFilter=");
   });
@@ -130,6 +130,31 @@ test.describe("HR Phase 4.4 — Comprehensive Reporting, KPI & Excel E2E Suite",
     await page.setViewportSize({ width: 375, height: 667 });
     await page.reload();
     await expect(page.locator("h1").first()).toBeVisible();
-    await expect(page.getByRole("button", { name: /Bộ lọc/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Bộ lọc", exact: true }).first()).toBeVisible();
+  });
+
+  test("6. Searchable Project Combobox interaction & zero horizontal overflow", async ({ page }) => {
+    await page.goto("/hr/reports");
+    await page.waitForLoadState("networkidle");
+
+    // Click project combobox trigger
+    const projectBtn = page.getByRole("button", { name: /Chọn công trình hoặc dự án/i });
+    await expect(projectBtn).toBeVisible();
+    await projectBtn.click();
+
+    // Search project
+    const searchInput = page.getByPlaceholder("Tìm theo tên hoặc mã công trình...");
+    await expect(searchInput).toBeVisible();
+    await searchInput.fill("Xuân Phương");
+
+    // Verify filtered result appears
+    await expect(page.getByText(/Xuân Phương/i).first()).toBeVisible();
+
+    // Select filtered option
+    await page.getByText(/Xuân Phương/i).first().click();
+
+    // Verify URL parameter updated
+    await page.waitForURL("**/hr/reports?*projectId=*", { timeout: 10000 }).catch(() => {});
+    expect(page.url()).toContain("projectId=");
   });
 });

@@ -3,7 +3,7 @@
 import React from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { HrReportDetailsTableResult } from "@/lib/hr/reporting-service";
-import { ChevronLeft, ChevronRight, FileSpreadsheet, Inbox } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileSpreadsheet, Inbox, XCircle, RotateCcw } from "lucide-react";
 
 interface HrReportDetailTableProps {
   tableData: HrReportDetailsTableResult;
@@ -16,11 +16,24 @@ export function HrReportDetailTable({ tableData }: HrReportDetailTableProps) {
 
   const { items, totalCount, page, pageSize, totalPages } = tableData;
 
+  const kpiFilter = searchParams.get("kpiFilter") || "";
+
   const goToPage = (newPage: number) => {
     if (newPage < 1 || newPage > totalPages) return;
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", String(newPage));
     router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const clearKpiFilter = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("kpiFilter");
+    params.set("page", "1");
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const clearAllFilters = () => {
+    router.push(pathname);
   };
 
   const statusBadgeMap: Record<string, { label: string; style: string }> = {
@@ -29,6 +42,25 @@ export function HrReportDetailTable({ tableData }: HrReportDetailTableProps) {
     RELEASED: { label: "Đã rút", style: "bg-amber-50 text-amber-700 border-amber-200" },
     COMPLETED: { label: "Hoàn thành", style: "bg-slate-100 text-slate-700 border-slate-200" },
     CANCELLED: { label: "Đã hủy", style: "bg-rose-50 text-rose-700 border-rose-200" },
+  };
+
+  const getEmptyStateMessage = () => {
+    switch (kpiFilter) {
+      case "overallocated":
+        return "Không có nhân sự nào bị phân bổ vượt 100%.";
+      case "expiring_30d":
+        return "Không có điều động nào kết thúc trong 30 ngày tới.";
+      case "unassigned":
+        return "Không có nhân sự nào chưa được điều động.";
+      case "projects_staffed":
+        return "Không có công trình nào có nhân sự phù hợp với bộ lọc.";
+      case "available_capacity":
+        return "Không có nhân sự nào còn khả năng phân bổ.";
+      case "on_site":
+        return "Không có nhân sự đang làm việc tại công trình phù hợp.";
+      default:
+        return "Không tìm thấy bản ghi điều động nào.";
+    }
   };
 
   return (
@@ -76,8 +108,28 @@ export function HrReportDetailTable({ tableData }: HrReportDetailTableProps) {
                 <td colSpan={8} className="py-12 text-center text-slate-500">
                   <div className="inline-flex flex-col items-center gap-2">
                     <Inbox className="w-8 h-8 text-slate-300" />
-                    <span className="font-semibold text-sm">Không tìm thấy bản ghi điều động nào.</span>
-                    <span className="text-xs text-slate-500">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.</span>
+                    <span className="font-semibold text-sm">{getEmptyStateMessage()}</span>
+                    <span className="text-xs text-slate-500">Thử thay đổi bộ lọc hoặc chọn thời gian khác.</span>
+                    <div className="mt-2 flex items-center gap-2">
+                      {kpiFilter && (
+                        <button
+                          type="button"
+                          onClick={clearKpiFilter}
+                          className="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-blue-200 bg-blue-50 text-xs font-semibold text-blue-700 hover:bg-blue-100 transition-colors"
+                        >
+                          <XCircle className="w-3.5 h-3.5" />
+                          Bỏ lọc KPI
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={clearAllFilters}
+                        className="inline-flex items-center gap-1 px-3 py-1 rounded-lg border border-slate-300 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        Xóa toàn bộ bộ lọc
+                      </button>
+                    </div>
                   </div>
                 </td>
               </tr>
