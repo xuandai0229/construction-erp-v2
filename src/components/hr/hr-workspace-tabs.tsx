@@ -18,7 +18,7 @@ const HR_TABS = [
   { id: "overview", label: "Tổng quan nhân sự", href: "/hr", icon: LayoutDashboard, implemented: true },
   { id: "employees", label: "Hồ sơ nhân viên", href: "/hr/employees", icon: Users, implemented: true },
   { id: "organization", label: "Cơ cấu tổ chức và phòng ban", href: "/hr/organization", icon: Network, implemented: true },
-  { id: "assignments", label: "Điều động công trình", href: "/hr/project-assignments", icon: Briefcase, implemented: false },
+  { id: "assignments", label: "Điều động công trình", href: "/hr/project-assignments", icon: Briefcase, implemented: true },
   { id: "contracts", label: "Hợp đồng", href: "/hr/contracts", icon: FileText, implemented: false },
   { id: "certificates", label: "Chứng chỉ và bằng cấp", href: "/hr/certificates", icon: Award, implemented: false },
   { id: "alerts", label: "Cảnh báo", href: "/hr/alerts", icon: AlertTriangle, implemented: false },

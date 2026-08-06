@@ -826,3 +826,113 @@ export async function getProjectStaffingQuery(
     };
   }
 }
+
+export interface AssignmentFormOptionEmployee {
+  id: string;
+  code: string;
+  fullName: string;
+  orgUnitName: string | null;
+}
+
+export interface AssignmentFormOptionProject {
+  id: string;
+  code: string;
+  name: string;
+}
+
+export interface AssignmentFormOptionRole {
+  id: string;
+  code: string;
+  name: string;
+}
+
+export interface AssignmentUserCapabilities {
+  canCreate: boolean;
+  canUpdate: boolean;
+  canRelease: boolean;
+  canOverride: boolean;
+  userRole: string;
+}
+
+export async function getAssignmentFormOptionsQuery(): Promise<
+  ActionResult<{
+    employees: AssignmentFormOptionEmployee[];
+    projects: AssignmentFormOptionProject[];
+    roles: AssignmentFormOptionRole[];
+    capabilities: AssignmentUserCapabilities;
+  }>
+> {
+  const session = await getSession();
+  if (!session) {
+    return {
+      success: false,
+      error: "Yêu cầu đăng nhập hệ thống",
+      code: "AUTHENTICATION_REQUIRED",
+    };
+  }
+
+  try {
+    const [canCreateRes, canUpdateRes, canReleaseRes, canOverrideRes] = await Promise.all([
+      authorizeProjectAssignmentAction(prisma, { userId: session.id, permissionCode: "hr:project_assignment:create", action: "create" }),
+      authorizeProjectAssignmentAction(prisma, { userId: session.id, permissionCode: "hr:project_assignment:update", action: "update" }),
+      authorizeProjectAssignmentAction(prisma, { userId: session.id, permissionCode: "hr:project_assignment:release", action: "release" }),
+      authorizeProjectAssignmentAction(prisma, { userId: session.id, permissionCode: "hr:project_allocation:override", action: "override", overrideReason: "Kiểm tra quyền override hệ thống" }),
+    ]);
+
+    const [empRecords, prjRecords, roleRecords] = await Promise.all([
+      prisma.employee.findMany({
+        where: { status: "ACTIVE" },
+        select: {
+          id: true,
+          code: true,
+          fullName: true,
+          orgAssignments: {
+            where: { isPrimary: true, endDate: null },
+            select: { organizationUnit: { select: { name: true } } },
+            take: 1,
+          },
+        },
+        orderBy: { fullName: "asc" },
+      }),
+      prisma.project.findMany({
+        where: { status: { in: ["ACTIVE", "PLANNING"] } },
+        select: { id: true, code: true, name: true },
+        orderBy: { code: "asc" },
+      }),
+      prisma.projectPersonnelRole.findMany({
+        select: { id: true, code: true, name: true },
+        orderBy: { name: "asc" },
+      }),
+    ]);
+
+    const employees: AssignmentFormOptionEmployee[] = empRecords.map((e) => ({
+      id: e.id,
+      code: e.code,
+      fullName: e.fullName,
+      orgUnitName: e.orgAssignments[0]?.organizationUnit?.name || null,
+    }));
+
+    return {
+      success: true,
+      data: {
+        employees,
+        projects: prjRecords,
+        roles: roleRecords,
+        capabilities: {
+          canCreate: canCreateRes.allowed,
+          canUpdate: canUpdateRes.allowed,
+          canRelease: canReleaseRes.allowed,
+          canOverride: canOverrideRes.allowed,
+          userRole: session.role,
+        },
+      },
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Lỗi nạp danh mục chọn lọc",
+      code: "INTERNAL_ERROR",
+    };
+  }
+}
+
