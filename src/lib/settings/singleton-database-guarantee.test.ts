@@ -12,6 +12,8 @@ describe("Phase 6 — Singleton Database Guarantee Integration Test", () => {
   let adapter: PrismaPg;
   let prisma: PrismaClient;
 
+  let createdGlobalSetting = false;
+
   beforeAll(async () => {
     pool = new Pool({ connectionString: dbUrl });
     adapter = new PrismaPg(pool);
@@ -19,6 +21,7 @@ describe("Phase 6 — Singleton Database Guarantee Integration Test", () => {
 
     const count = await prisma.systemSetting.count();
     if (count === 0) {
+      createdGlobalSetting = true;
       await prisma.systemSetting.create({
         data: {
           id: "global",
@@ -34,6 +37,9 @@ describe("Phase 6 — Singleton Database Guarantee Integration Test", () => {
   });
 
   afterAll(async () => {
+    if (createdGlobalSetting) {
+      await prisma.systemSetting.delete({ where: { singletonKey: "DEFAULT_SETTINGS" } });
+    }
     await prisma.$disconnect();
     await pool.end();
   });

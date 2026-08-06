@@ -4,14 +4,15 @@ import path from "path";
 import { existsSync } from "fs";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, User, Project, DocumentFolder } from "@prisma/client";
 import { LocalStorageProvider } from "@/lib/storage/local-storage-provider";
 import { validateDocumentUploadPolicy } from "@/lib/documents/validation";
 import { assertSafeStorage } from "../../../scripts/qa/assert-safe-storage";
+import { randomUUID } from "crypto";
+import fs from "fs/promises";
 
 const dbUrl = process.env.QA_DATABASE_URL;
 if (!dbUrl) throw new Error("QA_DATABASE_URL is required; credential fallback is prohibited");
-const storageDir = path.resolve(process.cwd(), "storage_e2e");
 
 describe("Phase 7 — Storage & Upload E2E Integration Tests", () => {
   let pool: Pool;
@@ -19,11 +20,18 @@ describe("Phase 7 — Storage & Upload E2E Integration Tests", () => {
   let prisma: PrismaClient;
   let storage: LocalStorageProvider;
   let testRunId: string;
-  let adminUser: any;
-  let proj: any;
-  let folder: any;
+  let adminUser: User;
+  let proj: Project;
+  let folder: DocumentFolder;
+  let storageDir: string;
+  let initialUserCount = 0;
+  let initialProjectCount = 0;
+  let initialFolderCount = 0;
+  let initialDocumentCount = 0;
 
   beforeAll(async () => {
+    testRunId = `HR_PHASE_4_1_4_${Date.now()}_${randomUUID()}`;
+    storageDir = path.resolve(process.cwd(), "storage_e2e", testRunId);
     process.env.DATABASE_URL = dbUrl;
     process.env.STORAGE_ROOT = storageDir;
 
@@ -35,7 +43,10 @@ describe("Phase 7 — Storage & Upload E2E Integration Tests", () => {
     prisma = new PrismaClient({ adapter });
     storage = new LocalStorageProvider();
 
-    testRunId = `HR_PHASE_4_1_3_${Date.now()}`;
+    initialUserCount = await prisma.user.count({ where: { email: { not: { contains: testRunId } } } });
+    initialProjectCount = await prisma.project.count({ where: { code: { not: { contains: testRunId } } } });
+    initialFolderCount = await prisma.documentFolder.count({ where: { name: { not: { contains: testRunId } } } });
+    initialDocumentCount = await prisma.document.count({ where: { originalName: { not: { contains: testRunId } } } });
 
     // Ensure test project and document folder exist
     adminUser = await prisma.user.create({
@@ -56,9 +67,25 @@ describe("Phase 7 — Storage & Upload E2E Integration Tests", () => {
 
   afterAll(async () => {
     await prisma.document.deleteMany({ where: { originalName: { contains: testRunId } } });
-    await prisma.documentFolder.deleteMany({ where: { id: folder.id } });
-    await prisma.project.deleteMany({ where: { id: proj.id } });
-    await prisma.user.deleteMany({ where: { id: adminUser.id } });
+    if (folder) await prisma.documentFolder.delete({ where: { id: folder.id } });
+    if (proj) await prisma.project.delete({ where: { id: proj.id } });
+    if (adminUser) await prisma.user.delete({ where: { id: adminUser.id } });
+
+    const finalUserCount = await prisma.user.count({ where: { email: { not: { contains: testRunId } } } });
+    const finalProjectCount = await prisma.project.count({ where: { code: { not: { contains: testRunId } } } });
+    const finalFolderCount = await prisma.documentFolder.count({ where: { name: { not: { contains: testRunId } } } });
+    const finalDocumentCount = await prisma.document.count({ where: { originalName: { not: { contains: testRunId } } } });
+
+    expect(finalUserCount).toBe(initialUserCount);
+    expect(finalProjectCount).toBe(initialProjectCount);
+    expect(finalFolderCount).toBe(initialFolderCount);
+    expect(finalDocumentCount).toBe(initialDocumentCount);
+
+    if (existsSync(storageDir)) {
+      await fs.rm(storageDir, { recursive: true, force: true });
+    }
+    expect(existsSync(storageDir)).toBe(false);
+
     await prisma.$disconnect();
     await pool.end();
   });

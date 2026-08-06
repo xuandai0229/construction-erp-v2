@@ -2,7 +2,7 @@ import "dotenv/config";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, User, SystemSetting } from "@prisma/client";
 import { createSettingsAuditPayload, parseSettingsAuditPayload, getSettingsFieldLabel } from "./settings-audit";
 import { sanitizeAuditData } from "@/lib/audit";
 
@@ -14,9 +14,12 @@ describe("Phase 6 — Settings Audit Integration Tests", () => {
   let adapter: PrismaPg;
   let prisma: PrismaClient;
 
-  let testRunId = `HR_PHASE_4_1_3_${Date.now()}`;
-  let adminUser: any;
-  let setting: any;
+  let testRunId = `HR_PHASE_4_1_4_${Date.now()}_${crypto.randomUUID()}`;
+  let adminUser: User;
+  let setting: SystemSetting;
+  let createdAuditLogIds: string[] = [];
+  let initialSettingCount = 0;
+  let initialAuditCount = 0;
 
   beforeAll(async () => {
     process.env.DATABASE_URL = dbUrl;
@@ -33,26 +36,34 @@ describe("Phase 6 — Settings Audit Integration Tests", () => {
       }
     });
 
-    setting = await prisma.systemSetting.findFirst();
-    if (!setting) {
-      setting = await prisma.systemSetting.create({
-        data: {
-          companyName: "QA Company",
-          taxCode: "1234567890",
-          hotline: "1900 1234",
-          maxUploadSizeMb: 50,
-          allowedExtensions: ".pdf,.docx",
-          timezone: "Asia/Ho_Chi_Minh",
-          currency: "VND",
-        }
-      });
-    }
+    initialSettingCount = await prisma.systemSetting.count({ where: { singletonKey: { not: testRunId } } });
+    initialAuditCount = await prisma.auditLog.count({ where: { afterData: { not: { contains: testRunId } } } });
+
+    setting = await prisma.systemSetting.create({
+      data: {
+        companyName: `QA Company ${testRunId}`,
+        taxCode: "1234567890",
+        hotline: "1900 1234",
+        maxUploadSizeMb: 50,
+        allowedExtensions: ".pdf,.docx",
+        timezone: "Asia/Ho_Chi_Minh",
+        currency: "VND",
+      }
+    });
   });
 
   afterAll(async () => {
-    await prisma.auditLog.deleteMany({ where: { userId: adminUser.id } });
+    if (createdAuditLogIds.length > 0) {
+      await prisma.auditLog.deleteMany({ where: { id: { in: createdAuditLogIds } } });
+    }
     if (setting) await prisma.systemSetting.delete({ where: { id: setting.id } });
-    await prisma.user.delete({ where: { id: adminUser.id } });
+    if (adminUser) await prisma.user.delete({ where: { id: adminUser.id } });
+
+    const finalSettingCount = await prisma.systemSetting.count({ where: { singletonKey: { not: testRunId } } });
+    const finalAuditCount = await prisma.auditLog.count({ where: { afterData: { not: { contains: testRunId } } } });
+    expect(finalSettingCount).toBe(initialSettingCount);
+    expect(finalAuditCount).toBe(initialAuditCount);
+
     await prisma.$disconnect();
     await pool.end();
   });
@@ -95,6 +106,7 @@ describe("Phase 6 — Settings Audit Integration Tests", () => {
         userAgent: "IntegrationTestAgent/1.0",
       },
     });
+    createdAuditLogIds.push(auditLog.id);
 
     expect(auditLog.id).toBeDefined();
     expect(auditLog.ipAddress).toBe("127.0.0.1");
@@ -146,6 +158,7 @@ describe("Phase 6 — Settings Audit Integration Tests", () => {
         userAgent: "IntegrationTestAgent/1.0",
       },
     });
+    createdAuditLogIds.push(auditLog.id);
 
     const parsed = parseSettingsAuditPayload(auditLog.afterData)!;
     expect(parsed.batchId).toBe(batchId);
@@ -189,6 +202,7 @@ describe("Phase 6 — Settings Audit Integration Tests", () => {
         afterData: JSON.stringify(payload),
       },
     });
+    createdAuditLogIds.push(auditLog.id);
 
     // Delete user
     await prisma.user.delete({ where: { id: tempActor.id } });
