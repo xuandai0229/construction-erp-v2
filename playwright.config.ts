@@ -9,7 +9,8 @@ if (process.env.DOTENV_CONFIG_PATH) {
 }
 
 export default defineConfig({
-  testDir: "./scripts/qa",
+  testDir: "./scripts/qa/__tests__",
+  testMatch: "**/*.spec.ts",
   timeout: 180000,
   expect: {
     timeout: 30000,
@@ -19,7 +20,7 @@ export default defineConfig({
   workers: 1,
   reporter: "list",
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3001",
+    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
@@ -27,8 +28,8 @@ export default defineConfig({
   },
   globalSetup: require.resolve("./scripts/qa/global-setup.ts"),
   webServer: {
-    command: "npm run dev -- -p 3001",
-    url: "http://127.0.0.1:3001",
+    command: "npm run dev",
+    url: process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000",
     reuseExistingServer: true,
     timeout: 120000,
   },

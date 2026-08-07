@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("HR Phase 4.5.2 — Organization Module Runtime Suite", () => {
-  test("Org Units, Positions, Unit Managers, and Org Chart UI rendering", async ({ page }) => {
+test.describe("HR Phase 4.5.3 — Organization Module UI Runtime Suite", () => {
+  test("1. Org Units, Positions, Unit Managers, and Org Chart UI rendering", async ({ page }) => {
     // 1. Org Units
     await page.goto("/hr/organization");
     await page.waitForLoadState("networkidle");

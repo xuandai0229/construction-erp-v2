@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("HR Phase 4.5.2 — Cross-Module Business Workflows Suite", () => {
+test.describe("HR Phase 4.5.3 — Cross-Module Business Workflows Suite", () => {
   test("1. Employee create updates overview and unassigned KPI", async ({ page }) => {
     await page.goto("/hr");
     await page.waitForLoadState("networkidle");
@@ -19,7 +19,7 @@ test.describe("HR Phase 4.5.2 — Cross-Module Business Workflows Suite", () => 
     await expect(page.locator("h1").first()).toContainText("Báo cáo và phân tích nhân sự");
   });
 
-  test("4. Transfer/release does not double-count", async ({ page }) => {
+  test("4. Transfer/release does not double-count in KPI metrics", async ({ page }) => {
     await page.goto("/hr/reports");
     await page.waitForLoadState("networkidle");
     await expect(page.locator("h1").first()).toBeVisible();

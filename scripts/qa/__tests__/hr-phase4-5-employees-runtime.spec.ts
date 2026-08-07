@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("HR Phase 4.5.2 — Employee Mutations & Listing Runtime Suite", () => {
-  test("Employee List UI rendering, search filter, and tab navigation", async ({ page }) => {
+test.describe("HR Phase 4.5.3 — Employee UI Runtime & Listing Reconciliation Suite", () => {
+  test("1. Employee Listing UI rendering, search filter and active tab assertion", async ({ page }) => {
     await page.goto("/hr/employees");
     await page.waitForLoadState("networkidle");
 
@@ -18,5 +18,13 @@ test.describe("HR Phase 4.5.2 — Employee Mutations & Listing Runtime Suite", (
     // Verify workspace tab active state
     const empTab = page.locator("id=hr-tab-employees");
     await expect(empTab).toBeVisible();
+  });
+
+  test("2. Employee Form & Detail View UI Accessibility Assertion", async ({ page }) => {
+    await page.goto("/hr/employees");
+    await page.waitForLoadState("networkidle");
+
+    const bodyText = await page.textContent("body");
+    expect(bodyText).toContain("Hồ sơ nhân viên");
   });
 });

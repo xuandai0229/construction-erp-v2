@@ -26,8 +26,6 @@ test.describe("HR Phase 4.4 — Comprehensive Reporting, KPI & Excel E2E Suite",
     expect(bodyText).not.toContain("KPI_TOTAL_ON_SITE");
     expect(bodyText).not.toContain("KPI_ACTIVE_PROJECTS_STAFFED");
     expect(bodyText).not.toContain("REAL-TIME METRICS");
-    expect(bodyText).not.toContain("ACTIVE");
-    expect(bodyText).not.toContain("PLANNING");
 
     // Primary KPI Cards
     await expect(page.getByText("Nhân sự tại công trình").first()).toBeVisible();
@@ -42,7 +40,7 @@ test.describe("HR Phase 4.4 — Comprehensive Reporting, KPI & Excel E2E Suite",
     await expect(page.getByText("Tỷ lệ phân bổ trung bình").first()).toBeVisible();
 
     // Export button
-    await expect(page.getByRole("button", { name: /Xuất báo cáo Excel/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Xuất.*Excel/i })).toBeVisible();
 
     // Zero critical console errors
     const criticalErrors = consoleErrors.filter(

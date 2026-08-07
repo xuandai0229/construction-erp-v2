@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("HR Phase 4.5.2 — Project Assignment Lifecycle Runtime Suite", () => {
-  test("Project Assignment List UI rendering and Workspace Tab interaction", async ({ page }) => {
+test.describe("HR Phase 4.5.3 — Project Assignment UI Runtime Suite", () => {
+  test("1. Project Assignment List UI rendering and Workspace Tab interaction", async ({ page }) => {
     await page.goto("/hr/project-assignments");
     await page.waitForLoadState("networkidle");
 
