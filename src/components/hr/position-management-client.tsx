@@ -11,6 +11,7 @@ import {
   Trash2,
   X,
   RotateCcw,
+  PowerOff,
   Loader2,
   AlertCircle,
   Users,
@@ -282,7 +283,7 @@ export function PositionManagementClient({ positions, canManage }: PositionManag
                                 title="Vô hiệu hóa chức danh"
                                 className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <PowerOff className="w-4 h-4" />
                               </button>
                             ) : (
                               <button

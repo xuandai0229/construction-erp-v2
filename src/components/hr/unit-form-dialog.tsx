@@ -44,6 +44,16 @@ export function UnitFormDialog({
   );
   const [description, setDescription] = useState(editUnit?.description || "");
 
+  React.useEffect(() => {
+    if (isOpen) {
+      setCode(editUnit?.code || "");
+      setName(editUnit?.name || "");
+      setParentId(editUnit ? (editUnit.parentId || "") : (defaultParentId || ""));
+      setDescription(editUnit?.description || "");
+      setError(null);
+    }
+  }, [isOpen, editUnit, defaultParentId]);
+
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {

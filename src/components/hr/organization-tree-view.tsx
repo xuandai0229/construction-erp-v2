@@ -14,6 +14,7 @@ import {
   Search,
   ShieldAlert,
   RotateCcw,
+  PowerOff,
   Loader2,
   Building,
   Lock,
@@ -71,9 +72,27 @@ export function OrganizationTreeView({ treeData, flatUnits, canManage }: Organiz
     if (canManage && searchParams.get("create") === "1") handleCreateRoot();
   }, [canManage, searchParams]);
 
+  const isDescendantOf = (ancestorId: string, targetId: string): boolean => {
+    const ancestor = findNode(treeData, ancestorId);
+    if (!ancestor) return false;
+    const check = (node: OrgTreeNode): boolean => {
+      for (const child of node.children) {
+        if (child.id === targetId || check(child)) return true;
+      }
+      return false;
+    };
+    return check(ancestor);
+  };
+
   const toggleExpand = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setExpandedNodes((prev) => ({ ...prev, [id]: !prev[id] }));
+    setExpandedNodes((prev) => {
+      const willBeCollapsed = prev[id] !== false; // default is expanded if not explicitly false
+      if (willBeCollapsed && selectedNodeId && isDescendantOf(id, selectedNodeId)) {
+        setSelectedNodeId(id);
+      }
+      return { ...prev, [id]: !willBeCollapsed };
+    });
   };
 
   const findNode = (nodes: OrgTreeNode[], id: string): OrgTreeNode | null => {
@@ -122,6 +141,19 @@ export function OrganizationTreeView({ treeData, flatUnits, canManage }: Organiz
       const res = await deactivateOrgUnitAction(node.id);
       if (!res.success) {
         setDeactivateError(res.error || "Không thể vô hiệu hóa đơn vị.");
+      }
+    });
+  };
+
+  const handleReactivate = (node: OrgTreeNode) => {
+    if (!confirm(`Bạn có chắc chắn muốn kích hoạt lại phòng ban/đơn vị '${node.name}' (${node.code})?`)) {
+      return;
+    }
+    setDeactivateError(null);
+    startTransition(async () => {
+      const res = await reactivateOrgUnitAction(node.id);
+      if (!res.success) {
+        setDeactivateError(res.error || "Không thể kích hoạt lại đơn vị.");
       }
     });
   };
@@ -362,7 +394,7 @@ export function OrganizationTreeView({ treeData, flatUnits, canManage }: Organiz
                         >
                           <Lock className="w-4 h-4 text-slate-400" />
                         </button>
-                      ) : (
+                      ) : selectedNode.isActive ? (
                         <button
                           type="button"
                           onClick={() => handleDeactivate(selectedNode)}
@@ -370,7 +402,17 @@ export function OrganizationTreeView({ treeData, flatUnits, canManage }: Organiz
                           title="Vô hiệu hóa đơn vị"
                           className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
                         >
-                          {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                          {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <PowerOff className="w-4 h-4" />}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleReactivate(selectedNode)}
+                          disabled={isPending}
+                          title="Kích hoạt lại đơn vị"
+                          className="p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
+                        >
+                          {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
                         </button>
                       )}
                     </div>
