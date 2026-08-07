@@ -42,6 +42,7 @@ export function HrReportDetailTable({ tableData }: HrReportDetailTableProps) {
     RELEASED: { label: "Đã rút", style: "bg-amber-50 text-amber-700 border-amber-200" },
     COMPLETED: { label: "Hoàn thành", style: "bg-slate-100 text-slate-700 border-slate-200" },
     CANCELLED: { label: "Đã hủy", style: "bg-rose-50 text-rose-700 border-rose-200" },
+    UNASSIGNED: { label: "Chưa điều động", style: "bg-purple-50 text-purple-700 border-purple-200" },
   };
 
   const getEmptyStateMessage = () => {

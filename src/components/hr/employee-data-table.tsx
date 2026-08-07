@@ -193,7 +193,7 @@ export function EmployeeDataTable({
                           <span>{emp.phoneNumber}</span>
                         </div>
                       ) : (
-                        <span className="text-slate-400 text-[11px] italic">Bị ẩn / Không có</span>
+                        <span className="text-slate-400 text-[11px] font-mono">—</span>
                       )}
                     </td>
 

@@ -207,6 +207,90 @@ export async function getHrReportCharts(
   const scopeWhere = await buildEmployeeScopeWhereClause(ctx, scope, prismaClient);
   const targetDate = filters.dateStart ? new Date(filters.dateStart) : new Date();
 
+  if (filters.kpiFilter === "unassigned") {
+    // Unassigned employees chart breakdown
+    const unassignedEmps = await prismaClient.employee.findMany({
+      where: {
+        AND: [
+          scopeWhere,
+          { status: filters.employeeStatus ? (filters.employeeStatus as any) : "ACTIVE" },
+          {
+            projectAssignments: {
+              none: {
+                status: "ACTIVE",
+                startDate: { lte: targetDate },
+                OR: [{ endDate: null }, { endDate: { gt: targetDate } }],
+              },
+            },
+          },
+          filters.searchQuery
+            ? {
+                OR: [
+                  { fullName: { contains: filters.searchQuery, mode: "insensitive" } },
+                  { code: { contains: filters.searchQuery, mode: "insensitive" } },
+                ],
+              }
+            : {},
+        ],
+      },
+      include: {
+        orgAssignments: {
+          where: {
+            isPrimary: true,
+            startDate: { lte: targetDate },
+            OR: [{ endDate: null }, { endDate: { gt: targetDate } }],
+          },
+          include: { organizationUnit: true, position: true },
+        },
+      },
+    });
+
+    const orgMap = new Map<string, { unitId: string; unitCode: string; unitName: string; count: number }>();
+    const roleMap = new Map<string, { roleId: string; roleCode: string; roleName: string; count: number }>();
+
+    for (const emp of unassignedEmps) {
+      const primaryOrg = emp.orgAssignments?.[0];
+      const orgUnit = primaryOrg?.organizationUnit;
+      const orgId = orgUnit?.id || "UNASSIGNED_ORG";
+      const orgCode = orgUnit?.code || "N/A";
+      const orgName = orgUnit?.name || "Chưa thuộc đơn vị";
+      if (!orgMap.has(orgId)) {
+        orgMap.set(orgId, { unitId: orgId, unitCode: orgCode, unitName: orgName, count: 0 });
+      }
+      orgMap.get(orgId)!.count++;
+
+      const pos = primaryOrg?.position;
+      const posId = pos?.id || "UNASSIGNED_POS";
+      const posCode = pos?.code || "N/A";
+      const posName = pos?.title || "Chưa gán chức danh";
+      if (!roleMap.has(posId)) {
+        roleMap.set(posId, { roleId: posId, roleCode: posCode, roleName: posName, count: 0 });
+      }
+      roleMap.get(posId)!.count++;
+    }
+
+    const total = unassignedEmps.length;
+    const orgUnitDistribution = Array.from(orgMap.values()).map((item) => ({
+      ...item,
+      percentage: total > 0 ? Math.round((item.count / total) * 100) : 0,
+    }));
+
+    return {
+      orgUnitDistribution,
+      projectDistribution: [
+        {
+          projectId: "UNASSIGNED",
+          projectCode: "N/A",
+          projectName: "Chưa điều động công trình",
+          count: total,
+          totalAllocation: 0,
+        },
+      ],
+      statusBreakdown: [{ status: "UNASSIGNED", statusLabel: "Chưa điều động", count: total }],
+      roleBreakdown: Array.from(roleMap.values()),
+    };
+  }
+
   // Fetch active assignments with relationships
   const assignments = await prismaClient.employeeProjectAssignment.findMany({
     where: {
@@ -322,6 +406,101 @@ export async function getHrReportDetailsTable(
 ): Promise<HrReportDetailsTableResult> {
   const scopeWhere = await buildEmployeeScopeWhereClause(ctx, scope, prismaClient);
   const targetDate = filters.dateStart ? new Date(filters.dateStart) : new Date();
+
+  if (filters.kpiFilter === "unassigned") {
+    // Unassigned employees table query directly from Employee
+    const empWhere: any = {
+      AND: [
+        scopeWhere,
+        { status: filters.employeeStatus ? (filters.employeeStatus as any) : "ACTIVE" },
+        {
+          projectAssignments: {
+            none: {
+              status: "ACTIVE",
+              startDate: { lte: targetDate },
+              OR: [{ endDate: null }, { endDate: { gt: targetDate } }],
+            },
+          },
+        },
+        filters.searchQuery
+          ? {
+              OR: [
+                { fullName: { contains: filters.searchQuery, mode: "insensitive" } },
+                { code: { contains: filters.searchQuery, mode: "insensitive" } },
+              ],
+            }
+          : {},
+      ],
+    };
+
+    if (filters.orgUnitId) {
+      empWhere.AND.push({
+        orgAssignments: {
+          some: {
+            organizationUnitId: filters.orgUnitId,
+            isPrimary: true,
+            startDate: { lte: targetDate },
+            OR: [{ endDate: null }, { endDate: { gt: targetDate } }],
+          },
+        },
+      });
+    }
+
+    const [rawEmployees, totalCount] = await Promise.all([
+      prismaClient.employee.findMany({
+        where: empWhere,
+        include: {
+          orgAssignments: {
+            where: {
+              isPrimary: true,
+              startDate: { lte: targetDate },
+              OR: [{ endDate: null }, { endDate: { gt: targetDate } }],
+            },
+            include: {
+              organizationUnit: true,
+              position: true,
+            },
+          },
+        },
+        orderBy: [{ createdAt: "desc" }],
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      prismaClient.employee.count({ where: empWhere }),
+    ]);
+
+    const items: HrReportDetailItem[] = rawEmployees.map((emp: any) => {
+      const primaryOrg = emp.orgAssignments?.[0];
+      return {
+        assignmentId: `unassigned_${emp.id}`,
+        employeeId: emp.id,
+        employeeCode: emp.code || "N/A",
+        employeeFullName: emp.fullName || "N/A",
+        orgUnitId: primaryOrg?.organizationUnitId,
+        orgUnitCode: primaryOrg?.organizationUnit?.code,
+        orgUnitName: primaryOrg?.organizationUnit?.name || "Chưa phân bổ",
+        positionTitle: primaryOrg?.position?.title || "Chưa xếp chức danh",
+        projectId: "N/A",
+        projectCode: "N/A",
+        projectName: "Chưa được điều động",
+        projectRoleId: "N/A",
+        projectRoleCode: "N/A",
+        projectRoleName: "Chưa có vai trò",
+        startDate: formatVietnamDateOnly(emp.joinedDate),
+        allocationPercentage: 0,
+        status: "UNASSIGNED",
+        notes: "Nhân sự chưa có điều động công trình hiệu lực",
+      };
+    });
+
+    return {
+      items,
+      totalCount,
+      page,
+      pageSize,
+      totalPages: Math.ceil(totalCount / pageSize) || 1,
+    };
+  }
 
   const whereClause: any = {
     employee: {

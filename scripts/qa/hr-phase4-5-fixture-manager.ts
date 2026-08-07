@@ -2,16 +2,12 @@ import fs from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
 
-function getDatabaseUrl(): string {
-  if (process.env.QA_DATABASE_URL) return process.env.QA_DATABASE_URL;
-  if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
-  const envLocalPath = path.join(process.cwd(), ".env.local");
-  if (fs.existsSync(envLocalPath)) {
-    const content = fs.readFileSync(envLocalPath, "utf8");
-    const match = content.match(/^DATABASE_URL=["']?([^"'\r\n]+)["']?/m);
-    if (match) return match[1];
+function getQaDatabaseUrl(): string {
+  const url = process.env.QA_DATABASE_URL || (process.env.DATABASE_URL?.includes("hr_qa") ? process.env.DATABASE_URL : "");
+  if (!url || !url.includes("hr_qa")) {
+    throw new Error("[FixtureManager] Safety Guard: FixtureManager MUST target a database containing 'hr_qa'! Execution blocked.");
   }
-  throw new Error("DATABASE_URL / QA_DATABASE_URL is missing.");
+  return url;
 }
 
 export interface EntityManifestRow {
@@ -27,7 +23,7 @@ export class FixtureManager {
   private connStr: string;
 
   constructor() {
-    this.connStr = getDatabaseUrl();
+    this.connStr = getQaDatabaseUrl();
   }
 
   private async getClient() {
@@ -39,7 +35,7 @@ export class FixtureManager {
   }
 
   public async setup(runId?: string): Promise<{ runId: string; rows: EntityManifestRow[] }> {
-    const activeRunId = runId || `HR_PHASE_4_5_3_${Date.now()}_${randomUUID().substring(0, 8)}`;
+    const activeRunId = runId || `HR_PHASE_4_5_4_${Date.now()}_${randomUUID().substring(0, 8)}`;
     console.log(`[FixtureManager] Starting --setup with RunId: ${activeRunId}`);
 
     const client = await this.getClient();
@@ -53,52 +49,75 @@ export class FixtureManager {
       const beforeProjects = parseInt((await client.query(`SELECT COUNT(*) FROM "Project"`)).rows[0].count, 10);
 
       // 1. Seed 6 Users (Roles: ADMIN, DIRECTOR, DEPUTY_DIRECTOR, MANAGER, CHIEF_COMMANDER, STAFF)
-      const roles = ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR", "MANAGER", "CHIEF_COMMANDER", "STAFF"];
+      const roles = [
+        { role: "ADMIN", name: "Nguyễn Văn Quan" },
+        { role: "DIRECTOR", name: "Trần Văn Đô" },
+        { role: "DEPUTY_DIRECTOR", name: "Lê Thị Phó" },
+        { role: "MANAGER", name: "Phạm Văn Trưởng" },
+        { role: "CHIEF_COMMANDER", name: "Hoàng Văn Chỉ" },
+        { role: "STAFF", name: "Vũ Văn Viên" },
+      ];
       const createdUserIds: string[] = [];
 
-      for (const role of roles) {
-        const email = `qa_${role.toLowerCase()}_${activeRunId}@construction.local`;
+      for (const r of roles) {
+        const email = `qa_${r.role.toLowerCase()}_${activeRunId}@construction.local`;
         const res = await client.query(
           `INSERT INTO "User" (id, email, password, name, role, "updatedAt")
            VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id`,
-          [`usr_${role.toLowerCase()}_${activeRunId}`, email, "$2a$10$UnusedHashedPasswordKeyQA", `QA User ${role}`, role]
+          [`usr_${r.role.toLowerCase()}_${activeRunId}`, email, "$2a$10$UnusedHashedPasswordKeyQA", r.name, r.role]
         );
         createdUserIds.push(res.rows[0].id);
       }
 
-      // 2. Seed 3 Org Units
+      // 2. Seed 3 Org Units with natural Vietnamese names
       const unitRoot = await client.query(
         `INSERT INTO "OrganizationUnit" (id, code, name, description, "updatedAt")
          VALUES ($1, $2, $3, $4, NOW()) RETURNING id`,
-        [`ou_root_${activeRunId}`, `OU_QA_ROOT_${activeRunId}`, `Khối Thi Công QA ${activeRunId}`, `Desc ${activeRunId}`]
+        [`ou_root_${activeRunId}`, `OU_ROOT_${activeRunId}`, `Khối Điều hành & Thi công`, `Ghi chú nội bộ ${activeRunId}`]
       );
       const unitChild1 = await client.query(
         `INSERT INTO "OrganizationUnit" (id, code, name, "parentId", "updatedAt")
          VALUES ($1, $2, $3, $4, NOW()) RETURNING id`,
-        [`ou_child1_${activeRunId}`, `OU_QA_CHILD1_${activeRunId}`, `Ban Chỉ Huy QA 1 ${activeRunId}`, unitRoot.rows[0].id]
+        [`ou_child1_${activeRunId}`, `OU_CHILD1_${activeRunId}`, `Phòng Dự án Công trình`, unitRoot.rows[0].id]
       );
       const unitChild2 = await client.query(
         `INSERT INTO "OrganizationUnit" (id, code, name, "parentId", "updatedAt")
          VALUES ($1, $2, $3, $4, NOW()) RETURNING id`,
-        [`ou_child2_${activeRunId}`, `OU_QA_CHILD2_${activeRunId}`, `Ban Chỉ Huy QA 2 ${activeRunId}`, unitRoot.rows[0].id]
+        [`ou_child2_${activeRunId}`, `OU_CHILD2_${activeRunId}`, `Ban Chỉ huy Công trường`, unitRoot.rows[0].id]
       );
 
-      // 3. Seed 4 Positions
-      const positions = ["DIRECTOR", "MANAGER", "LEAD", "STAFF"];
+      // 3. Seed 4 Positions with natural Vietnamese titles
+      const positions = [
+        { code: `POS_DIR_${activeRunId}`, title: "Giám đốc", level: 1 },
+        { code: `POS_MGR_${activeRunId}`, title: "Trưởng phòng", level: 2 },
+        { code: `POS_LEAD_${activeRunId}`, title: "Tổ trưởng", level: 3 },
+        { code: `POS_STAFF_${activeRunId}`, title: "Nhân viên", level: 4 },
+      ];
       const createdPosIds: string[] = [];
       for (let i = 0; i < positions.length; i++) {
         const res = await client.query(
           `INSERT INTO "Position" (id, code, title, level, "updatedAt")
            VALUES ($1, $2, $3, $4, NOW()) RETURNING id`,
-          [`pos_${i}_${activeRunId}`, `POS_QA_${positions[i]}_${activeRunId}`, `Chức danh ${positions[i]} QA`, i + 1]
+          [`pos_${i}_${activeRunId}`, positions[i].code, positions[i].title, positions[i].level]
         );
         createdPosIds.push(res.rows[0].id);
       }
 
-      // 4. Seed 8 Employees with PII Markers
+      // 4. Seed 8 Employees with natural Vietnamese names and localized PII markers
+      const empNames = [
+        "Nguyễn Văn An",
+        "Trần Thị Bình",
+        "Lê Văn Cường",
+        "Phạm Minh Đức",
+        "Hoàng Thị Em",
+        "Vũ Quốc Phong",
+        "Đặng Văn Giang",
+        "Bùi Thị Hà",
+      ];
+
       const createdEmpIds: string[] = [];
       for (let i = 1; i <= 8; i++) {
-        const empCode = `NV-QA-${activeRunId.replace(/[^a-zA-Z0-9]/g, "")}-${i}`;
+        const empCode = `NV-QA-${activeRunId.slice(-4)}-${i}`;
         const res = await client.query(
           `INSERT INTO "Employee" (
              id, code, "fullName", "joinedDate", status,
@@ -112,7 +131,7 @@ export class FixtureManager {
           [
             `emp_${i}_${activeRunId}`,
             empCode,
-            `Nguyễn Văn QA_${i}_${activeRunId}`,
+            empNames[i - 1],
             `QA_CCCD_${activeRunId}_${i}`,
             `blind_index_qa_cccd_${activeRunId}_${i}`,
             `789${i}`,
@@ -150,41 +169,41 @@ export class FixtureManager {
         [`mga_2_${activeRunId}`, unitChild2.rows[0].id, createdEmpIds[1], `DEC_MGR2_${activeRunId}`]
       );
 
-      // 6. Seed 3 Projects
+      // 6. Seed 3 Projects with natural names
       const prjActive = await client.query(
         `INSERT INTO "Project" (id, code, name, status, "updatedAt")
          VALUES ($1, $2, $3, 'ACTIVE', NOW()) RETURNING id`,
-        [`prj_active_${activeRunId}`, `PRJ_QA_ACTIVE_${activeRunId}`, `Dự án QA Đang Thi Công ${activeRunId}`]
+        [`prj_active_${activeRunId}`, `PRJ_XP_${activeRunId}`, `Dự án Chung cư Xuân Phương`]
       );
       const prjFuture = await client.query(
         `INSERT INTO "Project" (id, code, name, status, "updatedAt")
          VALUES ($1, $2, $3, 'PLANNING', NOW()) RETURNING id`,
-        [`prj_future_${activeRunId}`, `PRJ_QA_FUTURE_${activeRunId}`, `Dự án QA Sắp Khởi Công ${activeRunId}`]
+        [`prj_future_${activeRunId}`, `PRJ_MD_${activeRunId}`, `Dự án Khu đô thị Mỹ Đình`]
       );
       const prjClosed = await client.query(
         `INSERT INTO "Project" (id, code, name, status, "updatedAt")
          VALUES ($1, $2, $3, 'COMPLETED', NOW()) RETURNING id`,
-        [`prj_closed_${activeRunId}`, `PRJ_QA_CLOSED_${activeRunId}`, `Dự án QA Đã Đóng ${activeRunId}`]
+        [`prj_closed_${activeRunId}`, `PRJ_VD3_${activeRunId}`, `Dự án Cầu đường Vành Đai 3`]
       );
 
       // 7. Seed 3 Project Personnel Roles
       const rolePM = await client.query(
         `INSERT INTO "ProjectPersonnelRole" (id, code, name, "updatedAt")
          VALUES ($1, $2, $3, NOW()) RETURNING id`,
-        [`ppr_pm_${activeRunId}`, `PPR_QA_PM_${activeRunId}`, `Chỉ huy trưởng QA ${activeRunId}`]
+        [`ppr_pm_${activeRunId}`, `PPR_PM_${activeRunId}`, `Chỉ huy trưởng`]
       );
       const roleSup = await client.query(
         `INSERT INTO "ProjectPersonnelRole" (id, code, name, "updatedAt")
          VALUES ($1, $2, $3, NOW()) RETURNING id`,
-        [`ppr_sup_${activeRunId}`, `PPR_QA_SUP_${activeRunId}`, `Giám sát trưởng QA ${activeRunId}`]
+        [`ppr_sup_${activeRunId}`, `PPR_SUP_${activeRunId}`, `Giám sát trưởng`]
       );
       const roleEng = await client.query(
         `INSERT INTO "ProjectPersonnelRole" (id, code, name, "updatedAt")
          VALUES ($1, $2, $3, NOW()) RETURNING id`,
-        [`ppr_eng_${activeRunId}`, `PPR_QA_ENG_${activeRunId}`, `Kỹ sư công trình QA ${activeRunId}`]
+        [`ppr_eng_${activeRunId}`, `PPR_ENG_${activeRunId}`, `Kỹ sư công trình`]
       );
 
-      // 8. Seed 8 EmployeeProjectAssignments covering all scenarios
+      // 8. Seed 8 EmployeeProjectAssignments
       const assignmentScenarios = [
         { status: "ACTIVE", alloc: 100, endReason: null, prj: prjActive.rows[0].id, role: rolePM.rows[0].id, exp: null },
         { status: "ACTIVE", alloc: 50, endReason: null, prj: prjActive.rows[0].id, role: roleSup.rows[0].id, exp: null },
@@ -247,7 +266,6 @@ export class FixtureManager {
     const client = await this.getClient();
 
     try {
-      // Teardown seeded entities by runId tag or pattern
       const pattern = `%${runId}%`;
       await client.query(`DELETE FROM "EmployeeProjectAssignment" WHERE notes LIKE $1 OR id LIKE $1`, [pattern]);
       await client.query(`DELETE FROM "OrganizationUnitManagerAssignment" WHERE "decisionNo" LIKE $1 OR id LIKE $1`, [pattern]);
@@ -255,7 +273,7 @@ export class FixtureManager {
       await client.query(`DELETE FROM "EmployeeChangeHistory" WHERE reason LIKE $1 OR id LIKE $1`, [pattern]);
       await client.query(`DELETE FROM "AuditLog" WHERE "entityId" LIKE $1 OR action LIKE $1`, [pattern]);
       await client.query(`DELETE FROM "UserAccessGrant" WHERE reason LIKE $1 OR id LIKE $1`, [pattern]);
-      await client.query(`DELETE FROM "Employee" WHERE code LIKE $1 OR "fullName" LIKE $1 OR id LIKE $1`, [pattern]);
+      await client.query(`DELETE FROM "Employee" WHERE code LIKE $1 OR id LIKE $1`, [pattern]);
       await client.query(`DELETE FROM "User" WHERE email LIKE $1 OR id LIKE $1`, [pattern]);
       await client.query(`DELETE FROM "ProjectPersonnelRole" WHERE code LIKE $1 OR id LIKE $1`, [pattern]);
       await client.query(`DELETE FROM "Position" WHERE code LIKE $1 OR id LIKE $1`, [pattern]);
@@ -264,7 +282,7 @@ export class FixtureManager {
 
       // Verify ZERO RESIDUE by runId
       const remAssignments = parseInt((await client.query(`SELECT COUNT(*) FROM "EmployeeProjectAssignment" WHERE notes LIKE $1 OR id LIKE $1`, [pattern])).rows[0].count, 10);
-      const remEmployees = parseInt((await client.query(`SELECT COUNT(*) FROM "Employee" WHERE code LIKE $1 OR "fullName" LIKE $1 OR id LIKE $1`, [pattern])).rows[0].count, 10);
+      const remEmployees = parseInt((await client.query(`SELECT COUNT(*) FROM "Employee" WHERE code LIKE $1 OR id LIKE $1`, [pattern])).rows[0].count, 10);
       const remUnits = parseInt((await client.query(`SELECT COUNT(*) FROM "OrganizationUnit" WHERE code LIKE $1 OR id LIKE $1`, [pattern])).rows[0].count, 10);
       const remUsers = parseInt((await client.query(`SELECT COUNT(*) FROM "User" WHERE email LIKE $1 OR id LIKE $1`, [pattern])).rows[0].count, 10);
       const remProjects = parseInt((await client.query(`SELECT COUNT(*) FROM "Project" WHERE code LIKE $1 OR id LIKE $1`, [pattern])).rows[0].count, 10);
@@ -307,7 +325,7 @@ if (require.main === module) {
     });
   } else if (args.includes("--cleanup")) {
     const runIdFile = path.join(process.cwd(), ".current_fixture_run_id");
-    const runId = fs.existsSync(runIdFile) ? fs.readFileSync(runIdFile, "utf8").trim() : `HR_PHASE_4_5_3`;
+    const runId = fs.existsSync(runIdFile) ? fs.readFileSync(runIdFile, "utf8").trim() : `HR_PHASE_4_5_4`;
     manager.cleanup(runId).then(() => {
       if (fs.existsSync(runIdFile)) fs.unlinkSync(runIdFile);
       console.log("[FixtureManager] Zero residue verified 🚀");
@@ -317,7 +335,7 @@ if (require.main === module) {
     });
   } else {
     // Default mode: setup and cleanup verification
-    const runId = `HR_PHASE_4_5_3_${Date.now()}_${randomUUID().substring(0, 8)}`;
+    const runId = `HR_PHASE_4_5_4_${Date.now()}_${randomUUID().substring(0, 8)}`;
     manager.setup(runId).then(() => manager.cleanup(runId)).then(() => {
       console.log("[FixtureManager] Lifecycle test complete 🚀");
     }).catch((err) => {
