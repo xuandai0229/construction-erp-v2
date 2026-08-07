@@ -23,6 +23,27 @@ import {
   sanitizeEmployeeTransferAudit,
 } from "@/lib/audit-sanitizer";
 
+// Core Unit Guard constants
+const CORE_UNIT_CODES = new Set(["BGD", "PKT", "KTTTC"]);
+const CORE_UNIT_IDS = new Set(["cmsin1reg0000agk58d1407m2", "cmsebfgs500008ck5vrdk8eti", "cmsin1zlu0001bck57euldkc2"]);
+const CORE_UNIT_RESERVED_NAMES = [
+  "BAN GIAM DOC",
+  "PHONG GIAM DOC",
+  "PHONG KY THUAT",
+  "PHONG KE TOAN",
+];
+
+function isSemanticCoreUnitDuplicate(code: string, name: string): boolean {
+  const normCode = code.trim().toUpperCase();
+  const normName = name.trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  if (CORE_UNIT_CODES.has(normCode)) return true;
+  for (const reservedName of CORE_UNIT_RESERVED_NAMES) {
+    if (normName.includes(reservedName)) return true;
+  }
+  return false;
+}
+
 // --- Zod Schemas ---
 const CreateOrgUnitSchema = z.object({
   code: z.string().min(2, "Mã đơn vị phải có ít nhất 2 ký tự").max(50),
@@ -78,6 +99,10 @@ export async function createOrgUnitAction(formData: unknown) {
   const parsed = CreateOrgUnitSchema.safeParse(formData);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  if (isSemanticCoreUnitDuplicate(parsed.data.code, parsed.data.name)) {
+    return { success: false, error: "Không thể tạo đơn vị mới trùng lặp với tên hoặc mã phòng ban lõi của công ty." };
   }
 
   const scopeCheck = await validateTargetScope(permCheck.context, permCheck.scope, {
@@ -162,6 +187,18 @@ export async function deactivateOrgUnitAction(unitId: string) {
   });
   if (!scopeCheck.allowed) {
     return { success: false, error: scopeCheck.reason || "Thao tác bị từ chối bởi quy tắc phạm vi dữ liệu." };
+  }
+
+  // Core Unit Protection Guard
+  const targetUnit = await prisma.organizationUnit.findUnique({
+    where: { id: unitId },
+    select: { id: true, code: true, name: true },
+  });
+  if (!targetUnit) {
+    return { success: false, error: "Đơn vị tổ chức không tồn tại." };
+  }
+  if (CORE_UNIT_IDS.has(targetUnit.id) || CORE_UNIT_CODES.has(targetUnit.code.toUpperCase())) {
+    return { success: false, error: "Đây là phòng ban lõi của công ty. Không thể vô hiệu hóa." };
   }
 
   const currentUserId = permCheck.context.session.id;

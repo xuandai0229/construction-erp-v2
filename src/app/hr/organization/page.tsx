@@ -39,10 +39,14 @@ export default async function OrganizationPage(props: OrganizationPageProps) {
 
   if (activeTab === "positions") {
     const rawPositions = await prisma.position.findMany({
-      orderBy: [{ level: "asc" }, { code: "asc" }],
+      orderBy: [{ code: "asc" }],
       include: {
         employeeAssignments: {
-          where: { endDate: null },
+          where: {
+            endDate: null,
+            isPrimary: true,
+            employee: { status: { in: ["ACTIVE", "PROBATION"] } },
+          },
           select: { id: true },
         },
       },
@@ -62,10 +66,13 @@ export default async function OrganizationPage(props: OrganizationPageProps) {
       <HrWorkspaceShell>
         <HrPageHeader
           title="Phòng ban & Chức danh"
-          description="Quản lý hệ thống chức danh, cấp bậc và định mức vị trí công việc"
+          description="Quản lý hệ thống chức danh và định mức nhân sự chuyên môn trong công ty"
           action={
             managePerm.allowed ? (
-              <Link href="/hr/organization?tab=positions&create=1" className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-blue-700">
+              <Link
+                href="/hr/organization?tab=positions&create=1"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-blue-700"
+              >
                 <Plus className="h-4 w-4" />
                 <span>Thêm chức danh mới</span>
               </Link>
@@ -94,7 +101,11 @@ export default async function OrganizationPage(props: OrganizationPageProps) {
         take: 1,
       },
       employeeAssignments: {
-        where: { endDate: null },
+        where: {
+          endDate: null,
+          isPrimary: true,
+          employee: { status: { in: ["ACTIVE", "PROBATION"] } },
+        },
         select: { id: true },
       },
     },
@@ -146,15 +157,7 @@ export default async function OrganizationPage(props: OrganizationPageProps) {
       <HrWorkspaceShell>
         <HrPageHeader
           title="Phòng ban & Chức danh"
-          description="Biểu diễn sơ đồ cây phân cấp công ty, người phụ trách và quy mô nhân sự trực thuộc"
-          action={
-            managePerm.allowed ? (
-              <Link href="/hr/organization?tab=units&create=1" className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-blue-700">
-                <Plus className="h-4 w-4" />
-                <span>Thêm đơn vị cấp cao nhất</span>
-              </Link>
-            ) : undefined
-          }
+          description="Biểu diễn sơ đồ tháp phân cấp công ty, người phụ trách và quy mô nhân sự trực thuộc"
         />
         <HrWorkspaceTabs />
         <Suspense fallback={<div className="p-4 text-sm text-slate-500">Đang tải...</div>}>
@@ -173,9 +176,12 @@ export default async function OrganizationPage(props: OrganizationPageProps) {
         description="Quản lý cây phòng ban nhiều cấp, chức năng nhiệm vụ và người phụ trách đơn vị"
         action={
           managePerm.allowed ? (
-            <Link href="/hr/organization?tab=units&create=1" className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-blue-700">
+            <Link
+              href="/hr/organization?tab=units&create=1"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-blue-700"
+            >
               <Plus className="h-4 w-4" />
-              <span>Thêm đơn vị cấp cao nhất</span>
+              <span>+ Thêm phòng ban / đơn vị</span>
             </Link>
           ) : undefined
         }
