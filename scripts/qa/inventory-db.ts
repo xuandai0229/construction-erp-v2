@@ -76,13 +76,9 @@ async function checkDb(url: string, label: string) {
 async function main() {
   const db1 = process.env.DATABASE_URL || "";
   const db2 = process.env.QA_DATABASE_URL || "";
-  const db3 = "postgresql://postgres:postgres@127.0.0.1:5432/construction_erp_v2_dev?schema=public";
-  const db4 = "postgresql://postgres:123456@127.0.0.1:5432/construction_erp_v2_dev?schema=public";
 
   await checkDb(db1, "DATABASE_URL (.env.hr-qa.local)");
   await checkDb(db2, "QA_DATABASE_URL");
-  await checkDb(db3, "DEFAULT LOCAL postgres:postgres");
-  await checkDb(db4, "DEFAULT LOCAL postgres:123456");
 }
 
 main();

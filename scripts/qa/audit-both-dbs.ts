@@ -123,8 +123,8 @@ async function inspectDb(url: string, label: string) {
 }
 
 async function main() {
-  const devUrl = "postgresql://postgres:123456@127.0.0.1:5432/construction_erp_v2_dev?schema=public";
-  const qaUrl = "postgresql://hr_qa_user:hr_qa_password_2026_secure@127.0.0.1:5432/construction_erp_v2_hr_qa?schema=public";
+  const devUrl = process.env.DATABASE_URL || "postgresql://postgres:****@127.0.0.1:5432/construction_erp_v2_dev?schema=public";
+  const qaUrl = process.env.QA_DATABASE_URL || "postgresql://hr_qa_user:****@127.0.0.1:5432/construction_erp_v2_hr_qa?schema=public";
 
   await inspectDb(devUrl, "Runtime Development Database (construction_erp_v2_dev)");
   await inspectDb(qaUrl, "HR QA Database (construction_erp_v2_hr_qa)");
