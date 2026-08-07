@@ -1,6 +1,11 @@
 import fs from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
+import dotenv from "dotenv";
+
+if (fs.existsSync(path.join(process.cwd(), ".env.hr-qa.local"))) {
+  dotenv.config({ path: ".env.hr-qa.local", override: true });
+}
 
 function getQaDatabaseUrl(): string {
   const url = process.env.QA_DATABASE_URL;
