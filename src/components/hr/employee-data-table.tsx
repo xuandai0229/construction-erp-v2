@@ -17,6 +17,7 @@ import {
   HardHat,
   AlertCircle,
   X,
+  ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { HrEmptyState } from "./hr-empty-state";
@@ -57,16 +58,18 @@ function getInitials(name: string): string {
 }
 
 /**
- * Interactive Multi-Project Popover with Fixed Positioning (No Table Overflow Clipping)
+ * Interactive Single & Multi-Project Cell with 2-line max display, 
+ * clickable project links, and fixed floating Popover/Tooltip.
  */
 function ProjectAssignmentCell({
   projects,
   totalAllocationPercentage,
 }: {
-  projects: { id: string; name: string; code: string; allocationPercentage: number }[];
+  projects: { id: string; name: string; code: string; roleName?: string; allocationPercentage: number }[];
   totalAllocationPercentage: number;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const triggerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [coords, setCoords] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
@@ -74,34 +77,89 @@ function ProjectAssignmentCell({
     return <span className="text-slate-400 text-xs italic">Chưa bố trí công trình</span>;
   }
 
+  const openPopover = (el: HTMLElement | null) => {
+    if (el) {
+      const rect = el.getBoundingClientRect();
+      setCoords({
+        top: Math.min(window.innerHeight - 300, rect.bottom + 6),
+        left: Math.max(16, Math.min(window.innerWidth - 500, rect.left)),
+      });
+    }
+    setIsOpen(true);
+  };
+
+  // SINGLE PROJECT DISPLAY (MAX 2 LINES + ELLIPSIS + CLICKABLE LINK + FLOATING TOOLTIP)
   if (projects.length === 1) {
     const proj = projects[0];
     const cleanProjName = sanitizeDisplayName(proj.name);
+
     return (
       <div
-        className="flex items-center gap-1.5 text-slate-800 text-xs font-medium min-w-0"
-        title={`${cleanProjName} (${proj.allocationPercentage}%)`}
+        ref={triggerRef}
+        className="relative group min-w-0"
+        onMouseEnter={() => openPopover(triggerRef.current)}
+        onMouseLeave={() => setIsOpen(false)}
       >
-        <HardHat className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-        <span className="truncate block min-w-0">{cleanProjName}</span>
+        <div className="flex items-start gap-1.5 min-w-0">
+          <HardHat className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="min-w-0 flex-1 space-y-0.5">
+            {proj.code && (
+              <span className="font-mono text-[10px] font-bold text-slate-500 bg-slate-100/90 border border-slate-200/80 px-1.5 py-0.2 rounded-xs whitespace-nowrap inline-block tracking-tight">
+                {proj.code}
+              </span>
+            )}
+            <Link
+              href={`/projects/${proj.id}`}
+              className="font-medium text-slate-800 hover:text-blue-600 hover:underline text-xs leading-snug line-clamp-2 break-words transition-colors block"
+              title={cleanProjName}
+            >
+              {cleanProjName}
+            </Link>
+          </div>
+        </div>
+
+        {/* Floating Tooltip for Long Project Name (Fixed Portal Layer) */}
+        {isOpen && (
+          <div
+            style={{ top: `${coords.top}px`, left: `${coords.left}px` }}
+            className="fixed z-50 max-w-lg w-[480px] bg-slate-900 text-white rounded-xl p-3.5 shadow-2xl space-y-1.5 text-xs animate-in fade-in zoom-in-95 duration-100 pointer-events-none"
+          >
+            <div className="flex items-center justify-between text-blue-300 font-bold border-b border-slate-700 pb-1.5">
+              <span className="flex items-center gap-1.5">
+                <HardHat className="w-4 h-4 text-amber-400" />
+                <span>{proj.code ? `[${proj.code}] ` : ""}Chi tiết công trình</span>
+              </span>
+              <span className="text-[11px] text-emerald-400 font-mono">
+                Phân bổ: {proj.allocationPercentage}%
+              </span>
+            </div>
+            <p className="font-semibold text-slate-100 leading-normal break-words">
+              {cleanProjName}
+            </p>
+            {proj.roleName && (
+              <p className="text-[11px] text-slate-400">
+                Vai trò: <span className="text-slate-200 font-medium">{sanitizeDisplayName(proj.roleName)}</span>
+              </p>
+            )}
+          </div>
+        )}
       </div>
     );
   }
 
+  // MULTI-PROJECT DISPLAY (>1 PROJECTS)
+  const fullTooltipText =
+    projects
+      .map((p) => `• ${sanitizeDisplayName(p.name)} (${p.roleName || "Kỹ sư"} · ${p.allocationPercentage}%)`)
+      .join("\n") + `\nTổng phân bổ: ${totalAllocationPercentage}%`;
+
   const togglePopover = () => {
     if (!isOpen && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      setCoords({
-        top: rect.bottom + 6,
-        left: Math.max(16, Math.min(window.innerWidth - 320, rect.left)),
-      });
+      openPopover(buttonRef.current);
+    } else {
+      setIsOpen(false);
     }
-    setIsOpen(!isOpen);
   };
-
-  const fullTooltipText =
-    projects.map((p) => `• ${sanitizeDisplayName(p.name)}: ${p.allocationPercentage}%`).join("\n") +
-    `\nTổng phân bổ: ${totalAllocationPercentage}%`;
 
   return (
     <div className="relative inline-block text-left max-w-full">
@@ -119,50 +177,61 @@ function ProjectAssignmentCell({
         title={fullTooltipText}
         aria-expanded={isOpen}
         aria-label={`Xem ${projects.length} công trình đang tham gia`}
-        className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold rounded-md transition-colors border border-blue-200 cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-blue-500 whitespace-nowrap"
+        className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold rounded-lg transition-colors border border-blue-200 cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-blue-500 whitespace-nowrap"
       >
         <HardHat className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-        <span>{projects.length} công trình</span>
+        <span>{projects.length} công trình đang tham gia</span>
       </button>
 
       {isOpen && (
         <>
-          <div className="fixed inset-0 z-50 bg-black/5" onClick={() => setIsOpen(false)} />
+          <div className="fixed inset-0 z-50 bg-black/10" onClick={() => setIsOpen(false)} />
           <div
             style={{ top: `${coords.top}px`, left: `${coords.left}px` }}
-            className="fixed z-50 w-80 bg-white rounded-xl border border-slate-200 p-3 shadow-2xl space-y-2 text-xs text-slate-800 animate-in fade-in zoom-in-95 duration-100"
+            className="fixed z-50 w-96 max-w-md bg-white rounded-xl border border-slate-200 p-4 shadow-2xl space-y-3 text-xs text-slate-800 animate-in fade-in zoom-in-95 duration-100"
           >
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-              <span className="font-bold text-slate-900 flex items-center gap-1.5">
+              <span className="font-bold text-slate-900 flex items-center gap-1.5 text-sm">
                 <HardHat className="w-4 h-4 text-blue-600 shrink-0" />
-                <span>Danh sách công trình</span>
+                <span>{projects.length} công trình đang tham gia</span>
               </span>
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-0.5 rounded-sm cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 p-0.5 rounded-md cursor-pointer"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
-              {projects.map((proj) => (
-                <div key={proj.id} className="p-2 bg-slate-50 border border-slate-100 rounded-lg space-y-0.5">
-                  <div className="font-semibold text-slate-900 leading-snug break-words">
-                    {sanitizeDisplayName(proj.name)}
+            <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+              {projects.map((proj) => {
+                const cleanName = sanitizeDisplayName(proj.name);
+                const cleanRole = sanitizeDisplayName(proj.roleName || "Kỹ sư xây dựng");
+                return (
+                  <div key={proj.id} className="p-2.5 bg-slate-50 border border-slate-100 rounded-lg space-y-1 hover:bg-slate-100/80 transition-colors">
+                    <div className="flex items-start justify-between gap-2">
+                      <Link
+                        href={`/projects/${proj.id}`}
+                        onClick={() => setIsOpen(false)}
+                        className="font-bold text-slate-900 hover:text-blue-600 text-xs leading-snug break-words flex-1 flex items-center gap-1 group"
+                      >
+                        <span>{proj.code ? `[${proj.code}] ` : ""}{cleanName}</span>
+                        <ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-blue-600 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </Link>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] text-slate-600 pt-1 border-t border-slate-200/60">
+                      <span className="font-medium text-slate-700">{cleanRole}</span>
+                      <span className="font-bold text-blue-700">Tỷ lệ: {proj.allocationPercentage}%</span>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
-                    <span>Mã: {proj.code || "—"}</span>
-                    <span className="font-bold text-slate-800">Phân bổ: {proj.allocationPercentage}%</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
-            <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
-              <span className="text-slate-500 font-medium">Tổng tỷ lệ phân bổ:</span>
-              <span className={cn("font-bold text-xs", totalAllocationPercentage > 100 ? "text-rose-600" : "text-slate-900")}>
+            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+              <span className="text-slate-600 font-medium">Tổng tỷ lệ phân bổ:</span>
+              <span className={cn("font-bold text-xs tabular-nums px-2 py-0.5 rounded", totalAllocationPercentage > 100 ? "bg-rose-100 text-rose-700" : "bg-emerald-100 text-emerald-800")}>
                 {totalAllocationPercentage}%
               </span>
             </div>
@@ -235,18 +304,18 @@ export function EmployeeDataTable({
 
   return (
     <div className="space-y-3">
-      {/* Desktop Construction HR Table View (DETERMINISTIC HARMONIZED COLUMN RATIOS) */}
+      {/* Desktop Construction HR Table View (BALANCED 7-COLUMN RATIOS) */}
       <div className="hidden lg:block bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
         <table className="w-full text-left text-sm border-collapse table-fixed">
           <thead>
             <tr className="bg-slate-50/90 border-b border-slate-200 text-xs font-bold text-slate-700 tracking-tight">
-              <th className="py-2.5 px-3 w-[18%]">Nhân viên</th>
-              <th className="py-2.5 px-3 w-[21%]">Phòng ban / Chức danh</th>
-              <th className="py-2.5 px-3 w-[29%]">Công trình hiện tại</th>
+              <th className="py-2.5 px-3 w-[17%]">Nhân viên</th>
+              <th className="py-2.5 px-3 w-[19%]">Phòng ban / Chức danh</th>
+              <th className="py-2.5 px-3 w-[33%]">Công trình hiện tại</th>
               <th className="py-2.5 px-3 w-[7%] whitespace-nowrap">Phân bổ</th>
               <th className="py-2.5 px-3 w-[9%] whitespace-nowrap">Trạng thái</th>
               <th className="py-2.5 px-3 w-[9%] whitespace-nowrap">Ngày vào</th>
-              <th className="py-2.5 px-3 w-[7%] text-right whitespace-nowrap">Thao tác</th>
+              <th className="py-2.5 px-3 w-[6%] text-right whitespace-nowrap">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -269,7 +338,7 @@ export function EmployeeDataTable({
 
               return (
                 <tr key={emp.id} className="hover:bg-slate-50/80 transition-colors">
-                  {/* 1. Employee Name & Code Cell (18%) */}
+                  {/* 1. Employee Name & Code Cell (17%) */}
                   <td className="py-2.5 px-3 overflow-hidden">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center shrink-0">
@@ -290,7 +359,7 @@ export function EmployeeDataTable({
                     </div>
                   </td>
 
-                  {/* 2. Department & Position Cell (21%) */}
+                  {/* 2. Department & Position Cell (19%) */}
                   <td className="py-2.5 px-3 overflow-hidden">
                     <div className="space-y-0.5 min-w-0">
                       <div className="text-xs font-semibold text-slate-900 truncate" title={cleanDeptName || "Chưa phân công"}>
@@ -318,7 +387,7 @@ export function EmployeeDataTable({
                     </div>
                   </td>
 
-                  {/* 3. Current Project Assignment Cell (29%) */}
+                  {/* 3. Current Project Assignment Cell (33% - MAX 2 LINES + CLICKABLE LINK + TOOLTIP) */}
                   <td className="py-2.5 px-3 overflow-hidden">
                     <ProjectAssignmentCell projects={projects} totalAllocationPercentage={totalPct} />
                   </td>
@@ -353,7 +422,7 @@ export function EmployeeDataTable({
                     {joinDateFormatted}
                   </td>
 
-                  {/* 7. Action Cell (7%) */}
+                  {/* 7. Action Cell (6%) */}
                   <td className="py-2.5 px-3 text-right whitespace-nowrap">
                     <div className="flex items-center justify-end gap-0.5">
                       <Link
@@ -425,7 +494,7 @@ export function EmployeeDataTable({
                 </div>
                 <div className="min-w-0">
                   <span className="text-slate-400 block text-[10px] uppercase font-bold">Công trình & Phân bổ</span>
-                  <span className="font-semibold text-slate-900 block truncate">
+                  <span className="font-semibold text-slate-900 block line-clamp-2 break-words">
                     {projects.length > 0 ? `${projects.length} công trình (${totalPct}%)` : "Chưa bố trí"}
                   </span>
                 </div>

@@ -5,6 +5,7 @@ export interface ActiveProjectDTO {
   id: string;
   name: string;
   code: string;
+  roleName?: string;
   allocationPercentage: number;
 }
 
@@ -70,6 +71,7 @@ export function projectEmployeeForList(
     id: pa.project?.id || pa.projectId,
     name: pa.project?.name || "Công trình",
     code: pa.project?.code || "",
+    roleName: pa.projectPersonnelRole?.name || pa.role?.name || "Kỹ sư",
     allocationPercentage: pa.allocationPercentage ?? 100,
   }));
 
