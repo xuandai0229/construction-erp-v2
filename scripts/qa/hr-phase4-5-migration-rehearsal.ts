@@ -2,7 +2,10 @@ import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
 
-function getDatabaseUrl(): string {
+function getAdminUrl(): string {
+  if (process.env.HR_MIGRATION_REHEARSAL_ADMIN_URL) {
+    return process.env.HR_MIGRATION_REHEARSAL_ADMIN_URL;
+  }
   if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
   const envLocalPath = path.join(process.cwd(), ".env.local");
   if (fs.existsSync(envLocalPath)) {
@@ -10,20 +13,20 @@ function getDatabaseUrl(): string {
     const match = content.match(/^DATABASE_URL=["']?([^"'\r\n]+)["']?/m);
     if (match) return match[1];
   }
-  throw new Error("DATABASE_URL environment variable is missing and .env.local not found.");
+  throw new Error("No database connection string provided for migration rehearsal.");
 }
 
-async function runMigrationRehearsal() {
-  const baseConnStr = getDatabaseUrl();
+export async function runHardenedMigrationRehearsal() {
+  const connStr = getAdminUrl();
   const pgModulePath = require.resolve("pg", { paths: [process.cwd()] });
   const { Client } = require(pgModulePath);
 
-  const urlObj = new URL(baseConnStr);
+  const urlObj = new URL(connStr);
   const targetDb = urlObj.pathname.replace(/^\//, "");
 
-  // Safety checks: Refuse production, dev, or settings_e2e
-  if (targetDb.includes("prod") || targetDb === "settings_e2e") {
-    throw new Error(`Refusing to run migration rehearsal against protected database: ${targetDb}`);
+  // Safety Guards: Refuse protected DBs
+  if (targetDb.includes("prod") || targetDb.includes("staging") || targetDb === "settings_e2e") {
+    throw new Error(`[Safety Guard] Refusing to run migration rehearsal against protected database: ${targetDb}`);
   }
 
   urlObj.pathname = "/postgres";
@@ -31,44 +34,38 @@ async function runMigrationRehearsal() {
   adminClient.on("error", () => {});
   await adminClient.connect();
 
-  const rehearsalDbName = "construction_erp_v2_rehearsal_qa_" + Date.now();
-  console.log(`[Rehearsal] Creating disposable database: ${rehearsalDbName}`);
+  const rehearsalDbName = `hr_qa_rehearsal_${Date.now()}`;
+  console.log(`[MigrationRehearsal] Creating temporary database: ${rehearsalDbName}`);
 
   let rehearsalClient: any = null;
 
   try {
     await adminClient.query(`DROP DATABASE IF EXISTS ${rehearsalDbName};`);
     await adminClient.query(`CREATE DATABASE ${rehearsalDbName};`);
-    console.log("[Rehearsal] Database created.");
+    console.log("[MigrationRehearsal] Database created.");
 
     urlObj.pathname = `/${rehearsalDbName}`;
     const rehearsalUrl = urlObj.toString();
 
-    console.log("[Rehearsal] Running prisma migrate deploy...");
+    console.log("[MigrationRehearsal] Running prisma migrate deploy...");
     const deployOut = execSync("npx prisma migrate deploy", {
       env: { ...process.env, DATABASE_URL: rehearsalUrl },
       encoding: "utf8",
     });
-    console.log(deployOut);
 
-    console.log("[Rehearsal] Checking prisma migrate status...");
-    const statusOut = execSync("npx prisma migrate status", {
-      env: { ...process.env, DATABASE_URL: rehearsalUrl },
-      encoding: "utf8",
-    });
-    console.log(statusOut);
-
-    // Verify 26 migrations applied
-    if (!deployOut.includes("26 migrations found") && !statusOut.includes("26 migrations found")) {
-      throw new Error("Migration count assertion failed: expected 26 migrations.");
-    }
-
-    // Connect to rehearsal DB to inspect schema invariants
+    // 1. Query _prisma_migrations table to assert exact count of 26 migrations
     rehearsalClient = new Client({ connectionString: rehearsalUrl });
     rehearsalClient.on("error", () => {});
     await rehearsalClient.connect();
 
-    // 1. Assert Enum EmployeeProjectAssignmentEndReason values (5 values)
+    const migRes = await rehearsalClient.query(`SELECT COUNT(*) FROM "_prisma_migrations" WHERE finished_at IS NOT NULL;`);
+    const appliedMigrations = parseInt(migRes.rows[0].count, 10);
+    console.log(`[MigrationRehearsal] Applied Migrations Count: ${appliedMigrations}`);
+    if (appliedMigrations !== 26) {
+      throw new Error(`Migration count assertion failed: expected 26, got ${appliedMigrations}`);
+    }
+
+    // 2. Assert Enum EmployeeProjectAssignmentEndReason exact 5 values
     const enumRes = await rehearsalClient.query(`
       SELECT e.enumlabel
       FROM pg_type t
@@ -76,35 +73,42 @@ async function runMigrationRehearsal() {
       WHERE t.typname = 'EmployeeProjectAssignmentEndReason';
     `);
     const enumValues = enumRes.rows.map((r: any) => r.enumlabel);
-    console.log("[Rehearsal] EndReason Enum Values:", enumValues);
-    const expectedValues = ["COMPLETED", "EARLY_RELEASE", "ROLE_TRANSFER", "ALLOCATION_CHANGE", "PROJECT_TRANSFER"];
-    for (const val of expectedValues) {
+    console.log("[MigrationRehearsal] EndReason Enum Values:", enumValues);
+    const expectedEnum = ["COMPLETED", "EARLY_RELEASE", "ROLE_TRANSFER", "ALLOCATION_CHANGE", "PROJECT_TRANSFER"];
+    for (const val of expectedEnum) {
       if (!enumValues.includes(val)) {
         throw new Error(`Missing expected Enum value: ${val}`);
       }
     }
 
-    // 2. Assert composite indexes on EmployeeProjectAssignment
+    // 3. Assert composite indexes on EmployeeProjectAssignment
     const indexRes = await rehearsalClient.query(`
       SELECT indexname
       FROM pg_indexes
       WHERE tablename = 'EmployeeProjectAssignment';
     `);
     const indexNames = indexRes.rows.map((r: any) => r.indexname);
-    console.log("[Rehearsal] Assignment Index Names:", indexNames);
+    console.log("[MigrationRehearsal] Assignment Index Names:", indexNames);
 
-    // 3. Smoke DB Query on migrated schema
+    if (!indexNames.includes("EmployeeProjectAssignment_employeeId_status_startDate_idx")) {
+      throw new Error("Missing required index: EmployeeProjectAssignment_employeeId_status_startDate_idx");
+    }
+    if (!indexNames.includes("EmployeeProjectAssignment_projectId_status_startDate_idx")) {
+      throw new Error("Missing required index: EmployeeProjectAssignment_projectId_status_startDate_idx");
+    }
+
+    // 4. Smoke DB Query on migrated schema
     const countRes = await rehearsalClient.query(`SELECT COUNT(*) FROM "EmployeeProjectAssignment";`);
-    console.log(`[Rehearsal] Smoke Query Count: ${countRes.rows[0].count}`);
+    console.log(`[MigrationRehearsal] Smoke Query Count: ${countRes.rows[0].count}`);
 
-    console.log("[Rehearsal] All assertions PASSED 🚀");
+    console.log("[MigrationRehearsal] All assertions PASSED 🚀");
   } finally {
     if (rehearsalClient) {
       try {
         await rehearsalClient.end();
       } catch (e) {}
     }
-    console.log(`[Rehearsal] Dropping disposable database: ${rehearsalDbName}`);
+    console.log(`[MigrationRehearsal] Dropping temporary database: ${rehearsalDbName}`);
     try {
       await adminClient.query(`
         SELECT pg_terminate_backend(pid)
@@ -112,17 +116,29 @@ async function runMigrationRehearsal() {
         WHERE datname = '${rehearsalDbName}' AND pid <> pg_backend_pid();
       `);
       await adminClient.query(`DROP DATABASE IF EXISTS ${rehearsalDbName};`);
-      console.log("[Rehearsal] Teardown complete.");
     } catch (e) {
-      console.error("[Rehearsal] Teardown error:", e);
+      console.error("[MigrationRehearsal] Teardown error:", e);
     }
+
+    // 5. Query pg_database and assert database no longer exists
+    const dbCheckRes = await adminClient.query(`SELECT COUNT(*) FROM pg_database WHERE datname = $1`, [rehearsalDbName]);
+    const dbExistsCount = parseInt(dbCheckRes.rows[0].count, 10);
+    if (dbExistsCount !== 0) {
+      throw new Error(`Teardown failed! Database ${rehearsalDbName} still exists.`);
+    }
+    console.log(`[MigrationRehearsal] Verified database ${rehearsalDbName} is completely dropped.`);
+
     try {
       await adminClient.end();
     } catch (e) {}
   }
 }
 
-runMigrationRehearsal().catch((err) => {
-  console.error("Migration rehearsal failed:", err);
-  process.exit(1);
-});
+if (require.main === module) {
+  runHardenedMigrationRehearsal()
+    .then(() => console.log("[MigrationRehearsal] Hardened Rehearsal Complete 🚀"))
+    .catch((err) => {
+      console.error("[MigrationRehearsal] Failed:", err);
+      process.exit(1);
+    });
+}
