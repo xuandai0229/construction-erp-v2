@@ -110,7 +110,7 @@ export function HrReportDetailTable({ tableData }: HrReportDetailTableProps) {
                   <div className="inline-flex flex-col items-center gap-2">
                     <Inbox className="w-8 h-8 text-slate-300" />
                     <span className="font-semibold text-sm">{getEmptyStateMessage()}</span>
-                    <span className="text-xs text-slate-500">Thử thay đổi bộ lọc hoặc chọn thời gian khác.</span>
+                    <span className="text-xs text-slate-500">Chưa có dữ liệu điều động phù hợp với bộ lọc. Thử thay đổi bộ lọc hoặc chọn thời gian khác.</span>
                     <div className="mt-2 flex items-center gap-2">
                       {kpiFilter && (
                         <button
