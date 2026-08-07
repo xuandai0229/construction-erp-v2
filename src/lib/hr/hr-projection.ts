@@ -1,6 +1,13 @@
 import { SensitiveFieldPolicy } from "@prisma/client";
 import { maskIdentityNumber, decryptIdentityNumber, parseEnvelope } from "./pii-encryption";
 
+export interface ActiveProjectDTO {
+  id: string;
+  name: string;
+  code: string;
+  allocationPercentage: number;
+}
+
 export interface EmployeeListDTO {
   id: string;
   code: string;
@@ -18,6 +25,8 @@ export interface EmployeeListDTO {
   userEmail: string | null;
   userName: string | null;
   updatedAt: string;
+  activeProjects: ActiveProjectDTO[];
+  totalAllocationPercentage: number;
 }
 
 export interface EmployeeDetailDTO extends EmployeeListDTO {
@@ -49,6 +58,26 @@ export function projectEmployeeForList(
 
   const canSeeContact = policy !== SensitiveFieldPolicy.BASIC_ONLY;
 
+  const now = new Date();
+  const rawProjectAssignments = employee.projectAssignments ?? [];
+  const activeAssignments = rawProjectAssignments.filter((pa: any) => {
+    if (pa.status !== "ACTIVE") return false;
+    if (pa.endDate && new Date(pa.endDate) < now) return false;
+    return true;
+  });
+
+  const activeProjects: ActiveProjectDTO[] = activeAssignments.map((pa: any) => ({
+    id: pa.project?.id || pa.projectId,
+    name: pa.project?.name || "Công trình",
+    code: pa.project?.code || "",
+    allocationPercentage: pa.allocationPercentage ?? 100,
+  }));
+
+  const totalAllocationPercentage = activeProjects.reduce(
+    (acc, p) => acc + (p.allocationPercentage || 0),
+    0
+  );
+
   return {
     id: employee.id,
     code: employee.code,
@@ -66,6 +95,8 @@ export function projectEmployeeForList(
     userEmail: canSeeContact ? employee.user?.email || null : maskEmail(employee.user?.email),
     userName: employee.user?.name || null,
     updatedAt: employee.updatedAt ? new Date(employee.updatedAt).toISOString() : "",
+    activeProjects,
+    totalAllocationPercentage,
   };
 }
 

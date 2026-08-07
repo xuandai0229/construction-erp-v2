@@ -18,14 +18,11 @@ import {
 import { cn } from "@/lib/utils";
 
 const HR_TABS = [
-  { id: "overview", label: "Tổng quan nhân sự", href: "/hr", icon: LayoutDashboard, implemented: true },
-  { id: "employees", label: "Hồ sơ nhân viên", href: "/hr/employees", icon: Users, implemented: true },
-  { id: "organization", label: "Cơ cấu tổ chức và phòng ban", href: "/hr/organization", icon: Network, implemented: true },
-  { id: "assignments", label: "Điều động công trình", href: "/hr/project-assignments", icon: Briefcase, implemented: true },
-  { id: "reports", label: "Báo cáo và phân tích", href: "/hr/reports", icon: BarChart3, implemented: true },
-  { id: "contracts", label: "Hợp đồng", href: "/hr/contracts", icon: FileText, implemented: false },
-  { id: "certificates", label: "Chứng chỉ và bằng cấp", href: "/hr/certificates", icon: Award, implemented: false },
-  { id: "alerts", label: "Cảnh báo", href: "/hr/alerts", icon: AlertTriangle, implemented: false },
+  { id: "overview", label: "Tổng quan", href: "/hr", icon: LayoutDashboard },
+  { id: "employees", label: "Nhân sự", href: "/hr/employees", icon: Users },
+  { id: "organization", label: "Phòng ban & Chức danh", href: "/hr/organization", icon: Network },
+  { id: "assignments", label: "Điều động công trình", href: "/hr/project-assignments", icon: Briefcase },
+  { id: "reports", label: "Báo cáo", href: "/hr/reports", icon: BarChart3 },
 ];
 
 export function HrWorkspaceTabs() {
@@ -126,11 +123,6 @@ export function HrWorkspaceTabs() {
             >
               <tab.icon className={cn("h-4 w-4 shrink-0", isActive ? "text-blue-600" : "text-slate-400")} />
               <span>{tab.label}</span>
-              {!tab.implemented && (
-                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-2xs font-semibold text-slate-500 shrink-0">
-                  Sắp có
-                </span>
-              )}
             </Link>
           );
         })}

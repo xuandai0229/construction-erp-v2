@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useRef } from "react";
 import Link from "next/link";
 import { EmployeeListDTO } from "@/lib/hr/hr-projection";
 import { format } from "date-fns";
@@ -10,12 +10,13 @@ import {
   Edit,
   Building2,
   Briefcase,
-  Phone,
-  Mail,
   ChevronLeft,
   ChevronRight,
   Plus,
   RotateCcw,
+  HardHat,
+  AlertCircle,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { HrEmptyState } from "./hr-empty-state";
@@ -32,18 +33,144 @@ interface EmployeeDataTableProps {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; style: string }> = {
-  ACTIVE: { label: "Đang làm việc", style: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  PROBATION: { label: "Đang thử việc", style: "bg-amber-50 text-amber-700 border-amber-200" },
+  ACTIVE: { label: "Đang làm", style: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  PROBATION: { label: "Thử việc", style: "bg-amber-50 text-amber-700 border-amber-200" },
   SUSPENDED: { label: "Tạm ngừng", style: "bg-orange-50 text-orange-700 border-orange-200" },
-  RESIGNED: { label: "Đã nghỉ việc", style: "bg-rose-50 text-rose-700 border-rose-200" },
+  RESIGNED: { label: "Đã nghỉ", style: "bg-rose-50 text-rose-700 border-rose-200" },
   RETIRED: { label: "Nghỉ hưu", style: "bg-slate-100 text-slate-700 border-slate-200" },
 };
 
+function sanitizeDisplayName(name: string | null | undefined): string {
+  if (!name) return "";
+  return name
+    .replace(/QA\s+HR_PHASE_[A-Za-z0-9_.-]+/gi, "")
+    .replace(/HR_PHASE_[A-Za-z0-9_.-]+/gi, "")
+    .trim();
+}
+
 function getInitials(name: string): string {
   if (!name) return "NV";
-  const parts = name.trim().split(/\s+/);
+  const cleanName = sanitizeDisplayName(name);
+  const parts = cleanName.trim().split(/\s+/);
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+/**
+ * Interactive Multi-Project Popover with Fixed Positioning (No Table Overflow Clipping)
+ */
+function ProjectAssignmentCell({
+  projects,
+  totalAllocationPercentage,
+}: {
+  projects: { id: string; name: string; code: string; allocationPercentage: number }[];
+  totalAllocationPercentage: number;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [coords, setCoords] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+
+  if (projects.length === 0) {
+    return <span className="text-slate-400 text-xs italic">Chưa bố trí công trình</span>;
+  }
+
+  if (projects.length === 1) {
+    const proj = projects[0];
+    const cleanProjName = sanitizeDisplayName(proj.name);
+    return (
+      <div
+        className="flex items-center gap-1.5 text-slate-800 text-xs font-medium min-w-0"
+        title={`${cleanProjName} (${proj.allocationPercentage}%)`}
+      >
+        <HardHat className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+        <span className="truncate block min-w-0">{cleanProjName}</span>
+      </div>
+    );
+  }
+
+  const togglePopover = () => {
+    if (!isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setCoords({
+        top: rect.bottom + 6,
+        left: Math.max(16, Math.min(window.innerWidth - 320, rect.left)),
+      });
+    }
+    setIsOpen(!isOpen);
+  };
+
+  const fullTooltipText =
+    projects.map((p) => `• ${sanitizeDisplayName(p.name)}: ${p.allocationPercentage}%`).join("\n") +
+    `\nTổng phân bổ: ${totalAllocationPercentage}%`;
+
+  return (
+    <div className="relative inline-block text-left max-w-full">
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={togglePopover}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            togglePopover();
+          }
+          if (e.key === "Escape") setIsOpen(false);
+        }}
+        title={fullTooltipText}
+        aria-expanded={isOpen}
+        aria-label={`Xem ${projects.length} công trình đang tham gia`}
+        className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold rounded-md transition-colors border border-blue-200 cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-blue-500 whitespace-nowrap"
+      >
+        <HardHat className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+        <span>{projects.length} công trình</span>
+      </button>
+
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-50 bg-black/5" onClick={() => setIsOpen(false)} />
+          <div
+            style={{ top: `${coords.top}px`, left: `${coords.left}px` }}
+            className="fixed z-50 w-80 bg-white rounded-xl border border-slate-200 p-3 shadow-2xl space-y-2 text-xs text-slate-800 animate-in fade-in zoom-in-95 duration-100"
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+              <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                <HardHat className="w-4 h-4 text-blue-600 shrink-0" />
+                <span>Danh sách công trình</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-0.5 rounded-sm cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+              {projects.map((proj) => (
+                <div key={proj.id} className="p-2 bg-slate-50 border border-slate-100 rounded-lg space-y-0.5">
+                  <div className="font-semibold text-slate-900 leading-snug break-words">
+                    {sanitizeDisplayName(proj.name)}
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
+                    <span>Mã: {proj.code || "—"}</span>
+                    <span className="font-bold text-slate-800">Phân bổ: {proj.allocationPercentage}%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+              <span className="text-slate-500 font-medium">Tổng tỷ lệ phân bổ:</span>
+              <span className={cn("font-bold text-xs", totalAllocationPercentage > 100 ? "text-rose-600" : "text-slate-900")}>
+                {totalAllocationPercentage}%
+              </span>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
 
 export function EmployeeDataTable({
@@ -52,7 +179,6 @@ export function EmployeeDataTable({
   currentPage,
   pageSize,
   canUpdate,
-  canArchive,
   canCreate,
   searchQuery,
 }: EmployeeDataTableProps) {
@@ -64,6 +190,8 @@ export function EmployeeDataTable({
   };
 
   const hasSearchOrFilters = Boolean(searchQuery);
+  const startItemIndex = totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0;
+  const endItemIndex = Math.min(currentPage * pageSize, totalCount);
 
   if (employees.length === 0) {
     if (hasSearchOrFilters) {
@@ -106,193 +234,206 @@ export function EmployeeDataTable({
   }
 
   return (
-    <div className="space-y-4">
-      {/* Desktop Table View */}
+    <div className="space-y-3">
+      {/* Desktop Construction HR Table View (DETERMINISTIC HARMONIZED COLUMN RATIOS) */}
       <div className="hidden lg:block bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm border-collapse">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                <th className="py-3 px-4">Nhân viên</th>
-                <th className="py-3 px-4">Mã NV</th>
-                <th className="py-3 px-4">Phòng ban</th>
-                <th className="py-3 px-4">Chức danh</th>
-                <th className="py-3 px-4">Số điện thoại</th>
-                <th className="py-3 px-4">Trạng thái</th>
-                <th className="py-3 px-4">Tài khoản hệ thống</th>
-                <th className="py-3 px-4">Ngày vào</th>
-                <th className="py-3 px-4 text-right">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {employees.map((emp) => {
-                const statusCfg = STATUS_CONFIG[emp.status] || {
-                  label: emp.status,
-                  style: "bg-slate-100 text-slate-700 border-slate-200",
-                };
-                const joinDateFormatted = emp.joinedDate
-                  ? format(new Date(emp.joinedDate), "dd/MM/yyyy", { locale: vi })
-                  : "—";
+        <table className="w-full text-left text-sm border-collapse table-fixed">
+          <thead>
+            <tr className="bg-slate-50/90 border-b border-slate-200 text-xs font-bold text-slate-700 tracking-tight">
+              <th className="py-2.5 px-3 w-[18%]">Nhân viên</th>
+              <th className="py-2.5 px-3 w-[21%]">Phòng ban / Chức danh</th>
+              <th className="py-2.5 px-3 w-[29%]">Công trình hiện tại</th>
+              <th className="py-2.5 px-3 w-[7%] whitespace-nowrap">Phân bổ</th>
+              <th className="py-2.5 px-3 w-[9%] whitespace-nowrap">Trạng thái</th>
+              <th className="py-2.5 px-3 w-[9%] whitespace-nowrap">Ngày vào</th>
+              <th className="py-2.5 px-3 w-[7%] text-right whitespace-nowrap">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {employees.map((emp) => {
+              const statusCfg = STATUS_CONFIG[emp.status] || {
+                label: emp.status,
+                style: "bg-slate-100 text-slate-700 border-slate-200",
+              };
+              const joinDateFormatted = emp.joinedDate
+                ? format(new Date(emp.joinedDate), "dd/MM/yyyy", { locale: vi })
+                : "—";
 
-                return (
-                  <tr key={emp.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center shrink-0">
-                          {getInitials(emp.fullName)}
-                        </div>
-                        <div>
-                          <Link
-                            href={`/hr/employees/${emp.id}`}
-                            className="font-semibold text-slate-900 hover:text-blue-600 transition-colors"
-                          >
-                            {emp.fullName}
-                          </Link>
-                          {emp.personalEmail && (
-                            <div className="text-xs text-slate-500 flex items-center gap-1">
-                              <Mail className="w-3 h-3 text-slate-400" />
-                              <span>{emp.personalEmail}</span>
-                            </div>
-                          )}
-                        </div>
+              const projects = emp.activeProjects || [];
+              const totalPct = emp.totalAllocationPercentage || 0;
+              const isOverallocated = totalPct > 100;
+
+              const cleanFullName = sanitizeDisplayName(emp.fullName);
+              const cleanDeptName = sanitizeDisplayName(emp.currentDepartmentName);
+              const cleanPosTitle = sanitizeDisplayName(emp.currentPositionTitle);
+
+              return (
+                <tr key={emp.id} className="hover:bg-slate-50/80 transition-colors">
+                  {/* 1. Employee Name & Code Cell (18%) */}
+                  <td className="py-2.5 px-3 overflow-hidden">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center shrink-0">
+                        {getInitials(cleanFullName)}
                       </div>
-                    </td>
-
-                    <td className="py-3.5 px-4 font-mono font-medium text-xs text-slate-700">
-                      {emp.code}
-                    </td>
-
-                    <td className="py-3.5 px-4 text-slate-700 text-xs">
-                      {emp.currentDepartmentName ? (
-                        <div className="flex items-center gap-1.5">
-                          <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          <span>{emp.currentDepartmentName}</span>
-                        </div>
-                      ) : (
-                        <span className="text-amber-700 bg-amber-50 px-2 py-0.5 rounded text-[11px] font-medium border border-amber-200">
-                          Chưa phân công
-                        </span>
-                      )}
-                    </td>
-
-                    <td className="py-3.5 px-4 text-slate-700 text-xs">
-                      {emp.currentPositionTitle ? (
-                        <div className="flex items-center gap-1.5">
-                          <Briefcase className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          <span>{emp.currentPositionTitle}</span>
-                        </div>
-                      ) : (
-                        <span className="text-slate-400 italic text-[11px]">—</span>
-                      )}
-                    </td>
-
-                    <td className="py-3.5 px-4 text-slate-700 text-xs font-mono">
-                      {emp.phoneNumber ? (
-                        <div className="flex items-center gap-1">
-                          <Phone className="w-3 h-3 text-slate-400 shrink-0" />
-                          <span>{emp.phoneNumber}</span>
-                        </div>
-                      ) : (
-                        <span className="text-slate-400 text-[11px] font-mono">—</span>
-                      )}
-                    </td>
-
-                    <td className="py-3.5 px-4">
-                      <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border", statusCfg.style)}>
-                        {statusCfg.label}
-                      </span>
-                    </td>
-
-                    <td className="py-3.5 px-4 text-xs">
-                      {emp.userName ? (
-                        <div className="text-slate-900 font-medium">
-                          {emp.userName}
-                        </div>
-                      ) : (
-                        <span className="text-slate-600 bg-slate-100 px-2 py-0.5 rounded text-[11px] font-medium border border-slate-200">
-                          Chưa liên kết
-                        </span>
-                      )}
-                    </td>
-
-                    <td className="py-3.5 px-4 text-xs text-slate-600 whitespace-nowrap">
-                      {joinDateFormatted}
-                    </td>
-
-                    <td className="py-3.5 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="min-w-0 flex-1">
                         <Link
                           href={`/hr/employees/${emp.id}`}
-                          title="Xem hồ sơ"
-                          className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition-colors"
+                          title={cleanFullName}
+                          className="font-bold text-slate-900 hover:text-blue-600 transition-colors block truncate text-xs"
                         >
-                          <Eye className="w-4 h-4" />
+                          {cleanFullName}
                         </Link>
-                        {canUpdate && (
-                          <Link
-                            href={`/hr/employees/${emp.id}/edit`}
-                            title="Chỉnh sửa"
-                            className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-slate-100 rounded-lg transition-colors"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Link>
+                        <span className="text-[11px] font-mono font-semibold text-slate-500 whitespace-nowrap block truncate">
+                          {emp.code}
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+
+                  {/* 2. Department & Position Cell (21%) */}
+                  <td className="py-2.5 px-3 overflow-hidden">
+                    <div className="space-y-0.5 min-w-0">
+                      <div className="text-xs font-semibold text-slate-900 truncate" title={cleanDeptName || "Chưa phân công"}>
+                        {cleanDeptName ? (
+                          <span className="flex items-center gap-1 min-w-0">
+                            <Building2 className="w-3 h-3 text-slate-400 shrink-0" />
+                            <span className="truncate">{cleanDeptName}</span>
+                          </span>
+                        ) : (
+                          <span className="text-amber-700 bg-amber-50 px-1 py-0.5 rounded text-[10px] font-medium border border-amber-200">
+                            Chưa phân công
+                          </span>
                         )}
                       </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      <div className="text-xs text-slate-600 truncate" title={cleanPosTitle || "—"}>
+                        {cleanPosTitle ? (
+                          <span className="flex items-center gap-1 min-w-0">
+                            <Briefcase className="w-3 h-3 text-slate-400 shrink-0" />
+                            <span className="truncate text-[11px]">{cleanPosTitle}</span>
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 italic text-[11px]">—</span>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+
+                  {/* 3. Current Project Assignment Cell (29%) */}
+                  <td className="py-2.5 px-3 overflow-hidden">
+                    <ProjectAssignmentCell projects={projects} totalAllocationPercentage={totalPct} />
+                  </td>
+
+                  {/* 4. Allocation Percentage Cell (7%) */}
+                  <td className="py-2.5 px-3 whitespace-nowrap">
+                    {projects.length > 0 ? (
+                      <div className="flex items-center gap-1">
+                        <span className={cn("font-extrabold text-xs tabular-nums", isOverallocated ? "text-rose-600" : "text-slate-900")}>
+                          {totalPct}%
+                        </span>
+                        {isOverallocated && (
+                          <span title="Tổng tỷ lệ phân bổ hiện tại vượt 100%">
+                            <AlertCircle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-slate-400 text-xs tabular-nums">0%</span>
+                    )}
+                  </td>
+
+                  {/* 5. Status Badge Cell (9%) */}
+                  <td className="py-2.5 px-3 whitespace-nowrap">
+                    <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border whitespace-nowrap", statusCfg.style)}>
+                      {statusCfg.label}
+                    </span>
+                  </td>
+
+                  {/* 6. Joined Date Cell (9%) */}
+                  <td className="py-2.5 px-3 text-xs font-medium text-slate-600 whitespace-nowrap">
+                    {joinDateFormatted}
+                  </td>
+
+                  {/* 7. Action Cell (7%) */}
+                  <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                    <div className="flex items-center justify-end gap-0.5">
+                      <Link
+                        href={`/hr/employees/${emp.id}`}
+                        title="Xem hồ sơ"
+                        className="p-1 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-md transition-colors"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Link>
+                      {canUpdate && (
+                        <Link
+                          href={`/hr/employees/${emp.id}/edit`}
+                          title="Chỉnh sửa"
+                          className="p-1 text-slate-500 hover:text-amber-600 hover:bg-slate-100 rounded-md transition-colors"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Link>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
 
       {/* Mobile Cards View */}
       <div className="grid grid-cols-1 gap-3 lg:hidden">
         {employees.map((emp) => {
           const statusCfg = STATUS_CONFIG[emp.status] || { label: emp.status, style: "bg-slate-100 text-slate-700 border-slate-200" };
+          const projects = emp.activeProjects || [];
+          const totalPct = emp.totalAllocationPercentage || 0;
+          const cleanFullName = sanitizeDisplayName(emp.fullName);
+
           return (
             <div
               key={emp.id}
               className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs space-y-3"
             >
               <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0">
                   <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-bold text-sm flex items-center justify-center shrink-0">
-                    {getInitials(emp.fullName)}
+                    {getInitials(cleanFullName)}
                   </div>
-                  <div>
-                    <h3 className="font-bold text-slate-900 text-base">
-                      {emp.fullName}
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-slate-900 text-base truncate">
+                      {cleanFullName}
                     </h3>
-                    <span className="text-xs font-mono text-slate-500">
+                    <span className="text-xs font-mono font-semibold text-slate-500">
                       Mã: {emp.code}
                     </span>
                   </div>
                 </div>
-                <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border shrink-0", statusCfg.style)}>
+                <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border shrink-0 whitespace-nowrap", statusCfg.style)}>
                   {statusCfg.label}
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 text-xs border-t border-b border-slate-100 py-2 text-slate-600">
-                <div>
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Phòng ban</span>
-                  <span className="font-medium text-slate-900">
-                    {emp.currentDepartmentName || "Chưa phân công"}
+              <div className="grid grid-cols-2 gap-2 text-xs border-t border-b border-slate-100 py-2.5 text-slate-600">
+                <div className="min-w-0">
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Phòng ban / Chức danh</span>
+                  <span className="font-semibold text-slate-900 block truncate">
+                    {sanitizeDisplayName(emp.currentDepartmentName) || "Chưa phân công"}
+                  </span>
+                  <span className="text-slate-600 text-[11px] block truncate">
+                    {sanitizeDisplayName(emp.currentPositionTitle) || "—"}
                   </span>
                 </div>
-                <div>
-                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Chức danh</span>
-                  <span className="font-medium text-slate-900">
-                    {emp.currentPositionTitle || "—"}
+                <div className="min-w-0">
+                  <span className="text-slate-400 block text-[10px] uppercase font-bold">Công trình & Phân bổ</span>
+                  <span className="font-semibold text-slate-900 block truncate">
+                    {projects.length > 0 ? `${projects.length} công trình (${totalPct}%)` : "Chưa bố trí"}
                   </span>
                 </div>
               </div>
 
               <div className="flex items-center justify-between pt-1">
-                <span className="text-xs text-slate-500">
-                  Tài khoản: {emp.userName || "Chưa liên kết"}
+                <span className="text-xs text-slate-500 font-medium">
+                  Vào công ty: {emp.joinedDate ? format(new Date(emp.joinedDate), "dd/MM/yyyy", { locale: vi }) : "—"}
                 </span>
                 <Link
                   href={`/hr/employees/${emp.id}`}
@@ -307,25 +448,25 @@ export function EmployeeDataTable({
         })}
       </div>
 
-      {/* Pagination Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white border border-slate-200 rounded-xl p-3 shadow-xs text-xs text-slate-600">
-        <div>
-          Hiển thị <span className="font-bold text-slate-900">{employees.length}</span> trên tổng số{" "}
-          <span className="font-bold text-slate-900">{totalCount}</span> hồ sơ nhân viên
+      {/* Compact Modern Pagination Bar */}
+      <div className="flex items-center justify-between bg-white border border-slate-200 rounded-xl p-3 shadow-xs text-xs text-slate-600">
+        <div className="font-medium text-slate-700">
+          <span className="font-bold text-slate-900 tabular-nums">{startItemIndex}–{endItemIndex}</span> / <span className="font-bold text-slate-900 tabular-nums">{totalCount}</span> nhân viên
         </div>
 
         {totalPages > 1 && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <Link
               href={pageHref(Math.max(1, currentPage - 1))}
               className={cn(
                 "p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors text-slate-700",
                 currentPage <= 1 && "pointer-events-none opacity-40"
               )}
+              title="Trang trước"
             >
               <ChevronLeft className="w-4 h-4" />
             </Link>
-            <span className="font-medium px-2">
+            <span className="font-semibold px-1 text-slate-800">
               Trang {currentPage} / {totalPages}
             </span>
             <Link
@@ -334,6 +475,7 @@ export function EmployeeDataTable({
                 "p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors text-slate-700",
                 currentPage >= totalPages && "pointer-events-none opacity-40"
               )}
+              title="Trang sau"
             >
               <ChevronRight className="w-4 h-4" />
             </Link>

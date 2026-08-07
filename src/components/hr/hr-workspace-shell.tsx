@@ -8,7 +8,7 @@ interface HrWorkspaceShellProps {
 
 export function HrWorkspaceShell({ children, className }: HrWorkspaceShellProps) {
   return (
-    <div className={cn("mx-auto w-full max-w-7xl space-y-6", className)}>
+    <div className={cn("w-full space-y-6", className)}>
       {children}
     </div>
   );

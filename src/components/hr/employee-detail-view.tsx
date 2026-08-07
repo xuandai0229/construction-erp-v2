@@ -20,6 +20,9 @@ import {
   Award,
   ArrowRightLeft,
   Loader2,
+  AlertTriangle,
+  FileCheck,
+  HardHat,
 } from "lucide-react";
 import { revealIdentityNumberAction, archiveEmployeeAction, linkUserAccountAction } from "@/app/hr/employees/actions/employee-actions";
 import { EmployeeTransferDialog } from "@/components/hr/employee-transfer-dialog";
@@ -99,7 +102,6 @@ interface EmployeeDetailViewProps {
   canReadSensitive: boolean;
 }
 
-
 const STATUS_CONFIG: Record<string, { label: string; style: string }> = {
   ACTIVE: { label: "Đang làm việc", style: "bg-emerald-50 text-emerald-700 border-emerald-200" },
   PROBATION: { label: "Đang thử việc", style: "bg-amber-50 text-amber-700 border-amber-200" },
@@ -108,9 +110,18 @@ const STATUS_CONFIG: Record<string, { label: string; style: string }> = {
   RETIRED: { label: "Nghỉ hưu", style: "bg-slate-100 text-slate-700 border-slate-200" },
 };
 
+function sanitizeDisplayName(name: string | null | undefined): string {
+  if (!name) return "";
+  return name
+    .replace(/QA\s+HR_PHASE_[A-Za-z0-9_.-]+/gi, "")
+    .replace(/HR_PHASE_[A-Za-z0-9_.-]+/gi, "")
+    .trim();
+}
+
 function getInitials(name: string): string {
   if (!name) return "NV";
-  const parts = name.trim().split(/\s+/);
+  const cleanName = sanitizeDisplayName(name);
+  const parts = cleanName.trim().split(/\s+/);
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
@@ -128,11 +139,8 @@ export function EmployeeDetailView({
   canReadSensitive,
 }: EmployeeDetailViewProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<
-    "info" | "org_history" | "projects" | "history" | "user_link" | "unimplemented"
-  >("info");
+  const [activeTab, setActiveTab] = useState<"info" | "projects" | "documents" | "history">("info");
 
-  const [unimplementedTitle, setUnimplementedTitle] = useState("");
   const [showTransferModal, setShowTransferModal] = useState(false);
 
   // Sensitive Identity reveal state
@@ -169,6 +177,15 @@ export function EmployeeDetailView({
         (!a.endDate || new Date(a.endDate) > now)
     ) || organizationAssignments[0];
 
+  // Calculate project allocation
+  const activeProjectAssignments = projectAssignments.filter(
+    (p) => p.status === "ACTIVE" && (!p.endDate || new Date(p.endDate) > now)
+  );
+
+  const totalAllocationPercentage = activeProjectAssignments.reduce(
+    (acc, cur) => acc + (cur.allocationPercentage || 100),
+    0
+  );
 
   const handleRevealIdentity = async () => {
     if (revealedIdentity) {
@@ -224,11 +241,6 @@ export function EmployeeDetailView({
     router.refresh();
   };
 
-  const openUnimplementedTab = (title: string) => {
-    setUnimplementedTitle(title);
-    setActiveTab("unimplemented");
-  };
-
   useEffect(() => {
     if (revealedIdentity) {
       const timer = setTimeout(() => {
@@ -277,20 +289,24 @@ export function EmployeeDetailView({
     style: "bg-slate-100 text-slate-700 border-slate-200",
   };
 
+  const cleanFullName = sanitizeDisplayName(employee.fullName);
+  const cleanDeptName = sanitizeDisplayName(primaryAssignment?.organizationUnit?.name);
+  const cleanPosTitle = sanitizeDisplayName(primaryAssignment?.position?.title);
+
   return (
     <div className="space-y-6">
-      {/* Profile Header Card */}
+      {/* Profile Header Card (Left Info Section + Right Auto-Width Action Buttons) */}
       <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          <div className="flex items-center gap-4 min-w-0">
             <div className="w-16 h-16 rounded-full bg-blue-100 text-blue-700 font-extrabold text-xl flex items-center justify-center shrink-0 border-2 border-blue-200">
-              {getInitials(employee.fullName)}
+              {getInitials(cleanFullName)}
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-1 min-w-0">
               <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-2xl font-extrabold text-slate-900">
-                  {employee.fullName}
+                <h1 className="text-2xl font-extrabold text-slate-900 truncate">
+                  {cleanFullName}
                 </h1>
                 <span className="font-mono text-xs font-semibold px-2 py-0.5 bg-slate-100 text-slate-700 rounded border border-slate-200">
                   {employee.code}
@@ -301,19 +317,13 @@ export function EmployeeDetailView({
               </div>
 
               <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-slate-600 pt-1">
-                <div className="flex items-center gap-1.5">
-                  <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                  <span>{primaryAssignment?.organizationUnit?.name || "Chưa có phòng ban"}</span>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span className="truncate">{cleanDeptName || "Chưa có phòng ban"}</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <Briefcase className="w-3.5 h-3.5 text-slate-400" />
-                  <span>{primaryAssignment?.position?.title || "Chưa có chức danh"}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Link2 className="w-3.5 h-3.5 text-slate-400" />
-                  <span>
-                    Tài khoản: {employee.user?.name ? `${employee.user.name} (${employee.user.email || ""})` : "Chưa liên kết"}
-                  </span>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <Briefcase className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span className="truncate">{cleanPosTitle || "Chưa có chức danh"}</span>
                 </div>
               </div>
             </div>
@@ -324,7 +334,7 @@ export function EmployeeDetailView({
               <button
                 type="button"
                 onClick={() => setShowTransferModal(true)}
-                className="px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5"
+                className="px-3.5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
               >
                 <ArrowRightLeft className="w-4 h-4" />
                 <span>Điều chuyển công tác</span>
@@ -334,7 +344,7 @@ export function EmployeeDetailView({
             {canUpdate && employee.status !== EmployeeStatus.RESIGNED && (
               <Link
                 href={`/hr/employees/${employee.id}/edit`}
-                className="px-4 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5"
+                className="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5"
               >
                 <Edit className="w-4 h-4" />
                 <span>Chỉnh sửa hồ sơ</span>
@@ -345,7 +355,7 @@ export function EmployeeDetailView({
               <button
                 type="button"
                 onClick={() => setShowArchiveModal(true)}
-                className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5"
+                className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
               >
                 <UserX className="w-4 h-4" />
                 <span>Nghỉ việc / Lưu trữ</span>
@@ -355,111 +365,91 @@ export function EmployeeDetailView({
         </div>
       </div>
 
-      {/* Tabs Sub-navigation */}
+      {/* Exactly 4 Clean Tabs Sub-navigation */}
       <div className="border-b border-slate-200 bg-white rounded-t-xl px-2">
         <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar">
           <button
             onClick={() => setActiveTab("info")}
             className={cn(
-              "px-4 py-3 text-xs font-bold border-b-2 whitespace-nowrap transition-colors flex items-center gap-2",
+              "px-4 py-3 text-xs font-bold border-b-2 whitespace-nowrap transition-colors flex items-center gap-2 cursor-pointer",
               activeTab === "info"
                 ? "border-blue-600 text-blue-600"
                 : "border-transparent text-slate-600 hover:text-slate-900"
             )}
           >
             <User className="w-4 h-4" />
-            <span>Thông tin chung</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("org_history")}
-            className={cn(
-              "px-4 py-3 text-xs font-bold border-b-2 whitespace-nowrap transition-colors flex items-center gap-2",
-              activeTab === "org_history"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-slate-600 hover:text-slate-900"
-            )}
-          >
-            <Building2 className="w-4 h-4" />
-            <span>Quá trình công tác ({organizationAssignments.length})</span>
+            <span>1. Tổng quan & Công việc</span>
           </button>
 
           <button
             onClick={() => setActiveTab("projects")}
             className={cn(
-              "px-4 py-3 text-xs font-bold border-b-2 whitespace-nowrap transition-colors flex items-center gap-2",
+              "px-4 py-3 text-xs font-bold border-b-2 whitespace-nowrap transition-colors flex items-center gap-2 cursor-pointer",
               activeTab === "projects"
                 ? "border-blue-600 text-blue-600"
                 : "border-transparent text-slate-600 hover:text-slate-900"
             )}
           >
             <Briefcase className="w-4 h-4" />
-            <span>Phân công công trình ({projectAssignments.length})</span>
+            <span>2. Công trình & Điều động ({projectAssignments.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("documents")}
+            className={cn(
+              "px-4 py-3 text-xs font-bold border-b-2 whitespace-nowrap transition-colors flex items-center gap-2 cursor-pointer",
+              activeTab === "documents"
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-slate-600 hover:text-slate-900"
+            )}
+          >
+            <FileText className="w-4 h-4" />
+            <span>3. Hợp đồng & Giấy tờ</span>
           </button>
 
           <button
             onClick={() => setActiveTab("history")}
             className={cn(
-              "px-4 py-3 text-xs font-bold border-b-2 whitespace-nowrap transition-colors flex items-center gap-2",
+              "px-4 py-3 text-xs font-bold border-b-2 whitespace-nowrap transition-colors flex items-center gap-2 cursor-pointer",
               activeTab === "history"
                 ? "border-blue-600 text-blue-600"
                 : "border-transparent text-slate-600 hover:text-slate-900"
             )}
           >
             <History className="w-4 h-4" />
-            <span>Lịch sử thay đổi ({changeHistory.length})</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("user_link")}
-            className={cn(
-              "px-4 py-3 text-xs font-bold border-b-2 whitespace-nowrap transition-colors flex items-center gap-2",
-              activeTab === "user_link"
-                ? "border-blue-600 text-blue-600"
-                : "border-transparent text-slate-600 hover:text-slate-900"
-            )}
-          >
-            <Link2 className="w-4 h-4" />
-            <span>Tài khoản liên kết</span>
-          </button>
-
-          <button
-            onClick={() => openUnimplementedTab("Hợp đồng lao động")}
-            className="px-4 py-3 text-xs font-medium text-slate-400 hover:text-slate-600 whitespace-nowrap flex items-center gap-1.5"
-          >
-            <FileText className="w-4 h-4" />
-            <span>Hợp đồng</span>
-            <span className="text-[10px] bg-slate-100 text-slate-500 px-1 py-0.2 rounded">Sắp có</span>
-          </button>
-
-          <button
-            onClick={() => openUnimplementedTab("Chứng chỉ và bằng cấp")}
-            className="px-4 py-3 text-xs font-medium text-slate-400 hover:text-slate-600 whitespace-nowrap flex items-center gap-1.5"
-          >
-            <Award className="w-4 h-4" />
-            <span>Chứng chỉ</span>
-            <span className="text-[10px] bg-slate-100 text-slate-500 px-1 py-0.2 rounded">Sắp có</span>
+            <span>4. Lịch sử công tác ({changeHistory.length})</span>
           </button>
         </div>
       </div>
 
-      {/* Tab Content 1: General Info */}
+      {/* TAB 1: Tổng quan & Công việc (65% Primary Info / 35% Secondary Info) */}
       {activeTab === "info" && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Main Primary Info Card (65% width) */}
+          <div className="lg:col-span-7 bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-4">
             <h3 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
-              <User className="w-4 h-4 text-blue-600" /> Thông tin cá nhân
+              <User className="w-4 h-4 text-blue-600" /> Thông tin cá nhân & Công việc
             </h3>
 
-            <div className="grid grid-cols-2 gap-4 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
                 <span className="text-slate-400 block mb-0.5">Họ và tên</span>
-                <span className="font-semibold text-slate-900">{employee.fullName}</span>
+                <span className="font-semibold text-slate-900">{cleanFullName}</span>
               </div>
 
               <div>
                 <span className="text-slate-400 block mb-0.5">Mã nhân viên</span>
                 <span className="font-mono font-semibold text-slate-900">{employee.code}</span>
+              </div>
+
+              <div>
+                <span className="text-slate-400 block mb-0.5">Phòng ban chính</span>
+                <span className="font-semibold text-blue-700">{cleanDeptName || "Chưa có"}</span>
+              </div>
+
+              <div>
+                <span className="text-slate-400 block mb-0.5">Chức danh</span>
+                <span className="font-semibold text-slate-800">{cleanPosTitle || "Chưa có"}</span>
               </div>
 
               <div>
@@ -476,12 +466,12 @@ export function EmployeeDetailView({
 
               <div>
                 <span className="text-slate-400 block mb-0.5">Số điện thoại</span>
-                <span className="font-mono font-medium text-slate-900">{employee.phoneNumber || "Bị ẩn / Không có"}</span>
+                <span className="font-mono font-medium text-slate-900">{employee.phoneNumber || "Bị ẩn / Chưa có"}</span>
               </div>
 
               <div>
                 <span className="text-slate-400 block mb-0.5">Email cá nhân</span>
-                <span className="font-medium text-slate-900">{employee.personalEmail || "Bị ẩn / Không có"}</span>
+                <span className="font-medium text-slate-900">{employee.personalEmail || "Bị ẩn / Chưa có"}</span>
               </div>
 
               <div>
@@ -502,174 +492,198 @@ export function EmployeeDetailView({
             </div>
           </div>
 
-          {/* Identity Security Box */}
-          <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-4">
-            <h3 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
-              <Shield className="w-4 h-4 text-emerald-600" /> Thông tin nhận dạng bảo mật (CCCD)
-            </h3>
+          {/* Secondary Security & Account Panels (35% width) */}
+          <div className="lg:col-span-5 space-y-6">
+            <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-4">
+              <h3 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+                <Shield className="w-4 h-4 text-emerald-600" /> Thông tin nhận dạng bảo mật (CCCD)
+              </h3>
 
-            <div className="space-y-3">
-              <div>
-                <span className="text-xs text-slate-400 block mb-1">Số CCCD / CMND</span>
-                <div className="flex items-center gap-3">
-                  <div className="font-mono text-sm font-bold bg-slate-100 px-3 py-2 rounded-lg border border-slate-200 text-slate-900 min-w-[180px]">
-                    {revealedIdentity ? (
-                      <span className="text-emerald-700">{revealedIdentity}</span>
-                    ) : (
-                      <span>{employee.maskedIdentityNumber || "Chưa cập nhật"}</span>
+              <div className="space-y-3">
+                <div>
+                  <span className="text-xs text-slate-400 block mb-1">Số CCCD / CMND</span>
+                  <div className="flex items-center gap-3">
+                    <div className="font-mono text-sm font-bold bg-slate-100 px-3 py-2 rounded-lg border border-slate-200 text-slate-900 min-w-[180px]">
+                      {revealedIdentity ? (
+                        <span className="text-emerald-700">{revealedIdentity}</span>
+                      ) : (
+                        <span>{employee.maskedIdentityNumber || "Chưa cập nhật"}</span>
+                      )}
+                    </div>
+
+                    {canReadSensitive && employee.identityNumberLastDigits && (
+                      <button
+                        type="button"
+                        onClick={handleRevealIdentity}
+                        disabled={revealing}
+                        className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                      >
+                        {revealing ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : revealedIdentity ? (
+                          <>
+                            <EyeOff className="w-3.5 h-3.5" />
+                            <span>Che bớt</span>
+                          </>
+                        ) : (
+                          <>
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Xem đầy đủ</span>
+                          </>
+                        )}
+                      </button>
                     )}
                   </div>
 
-                  {canReadSensitive && employee.identityNumberLastDigits && (
-                    <button
-                      type="button"
-                      onClick={handleRevealIdentity}
-                      disabled={revealing}
-                      className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 disabled:opacity-50"
-                    >
-                      {revealing ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : revealedIdentity ? (
-                        <>
-                          <EyeOff className="w-3.5 h-3.5" />
-                          <span>Che bớt</span>
-                        </>
-                      ) : (
-                        <>
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>Xem đầy đủ</span>
-                        </>
-                      )}
-                    </button>
+                  {identityError && (
+                    <p className="text-xs text-rose-600 mt-1">{identityError}</p>
                   )}
                 </div>
 
-                {identityError && (
-                  <p className="text-xs text-rose-600 mt-1">{identityError}</p>
+                <div className="p-3 bg-slate-50 rounded-lg text-xs text-slate-500 space-y-1 border border-slate-100">
+                  <p className="font-semibold text-slate-700">
+                    Bảo mật thông tin cá nhân:
+                  </p>
+                  <p>
+                    Số CCCD được mã hóa an toàn. Hành động mở khóa giải mã được tự động lưu nhật ký an ninh.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* User Account Link Section */}
+            <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <Link2 className="w-4 h-4 text-purple-600" /> Tài khoản hệ thống liên kết
+                </h3>
+                {canUpdate && (
+                  <button
+                    type="button"
+                    onClick={() => setShowLinkModal(true)}
+                    className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    {employee.user ? "Thay đổi" : "Liên kết tài khoản"}
+                  </button>
                 )}
               </div>
 
-              <div className="p-3 bg-slate-50 rounded-lg text-xs text-slate-500 space-y-1 border border-slate-100">
-                <p className="font-semibold text-slate-700">
-                  Chính sách bảo vệ thông tin cá nhân và Nhật ký an ninh:
-                </p>
-                <p>
-                  • Thông tin nhận dạng được mã hóa và bảo vệ trong hệ thống.
-                </p>
-                <p>
-                  • Hành động giải mã hoặc truy cập thông tin định danh đều được ghi lại trong nhật ký hệ thống.
-                </p>
-              </div>
+              {employee.user ? (
+                <div className="p-4 bg-purple-50/50 border border-purple-200 rounded-xl space-y-2 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-slate-900 text-sm">
+                      {employee.user.name}
+                    </span>
+                    <span className="px-2 py-0.5 bg-purple-100 text-purple-800 rounded font-semibold text-[10px]">
+                      {mapRoleToVietnamese(employee.user.role)}
+                    </span>
+                  </div>
+                  <p className="text-slate-600">Email: {employee.user.email}</p>
+                </div>
+              ) : (
+                <div className="p-4 text-center text-slate-500 text-xs italic bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                  Hồ sơ chưa liên kết với tài khoản đăng nhập.
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* Tab Content 2: Organization History */}
-      {activeTab === "org_history" && (
-        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-4">
-          <h3 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">
-            Dòng thời gian quá trình công tác phòng ban
-          </h3>
-
-          <div className="relative border-l-2 border-slate-200 ml-4 pl-6 space-y-6">
-            {organizationAssignments.map((assign) => {
-              const isActive = !assign.endDate || new Date(assign.endDate) > new Date();
-              return (
-                <div key={assign.id} className="relative">
-                  <div
-                    className={cn(
-                      "absolute -left-[31px] top-1.5 w-4 h-4 rounded-full border-2 bg-white",
-                      isActive
-                        ? "border-emerald-500 bg-emerald-500"
-                        : "border-slate-300"
-                    )}
-                  />
-
-                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-slate-900 text-sm">
-                          {assign.organizationUnit?.name} ({assign.organizationUnit?.code})
-                        </span>
-                        {assign.isPrimary && (
-                          <span className="text-[10px] uppercase font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded border border-blue-200">
-                            Phòng chính
-                          </span>
-                        )}
-                        <span
-                          className={cn(
-                            "text-[10px] uppercase font-bold px-2 py-0.5 rounded border",
-                            isActive
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                              : "bg-slate-200 text-slate-600 border-slate-300"
-                          )}
-                        >
-                          {isActive ? "Đang hiệu lực" : "Đã kết thúc"}
-                        </span>
-                      </div>
-
-                      <div className="text-xs font-medium text-slate-500">
-                        {format(new Date(assign.startDate), "dd/MM/yyyy")}
-                        {" → "}
-                        {assign.endDate ? format(new Date(assign.endDate), "dd/MM/yyyy") : "Hiện tại"}
-                      </div>
-                    </div>
-
-                    <div className="text-xs text-slate-700 font-medium">
-                      Chức danh: {assign.position?.title} ({assign.position?.code})
-                    </div>
-
-                    {assign.decisionNo && (
-                      <div className="text-xs text-slate-500 font-mono">
-                        Quyết định số: {assign.decisionNo}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Tab Content 3: Project Assignments */}
+      {/* TAB 2: Công trình & Điều động (Harmonized Table Ratios & Title Case Headers) */}
       {activeTab === "projects" && (
-        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-4">
-          <h3 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">
-            Lịch sử phân công nhân sự công trình
-          </h3>
+        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <div>
+              <h3 className="text-base font-bold text-slate-900">
+                Tình hình điều động công trình hiện tại
+              </h3>
+              <p className="text-xs text-slate-500">
+                Danh sách các dự án/công trình nhân sự đang trực tiếp tham gia thi công
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="text-right">
+                <span className="text-xs text-slate-500 block">Tổng % phân bổ hiện tại:</span>
+                <span className={cn(
+                  "font-mono text-sm font-bold",
+                  totalAllocationPercentage > 100 ? "text-rose-600" : "text-emerald-600"
+                )}>
+                  {totalAllocationPercentage}%
+                </span>
+              </div>
+              {totalAllocationPercentage > 100 && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-xs font-bold">
+                  <AlertTriangle className="w-4 h-4" />
+                  <span>Cảnh báo quá tải!</span>
+                </div>
+              )}
+            </div>
+          </div>
 
           {projectAssignments.length === 0 ? (
-            <p className="text-sm text-slate-500 italic py-4">Chưa có dữ liệu phân công công trình.</p>
+            <div className="p-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200 space-y-2">
+              <Briefcase className="w-8 h-8 text-slate-400 mx-auto" />
+              <p className="text-sm font-semibold text-slate-700">Chưa có điều động công trình</p>
+              <p className="text-xs text-slate-500">Nhân viên hiện đang rảnh / làm việc tại Văn phòng.</p>
+              {canUpdate && (
+                <Link
+                  href="/hr/project-assignments"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors mt-2"
+                >
+                  <span>Tạo điều động mới</span>
+                </Link>
+              )}
+            </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
+            <div className="overflow-hidden border border-slate-200 rounded-xl">
+              <table className="w-full text-left text-xs border-collapse table-fixed">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-semibold">
-                    <th className="p-3">Công trình / Dự án</th>
-                    <th className="p-3">Vai trò dự án</th>
-                    <th className="p-3">Tỉ lệ phân bổ</th>
-                    <th className="p-3">Ngày bắt đầu</th>
-                    <th className="p-3">Trạng thái</th>
+                  <tr className="bg-slate-50/90 border-b border-slate-200 text-slate-700 font-bold">
+                    <th className="p-3 w-[31%]">Công trình / Dự án</th>
+                    <th className="p-3 w-[25%]">Vai trò công trường</th>
+                    <th className="p-3 w-[9%] whitespace-nowrap">Tỷ lệ phân bổ</th>
+                    <th className="p-3 w-[11%] whitespace-nowrap">Ngày bắt đầu</th>
+                    <th className="p-3 w-[14%] whitespace-nowrap">Ngày dự kiến kết thúc</th>
+                    <th className="p-3 w-[10%] whitespace-nowrap">Trạng thái</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {projectAssignments.map((p) => (
-                    <tr key={p.id}>
-                      <td className="p-3 font-semibold text-slate-900">
-                        {p.project?.name || p.projectId}
-                      </td>
-                      <td className="p-3 text-slate-700">{p.projectPersonnelRole?.name || p.projectPersonnelRoleId}</td>
-                      <td className="p-3 font-mono text-slate-700">{p.allocationPercentage}%</td>
-                      <td className="p-3 text-slate-700">{format(new Date(p.startDate), "dd/MM/yyyy")}</td>
-                      <td className="p-3">
-                        <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded text-[11px] font-bold">
-                          {p.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  {projectAssignments.map((p) => {
+                    const cleanProj = sanitizeDisplayName(p.project?.name || p.projectId);
+                    const cleanRole = sanitizeDisplayName(p.projectPersonnelRole?.name || p.role?.name);
+                    return (
+                      <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="p-3 font-bold text-slate-900 overflow-hidden" title={`${cleanProj} (${p.project?.code || ""})`}>
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <HardHat className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                            <span className="truncate block min-w-0">{cleanProj}</span>
+                          </div>
+                        </td>
+                        <td className="p-3 text-slate-700 font-medium overflow-hidden" title={cleanRole || "Kỹ sư công trường"}>
+                          <span className="truncate block">{cleanRole || "Kỹ sư công trường"}</span>
+                        </td>
+                        <td className="p-3 font-mono font-bold text-blue-700 whitespace-nowrap">
+                          {p.allocationPercentage || 100}%
+                        </td>
+                        <td className="p-3 text-slate-700 whitespace-nowrap">
+                          {format(new Date(p.startDate), "dd/MM/yyyy")}
+                        </td>
+                        <td className="p-3 text-slate-700 whitespace-nowrap">
+                          {p.endDate ? format(new Date(p.endDate), "dd/MM/yyyy") : "—"}
+                        </td>
+                        <td className="p-3 whitespace-nowrap">
+                          <span className={cn(
+                            "px-2 py-0.5 rounded-full text-[11px] font-semibold border whitespace-nowrap",
+                            p.status === "ACTIVE" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-slate-100 text-slate-600 border-slate-200"
+                          )}>
+                            {p.status === "ACTIVE" ? "Đang tham gia" : "Đã kết thúc"}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -677,85 +691,126 @@ export function EmployeeDetailView({
         </div>
       )}
 
-      {/* Tab Content 4: Audit Change History */}
-      {activeTab === "history" && (
-        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-4">
-          <h3 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">
-            Nhật ký thay đổi hồ sơ
-          </h3>
-
-          <div className="space-y-3">
-            {changeHistory.map((log) => (
-              <div
-                key={log.id}
-                className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-1"
-              >
-                <div className="flex items-center justify-between font-semibold text-slate-900">
-                  <span>{mapChangeTypeToVietnamese(log.changeType)}</span>
-                  <span className="text-slate-400 font-mono text-[11px]">
-                    {format(new Date(log.createdAt), "dd/MM/yyyy HH:mm:ss")}
-                  </span>
-                </div>
-                <p className="text-slate-600">{log.reason}</p>
-                {log.performedBy && (
-                  <p className="text-[11px] text-slate-400">
-                    Người thực hiện: {log.performedBy.name} ({log.performedBy.email})
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Tab Content 5: Linked User Account */}
-      {activeTab === "user_link" && (
-        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <Link2 className="w-4 h-4 text-purple-600" /> Tài khoản hệ thống liên kết
+      {/* TAB 3: Hợp đồng & Giấy tờ (Correct non-misleading Empty States) */}
+      {activeTab === "documents" && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-4">
+            <h3 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+              <FileText className="w-4 h-4 text-blue-600" /> Hợp đồng lao động
             </h3>
-            {canUpdate && (
-              <button
-                type="button"
-                onClick={() => setShowLinkModal(true)}
-                className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg text-xs font-bold transition-colors"
-              >
-                {employee.user ? "Thay đổi / Hủy liên kết" : "Liên kết tài khoản mới"}
-              </button>
-            )}
+
+            <div className="p-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200 space-y-2">
+              <FileCheck className="w-8 h-8 text-slate-400 mx-auto" />
+              <p className="text-sm font-semibold text-slate-700">Chưa có dữ liệu hợp đồng lao động.</p>
+              <p className="text-xs text-slate-500">
+                Thông tin sẽ hiển thị tại đây khi được cập nhật.
+              </p>
+            </div>
           </div>
 
-          {employee.user ? (
-            <div className="p-4 bg-purple-50/50 border border-purple-200 rounded-xl space-y-2 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-slate-900 text-sm">
-                  {employee.user.name}
-                </span>
-                <span className="px-2 py-0.5 bg-purple-100 text-purple-800 rounded font-semibold text-[10px]">
-                  Vai trò: {mapRoleToVietnamese(employee.user.role)}
-                </span>
-              </div>
-              <p className="text-slate-600">Email: {employee.user.email}</p>
-              <p className="text-slate-600">Tên đăng nhập: {employee.user.username || "—"}</p>
+          <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-4">
+            <h3 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+              <Award className="w-4 h-4 text-amber-600" /> Chứng chỉ hành nghề & An toàn lao động
+            </h3>
+
+            <div className="p-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200 space-y-2">
+              <Award className="w-8 h-8 text-slate-400 mx-auto" />
+              <p className="text-sm font-semibold text-slate-700">Chưa có dữ liệu chứng chỉ.</p>
+              <p className="text-xs text-slate-500">
+                Thông tin sẽ hiển thị tại đây khi được cập nhật.
+              </p>
             </div>
-          ) : (
-            <div className="p-8 text-center text-slate-500 text-xs italic bg-slate-50 rounded-xl border border-dashed border-slate-300">
-              Hồ sơ này chưa được liên kết với tài khoản người dùng nào.
-            </div>
-          )}
+          </div>
         </div>
       )}
 
-      {/* Unimplemented Tab Placeholder */}
-      {activeTab === "unimplemented" && (
-        <div className="bg-white border border-slate-200 rounded-xl p-12 text-center shadow-xs space-y-2">
-          <h3 className="text-lg font-bold text-slate-900">
-            {unimplementedTitle}
-          </h3>
-          <p className="text-xs text-slate-500">
-            Chức năng đang được tích hợp và hoàn thiện trong phiên bản tiếp theo.
-          </p>
+      {/* TAB 4: Lịch sử công tác (Formatted Actor Display) */}
+      {activeTab === "history" && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Department transfer timeline */}
+          <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-4">
+            <h3 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-blue-600" /> Quá trình công tác phòng ban
+            </h3>
+
+            <div className="relative border-l-2 border-slate-200 ml-4 pl-6 space-y-6">
+              {organizationAssignments.map((assign) => {
+                const isActive = !assign.endDate || new Date(assign.endDate) > new Date();
+                const cleanUnit = sanitizeDisplayName(assign.organizationUnit?.name);
+                const cleanPos = sanitizeDisplayName(assign.position?.title);
+                return (
+                  <div key={assign.id} className="relative">
+                    <div
+                      className={cn(
+                        "absolute -left-[31px] top-1.5 w-4 h-4 rounded-full border-2 bg-white",
+                        isActive ? "border-emerald-500 bg-emerald-500" : "border-slate-300"
+                      )}
+                    />
+
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-slate-900 text-sm">
+                            {cleanUnit} ({assign.organizationUnit?.code})
+                          </span>
+                          {assign.isPrimary && (
+                            <span className="text-[10px] uppercase font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded border border-blue-200">
+                              Phòng chính
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="text-xs font-medium text-slate-500">
+                          {format(new Date(assign.startDate), "dd/MM/yyyy")}
+                          {" → "}
+                          {assign.endDate ? format(new Date(assign.endDate), "dd/MM/yyyy") : "Hiện tại"}
+                        </div>
+                      </div>
+
+                      <div className="text-xs text-slate-700 font-medium">
+                        Chức danh: {cleanPos} ({assign.position?.code})
+                      </div>
+
+                      {assign.decisionNo && (
+                        <div className="text-xs text-slate-500 font-mono">
+                          Số quyết định: {assign.decisionNo}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Audit change history */}
+          <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-4">
+            <h3 className="text-base font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+              <History className="w-4 h-4 text-purple-600" /> Nhật ký thay đổi hệ thống
+            </h3>
+
+            <div className="space-y-3">
+              {changeHistory.map((log) => (
+                <div
+                  key={log.id}
+                  className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-1"
+                >
+                  <div className="flex items-center justify-between font-semibold text-slate-900">
+                    <span>{mapChangeTypeToVietnamese(log.changeType)}</span>
+                    <span className="text-slate-400 font-mono text-[11px]">
+                      {format(new Date(log.createdAt), "dd/MM/yyyy HH:mm")}
+                    </span>
+                  </div>
+                  {log.reason && <p className="text-slate-600">{log.reason}</p>}
+                  {log.performedBy && (
+                    <p className="text-[11px] text-slate-500 font-medium" title={log.performedBy.email || ""}>
+                      Người thực hiện: <span className="font-semibold text-slate-800">{log.performedBy.name}</span>
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
@@ -803,32 +858,32 @@ export function EmployeeDetailView({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Lý do nghỉ việc <span className="text-rose-500">*</span>
+                  Lý do nghỉ việc / lưu trữ
                 </label>
                 <textarea
-                  required
                   rows={3}
                   value={archiveForm.reason}
                   onChange={(e) => setArchiveForm((p) => ({ ...p, reason: e.target.value }))}
-                  placeholder="Nhập lý do chi tiết..."
+                  placeholder="Nhập lý do nghỉ việc..."
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowArchiveModal(false)}
-                  className="px-4 py-2 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                  className="px-4 py-2 border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
                 >
-                  Hủy bỏ
+                  Hủy
                 </button>
                 <button
                   type="submit"
                   disabled={archiving}
-                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold disabled:opacity-50"
+                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
                 >
-                  {archiving ? "Đang xử lý..." : "Xác nhận lưu trữ"}
+                  {archiving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  <span>Xác nhận lưu trữ</span>
                 </button>
               </div>
             </form>
@@ -853,36 +908,37 @@ export function EmployeeDetailView({
             <form onSubmit={handleLinkSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Chọn tài khoản hệ thống chưa liên kết
+                  Chọn tài khoản hệ thống
                 </label>
                 <select
                   value={selectedUserId}
                   onChange={(e) => setSelectedUserId(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900"
                 >
-                  <option value="">-- Hủy liên kết (Không gắn tài khoản) --</option>
+                  <option value="">-- Không liên kết (Hủy liên kết hiện tại) --</option>
                   {unlinkedUsers.map((u) => (
                     <option key={u.id} value={u.id}>
-                      {u.name} ({u.email})
+                      {u.name} ({u.email || "No email"})
                     </option>
                   ))}
                 </select>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setShowLinkModal(false)}
-                  className="px-4 py-2 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                  className="px-4 py-2 border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
                 >
-                  Hủy bỏ
+                  Hủy
                 </button>
                 <button
                   type="submit"
                   disabled={linking}
-                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold disabled:opacity-50"
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
                 >
-                  {linking ? "Đang lưu..." : "Cập nhật liên kết"}
+                  {linking && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  <span>Lưu liên kết</span>
                 </button>
               </div>
             </form>
@@ -890,15 +946,28 @@ export function EmployeeDetailView({
         </div>
       )}
 
-      {/* Transfer Employee Modal */}
-      <EmployeeTransferDialog
-        isOpen={showTransferModal}
-        onClose={() => setShowTransferModal(false)}
-        units={allUnits}
-        positions={allPositions}
-        employees={[{ id: employee.id, code: employee.code, fullName: employee.fullName }]}
-        defaultEmployeeId={employee.id}
-      />
+      {/* Transfer Dialog */}
+      {showTransferModal && (
+        <EmployeeTransferDialog
+          isOpen={showTransferModal}
+          onClose={() => {
+            setShowTransferModal(false);
+            router.refresh();
+          }}
+          units={allUnits}
+          positions={allPositions}
+          employees={[
+            {
+              id: employee.id,
+              code: employee.code,
+              fullName: cleanFullName,
+              currentUnitName: cleanDeptName,
+              currentPositionTitle: cleanPosTitle,
+            },
+          ]}
+          defaultEmployeeId={employee.id}
+        />
+      )}
     </div>
   );
 }

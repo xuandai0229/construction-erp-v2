@@ -1,5 +1,5 @@
-import { HrUnimplementedTabPage } from "@/components/hr/unimplemented-tab-placeholder";
+import { redirect } from "next/navigation";
 
-export default async function HrContractsPage() {
-  return <HrUnimplementedTabPage title="Hợp đồng lao động" />;
+export default function HrContractsPage() {
+  redirect("/hr/employees");
 }

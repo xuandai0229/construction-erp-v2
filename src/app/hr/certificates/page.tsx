@@ -1,5 +1,5 @@
-import { HrUnimplementedTabPage } from "@/components/hr/unimplemented-tab-placeholder";
+import { redirect } from "next/navigation";
 
-export default async function HrCertificatesPage() {
-  return <HrUnimplementedTabPage title="Chứng chỉ và hồ sơ" />;
+export default function HrCertificatesPage() {
+  redirect("/hr/employees");
 }

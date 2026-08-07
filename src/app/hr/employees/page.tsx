@@ -18,10 +18,12 @@ interface EmployeeListPageProps {
   searchParams: Promise<{
     q?: string;
     status?: string;
+    workplace?: string;
     orgUnitId?: string;
     positionId?: string;
     unlinked?: string;
     missingOrg?: string;
+    assignmentEndingSoon?: string;
     sort?: string;
     dir?: string;
     page?: string;
@@ -34,8 +36,8 @@ export default async function EmployeeListPage({ searchParams }: EmployeeListPag
     return (
       <HrWorkspaceShell>
         <HrPageHeader
-          title="Hồ sơ nhân viên"
-          description="Quản lý danh sách nhân sự, phân công phòng ban và thông tin liên kết hệ thống"
+          title="Nhân sự"
+          description="Tra cứu nhân viên, phòng ban, chức danh và tình trạng bố trí công trình."
         />
         <HrWorkspaceTabs />
         <HrAccessDenied requiredPermission="hr:employee:read" />
@@ -46,28 +48,74 @@ export default async function EmployeeListPage({ searchParams }: EmployeeListPag
   const params = await searchParams;
   const q = params.q?.trim() || "";
   const statusFilter = params.status || "";
+  const workplaceFilter = params.workplace || "";
   const orgUnitFilter = params.orgUnitId || "";
   const positionFilter = params.positionId || "";
   const unlinkedFilter = params.unlinked === "true";
   const missingOrgFilter = params.missingOrg === "true";
-  const sortKey = ["code", "fullName", "joinedDate", "status", "updatedAt"].includes(params.sort || "") ? params.sort! : "createdAt";
+  const assignmentEndingSoonFilter = params.assignmentEndingSoon === "true";
+
+  const allowedSortKeys = ["code", "fullName", "joinedDate", "status", "updatedAt"];
+  const sortKey = allowedSortKeys.includes(params.sort || "") ? params.sort! : "joinedDate";
   const sortDirection = params.dir === "asc" ? "asc" : "desc";
   const currentPage = Math.max(1, parseInt(params.page || "1", 10));
   const pageSize = 15;
 
-  const scopeWhere = await buildEmployeeScopeWhereClause(permCheck.context, permCheck.scope);
+  const now = new Date();
+  const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  const activeAssignmentCondition = {
+    status: "ACTIVE" as const,
+    OR: [{ endDate: null }, { endDate: { gte: now } }],
+  };
 
-  // Build filters
+  const scopeWhere = await buildEmployeeScopeWhereClause(permCheck.context, permCheck.scope);
   const conditions: any[] = [scopeWhere];
 
+  // 1. Status Filter
   if (statusFilter) {
     conditions.push({ status: statusFilter });
   }
 
-  if (unlinkedFilter) {
-    conditions.push({ userId: null });
+  // 2. Workplace Filter
+  if (workplaceFilter === "site") {
+    conditions.push({
+      projectAssignments: {
+        some: activeAssignmentCondition,
+      },
+    });
+  } else if (workplaceFilter === "unassigned") {
+    conditions.push({
+      projectAssignments: {
+        none: activeAssignmentCondition,
+      },
+    });
+  } else if (workplaceFilter === "overallocated") {
+    const overallocatedGroup = await prisma.employeeProjectAssignment.groupBy({
+      by: ["employeeId"],
+      where: {
+        status: "ACTIVE",
+        OR: [{ endDate: null }, { endDate: { gte: now } }],
+      },
+      _sum: { allocationPercentage: true },
+      having: { allocationPercentage: { _sum: { gt: 100 } } },
+    });
+    const overallocatedIds = overallocatedGroup.map((g) => g.employeeId);
+    conditions.push({ id: { in: overallocatedIds } });
   }
 
+  // 3. Assignment Ending Soon Filter
+  if (assignmentEndingSoonFilter) {
+    conditions.push({
+      projectAssignments: {
+        some: {
+          status: "ACTIVE",
+          endDate: { gte: now, lte: thirtyDaysLater },
+        },
+      },
+    });
+  }
+
+  // 4. Missing Primary Org Filter
   if (missingOrgFilter) {
     conditions.push({
       orgAssignments: {
@@ -76,6 +124,12 @@ export default async function EmployeeListPage({ searchParams }: EmployeeListPag
     });
   }
 
+  // 5. Unlinked User Filter
+  if (unlinkedFilter) {
+    conditions.push({ userId: null });
+  }
+
+  // 6. Primary Org Unit Filter
   if (orgUnitFilter) {
     conditions.push({
       orgAssignments: {
@@ -88,6 +142,7 @@ export default async function EmployeeListPage({ searchParams }: EmployeeListPag
     });
   }
 
+  // 7. Primary Position Filter
   if (positionFilter) {
     conditions.push({
       orgAssignments: {
@@ -100,22 +155,24 @@ export default async function EmployeeListPage({ searchParams }: EmployeeListPag
     });
   }
 
-  // Search logic
+  // 8. Search Filter
   if (q) {
     const searchConditions: any[] = [
       { code: { contains: q, mode: "insensitive" } },
       { fullName: { contains: q, mode: "insensitive" } },
     ];
 
-    // If policy allows contact, search phone & email
     if (permCheck.sensitiveFieldPolicy !== "BASIC_ONLY") {
       searchConditions.push({ phoneNumber: { contains: q, mode: "insensitive" } });
       searchConditions.push({ personalEmail: { contains: q, mode: "insensitive" } });
     }
 
-    // Exact identity blind index lookup if user has read_sensitive permission and query looks like identity number
     const isSensitivePerm = await checkHrPermission("hr:employee:read_sensitive");
-    if (isSensitivePerm.allowed && ["IDENTITY", "FULL"].includes(isSensitivePerm.sensitiveFieldPolicy) && /^\d{9}$|^\d{12}$/.test(q)) {
+    if (
+      isSensitivePerm.allowed &&
+      ["IDENTITY", "FULL"].includes(isSensitivePerm.sensitiveFieldPolicy) &&
+      /^\d{9}$|^\d{12}$/.test(q)
+    ) {
       try {
         const normalized = normalizeIdentityNumber(q);
         const blindIndex = generateIdentityBlindIndex(normalized);
@@ -128,7 +185,7 @@ export default async function EmployeeListPage({ searchParams }: EmployeeListPag
           afterData: { queryType: "EXACT_BLIND_INDEX" },
         });
       } catch {
-        // Invalid identity input remains a normal name/code search.
+        // Fallback search
       }
     }
 
@@ -137,8 +194,16 @@ export default async function EmployeeListPage({ searchParams }: EmployeeListPag
 
   const finalWhere = { AND: conditions };
 
-  // Fetch Master Data & Employee List
-  const [organizationUnits, positions, totalCount, rawEmployees, createPermCheck, updatePermCheck, archivePermCheck] = await Promise.all([
+  // Fetch Master Data & Employee List with project assignments
+  const [
+    organizationUnits,
+    positions,
+    totalCount,
+    rawEmployees,
+    createPermCheck,
+    updatePermCheck,
+    archivePermCheck,
+  ] = await Promise.all([
     prisma.organizationUnit.findMany({
       where: { isActive: true },
       select: { id: true, name: true, code: true },
@@ -164,6 +229,15 @@ export default async function EmployeeListPage({ searchParams }: EmployeeListPag
             position: { select: { id: true, title: true, code: true } },
           },
         },
+        projectAssignments: {
+          where: {
+            status: "ACTIVE",
+            OR: [{ endDate: null }, { endDate: { gte: now } }],
+          },
+          include: {
+            project: { select: { id: true, name: true, code: true } },
+          },
+        },
       },
     }),
     checkHrPermission("hr:employee:create"),
@@ -171,7 +245,10 @@ export default async function EmployeeListPage({ searchParams }: EmployeeListPag
     checkHrPermission("hr:employee:delete"),
   ]);
 
-  const employees = rawEmployees.map((emp) => projectEmployeeForList(emp, permCheck.sensitiveFieldPolicy));
+  const employees = rawEmployees.map((emp) =>
+    projectEmployeeForList(emp, permCheck.sensitiveFieldPolicy)
+  );
+
   const queryParams = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
     if (typeof value === "string" && value) queryParams.set(key, value);
@@ -181,8 +258,8 @@ export default async function EmployeeListPage({ searchParams }: EmployeeListPag
   return (
     <HrWorkspaceShell>
       <HrPageHeader
-        title="Hồ sơ nhân viên"
-        description="Quản lý danh sách nhân sự, phân công phòng ban và thông tin liên kết hệ thống"
+        title="Nhân sự"
+        description="Tra cứu nhân viên, phòng ban, chức danh và tình trạng bố trí công trình."
         action={
           createPermCheck.allowed ? (
             <Link

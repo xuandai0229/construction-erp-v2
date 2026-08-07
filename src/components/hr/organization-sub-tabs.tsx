@@ -2,47 +2,38 @@
 
 import React, { useEffect, useRef } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Network, Building2, UserCheck, ShieldCheck } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { Network, Building2, ShieldCheck } from "lucide-react";
 
 export function OrganizationSubTabs() {
-  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const activeTabRef = useRef<HTMLAnchorElement>(null);
+
+  const activeTab = searchParams.get("tab") || "units";
 
   const tabs = [
     {
-      id: "hr-tab-organization-tree",
-      label: "Đơn vị / phòng ban",
-      href: "/hr/organization",
-      exact: true,
+      id: "hr-tab-units",
+      label: "Phòng ban",
+      href: "/hr/organization?tab=units",
+      tabKey: "units",
       icon: Building2,
     },
     {
       id: "hr-tab-positions",
-      label: "Danh mục chức danh",
-      href: "/hr/organization/positions",
+      label: "Chức danh",
+      href: "/hr/organization?tab=positions",
+      tabKey: "positions",
       icon: ShieldCheck,
-    },
-    {
-      id: "hr-tab-unit-managers",
-      label: "Người quản lý đơn vị",
-      href: "/hr/organization/managers",
-      icon: UserCheck,
     },
     {
       id: "hr-tab-org-chart",
       label: "Sơ đồ tổ chức",
-      href: "/hr/organization/chart",
+      href: "/hr/organization?tab=chart",
+      tabKey: "chart",
       icon: Network,
     },
   ];
-
-  const isActive = (tab: (typeof tabs)[0]) => {
-    if (tab.exact) {
-      return pathname === "/hr/organization" || pathname === "/hr/organization/units";
-    }
-    return pathname.startsWith(tab.href);
-  };
 
   useEffect(() => {
     if (activeTabRef.current) {
@@ -52,12 +43,12 @@ export function OrganizationSubTabs() {
         inline: "nearest",
       });
     }
-  }, [pathname]);
+  }, [activeTab]);
 
   return (
     <nav className="flex items-center gap-1 border-b border-slate-200 bg-slate-50/50 p-1.5 rounded-xl mb-4 overflow-x-auto hide-scrollbar scroll-smooth">
       {tabs.map((tab) => {
-        const active = isActive(tab);
+        const active = activeTab === tab.tabKey;
         const Icon = tab.icon;
         return (
           <Link
@@ -66,13 +57,6 @@ export function OrganizationSubTabs() {
             ref={active ? activeTabRef : null}
             href={tab.href}
             aria-current={active ? "page" : undefined}
-            onFocus={(e) => {
-              e.currentTarget.scrollIntoView({
-                behavior: "smooth",
-                block: "nearest",
-                inline: "nearest",
-              });
-            }}
             className={`inline-flex items-center gap-2 px-3.5 py-2 text-sm font-semibold rounded-lg transition-all whitespace-nowrap scroll-mx-2 focus:outline-hidden focus:ring-2 focus:ring-blue-500 ${
               active
                 ? "bg-white text-blue-700 shadow-xs border border-slate-200"

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
-export default function OrganizationUnitsAliasPage() {
-  redirect("/hr/organization");
+export default function OrganizationUnitsRedirectPage() {
+  redirect("/hr/organization?tab=units");
 }
