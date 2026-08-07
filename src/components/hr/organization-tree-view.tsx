@@ -13,12 +13,13 @@ import {
   UserCheck,
   Search,
   ShieldAlert,
+  RotateCcw,
   Loader2,
   Building,
   Lock,
 } from "lucide-react";
 import { UnitFormDialog } from "./unit-form-dialog";
-import { deactivateOrgUnitAction } from "@/app/hr/organization/actions/organization-actions";
+import { deactivateOrgUnitAction, reactivateOrgUnitAction } from "@/app/hr/organization/actions/organization-actions";
 
 const CORE_CODES = new Set(["BGD", "PKT", "KTTTC"]);
 const isCoreUnit = (code: string) => CORE_CODES.has(code.toUpperCase());
@@ -146,8 +147,11 @@ export function OrganizationTreeView({ treeData, flatUnits, canManage }: Organiz
       .filter((n): n is OrgTreeNode => n !== null);
   };
 
+  const countTreeHeadcount = (nodes: OrgTreeNode[]): number =>
+    nodes.reduce((acc, n) => acc + n.activeEmployeeCount + countTreeHeadcount(n.children), 0);
+
   const displayedTree = filterTree(treeData, searchTerm);
-  const totalCompanyHeadcount = treeData.reduce((acc, n) => acc + n.activeEmployeeCount + n.children.reduce((cAcc, cN) => cAcc + cN.activeEmployeeCount, 0), 0);
+  const totalCompanyHeadcount = countTreeHeadcount(treeData);
 
   const renderTreeItem = (node: OrgTreeNode, level = 1) => {
     const hasChildren = node.children && node.children.length > 0;
@@ -178,16 +182,11 @@ export function OrganizationTreeView({ treeData, flatUnits, canManage }: Organiz
             ) : (
               <span className="w-5" />
             )}
-            <Building2 className={`w-4 h-4 shrink-0 ${isSelected ? "text-blue-600" : isCore ? "text-amber-500" : "text-slate-400"}`} />
+            <Building2 className={`w-4 h-4 shrink-0 ${isSelected ? "text-blue-600" : "text-slate-400"}`} />
             <span className="text-[11px] font-mono font-bold uppercase tracking-wide text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 shrink-0">
               {node.code}
             </span>
             <span className="text-xs font-semibold truncate">{node.name}</span>
-            {isCore && (
-              <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200 shrink-0">
-                Lõi
-              </span>
-            )}
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
@@ -339,11 +338,6 @@ export function OrganizationTreeView({ treeData, flatUnits, canManage }: Organiz
                       <span className="inline-block px-2 py-0.5 text-[10px] font-mono font-extrabold uppercase tracking-wider bg-blue-100 text-blue-800 rounded border border-blue-200">
                         {selectedNode.code}
                       </span>
-                      {isCoreUnit(selectedNode.code) && (
-                        <span className="inline-block px-2 py-0.5 text-[10px] font-bold bg-amber-50 text-amber-700 rounded border border-amber-200">
-                          Phòng ban lõi
-                        </span>
-                      )}
                     </div>
                     <h2 className="text-base font-bold text-slate-900 leading-tight">
                       {selectedNode.name}

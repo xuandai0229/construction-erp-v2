@@ -337,7 +337,7 @@ export async function validatePositionDeactivation(
     },
   });
   if (activeCount > 0) {
-    throw new Error("Không thể vô hiệu hóa chức danh đang được phân công cho nhân viên active.");
+    throw new Error("Chức danh đang có nhân sự sử dụng và chưa thể vô hiệu hóa.");
   }
 }
 

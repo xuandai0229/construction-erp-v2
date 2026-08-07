@@ -10,6 +10,7 @@ import {
   Edit2,
   Trash2,
   X,
+  RotateCcw,
   Loader2,
   AlertCircle,
   Users,
@@ -19,6 +20,7 @@ import {
   createPositionAction,
   updatePositionAction,
   deactivatePositionAction,
+  reactivatePositionAction,
 } from "@/app/hr/organization/actions/organization-actions";
 
 export interface PositionItem {
@@ -107,6 +109,19 @@ export function PositionManagementClient({ positions, canManage }: PositionManag
       const res = await deactivatePositionAction(pos.id);
       if (!res.success) {
         setError(res.error || "Không thể vô hiệu hóa chức danh.");
+      }
+    });
+  };
+
+  const handleReactivate = (pos: PositionItem) => {
+    if (!confirm(`Bạn có chắc chắn muốn kích hoạt lại chức danh '${pos.title}' (${pos.code})?`)) {
+      return;
+    }
+    setError(null);
+    startTransition(async () => {
+      const res = await reactivatePositionAction(pos.id);
+      if (!res.success) {
+        setError(res.error || "Không thể kích hoạt lại chức danh.");
       }
     });
   };
@@ -220,15 +235,22 @@ export function PositionManagementClient({ positions, canManage }: PositionManag
                         {pos.title}
                       </td>
                       <td className="py-3 px-4 text-center">
-                        <Link
-                          href={`/hr/employees?search=${encodeURIComponent(pos.title)}`}
-                          title={`Xem danh sách ${pos.activeEmployeeCount} nhân sự giữ chức danh '${pos.title}'`}
-                          className="inline-flex items-center gap-1.5 text-blue-700 font-bold bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg border border-blue-200/80 transition-colors group cursor-pointer"
-                        >
-                          <Users className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                          <span>{pos.activeEmployeeCount} nhân sự</span>
-                          <ExternalLink className="w-3 h-3 text-blue-400 group-hover:text-blue-700 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                        </Link>
+                        {pos.activeEmployeeCount > 0 ? (
+                          <Link
+                            href={`/hr/employees?positionId=${pos.id}`}
+                            title={`Xem danh sách ${pos.activeEmployeeCount} nhân sự giữ chức danh '${pos.title}'`}
+                            className="inline-flex items-center gap-1.5 text-blue-700 font-bold bg-blue-50 hover:bg-blue-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-hidden px-2.5 py-1 rounded-lg border border-blue-200/80 transition-colors group cursor-pointer"
+                          >
+                            <Users className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                            <span>{pos.activeEmployeeCount} nhân sự</span>
+                            <ExternalLink className="w-3 h-3 text-blue-400 group-hover:text-blue-700 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                          </Link>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 text-slate-400 font-medium px-2.5 py-1 text-xs select-none">
+                            <Users className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+                            <span>0 nhân sự</span>
+                          </span>
+                        )}
                       </td>
                       <td className="py-3 px-4 text-center whitespace-nowrap">
                         {pos.isActive ? (
@@ -252,7 +274,7 @@ export function PositionManagementClient({ positions, canManage }: PositionManag
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
-                            {pos.isActive && (
+                            {pos.isActive ? (
                               <button
                                 type="button"
                                 onClick={() => handleDeactivate(pos)}
@@ -261,6 +283,16 @@ export function PositionManagementClient({ positions, canManage }: PositionManag
                                 className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
                               >
                                 <Trash2 className="w-4 h-4" />
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleReactivate(pos)}
+                                disabled={isPending}
+                                title="Kích hoạt lại chức danh"
+                                className="p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
+                              >
+                                <RotateCcw className="w-4 h-4" />
                               </button>
                             )}
                           </div>

@@ -344,6 +344,81 @@ export async function deactivatePositionAction(positionId: string) {
   }
 }
 
+// --- Server Action: Reactivate Org Unit ---
+export async function reactivateOrgUnitAction(unitId: string) {
+  const permCheck = await checkHrPermission("hr:organization:manage");
+  if (!permCheck.allowed) {
+    return { success: false, error: "Bạn không có quyền quản lý cơ cấu tổ chức (hr:organization:manage)" };
+  }
+
+  const scopeCheck = await validateTargetScope(permCheck.context, permCheck.scope, {
+    organizationUnitId: unitId,
+  });
+  if (!scopeCheck.allowed) {
+    return { success: false, error: scopeCheck.reason || "Thao tác bị từ chối bởi quy tắc phạm vi dữ liệu." };
+  }
+
+  const currentUserId = permCheck.context.session.id;
+
+  try {
+    const updated = await prisma.organizationUnit.update({
+      where: { id: unitId },
+      data: { isActive: true },
+    });
+
+    await writeAuditLog({
+      userId: currentUserId,
+      action: "ORGANIZATION_UNIT_REACTIVATED",
+      entityType: "OrganizationUnit",
+      entityId: unitId,
+      afterData: sanitizeOrganizationUnitAudit(updated),
+    });
+
+    revalidatePath("/hr/organization");
+    revalidatePath("/hr/employees");
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Không thể kích hoạt lại đơn vị." };
+  }
+}
+
+// --- Server Action: Reactivate Position ---
+export async function reactivatePositionAction(positionId: string) {
+  const permCheck = await checkHrPermission("hr:organization:manage");
+  if (!permCheck.allowed) {
+    return { success: false, error: "Bạn không có quyền quản lý chức danh (hr:organization:manage)" };
+  }
+
+  const scopeCheck = await validateTargetScope(permCheck.context, permCheck.scope, {});
+  if (!scopeCheck.allowed) {
+    return { success: false, error: scopeCheck.reason || "Thao tác bị từ chối bởi quy tắc phạm vi dữ liệu." };
+  }
+
+  const currentUserId = permCheck.context.session.id;
+
+  try {
+    const updated = await prisma.position.update({
+      where: { id: positionId },
+      data: { isActive: true },
+    });
+
+    await writeAuditLog({
+      userId: currentUserId,
+      action: "POSITION_REACTIVATED",
+      entityType: "Position",
+      entityId: positionId,
+      afterData: sanitizePositionAudit(updated),
+    });
+
+    revalidatePath("/hr/organization/positions");
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Không thể kích hoạt lại chức danh." };
+  }
+}
+
 // --- Server Action: Assign Unit Manager ---
 export async function assignUnitManagerAction(formData: unknown) {
   const permCheck = await checkHrPermission("hr:organization:manage");
