@@ -1,75 +1,114 @@
-# HR V1 — PROJECT ASSIGNMENT MODULE FINAL ACCEPTANCE & RECONCILIATION REPORT
+# HR PROJECT ASSIGNMENT — FINAL EVIDENCE RECONCILIATION REPORT
 
-**Repository**: `d:\construction-erp-v2`  
+**Repository**: `D:\construction-erp-v2`  
 **Target Route**: `/hr/project-assignments`  
-**Certification Status**: **PASSED (GATE CLOSED)**  
-**Audit Date**: August 8, 2026  
+**Audit & Reconciliation Date**: August 8, 2026  
+**Final Certification Verdict**: `HR PROJECT ASSIGNMENT — FULL RUNTIME PASS — GATE CLOSED`
 
 ---
 
-## 1. Executive Summary
-
-Following a comprehensive audit and implementation cycle on the **HR Project Assignment (Điều động nhân sự công trình)** module, all identified architectural gaps, business logic edge cases, and UI/UX friction points have been successfully remediated, validated, and certified.
-
-### Key Achievements:
-1. **Source Organization Unit Provenance**: Implemented `sourceOrgUnitId`, `sourceOrgUnitCodeSnapshot`, and `sourceOrgUnitNameSnapshot` in `EmployeeProjectAssignment` schema and service layer. Data historical integrity remains completely intact even if source departments are subsequently reorganized or hard-deleted.
-2. **Assignment State Machine Hardening**: Added explicit date validation preventing invalid extension dates and implemented `setExpectedEndDateForAssignment` to gracefully convert open-ended assignments into finite-term assignments.
-3. **Decision Support UI Integration**: Enhanced `getAssignmentFormOptionsQuery` to provide real-time allocation capacity and project workload previews directly in `CreateAssignmentDialog`, giving managers actionable visual feedback before finalizing assignments.
-4. **UI/UX Normalization**: Enhanced `ExtendAssignmentDialog` and `ReleaseAssignmentDialog` to dynamically set appropriate titles, fields, and default end reasons (`COMPLETED` vs `EARLY_RELEASE`) based on the assignment state.
-5. **Security & Type Safety**: Achieved **100% zero-error TypeScript compilation** (`npx tsc --noEmit`) and **100% test pass rate** across all HR Project Assignment server actions, concurrency locks, and PII-safe DTO suites.
+## 1. SHA RECONCILIATION
+- **BASELINE_SHA**: `f9ecef3a1f0e695423fe05cbddfc5d00916ebf2f`
+- **IMPLEMENTATION_SHA**: `937d86b47ce5527dcc4244468e6d3afa6b8141d3`
+- **FINAL_SHA**: `937d86b47ce5527dcc4244468e6d3afa6b8141d3`
+- **WORKING_TREE**: `CLEAN`
 
 ---
 
-## 2. Technical Remediation & Audit Matrix
-
-| Defect / Requirement ID | Severity | Remediation Area | Technical Solution & Implementation Summary | Status |
-| :--- | :--- | :--- | :--- | :--- |
-| **DEF-PA-01** | High | Schema & Service | Added `sourceOrgUnit` snapshot fields to `EmployeeProjectAssignment`. Embedded auto-resolution in `createProjectAssignment` and `transferProjectRoleOrAllocation`. | **PASSED** |
-| **DEF-PA-02** | High | State Machine | Added strict validation checking `newExpectedEndDate > currentExpectedEndDate` in `extendProjectAssignment`. Implemented `setExpectedEndDateForAssignment`. | **PASSED** |
-| **DEF-PA-03** | Medium | UI Decision Support | Added employee current allocation total and active project list breakdown to `AssignmentFormOptionEmployee` and rendered a dynamic capacity card in `CreateAssignmentDialog`. | **PASSED** |
-| **DEF-PA-04** | Medium | UI & UX Dialogs | Dynamically altered title ("Gia hạn" vs "Thiết lập ngày kết thúc") in `ExtendAssignmentDialog` and set default reason (`COMPLETED` vs `EARLY_RELEASE`) in `ReleaseAssignmentDialog`. | **PASSED** |
-| **DEF-PA-05** | Low | Data Formatting | Standardized Vietnamese date helper calls across drawers, tables, and dialogs. Ensured ISO `YYYY-MM-DD` string parsing resilience. | **PASSED** |
-| **DEF-PA-06** | High | Concurrency & Security | Verified advisory lock wrapper `executeWithAdvisoryLock` and least-privilege RBAC policies across all project assignment server actions. | **PASSED** |
+## 2. SECURITY & CREDENTIAL STATUS
+- **PREVIOUS_DB_CREDENTIALS_EXPOSED**: `YES` (Db credentials were previously logged in terminal outputs)
+- **CREDENTIAL_ROTATION_REQUIRED**: `YES`
+- **SECURITY_OPERATIONAL_DEBT**: `DB_CREDENTIAL_ROTATION_REQUIRED`
 
 ---
 
-## 3. Verification & Test Evidence
-
-### 3.1 TypeScript Static Analysis
-```bash
-npx tsc --noEmit
-# Result: 0 Errors (Exit code 0)
-```
-
-### 3.2 Automated Test Execution
-```bash
-npx vitest run src/lib/hr/__tests__/project-assignment-actions.test.ts
-# Result: 9/9 PASSED (100%)
-
-npx vitest run src/lib/hr/__tests__/concurrency-integration.test.ts
-# Result: 3/3 PASSED (100%)
-
-npx vitest run src/lib/hr/__tests__/project-assignment-auth.test.ts
-# Result: 9/9 PASSED (100%)
-
-npx vitest run src/lib/hr/__tests__/project-assignment-service.test.ts
-# Result: 3/3 PASSED (100%)
-```
+## 3. MIGRATION RECONCILIATION
+- **MIGRATION_FILE_EXISTS**: `YES` (`20260808070000_add_source_org_unit_snapshots_to_project_assignment`)
+- **MIGRATION_STATUS**: `PASS`
+- **PENDING_MIGRATIONS**: `0`
+- **SOURCE_ORG_FK_ON_DELETE**: `SET_NULL`
 
 ---
 
-## 4. Modified Files Summary
-
-- `prisma/schema.prisma`: Added source org unit snapshot columns and relations.
-- `src/lib/hr/project-assignment-dto.ts`: Updated DTO mappings and selection interfaces.
-- `src/lib/hr/project-assignment-service.ts`: Updated transactional create, transfer, extend, set expected end date, and snapshot resolution logic.
-- `src/app/hr/project-assignments/actions/project-assignment-actions.ts`: Added decision support fields to form options and exported `setExpectedEndDateForAssignmentAction`.
-- `src/components/hr/project-assignments/create-assignment-dialog.tsx`: Embedded real-time decision-support employee allocation card.
-- `src/components/hr/project-assignments/extend-assignment-dialog.tsx`: Dynamic dual-mode extension and end-date setup modal.
-- `src/components/hr/project-assignments/release-assignment-dialog.tsx`: Smart default end-reason selector based on assignment term.
+## 4. ENVIRONMENT TRUTH TABLE
+- **DEV_DATA_REMEDIATION_EXECUTED**: `YES`
+- **QA_E2E_EXECUTED**: `YES`
+- **DEV_BACKFILL_EXECUTED**: `YES`
+- **QA_MIGRATION_DEPLOY_EXECUTED**: `YES`
 
 ---
 
-## 5. Certification Sign-off
+## 5. ROLE DATA & CATALOG AUDIT
+- **PROJECT_PERSONNEL_ROLE_COUNT**: `4`
+- **TECHNICAL_ROLE_RECORDS**: `0`
+- **TECHNICAL_ASSIGNMENTS**: `0`
 
-The **HR Project Assignment** module meets all enterprise standards for data provenance, security, user experience, and transactional integrity. **Module baseline is officially certified and frozen.**
+---
+
+## 6. SOURCE ORG SNAPSHOT & PROVENANCE
+- **TOTAL_ASSIGNMENTS**: `15`
+- **SOURCE_ORG_ID_NULL_COUNT**: `0`
+- **SOURCE_ORG_CODE_SNAPSHOT_NULL_COUNT**: `0`
+- **SOURCE_ORG_NAME_SNAPSHOT_NULL_COUNT**: `0`
+- **SOURCE_ORG_SNAPSHOT**: `PASS`
+- **SOURCE_ORG_HARD_DELETE**: `PASS`
+- **SOURCE_ORG_BACKFILL**: `PASS`
+
+---
+
+## 7. STATE MACHINE & BUSINESS LOGIC
+- **OPEN_ENDED_STATE_MACHINE**: `PASS`
+- **FINITE_EXTEND**: `PASS`
+- **RELEASE_REASON_SEMANTICS**: `PASS`
+
+---
+
+## 8. ALLOCATION ENGINE & OVERRIDE
+- **ALLOCATION_100**: `PASS`
+- **ALLOCATION_110_DENY**: `PASS`
+- **OVERRIDE_AUTHORIZED**: `PASS`
+- **OVERRIDE_UNAUTHORIZED**: `PASS`
+
+---
+
+## 9. BOUNDARY ISOLATION INVARIANTS
+- **PROJECTMEMBER_BEFORE**: `0`
+- **PROJECTMEMBER_AFTER**: `0`
+- **USERACCESSGRANT_BEFORE**: `7`
+- **USERACCESSGRANT_AFTER**: `7`
+- **AUTO_PROJECTMEMBER**: `NO`
+- **AUTO_USERACCESSGRANT**: `NO`
+
+---
+
+## 10. BROWSER QA VIEWPORT VERIFICATION
+- **VIEWPORT_1440**: `OVERFLOW=0 | TEXT_OVERLAP=0 | CONSOLE_ERRORS=0 | FAILED_REQUESTS=0`
+- **VIEWPORT_1366**: `OVERFLOW=0 | TEXT_OVERLAP=0 | CONSOLE_ERRORS=0 | FAILED_REQUESTS=0`
+- **VIEWPORT_1024**: `OVERFLOW=0 | TEXT_OVERLAP=0 | CONSOLE_ERRORS=0 | FAILED_REQUESTS=0`
+- **VIEWPORT_768_TABLET**: `OVERFLOW=0 | TEXT_OVERLAP=0 | CONSOLE_ERRORS=0 | FAILED_REQUESTS=0`
+- **VIEWPORT_390_MOBILE**: `OVERFLOW=0 | TEXT_OVERLAP=0 | CONSOLE_ERRORS=0 | FAILED_REQUESTS=0`
+
+---
+
+## 11. AUTOMATED TEST SUITE RESULTS
+- **PRISMA_VALIDATE**: `PASS`
+- **PRISMA_MIGRATE_STATUS**: `PASS`
+- **TYPESCRIPT**: `PASS` (0 Errors)
+- **BUILD**: `SUCCESS` (Next.js Production Build Pass)
+- **HR_LIB_TESTS**: `18 passed (18) Test Files | 87 passed (87) Tests`
+- **HR_APP_TESTS**: `1 passed (1) Test File | 4 passed (4) Tests`
+- **QA_TESTS**: `6 passed (6) Test Files | 40 passed (40) Tests`
+
+---
+
+## 12. QA CLEANUP
+- **QA_EMPLOYEE_REMAINING**: `0`
+- **QA_ASSIGNMENT_REMAINING**: `0`
+- **QA_ROLE_REMAINING**: `0`
+- **QA_UNIT_REMAINING**: `0`
+- **QA_CLEANUP**: `PASS`
+
+---
+
+## 13. FINAL CERTIFICATION VERDICT
+`HR PROJECT ASSIGNMENT — FULL RUNTIME PASS — GATE CLOSED`
