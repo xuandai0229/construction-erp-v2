@@ -65,3 +65,18 @@ export function formatVietnamDateOnly(value: Date): string {
 
   return formatter.format(value);
 }
+
+/**
+ * Formats YYYY-MM-DD to dd/MM/yyyy for UI display.
+ */
+export function formatDisplayDate(value: string | null | undefined): string {
+  if (!value) return "";
+  if (value.length >= 10 && value.includes("-")) {
+    const parts = value.slice(0, 10).split("-");
+    if (parts.length === 3) {
+      const [y, m, d] = parts;
+      return `${d}/${m}/${y}`;
+    }
+  }
+  return value;
+}

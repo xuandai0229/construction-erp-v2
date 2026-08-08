@@ -2104,9 +2104,10 @@ model OrganizationUnit {
 
   parent              OrganizationUnit?                   @relation("OrgUnitHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
   children            OrganizationUnit[]                  @relation("OrgUnitHierarchy")
-  employeeAssignments EmployeeOrganizationAssignment[]
-  managerAssignments  OrganizationUnitManagerAssignment[]
-  userAccessGrants    UserAccessGrant[]
+  employeeAssignments      EmployeeOrganizationAssignment[]
+  managerAssignments       OrganizationUnitManagerAssignment[]
+  userAccessGrants         UserAccessGrant[]
+  sourceProjectAssignments EmployeeProjectAssignment[]          @relation("EmployeeProjectAssignmentSourceUnit")
 
   @@index([parentId])
   @@index([code])
@@ -2227,19 +2228,23 @@ model EmployeeProjectAssignment {
   startDate              DateTime
   expectedEndDate        DateTime?
   endDate                DateTime?
-  allocationPercentage   Int                                 @default(100)
-  status                 EmployeeProjectAssignmentStatus     @default(ACTIVE)
-  endReason              EmployeeProjectAssignmentEndReason?
-  assignmentDecisionNo   String?
-  notes                  String?
-  overrideReason         String?
-  createdById            String?
-  createdAt              DateTime                            @default(now())
-  updatedAt              DateTime                            @updatedAt
+  allocationPercentage      Int                                 @default(100)
+  status                    EmployeeProjectAssignmentStatus     @default(ACTIVE)
+  endReason                 EmployeeProjectAssignmentEndReason?
+  assignmentDecisionNo      String?
+  notes                     String?
+  overrideReason            String?
+  sourceOrgUnitId           String?
+  sourceOrgUnitCodeSnapshot String?
+  sourceOrgUnitNameSnapshot String?
+  createdById               String?
+  createdAt                 DateTime                            @default(now())
+  updatedAt                 DateTime                            @updatedAt
 
   employee             Employee             @relation(fields: [employeeId], references: [id], onDelete: Restrict)
   project              Project              @relation(fields: [projectId], references: [id], onDelete: Restrict)
   projectPersonnelRole ProjectPersonnelRole @relation(fields: [projectPersonnelRoleId], references: [id], onDelete: Restrict)
+  sourceOrgUnit        OrganizationUnit?    @relation("EmployeeProjectAssignmentSourceUnit", fields: [sourceOrgUnitId], references: [id], onDelete: SetNull)
   createdBy            User?                @relation("EmployeeProjectAssignmentCreator", fields: [createdById], references: [id], onDelete: SetNull)
 
   @@index([employeeId])

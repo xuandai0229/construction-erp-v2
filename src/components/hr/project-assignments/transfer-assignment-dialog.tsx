@@ -99,9 +99,9 @@ export function TransferAssignmentDialog({
   return (
     <>
       <HrDialogShell isOpen={isOpen} onClose={onClose} title="Thay đổi vai trò hoặc tỷ lệ" icon={<RefreshCw className="h-5 w-5" />} maxWidth="max-w-lg">
-
-          {/* Form */}
-          <form onSubmit={(e) => handleSubmit(e, false)} className="p-6 space-y-4 overflow-y-auto">
+        {/* Form with sticky footer */}
+        <form onSubmit={(e) => handleSubmit(e, false)} className="flex flex-col min-h-0 flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {errorMessage && (
               <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700 flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
@@ -210,29 +210,30 @@ export function TransferAssignmentDialog({
                 className="w-full text-sm p-2.5 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 outline-hidden"
               />
             </div>
+          </div>
 
-            {/* Actions */}
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3 shrink-0">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={isSubmitting}
-                className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-xl transition"
-              >
-                Hủy bỏ
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-4 py-2 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-xs transition flex items-center gap-1.5"
-              >
-                {isSubmitting && (
-                  <span className="inline-block animate-spin border-2 border-white border-t-transparent rounded-full w-3.5 h-3.5" />
-                )}
-                Xác nhận thay đổi
-              </button>
-            </div>
-          </form>
+          {/* Sticky Footer */}
+          <div className="shrink-0 bg-white px-6 py-4 border-t border-slate-100 flex items-center justify-end gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-xl transition"
+            >
+              Hủy bỏ
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="px-4 py-2 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-xs transition flex items-center gap-1.5"
+            >
+              {isSubmitting && (
+                <span className="inline-block animate-spin border-2 border-white border-t-transparent rounded-full w-3.5 h-3.5" />
+              )}
+              Xác nhận thay đổi
+            </button>
+          </div>
+        </form>
       </HrDialogShell>
 
       <AllocationOverlapDialog

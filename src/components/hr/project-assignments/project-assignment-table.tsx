@@ -12,6 +12,7 @@ import {
   Plus,
 } from "lucide-react";
 import { ProjectAssignmentDTO } from "@/lib/hr/project-assignment-dto";
+import { formatDisplayDate } from "@/lib/hr/vietnam-date-helper";
 import { AssignmentStatusBadge } from "./assignment-status-badge";
 import { AssignmentUserCapabilities } from "@/app/hr/project-assignments/actions/project-assignment-actions";
 
@@ -135,10 +136,13 @@ export function ProjectAssignmentTable({
                   {/* Project */}
                   <td className="py-3.5 px-4">
                     <div className="min-w-0">
-                      <div className="font-semibold text-slate-900 truncate max-w-[180px]" title={item.projectName}>
+                      <div 
+                        className="font-semibold text-slate-900 line-clamp-2 max-w-[220px] leading-snug" 
+                        title={item.projectName}
+                      >
                         {item.projectName}
                       </div>
-                      <div className="text-[11px] text-slate-500 font-mono">
+                      <div className="text-[11px] text-slate-500 font-mono mt-0.5">
                         {item.projectCode}
                       </div>
                     </div>
@@ -157,10 +161,10 @@ export function ProjectAssignmentTable({
                   </td>
 
                   {/* Dates */}
-                  <td className="py-3.5 px-4 text-[11px] text-slate-600">
-                    <div>{item.startDate}</div>
+                  <td className="py-3.5 px-4 text-[11px] text-slate-600 font-medium">
+                    <div>{formatDisplayDate(item.startDate)}</div>
                     <div className="text-slate-400">
-                      {item.expectedEndDate ? `đến ${item.expectedEndDate}` : "Không giới hạn"}
+                      {item.expectedEndDate ? `đến ${formatDisplayDate(item.expectedEndDate)}` : "Không giới hạn"}
                     </div>
                   </td>
 
@@ -222,10 +226,10 @@ export function ProjectAssignmentTable({
                                   setActiveMenuId(null);
                                   onExtend(item);
                                 }}
-                                className="w-full px-3 py-2 text-left hover:bg-slate-50 flex items-center gap-2"
+                                className="w-full px-3 py-2 text-left hover:bg-slate-50 flex items-center gap-2 text-slate-700"
                               >
                                 <Calendar className="w-3.5 h-3.5 text-sky-600" />
-                                <span>Gia hạn điều động</span>
+                                <span>{item.expectedEndDate ? "Gia hạn điều động" : "Thiết lập ngày dự kiến kết thúc"}</span>
                               </button>
                             )}
 

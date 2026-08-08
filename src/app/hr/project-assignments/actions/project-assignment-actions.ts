@@ -827,12 +827,22 @@ export async function getProjectStaffingQuery(
   }
 }
 
+export interface AssignmentActiveProjectSummary {
+  projectName: string;
+  projectCode: string;
+  allocationPercentage: number;
+}
+
 export interface AssignmentFormOptionEmployee {
   id: string;
   code: string;
   fullName: string;
   orgUnitId: string | null;
   orgUnitName: string | null;
+  positionTitle: string | null;
+  currentTotalAllocation: number;
+  activeProjectCount: number;
+  activeProjects: AssignmentActiveProjectSummary[];
 }
 
 export interface AssignmentFormOptionProject {
@@ -889,8 +899,18 @@ export async function getAssignmentFormOptionsQuery(): Promise<
           fullName: true,
           orgAssignments: {
             where: { isPrimary: true, endDate: null },
-            select: { organizationUnit: { select: { id: true, name: true } } },
+            select: {
+              organizationUnit: { select: { id: true, name: true } },
+              position: { select: { title: true } },
+            },
             take: 1,
+          },
+          projectAssignments: {
+            where: { status: EmployeeProjectAssignmentStatus.ACTIVE },
+            select: {
+              allocationPercentage: true,
+              project: { select: { code: true, name: true } },
+            },
           },
         },
         orderBy: { fullName: "asc" },
@@ -902,17 +922,31 @@ export async function getAssignmentFormOptionsQuery(): Promise<
       }),
       prisma.projectPersonnelRole.findMany({
         select: { id: true, code: true, name: true },
-        orderBy: { name: "asc" },
+        orderBy: { orderIndex: "asc" },
       }),
     ]);
 
-    const employees: AssignmentFormOptionEmployee[] = empRecords.map((e) => ({
-      id: e.id,
-      code: e.code,
-      fullName: e.fullName,
-      orgUnitId: e.orgAssignments[0]?.organizationUnit?.id || null,
-      orgUnitName: e.orgAssignments[0]?.organizationUnit?.name || null,
-    }));
+    const employees: AssignmentFormOptionEmployee[] = empRecords.map((e) => {
+      const activeAss = e.projectAssignments || [];
+      const currentTotalAllocation = activeAss.reduce((sum: number, a: { allocationPercentage: number }) => sum + a.allocationPercentage, 0);
+      const activeProjects: AssignmentActiveProjectSummary[] = activeAss.map((a: { allocationPercentage: number; project: { code: string; name: string } }) => ({
+        projectCode: a.project.code,
+        projectName: a.project.name,
+        allocationPercentage: a.allocationPercentage,
+      }));
+
+      return {
+        id: e.id,
+        code: e.code,
+        fullName: e.fullName,
+        orgUnitId: e.orgAssignments[0]?.organizationUnit?.id || null,
+        orgUnitName: e.orgAssignments[0]?.organizationUnit?.name || null,
+        positionTitle: e.orgAssignments[0]?.position?.title || null,
+        currentTotalAllocation,
+        activeProjectCount: activeProjects.length,
+        activeProjects,
+      };
+    });
 
     return {
       success: true,

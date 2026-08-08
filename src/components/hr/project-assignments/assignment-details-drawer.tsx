@@ -13,6 +13,7 @@ import {
 import { ProjectAssignmentDTO } from "@/lib/hr/project-assignment-dto";
 import { AssignmentStatusBadge, EndReasonBadge } from "./assignment-status-badge";
 import { getEmployeeProjectAssignmentHistoryQuery } from "@/app/hr/project-assignments/actions/project-assignment-actions";
+import { formatDisplayDate } from "@/lib/hr/vietnam-date-helper";
 
 interface AssignmentDetailsDrawerProps {
   isOpen: boolean;
@@ -140,18 +141,18 @@ export function AssignmentDetailsDrawer({
               <div className="grid grid-cols-2 gap-2 text-slate-700">
                 <div>
                   <span className="text-slate-500 block">Ngày bắt đầu:</span>
-                  <span className="font-medium text-slate-900">{assignment.startDate}</span>
+                  <span className="font-medium text-slate-900">{formatDisplayDate(assignment.startDate)}</span>
                 </div>
                 <div>
                   <span className="text-slate-500 block">Dự kiến kết thúc:</span>
                   <span className="font-medium text-slate-900">
-                    {assignment.expectedEndDate || "Không giới hạn"}
+                    {assignment.expectedEndDate ? formatDisplayDate(assignment.expectedEndDate) : "Không giới hạn"}
                   </span>
                 </div>
                 {assignment.endDate && (
                   <div className="col-span-2">
                     <span className="text-slate-500 block">Ngày kết thúc thực tế:</span>
-                    <span className="font-medium text-amber-700">{assignment.endDate}</span>
+                    <span className="font-medium text-amber-700">{formatDisplayDate(assignment.endDate)}</span>
                   </div>
                 )}
               </div>
@@ -200,7 +201,7 @@ export function AssignmentDetailsDrawer({
                         {item.projectCode} - {item.projectPersonnelRoleName} ({item.allocationPercentage}%)
                       </div>
                       <div className="text-slate-500 text-[11px]">
-                        {item.startDate} {item.endDate ? `→ ${item.endDate}` : "→ Hiện tại"}
+                        {formatDisplayDate(item.startDate)} {item.endDate ? `→ ${formatDisplayDate(item.endDate)}` : "→ Hiện tại"}
                       </div>
                       <div className="mt-0.5">
                         <AssignmentStatusBadge assignment={item} className="scale-90 origin-left" />

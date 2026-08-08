@@ -135,7 +135,12 @@ export async function createProjectAssignment(
       );
     }
 
-    // 3. Create assignment record
+    // 3. Resolve primary org unit for source snapshot
+    const primaryOrgAss = await tx.employeeOrganizationAssignment.findFirst({
+      where: { employeeId: input.employeeId, isPrimary: true, endDate: null },
+      include: { organizationUnit: true },
+    });
+
     const assignment = await tx.employeeProjectAssignment.create({
       data: {
         employeeId: input.employeeId,
@@ -149,6 +154,9 @@ export async function createProjectAssignment(
         notes: input.notes || null,
         overrideReason: input.overrideReason || null,
         createdById: input.createdById || null,
+        sourceOrgUnitId: primaryOrgAss?.organizationUnitId || null,
+        sourceOrgUnitCodeSnapshot: primaryOrgAss?.organizationUnit?.code || null,
+        sourceOrgUnitNameSnapshot: primaryOrgAss?.organizationUnit?.name || null,
       },
     });
 
@@ -209,6 +217,12 @@ export async function extendProjectAssignment(
 
   validateEffectiveDateRange(current.startDate, input.newExpectedEndDate, "Ngày gia hạn dự kiến");
 
+  if (current.expectedEndDate && input.newExpectedEndDate <= current.expectedEndDate) {
+    throw new Error(
+      `Ngày gia hạn mới (${formatVietnamDateOnly(input.newExpectedEndDate)}) phải sau ngày dự kiến kết thúc hiện tại (${formatVietnamDateOnly(current.expectedEndDate)}).`
+    );
+  }
+
   return executeWithAdvisoryLock(prisma, current.employeeId, async (tx) => {
     const updated = await tx.employeeProjectAssignment.update({
       where: { id: input.assignmentId },
@@ -227,6 +241,51 @@ export async function extendProjectAssignment(
         entityId: updated.id,
         afterData: JSON.stringify({
           oldExpectedEndDate: current.expectedEndDate,
+          newExpectedEndDate: input.newExpectedEndDate,
+          reason: input.reason,
+        }),
+      },
+    });
+
+    return updated;
+  });
+}
+
+/**
+ * Sets expectedEndDate on an open-ended active assignment.
+ */
+export async function setExpectedEndDateForAssignment(
+  prisma: PrismaClient,
+  input: ExtendAssignmentInput
+): Promise<EmployeeProjectAssignment> {
+  const current = await prisma.employeeProjectAssignment.findUnique({
+    where: { id: input.assignmentId },
+  });
+  if (!current) throw new Error("Bản ghi điều động không tồn tại.");
+  if (current.status !== EmployeeProjectAssignmentStatus.ACTIVE) {
+    throw new Error("Chỉ có thể thiết lập ngày dự kiến kết thúc cho bản ghi điều động đang hoạt động (ACTIVE).");
+  }
+
+  validateEffectiveDateRange(current.startDate, input.newExpectedEndDate, "Ngày dự kiến kết thúc");
+
+  return executeWithAdvisoryLock(prisma, current.employeeId, async (tx) => {
+    const updated = await tx.employeeProjectAssignment.update({
+      where: { id: input.assignmentId },
+      data: {
+        expectedEndDate: input.newExpectedEndDate,
+        notes: input.reason ? `Thiết lập ngày kết thúc: ${input.reason}` : current.notes,
+      },
+    });
+
+    await tx.auditLog.create({
+      data: {
+        userId: (input.performedById && input.performedById !== "SYSTEM") ? input.performedById : null,
+        projectId: current.projectId,
+        action: "PROJECT_ASSIGNMENT_EXPECTED_END_SET",
+        entityType: "EmployeeProjectAssignment",
+        entityId: updated.id,
+        afterData: JSON.stringify({
+          oldExpectedEndDate: null,
           newExpectedEndDate: input.newExpectedEndDate,
           reason: input.reason,
         }),
@@ -390,6 +449,9 @@ export async function transferProjectRoleOrAllocation(
         notes: input.notes ?? current.notes,
         overrideReason: input.overrideReason ?? current.overrideReason,
         createdById: input.performedById ?? current.createdById,
+        sourceOrgUnitId: current.sourceOrgUnitId,
+        sourceOrgUnitCodeSnapshot: current.sourceOrgUnitCodeSnapshot,
+        sourceOrgUnitNameSnapshot: current.sourceOrgUnitNameSnapshot,
       },
     });
 
