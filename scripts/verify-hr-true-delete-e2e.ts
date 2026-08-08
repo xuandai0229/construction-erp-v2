@@ -5,7 +5,6 @@ dotenv.config({ path: ".env" });
 async function runTrueDeleteVerification() {
   console.log("=== START HR V1 TRUE HARD DELETE E2E VERIFICATION ===");
   const prisma = (await import("../src/lib/prisma")).default;
-  const { deleteOrgUnitAction, deletePositionAction } = await import("../src/app/hr/organization/actions/organization-actions");
 
   // Find an admin user for server actions
   const adminUser = await prisma.user.findFirst({
@@ -17,10 +16,12 @@ async function runTrueDeleteVerification() {
     throw new Error("No active ADMIN user found for audit execution.");
   }
 
-  // Mock global session for server actions
+  // Mock global test session for server actions CLI execution
   (globalThis as any).__TEST_SESSION__ = {
-    user: { id: adminUser.id, role: "ADMIN", email: adminUser.email },
+    user: { id: adminUser.id, role: "ADMIN", email: adminUser.email, name: "Admin", username: "admin", phone: null, isActive: true },
   };
+
+  const { deleteOrgUnitAction, deletePositionAction } = await import("../src/app/hr/organization/actions/organization-actions");
 
   // Pre-test cleanup of any leftover QA entities
   await prisma.employeeChangeHistory.deleteMany({ where: { employee: { code: { startsWith: "QA-EMP-" } } } });

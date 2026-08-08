@@ -19,8 +19,14 @@ export interface HrResolvedAccess extends HrPermissionCheckResult {
  * Ensures user is authenticated and retrieves HR context.
  */
 export async function getHrUserContext(): Promise<HrUserContext> {
-  const testSession = (globalThis as any).__TEST_SESSION__?.user;
-  const session = testSession || (await getSession());
+  let session: SessionUser | null = null;
+  try {
+    session = await getSession();
+  } catch (err: any) {
+    if (process.env.NODE_ENV !== "production") {
+      session = (globalThis as any).__TEST_SESSION__?.user || null;
+    }
+  }
   if (!session) {
     redirect("/login?reason=session_expired");
   }
