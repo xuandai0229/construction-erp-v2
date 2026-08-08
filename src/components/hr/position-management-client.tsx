@@ -20,8 +20,7 @@ import {
 import {
   createPositionAction,
   updatePositionAction,
-  deactivatePositionAction,
-  reactivatePositionAction,
+  deletePositionAction,
 } from "@/app/hr/organization/actions/organization-actions";
 
 export interface PositionItem {
@@ -42,10 +41,12 @@ interface PositionManagementClientProps {
 export function PositionManagementClient({ positions, canManage }: PositionManagementClientProps) {
   const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPosition, setEditingPosition] = useState<PositionItem | null>(null);
+
+  const [deleteTargetPos, setDeleteTargetPos] = useState<PositionItem | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const [code, setCode] = useState("");
   const [title, setTitle] = useState("");
@@ -101,43 +102,24 @@ export function PositionManagementClient({ positions, canManage }: PositionManag
     });
   };
 
-  const handleDeactivate = (pos: PositionItem) => {
-    if (!confirm(`Bạn có chắc chắn muốn vô hiệu hóa chức danh '${pos.title}' (${pos.code})?`)) {
-      return;
-    }
-    setError(null);
+  const handleConfirmDelete = () => {
+    if (!deleteTargetPos) return;
+    setDeleteError(null);
     startTransition(async () => {
-      const res = await deactivatePositionAction(pos.id);
+      const res = await deletePositionAction(deleteTargetPos.id);
       if (!res.success) {
-        setError(res.error || "Không thể vô hiệu hóa chức danh.");
-      }
-    });
-  };
-
-  const handleReactivate = (pos: PositionItem) => {
-    if (!confirm(`Bạn có chắc chắn muốn kích hoạt lại chức danh '${pos.title}' (${pos.code})?`)) {
-      return;
-    }
-    setError(null);
-    startTransition(async () => {
-      const res = await reactivatePositionAction(pos.id);
-      if (!res.success) {
-        setError(res.error || "Không thể kích hoạt lại chức danh.");
+        setDeleteError(res.error || "Không thể xóa chức danh.");
+      } else {
+        setDeleteTargetPos(null);
       }
     });
   };
 
   const filteredPositions = positions.filter((pos) => {
-    const matchesSearch =
-      pos.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pos.code.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all"
-        ? true
-        : statusFilter === "active"
-        ? pos.isActive
-        : !pos.isActive;
-    return matchesSearch && matchesStatus;
+    if (!pos.isActive) return false;
+    if (!searchTerm.trim()) return true;
+    const lower = searchTerm.toLowerCase();
+    return pos.title.toLowerCase().includes(lower) || pos.code.toLowerCase().includes(lower);
   });
 
   return (
@@ -154,7 +136,7 @@ export function PositionManagementClient({ positions, canManage }: PositionManag
         </div>
       )}
 
-      {/* Filter Toolbar (Single Primary CTA Enforcement: Header Contains Create CTA) */}
+      {/* Filter Toolbar */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <div className="relative w-full sm:w-72">
@@ -167,16 +149,6 @@ export function PositionManagementClient({ positions, canManage }: PositionManag
               className="w-full h-9 pl-9 pr-3 text-xs border border-slate-300 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-slate-50/50"
             />
           </div>
-
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-9 border border-slate-300 rounded-lg px-2.5 text-xs text-slate-700 bg-slate-50/50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-          >
-            <option value="all">Tất cả trạng thái</option>
-            <option value="active">Đang hoạt động</option>
-            <option value="inactive">Đã vô hiệu hóa</option>
-          </select>
         </div>
       </div>
 
@@ -275,27 +247,18 @@ export function PositionManagementClient({ positions, canManage }: PositionManag
                             >
                               <Edit2 className="w-4 h-4" />
                             </button>
-                            {pos.isActive ? (
-                              <button
-                                type="button"
-                                onClick={() => handleDeactivate(pos)}
-                                disabled={isPending}
-                                title="Vô hiệu hóa chức danh"
-                                className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
-                              >
-                                <PowerOff className="w-4 h-4" />
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => handleReactivate(pos)}
-                                disabled={isPending}
-                                title="Kích hoạt lại chức danh"
-                                className="p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
-                              >
-                                <RotateCcw className="w-4 h-4" />
-                              </button>
-                            )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDeleteError(null);
+                                setDeleteTargetPos(pos);
+                              }}
+                              disabled={isPending}
+                              title="Xóa chức danh"
+                              className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </div>
                         </td>
                       )}
@@ -396,6 +359,61 @@ export function PositionManagementClient({ positions, canManage }: PositionManag
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Delete Position Confirmation Modal */}
+      {deleteTargetPos && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center gap-3 text-red-600">
+              <div className="p-2 bg-red-100 rounded-xl">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 leading-tight">
+                Xóa chức danh này?
+              </h3>
+            </div>
+
+            {deleteTargetPos.activeEmployeeCount > 0 && (
+              <p className="text-xs text-slate-600">
+                Có <strong className="text-slate-900 font-bold">{deleteTargetPos.activeEmployeeCount} nhân sự</strong> đang sử dụng chức danh này. Sau khi xóa, nhân viên vẫn được giữ lại và chức danh hiện tại sẽ chuyển thành 'Chưa xác định chức danh'.
+              </p>
+            )}
+
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-1 text-slate-700">
+              <p className="font-semibold text-slate-900 mb-1">Sau khi xóa:</p>
+              <p>• Chức danh '{deleteTargetPos.title}' ({deleteTargetPos.code}) sẽ bị xóa hoàn toàn khỏi hệ thống.</p>
+              <p>• Hồ sơ nhân viên vẫn được bảo toàn 100%.</p>
+              <p>• Lịch sử công tác vẫn được lưu giữ và đọc được.</p>
+            </div>
+
+            {deleteError && (
+              <div className="p-3 bg-red-50 text-red-700 text-xs rounded-xl border border-red-200 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                <span>{deleteError}</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setDeleteTargetPos(null)}
+                disabled={isPending}
+                className="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={isPending}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                <span>Xóa chức danh</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

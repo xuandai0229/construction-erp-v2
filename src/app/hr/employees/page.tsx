@@ -130,7 +130,13 @@ export default async function EmployeeListPage({ searchParams }: EmployeeListPag
   }
 
   // 6. Primary Org Unit Filter
-  if (orgUnitFilter) {
+  if (orgUnitFilter === "UNASSIGNED") {
+    conditions.push({
+      orgAssignments: {
+        none: { isPrimary: true, endDate: null },
+      },
+    });
+  } else if (orgUnitFilter) {
     conditions.push({
       orgAssignments: {
         some: {
@@ -143,7 +149,26 @@ export default async function EmployeeListPage({ searchParams }: EmployeeListPag
   }
 
   // 7. Primary Position Filter
-  if (positionFilter) {
+  if (positionFilter === "UNASSIGNED") {
+    conditions.push({
+      OR: [
+        {
+          orgAssignments: {
+            none: { isPrimary: true, endDate: null },
+          },
+        },
+        {
+          orgAssignments: {
+            some: {
+              isPrimary: true,
+              endDate: null,
+              positionId: null,
+            },
+          },
+        },
+      ],
+    });
+  } else if (positionFilter) {
     conditions.push({
       orgAssignments: {
         some: {

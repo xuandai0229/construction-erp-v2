@@ -178,11 +178,6 @@ export async function updateOrganizationUnit(
     await validateOrgUnitHierarchy(prisma, input.id, input.parentId);
   }
 
-  // If deactivating, check constraints
-  if (input.isActive === false && currentUnit.isActive === true) {
-    await validateOrgUnitDeactivation(prisma, input.id);
-  }
-
   return prisma.organizationUnit.update({
     where: { id: input.id },
     data: {
@@ -197,39 +192,13 @@ export async function updateOrganizationUnit(
 }
 
 /**
- * Validates whether an OrganizationUnit can be deactivated.
+ * Legacy validator for OrgUnit deactivation - no-op in free CRUD model.
  */
 export async function validateOrgUnitDeactivation(
-  prisma: PrismaLike,
-  unitId: string
+  _prisma: PrismaLike,
+  _unitId: string
 ): Promise<void> {
-  const now = new Date();
-  const activeChildrenCount = await prisma.organizationUnit.count({
-    where: { parentId: unitId, isActive: true },
-  });
-  if (activeChildrenCount > 0) {
-    throw new Error("Không thể vô hiệu hóa đơn vị vì vẫn còn đơn vị con đang hoạt động.");
-  }
-
-  const activeEmployeesCount = await prisma.employeeOrganizationAssignment.count({
-    where: {
-      organizationUnitId: unitId,
-      ...buildEffectiveDateWhere(now),
-    },
-  });
-  if (activeEmployeesCount > 0) {
-    throw new Error("Không thể vô hiệu hóa đơn vị vì vẫn còn nhân viên đang làm việc.");
-  }
-
-  const activeManagersCount = await prisma.organizationUnitManagerAssignment.count({
-    where: {
-      organizationUnitId: unitId,
-      ...buildEffectiveDateWhere(now),
-    },
-  });
-  if (activeManagersCount > 0) {
-    throw new Error("Không thể vô hiệu hóa đơn vị vì vẫn còn người quản lý đang đương nhiệm.");
-  }
+  return;
 }
 
 /**
@@ -306,10 +275,6 @@ export async function updatePosition(
     }
   }
 
-  if (input.isActive === false && current.isActive === true) {
-    await validatePositionDeactivation(prisma, input.id);
-  }
-
   return prisma.position.update({
     where: { id: input.id },
     data: {
@@ -323,22 +288,13 @@ export async function updatePosition(
 }
 
 /**
- * Validates whether a Position can be deactivated.
+ * Legacy validator for Position deactivation - no-op in free CRUD model.
  */
 export async function validatePositionDeactivation(
-  prisma: PrismaLike,
-  positionId: string
+  _prisma: PrismaLike,
+  _positionId: string
 ): Promise<void> {
-  const now = new Date();
-  const activeCount = await prisma.employeeOrganizationAssignment.count({
-    where: {
-      positionId,
-      ...buildEffectiveDateWhere(now),
-    },
-  });
-  if (activeCount > 0) {
-    throw new Error("Chức danh đang có nhân sự sử dụng và chưa thể vô hiệu hóa.");
-  }
+  return;
 }
 
 /**

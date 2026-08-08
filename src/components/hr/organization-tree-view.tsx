@@ -20,10 +20,7 @@ import {
   Lock,
 } from "lucide-react";
 import { UnitFormDialog } from "./unit-form-dialog";
-import { deactivateOrgUnitAction, reactivateOrgUnitAction } from "@/app/hr/organization/actions/organization-actions";
-
-const CORE_CODES = new Set(["BGD", "PKT", "KTTTC"]);
-const isCoreUnit = (code: string) => CORE_CODES.has(code.toUpperCase());
+import { deleteOrgUnitAction } from "@/app/hr/organization/actions/organization-actions";
 
 export interface OrgTreeNode {
   id: string;
@@ -48,9 +45,10 @@ interface OrganizationTreeViewProps {
   treeData: OrgTreeNode[];
   flatUnits: { id: string; code: string; name: string; parentId?: string | null }[];
   canManage: boolean;
+  companyHeadcount?: number;
 }
 
-export function OrganizationTreeView({ treeData, flatUnits, canManage }: OrganizationTreeViewProps) {
+export function OrganizationTreeView({ treeData, flatUnits, canManage, companyHeadcount }: OrganizationTreeViewProps) {
   const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>(() => {
@@ -65,7 +63,8 @@ export function OrganizationTreeView({ treeData, flatUnits, canManage }: Organiz
   const [editNode, setEditNode] = useState<OrgTreeNode | null>(null);
   const [defaultParentId, setDefaultParentId] = useState<string | null>(null);
 
-  const [deactivateError, setDeactivateError] = useState<string | null>(null);
+  const [deleteTargetNode, setDeleteTargetNode] = useState<OrgTreeNode | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -127,33 +126,18 @@ export function OrganizationTreeView({ treeData, flatUnits, canManage }: Organiz
     setIsFormOpen(true);
   };
 
-  const handleDeactivate = (node: OrgTreeNode) => {
-    if (isCoreUnit(node.code)) {
-      setDeactivateError("Đây là phòng ban lõi của công ty. Không thể vô hiệu hóa.");
-      return;
-    }
-
-    if (!confirm(`Bạn có chắc chắn muốn vô hiệu hóa phòng ban/đơn vị '${node.name}' (${node.code})?`)) {
-      return;
-    }
-    setDeactivateError(null);
+  const handleConfirmDelete = () => {
+    if (!deleteTargetNode) return;
+    setDeleteError(null);
     startTransition(async () => {
-      const res = await deactivateOrgUnitAction(node.id);
+      const res = await deleteOrgUnitAction(deleteTargetNode.id);
       if (!res.success) {
-        setDeactivateError(res.error || "Không thể vô hiệu hóa đơn vị.");
-      }
-    });
-  };
-
-  const handleReactivate = (node: OrgTreeNode) => {
-    if (!confirm(`Bạn có chắc chắn muốn kích hoạt lại phòng ban/đơn vị '${node.name}' (${node.code})?`)) {
-      return;
-    }
-    setDeactivateError(null);
-    startTransition(async () => {
-      const res = await reactivateOrgUnitAction(node.id);
-      if (!res.success) {
-        setDeactivateError(res.error || "Không thể kích hoạt lại đơn vị.");
+        setDeleteError(res.error || "Không thể xóa đơn vị tổ chức.");
+      } else {
+        const nextSelected =
+          deleteTargetNode.parentId || treeData.find((n) => n.id !== deleteTargetNode.id)?.id || null;
+        setSelectedNodeId(nextSelected);
+        setDeleteTargetNode(null);
       }
     });
   };
@@ -183,13 +167,14 @@ export function OrganizationTreeView({ treeData, flatUnits, canManage }: Organiz
     nodes.reduce((acc, n) => acc + n.activeEmployeeCount + countTreeHeadcount(n.children), 0);
 
   const displayedTree = filterTree(treeData, searchTerm);
-  const totalCompanyHeadcount = countTreeHeadcount(treeData);
+  const assignedCompanyHeadcount = countTreeHeadcount(treeData);
+  const totalCompanyHeadcount = companyHeadcount ?? assignedCompanyHeadcount;
+  const unassignedHeadcount = Math.max(0, totalCompanyHeadcount - assignedCompanyHeadcount);
 
   const renderTreeItem = (node: OrgTreeNode, level = 1) => {
     const hasChildren = node.children && node.children.length > 0;
     const isExpanded = !!expandedNodes[node.id];
     const isSelected = selectedNodeId === node.id;
-    const isCore = isCoreUnit(node.code);
 
     return (
       <div key={node.id} className="space-y-1">
@@ -253,18 +238,6 @@ export function OrganizationTreeView({ treeData, flatUnits, canManage }: Organiz
 
   return (
     <div className="space-y-4">
-      {deactivateError && (
-        <div className="flex items-center justify-between p-3.5 text-xs text-red-700 bg-red-50 border border-red-200 rounded-xl font-medium">
-          <div className="flex items-center gap-2">
-            <ShieldAlert className="w-4 h-4 text-red-600 shrink-0" />
-            <span>{deactivateError}</span>
-          </div>
-          <button onClick={() => setDeactivateError(null)} className="text-red-500 hover:text-red-800 text-xs font-bold cursor-pointer">
-            Đóng
-          </button>
-        </div>
-      )}
-
       {/* Action Bar & Search (Single CTA Enforcement: Toolbar contains Search ONLY) */}
       <div className="flex items-center justify-between bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
         <div className="relative w-full">
@@ -341,7 +314,7 @@ export function OrganizationTreeView({ treeData, flatUnits, canManage }: Organiz
                   <span>Công ty Cổ phần Xây dựng</span>
                 </div>
                 <span className="text-[11px] font-extrabold text-blue-800 bg-blue-100/80 px-2 py-0.5 rounded-full">
-                  Tổng {totalCompanyHeadcount} NV
+                  Tổng {totalCompanyHeadcount} NV{unassignedHeadcount > 0 ? ` (${assignedCompanyHeadcount} đã phân phòng, ${unassignedHeadcount} chưa phân)` : ""}
                 </span>
               </div>
 
@@ -385,36 +358,18 @@ export function OrganizationTreeView({ treeData, flatUnits, canManage }: Organiz
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
-                      {isCoreUnit(selectedNode.code) ? (
-                        <button
-                          type="button"
-                          disabled
-                          title="Đây là phòng ban lõi của công ty. Không thể vô hiệu hóa."
-                          className="p-1.5 text-slate-300 bg-slate-50 rounded-lg cursor-not-allowed border border-slate-200"
-                        >
-                          <Lock className="w-4 h-4 text-slate-400" />
-                        </button>
-                      ) : selectedNode.isActive ? (
-                        <button
-                          type="button"
-                          onClick={() => handleDeactivate(selectedNode)}
-                          disabled={isPending}
-                          title="Vô hiệu hóa đơn vị"
-                          className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
-                        >
-                          {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <PowerOff className="w-4 h-4" />}
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleReactivate(selectedNode)}
-                          disabled={isPending}
-                          title="Kích hoạt lại đơn vị"
-                          className="p-1.5 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
-                        >
-                          {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDeleteError(null);
+                          setDeleteTargetNode(selectedNode);
+                        }}
+                        disabled={isPending}
+                        title="Xóa phòng ban"
+                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   )}
                 </div>
@@ -494,6 +449,68 @@ export function OrganizationTreeView({ treeData, flatUnits, canManage }: Organiz
                 Chọn một phòng ban trên cây để xem thông tin chi tiết.
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteTargetNode && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center gap-3 text-red-600">
+              <div className="p-2 bg-red-100 rounded-xl">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 leading-tight">
+                Xóa phòng ban này?
+              </h3>
+            </div>
+
+            {deleteTargetNode.activeEmployeeCount > 0 && (
+              <p className="text-xs text-slate-600">
+                Phòng ban hiện có <strong className="text-slate-900 font-bold">{deleteTargetNode.activeEmployeeCount} nhân sự</strong>. Sau khi xóa, các nhân sự này vẫn được giữ lại và chuyển sang 'Chưa phân phòng ban'.
+              </p>
+            )}
+
+            {deleteTargetNode.children && deleteTargetNode.children.length > 0 && (
+              <p className="text-xs text-amber-800 bg-amber-50 p-2.5 rounded-lg border border-amber-200 font-semibold">
+                Có {deleteTargetNode.children.length} đơn vị trực thuộc. Các đơn vị này sẽ được chuyển lên cấp trên của phòng đang xóa.
+              </p>
+            )}
+
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-1 text-slate-700">
+              <p className="font-semibold text-slate-900 mb-1">Sau khi xóa:</p>
+              <p>• Phòng ban '{deleteTargetNode.name}' ({deleteTargetNode.code}) sẽ bị xóa hoàn toàn khỏi hệ thống.</p>
+              <p>• Nhân sự vẫn được bảo toàn hồ sơ.</p>
+              <p>• Lịch sử công tác vẫn được lưu giữ và đọc được.</p>
+            </div>
+
+            {deleteError && (
+              <div className="p-3 bg-red-50 text-red-700 text-xs rounded-xl border border-red-200 flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 shrink-0" />
+                <span>{deleteError}</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setDeleteTargetNode(null)}
+                disabled={isPending}
+                className="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={isPending}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                <span>Xóa phòng ban</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

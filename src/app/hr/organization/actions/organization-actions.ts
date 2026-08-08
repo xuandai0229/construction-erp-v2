@@ -23,27 +23,6 @@ import {
   sanitizeEmployeeTransferAudit,
 } from "@/lib/audit-sanitizer";
 
-// Core Unit Guard constants
-const CORE_UNIT_CODES = new Set(["BGD", "PKT", "KTTTC"]);
-const CORE_UNIT_IDS = new Set(["cmsin1reg0000agk58d1407m2", "cmsebfgs500008ck5vrdk8eti", "cmsin1zlu0001bck57euldkc2"]);
-const CORE_UNIT_RESERVED_NAMES = [
-  "BAN GIAM DOC",
-  "PHONG GIAM DOC",
-  "PHONG KY THUAT",
-  "PHONG KE TOAN",
-];
-
-function isSemanticCoreUnitDuplicate(code: string, name: string): boolean {
-  const normCode = code.trim().toUpperCase();
-  const normName = name.trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-  if (CORE_UNIT_CODES.has(normCode)) return true;
-  for (const reservedName of CORE_UNIT_RESERVED_NAMES) {
-    if (normName.includes(reservedName)) return true;
-  }
-  return false;
-}
-
 // --- Zod Schemas ---
 const CreateOrgUnitSchema = z.object({
   code: z.string().min(2, "Mã đơn vị phải có ít nhất 2 ký tự").max(50),
@@ -99,10 +78,6 @@ export async function createOrgUnitAction(formData: unknown) {
   const parsed = CreateOrgUnitSchema.safeParse(formData);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0].message };
-  }
-
-  if (isSemanticCoreUnitDuplicate(parsed.data.code, parsed.data.name)) {
-    return { success: false, error: "Không thể tạo đơn vị mới trùng lặp với tên hoặc mã phòng ban lõi của công ty." };
   }
 
   const scopeCheck = await validateTargetScope(permCheck.context, permCheck.scope, {
@@ -175,8 +150,8 @@ export async function updateOrgUnitAction(formData: unknown) {
   }
 }
 
-// --- Server Action: Deactivate Org Unit ---
-export async function deactivateOrgUnitAction(unitId: string) {
+// --- Server Action: Delete Org Unit (TRUE HARD DELETE) ---
+export async function deleteOrgUnitAction(unitId: string) {
   const permCheck = await checkHrPermission("hr:organization:manage");
   if (!permCheck.allowed) {
     return { success: false, error: "Bạn không có quyền quản lý cơ cấu tổ chức (hr:organization:manage)" };
@@ -189,44 +164,101 @@ export async function deactivateOrgUnitAction(unitId: string) {
     return { success: false, error: scopeCheck.reason || "Thao tác bị từ chối bởi quy tắc phạm vi dữ liệu." };
   }
 
-  // Core Unit Protection Guard
-  const targetUnit = await prisma.organizationUnit.findUnique({
-    where: { id: unitId },
-    select: { id: true, code: true, name: true },
-  });
-  if (!targetUnit) {
-    return { success: false, error: "Đơn vị tổ chức không tồn tại." };
-  }
-  if (CORE_UNIT_IDS.has(targetUnit.id) || CORE_UNIT_CODES.has(targetUnit.code.toUpperCase())) {
-    return { success: false, error: "Đây là phòng ban lõi của công ty. Không thể vô hiệu hóa." };
-  }
-
   const currentUserId = permCheck.context.session.id;
 
   try {
-    await validateOrgUnitDeactivation(prisma, unitId);
+    await prisma.$transaction(async (tx) => {
+      const targetUnit = await tx.organizationUnit.findUnique({
+        where: { id: unitId },
+        select: { id: true, code: true, name: true, parentId: true },
+      });
+      if (!targetUnit) {
+        throw new Error("Đơn vị tổ chức không tồn tại.");
+      }
 
-    const updated = await prisma.organizationUnit.update({
-      where: { id: unitId },
-      data: { isActive: false },
+      const now = new Date();
+
+      // 1. Re-parent child units to parent of deleted unit
+      await tx.organizationUnit.updateMany({
+        where: { parentId: unitId },
+        data: { parentId: targetUnit.parentId || null },
+      });
+
+      // 2. Snapshot history for all employees assigned to this unit (active & past)
+      const allUnitAssignments = await tx.employeeOrganizationAssignment.findMany({
+        where: { organizationUnitId: unitId },
+        select: { id: true, employeeId: true, positionId: true },
+      });
+
+      const uniqueEmployeeIds = Array.from(new Set(allUnitAssignments.map((a) => a.employeeId)));
+      for (const empId of uniqueEmployeeIds) {
+        await tx.employeeChangeHistory.create({
+          data: {
+            employeeId: empId,
+            changeType: "EMPLOYEE_ORGANIZATION_TRANSFERRED",
+            performedById: currentUserId,
+            reason: `Phòng ban '${targetUnit.name}' (${targetUnit.code}) đã bị xóa khỏi hệ thống`,
+            details: {
+              fromUnitId: unitId,
+              fromUnitName: targetUnit.name,
+              fromUnitCode: targetUnit.code,
+              toUnitId: null,
+              toUnitName: null,
+              deletedAt: now.toISOString(),
+            },
+          },
+        });
+      }
+
+      // 3. Remove manager assignments for this unit
+      await tx.organizationUnitManagerAssignment.deleteMany({
+        where: { organizationUnitId: unitId },
+      });
+
+      // 4. Remove employee organization assignments referencing this unit
+      await tx.employeeOrganizationAssignment.deleteMany({
+        where: { organizationUnitId: unitId },
+      });
+
+      // 5. Clear UserAccessGrant referencing this unit
+      await tx.userAccessGrant.updateMany({
+        where: { organizationUnitId: unitId },
+        data: { organizationUnitId: null },
+      });
+
+      // 6. HARD DELETE OrganizationUnit
+      await tx.organizationUnit.delete({
+        where: { id: unitId },
+      });
+
+      // 7. Write audit log
+      await writeAuditLog({
+        userId: currentUserId,
+        action: "ORGANIZATION_UNIT_DELETED",
+        entityType: "OrganizationUnit",
+        entityId: unitId,
+        afterData: { id: unitId, code: targetUnit.code, name: targetUnit.name, deleted: true },
+      });
     });
 
-    await writeAuditLog({
-      userId: currentUserId,
-      action: "ORGANIZATION_UNIT_DEACTIVATED",
-      entityType: "OrganizationUnit",
-      entityId: unitId,
-      afterData: sanitizeOrganizationUnitAudit(updated),
-    });
-
-    revalidatePath("/hr/organization");
-    revalidatePath("/hr/employees");
+    safeRevalidatePath("/hr/organization");
+    safeRevalidatePath("/hr/employees");
 
     return { success: true };
   } catch (error: any) {
-    return { success: false, error: error.message || "Không thể vô hiệu hóa đơn vị." };
+    return { success: false, error: error.message || "Không thể xóa đơn vị tổ chức." };
   }
 }
+
+function safeRevalidatePath(path: string) {
+  try {
+    revalidatePath(path);
+  } catch {
+    // Ignore outside request store error in test/CLI context
+  }
+}
+
+export const deactivateOrgUnitAction = deleteOrgUnitAction;
 
 // --- Server Action: Create Position ---
 export async function createPositionAction(formData: unknown) {
@@ -306,8 +338,8 @@ export async function updatePositionAction(formData: unknown) {
   }
 }
 
-// --- Server Action: Deactivate Position ---
-export async function deactivatePositionAction(positionId: string) {
+// --- Server Action: Delete Position (TRUE HARD DELETE) ---
+export async function deletePositionAction(positionId: string) {
   const permCheck = await checkHrPermission("hr:organization:manage");
   if (!permCheck.allowed) {
     return { success: false, error: "Bạn không có quyền quản lý chức danh (hr:organization:manage)" };
@@ -321,28 +353,73 @@ export async function deactivatePositionAction(positionId: string) {
   const currentUserId = permCheck.context.session.id;
 
   try {
-    await validatePositionDeactivation(prisma, positionId);
+    await prisma.$transaction(async (tx) => {
+      const targetPos = await tx.position.findUnique({
+        where: { id: positionId },
+        select: { id: true, code: true, title: true },
+      });
+      if (!targetPos) {
+        throw new Error("Chức danh không tồn tại.");
+      }
 
-    const updated = await prisma.position.update({
-      where: { id: positionId },
-      data: { isActive: false },
+      const now = new Date();
+
+      // 1. Snapshot history for all employees assigned to this position (active & past)
+      const allPosAssignments = await tx.employeeOrganizationAssignment.findMany({
+        where: { positionId },
+        select: { id: true, employeeId: true, organizationUnitId: true },
+      });
+
+      const uniqueEmployeeIds = Array.from(new Set(allPosAssignments.map((a) => a.employeeId)));
+      for (const empId of uniqueEmployeeIds) {
+        await tx.employeeChangeHistory.create({
+          data: {
+            employeeId: empId,
+            changeType: "EMPLOYEE_POSITION_CHANGED",
+            performedById: currentUserId,
+            reason: `Chức danh '${targetPos.title}' (${targetPos.code}) đã bị xóa khỏi hệ thống`,
+            details: {
+              fromPositionId: positionId,
+              fromPositionTitle: targetPos.title,
+              fromPositionCode: targetPos.code,
+              toPositionId: null,
+              toPositionTitle: null,
+              deletedAt: now.toISOString(),
+            },
+          },
+        });
+      }
+
+      // 2. Remove all employee organization assignments referencing this position
+      await tx.employeeOrganizationAssignment.deleteMany({
+        where: { positionId },
+      });
+
+      // 3. HARD DELETE Position
+      await tx.position.delete({
+        where: { id: positionId },
+      });
+
+      // 4. Write audit log
+      await writeAuditLog({
+        userId: currentUserId,
+        action: "POSITION_DELETED",
+        entityType: "Position",
+        entityId: positionId,
+        afterData: { id: positionId, code: targetPos.code, title: targetPos.title, deleted: true },
+      });
     });
 
-    await writeAuditLog({
-      userId: currentUserId,
-      action: "POSITION_DEACTIVATED",
-      entityType: "Position",
-      entityId: positionId,
-      afterData: sanitizePositionAudit(updated),
-    });
-
-    revalidatePath("/hr/organization/positions");
+    safeRevalidatePath("/hr/organization");
+    safeRevalidatePath("/hr/organization/positions");
 
     return { success: true };
   } catch (error: any) {
-    return { success: false, error: error.message || "Không thể vô hiệu hóa chức danh." };
+    return { success: false, error: error.message || "Không thể xóa chức danh." };
   }
 }
+
+export const deactivatePositionAction = deletePositionAction;
 
 // --- Server Action: Reactivate Org Unit ---
 export async function reactivateOrgUnitAction(unitId: string) {

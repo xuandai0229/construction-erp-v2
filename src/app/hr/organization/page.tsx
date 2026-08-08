@@ -152,6 +152,13 @@ export default async function OrganizationPage(props: OrganizationPageProps) {
     }
   });
 
+  // Calculate total active company workforce headcount (CURRENT_WORKFORCE)
+  const companyHeadcount = await prisma.employee.count({
+    where: {
+      status: { in: ["ACTIVE", "PROBATION", "SUSPENDED"] },
+    },
+  });
+
   if (activeTab === "chart") {
     return (
       <HrWorkspaceShell>
@@ -163,7 +170,7 @@ export default async function OrganizationPage(props: OrganizationPageProps) {
         <Suspense fallback={<div className="p-4 text-sm text-slate-500">Đang tải...</div>}>
           <OrganizationSubTabs />
         </Suspense>
-        <OrgChartView treeData={rootNodes} />
+        <OrgChartView treeData={rootNodes} companyHeadcount={companyHeadcount} />
       </HrWorkspaceShell>
     );
   }
@@ -194,6 +201,7 @@ export default async function OrganizationPage(props: OrganizationPageProps) {
         treeData={rootNodes}
         flatUnits={flatUnits}
         canManage={managePerm.allowed}
+        companyHeadcount={companyHeadcount}
       />
     </HrWorkspaceShell>
   );

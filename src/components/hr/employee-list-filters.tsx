@@ -155,6 +155,7 @@ export function EmployeeListFilters({ organizationUnits, positions }: EmployeeLi
             className="w-full py-1.5 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Tất cả phòng ban</option>
+            <option value="UNASSIGNED">Chưa phân phòng ban</option>
             {organizationUnits.map((org) => (
               <option key={org.id} value={org.id}>
                 {org.name} ({org.code})
@@ -173,6 +174,7 @@ export function EmployeeListFilters({ organizationUnits, positions }: EmployeeLi
             className="w-full py-1.5 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Tất cả chức danh</option>
+            <option value="UNASSIGNED">Chưa xác định chức danh</option>
             {positions.map((pos) => (
               <option key={pos.id} value={pos.id}>
                 {pos.title}

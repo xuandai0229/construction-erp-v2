@@ -19,9 +19,10 @@ import { OrgTreeNode } from "./organization-tree-view";
 
 interface OrgChartViewProps {
   treeData: OrgTreeNode[];
+  companyHeadcount?: number;
 }
 
-export function OrgChartView({ treeData }: OrgChartViewProps) {
+export function OrgChartView({ treeData, companyHeadcount }: OrgChartViewProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [collapsedNodes, setCollapsedNodes] = useState<Record<string, boolean>>({});
   const [zoomLevel, setZoomLevel] = useState<number>(1);
@@ -57,7 +58,9 @@ export function OrgChartView({ treeData }: OrgChartViewProps) {
   // Calculate total headcount
   const countAll = (nodes: OrgTreeNode[]): number =>
     nodes.reduce((acc, n) => acc + n.activeEmployeeCount + countAll(n.children), 0);
-  const totalCompanyHeadcount = countAll(treeData);
+  const assignedCompanyHeadcount = countAll(treeData);
+  const totalCompanyHeadcount = companyHeadcount ?? assignedCompanyHeadcount;
+  const unassignedHeadcount = Math.max(0, totalCompanyHeadcount - assignedCompanyHeadcount);
 
   const renderChartNode = (node: OrgTreeNode, isTopDirector = false) => {
     const isCollapsed = !!collapsedNodes[node.id];
@@ -66,8 +69,6 @@ export function OrgChartView({ treeData }: OrgChartViewProps) {
       searchTerm.trim() !== "" &&
       (node.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         node.code.toLowerCase().includes(searchTerm.toLowerCase()));
-
-    const isCore = ["BGD", "PKT", "KTTTC"].includes(node.code.toUpperCase());
 
     return (
       <div key={node.id} className="flex flex-col items-center">
@@ -233,7 +234,7 @@ export function OrgChartView({ treeData }: OrgChartViewProps) {
                   CTY
                 </span>
                 <span className="text-[11px] font-extrabold text-blue-800 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
-                  Tổng {totalCompanyHeadcount} NV
+                  Tổng {totalCompanyHeadcount} NV{unassignedHeadcount > 0 ? ` (${assignedCompanyHeadcount} đã phân phòng, ${unassignedHeadcount} chưa phân)` : ""}
                 </span>
               </div>
               <h2 className="text-xs font-extrabold text-slate-900">

@@ -362,7 +362,7 @@ export function EmployeeDataTable({
                   {/* 2. Department & Position Cell (19%) */}
                   <td className="py-2.5 px-3 overflow-hidden">
                     <div className="space-y-0.5 min-w-0">
-                      <div className="text-xs font-semibold text-slate-900 truncate" title={cleanDeptName || "Chưa phân công"}>
+                      <div className="text-xs font-semibold text-slate-900 truncate" title={cleanDeptName || "Chưa phân phòng ban"}>
                         {cleanDeptName ? (
                           <span className="flex items-center gap-1 min-w-0">
                             <Building2 className="w-3 h-3 text-slate-400 shrink-0" />
@@ -370,18 +370,18 @@ export function EmployeeDataTable({
                           </span>
                         ) : (
                           <span className="text-amber-700 bg-amber-50 px-1 py-0.5 rounded text-[10px] font-medium border border-amber-200">
-                            Chưa phân công
+                            Chưa phân phòng ban
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-slate-600 truncate" title={cleanPosTitle || "—"}>
+                      <div className="text-xs text-slate-600 truncate" title={cleanPosTitle || "Chưa xác định chức danh"}>
                         {cleanPosTitle ? (
                           <span className="flex items-center gap-1 min-w-0">
                             <Briefcase className="w-3 h-3 text-slate-400 shrink-0" />
                             <span className="truncate text-[11px]">{cleanPosTitle}</span>
                           </span>
                         ) : (
-                          <span className="text-slate-400 italic text-[11px]">—</span>
+                          <span className="text-slate-400 italic text-[11px]">Chưa xác định chức danh</span>
                         )}
                       </div>
                     </div>
@@ -486,10 +486,10 @@ export function EmployeeDataTable({
                 <div className="min-w-0">
                   <span className="text-slate-400 block text-[10px] uppercase font-bold">Phòng ban / Chức danh</span>
                   <span className="font-semibold text-slate-900 block truncate">
-                    {sanitizeDisplayName(emp.currentDepartmentName) || "Chưa phân công"}
+                    {sanitizeDisplayName(emp.currentDepartmentName) || "Chưa phân phòng ban"}
                   </span>
                   <span className="text-slate-600 text-[11px] block truncate">
-                    {sanitizeDisplayName(emp.currentPositionTitle) || "—"}
+                    {sanitizeDisplayName(emp.currentPositionTitle) || "Chưa xác định chức danh"}
                   </span>
                 </div>
                 <div className="min-w-0">
