@@ -2,7 +2,7 @@
 
 import React, { useState, useTransition, useRef, useEffect } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { Search, Filter, X, Calendar, RefreshCw, SlidersHorizontal, ChevronDown, Check } from "lucide-react";
+import { Search, Filter, X, Calendar, RefreshCw, SlidersHorizontal, ChevronDown, Check, ChevronUp } from "lucide-react";
 
 interface Option {
   id: string;
@@ -23,11 +23,6 @@ export function HrReportFilterBar({ orgUnits, projects, projectRoles }: HrReport
   const [isPending, startTransition] = useTransition();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  // Project Combobox State
-  const [isProjectOpen, setIsProjectOpen] = useState(false);
-  const [projectSearch, setProjectSearch] = useState("");
-  const projectComboboxRef = useRef<HTMLDivElement>(null);
-
   const dateStart = searchParams.get("dateStart") || "";
   const dateEnd = searchParams.get("dateEnd") || "";
   const orgUnitId = searchParams.get("orgUnitId") || "";
@@ -37,12 +32,23 @@ export function HrReportFilterBar({ orgUnits, projects, projectRoles }: HrReport
   const searchQuery = searchParams.get("searchQuery") || "";
   const kpiFilter = searchParams.get("kpiFilter") || "";
 
+  // Advanced filters state (auto-expand if orgUnitId or projectRoleId is set)
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState<boolean>(Boolean(orgUnitId || projectRoleId));
+
+  // Project Combobox State
+  const [isProjectOpen, setIsProjectOpen] = useState(false);
+  const [projectSearch, setProjectSearch] = useState("");
+  const projectComboboxRef = useRef<HTMLDivElement>(null);
+
+  const positionId = searchParams.get("positionId") || "";
+
   const activeFilterCount = [
     dateStart,
     dateEnd,
     orgUnitId,
     projectId,
     projectRoleId,
+    positionId,
     assignmentStatus,
     searchQuery,
     kpiFilter,
@@ -67,7 +73,6 @@ export function HrReportFilterBar({ orgUnits, projects, projectRoles }: HrReport
     });
   };
 
-  // Close project combobox on click outside or Escape key
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (projectComboboxRef.current && !projectComboboxRef.current.contains(event.target as Node)) {
@@ -113,7 +118,7 @@ export function HrReportFilterBar({ orgUnits, projects, projectRoles }: HrReport
               Bộ lọc đang áp dụng: {activeFilterCount}
             </span>
           ) : (
-            <span className="text-2xs text-slate-400 font-medium">(Hiển thị tất cả bản ghi)</span>
+            <span className="text-2xs text-slate-400 font-medium">(Mặc định: Điều động đang hiệu lực)</span>
           )}
         </div>
 
@@ -142,7 +147,8 @@ export function HrReportFilterBar({ orgUnits, projects, projectRoles }: HrReport
 
       {/* Main Filters Form */}
       <div className={`space-y-4 ${isMobileOpen ? "block" : "hidden md:block"}`}>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        {/* Primary Filter Bar (4 core items) */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {/* 1. Search Query */}
           <div>
             <label className="block text-2xs font-semibold text-slate-600 mb-1">
@@ -160,26 +166,7 @@ export function HrReportFilterBar({ orgUnits, projects, projectRoles }: HrReport
             </div>
           </div>
 
-          {/* 2. Org Unit */}
-          <div>
-            <label className="block text-2xs font-semibold text-slate-600 mb-1">
-              Đơn vị gốc:
-            </label>
-            <select
-              value={orgUnitId}
-              onChange={(e) => updateParam("orgUnitId", e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
-            >
-              <option value="">Tất cả đơn vị gốc</option>
-              {orgUnits.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.name} ({u.code})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* 3. Searchable Project Combobox (No horizontal overflow) */}
+          {/* 2. Searchable Project Combobox */}
           <div className="relative" ref={projectComboboxRef}>
             <label className="block text-2xs font-semibold text-slate-600 mb-1">
               Công trình / Dự án:
@@ -272,26 +259,7 @@ export function HrReportFilterBar({ orgUnits, projects, projectRoles }: HrReport
             )}
           </div>
 
-          {/* 4. Project Role */}
-          <div>
-            <label className="block text-2xs font-semibold text-slate-600 mb-1">
-              Vai trò công trường:
-            </label>
-            <select
-              value={projectRoleId}
-              onChange={(e) => updateParam("projectRoleId", e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
-            >
-              <option value="">Tất cả vai trò</option>
-              {projectRoles.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name} ({r.code})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* 5. Assignment Status */}
+          {/* 3. Assignment Status */}
           <div>
             <label className="block text-2xs font-semibold text-slate-600 mb-1">
               Trạng thái điều động:
@@ -301,7 +269,8 @@ export function HrReportFilterBar({ orgUnits, projects, projectRoles }: HrReport
               onChange={(e) => updateParam("assignmentStatus", e.target.value)}
               className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
             >
-              <option value="">Tất cả trạng thái</option>
+              <option value="">Đang hiệu lực (Mặc định)</option>
+              <option value="ALL">Tất cả lịch sử điều động</option>
               <option value="ACTIVE">Đang hiệu lực</option>
               <option value="PLANNING">Kế hoạch điều động</option>
               <option value="RELEASED">Đã rút khỏi dự án</option>
@@ -309,44 +278,94 @@ export function HrReportFilterBar({ orgUnits, projects, projectRoles }: HrReport
               <option value="CANCELLED">Đã hủy</option>
             </select>
           </div>
-        </div>
 
-        {/* Date Range & Dynamic Status Row */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-              <Calendar className="h-3.5 w-3.5 text-blue-600" />
-              Thời gian báo cáo:
-            </span>
-            <div className="flex items-center gap-1.5">
-              <label htmlFor="dateStart" className="text-xs font-medium text-slate-600">Từ ngày:</label>
+          {/* 4. Date Range */}
+          <div>
+            <label className="block text-2xs font-semibold text-slate-600 mb-1 flex items-center gap-1">
+              <Calendar className="h-3 w-3 text-blue-600" />
+              Mốc thời gian báo cáo:
+            </label>
+            <div className="flex items-center gap-1">
               <input
-                id="dateStart"
                 type="date"
                 value={dateStart}
                 onChange={(e) => updateParam("dateStart", e.target.value)}
-                className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs text-slate-900 focus:border-blue-500 focus:outline-hidden"
+                className="w-full rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs text-slate-900 focus:border-blue-500 focus:outline-hidden"
               />
-            </div>
-            <div className="flex items-center gap-1.5">
-              <label htmlFor="dateEnd" className="text-xs font-medium text-slate-600">Đến ngày:</label>
+              <span className="text-slate-400 text-xs">-</span>
               <input
-                id="dateEnd"
                 type="date"
                 value={dateEnd}
                 onChange={(e) => updateParam("dateEnd", e.target.value)}
-                className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs text-slate-900 focus:border-blue-500 focus:outline-hidden"
+                className="w-full rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs text-slate-900 focus:border-blue-500 focus:outline-hidden"
               />
             </div>
           </div>
+        </div>
 
-          {isPending && (
-            <span className="flex items-center gap-1.5 text-xs text-blue-600 font-medium animate-pulse">
-              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-              Đang cập nhật danh sách...
-            </span>
+        {/* Advanced Filters Bar (Collapsible) */}
+        <div className="border-t border-slate-100 pt-3">
+          <button
+            type="button"
+            onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 transition-colors"
+          >
+            {isAdvancedOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            <span>Bộ lọc nâng cao (Đơn vị gốc & Vai trò công trường)</span>
+            {(orgUnitId || projectRoleId) && (
+              <span className="w-2 h-2 rounded-full bg-blue-600 inline-block ml-1" />
+            )}
+          </button>
+
+          {isAdvancedOpen && (
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 rounded-lg bg-slate-50 border border-slate-200 animate-in fade-in-50">
+              {/* Org Unit */}
+              <div>
+                <label className="block text-2xs font-semibold text-slate-600 mb-1">
+                  Đơn vị gốc (Phòng ban / Công ty):
+                </label>
+                <select
+                  value={orgUnitId}
+                  onChange={(e) => updateParam("orgUnitId", e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-blue-500 focus:outline-hidden"
+                >
+                  <option value="">Tất cả đơn vị gốc</option>
+                  {orgUnits.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name} ({u.code})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Project Role */}
+              <div>
+                <label className="block text-2xs font-semibold text-slate-600 mb-1">
+                  Vai trò công trường:
+                </label>
+                <select
+                  value={projectRoleId}
+                  onChange={(e) => updateParam("projectRoleId", e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 focus:border-blue-500 focus:outline-hidden"
+                >
+                  <option value="">Tất cả vai trò công trường</option>
+                  {projectRoles.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.name} ({r.code})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
           )}
         </div>
+
+        {isPending && (
+          <div className="flex items-center justify-end gap-1.5 text-xs text-blue-600 font-medium animate-pulse pt-1">
+            <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+            Đang cập nhật danh sách...
+          </div>
+        )}
       </div>
     </div>
   );

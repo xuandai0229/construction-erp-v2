@@ -11,6 +11,7 @@ export interface HrReportFilters {
   orgUnitId?: string;
   projectId?: string;
   projectRoleId?: string;
+  positionId?: string;
   employeeStatus?: string;
   assignmentStatus?: string;
   searchQuery?: string;
@@ -32,7 +33,7 @@ export interface HrKpiMetrics {
 
 export interface HrChartData {
   orgUnitDistribution: Array<{ unitId: string; unitCode: string; unitName: string; count: number; percentage: number }>;
-  projectDistribution: Array<{ projectId: string; projectCode: string; projectName: string; count: number; totalAllocation: number }>;
+  projectDistribution: Array<{ projectId: string; projectCode: string; projectName: string; count: number; totalAllocation: number; averageAllocation: number }>;
   statusBreakdown: Array<{ status: string; statusLabel: string; count: number }>;
   roleBreakdown: Array<{ roleId: string; roleCode: string; roleName: string; count: number }>;
 }
@@ -284,6 +285,7 @@ export async function getHrReportCharts(
           projectName: "Chưa điều động công trình",
           count: total,
           totalAllocation: 0,
+          averageAllocation: 0,
         },
       ],
       statusBreakdown: [{ status: "UNASSIGNED", statusLabel: "Chưa điều động", count: total }],
@@ -324,22 +326,25 @@ export async function getHrReportCharts(
     },
   });
 
-  const orgMap = new Map<string, { unitId: string; unitCode: string; unitName: string; count: number }>();
+  const orgMap = new Map<string, { unitId: string; unitCode: string; unitName: string; empSet: Set<string> }>();
   const projMap = new Map<string, { projectId: string; projectCode: string; projectName: string; count: number; totalAllocation: number }>();
   const roleMap = new Map<string, { roleId: string; roleCode: string; roleName: string; count: number }>();
   const statusMap = new Map<string, number>();
 
-  const total = assignments.length;
+  const totalUniqueOnSiteEmps = new Set<string>();
 
   for (const a of assignments) {
+    const empId = a.employeeId;
+    if (empId) totalUniqueOnSiteEmps.add(empId);
+
     const org = a.employee?.orgAssignments?.[0]?.organizationUnit;
     const orgId = org?.id || "UNASSIGNED_ORG";
     const orgCode = org?.code || "N/A";
     const orgName = org?.name || "Chưa thuộc phòng ban";
     if (!orgMap.has(orgId)) {
-      orgMap.set(orgId, { unitId: orgId, unitCode: orgCode, unitName: orgName, count: 0 });
+      orgMap.set(orgId, { unitId: orgId, unitCode: orgCode, unitName: orgName, empSet: new Set() });
     }
-    orgMap.get(orgId)!.count++;
+    if (empId) orgMap.get(orgId)!.empSet.add(empId);
 
     const pId = a.projectId;
     const pCode = a.project?.code || "N/A";
@@ -363,12 +368,19 @@ export async function getHrReportCharts(
     statusMap.set(st, (statusMap.get(st) || 0) + 1);
   }
 
+  const totalEmpsCount = totalUniqueOnSiteEmps.size || 1;
   const orgUnitDistribution = Array.from(orgMap.values()).map((item) => ({
-    ...item,
-    percentage: total > 0 ? Math.round((item.count / total) * 100) : 0,
+    unitId: item.unitId,
+    unitCode: item.unitCode,
+    unitName: item.unitName,
+    count: item.empSet.size,
+    percentage: Math.round((item.empSet.size / totalEmpsCount) * 100),
   }));
 
-  const projectDistribution = Array.from(projMap.values());
+  const projectDistribution = Array.from(projMap.values()).map((item) => ({
+    ...item,
+    averageAllocation: item.count > 0 ? Math.round(item.totalAllocation / item.count) : 0,
+  }));
   const roleBreakdown = Array.from(roleMap.values());
 
   const statusLabelMap: Record<string, string> = {
@@ -446,6 +458,31 @@ export async function getHrReportDetailsTable(
       });
     }
 
+    if (filters.positionId) {
+      if (filters.positionId === "UNASSIGNED_POS") {
+        empWhere.AND.push({
+          orgAssignments: {
+            none: {
+              isPrimary: true,
+              startDate: { lte: targetDate },
+              OR: [{ endDate: null }, { endDate: { gt: targetDate } }],
+            },
+          },
+        });
+      } else {
+        empWhere.AND.push({
+          orgAssignments: {
+            some: {
+              positionId: filters.positionId,
+              isPrimary: true,
+              startDate: { lte: targetDate },
+              OR: [{ endDate: null }, { endDate: { gt: targetDate } }],
+            },
+          },
+        });
+      }
+    }
+
     const [rawEmployees, totalCount] = await Promise.all([
       prismaClient.employee.findMany({
         where: empWhere,
@@ -506,7 +543,7 @@ export async function getHrReportDetailsTable(
     employee: {
       AND: [
         scopeWhere,
-        filters.employeeStatus ? { status: filters.employeeStatus as any } : {},
+        filters.employeeStatus ? { status: filters.employeeStatus as any } : { status: "ACTIVE" },
         filters.searchQuery
           ? {
               OR: [
@@ -517,10 +554,19 @@ export async function getHrReportDetailsTable(
           : {},
       ],
     },
-    ...(filters.assignmentStatus ? { status: filters.assignmentStatus as any } : {}),
     ...(filters.projectId ? { projectId: filters.projectId } : {}),
     ...(filters.projectRoleId ? { projectPersonnelRoleId: filters.projectRoleId } : {}),
   };
+
+  if (!filters.assignmentStatus) {
+    whereClause.status = "ACTIVE";
+    if (!filters.dateStart && !filters.dateEnd) {
+      whereClause.startDate = { lte: targetDate };
+      whereClause.OR = [{ endDate: null }, { endDate: { gt: targetDate } }];
+    }
+  } else if (filters.assignmentStatus !== "ALL") {
+    whereClause.status = filters.assignmentStatus as any;
+  }
 
   if (filters.dateStart || filters.dateEnd) {
     const dStart = filters.dateStart ? new Date(filters.dateStart) : undefined;

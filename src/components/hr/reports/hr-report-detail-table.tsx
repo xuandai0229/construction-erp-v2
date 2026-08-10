@@ -9,6 +9,16 @@ interface HrReportDetailTableProps {
   tableData: HrReportDetailsTableResult;
 }
 
+function formatDisplayDate(dateStr?: string | null): string {
+  if (!dateStr || dateStr === "-") return "Không thời hạn";
+  const parts = dateStr.split("-");
+  if (parts.length === 3) {
+    const [year, month, day] = parts;
+    return `${day}/${month}/${year}`;
+  }
+  return dateStr;
+}
+
 export function HrReportDetailTable({ tableData }: HrReportDetailTableProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -144,24 +154,26 @@ export function HrReportDetailTable({ tableData }: HrReportDetailTableProps) {
                 return (
                   <tr key={item.assignmentId} className="hover:bg-slate-50 transition-colors">
                     <td className="px-3 py-3 text-center font-medium text-slate-500">{stt}</td>
-                    <td className="px-3 py-3 whitespace-nowrap sticky left-0 bg-white z-10 shadow-xs">
-                      <div className="font-bold text-slate-900">{item.employeeFullName}</div>
+                    <td className="px-3 py-3 min-w-[150px] max-w-[200px] sticky left-0 bg-white z-10 shadow-xs">
+                      <div className="font-bold text-slate-900 truncate" title={item.employeeFullName}>{item.employeeFullName}</div>
                       <div className="text-2xs font-mono font-semibold text-blue-700">{item.employeeCode}</div>
                     </td>
-                    <td className="px-3 py-3 text-slate-600 whitespace-nowrap">
-                      {item.orgUnitName || "Chưa gán"}
+                    <td className="px-3 py-3 min-w-[140px] max-w-[180px] text-slate-600">
+                      <div className="truncate" title={item.orgUnitName}>{item.orgUnitName || "Chưa gán"}</div>
                     </td>
-                    <td className="px-3 py-3 whitespace-nowrap">
-                      <div className="font-semibold text-slate-900">{item.projectName}</div>
-                      <div className="text-2xs text-slate-500 font-mono">{item.projectCode}</div>
+                    <td className="px-3 py-3 min-w-[180px] max-w-[260px]">
+                      <div className="font-semibold text-slate-900 line-clamp-2 leading-snug" title={item.projectName}>
+                        {item.projectName}
+                      </div>
+                      <div className="text-2xs text-slate-500 font-mono mt-0.5">{item.projectCode}</div>
                     </td>
                     <td className="px-3 py-3 whitespace-nowrap font-medium text-slate-800">
                       {item.projectRoleName}
                     </td>
                     <td className="px-3 py-3 text-center font-mono whitespace-nowrap text-slate-700">
-                      <span>{item.startDate}</span>
+                      <span>{formatDisplayDate(item.startDate)}</span>
                       <span className="mx-1 text-slate-400">→</span>
-                      <span>{item.expectedEndDate || "Không thời hạn"}</span>
+                      <span>{formatDisplayDate(item.expectedEndDate)}</span>
                     </td>
                     <td className="px-3 py-3 text-center whitespace-nowrap">
                       <span
