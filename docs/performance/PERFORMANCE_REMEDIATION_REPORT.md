@@ -1,5 +1,9 @@
 # Performance Remediation Report
 
+> **CURRENT VERDICT:** **CONDITIONAL GO FOR CONTROLLED REMEDIATION.**
+>
+> **NOT YET SCALE-READY.** The earlier Phase 2 request-scoped context-cache candidate remains **BLOCKED** because it did not prove end-user improvement. Phase 2A.1 closed enough production-local evidence to permit narrow, independently measured remediation only; it did not clear Auth/RBAC, project isolation, query architecture, or scale readiness.
+
 ## 1. Executive Summary
 
 Phase 2 did not ship a performance remediation. It added development/QA-only request and Prisma phase telemetry, closed several evidence gaps, and rejected the first isolated P0 candidate because the required end-user before/after result was not demonstrated.
@@ -345,12 +349,12 @@ For the ten direct-cold `/dashboard` UX samples: LCP is **168 ms p50 / 232 ms p9
 
 ## Performance Accounting
 
-`/dashboard` direct-cold p50 T3 is 206 ms. T1 occurs at 20 ms, leaving approximately **187 ms (90%) after the first server response** before primary UI is stable. This remainder includes client download/execute/hydration/render and the skeleton/content transition; it is not a claim that every millisecond is JavaScript.
+`/dashboard` direct-cold p50 T3 is 206 ms. T1 occurs at 20 ms, leaving approximately **187 ms (90%) of post-first-byte completion** before primary UI is stable. This remainder can include streamed RSC, route chunks, hydration, JavaScript execution, layout, render, paint, and loading-boundary completion; it is not a claim that every millisecond is client CPU or JavaScript.
 
 | Layer | p50 ms | Share of T3 | Interpretation |
 |---|---:|---:|---|
 | First response / server wait (T0→T1) | 20 | 10% | Includes proxy, auth, AppShell and initial server response. |
-| Client-side completion (T1→T3) | 187 | 90% | Hydration, client render/paint, and loading-boundary completion. |
+| Post-first-byte completion (T1→T3) | 187 | 90% | Mixed streamed RSC/chunk/hydration/render/paint/loading-boundary completion; not additive client CPU. |
 | AppShell server span | 10.24 | Nested | Not additive; contained in request processing. |
 | GlobalProjectContext span | 3.91 ×2 | Nested | Confirmed duplicate work, current S0 p50 small. |
 | HR permission aggregate | 4.69 | Nested | Security work retained. |
@@ -364,7 +368,7 @@ This accounts for the user-visible wait without falsely adding nested server spa
 | Rank | Cause | Measured user-visible cost | Confidence | Classification |
 |---:|---|---:|---|---|
 | 1 | Root HTTP redirect plus dashboard loading-boundary swap | `/` adds 22 ms p50 to `/dashboard`; skeleton visible for ~78 ms in captured root flow | Confirmed | Initial visual flicker |
-| 2 | Client completion after first response | 187 ms p50 / 208 ms p95 on direct `/dashboard` | High | Main contributor to current T3 |
+| 2 | Post-first-byte completion | 187 ms p50 / 208 ms p95 on direct `/dashboard` | High | Main contributor to current T3; mixed layers, not labeled client CPU without a trace |
 | 3 | Warm/prefetch navigation tails | `/projects` first-click p95 413 ms; multiple major routes have 383–924 ms p95 tails | Confirmed | User-visible navigation variability |
 | 4 | Duplicate Auth/GPC/RBAC/Prisma work | 43 ops/request; two sessions and two contexts; AppShell 10/15 ms | Confirmed | Scale and tail-risk, not current S0 p50 leader |
 | 5 | `/supervision/weekly` compatibility path | 315/348 ms direct T3 | Confirmed | Route-specific UX issue |
@@ -401,3 +405,168 @@ The first recommended remediation is the **smallest verified visual surface: the
 ## Phase 2A.1 Verdict
 
 **CONDITIONAL GO — evidence closure only.** The production-local latency and flicker blockers for the representative Admin flow are now measured. No business remediation, auth/RBAC change, cache, index, redirect change, query rewrite, component split, or `router.refresh()` change was made. The system is not cleared for an auth/RBAC remediation until the existing role/project-isolation regression matrix is available; high-volume scaling and route-tail work also remain open.
+
+---
+
+# Phase 2B — Visual Stability & Tail Latency
+
+## Current Verdict Reconciliation
+
+**CONDITIONAL GO FOR CONTROLLED REMEDIATION. NOT YET SCALE-READY.**
+
+The historical Phase 2 request-scoped context-cache candidate remains **BLOCKED**: it changed work count but did not prove an end-user improvement and was rolled back. Phase 2A.1 then supplied sufficient production-local evidence for a deliberately narrow visual remediation. This phase retained that visual remediation, rejected one tail candidate, and did not change Auth/RBAC, project isolation, session caching, `force-dynamic`, redirects, database queries, indexes, or broad navigation architecture.
+
+## Terminology Correction
+
+`T1 → T3` is called **post-first-byte completion** throughout Phase 2B. It can contain streamed RSC work, route chunks, hydration, JavaScript execution, layout, render, paint, and loading-boundary completion. A subpart is called client CPU or render cost only when an appropriate trace proves it.
+
+## Statistical Methodology
+
+Visual measurements use 20 independent fresh authenticated contexts for `/` and `/dashboard`. Tail measurements use 30 independent fresh contexts per route and click condition, with a real UI click after the source route is interactive:
+
+| Condition | Click timing |
+|---|---|
+| Fast click | 200 ms after source route becomes interactive |
+| Normal click | 1,000 ms after source route becomes interactive |
+| Prefetched click | 1,500 ms after source route becomes interactive |
+
+The tail matrix has 30 samples per condition, not 50. It satisfies the minimum requested sample size. Percentiles use nearest-rank: at `n=30`, p95 is the 29th ordered value, so p90/p95 below are **30-run tail signals**, not a stable production percentile claim.
+
+Every target navigation records browser response timing, RSC response request IDs, RSC resource counts, long-task observations, console errors/warnings, and—when an RSC request is emitted—server proxy/phase/Prisma telemetry. Background `Link` prefetch is intentionally retained in the observed flow because it is user-facing application behavior.
+
+## Visual Fix Candidate
+
+### Boundary dependency tree
+
+```text
+GET / → role-aware 307 → /dashboard
+  → src/app/(dashboard)/layout.tsx → AppShell
+  → src/app/(dashboard)/dashboard/loading.tsx
+  → DashboardPage → ExecutiveDashboard
+```
+
+The confirmed fallback is the dashboard route's `loading.tsx`, not the role-aware root redirect. The placeholder existed for about 76–78 ms at p50. It has a structural layout aligned with the dashboard, but every block used Tailwind `animate-pulse`.
+
+Candidates considered:
+
+| Candidate | Decision | Reason |
+|---|---|---|
+| Structural placeholder | Already present | Geometry was already stable; no layout-shift evidence. |
+| Non-animated placeholder | **Retained** | Removes the verified pulse animation while preserving loading geometry and semantics. |
+| Delayed indicator | Rejected | Would require client timing/state machinery and could hide or delay valid loading work. |
+| Preserve previous content | Not applicable on direct initial entry | There is no previous route content without risking a stale-data illusion. |
+
+The retained change is confined to `src/app/(dashboard)/dashboard/loading.tsx`: it removes `animate-pulse` and adds `data-dashboard-loading` solely for deterministic QA observation. It neither changes data fetches nor delays content.
+
+## Visual Before/After
+
+| Route | Build | T1 p50 | T2 p50 | T3 p50 | Loading visible p50 | CLS p50 | Console events | Shell removals |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| `/` | Before | 12 | 242 | 258 | 76.4 animated | 0.00 | 0 | 0 |
+| `/` | After | 10 | 233 | 249 | 77.6 static | 0.00 | 0 | 0 |
+| `/dashboard` | Before | 30 | 222 | 243 | 77.6 animated | 0.00 | 0 | 0 |
+| `/dashboard` | After | 20 | 215 | 231 | 79.4 static | 0.00 | 0 | 0 |
+
+The root video after the change still shows the correct one-document redirect chain and then `shell → static placeholder → content`; it shows no browser reload loop, shell disappearance, or console warning. The placeholder's lifetime did not need to be extended; only the visible pulse was removed.
+
+Visual acceptance: **PASS**. T3 did not regress (root -3.7%; dashboard -5.1% in these separate 20-run samples), CLS remains zero, and no hydration warning or shell remount was observed. This is a visual-stability result, not a claim of a large latency-speed improvement.
+
+## 50-Run Tail Matrix
+
+The requested section name is retained for continuity; the completed, valid matrix is the 30-run minimum described above. Values are T3 interactive `p50 / p95` in `ms`.
+
+| Route | Fast click | Normal click | Prefetched click | Notes |
+|---|---:|---:|---:|---|
+| `/projects` | 110 / 414 | 112 / 132 | 108 / 399 | Fast/prefetch tail signal; normal condition stable. |
+| `/documents` | 79 / 417 | 83 / 95 | 89 / 122 | Normal/prefetched stable. |
+| `/hr` | 61 / 82 | 61 / 92 | 76 / 262 | One fast max 841 ms; correlated below. |
+| `/materials` | 87 / 362 | 94 / 409 | 360 / 389 | One fast max 1,059 ms; one normal max 879 ms. |
+| `/approvals` | 95 / 114 | 81 / 378 | 81 / 369 | Bimodal normal/prefetch completion, no sample ≥500 ms. |
+| `/settings` | 368 / 511 | 84 / 837 | 78 / 479 | Five samples ≥500 ms; highest repeatable tail signal. |
+| `/reports/weekly-inspection` via weekly UI | 74 / 88 | 78 / 98 | 74 / 88 | Compatibility UI flow stable. |
+
+Selected normal-click distribution detail (`p50 / p75 / p90 / p95 / max`, `ms`):
+
+| Route | Distribution |
+|---|---|
+| Projects | 112 / 119 / 130 / 132 / 144 |
+| Documents | 83 / 90 / 93 / 95 / 124 |
+| HR | 61 / 70 / 84 / 92 / 112 |
+| Materials | 94 / 363 / 377 / 409 / 879 |
+| Approvals | 81 / 97 / 360 / 378 / 408 |
+| Settings | 84 / 360 / 378 / 837 / 853 |
+| Weekly | 78 / 87 / 90 / 98 / 116 |
+
+## Slow Sample Correlation
+
+### HR fast click — 841 ms
+
+The initial `/hr` RSC response began at 26 ms, so this is not a first-byte server wait. The browser then observed 23 RSC responses before T3, including `/hr/reports`, `/hr/project-assignments`, `/hr/organization`, repeated `/hr/employees`, `/settings`, and `/dashboard`. One 51 ms long task was observed.
+
+The target `/hr` request (`410af940fac4`) also had 14 Prisma operations with 612.50 ms summed operation duration: three `Employee.count` calls and an `EmployeeProjectAssignment.groupBy` each took about 143 ms. The RSC response can stream its first byte before those later phases finish, which explains why T1 is low while T3 is high.
+
+Classification: **mixed streamed server/database tail plus route/link prefetch fan-out**. It is specifically not evidence that the seven AppShell HR permission branches caused the tail.
+
+### Settings — five samples from 511 to 868 ms
+
+For four settings tails, the target `/settings` response began in 25–45 ms and had only three Prisma operations with 2.73–6.65 ms summed duration. Their T3 delay was 379–827 ms after the first observed byte. Response timelines show concurrent background `/dashboard` or `/dashboard/projects-status` RSC activity after the settings response; one sample had a 56 ms long task and the others had none.
+
+Classification: **post-first-byte completion with navigation prefetch contention**. The evidence rules out settings database work as the primary cause. It does not yet isolate an individual browser scheduling/chunk/render phase, so no settings code was changed.
+
+### Materials — 1,059 ms fast and 879 ms normal samples
+
+The fast outlier did not receive its first observed RSC byte until 608 ms, then collected 20 RSC responses across dashboard/sidebar destinations before T3. The target materials RSC arrived at 652 ms, and a 50 ms long task occurred. The normal outlier received its target materials RSC at 45 ms with only six Prisma operations and 9.47 ms summed query duration, but remained in post-first-byte completion for 834 ms while dashboard RSC work occurred.
+
+Classification: **global navigation prefetch fan-out / post-first-byte contention**, with one fast-click server/RSC waiting tail. The materials query path is not the confirmed dominant cause.
+
+## Route Tail Classification
+
+| Route | Classification | Confidence | Remediation status |
+|---|---|---|---|
+| Settings | Post-first-byte navigation prefetch contention | High | Measure-only; no isolated component identified yet. |
+| Materials | Global prefetch contention; one fast RSC wait | High | Measure-only. |
+| HR | Mixed late streamed database work and HR/global prefetch fan-out | High | Candidate tested and rolled back. |
+| Projects/Documents | Fast/prefetch tail signals, normal stable | Medium | No confirmed bottleneck. |
+| Approvals | Bimodal post-first-byte signal below 500 ms | Medium | No confirmed bottleneck. |
+| Weekly | No tail evidence in 30-run matrix | High | No change. |
+
+The common code evidence is the default-prefetch `Link` architecture in `src/components/layout/sidebar.tsx`, supplemented by route-local links such as HR workspace/table links. A broad prefetch change would affect many user flows and was deliberately not made in this phase.
+
+## Retained Remediation
+
+| Change | Before | After | Result |
+|---|---|---|---|
+| Static dashboard loading placeholder | 76–78 ms animated pulse fallback | Same structural fallback without `animate-pulse` | **Retained**: visual stability improved; no T3/CLS/hydration regression. |
+
+## Rolled Back Candidates
+
+| Candidate | Before | After | Decision |
+|---|---|---|---|
+| `prefetch={false}` on HR workspace tabs | HR fast p50/p95 61/82; max 841 | HR fast p50/p95 59/88; max 1,272 | **Rolled back.** It did not remove global sidebar/employee-link fan-out and worsened the worst observed fast sample. |
+
+No Tail/Auth/RBAC/database remediation was retained.
+
+## Security Fixture Inventory
+
+| Role / fixture | Inventory result | Status |
+|---|---|---|
+| ADMIN | Existing authenticated `playwright/.auth/admin.json` | Available for this pass |
+| DIRECTOR, DEPUTY_DIRECTOR, CHIEF_COMMANDER | Development seed definitions exist, including two QA project assignments for CHIEF_COMMANDER | No authenticated QA storage state verified |
+| MANAGER, ENGINEER, STAFF, SUPERVISION_HEAD, CONSTRUCTION_SUPERVISOR | Role/policy definitions and some feature fixtures exist | No safe authenticated fixture verified |
+| Project A vs Project B | Development seed defines QA projects | No safe non-Admin browser fixture verified |
+
+The role/project security matrix is therefore **BLOCKED**. No users, credentials, projects, assignments, permissions, or production-like records were created or changed. No password or credential was logged in this report.
+
+## Concurrency Probe
+
+**BLOCKED.** The available environment is the same local database used for authenticated feature QA, without an explicitly isolated concurrency/load-test database or resource telemetry agreement. A 1/5/10/25 concurrency probe could alter timing while the matrix is in progress and has not been run. No denial-of-service-like load was sent.
+
+## Remaining Scale Risks
+
+The Phase 2A.1 evidence remains: `/dashboard` executes 43 Prisma operations per request, including duplicate session/context work. This phase did not deduplicate it. At 10 requests that is approximately 430 operations and at 100 requests approximately 4,300 operations before considering overlap, caching, row growth, or concurrency. It remains a scale-pressure signal, not the current S0 p50 root cause.
+
+The tail evidence adds a separate risk: broad default Link prefetch can issue many RSC requests after a primary navigation begins. The next investigation must quantify the UX trade-off of a narrowly scoped global/sidebar prefetch policy with role/project regression coverage; it must not simply disable all prefetch everywhere.
+
+## Next Recommended Fix
+
+Do not make a further remediation in this pass. First create safe role/project browser fixtures and then isolate **global sidebar Link prefetch scheduling** in one controlled candidate. Measure source-route click latency, target route T3, prefetch request count, background RSC count, and permissions for Admin plus at least one scoped project role. Retain only if it reduces the confirmed Settings/Materials post-first-byte tail without regressing normal navigation.
