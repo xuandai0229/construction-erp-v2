@@ -4,7 +4,7 @@ const { chromium } = require('playwright');
 
 const baseUrl = process.env.PERF_BASE_URL ?? 'http://127.0.0.1:3001';
 const storageState = process.env.PERF_STORAGE_STATE ?? 'playwright/.auth/admin.json';
-const outputDir = path.join(process.cwd(), 'docs/performance/.phase2a1-flicker');
+const outputDir = process.env.PERF_OUTPUT_DIR ?? path.join(process.cwd(), 'docs/performance/.phase2a1-flicker');
 const framesDir = path.join(outputDir, 'frames');
 const videoDir = path.join(outputDir, 'video');
 
@@ -41,7 +41,8 @@ fs.mkdirSync(videoDir, { recursive: true });
         atMs: Math.round((performance.now() - started) * 10) / 10,
         shell: visible(shell),
         heading: visible(heading),
-        skeleton: [...(main?.querySelectorAll('.animate-pulse') ?? [])].some(visible),
+        skeleton: Boolean(main?.querySelector('[data-dashboard-loading]'))
+          || [...(main?.querySelectorAll('.animate-pulse') ?? [])].some(visible),
         location: location.pathname,
       });
     };
@@ -84,7 +85,9 @@ fs.mkdirSync(videoDir, { recursive: true });
   await page.locator('[data-app-content] h1').first().waitFor({ state: 'visible', timeout: 60_000 });
   await page.waitForFunction(() => {
     const content = document.querySelector('[data-app-content]');
-    return Boolean(content?.querySelector('h1')) && ![...(content?.querySelectorAll('.animate-pulse') ?? [])].some((element) => {
+    return Boolean(content?.querySelector('h1'))
+      && !content?.querySelector('[data-dashboard-loading]')
+      && ![...(content?.querySelectorAll('.animate-pulse') ?? [])].some((element) => {
       if (!(element instanceof HTMLElement)) return false;
       const style = getComputedStyle(element);
       const rect = element.getBoundingClientRect();
