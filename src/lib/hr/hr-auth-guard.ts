@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import { resolveUserHrPermission, HrPermissionCheckResult } from "./permission-service";
 import { redirect } from "next/navigation";
 import { buildEffectiveDateWhere } from "./effective-date-helper";
+import { measureServerPhase } from "@/lib/performance/server";
 
 export interface HrUserContext {
   session: SessionUser;
@@ -81,10 +82,14 @@ export async function checkUserHasAnyHrPermission(userId: string, role: string):
     "hr:project_assignment:read",
     "hr:access_grant:manage",
   ];
-  const checks = await Promise.all(
-    workspacePermissions.map((permissionCode) => resolveUserHrPermission(prisma, userId, permissionCode))
-  );
-  return checks.some((check) => check.allowed);
+  return measureServerPhase("hr-permissions.any", async () => {
+    const checks = await Promise.all(
+      workspacePermissions.map((permissionCode) =>
+        measureServerPhase(`hr-permissions.${permissionCode}`, () => resolveUserHrPermission(prisma, userId, permissionCode))
+      )
+    );
+    return checks.some((check) => check.allowed);
+  });
 }
 
 /**
@@ -323,5 +328,4 @@ export async function buildManagerAssignmentScopeWhereClause(
 
   return { id: "IMPOSSIBLE_NON_EXISTENT_ID" };
 }
-
 

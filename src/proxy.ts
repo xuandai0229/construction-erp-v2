@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import {
+  createPerformanceRequestId,
+  isPerformanceProfilingEnabled,
+  logPerformanceEvent,
+} from '@/lib/performance/perf-core';
 
 const RETIRED_ROUTE_PREFIXES = ["/suppliers", "/contracts", "/accounting"] as const;
 
@@ -58,8 +63,25 @@ async function hasValidSession(request: NextRequest): Promise<boolean> {
 }
 
 export default async function proxy(request: NextRequest) {
+  const startedAt = performance.now();
+  const performanceProfiling = isPerformanceProfilingEnabled();
+  const requestId = performanceProfiling
+    ? request.headers.get("x-perf-request-id") || createPerformanceRequestId()
+    : undefined;
+  const logProxy = () => logPerformanceEvent({
+    requestId,
+    route: request.nextUrl.pathname,
+    phase: "proxy",
+    durationMs: performance.now() - startedAt,
+  });
+  const addPerfResponseHeader = (response: NextResponse) => {
+    if (requestId) response.headers.set("x-perf-request-id", requestId);
+    return response;
+  };
+
   if (isRetiredRoute(request.nextUrl.pathname)) {
-    return new NextResponse(null, { status: 404 });
+    logProxy();
+    return addPerfResponseHeader(new NextResponse(null, { status: 404 }));
   }
 
   const hasSession = await hasValidSession(request);
@@ -72,7 +94,8 @@ export default async function proxy(request: NextRequest) {
     if (!isApiRoute) {
       const url = new URL('/login', request.url);
       url.searchParams.set('next', `${request.nextUrl.pathname}${request.nextUrl.search}`);
-      return NextResponse.redirect(url);
+      logProxy();
+      return addPerfResponseHeader(NextResponse.redirect(url));
     }
   }
 
@@ -82,10 +105,18 @@ export default async function proxy(request: NextRequest) {
       response.cookies.delete('auth_session');
       return response;
     }
-    return NextResponse.redirect(new URL('/', request.url));
+    logProxy();
+    return addPerfResponseHeader(NextResponse.redirect(new URL('/', request.url)));
   }
 
-  const response = NextResponse.next();
+  const requestHeaders = new Headers(request.headers);
+  if (requestId) {
+    requestHeaders.set("x-perf-request-id", requestId);
+    requestHeaders.set("x-perf-route", request.nextUrl.pathname);
+  }
+  const response = requestId
+    ? NextResponse.next({ request: { headers: requestHeaders } })
+    : NextResponse.next();
   // Clear cookie if reason=session_expired on any route? No, only on login is fine, but let's be safe.
   if (request.nextUrl.searchParams.get('reason') === 'session_expired') {
     response.cookies.delete('auth_session');
@@ -94,7 +125,8 @@ export default async function proxy(request: NextRequest) {
   response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
   response.headers.set("Pragma", "no-cache");
   response.headers.set("Expires", "0");
-  return response;
+  logProxy();
+  return addPerfResponseHeader(response);
 }
 
 export const config = {

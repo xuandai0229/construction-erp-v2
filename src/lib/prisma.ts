@@ -1,13 +1,32 @@
 import { PrismaClient } from '@prisma/client'
 import { Pool } from 'pg'
 import { PrismaPg } from '@prisma/adapter-pg'
+import { isPerformanceProfilingEnabled } from '@/lib/performance/perf-core'
+import { logPrismaQuery } from '@/lib/performance/server'
 
 const connectionString = `${process.env.DATABASE_URL}`
 
-const prismaClientSingleton = () => {
+const prismaClientSingleton = (): PrismaClient => {
   const pool = new Pool({ connectionString })
   const adapter = new PrismaPg(pool)
-  return new PrismaClient({ adapter })
+  const client = new PrismaClient({ adapter })
+
+  if (!isPerformanceProfilingEnabled()) return client
+
+  return client.$extends({
+    query: {
+      $allModels: {
+        async $allOperations({ model, operation, args, query }) {
+          const startedAt = performance.now()
+          try {
+            return await query(args)
+          } finally {
+            await logPrismaQuery(model, operation, performance.now() - startedAt)
+          }
+        },
+      },
+    },
+  }) as unknown as PrismaClient
 }
 
 declare const globalThis: {

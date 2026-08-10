@@ -6,12 +6,17 @@ import { getGlobalProjectContext } from '@/lib/project-context';
 import { isCompanyWideRole } from '@/lib/rbac-rules';
 import { getDefaultRouteForRole } from '@/lib/roles/role-workspace-policy';
 import { redirect } from 'next/navigation';
+import { measureServerPhase } from '@/lib/performance/server';
 
 type DashboardPageProps = {
   searchParams: Promise<{ period?: string; projectId?: string }>;
 };
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  return measureServerPhase('page.dashboard', () => renderDashboardPage(searchParams));
+}
+
+async function renderDashboardPage(searchParams: DashboardPageProps['searchParams']) {
   const currentSession = await requireAuth();
   const params = await searchParams;
 
@@ -22,7 +27,10 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   // Resolve projectId globally (URL > Cookie)
   const globalContext = await getGlobalProjectContext(currentSession, params.projectId);
 
-  const data = await getDashboardData(currentSession, params.period, globalContext.selectedProjectId || undefined);
+  const data = await measureServerPhase(
+    'page-data.dashboard',
+    () => getDashboardData(currentSession, params.period, globalContext.selectedProjectId || undefined),
+  );
 
   const isHighLevel = isCompanyWideRole(currentSession.role);
 

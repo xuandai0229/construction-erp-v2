@@ -8,6 +8,7 @@ import {
   buildReportNotificationTarget,
   type NotificationTargetType,
 } from '@/lib/notifications/notification-routing';
+import { measureServerPhase } from '@/lib/performance/server';
 
 export type GlobalProjectContext = {
   selectedProjectId: string | null;
@@ -48,7 +49,16 @@ export async function getGlobalProjectContext(
   session: SessionUser,
   searchParamsProjectId?: string
 ): Promise<GlobalProjectContext> {
-  const accessScope = await getProjectAccessScope(session);
+  return measureServerPhase('global-project-context', () =>
+    getGlobalProjectContextImpl(session, searchParamsProjectId),
+  );
+}
+
+async function getGlobalProjectContextImpl(
+  session: SessionUser,
+  searchParamsProjectId?: string
+): Promise<GlobalProjectContext> {
+  const accessScope = await measureServerPhase('global-project-context.access-scope', () => getProjectAccessScope(session));
   const cookieStore = await cookies();
   const cookieProjectId = cookieStore.get('selectedProjectId')?.value;
 
@@ -67,7 +77,7 @@ export async function getGlobalProjectContext(
   // 3. Fetch list of all accessible projects with full identity context
   const allAccessibleProjectWhere = { deletedAt: null, ...projectScopeWhere(accessScope) };
 
-  const accessibleProjects = await prisma.project.findMany({
+  const accessibleProjects = await measureServerPhase('global-project-context.accessible-projects', () => prisma.project.findMany({
     where: allAccessibleProjectWhere,
     select: { 
       id: true, 
@@ -99,13 +109,14 @@ export async function getGlobalProjectContext(
     commanderName: project.members[0]?.user?.name || null,
     executionUnit: typeof project.sourceMetadata === "object" && project.sourceMetadata && "unit" in project.sourceMetadata ? String((project.sourceMetadata as { unit?: unknown }).unit ?? "") : null,
     durationLabel: project.plannedDurationValue && project.plannedDurationUnit ? `${project.plannedDurationValue} ${project.plannedDurationUnit === "MONTH" ? "tháng" : "ngày"}` : "Chưa cập nhật"
-  })));
+  }))));
 
   // 4. Fetch overview data for the selected project (for the topbar badge)
   let overviewData = null;
-  if (selectedProjectId) {
-    const project = await prisma.project.findUnique({
-      where: { id: selectedProjectId },
+  const projectIdForOverview = selectedProjectId;
+  if (projectIdForOverview) {
+    const project = await measureServerPhase('global-project-context.selected-project-overview', () => prisma.project.findUnique({
+      where: { id: projectIdForOverview },
       select: {
         status: true,
         endDate: true,
@@ -121,7 +132,7 @@ export async function getGlobalProjectContext(
           },
         },
       }
-    });
+    }));
 
     if (project) {
       // Simplified health check for the global topbar
@@ -158,7 +169,7 @@ export async function getGlobalProjectContext(
   const notifications: GlobalProjectContext['notifications'] = [];
 
   // Pending Approvals
-  const pendingApprovals = await prisma.approvalRequest.findMany({
+  const pendingApprovals = await measureServerPhase('global-project-context.pending-approvals', () => prisma.approvalRequest.findMany({
     where: {
       deletedAt: null,
       status: "PENDING",
@@ -167,7 +178,7 @@ export async function getGlobalProjectContext(
     orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
     take: 5,
     include: { project: { select: { name: true } } },
-  });
+  }));
 
   pendingApprovals.forEach(app => {
     const notificationId = `app-${app.id}`;
@@ -197,7 +208,7 @@ export async function getGlobalProjectContext(
   });
 
   // Issue Reports
-  const rawIssueReports = await prisma.siteReport.findMany({
+  const rawIssueReports = await measureServerPhase('global-project-context.issue-reports', () => prisma.siteReport.findMany({
     where: {
       deletedAt: null,
       ...(selectedProjectId ? { projectId: selectedProjectId } : { project: projectScopeWhere(accessScope) }),
@@ -209,7 +220,7 @@ export async function getGlobalProjectContext(
     orderBy: { updatedAt: "desc" },
     take: 20,
     include: { project: { select: { name: true } } },
-  });
+  }));
 
   const issueReports = rawIssueReports.filter(r => {
     if (r.status === "SUBMITTED" || r.status === "REVISION_REQUESTED") return true;
@@ -276,14 +287,14 @@ export async function getGlobalProjectContext(
   uniqueNotifications.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   const visibleNotifications = uniqueNotifications.slice(0, 5);
   const readRows = visibleNotifications.length > 0
-    ? await prisma.notification.findMany({
+    ? await measureServerPhase('global-project-context.notification-read-state', () => prisma.notification.findMany({
       where: {
         userId: session.id,
         id: { in: visibleNotifications.map((notification) => `${session.id}:${notification.id}`) },
         isRead: true,
       },
       select: { id: true },
-    })
+    }))
     : [];
   const readIds = new Set(readRows.map((notification) => notification.id.replace(`${session.id}:`, "")));
 

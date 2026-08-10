@@ -6,6 +6,7 @@ import {
   SESSION_MAX_AGE_SECONDS,
   verifySessionToken,
 } from './session-token';
+import { measureServerPhase } from './performance/server';
 
 export interface SessionUser {
   id: string;
@@ -18,45 +19,47 @@ export interface SessionUser {
 }
 
 export async function getSession(): Promise<SessionUser | null> {
-  const cookieStore = await cookies();
-  const sessionToken = cookieStore.get('auth_session')?.value;
-  
-  if (!sessionToken) return null;
-  
-  try {
-    const sessionData = verifySessionToken(sessionToken);
-    if (!sessionData) return null;
+  return measureServerPhase('auth.get-session', async () => {
+    const cookieStore = await cookies();
+    const sessionToken = cookieStore.get('auth_session')?.value;
+
+    if (!sessionToken) return null;
     
-    const user = await prisma.user.findUnique({
-      where: { id: sessionData.userId },
-      select: { 
-        id: true, 
-        email: true, 
-        username: true,
-        name: true, 
-        role: true,
-        phone: true,
-        isActive: true,
-        deletedAt: true,
-        updatedAt: true,
-      }
-    });
-    
-    if (!user || !user.isActive || user.deletedAt !== null) return null;
-    if (sessionData.credentialVersion !== user.updatedAt.toISOString()) return null;
-    
-    return {
-      id: user.id,
-      email: user.email,
-      username: user.username,
-      name: user.name,
-      role: user.role,
-      phone: user.phone,
-      isActive: user.isActive,
-    };
-  } catch {
-    return null;
-  }
+    try {
+      const sessionData = verifySessionToken(sessionToken);
+      if (!sessionData) return null;
+
+      const user = await prisma.user.findUnique({
+        where: { id: sessionData.userId },
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          name: true,
+          role: true,
+          phone: true,
+          isActive: true,
+          deletedAt: true,
+          updatedAt: true,
+        }
+      });
+
+      if (!user || !user.isActive || user.deletedAt !== null) return null;
+      if (sessionData.credentialVersion !== user.updatedAt.toISOString()) return null;
+
+      return {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        name: user.name,
+        role: user.role,
+        phone: user.phone,
+        isActive: user.isActive,
+      };
+    } catch {
+      return null;
+    }
+  });
 }
 
 export async function setSession(userId: string) {

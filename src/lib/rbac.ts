@@ -2,6 +2,7 @@ import { UserRole } from "@prisma/client";
 import prisma from "./prisma";
 import { getSession } from "./auth";
 import { redirect } from "next/navigation";
+import { measureServerPhase } from "./performance/server";
 import { SYSTEM_ROLE_DISPLAY_NAMES, SYSTEM_ROLE_REGISTRY } from "./roles/role-registry";
 
 
@@ -190,11 +191,13 @@ export async function canManageProject(
  * Require session and return user. Redirect to login if not authenticated.
  */
 export async function requireAuth() {
-  const session = await getSession();
-  if (!session) {
-    redirect("/login?reason=session_expired");
-  }
-  return session;
+  return measureServerPhase("auth.require-auth", async () => {
+    const session = await getSession();
+    if (!session) {
+      redirect("/login?reason=session_expired");
+    }
+    return session;
+  });
 }
 
 /**

@@ -8,19 +8,21 @@ import { ROLE_DISPLAY_NAMES } from '@/lib/rbac';
 import { getGlobalProjectContext } from '@/lib/project-context';
 import { serializePrisma } from '@/lib/serialize';
 import { checkUserHasAnyHrPermission } from '@/lib/hr/hr-auth-guard';
+import { measureServerPhase } from '@/lib/performance/server';
 
 export async function AppShell({ children }: { children: React.ReactNode }) {
-  const session = await getSession();
+  return measureServerPhase('app-shell', async () => {
+    const session = await getSession();
 
-  if (!session) {
-    redirect("/login?reason=session_expired");
-  }
+    if (!session) {
+      redirect("/login?reason=session_expired");
+    }
 
-  const roleDisplayName = ROLE_DISPLAY_NAMES[session.role] || session.role;
-  const globalContext = serializePrisma(await getGlobalProjectContext(session));
-  const canAccessHr = await checkUserHasAnyHrPermission(session.id, session.role);
+    const roleDisplayName = ROLE_DISPLAY_NAMES[session.role] || session.role;
+    const globalContext = serializePrisma(await getGlobalProjectContext(session));
+    const canAccessHr = await checkUserHasAnyHrPermission(session.id, session.role);
 
-  return (
+    return (
     <div className="flex min-h-dvh min-w-0 w-full max-w-full bg-background text-foreground" data-app-shell>
       <div className="hidden lg:block sticky top-0 h-dvh shrink-0" data-app-sidebar>
         <Sidebar userRole={session.role} canAccessHr={canAccessHr} />
@@ -43,5 +45,6 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
         <div data-app-bottom-nav><MobileBottomNav userRole={session.role} canAccessHr={canAccessHr} /></div>
       </div>
     </div>
-  );
+    );
+  });
 }
