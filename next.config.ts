@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
     // Allow uploads up to 100MB through route handlers (default is 10MB)
     proxyClientMaxBodySize: '100mb',
   },
+  outputFileTracingExcludes: {
+    '*': ['storage/**/*'],
+  },
 };
 
 export default nextConfig;

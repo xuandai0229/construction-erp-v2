@@ -1,11 +1,10 @@
+import { cache } from 'react';
 import { UserRole } from "@prisma/client";
 import prisma from "./prisma";
 import { getSession } from "./auth";
 import { redirect } from "next/navigation";
 import { measureServerPhase } from "./performance/server";
 import { SYSTEM_ROLE_DISPLAY_NAMES, SYSTEM_ROLE_REGISTRY } from "./roles/role-registry";
-
-
 // ─── Role Constants ───────────────────────────────────────────
 export const SYSTEM_ADMIN_ROLES: UserRole[] = ["ADMIN"];
 export const COMPANY_WIDE_ROLES: UserRole[] = ["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"];
@@ -278,13 +277,15 @@ export function projectScopeWhere(scope: ProjectAccessScope) {
     : { id: { in: scope.kind === "PROJECT_IDS" ? scope.projectIds : [] } };
 }
 
-/** Resolve an explicit project scope; no sentinel null/undefined values are used. */
-export async function getProjectAccessScope(
-  user: { id: string; role: UserRole }
-): Promise<ProjectAccessScope> {
+/** Core memoized scope lookup using primitive arguments for React.cache key stability. */
+export const getProjectAccessScopeByCredentials = cache(async (
+  userId: string,
+  userRole: UserRole
+): Promise<ProjectAccessScope> => {
+  const user = { id: userId, role: userRole };
   if (canViewAllProjects(user)) return { kind: "ALL_PROJECTS" };
 
-  if (user.role === "SUPERVISION_HEAD") {
+  if (userRole === "SUPERVISION_HEAD") {
     const scopeWhere = await getSupervisionProjectWhere(user);
     if (!scopeWhere.id) return { kind: "ALL_PROJECTS" };
     const projectIds = scopeWhere.id.in || [];
@@ -293,7 +294,7 @@ export async function getProjectAccessScope(
 
   const members = await prisma.projectMember.findMany({
     where: {
-      userId: user.id,
+      userId: userId,
       isActive: true,
       deletedAt: null,
     },
@@ -302,6 +303,13 @@ export async function getProjectAccessScope(
 
   const projectIds = members.map((m) => m.projectId);
   return projectIds.length ? { kind: "PROJECT_IDS", projectIds } : { kind: "NO_PROJECTS" };
+});
+
+/** Resolve an explicit project scope; delegates to primitive-memoized resolver. */
+export async function getProjectAccessScope(
+  user: { id: string; role: UserRole }
+): Promise<ProjectAccessScope> {
+  return getProjectAccessScopeByCredentials(user.id, user.role);
 }
 
 // ─── Sidebar Navigation Visibility ──────────────────────────
@@ -310,11 +318,10 @@ export interface NavItem {
   name: string;
   href: string;
   icon: string;
-  roles?: UserRole[]; // If set, only these roles see the item. If undefined, all see it.
+  roles?: UserRole[];
 }
 
 export function getVisibleNavItems(role: UserRole): string[] {
-  // Items hidden from CHIEF_COMMANDER
   const hiddenForCommander = [
     "/approvals",
     "/audit",
@@ -326,5 +333,5 @@ export function getVisibleNavItems(role: UserRole): string[] {
     return hiddenForCommander;
   }
 
-  return []; // high-level users see everything
+  return [];
 }

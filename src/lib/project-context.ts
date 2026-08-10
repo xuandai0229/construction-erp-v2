@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { cookies } from 'next/headers';
 import prisma from '@/lib/prisma';
 import { getProjectAccessScope, projectScopeAllows, projectScopeWhere } from '@/lib/rbac';
@@ -45,14 +46,14 @@ export type GlobalProjectContext = {
   }[];
 };
 
-export async function getGlobalProjectContext(
+export const getGlobalProjectContext = cache(async (
   session: SessionUser,
   searchParamsProjectId?: string
-): Promise<GlobalProjectContext> {
+): Promise<GlobalProjectContext> => {
   return measureServerPhase('global-project-context', () =>
     getGlobalProjectContextImpl(session, searchParamsProjectId),
   );
-}
+});
 
 async function getGlobalProjectContextImpl(
   session: SessionUser,

@@ -177,7 +177,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ rep
     }
 
     // Write files and create DB records with rollback on failure
-    const baseStorageDir = path.join(process.cwd(), "storage", "site-reports", reportId);
+    const baseStorageDir = path.join(/*turbopackIgnore: true*/ process.cwd(), "storage", "site-reports", reportId);
     await fs.mkdir(baseStorageDir, { recursive: true });
 
     const savedFilePaths: string[] = [];
@@ -198,7 +198,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ rep
 
         // storagePath uses relative path from project root for portability
         const relativeStoragePath = path.join("storage", "site-reports", reportId, safeFileName);
-        const absoluteStoragePath = path.join(process.cwd(), relativeStoragePath);
+        const absoluteStoragePath = path.join(/*turbopackIgnore: true*/ process.cwd(), relativeStoragePath);
 
         // Write file to disk using stream pipeline
         await pipeline(

@@ -92,7 +92,7 @@ export default async function FieldReportsPage({
     status: r.status as ReportStatus,
     photos: ((r.attachments as Record<string, unknown>[]) || []).filter((a: Record<string, unknown>) => a.kind === 'PHOTO').map((a: Record<string, unknown>) => {
       const storagePath = a.storagePath as string;
-      const physicalPath = storagePath ? path.join(process.cwd(), storagePath.startsWith('storage') ? '' : 'storage', storagePath) : "";
+      const physicalPath = storagePath ? path.join(/*turbopackIgnore: true*/ process.cwd(), storagePath.startsWith('storage') ? '' : 'storage', storagePath) : "";
       const isMissing = storagePath ? !fs.existsSync(physicalPath) : true;
       return {
         id: String(a.id),
@@ -104,7 +104,7 @@ export default async function FieldReportsPage({
     }),
     attachments: ((r.attachments as Record<string, unknown>[]) || []).filter((a: Record<string, unknown>) => a.kind === 'FILE').map((a: Record<string, unknown>) => {
       const storagePath = a.storagePath as string;
-      const physicalPath = storagePath ? path.join(process.cwd(), storagePath.startsWith('storage') ? '' : 'storage', storagePath) : "";
+      const physicalPath = storagePath ? path.join(/*turbopackIgnore: true*/ process.cwd(), storagePath.startsWith('storage') ? '' : 'storage', storagePath) : "";
       const isMissing = storagePath ? !fs.existsSync(physicalPath) : true;
       return {
         id: String(a.id),

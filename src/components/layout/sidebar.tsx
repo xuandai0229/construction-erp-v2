@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Building2,
@@ -88,13 +88,28 @@ function getFilteredSections(role: UserRole, canAccessHr: boolean) {
 
 export function Sidebar({ userRole, canAccessHr }: { userRole: UserRole; canAccessHr: boolean }) {
   const pathname = usePathname();
+  const router = useRouter();
   const filteredSections = getFilteredSections(userRole, canAccessHr);
   const homeHref = getDefaultRouteForRole(userRole);
+
+  const handlePrefetchIntent = (href: string) => {
+    try {
+      router.prefetch(href);
+    } catch {
+      // Ignore prefetch errors
+    }
+  };
 
   return (
     <div className={styles.sidebarRoot}>
       <div className={styles.brand}>
-        <Link href={homeHref} className={styles.brandLink}>
+        <Link
+          href={homeHref}
+          className={styles.brandLink}
+          prefetch={false}
+          onMouseEnter={() => handlePrefetchIntent(homeHref)}
+          onFocus={() => handlePrefetchIntent(homeHref)}
+        >
           <div className={styles.brandIcon}>
             <svg width="24" height="28" viewBox="0 0 28 32" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M4 16H8V32H4V16Z" fill="#ffffff" fillOpacity="0.7" />
@@ -120,6 +135,9 @@ export function Sidebar({ userRole, canAccessHr }: { userRole: UserRole; canAcce
                     <Link
                       key={item.name}
                       href={item.href}
+                      prefetch={false}
+                      onMouseEnter={() => handlePrefetchIntent(item.href)}
+                      onFocus={() => handlePrefetchIntent(item.href)}
                       className={cn(styles.navItem, isActive && styles.navItemActive)}
                     >
                       <div className={cn(styles.indicator, isActive && styles.indicatorActive)} />

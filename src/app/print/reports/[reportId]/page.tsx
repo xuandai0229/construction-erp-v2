@@ -106,7 +106,7 @@ export default async function PrintReportPage({ params }: { params: Promise<{ re
     weatherTemperature: report.weatherTemperature ? Number(report.weatherTemperature) : undefined,
     status: report.status as ReportStatus,
     photos: report.attachments.filter(a => a.kind === 'PHOTO').map(a => {
-      const physicalPath = a.storagePath ? path.join(process.cwd(), a.storagePath.startsWith('storage') ? '' : 'storage', a.storagePath) : "";
+      const physicalPath = a.storagePath ? path.join(/*turbopackIgnore: true*/ process.cwd(), a.storagePath.startsWith('storage') ? '' : 'storage', a.storagePath) : "";
       const isMissing = a.storagePath ? !fs.existsSync(physicalPath) : true;
       return {
         id: String(a.id),
@@ -117,7 +117,7 @@ export default async function PrintReportPage({ params }: { params: Promise<{ re
       };
     }),
     attachments: report.attachments.filter(a => a.kind === 'FILE').map(a => {
-      const physicalPath = a.storagePath ? path.join(process.cwd(), a.storagePath.startsWith('storage') ? '' : 'storage', a.storagePath) : "";
+      const physicalPath = a.storagePath ? path.join(/*turbopackIgnore: true*/ process.cwd(), a.storagePath.startsWith('storage') ? '' : 'storage', a.storagePath) : "";
       const isMissing = a.storagePath ? !fs.existsSync(physicalPath) : true;
       return {
         id: String(a.id),

@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { cookies } from 'next/headers';
 import prisma from './prisma';
 import { UserRole } from '@prisma/client';
@@ -18,7 +19,7 @@ export interface SessionUser {
   isActive: boolean;
 }
 
-export async function getSession(): Promise<SessionUser | null> {
+export const getSession = cache(async (): Promise<SessionUser | null> => {
   return measureServerPhase('auth.get-session', async () => {
     const cookieStore = await cookies();
     const sessionToken = cookieStore.get('auth_session')?.value;
@@ -60,7 +61,7 @@ export async function getSession(): Promise<SessionUser | null> {
       return null;
     }
   });
-}
+});
 
 export async function setSession(userId: string) {
   const cookieStore = await cookies();

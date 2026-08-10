@@ -14,10 +14,10 @@ describe("Phase 6 — Settings Audit Integration Tests", () => {
   let adapter: PrismaPg;
   let prisma: PrismaClient;
 
-  let testRunId = `HR_PHASE_4_1_4_${Date.now()}_${crypto.randomUUID()}`;
+  const testRunId = `HR_PHASE_4_1_4_${Date.now()}_${crypto.randomUUID()}`;
   let adminUser: User;
   let setting: SystemSetting;
-  let createdAuditLogIds: string[] = [];
+  const createdAuditLogIds: string[] = [];
   let initialSettingCount = 0;
   let initialAuditCount = 0;
 
