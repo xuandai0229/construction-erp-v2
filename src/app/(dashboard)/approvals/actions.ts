@@ -340,7 +340,7 @@ async function getApprovalForDecision(id: string) {
 
 async function syncSourceOnApprovalTx(
   tx: Prisma.TransactionClient,
-  approval: { type: ApprovalRequestType; sourceId: string | null; id: string; projectId: string },
+  approval: { type: ApprovalRequestType; sourceId: string | null; sourceType?: string | null; id: string; projectId: string },
   decision: "APPROVED" | "REJECTED",
   note: string | null
 ) {
@@ -349,23 +349,21 @@ async function syncSourceOnApprovalTx(
 
   switch (approval.type) {
     case "MATERIAL": {
-      const matReq = await tx.materialRequest.findUnique({
-        where: { id: approval.sourceId }
-      });
-      if (!matReq || matReq.deletedAt) throw new Error("Không thể duyệt vì bản ghi gốc không tồn tại hoặc đã bị xóa.");
-      if (matReq.projectId !== approval.projectId) throw new Error("Bản ghi gốc không thuộc cùng công trình với yêu cầu phê duyệt.");
-      if (!["DRAFT", "REQUESTED", "SUBMITTED"].includes(matReq.status)) {
-         throw new Error(`Trạng thái phiếu yêu cầu vật tư hiện tại (${matReq.status}) không cho phép phê duyệt.`);
+      if (approval.sourceType === "FIELD_MATERIAL_REQUEST") {
+        const matReq = await tx.fieldMaterialRequest.findUnique({
+          where: { id: approval.sourceId }
+        });
+        if (!matReq || matReq.deletedAt) throw new Error("Không thể duyệt vì bản ghi gốc không tồn tại hoặc đã bị xóa.");
+        if (matReq.projectId !== approval.projectId) throw new Error("Bản ghi gốc không thuộc cùng công trình với yêu cầu phê duyệt.");
+        await tx.fieldMaterialRequest.update({
+          where: { id: matReq.id },
+          data: decision === "APPROVED" ? {
+            status: "APPROVED",
+          } : {
+            status: "REJECTED",
+          }
+        });
       }
-      await tx.materialRequest.update({
-        where: { id: matReq.id },
-        data: decision === "APPROVED" ? {
-          status: "APPROVED",
-        } : {
-          status: "REJECTED",
-          cancelReason: note ?? "Bị từ chối từ hệ thống phê duyệt",
-        }
-      });
       break;
     }
     case "REPORT": {
@@ -570,56 +568,5 @@ export async function softDeleteApprovalRequest(id: string) {
 }
 
 export async function getApprovalMaterialDetails(approvalId: string) {
-  const session = await getSession();
-  if (!session) return null;
-
-  const approval = await prisma.approvalRequest.findFirst({
-    where: { id: approvalId, deletedAt: null },
-    select: { sourceId: true, sourceType: true, projectId: true, requesterId: true }
-  });
-
-  if (!approval || approval.sourceType !== "MATERIAL_REQUEST" || !approval.sourceId) return null;
-
-  await assertPermission({ id: session.id, role: session.role }, "approvals.view", {
-    projectId: approval.projectId,
-    ownerId: approval.requesterId,
-  });
-
-  const materialReq = await prisma.materialRequest.findUnique({
-    where: { id: approval.sourceId },
-    include: {
-      items: true,
-      requestedBy: {
-        select: { name: true }
-      }
-    }
-  });
-
-  if (!materialReq) return null;
-
-  // Serialize Date and Decimal objects
-  return {
-    id: materialReq.id,
-    projectId: materialReq.projectId,
-    requestNo: materialReq.requestNo,
-    status: materialReq.status,
-    priority: materialReq.priority,
-    requestDate: materialReq.requestDate ? materialReq.requestDate.toISOString() : null,
-    neededDate: materialReq.neededDate ? materialReq.neededDate.toISOString() : null,
-    note: materialReq.note,
-    cancelReason: materialReq.cancelReason,
-    requestedBy: materialReq.requestedBy,
-    items: materialReq.items.map((item) => ({
-      id: item.id,
-      materialCode: item.materialCode,
-      materialName: item.materialName,
-      unit: item.unit,
-      requestedQuantity: Number(item.requestedQuantity),
-      issuedQuantity: Number(item.issuedQuantity),
-      receivedQuantity: Number(item.receivedQuantity),
-      remainingQuantity: Number(item.remainingQuantity),
-      reason: item.reason,
-      note: item.note,
-    }))
-  };
+  return null;
 }

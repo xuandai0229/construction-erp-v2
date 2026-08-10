@@ -5,16 +5,14 @@ import { AppDrawer } from "@/components/ui/app-drawer";
 import { CloseButton } from "@/components/ui/close-button";
 import { formatDateTime, formatQuantity, getStockDelta, getStockRatio, getStockStatus } from "./materials-formatters";
 import { MovementTypeBadge, StockStatusBadge } from "./materials-badges";
-import type { ProjectStockDto, MaterialMovementDto } from "@/app/(dashboard)/materials/actions";
-import type { MaterialRequestWithItems } from "./materials-stock-table";
-import { SafeText, QuantityCell, DateCell } from "@/components/ui/enterprise";
 import { Button } from "@/components/ui/button";
-import { getApprovedProposalSummaryByMaterial } from "@/app/actions/material-request";
+import type { ProjectStockDto, MaterialMovementDto } from "@/app/(dashboard)/materials/actions";
+import { QuantityCell } from "@/components/ui/enterprise";
 
 interface StockDetailDrawerProps {
   stock: ProjectStockDto | null;
   recentTransactions?: MaterialMovementDto[];
-  relatedRequests?: MaterialRequestWithItems[];
+  relatedRequests?: any[];
   onClose: () => void;
   onImport?: () => void;
   onExport?: () => void;
@@ -37,21 +35,7 @@ export function StockDetailDrawer({
   const [isLoadingProposals, setIsLoadingProposals] = useState(false);
 
   useEffect(() => {
-    let mounted = true;
-    if (stock) {
-      setIsLoadingProposals(true);
-      getApprovedProposalSummaryByMaterial(stock.projectId, stock.materialItemId)
-        .then((res: any) => {
-          if (mounted) setProposalSummary(res);
-        })
-        .catch(console.error)
-        .finally(() => {
-          if (mounted) setIsLoadingProposals(false);
-        });
-    } else {
-      setProposalSummary(null);
-    }
-    return () => { mounted = false; };
+    setProposalSummary(null);
   }, [stock]);
 
   if (!stock) return null;

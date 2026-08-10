@@ -58,50 +58,7 @@ export async function applyMaterialMovement(tx: MaterialLedgerTx, input: ApplyMa
     throw new Error("Vật tư đã lưu trữ, không thể tạo giao dịch mới");
   }
 
-  if (input.materialRequestItemId && OUTBOUND_TYPES.includes(input.type)) {
-    const requestItem = await tx.materialRequestItem.findUnique({
-      where: { id: input.materialRequestItemId },
-      include: { materialRequest: true },
-    });
-    if (!requestItem) throw new Error("Mục yêu cầu vật tư không tồn tại");
-    if (requestItem.deletedAt) throw new Error("Mục yêu cầu vật tư đã bị xóa");
-    if (requestItem.materialRequest.projectId !== input.projectId) throw new Error("Phiếu yêu cầu không thuộc công trình này");
-    
-    const validStatuses = ["APPROVED", "PROCESSING", "ISSUED"];
-    if (!validStatuses.includes(requestItem.materialRequest.status)) {
-      throw new Error(`Không thể xuất kho từ phiếu có trạng thái ${requestItem.materialRequest.status}`);
-    }
 
-    if (quantity > Number(requestItem.remainingQuantity)) {
-      throw new Error("Số lượng xuất vượt quá số lượng còn lại cần cấp của yêu cầu");
-    }
-
-    // Cập nhật item
-    await tx.materialRequestItem.update({
-      where: { id: input.materialRequestItemId },
-      data: {
-        issuedQuantity: { increment: quantity },
-        remainingQuantity: { decrement: quantity },
-      },
-    });
-
-    // Tính lại status của request
-    const allItems = await tx.materialRequestItem.findMany({
-      where: { materialRequestId: requestItem.materialRequestId, deletedAt: null },
-    });
-    const allIssued = allItems.every(i => 
-      i.id === input.materialRequestItemId 
-        ? Number(i.remainingQuantity) - quantity <= 0 
-        : Number(i.remainingQuantity) <= 0
-    );
-    
-    await tx.materialRequest.update({
-      where: { id: requestItem.materialRequestId },
-      data: {
-        status: allIssued ? "ISSUED" : "PROCESSING",
-      },
-    });
-  }
 
   if (OUTBOUND_TYPES.includes(input.type)) {
     const updated = await tx.projectMaterialStock.updateMany({

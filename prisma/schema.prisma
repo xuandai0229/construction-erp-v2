@@ -119,24 +119,7 @@ enum WBSItemStatus {
   CANCELLED
 }
 
-enum MaterialRequestStatus {
-  DRAFT
-  REQUESTED
-  SUBMITTED
-  APPROVED
-  REJECTED
-  PROCESSING
-  ISSUED
-  RECEIVED
-  CANCELLED
-}
 
-enum MaterialRequestPriority {
-  LOW
-  MEDIUM
-  HIGH
-  URGENT
-}
 
 enum FieldProgressItemType {
   GROUP
@@ -228,7 +211,6 @@ model User {
   createdSiteReports           SiteReport[]                  @relation("ReportCreator")
   approvedSiteReports          SiteReport[]                  @relation("ReportApprover")
   createdWBSItems              WBSItem[]
-  materialRequests             MaterialRequest[]
   approvalRequests             ApprovalRequest[]             @relation("Requester")
   approvals                    ApprovalRequest[]             @relation("Approver")
   documents                    Document[]
@@ -311,7 +293,6 @@ model Project {
   siteReports                  SiteReport[]
   siteReportLines              SiteReportLine[]
   materialMovements            MaterialMovement[]
-  materialRequests             MaterialRequest[]
   documents                    Document[]
   fieldProgressTemplates       FieldProgressTemplate[]
   fieldProgressItems           FieldProgressItem[]
@@ -402,7 +383,6 @@ model WBSItem {
   children             WBSItem[]             @relation("WBSHierarchy")
   createdBy            User?                 @relation(fields: [createdById], references: [id])
   siteReportLines      SiteReportLine[]
-  materialRequestItems MaterialRequestItem[]
 
   @@unique([projectId, code])
   @@index([projectId])
@@ -517,7 +497,6 @@ model SiteReport {
   photos           SiteReportPhoto[]
   attachments      SiteReportAttachment[]
   lines            SiteReportLine[]
-  materialRequests MaterialRequest[]
 
   @@index([projectId])
   @@index([createdById])
@@ -592,65 +571,7 @@ model SiteReportLine {
   @@index([locationNodeId])
 }
 
-model MaterialRequest {
-  id            String                  @id @default(cuid())
-  projectId     String
-  requestNo     String                  @unique
-  siteReportId  String?
-  requestedById String
-  requestDate   DateTime
-  neededDate    DateTime?
-  status        MaterialRequestStatus   @default(DRAFT)
-  priority      MaterialRequestPriority @default(MEDIUM)
-  note          String?
-  cancelReason  String?
-  createdAt     DateTime                @default(now())
-  updatedAt     DateTime                @updatedAt
-  deletedAt     DateTime?
 
-  project     Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  siteReport  SiteReport?           @relation(fields: [siteReportId], references: [id])
-  requestedBy User                  @relation(fields: [requestedById], references: [id])
-  items       MaterialRequestItem[]
-  movements   MaterialMovement[]
-
-  @@index([projectId])
-  @@index([requestNo])
-  @@index([siteReportId])
-  @@index([requestedById])
-}
-
-model MaterialRequestItem {
-  id                   String    @id @default(cuid())
-  materialRequestId    String
-  wbsItemId            String?
-  fieldProgressItemId  String?
-  workItemNameSnapshot String?
-  materialCode         String?
-  materialName         String
-  unit                 String
-  requestedQuantity    Decimal   @db.Decimal(19, 4)
-  issuedQuantity       Decimal   @default(0) @db.Decimal(19, 4)
-  receivedQuantity     Decimal   @default(0) @db.Decimal(19, 4)
-  remainingQuantity    Decimal   @default(0) @db.Decimal(19, 4)
-  reason               String?
-  note                 String?
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
-  deletedAt            DateTime?
-  locationNodeId       String?
-
-  materialRequest   MaterialRequest      @relation(fields: [materialRequestId], references: [id], onDelete: Cascade)
-  wbsItem           WBSItem?             @relation(fields: [wbsItemId], references: [id])
-  fieldProgressItem FieldProgressItem?   @relation(fields: [fieldProgressItemId], references: [id])
-  movements         MaterialMovement[]
-  locationNode      ProjectLocationNode? @relation(fields: [locationNodeId], references: [id])
-
-  @@index([materialRequestId])
-  @@index([wbsItemId])
-  @@index([fieldProgressItemId])
-  @@index([locationNodeId])
-}
 
 model MaterialItem {
   id          String   @id @default(cuid())
@@ -691,8 +612,6 @@ model MaterialMovement {
 
   project             Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
   materialItem        MaterialItem         @relation(fields: [materialItemId], references: [id])
-  materialRequest     MaterialRequest?     @relation(fields: [materialRequestId], references: [id], onDelete: SetNull)
-  materialRequestItem MaterialRequestItem? @relation(fields: [materialRequestItemId], references: [id], onDelete: SetNull)
 
   @@index([projectId])
   @@index([materialItemId])
@@ -860,7 +779,6 @@ model FieldProgressItem {
   createdBy            User                          @relation("FieldItemCreator", fields: [createdById], references: [id])
   entries              FieldProgressEntry[]
   materialRequests     FieldMaterialRequest[]
-  materialRequestItems MaterialRequestItem[]
   siteReportLines      SiteReportLine[]
   documents            Document[]
   assignments          FieldProgressItemAssignment[]
@@ -896,7 +814,6 @@ model ProjectLocationNode {
   documents                  Document[]
   fieldProgressEntries       FieldProgressEntry[]
   fieldProgressItemLocations FieldProgressItemLocation[]
-  materialRequestItems       MaterialRequestItem[]
   siteReportLines            SiteReportLine[]
 
   @@unique([projectId, parentId, code])

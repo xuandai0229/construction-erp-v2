@@ -11,7 +11,7 @@ import { MaterialsTransactions } from "./materials-transactions";
 import { MaterialsCatalog } from "./materials-catalog";
 import { MaterialFormDialog } from "./material-form-dialog";
 import { TransactionFormDialog } from "./transaction-form-dialog";
-import { MaterialRequestList } from "@/components/material-request/material-request-list";
+import { MaterialRequestResetPlaceholder } from "./material-request-reset-placeholder";
 
 import { createMaterialItem, updateMaterialItem, deleteMaterialItem, restoreMaterialItem, createMaterialTransaction } from "@/app/(dashboard)/materials/actions";
 import type { MaterialItemDto, MaterialMovementDto, ProjectStockDto } from "@/app/(dashboard)/materials/actions";
@@ -319,15 +319,7 @@ export function MaterialsWorkspace({
           )}
           {currentTab === "requests" && (
             <div className="pt-2">
-              <MaterialRequestList 
-                projectId={projectId}
-                initialRequests={materialRequests}
-                wbsItems={wbsItems}
-                materialItems={materialItems}
-                stocks={initialStocks}
-                currentUserRole={currentUserRole}
-                currentUserId={currentUserId}
-              />
+              <MaterialRequestResetPlaceholder />
             </div>
           )}
         </section>

@@ -158,49 +158,18 @@ export async function getExecutiveActionItems(
   }
 
   // 3. Urgent / Critical Material Shortage Requests
-  const [materialRequests, fieldMaterialRequests] = await Promise.all([
-    prisma.materialRequest.findMany({
-      where: {
-        ...projectIdWhere,
-        deletedAt: null,
-        priority: { in: ["URGENT", "HIGH"] },
-        status: { notIn: ["REJECTED", "CANCELLED"] },
-      },
-      orderBy: { createdAt: "desc" },
-      include: { project: { select: { id: true, name: true } }, requestedBy: { select: { name: true } } },
-    }),
-    prisma.fieldMaterialRequest.findMany({
-      where: {
-        ...projectIdWhere,
-        deletedAt: null,
-        priority: { in: ["URGENT", "HIGH"] },
-        status: { notIn: ["APPROVED", "REJECTED", "CANCELLED"] },
-      },
-      orderBy: { createdAt: "desc" },
-      include: { project: { select: { id: true, name: true } }, requestedBy: { select: { name: true } } },
-    }),
-  ]);
+  const fieldMaterialRequests = await prisma.fieldMaterialRequest.findMany({
+    where: {
+      ...projectIdWhere,
+      deletedAt: null,
+      priority: { in: ["URGENT", "HIGH"] },
+      status: { notIn: ["APPROVED", "REJECTED", "CANCELLED"] },
+    },
+    orderBy: { createdAt: "desc" },
+    include: { project: { select: { id: true, name: true } }, requestedBy: { select: { name: true } } },
+  });
 
-  const materialItems: ExecutiveActionItem[] = [
-    ...materialRequests.map((m) => ({
-      id: `material-${m.id}`,
-      projectId: m.projectId,
-      projectName: m.project.name,
-      title: `Cấp thiết vật tư: ${m.requestNo}`,
-      type: "MATERIAL" as const,
-      typeLabel: "Vật tư",
-      reason: m.note || "Yêu cầu vật tư ưu tiên cao cho thi công",
-      priority: "HIGH" as const,
-      status: "Cần xử lý",
-      assignee: m.requestedBy?.name ?? "Kỹ sư vật tư",
-      dueDate: m.neededDate ? new Date(m.neededDate).toLocaleDateString("vi-VN") : null,
-      overdueDuration: null,
-      createdAt: m.createdAt.toLocaleDateString("vi-VN"),
-      occurredAt: m.createdAt,
-      targetType: "MATERIAL_REQUEST",
-      targetId: m.id,
-    })),
-    ...fieldMaterialRequests.map((fm) => ({
+  const materialItems: ExecutiveActionItem[] = fieldMaterialRequests.map((fm) => ({
       id: `field-material-${fm.id}`,
       projectId: fm.projectId,
       projectName: fm.project.name,
@@ -217,8 +186,7 @@ export async function getExecutiveActionItems(
       occurredAt: fm.createdAt,
       targetType: "FIELD_MATERIAL_REQUEST",
       targetId: fm.id,
-    })),
-  ];
+    }));
 
   // Combine and sort all items (Highest priority & newest first)
   const allItems = [...riskItems, ...reportItems, ...materialItems].sort((a, b) => {

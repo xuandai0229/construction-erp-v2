@@ -45,44 +45,7 @@ export default async function MaterialsPage({
       initialTransactions = await getRecentTransactions(projectIdToLoad);
       
       const db = (await import("@/lib/prisma")).default;
-      materialRequests = await db.materialRequest.findMany({
-        where: { projectId: projectIdToLoad, deletedAt: null },
-        include: {
-          items: true,
-          requestedBy: { select: { name: true } },
-          movements: { select: { id: true } }
-        },
-        orderBy: { createdAt: 'desc' }
-      });
-
-      const approvalRequests = await db.approvalRequest.findMany({
-        where: {
-          sourceType: "MATERIAL_REQUEST",
-          sourceId: { in: materialRequests.map(r => r.id) }
-        },
-        select: { id: true, sourceId: true, code: true }
-      });
-      const approvalMap = new Map(approvalRequests.map(a => [a.sourceId, a]));
-      materialRequests = materialRequests.map(r => ({
-        ...r,
-        requestDate: r.requestDate ? r.requestDate.toISOString() : null,
-        neededDate: r.neededDate ? r.neededDate.toISOString() : null,
-        createdAt: r.createdAt.toISOString(),
-        updatedAt: r.updatedAt.toISOString(),
-        deletedAt: r.deletedAt ? r.deletedAt.toISOString() : null,
-        items: r.items.map((item: any) => ({
-          ...item,
-          requestedQuantity: Number(item.requestedQuantity),
-          issuedQuantity: Number(item.issuedQuantity),
-          receivedQuantity: Number(item.receivedQuantity),
-          remainingQuantity: Number(item.remainingQuantity),
-          createdAt: item.createdAt.toISOString(),
-          updatedAt: item.updatedAt.toISOString(),
-          deletedAt: item.deletedAt ? item.deletedAt.toISOString() : null,
-        })),
-        approvalRequestId: approvalMap.get(r.id)?.id || null,
-        approvalRequestCode: approvalMap.get(r.id)?.code || null
-      }));
+      materialRequests = [];
 
       const template = await db.fieldProgressTemplate.findFirst({
         where: { projectId: projectIdToLoad, deletedAt: null },

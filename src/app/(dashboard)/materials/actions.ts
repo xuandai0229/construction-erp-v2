@@ -300,47 +300,12 @@ export async function getMaterialItems(projectId: string): Promise<MaterialItemD
     orderBy: [{ group: "asc" }, { name: "asc" }],
   });
 
-  const proposalSummaries = await prisma.materialRequestItem.groupBy({
-    by: ['materialCode'],
-    _sum: {
-      requestedQuantity: true,
-      receivedQuantity: true,
-    },
-    where: {
-      materialRequest: {
-        projectId,
-        status: "APPROVED"
-      }
-    }
-  });
-
-  const pendingProposalSummaries = await prisma.materialRequestItem.groupBy({
-    by: ['materialCode'],
-    _sum: {
-      requestedQuantity: true,
-    },
-    where: {
-      materialRequest: {
-        projectId,
-        status: { in: ["SUBMITTED", "REQUESTED", "DRAFT"] }
-      }
-    }
-  });
-
-  const summaryMap = new Map(proposalSummaries.map(s => [s.materialCode, s]));
-  const pendingSummaryMap = new Map(pendingProposalSummaries.map(s => [s.materialCode, s]));
-
   return items.map(item => {
-    const summary = summaryMap.get(item.code);
-    const pendingSummary = pendingSummaryMap.get(item.code);
-    const requested = Number(summary?._sum?.requestedQuantity || 0);
-    const received = Number(summary?._sum?.receivedQuantity || 0);
-    const pending = Number(pendingSummary?._sum?.requestedQuantity || 0);
     return toMaterialItemDto({
       ...item,
-      approvedProposalQuantity: requested,
-      importedFromProposalQuantity: received,
-      pendingProposalQuantity: pending
+      approvedProposalQuantity: 0,
+      importedFromProposalQuantity: 0,
+      pendingProposalQuantity: 0
     } as any);
   });
 }
@@ -481,21 +446,14 @@ export async function updateMaterialItem(id: string, data: { code?: string; name
 
   const requestedCode = data.code ? normalizeMaterialCode(data.code) : undefined;
 
-  // Block code modification if material is already used in transactions or requests
+  // Block code modification if material is already used in transactions
   if (requestedCode && requestedCode !== material.code) {
     const movementsCount = await prisma.materialMovement.count({
       where: { materialItemId: id, projectId: material.projectId },
     });
-    
-    const requestItemsCount = await prisma.materialRequestItem.count({
-      where: { 
-        materialCode: material.code,
-        materialRequest: { projectId: material.projectId }
-      }
-    });
 
-    if (movementsCount > 0 || requestItemsCount > 0) {
-      throw new Error("Không thể đổi mã vật tư vì vật tư này đã phát sinh giao dịch nhập/xuất hoặc đã được đưa vào phiếu yêu cầu.");
+    if (movementsCount > 0) {
+      throw new Error("Không thể đổi mã vật tư vì vật tư này đã phát sinh giao dịch nhập/xuất.");
     }
   }
 
@@ -578,14 +536,7 @@ export async function deleteMaterialItem(id: string) {
     where: { projectId_materialItemId: { projectId: material.projectId, materialItemId: id } },
   });
 
-  const requestItemsCount = await prisma.materialRequestItem.count({
-    where: { 
-      materialCode: material.code,
-      materialRequest: { projectId: material.projectId }
-    }
-  });
-
-  if (movementsCount > 0 || (stockInfo && Number(stockInfo.stock) > 0) || requestItemsCount > 0) {
+  if (movementsCount > 0 || (stockInfo && Number(stockInfo.stock) > 0)) {
     // Soft delete/archive
     await prisma.materialItem.update({
       where: { id },
@@ -741,7 +692,6 @@ export async function getRecentTransactions(projectId: string): Promise<Material
     where: { projectId },
     include: {
       materialItem: true,
-      materialRequest: { select: { requestNo: true, requestedBy: { select: { name: true } } } }
     },
     orderBy: { movementDate: "desc" },
   });

@@ -5,10 +5,9 @@ import { CloseButton } from "@/components/ui/close-button";
 import { formatDateTime, formatQuantity, getStockStatus } from "./materials-formatters";
 import { MovementTypeBadge, StockStatusBadge } from "./materials-badges";
 import type { MaterialItemDto, ProjectStockDto, MaterialMovementDto } from "@/app/(dashboard)/materials/actions";
-import { SafeText, DateCell, QuantityCell, ActionGroup } from "@/components/ui/enterprise";
-import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
-import { getApprovedProposalSummaryByMaterial } from "@/app/actions/material-request";
+import { Button } from "@/components/ui/button";
+import { QuantityCell } from "@/components/ui/enterprise";
 
 interface MaterialDetailDrawerProps {
   material: MaterialItemDto | null;
@@ -44,21 +43,7 @@ export function MaterialDetailDrawer({
   const [isLoadingProposals, setIsLoadingProposals] = useState(false);
 
   useEffect(() => {
-    let mounted = true;
-    if (material && projectId) {
-      setIsLoadingProposals(true);
-      getApprovedProposalSummaryByMaterial(projectId, material.id, material.code)
-        .then((res: any) => {
-          if (mounted) setProposalSummary(res);
-        })
-        .catch(console.error)
-        .finally(() => {
-          if (mounted) setIsLoadingProposals(false);
-        });
-    } else {
-      setProposalSummary(null);
-    }
-    return () => { mounted = false; };
+    setProposalSummary(null);
   }, [material, projectId]);
 
   if (!material) return null;

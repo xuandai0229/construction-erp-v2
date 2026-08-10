@@ -645,38 +645,5 @@ export async function fetchSingleReportDetail(reportId: string): Promise<SingleR
 }
 
 export async function fetchSingleMaterialRequestDetail(requestId: string): Promise<SingleMaterialRequestDetail | null> {
-  const session = await getSession();
-  if (!session) return null;
-  assertCanAccessExecutiveDashboard(session.role);
-
-  const cleanId = requestId.replace(/^(material|field-material)-/, '');
-  const request = await prisma.materialRequest.findFirst({
-    where: { id: cleanId, deletedAt: null },
-    include: {
-      project: { select: { id: true, name: true } },
-      requestedBy: { select: { name: true } },
-      items: true,
-    },
-  });
-
-  if (!request) return null;
-
-  const scope = await getProjectAccessScope(session);
-  if (!projectScopeAllows(scope, request.projectId)) return null;
-
-  return {
-    id: request.id,
-    projectId: request.projectId,
-    projectName: request.project.name,
-    requestNo: request.requestNo,
-    requesterName: request.requestedBy.name,
-    status: request.status,
-    createdAt: new Date(request.createdAt).toLocaleDateString('vi-VN'),
-    items: request.items.map((i) => ({
-      materialName: i.materialName,
-      quantity: Number(i.requestedQuantity ?? 0),
-      unit: i.unit,
-      note: i.note,
-    })),
-  };
+  return null;
 }
