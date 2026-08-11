@@ -20,11 +20,7 @@ export function WeeklySummaryPrintToolbar({
   };
 
   const handleBack = () => {
-    if (window.history.length > 1) {
-      window.history.back();
-    } else {
-      window.location.href = `/reports/field?tab=weekly&weekStart=${weekStart}`;
-    }
+    window.location.href = `/reports/field?tab=weekly&weekStart=${weekStart}`;
   };
 
   const pdfUrl = `/api/reports/weekly-summary/export-pdf?weekStart=${weekStart}`;

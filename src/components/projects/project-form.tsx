@@ -228,7 +228,7 @@ export function ProjectForm({ initialData }: ProjectFormProps) {
         </div>
 
         <div className="mt-8 border-t border-[var(--border)] pt-6 pb-12 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
-          <Link href="/projects" className="w-full sm:w-auto inline-flex items-center justify-center rounded-[var(--radius-md)] text-sm font-medium transition-colors border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-subtle)] text-[var(--foreground)] h-10 px-4 py-2">
+          <Link href={initialData?.id ? `/projects/${initialData.id}` : "/projects"} className="w-full sm:w-auto inline-flex items-center justify-center rounded-[var(--radius-md)] text-sm font-medium transition-colors border border-[var(--border)] bg-[var(--surface)] hover:bg-[var(--surface-subtle)] text-[var(--foreground)] h-10 px-4 py-2">
             Hủy
           </Link>
           <Button type="submit" disabled={isPending} className="w-full sm:w-auto h-10 px-6 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-[var(--radius-md)] shadow-sm">

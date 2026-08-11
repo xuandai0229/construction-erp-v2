@@ -410,8 +410,12 @@ export function MaterialProposalForm({
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => router.back()}
+            onClick={() => {
+              const targetUrl = `/materials?tab=requests${projectId ? `&projectId=${projectId}` : ""}`;
+              router.push(targetUrl);
+            }}
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-2xs transition hover:bg-slate-50"
+            aria-label="Quay lại danh sách đề xuất"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>

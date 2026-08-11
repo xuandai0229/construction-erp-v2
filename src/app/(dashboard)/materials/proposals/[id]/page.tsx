@@ -34,14 +34,17 @@ export default async function MaterialProposalDetailPage({
 
   let sequenceCounter = 0;
 
+  const backUrl = `/materials?tab=requests${proposal.projectId ? `&projectId=${proposal.projectId}` : ""}`;
+
   return (
     <main className="w-full max-w-full space-y-6">
       {/* Top Navigation & Action Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div className="flex items-center gap-3">
           <Link
-            href="/materials?tab=requests"
+            href={backUrl}
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-2xs hover:bg-slate-50"
+            aria-label="Quay lại danh sách"
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
@@ -76,7 +79,7 @@ export default async function MaterialProposalDetailPage({
           </a>
 
           <Link
-            href="/materials?tab=requests"
+            href={backUrl}
             className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50"
           >
             Quay lại

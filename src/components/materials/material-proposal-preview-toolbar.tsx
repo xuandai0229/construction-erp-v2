@@ -169,6 +169,7 @@ export function MaterialProposalPreviewToolbar({
         <div className="flex flex-wrap items-center gap-3">
           <Link
             href={backHref}
+            replace
             className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs"
             aria-label="Quay lại chỉnh sửa"
           >

@@ -225,6 +225,7 @@ export function SafetyDocumentPreviewShell({
           <div className="flex items-center gap-3">
             <Link
               href={backHref}
+              replace
               className="inline-flex items-center gap-1.5 font-bold text-slate-700 hover:text-blue-600 transition-colors"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -304,7 +305,7 @@ export function SafetyDocumentPreviewShell({
             </Button>
 
             {/* Close Preview */}
-            <Link href={backHref}>
+            <Link href={backHref} replace>
               <Button
                 size="sm"
                 variant="ghost"
