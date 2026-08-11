@@ -146,7 +146,7 @@ export function SettingsWorkspace({
   };
 
   return (
-    <div className="app-page mx-auto max-w-[1400px] space-y-6 pb-24 lg:pb-8">
+    <div className="app-page w-full max-w-full space-y-6 pb-24 lg:pb-8">
       <header className="border-b border-slate-200 pb-5">
         <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Cài đặt hệ thống</h1>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Quản lý thông tin doanh nghiệp và các chính sách dùng chung đang được hệ thống áp dụng.</p>

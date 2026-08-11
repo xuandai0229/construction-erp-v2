@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import { 
   ArrowUpDown, ChevronLeft, ChevronRight, Plus, Search, ShieldCheck, 
   Lock, Unlock, Key, Building2, X, Eye, EyeOff, Edit, Trash2, RefreshCcw, 
-  MoreVertical, Check, Filter, Sparkles
+  MoreHorizontal, MoreVertical, Check, Filter, Sparkles
 } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast-context";
 import { notifyOverlayOpen } from "@/components/ui/global-overlay-manager";
+import { UnifiedActionMenu, ActionMenuItem } from "@/components/ui/unified-action-menu";
 import { 
   createUser, toggleUserActive, assignProjectToUser, unassignProjectFromUser, 
   resetUserPassword, updateUser, softDeleteUser, restoreUser 
@@ -695,7 +696,11 @@ export function UserManagementClient({
                   onClick={() => setDetailUser(user)}
                   onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setDetailUser(user); } }} 
                   tabIndex={0} 
-                  className="group cursor-pointer hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  className={`group cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+                    openActionMenuId === user.id
+                      ? "bg-blue-50/70 border-l-2 border-l-blue-600 font-medium"
+                      : "hover:bg-slate-50"
+                  }`}
                 >
                   {/* 1. NGƯỜI DÙNG */}
                   <td className="px-3.5 py-3.5 align-top">
@@ -801,132 +806,83 @@ export function UserManagementClient({
                     </div>
                   </td>
 
-                  {/* 5. THAO TÁC (Clear buttons + Menu popover) */}
-                  <td className="w-[185px] min-w-[185px] px-3.5 py-3.5 align-top text-right whitespace-nowrap shrink-0">
-                    <div className="flex items-center justify-end gap-1.5 shrink-0" data-action-buttons>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); setDetailUser(user); }} 
-                        className="inline-flex items-center gap-1 px-2.5 py-1 text-[12.5px] font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
-                        title="Xem chi tiết"
-                        data-action-view
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                        Xem
-                      </button>
-
-                      {!user.deletedAt && canManageUser(user) && (
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); openEdit(user); }} 
-                          className="inline-flex items-center gap-1 px-2.5 py-1 text-[12.5px] font-bold text-slate-700 bg-slate-100 border border-slate-200 rounded-lg hover:bg-slate-200 transition-colors"
-                          title="Sửa thông tin"
-                          data-action-edit
-                        >
-                          <Edit className="h-3.5 w-3.5" />
-                          Sửa
-                        </button>
-                      )}
-
-                      {/* Dropdown Menu for Additional Actions */}
-                      <div className="relative inline-block" data-action-menu>
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const next = openActionMenuId === user.id ? null : user.id;
-                            setOpenActionMenuId(next);
-                            setExpandedProjectsUserId(null);
-                            if (next) {
-                              notifyOverlayOpen(`action-menu-${user.id}`);
-                            }
-                          }} 
-                          className="p-1.5 text-slate-600 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors"
-                          aria-label="Thao tác bổ sung"
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </button>
-
-                        {openActionMenuId === user.id && (
-                          <div className={`absolute right-0 ${isBottomRow ? "bottom-full mb-1" : "top-full mt-1"} z-30 w-48 rounded-xl bg-white border border-slate-200 p-1.5 shadow-xl space-y-0.5 text-left text-[13px] animate-in fade-in zoom-in-95 duration-100`}>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOpenActionMenuId(null);
-                                setAssignUserId(user.id);
-                                setAssignProjectId("");
-                                setAssignProjectRole("");
-                              }}
-                              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-slate-700 font-medium hover:bg-slate-100 hover:text-slate-900"
-                            >
-                              <Building2 className="h-4 w-4 text-blue-600" />
-                              Gán công trình
-                            </button>
-
-                            {canPerformSensitiveAction(user) && !user.deletedAt && (
-                              <>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setOpenActionMenuId(null);
-                                    handleResetPwClick(user);
-                                  }}
-                                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-slate-700 font-medium hover:bg-slate-100 hover:text-slate-900"
-                                >
-                                  <Key className="h-4 w-4 text-amber-600" />
-                                  Đặt lại mật khẩu
-                                </button>
-
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setOpenActionMenuId(null);
-                                    handleToggleActive(user.id, user.isActive);
-                                  }}
-                                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-slate-700 font-medium hover:bg-slate-100 hover:text-slate-900"
-                                >
-                                  {user.isActive ? (
-                                    <>
-                                      <Lock className="h-4 w-4 text-amber-600" />
-                                      Khóa tài khoản
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Unlock className="h-4 w-4 text-emerald-600" />
-                                      Mở khóa tài khoản
-                                    </>
-                                  )}
-                                </button>
-
-                                <div className="my-1 border-t border-slate-100" />
-
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setOpenActionMenuId(null);
-                                    handleSoftDelete(user);
-                                  }}
-                                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-red-600 font-semibold hover:bg-red-50"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                  Ngừng sử dụng
-                                </button>
-                              </>
-                            )}
-
-                            {canPerformSensitiveAction(user) && user.deletedAt && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setOpenActionMenuId(null);
-                                  handleRestore(user);
-                                }}
-                                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-emerald-700 font-semibold hover:bg-emerald-50"
-                              >
-                                <RefreshCcw className="h-4 w-4" />
-                                Khôi phục tài khoản
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
+                  {/* 5. THAO TÁC (Unified 3-dot Action Menu) */}
+                  <td className="w-[80px] min-w-[80px] px-3.5 py-3.5 align-top text-right whitespace-nowrap shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-end">
+                      <UnifiedActionMenu
+                        ariaLabel={`Thao tác tài khoản ${user.name}`}
+                        showPointer={true}
+                        open={openActionMenuId === user.id}
+                        onOpenChange={(isOpen) => setOpenActionMenuId(isOpen ? user.id : null)}
+                        menuWidth="w-52"
+                        align="right"
+                        trigger={
+                          <button
+                            type="button"
+                            className={`p-1.5 rounded-lg border transition-colors ${
+                              openActionMenuId === user.id
+                                ? "bg-blue-100 border-blue-300 text-blue-700"
+                                : "text-slate-500 hover:bg-slate-100 border-slate-200 hover:text-slate-800"
+                            }`}
+                            title="Thao tác"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </button>
+                        }
+                        items={[
+                          {
+                            id: "view-details",
+                            label: "Xem chi tiết",
+                            icon: <Eye className="h-4 w-4 text-slate-500" />,
+                            onClick: () => setDetailUser(user),
+                          },
+                          ...(!user.deletedAt && canManageUser(user) ? [{
+                            id: "edit-user",
+                            label: "Sửa thông tin",
+                            icon: <Edit className="h-4 w-4 text-slate-500" />,
+                            onClick: () => openEdit(user),
+                          }] : []),
+                          {
+                            id: "assign-project",
+                            label: "Gán công trình",
+                            icon: <Building2 className="h-4 w-4 text-slate-500" />,
+                            onClick: () => {
+                              setAssignUserId(user.id);
+                              setAssignProjectId("");
+                              setAssignProjectRole("");
+                            },
+                          },
+                          ...(canPerformSensitiveAction(user) && !user.deletedAt ? [
+                            {
+                              id: "reset-pw",
+                              label: "Đặt lại mật khẩu",
+                              icon: <Key className="h-4 w-4 text-amber-500" />,
+                              onClick: () => handleResetPwClick(user),
+                            },
+                            {
+                              id: "toggle-active",
+                              label: user.isActive ? "Khóa tài khoản" : "Mở khóa tài khoản",
+                              icon: user.isActive ? <Lock className="h-4 w-4 text-amber-500" /> : <Unlock className="h-4 w-4 text-emerald-500" />,
+                              onClick: () => handleToggleActive(user.id, user.isActive),
+                            },
+                            {
+                              id: "soft-delete",
+                              label: "Ngừng sử dụng",
+                              icon: <Trash2 className="h-4 w-4 text-rose-500" />,
+                              variant: "destructive" as const,
+                              onClick: () => handleSoftDelete(user),
+                            },
+                          ] : []),
+                          ...(canPerformSensitiveAction(user) && user.deletedAt ? [
+                            {
+                              id: "restore-user",
+                              label: "Khôi phục tài khoản",
+                              icon: <RefreshCcw className="h-4 w-4 text-emerald-600" />,
+                              onClick: () => handleRestore(user),
+                            },
+                          ] : []),
+                        ]}
+                      />
                     </div>
                   </td>
                 </tr>

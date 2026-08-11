@@ -30,7 +30,7 @@ export default async function DashboardActionsPage({
   const dashboardData = await getDashboardData(session, "7d", selectedProjectId ?? undefined);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <div className="w-full max-w-full space-y-6">
       <ActionsCenterClientView
         allItems={actionResult.allItems}
         totalCount={actionResult.total}

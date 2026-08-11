@@ -9,7 +9,7 @@ import type { DashboardData } from '@/lib/dashboard/dashboard-queries';
 
 export function OperationalDashboard({ data }: { data: DashboardData }) {
   return (
-    <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-4 overflow-x-hidden px-0 py-0 sm:gap-6">
+    <div className="mx-auto flex w-full max-w-full flex-col gap-4 overflow-x-hidden px-0 py-0 sm:gap-6">
       <DashboardHeader data={data} />
 
       {/* MOBILE LAYOUT */}

@@ -1,15 +1,16 @@
 "use client";
 
-import { Eye, Printer, ChevronLeft, ChevronRight, Edit2, Trash2 } from "lucide-react";
+import { useState, useMemo, Fragment } from "react";
+import { Eye, Printer, ChevronLeft, ChevronRight, Edit2, Trash2, MoreHorizontal } from "lucide-react";
 import type { FieldReport } from "./types";
 import { getStatusLabel, getStatusVariant } from "./types";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { PhotoPreviewStack } from "./photo-preview-stack";
-import { useMemo, Fragment } from "react";
 import { getVietnamIsoWeekInfo } from "@/lib/reports/report-timezone";
 import { formatDateVN, formatTimeVN, formatReportCode } from "@/lib/utils";
 import { ContentCard } from "@/components/ui/enterprise";
 import { isCompanyWideRole } from "@/lib/rbac-rules";
+import { UnifiedActionMenu } from "@/components/ui/unified-action-menu";
 
 interface ReportsTableProps {
   reports: FieldReport[];
@@ -40,6 +41,7 @@ export function ReportsTable({
   showProjectColumn = true,
   currentUser,
 }: ReportsTableProps) {
+  const [activeReportId, setActiveReportId] = useState<string | null>(null);
   const currentUserHasCompanyScope = isCompanyWideRole(currentUser?.role);
   const totalPages = Math.ceil(totalReports / pageSize) || 1;
   const start = totalReports === 0 ? 0 : (page - 1) * pageSize + 1;
@@ -176,7 +178,11 @@ export function ReportsTable({
                       return (
                         <tr
                           key={report.id}
-                          className={`hover:bg-[var(--surface-subtle)] transition-colors cursor-pointer group ${isWeekly ? 'bg-indigo-50/30' : ''}`}
+                          className={`transition-colors cursor-pointer group ${
+                            activeReportId === report.id
+                              ? "bg-blue-50/70 border-l-2 border-l-blue-600 font-medium"
+                              : isWeekly ? 'bg-indigo-50/30 hover:bg-indigo-50/60' : 'hover:bg-[var(--surface-subtle)]'
+                          }`}
                           onClick={() => onViewDetail(report)}
                         >
                           <td className="py-2.5 px-4 whitespace-nowrap">
@@ -256,55 +262,66 @@ export function ReportsTable({
                               )}
                             </div>
                           </td>
-                          <td className="w-[140px] min-w-[140px] py-2.5 px-4 text-right whitespace-nowrap shrink-0" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center justify-end gap-0.5 shrink-0">
-                              {/* Edit & Delete Buttons */}
-                              {currentUser && (
-                                <>
-                                  {(report.status === "DRAFT" || report.status === "REJECTED" || report.status === "REVISION_REQUESTED") && 
-                                   (report.createdById === currentUser.id || currentUserHasCompanyScope) && (
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); onEdit?.(report); }}
-                                      className="icon-button h-9 w-9 text-[var(--muted-foreground)] hover:text-blue-700"
-                                      title="Sửa báo cáo"
-                                      aria-label="Sửa báo cáo"
-                                    >
-                                      <Edit2 className="w-[18px] h-[18px]" strokeWidth={2} />
-                                    </button>
-                                  )}
-                                  
-                                  {(report.status === "DRAFT" || report.status === "REJECTED" || report.status === "REVISION_REQUESTED" || report.status === "SUBMITTED") && 
-                                   currentUserHasCompanyScope && (
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); onDelete?.(report); }}
-                                      className="icon-button h-9 w-9 text-[var(--muted-foreground)] hover:bg-rose-50 hover:text-rose-700"
-                                      title="Xóa báo cáo"
-                                      aria-label="Xóa báo cáo"
-                                    >
-                                      <Trash2 className="w-[18px] h-[18px]" strokeWidth={2} />
-                                    </button>
-                                  )}
-                                </>
-                              )}
-                              
-                              <button
-                                onClick={(e) => { e.stopPropagation(); onViewDetail(report); }}
-                                className="icon-button h-9 w-9"
-                                title="Xem chi tiết"
-                                aria-label="Xem chi tiết"
-                              >
-                                <Eye className="w-[18px] h-[18px]" strokeWidth={2} />
-                              </button>
-                              {currentUser?.role !== "CONSTRUCTION_SUPERVISOR" && (
-                                <button
-                                  onClick={(e) => handlePrint(e, report)}
-                                  className="icon-button h-9 w-9"
-                                  title="In / Xuất PDF"
-                                  aria-label="In / Xuất PDF"
-                                >
-                                  <Printer className="w-[18px] h-[18px]" strokeWidth={2} />
-                                </button>
-                              )}
+                          <td className="w-[80px] min-w-[80px] py-2.5 px-4 text-right whitespace-nowrap shrink-0" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-end">
+                              <UnifiedActionMenu
+                                ariaLabel={`Thao tác báo cáo ${report.code}`}
+                                showPointer={true}
+                                open={activeReportId === report.id}
+                                onOpenChange={(isOpen) => setActiveReportId(isOpen ? report.id : null)}
+                                menuWidth="w-48"
+                                align="right"
+                                trigger={
+                                  <button
+                                    type="button"
+                                    className={`p-1.5 rounded-lg border transition-colors ${
+                                      activeReportId === report.id
+                                        ? "bg-blue-100 border-blue-300 text-blue-700"
+                                        : "text-slate-500 hover:bg-slate-100 border-slate-200 hover:text-slate-800"
+                                    }`}
+                                    title="Thao tác"
+                                  >
+                                    <MoreHorizontal className="w-4 h-4" />
+                                  </button>
+                                }
+                                items={[
+                                  {
+                                    id: "view-report",
+                                    label: "Xem chi tiết",
+                                    icon: <Eye className="h-4 w-4 text-blue-600" />,
+                                    onClick: () => onViewDetail(report),
+                                  },
+                                  ...((currentUser && (report.status === "DRAFT" || report.status === "REJECTED" || report.status === "REVISION_REQUESTED") && (report.createdById === currentUser.id || currentUserHasCompanyScope)) ? [
+                                    {
+                                      id: "edit-report",
+                                      label: "Sửa báo cáo",
+                                      icon: <Edit2 className="h-4 w-4 text-slate-600" />,
+                                      onClick: () => onEdit?.(report),
+                                    },
+                                  ] : []),
+                                  ...(currentUser?.role !== "CONSTRUCTION_SUPERVISOR" ? [
+                                    {
+                                      id: "print-report",
+                                      label: "In / Xuất PDF",
+                                      icon: <Printer className="h-4 w-4 text-slate-600" />,
+                                      onClick: (e?: React.MouseEvent) => {
+                                        if (e) handlePrint(e, report);
+                                        else if (onPrintPreview) onPrintPreview(report);
+                                        else window.open(`/print/reports/${report.id}`, '_blank');
+                                      },
+                                    },
+                                  ] : []),
+                                  ...((currentUser && (report.status === "DRAFT" || report.status === "REJECTED" || report.status === "REVISION_REQUESTED" || report.status === "SUBMITTED") && currentUserHasCompanyScope) ? [
+                                    {
+                                      id: "delete-report",
+                                      label: "Xóa báo cáo",
+                                      icon: <Trash2 className="h-4 w-4 text-rose-600" />,
+                                      variant: "destructive" as const,
+                                      onClick: () => onDelete?.(report),
+                                    },
+                                  ] : []),
+                                ]}
+                              />
                             </div>
                           </td>
                         </tr>

@@ -76,7 +76,7 @@ export function WeeklySummaryClientView({ summary }: WeeklySummaryClientViewProp
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 py-6 text-slate-900">
+    <div className="space-y-6 min-w-0 max-w-full py-2 text-slate-900">
       {/* Top Fixed Header & Action Toolbar */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-slate-200 pb-5">
         <div>

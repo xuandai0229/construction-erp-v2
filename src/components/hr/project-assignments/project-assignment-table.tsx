@@ -15,6 +15,7 @@ import { ProjectAssignmentDTO } from "@/lib/hr/project-assignment-dto";
 import { formatDisplayDate } from "@/lib/hr/vietnam-date-helper";
 import { AssignmentStatusBadge } from "./assignment-status-badge";
 import { AssignmentUserCapabilities } from "@/app/hr/project-assignments/actions/project-assignment-actions";
+import { UnifiedActionMenu } from "@/components/ui/unified-action-menu";
 
 interface ProjectAssignmentTableProps {
   assignments: ProjectAssignmentDTO[];
@@ -104,7 +105,14 @@ export function ProjectAssignmentTable({
               const isActiveCurrent = item.status === "ACTIVE" && item.startDate <= todayStr;
 
               return (
-                <tr key={item.id} className="hover:bg-slate-50/80 transition group">
+                <tr
+                  key={item.id}
+                  className={`transition group ${
+                    activeMenuId === item.id
+                      ? "bg-blue-50/70 border-l-2 border-l-blue-600 font-medium"
+                      : "hover:bg-slate-50/80"
+                  }`}
+                >
                   {/* Employee */}
                   <td className="py-3.5 px-4 font-medium text-slate-900">
                     <div className="flex items-center gap-2">
@@ -174,95 +182,68 @@ export function ProjectAssignmentTable({
                   </td>
 
                   {/* Actions Dropdown */}
-                  <td className="py-3.5 px-4 text-right relative">
-                    <div className="relative inline-block text-left">
-                      <button
-                        type="button"
-                        onClick={() => setActiveMenuId(activeMenuId === item.id ? null : item.id)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
-                        title="Thao tác"
-                        aria-label={`Mở thao tác cho ${item.employeeName}`}
-                      >
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
-
-                      {activeMenuId === item.id && (
-                        <>
-                          <div
-                            className="fixed inset-0 z-10"
-                            onClick={() => setActiveMenuId(null)}
-                          />
-                          <div className="absolute right-0 mt-1 w-52 bg-white rounded-xl shadow-xl border border-slate-200 z-20 py-1 text-xs text-slate-700 animate-in fade-in zoom-in-95 duration-100">
-                            {/* View Details */}
-                            <button
-                              onClick={() => {
-                                setActiveMenuId(null);
-                                onViewDetails(item);
-                              }}
-                              className="w-full px-3 py-2 text-left hover:bg-slate-50 flex items-center gap-2"
-                            >
-                              <Eye className="w-3.5 h-3.5 text-blue-600" />
-                              <span>Xem chi tiết & Lịch sử</span>
-                            </button>
-
-                            {/* Transfer Role / Allocation */}
-                            {capabilities.canUpdate && isActiveCurrent && (
-                              <button
-                                onClick={() => {
-                                  setActiveMenuId(null);
-                                  onTransfer(item);
-                                }}
-                                className="w-full px-3 py-2 text-left hover:bg-slate-50 flex items-center gap-2"
-                              >
-                                <RefreshCw className="w-3.5 h-3.5 text-purple-600" />
-                                <span>Thay đổi vai trò hoặc tỷ lệ</span>
-                              </button>
-                            )}
-
-                            {/* Extend */}
-                            {capabilities.canUpdate && isActiveCurrent && (
-                              <button
-                                onClick={() => {
-                                  setActiveMenuId(null);
-                                  onExtend(item);
-                                }}
-                                className="w-full px-3 py-2 text-left hover:bg-slate-50 flex items-center gap-2 text-slate-700"
-                              >
-                                <Calendar className="w-3.5 h-3.5 text-sky-600" />
-                                <span>{item.expectedEndDate ? "Gia hạn điều động" : "Thiết lập ngày dự kiến kết thúc"}</span>
-                              </button>
-                            )}
-
-                            {/* Release */}
-                            {capabilities.canRelease && (isActiveCurrent || isFuturePlanned) && (
-                              <button
-                                onClick={() => {
-                                  setActiveMenuId(null);
-                                  onRelease(item);
-                                }}
-                                className="w-full px-3 py-2 text-left hover:bg-slate-50 flex items-center gap-2 text-amber-700"
-                              >
-                                <LogOut className="w-3.5 h-3.5 text-amber-600" />
-                                <span>Rút nhân sự</span>
-                              </button>
-                            )}
-
-                            {/* Cancel Future */}
-                            {capabilities.canRelease && isFuturePlanned && (
-                              <button
-                                onClick={() => {
-                                  setActiveMenuId(null);
-                                  onCancel(item);
-                                }}
-                                className="w-full px-3 py-2 text-left hover:bg-slate-50 flex items-center gap-2 text-rose-600"
-                              >
-                                <Ban className="w-3.5 h-3.5 text-rose-600" />
-                                <span>Hủy điều động</span>
-                              </button>
-                            )}
-                          </div>
-                        </>
-                      )}
+                  <td className="py-3.5 px-4 text-right whitespace-nowrap shrink-0">
+                    <div className="flex items-center justify-end">
+                      <UnifiedActionMenu
+                        ariaLabel={`Thao tác điều động ${item.employeeName}`}
+                        showPointer={true}
+                        open={activeMenuId === item.id}
+                        onOpenChange={(isOpen) => setActiveMenuId(isOpen ? item.id : null)}
+                        menuWidth="w-56"
+                        align="right"
+                        trigger={
+                          <button
+                            type="button"
+                            className={`p-1.5 rounded-lg border transition-colors ${
+                              activeMenuId === item.id
+                                ? "bg-blue-100 border-blue-300 text-blue-700"
+                                : "text-slate-500 hover:bg-slate-100 border-slate-200 hover:text-slate-800"
+                            }`}
+                            title="Thao tác"
+                          >
+                            <MoreHorizontal className="w-4 h-4" />
+                          </button>
+                        }
+                        items={[
+                          {
+                            id: "view-details",
+                            label: "Xem chi tiết & Lịch sử",
+                            icon: <Eye className="w-4 h-4 text-blue-600" />,
+                            onClick: () => onViewDetails(item),
+                          },
+                          ...(capabilities.canUpdate && isActiveCurrent ? [
+                            {
+                              id: "transfer-role",
+                              label: "Thay đổi vai trò hoặc tỷ lệ",
+                              icon: <RefreshCw className="w-4 h-4 text-purple-600" />,
+                              onClick: () => onTransfer(item),
+                            },
+                            {
+                              id: "extend-assignment",
+                              label: item.expectedEndDate ? "Gia hạn điều động" : "Thiết lập ngày dự kiến kết thúc",
+                              icon: <Calendar className="w-4 h-4 text-sky-600" />,
+                              onClick: () => onExtend(item),
+                            },
+                          ] : []),
+                          ...(capabilities.canRelease && (isActiveCurrent || isFuturePlanned) ? [
+                            {
+                              id: "release-assignment",
+                              label: "Rút nhân sự",
+                              icon: <LogOut className="w-4 h-4 text-amber-600" />,
+                              onClick: () => onRelease(item),
+                            },
+                          ] : []),
+                          ...(capabilities.canRelease && isFuturePlanned ? [
+                            {
+                              id: "cancel-assignment",
+                              label: "Hủy điều động",
+                              icon: <Ban className="w-4 h-4 text-rose-600" />,
+                              variant: "destructive" as const,
+                              onClick: () => onCancel(item),
+                            },
+                          ] : []),
+                        ]}
+                      />
                     </div>
                   </td>
                 </tr>

@@ -3,10 +3,11 @@
 import * as React from "react";
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { MoreVertical } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ContentCard, FilterBar, KpiCard, EnterpriseTable, SectionHeader } from "@/components/ui/enterprise";
 import { InteractiveKpiCard } from "@/components/ui/interactive-kpi-card";
+import { UnifiedActionMenu, ActionMenuItem } from "@/components/ui/unified-action-menu";
 
 export type MaterialKpiItem = {
   key: string;
@@ -136,118 +137,61 @@ export type MaterialActionItem = {
 
 export function MaterialRowActionMenu({
   actions,
+  onOpenChange,
 }: {
   actions: MaterialActionItem[];
+  onOpenChange?: (isOpen: boolean) => void;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
-  const [panelStyle, setPanelStyle] = useState<React.CSSProperties | null>(null);
-
-  const updatePanelPosition = () => {
-    const button = buttonRef.current;
-    if (!button) return;
-    const rect = button.getBoundingClientRect();
-    const safePadding = 12;
-    const width = 224;
-    const estimatedHeight = Math.min(actions.length * 40 + 12, 320);
-    const spaceBelow = window.innerHeight - rect.bottom - safePadding;
-    const openUp = spaceBelow < estimatedHeight && rect.top > spaceBelow;
-    setPanelStyle({
-      position: "fixed",
-      width,
-      left: Math.max(safePadding, Math.min(rect.right - width, window.innerWidth - width - safePadding)),
-      top: openUp ? undefined : rect.bottom + 6,
-      bottom: openUp ? window.innerHeight - rect.top + 6 : undefined,
-      zIndex: 110,
-    });
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (
-        menuRef.current &&
-        !menuRef.current.contains(target) &&
-        panelRef.current &&
-        !panelRef.current.contains(target)
-      ) {
-        setIsOpen(false);
-      }
-    };
-    if (isOpen) {
-      updatePanelPosition();
-      document.addEventListener("mousedown", handleClickOutside);
-      window.addEventListener("resize", updatePanelPosition);
-      window.addEventListener("scroll", updatePanelPosition, true);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      window.removeEventListener("resize", updatePanelPosition);
-      window.removeEventListener("scroll", updatePanelPosition, true);
-    };
-  }, [isOpen, actions.length]);
-
   if (!actions.length) return null;
 
-  const panel = isOpen ? (
-    <div
-      ref={panelRef}
-      style={panelStyle || undefined}
-      className="max-h-[min(320px,calc(100dvh-24px))] overflow-y-auto rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface)] p-1.5 shadow-[var(--shadow-elevated)] ring-1 ring-black/5 focus:outline-none"
-      role="menu"
-    >
-      {actions.map((action, idx) => (
-        <div key={idx} title={action.disabledReason}>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (!action.disabled) {
-                setIsOpen(false);
-                action.onClick();
-              }
-            }}
-            disabled={action.disabled}
-            className={cn(
-              "flex w-full items-center gap-2.5 rounded-[var(--radius-lg)] px-2.5 py-2 text-left text-sm font-medium transition-colors",
-              action.disabled
-                ? "cursor-not-allowed opacity-50 text-[var(--muted-foreground)] opacity-70"
-                : action.danger
-                ? "text-rose-600 hover:bg-rose-50"
-                : "text-[var(--foreground)] hover:bg-[var(--border)] hover:text-[var(--foreground)]"
-            )}
-            role="menuitem"
-          >
-            {action.icon && <span className="shrink-0">{action.icon}</span>}
-            <span className="truncate">{action.label}</span>
-          </button>
-        </div>
-      ))}
-    </div>
-  ) : null;
-
   return (
-    <div className="relative inline-block text-left" ref={menuRef}>
-      <button
-        ref={buttonRef}
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          setIsOpen(!isOpen);
-        }}
-        className={`flex h-8 w-8 items-center justify-center rounded-[var(--radius-lg)] border transition-colors focus:outline-none ${
-          isOpen ? "border-[var(--border)] bg-[var(--border)] text-[var(--foreground)] shadow-[var(--shadow-card)]" : "border-transparent text-[var(--muted-foreground)] hover:bg-[var(--border)] hover:text-[var(--foreground)]"
-        }`}
-        aria-haspopup="menu"
-        aria-expanded={isOpen}
-        aria-label="Mo menu thao tac"
-      >
-        <MoreVertical className="h-4 w-4" />
-      </button>
+    <UnifiedActionMenu
+      align="right"
+      menuWidth="w-52"
+      showPointer={true}
+      onOpenChange={onOpenChange}
+      trigger={({ toggle, isOpen }) => (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggle();
+          }}
+          className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border transition-colors shadow-2xs ${
+            isOpen
+              ? "border-blue-300 bg-blue-100/80 text-blue-700"
+              : "border-slate-200 bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+          }`}
+          aria-label="Thao tác"
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </button>
+      )}
+    >
+      {actions.map((action, idx) => {
+        const isSeparatorBefore = action.danger && idx > 0 && !actions[idx - 1].danger;
 
-      {panel ? createPortal(panel, document.body) : null}
-    </div>
+        return (
+          <React.Fragment key={idx}>
+            {isSeparatorBefore && <div className="my-1 border-t border-slate-100" />}
+            <ActionMenuItem
+              disabled={action.disabled}
+              destructive={action.danger}
+              icon={action.icon}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!action.disabled) {
+                  action.onClick();
+                }
+              }}
+            >
+              {action.label}
+            </ActionMenuItem>
+          </React.Fragment>
+        );
+      })}
+    </UnifiedActionMenu>
   );
 }

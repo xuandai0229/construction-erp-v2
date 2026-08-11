@@ -10,6 +10,7 @@ import {
   Search,
   X,
   MoreVertical,
+  MoreHorizontal,
   Edit3,
   Eye,
   Trash2,
@@ -274,8 +275,14 @@ export function WeeklyListClient({
   const [page, setPage] = useState(1);
   const pageSize = 15;
 
-  // Active Row State for Menu & Popover
-  const [activeActionRowId, setActiveActionRowId] = useState<string | null>(null);
+  // Active Row State for Menu & Popover — desktop and mobile have SEPARATE state
+  // to prevent Portal-based menus from escaping display:none containers.
+  // ROOT CAUSE FIX: When both branches shared the same controlled `open` state,
+  // the hidden branch's UnifiedActionMenu Portal rendered a ghost menu at (0,0).
+  const [desktopActiveRowId, setDesktopActiveRowId] = useState<string | null>(null);
+  const [mobileActiveRowId, setMobileActiveRowId] = useState<string | null>(null);
+  // Unified read accessor for row highlighting (used by both branches)
+  const activeActionRowId = desktopActiveRowId ?? mobileActiveRowId;
   const [activeProjectPopover, setActiveProjectPopover] = useState<string | null>(null);
   const [popoverTriggerEl, setPopoverTriggerEl] = useState<HTMLElement | null>(null);
 
@@ -720,7 +727,7 @@ export function WeeklyListClient({
                     const projectList = row.projects || [];
                     const projectCount = projectList.length;
 
-                    const isActionOpen = activeActionRowId === row.id;
+                    const isActionOpen = desktopActiveRowId === row.id;
                     const isPopoverOpen = activeProjectPopover === row.id;
                     const isRowHighlighted = isActionOpen || isPopoverOpen;
 
@@ -831,48 +838,43 @@ export function WeeklyListClient({
                         </td>
 
                         {/* Thao tác */}
-                        <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                          <div className="flex items-center justify-end gap-1.5">
-                            {/* Nút thao tác chính: Soạn/Sửa */}
-                            <Button
-                              size="sm"
-                              onClick={() => router.push(`/reports/weekly-inspection/${row.id}/edit`)}
-                              className="h-8 text-xs gap-1 bg-blue-600 text-white hover:bg-blue-700 font-medium"
-                            >
-                              <Edit3 className="h-3.5 w-3.5" />
-                              <span>Soạn/Sửa</span>
-                            </Button>
-
+                        <td className="py-3.5 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center justify-end">
                             {/* Unified Action Menu (3-dots) với Context Header rõ ràng */}
                             <UnifiedActionMenu
                               align="right"
                               menuWidth="w-56"
+                              pointerBg="bg-slate-50"
+                              open={desktopActiveRowId === row.id}
                               ariaLabel={`Mở thao tác hồ sơ ${displayCode}`}
                               onOpenChange={(isOpen) => {
                                 if (isOpen) {
-                                  setActiveActionRowId(row.id);
+                                  setDesktopActiveRowId(row.id);
+                                  setMobileActiveRowId(null); // ensure mobile branch is closed
                                 } else {
-                                  setActiveActionRowId((prev) => (prev === row.id ? null : prev));
+                                  setDesktopActiveRowId((prev) => (prev === row.id ? null : prev));
                                 }
                               }}
-                              trigger={({ isOpen, toggle }) => (
+                              trigger={({ toggle, isOpen }) => (
                                 <button
                                   type="button"
-                                  onClick={toggle}
-                                  aria-expanded={isOpen}
-                                  aria-haspopup="menu"
                                   aria-label={`Mở thao tác hồ sơ ${displayCode}`}
                                   className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-all ${
                                     isOpen || isActionOpen
                                       ? "bg-blue-100 text-blue-700 border-blue-400 ring-2 ring-blue-500/20 font-bold"
                                       : "border-slate-200 text-slate-600 hover:bg-slate-100"
                                   }`}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    toggle();
+                                  }}
                                 >
-                                  <MoreVertical className="h-4 w-4" />
+                                  <MoreHorizontal className="h-4 w-4" />
                                 </button>
                               )}
                             >
-                              {/* Yêu cầu 3: Context Header trực quan ở đầu menu */}
+                              {/* Context Header trực quan ở đầu menu */}
                               <div className="px-3 py-2 bg-slate-50/90 rounded-t-lg border-b border-slate-100 mb-1 pointer-events-none">
                                 <div className="font-bold text-slate-900 text-xs font-mono">
                                   Hồ sơ {displayCode}
@@ -882,8 +884,17 @@ export function WeeklyListClient({
                                 </div>
                               </div>
 
-                              {/* Action items không bị lặp nút Soạn/Sửa */}
                               <div className="space-y-0.5 p-1">
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  onClick={() => router.push(`/reports/weekly-inspection/${row.id}/edit`)}
+                                  className="w-full flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-bold rounded-lg text-blue-700 hover:bg-blue-50 transition-colors text-left"
+                                >
+                                  <Edit3 className="h-4 w-4 text-blue-600 shrink-0" />
+                                  <span>Soạn / Sửa hồ sơ</span>
+                                </button>
+
                                 <button
                                   type="button"
                                   role="menuitem"
@@ -956,7 +967,7 @@ export function WeeklyListClient({
                 const displayCode = row.reportNumber || `BCGS-${weekInfo.year}-W${weekInfo.week}`;
                 const projectList = row.projects || [];
                 const projectCount = projectList.length;
-                const isActionOpen = activeActionRowId === row.id;
+                const isActionOpen = mobileActiveRowId === row.id;
 
                 return (
                   <div
@@ -995,40 +1006,37 @@ export function WeeklyListClient({
                         <span className="text-xs font-medium text-slate-700">{row.createdBy.name}</span>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() => router.push(`/reports/weekly-inspection/${row.id}/edit`)}
-                          className="h-8 text-xs gap-1 bg-blue-600 text-white hover:bg-blue-700 font-medium"
-                        >
-                          <Edit3 className="h-3.5 w-3.5" />
-                          <span>Sửa</span>
-                        </Button>
+                      <div className="flex items-center justify-end" onClick={(e) => e.stopPropagation()}>
                         <UnifiedActionMenu
                           align="right"
                           menuWidth="w-52"
+                          pointerBg="bg-slate-50"
+                          open={mobileActiveRowId === row.id}
                           ariaLabel={`Mở thao tác hồ sơ ${displayCode}`}
                           onOpenChange={(isOpen) => {
                             if (isOpen) {
-                              setActiveActionRowId(row.id);
+                              setMobileActiveRowId(row.id);
+                              setDesktopActiveRowId(null); // ensure desktop branch is closed
                             } else {
-                              setActiveActionRowId((prev) => (prev === row.id ? null : prev));
+                              setMobileActiveRowId((prev) => (prev === row.id ? null : prev));
                             }
                           }}
-                          trigger={({ isOpen, toggle }) => (
+                          trigger={({ toggle, isOpen }) => (
                             <button
                               type="button"
-                              onClick={toggle}
-                              aria-expanded={isOpen}
-                              aria-haspopup="menu"
                               aria-label={`Mở thao tác hồ sơ ${displayCode}`}
                               className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-all ${
                                 isOpen || isActionOpen
                                   ? "bg-blue-100 text-blue-700 border-blue-400 font-bold"
                                   : "border-slate-200 text-slate-600 hover:bg-slate-100"
                               }`}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                toggle();
+                              }}
                             >
-                              <MoreVertical className="h-4 w-4" />
+                              <MoreHorizontal className="h-4 w-4" />
                             </button>
                           )}
                         >
@@ -1044,22 +1052,50 @@ export function WeeklyListClient({
                             <button
                               type="button"
                               role="menuitem"
-                              onClick={() => router.push(`/reports/weekly-inspection/${row.id}/preview`)}
-                              className="w-full flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-medium rounded-lg text-slate-700 hover:bg-slate-100 text-left"
+                              onClick={() => router.push(`/reports/weekly-inspection/${row.id}/edit`)}
+                              className="w-full flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-bold rounded-lg text-blue-700 hover:bg-blue-50 text-left"
                             >
-                              <Eye className="h-4 w-4 text-slate-500 shrink-0" />
-                              <span>Xem chi tiết</span>
+                              <Edit3 className="h-4 w-4 text-blue-600 shrink-0" />
+                              <span>Soạn / Sửa hồ sơ</span>
                             </button>
 
                             <button
                               type="button"
                               role="menuitem"
-                              onClick={() => router.push(`/reports/weekly-inspection/${row.id}/preview?autoPrint=1`)}
+                              onClick={() => router.push(`/reports/weekly-inspection/${row.id}/preview`)}
+                              className="w-full flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-medium rounded-lg text-slate-700 hover:bg-slate-100 text-left"
+                            >
+                              <Eye className="h-4 w-4 text-slate-500 shrink-0" />
+                              <span>Xem trước HTML</span>
+                            </button>
+
+                            <a
+                              href={`/api/supervision/weekly/${row.id}/export?format=pdf&disposition=inline&document=RESULT`}
+                              target="_blank"
+                              rel="noopener noreferrer"
                               className="w-full flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-medium rounded-lg text-slate-700 hover:bg-slate-100 text-left"
                             >
                               <Printer className="h-4 w-4 text-slate-500 shrink-0" />
-                              <span>In / PDF</span>
-                            </button>
+                              <span>Xem PDF (In sạch)</span>
+                            </a>
+
+                            <a
+                              href={`/api/supervision/weekly/${row.id}/export?format=pdf&disposition=attachment&document=RESULT`}
+                              download
+                              className="w-full flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-medium rounded-lg text-slate-700 hover:bg-slate-100 text-left"
+                            >
+                              <Download className="h-4 w-4 text-blue-600 shrink-0" />
+                              <span>Tải PDF</span>
+                            </a>
+
+                            <a
+                              href={`/api/supervision/weekly/${row.id}/export?format=docx&document=RESULT`}
+                              download
+                              className="w-full flex items-center gap-2.5 px-2.5 py-1.5 text-xs font-medium rounded-lg text-slate-700 hover:bg-slate-100 text-left"
+                            >
+                              <FileText className="h-4 w-4 text-slate-500 shrink-0" />
+                              <span>Tải DOCX</span>
+                            </a>
 
                             {(isReviewer || isOwner) && (
                               <>

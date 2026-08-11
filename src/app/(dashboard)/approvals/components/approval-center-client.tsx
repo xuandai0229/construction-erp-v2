@@ -832,7 +832,7 @@ export function ApprovalCenterClient({
   };
 
   return (
-    <div className="app-page mx-auto max-w-[1400px] space-y-6">
+    <div className="app-page w-full max-w-full space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="flex items-center gap-2 text-sm font-medium text-blue-600 mb-2">

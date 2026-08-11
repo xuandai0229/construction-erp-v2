@@ -132,7 +132,7 @@ export default async function FieldProgressDailyPage({
   });
 
   return (
-    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 space-y-6 pb-20 min-w-0 overflow-x-hidden">
+    <div className="w-full max-w-full space-y-6 pb-20 min-w-0 overflow-x-hidden">
       <div className="flex flex-col gap-3">
         <div>
           <h1 className="text-xl sm:text-3xl font-bold text-slate-900 flex items-center gap-2 sm:gap-3">

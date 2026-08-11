@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { HrEmptyState } from "./hr-empty-state";
+import { UnifiedActionMenu, ActionMenuItem } from "@/components/ui/unified-action-menu";
+import { MoreHorizontal } from "lucide-react";
 
 interface EmployeeDataTableProps {
   employees: EmployeeListDTO[];
@@ -251,6 +253,7 @@ export function EmployeeDataTable({
   canCreate,
   searchQuery,
 }: EmployeeDataTableProps) {
+  const [activeEmpId, setActiveEmpId] = useState<string | null>(null);
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
   const pageHref = (page: number) => {
     const params = new URLSearchParams(searchQuery);
@@ -335,9 +338,17 @@ export function EmployeeDataTable({
               const cleanFullName = sanitizeDisplayName(emp.fullName);
               const cleanDeptName = sanitizeDisplayName(emp.currentDepartmentName);
               const cleanPosTitle = sanitizeDisplayName(emp.currentPositionTitle);
+              const isActiveRow = activeEmpId === emp.id;
 
               return (
-                <tr key={emp.id} className="hover:bg-slate-50/80 transition-colors">
+                <tr 
+                  key={emp.id} 
+                  className={`transition-colors ${
+                    isActiveRow
+                      ? "bg-blue-50/70 border-l-2 border-l-blue-600 font-medium"
+                      : "hover:bg-slate-50/80"
+                  }`}
+                >
                   {/* 1. Employee Name & Code Cell (17%) */}
                   <td className="py-2.5 px-3 overflow-hidden">
                     <div className="flex items-center gap-2.5 min-w-0">
@@ -424,23 +435,40 @@ export function EmployeeDataTable({
 
                   {/* 7. Action Cell (6%) */}
                   <td className="py-2.5 px-3 text-right whitespace-nowrap">
-                    <div className="flex items-center justify-end gap-0.5">
-                      <Link
-                        href={`/hr/employees/${emp.id}`}
-                        title="Xem hồ sơ"
-                        className="p-1 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-md transition-colors"
+                    <div className="flex items-center justify-end">
+                      <UnifiedActionMenu
+                        align="right"
+                        menuWidth="w-48"
+                        showPointer={true}
+                        onOpenChange={(isOpen) => setActiveEmpId(isOpen ? emp.id : null)}
+                        trigger={({ toggle, isOpen }) => (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              toggle();
+                            }}
+                            className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border transition-colors shadow-2xs ${
+                              isOpen
+                                ? "border-blue-300 bg-blue-100/80 text-blue-700"
+                                : "border-slate-200 bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                            }`}
+                            aria-label="Thao tác nhân viên"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </button>
+                        )}
                       >
-                        <Eye className="w-4 h-4" />
-                      </Link>
-                      {canUpdate && (
-                        <Link
-                          href={`/hr/employees/${emp.id}/edit`}
-                          title="Chỉnh sửa"
-                          className="p-1 text-slate-500 hover:text-amber-600 hover:bg-slate-100 rounded-md transition-colors"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Link>
-                      )}
+                        <ActionMenuItem href={`/hr/employees/${emp.id}`} icon={<Eye className="w-4 h-4 text-slate-500" />}>
+                          Xem hồ sơ
+                        </ActionMenuItem>
+                        {canUpdate && (
+                          <ActionMenuItem href={`/hr/employees/${emp.id}/edit`} icon={<Edit className="w-4 h-4 text-slate-500" />}>
+                            Chỉnh sửa
+                          </ActionMenuItem>
+                        )}
+                      </UnifiedActionMenu>
                     </div>
                   </td>
                 </tr>

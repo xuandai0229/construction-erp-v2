@@ -8,7 +8,7 @@ export function SkeletonBlock({ className = "" }: { className?: string }) {
 
 export function PageSkeleton() {
   return (
-    <div className="app-page max-w-[1400px] space-y-5 sm:space-y-6">
+    <div className="app-page w-full max-w-full space-y-5 sm:space-y-6">
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="space-y-2">

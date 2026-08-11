@@ -176,7 +176,7 @@
   .app-page-container {
     width: 100%;
     min-width: 0;
-    max-width: 1600px;
+    max-width: 1760px;
     min-height: 100%;
     margin-inline: auto;
   }
@@ -184,7 +184,7 @@
   .app-page {
     width: 100%;
     min-width: 0;
-    max-width: 1600px;
+    max-width: 1760px;
     margin-inline: auto;
   }
 

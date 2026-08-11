@@ -224,7 +224,7 @@ export function SafetyListClient({
   const isFiltered = Boolean(searchQuery || selectedYear || (selectedSort && selectedSort !== "updated_desc") || (selectedCompletion && selectedCompletion !== "ALL"));
 
   return (
-    <div className="space-y-5 max-w-7xl mx-auto pb-12 font-sans">
+    <div className="space-y-5 min-w-0 max-w-full pb-12 font-sans">
       {/* Top Breadcrumb Navigation */}
       <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
         <Link

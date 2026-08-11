@@ -18,6 +18,8 @@ import {
   assignUnitManagerAction,
   endUnitManagerTermAction,
 } from "@/app/hr/organization/actions/organization-actions";
+import { UnifiedActionMenu, ActionMenuItem } from "@/components/ui/unified-action-menu";
+import { MoreHorizontal } from "lucide-react";
 
 export interface ManagerAssignmentItem {
   id: string;
@@ -61,6 +63,7 @@ export function UnitManagerManagementClient({
   const [searchTerm, setSearchTerm] = useState("");
   const [unitFilter, setUnitFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("active");
+  const [activeAssignmentId, setActiveAssignmentId] = useState<string | null>(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [unitId, setUnitId] = useState("");
@@ -247,71 +250,111 @@ export function UnitManagerManagementClient({
                     </td>
                   </tr>
                 ) : (
-                  filteredAssignments.map((a) => (
-                    <tr key={a.id} className="hover:bg-slate-50/60 transition-colors">
-                      <td className="py-3 px-4 font-bold text-slate-900">
-                        <div className="flex items-center gap-1.5">
-                          <Building2 className="w-4 h-4 text-slate-400" />
-                          <span>{a.organizationUnit.name}</span>
-                          <span className="text-[10px] text-slate-400">({a.organizationUnit.code})</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 font-semibold text-slate-900">
-                        <div className="flex items-center gap-1.5">
-                          <UserCheck className="w-4 h-4 text-blue-600" />
-                          <span>{a.employee.fullName}</span>
-                          <span className="text-[10px] text-slate-500">[{a.employee.code}]</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        {a.isPrimary ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200">
-                            Trưởng đơn vị chính
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-                            Phó / Phụ trách
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 font-mono text-slate-700">
-                        {a.decisionNo || "-"}
-                      </td>
-                      <td className="py-3 px-4 text-slate-600">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                          <span>{new Date(a.startDate).toLocaleDateString("vi-VN")}</span>
-                          <span>-</span>
-                          <span>
-                            {a.endDate ? new Date(a.endDate).toLocaleDateString("vi-VN") : "Hiện tại"}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        {a.endDate === null ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            <CheckCircle2 className="w-3 h-3" /> Đang đương nhiệm
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
-                            <Clock className="w-3 h-3" /> Đã mãn nhiệm
-                          </span>
-                        )}
-                      </td>
-                      {canManage && (
-                        <td className="py-3 px-4 text-right">
-                          {a.endDate === null && (
-                            <button
-                              onClick={() => setIsEndingTermId(a.id)}
-                              className="px-2.5 py-1 text-[11px] font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-md transition-colors"
-                            >
-                              Mãn nhiệm
-                            </button>
+                  filteredAssignments.map((a) => {
+                    const isActiveRow = activeAssignmentId === a.id;
+
+                    return (
+                      <tr 
+                        key={a.id} 
+                        className={`transition-colors ${
+                          isActiveRow
+                            ? "bg-blue-50/70 border-l-2 border-l-blue-600 font-medium"
+                            : "hover:bg-slate-50/60"
+                        }`}
+                      >
+                        <td className="py-3 px-4 font-bold text-slate-900">
+                          <div className="flex items-center gap-1.5">
+                            <Building2 className="w-4 h-4 text-slate-400" />
+                            <span>{a.organizationUnit.name}</span>
+                            <span className="text-[10px] text-slate-400">({a.organizationUnit.code})</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 font-semibold text-slate-900">
+                          <div className="flex items-center gap-1.5">
+                            <UserCheck className="w-4 h-4 text-blue-600" />
+                            <span>{a.employee.fullName}</span>
+                            <span className="text-[10px] text-slate-500">[{a.employee.code}]</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          {a.isPrimary ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200">
+                              Trưởng đơn vị chính
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                              Phó / Phụ trách
+                            </span>
                           )}
                         </td>
-                      )}
-                    </tr>
-                  ))
+                        <td className="py-3 px-4 font-mono text-slate-700">
+                          {a.decisionNo || "-"}
+                        </td>
+                        <td className="py-3 px-4 text-slate-600">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                            <span>{new Date(a.startDate).toLocaleDateString("vi-VN")}</span>
+                            <span>-</span>
+                            <span>
+                              {a.endDate ? new Date(a.endDate).toLocaleDateString("vi-VN") : "Hiện tại"}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          {a.endDate === null ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <CheckCircle2 className="w-3 h-3" /> Đang đương nhiệm
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
+                              <Clock className="w-3 h-3" /> Đã mãn nhiệm
+                            </span>
+                          )}
+                        </td>
+                        {canManage && (
+                          <td className="py-3 px-4 text-right">
+                            {a.endDate === null ? (
+                              <div className="flex items-center justify-end">
+                                <UnifiedActionMenu
+                                  align="right"
+                                  menuWidth="w-48"
+                                  showPointer={true}
+                                  onOpenChange={(isOpen) => setActiveAssignmentId(isOpen ? a.id : null)}
+                                  trigger={({ toggle, isOpen }) => (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        toggle();
+                                      }}
+                                      className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border transition-colors shadow-2xs ${
+                                        isOpen
+                                          ? "border-blue-300 bg-blue-100/80 text-blue-700"
+                                          : "border-slate-200 bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                                      }`}
+                                      aria-label="Thao tác quản lý"
+                                    >
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </button>
+                                  )}
+                                >
+                                  <ActionMenuItem
+                                    icon={<Clock className="w-4 h-4 text-amber-600" />}
+                                    onClick={() => setIsEndingTermId(a.id)}
+                                  >
+                                    Mãn nhiệm
+                                  </ActionMenuItem>
+                                </UnifiedActionMenu>
+                              </div>
+                            ) : (
+                              <span className="text-[11px] text-slate-400 italic">Đã mãn nhiệm</span>
+                            )}
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

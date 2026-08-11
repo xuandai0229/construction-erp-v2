@@ -162,7 +162,7 @@ export function SafetyWeeklyFileWorkspace({
   };
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto pb-16 font-sans text-slate-900">
+    <div className="space-y-4 min-w-0 max-w-full pb-16 font-sans text-slate-900">
       {/* SINGLE UNIFIED WORKSPACE HEADER */}
       <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs space-y-3">
         {/* Top Breadcrumb */}

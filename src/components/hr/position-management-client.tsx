@@ -22,6 +22,8 @@ import {
   updatePositionAction,
   deletePositionAction,
 } from "@/app/hr/organization/actions/organization-actions";
+import { UnifiedActionMenu, ActionMenuItem } from "@/components/ui/unified-action-menu";
+import { MoreHorizontal } from "lucide-react";
 
 export interface PositionItem {
   id: string;
@@ -41,6 +43,7 @@ interface PositionManagementClientProps {
 export function PositionManagementClient({ positions, canManage }: PositionManagementClientProps) {
   const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
+  const [activePosId, setActivePosId] = useState<string | null>(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPosition, setEditingPosition] = useState<PositionItem | null>(null);
@@ -197,73 +200,107 @@ export function PositionManagementClient({ positions, canManage }: PositionManag
                     </td>
                   </tr>
                 ) : (
-                  filteredPositions.map((pos) => (
-                    <tr key={pos.id} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="py-3 px-4 font-mono font-bold text-slate-900 uppercase">
-                        <span className="bg-slate-100 px-2 py-0.5 rounded border border-slate-200 inline-block">
-                          {pos.code}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 font-bold text-slate-900 text-xs">
-                        {pos.title}
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        {pos.activeEmployeeCount > 0 ? (
-                          <Link
-                            href={`/hr/employees?positionId=${pos.id}`}
-                            title={`Xem danh sách ${pos.activeEmployeeCount} nhân sự giữ chức danh '${pos.title}'`}
-                            className="inline-flex items-center gap-1.5 text-blue-700 font-bold bg-blue-50 hover:bg-blue-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-hidden px-2.5 py-1 rounded-lg border border-blue-200/80 transition-colors group cursor-pointer"
-                          >
-                            <Users className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                            <span>{pos.activeEmployeeCount} nhân sự</span>
-                            <ExternalLink className="w-3 h-3 text-blue-400 group-hover:text-blue-700 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                          </Link>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 text-slate-400 font-medium px-2.5 py-1 text-xs select-none">
-                            <Users className="w-3.5 h-3.5 text-slate-300 shrink-0" />
-                            <span>0 nhân sự</span>
+                  filteredPositions.map((pos) => {
+                    const isActiveRow = activePosId === pos.id;
+
+                    return (
+                      <tr 
+                        key={pos.id} 
+                        className={`transition-colors ${
+                          isActiveRow
+                            ? "bg-blue-50/70 border-l-2 border-l-blue-600 font-medium"
+                            : "hover:bg-slate-50/70"
+                        }`}
+                      >
+                        <td className="py-3 px-4 font-mono font-bold text-slate-900 uppercase">
+                          <span className="bg-slate-100 px-2 py-0.5 rounded border border-slate-200 inline-block">
+                            {pos.code}
                           </span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-center whitespace-nowrap">
-                        {pos.isActive ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            Đang hoạt động
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
-                            Đã vô hiệu hóa
-                          </span>
-                        )}
-                      </td>
-                      {canManage && (
-                        <td className="py-3 px-4 text-right whitespace-nowrap">
-                          <div className="flex items-center justify-end gap-1">
-                            <button
-                              type="button"
-                              onClick={() => handleOpenEdit(pos)}
-                              title="Chỉnh sửa chức danh"
-                              className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setDeleteError(null);
-                                setDeleteTargetPos(pos);
-                              }}
-                              disabled={isPending}
-                              title="Xóa chức danh"
-                              className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
                         </td>
-                      )}
-                    </tr>
-                  ))
+                        <td className="py-3 px-4 font-bold text-slate-900 text-xs">
+                          {pos.title}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          {pos.activeEmployeeCount > 0 ? (
+                            <Link
+                              href={`/hr/employees?positionId=${pos.id}`}
+                              title={`Xem danh sách ${pos.activeEmployeeCount} nhân sự giữ chức danh '${pos.title}'`}
+                              className="inline-flex items-center gap-1.5 text-blue-700 font-bold bg-blue-50 hover:bg-blue-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-hidden px-2.5 py-1 rounded-lg border border-blue-200/80 transition-colors group cursor-pointer"
+                            >
+                              <Users className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                              <span>{pos.activeEmployeeCount} nhân sự</span>
+                              <ExternalLink className="w-3 h-3 text-blue-400 group-hover:text-blue-700 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                            </Link>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 text-slate-400 font-medium px-2.5 py-1 text-xs select-none">
+                              <Users className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+                              <span>0 nhân sự</span>
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-center whitespace-nowrap">
+                          {pos.isActive ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              Đang hoạt động
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
+                              Đã vô hiệu hóa
+                            </span>
+                          )}
+                        </td>
+                        {canManage && (
+                          <td className="py-3 px-4 text-right whitespace-nowrap">
+                            <div className="flex items-center justify-end">
+                              <UnifiedActionMenu
+                                align="right"
+                                menuWidth="w-48"
+                                showPointer={true}
+                                onOpenChange={(isOpen) => setActivePosId(isOpen ? pos.id : null)}
+                                trigger={({ toggle, isOpen }) => (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      toggle();
+                                    }}
+                                    className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border transition-colors shadow-2xs ${
+                                      isOpen
+                                        ? "border-blue-300 bg-blue-100/80 text-blue-700"
+                                        : "border-slate-200 bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                                    }`}
+                                    aria-label="Thao tác chức danh"
+                                  >
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </button>
+                                )}
+                              >
+                                <ActionMenuItem
+                                  icon={<Edit2 className="w-4 h-4 text-slate-500" />}
+                                  onClick={() => handleOpenEdit(pos)}
+                                >
+                                  Chỉnh sửa
+                                </ActionMenuItem>
+                                <div className="my-1 border-t border-slate-100" />
+                                <ActionMenuItem
+                                  destructive
+                                  disabled={isPending}
+                                  icon={<Trash2 className="w-4 h-4 text-rose-600" />}
+                                  onClick={() => {
+                                    setDeleteError(null);
+                                    setDeleteTargetPos(pos);
+                                  }}
+                                >
+                                  Xóa chức danh
+                                </ActionMenuItem>
+                              </UnifiedActionMenu>
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

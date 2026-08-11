@@ -2,16 +2,18 @@
 
 import React, { useState, useRef, useEffect, useId, useCallback } from "react";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 import { useTransientOverlay, notifyOverlayOpen } from "./global-overlay-manager";
 
-export interface ActionMenuItemProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ActionMenuItemProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "onClick"> {
   id?: string;
   label?: React.ReactNode;
   icon?: React.ReactNode;
   variant?: "default" | "destructive" | "danger";
   disabled?: boolean;
   destructive?: boolean;
-  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+  href?: string;
+  onClick?: (e: React.MouseEvent<HTMLElement>) => void;
   children?: React.ReactNode;
 }
 
@@ -24,6 +26,7 @@ export function ActionMenuItem({
   variant = "default",
   destructive,
   disabled,
+  href,
   onClick,
   children,
   className = "",
@@ -32,6 +35,39 @@ export function ActionMenuItem({
   const isDestructive = destructive || variant === "destructive" || variant === "danger";
   const displayContent = children ?? label;
 
+  const itemClassName = `w-full flex items-center space-x-2.5 px-3 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors text-left ${
+    disabled
+      ? "opacity-40 cursor-not-allowed text-slate-400"
+      : isDestructive
+      ? "text-red-600 hover:bg-red-50 active:bg-red-100"
+      : "text-slate-700 hover:bg-slate-100 active:bg-slate-150"
+  } ${className}`;
+
+  const content = (
+    <>
+      {icon && (
+        <span className={`h-4 w-4 shrink-0 ${isDestructive ? "text-red-500" : "text-slate-500"}`}>
+          {icon}
+        </span>
+      )}
+      <span className="truncate">{displayContent}</span>
+    </>
+  );
+
+  if (href && !disabled) {
+    return (
+      <Link
+        id={id}
+        role="menuitem"
+        href={href}
+        onClick={onClick}
+        className={itemClassName}
+      >
+        {content}
+      </Link>
+    );
+  }
+
   return (
     <button
       id={id}
@@ -39,21 +75,10 @@ export function ActionMenuItem({
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className={`w-full flex items-center space-x-2.5 px-3 py-2 text-xs sm:text-sm font-medium rounded-lg transition-colors text-left ${
-        disabled
-          ? "opacity-40 cursor-not-allowed text-slate-400"
-          : isDestructive
-          ? "text-red-600 hover:bg-red-50 active:bg-red-100"
-          : "text-slate-700 hover:bg-slate-100 active:bg-slate-150"
-      } ${className}`}
+      className={itemClassName}
       {...props}
     >
-      {icon && (
-        <span className={`h-4 w-4 shrink-0 ${isDestructive ? "text-red-500" : "text-slate-500"}`}>
-          {icon}
-        </span>
-      )}
-      <span className="truncate">{displayContent}</span>
+      {content}
     </button>
   );
 }
@@ -68,6 +93,8 @@ export interface UnifiedActionMenuProps {
   className?: string;
   menuWidth?: string;
   ariaLabel?: string;
+  showPointer?: boolean;
+  pointerBg?: string;
   onOpenChange?: (isOpen: boolean) => void;
 }
 
@@ -81,13 +108,20 @@ export function UnifiedActionMenu({
   className = "",
   menuWidth = "w-48",
   ariaLabel,
+  showPointer = true,
+  pointerBg,
   onOpenChange,
 }: UnifiedActionMenuProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
   const isControlled = controlledOpen !== undefined;
   const isOpen = isControlled ? Boolean(controlledOpen) : uncontrolledOpen;
 
-  const [coords, setCoords] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const [coords, setCoords] = useState<{ top: number; left: number; pointerLeft: number }>({
+    top: 0,
+    left: 0,
+    pointerLeft: 16,
+  });
+  const [isFlipped, setIsFlipped] = useState(false);
   const triggerRef = useRef<HTMLDivElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const menuId = useId();
@@ -103,17 +137,21 @@ export function UnifiedActionMenu({
     [isControlled, onOpenChange]
   );
 
-  // Recalculate position for Portal
+  // Recalculate position for Portal using pure viewport fixed coordinates
   const updatePosition = useCallback(() => {
     const el = triggerRef.current;
     if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const scrollTop = window.scrollY || document.documentElement.scrollTop;
-    const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
 
-    let numericWidth = 224;
+    const triggerRect = el.getBoundingClientRect();
+    const triggerCenterX = triggerRect.left + triggerRect.width / 2;
+
+    let numericWidth = 200;
+    let numericHeight = 200;
+
     if (menuRef.current) {
-      numericWidth = menuRef.current.offsetWidth || menuRef.current.getBoundingClientRect().width || 224;
+      const mRect = menuRef.current.getBoundingClientRect();
+      numericWidth = mRect.width || numericWidth;
+      numericHeight = mRect.height || numericHeight;
     } else {
       const val = parseInt(menuWidth.replace(/\D/g, ""), 10);
       if (val) {
@@ -122,39 +160,72 @@ export function UnifiedActionMenu({
     }
 
     const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
 
+    // Calculate initial left based on alignment
     let left =
       align === "right" || align === "end"
-        ? rect.right + scrollLeft - numericWidth
-        : rect.left + scrollLeft;
+        ? triggerRect.right - numericWidth
+        : align === "left"
+        ? triggerRect.left
+        : triggerCenterX - numericWidth / 2;
 
-    // Viewport overflow prevention (Clamp inside screen with 12px margin)
+    // Clamp menu left inside viewport (with 12px margin)
     if (left + numericWidth > viewportWidth - 12) {
       left = Math.max(12, viewportWidth - numericWidth - 12);
     }
-    if (left < 12) left = 12;
-
-    let top = rect.bottom + scrollTop + 4;
-    // Check if bottom of viewport is reached
-    if (rect.bottom + 250 > window.innerHeight && rect.top > 250) {
-      top = rect.top + scrollTop - 215; // flip upward cleanly
+    if (left < 12) {
+      left = 12;
     }
 
-    setCoords({ top, left });
-  }, [align, menuWidth]);
+    // Dynamic pointer X relative to menu left
+    let pointerLeft = triggerCenterX - left;
+    const minPointerOffset = 16;
+    const maxPointerOffset = numericWidth - 16;
+    pointerLeft = Math.max(minPointerOffset, Math.min(pointerLeft, maxPointerOffset));
+
+    // Calculate top and flip state
+    const spaceBelow = viewportHeight - triggerRect.bottom;
+    const spaceAbove = triggerRect.top;
+    let flipped = false;
+    let top = 0;
+
+    if (spaceBelow < numericHeight + 12 && spaceAbove > spaceBelow) {
+      flipped = true;
+      top = triggerRect.top - numericHeight - (showPointer ? 8 : 4);
+    } else {
+      flipped = false;
+      top = triggerRect.bottom + (showPointer ? 8 : 4);
+    }
+
+    // Clamp top inside viewport
+    top = Math.max(8, Math.min(top, viewportHeight - numericHeight - 8));
+
+    setIsFlipped(flipped);
+    setCoords({ top, left, pointerLeft });
+  }, [align, menuWidth, showPointer]);
 
   // Recalculate position on mount after portal renders or when open state changes
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) return;
+
+    updatePosition();
+    const handleScrollOrResize = () => updatePosition();
+
+    // Capture phase for scroll catches all scrollable containers in the DOM
+    window.addEventListener("scroll", handleScrollOrResize, true);
+    window.addEventListener("resize", handleScrollOrResize);
+
+    // Initial animation frame ticks to update position after DOM layout stabilization
+    let rafId = requestAnimationFrame(() => {
       updatePosition();
-      const handleScroll = () => updatePosition();
-      window.addEventListener("scroll", handleScroll, true);
-      window.addEventListener("resize", handleScroll);
-      return () => {
-        window.removeEventListener("scroll", handleScroll, true);
-        window.removeEventListener("resize", handleScroll);
-      };
-    }
+    });
+
+    return () => {
+      window.removeEventListener("scroll", handleScrollOrResize, true);
+      window.removeEventListener("resize", handleScrollOrResize);
+      cancelAnimationFrame(rafId);
+    };
   }, [isOpen, updatePosition]);
 
   const handleTransientClose = useCallback(() => {
@@ -208,12 +279,24 @@ export function UnifiedActionMenu({
             aria-orientation="vertical"
             onClick={handleMenuContentClick}
             style={{
-              position: "absolute",
+              position: "fixed",
               top: `${coords.top}px`,
               left: `${coords.left}px`,
             }}
-            className={`z-[50] ${menuWidth} rounded-xl bg-white p-1.5 shadow-xl border border-slate-200 backdrop-blur-md animate-in fade-in-50 zoom-in-95 duration-100 focus:outline-none`}
+            className={`z-[9999] ${menuWidth} relative rounded-xl bg-white p-1.5 shadow-xl border border-slate-200 backdrop-blur-md animate-in fade-in-50 zoom-in-95 duration-100 focus:outline-none`}
           >
+            {showPointer && (
+              <span
+                aria-hidden="true"
+                data-action-menu-pointer="true"
+                style={{ left: `${coords.pointerLeft}px` }}
+                className={`absolute h-2.5 w-2.5 -translate-x-1/2 rotate-45 border-slate-200 z-20 ${
+                  isFlipped
+                    ? "-bottom-[5.5px] border-r border-b bg-white"
+                    : `-top-[5.5px] border-l border-t ${pointerBg || "bg-white"}`
+                }`}
+              />
+            )}
             {children ? (
               children
             ) : (

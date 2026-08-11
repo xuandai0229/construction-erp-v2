@@ -11,7 +11,7 @@ import { MaterialsTransactions } from "./materials-transactions";
 import { MaterialsCatalog } from "./materials-catalog";
 import { MaterialFormDialog } from "./material-form-dialog";
 import { TransactionFormDialog } from "./transaction-form-dialog";
-import { MaterialRequestResetPlaceholder } from "./material-request-reset-placeholder";
+import { MaterialProposalList } from "./material-proposal-list";
 
 import { createMaterialItem, updateMaterialItem, deleteMaterialItem, restoreMaterialItem, createMaterialTransaction } from "@/app/(dashboard)/materials/actions";
 import type { MaterialItemDto, MaterialMovementDto, ProjectStockDto } from "@/app/(dashboard)/materials/actions";
@@ -34,6 +34,7 @@ interface MaterialsWorkspaceProps {
     canViewTransactions: boolean;
   };
   materialRequests?: any[];
+  materialProposals?: any[];
   wbsItems?: any[];
   currentUserRole?: string;
   currentUserId?: string;
@@ -47,6 +48,7 @@ export function MaterialsWorkspace({
   initialProjectId,
   permissions,
   materialRequests = [],
+  materialProposals = [],
   wbsItems = [],
   currentUserRole,
   currentUserId,
@@ -218,7 +220,7 @@ export function MaterialsWorkspace({
   };
 
   return (
-    <div className="app-page mx-auto max-w-[1400px] space-y-4 sm:space-y-5 pb-24">
+    <div className="app-page w-full max-w-full space-y-4 sm:space-y-5 pb-24">
       <PageHeader className="flex flex-col gap-2.5 sm:gap-3 py-3 sm:py-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-950">Quản lý vật tư</h1>
@@ -319,7 +321,7 @@ export function MaterialsWorkspace({
           )}
           {currentTab === "requests" && (
             <div className="pt-2">
-              <MaterialRequestResetPlaceholder />
+              <MaterialProposalList proposals={materialProposals} currentProjectId={projectId} />
             </div>
           )}
         </section>

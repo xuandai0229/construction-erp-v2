@@ -216,13 +216,15 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
 
   const hasActions = permissions.canImport || permissions.canExport || permissions.canUpdate || permissions.canDelete;
 
+  const [activeStockId, setActiveStockId] = useState<string | null>(null);
+
   const actionButtons = (stock: ProjectStockDto) => {
     if (!hasActions) return null;
     
     const actions: MaterialActionItem[] = [
       {
         label: "Xem chi tiết",
-        icon: <Search className="w-4 h-4" />,
+        icon: <Search className="w-4 h-4 text-slate-500" />,
         onClick: () => handleRowClick(stock.id),
       }
     ];
@@ -230,7 +232,7 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
     if (permissions.canImport) {
       actions.push({
         label: "Nhập kho",
-        icon: <ArrowDownRight className="w-4 h-4" />,
+        icon: <ArrowDownRight className="w-4 h-4 text-emerald-600" />,
         onClick: () => onTransaction?.("IMPORT", stock.materialItemId),
         disabled: !stock.materialItem.isActive,
         disabledReason: "Vật tư đã lưu trữ",
@@ -240,7 +242,7 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
     if (permissions.canExport) {
       actions.push({
         label: "Xuất kho",
-        icon: <ArrowUpRight className="w-4 h-4" />,
+        icon: <ArrowUpRight className="w-4 h-4 text-amber-600" />,
         onClick: () => onTransaction?.("EXPORT", stock.materialItemId),
         disabled: !stock.materialItem.isActive || stock.stock <= 0,
         disabledReason: "Chưa có tồn kho để xuất",
@@ -250,7 +252,7 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
     if (permissions.canUpdate && onEditMaterial) {
       actions.push({
         label: "Sửa vật tư",
-        icon: <Pencil className="w-4 h-4" />,
+        icon: <Pencil className="w-4 h-4 text-slate-500" />,
         onClick: () => onEditMaterial(stock.materialItemId),
       });
     }
@@ -260,7 +262,7 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
         if (onDeleteMaterial) {
           actions.push({
             label: "Xóa vật tư",
-            icon: <Trash2 className="w-4 h-4" />,
+            icon: <Trash2 className="w-4 h-4 text-rose-600" />,
             danger: true,
             onClick: () => setDeletingStock(stock),
           });
@@ -269,7 +271,7 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
         if (onRestoreMaterial) {
           actions.push({
             label: "Khôi phục vật tư",
-            icon: <RotateCcw className="w-4 h-4" />,
+            icon: <RotateCcw className="w-4 h-4 text-blue-600" />,
             onClick: () => onRestoreMaterial(stock.materialItemId),
           });
         }
@@ -278,7 +280,10 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
 
     return (
       <div className="flex justify-end">
-        <MaterialRowActionMenu actions={actions} />
+        <MaterialRowActionMenu
+          actions={actions}
+          onOpenChange={(isOpen) => setActiveStockId(isOpen ? stock.id : null)}
+        />
       </div>
     );
   };
@@ -397,12 +402,18 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {filtered.map((stock) => (
-              <tr 
-                key={stock.id} 
-                className="transition hover:bg-[var(--surface-subtle)] cursor-pointer group active:bg-[var(--border)] h-12"
-                onClick={() => handleRowClick(stock.id)}
-              >
+            {filtered.map((stock) => {
+              const isActiveRow = activeStockId === stock.id;
+              return (
+                <tr 
+                  key={stock.id} 
+                  className={`transition cursor-pointer group h-12 ${
+                    isActiveRow
+                      ? "bg-blue-50/70 border-l-2 border-l-blue-600 font-medium"
+                      : "hover:bg-[var(--surface-subtle)]"
+                  }`}
+                  onClick={() => handleRowClick(stock.id)}
+                >
                 <td className="px-3 py-2 font-mono text-xs font-semibold text-[var(--muted-foreground)] whitespace-nowrap">{stock.materialItem.code}</td>
                 <td className="px-3 py-2 font-semibold text-slate-950 max-w-0">
                   <div className="flex min-w-0 items-center gap-2">
@@ -439,7 +450,8 @@ export function MaterialsStockTable({ stocks, transactions = [], requests = [], 
                   </td>
                 )}
               </tr>
-            ))}
+            );
+          })}
             {filtered.length === 0 && (
               <tr>
                 <td colSpan={hasActions ? 8 : 7} className="px-3 py-12 text-center text-sm text-[var(--muted-foreground)]">

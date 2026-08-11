@@ -186,6 +186,8 @@ export function MaterialsTransactions({
     setShowArchived(false);
   };
 
+  const [activeTxId, setActiveTxId] = useState<string | null>(null);
+
   return (
     <div className="space-y-4">
       <MaterialToolbar
@@ -384,9 +386,18 @@ export function MaterialsTransactions({
               const colorClass = sign === "+" ? "text-emerald-700" : "text-rose-700";
               const ledger = ledgerById.get(transaction.id);
               const note = displayNote(transaction.notes);
+              const isActiveRow = activeTxId === transaction.id;
 
               return (
-                <tr key={transaction.id} className="cursor-pointer transition hover:bg-[var(--surface-subtle)]" onClick={() => handleOpenDrawer(transaction)}>
+                <tr 
+                  key={transaction.id} 
+                  className={`cursor-pointer transition ${
+                    isActiveRow
+                      ? "bg-blue-50/70 border-l-2 border-l-blue-600 font-medium"
+                      : "hover:bg-[var(--surface-subtle)]"
+                  }`}
+                  onClick={() => handleOpenDrawer(transaction)}
+                >
                   <td className="px-3 py-3"><MovementTypeBadge type={transaction.type} /></td>
                   <td className="min-w-0 px-3 py-3">
                     <div className="flex items-center gap-2">
@@ -430,15 +441,16 @@ export function MaterialsTransactions({
                   <td className="px-3 py-3 text-right relative">
                     <div className="flex justify-end">
                       <MaterialRowActionMenu
+                        onOpenChange={(isOpen) => setActiveTxId(isOpen ? transaction.id : null)}
                         actions={[
                           {
                             label: "Xem chi tiết",
-                            icon: <Eye className="h-4 w-4" />,
+                            icon: <Eye className="h-4 w-4 text-slate-500" />,
                             onClick: () => handleOpenDrawer(transaction),
                           },
                           {
                             label: "Xem vật tư",
-                            icon: <Box className="h-4 w-4" />,
+                            icon: <Box className="h-4 w-4 text-slate-500" />,
                             disabled: !transaction.materialItem.isActive,
                             disabledReason: !transaction.materialItem.isActive ? "Vật tư đã được lưu trữ/xóa" : undefined,
                             onClick: () => {
@@ -453,7 +465,7 @@ export function MaterialsTransactions({
                           ...(transaction.type === "IMPORT" || transaction.type === "EXPORT" ? [
                             {
                               label: `${transaction.type === "IMPORT" ? "Nhập" : "Xuất"} tiếp vật tư này`,
-                              icon: <Repeat2 className="h-4 w-4" />,
+                              icon: <Repeat2 className="h-4 w-4 text-blue-600" />,
                               disabled: !transaction.materialItem.isActive,
                               disabledReason: !transaction.materialItem.isActive ? "Vật tư không còn hoạt động" : undefined,
                               onClick: () => {
@@ -465,14 +477,14 @@ export function MaterialsTransactions({
                           ] : []),
                           {
                             label: "Sửa giao dịch",
-                            icon: <Edit2 className="h-4 w-4" />,
+                            icon: <Edit2 className="h-4 w-4 text-slate-400" />,
                             disabled: true,
                             disabledReason: "Chưa hỗ trợ sửa trực tiếp (cần tạo giao dịch điều chỉnh)",
                             onClick: () => {},
                           },
                           {
                             label: "Đảo giao dịch",
-                            icon: <Repeat2 className="h-4 w-4" />,
+                            icon: <Repeat2 className="h-4 w-4 text-rose-500" />,
                             danger: true,
                             disabled: true,
                             disabledReason: "Chưa hỗ trợ tạo tự động (hãy tạo phiếu ngược lại để hủy)",
@@ -480,7 +492,7 @@ export function MaterialsTransactions({
                           },
                           {
                             label: "Sao chép thông tin",
-                            icon: <Copy className="h-4 w-4" />,
+                            icon: <Copy className="h-4 w-4 text-slate-500" />,
                             onClick: () => {
                               const text = `${transaction.type === "IMPORT" ? "Nhập" : "Xuất"} ${formatQuantity(Number(transaction.quantity))} ${transaction.materialItem?.unit || ""} ${transaction.materialItem?.name || ""}`;
                               void navigator.clipboard.writeText(text);

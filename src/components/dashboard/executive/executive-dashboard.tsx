@@ -29,7 +29,7 @@ export function ExecutiveDashboard({ data }: { data: DashboardData }) {
   }
 
   return (
-    <div className="executive-dashboard-shell mx-auto flex w-full max-w-[1600px] flex-col gap-5 pb-8 sm:gap-6">
+    <div className="executive-dashboard-shell mx-auto flex w-full max-w-full flex-col gap-5 pb-8 sm:gap-6">
       <ExecutiveHeader 
         data={data} 
         context={context}

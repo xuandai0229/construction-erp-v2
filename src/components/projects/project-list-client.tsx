@@ -1,12 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Eye, Pencil, ChevronRight } from "lucide-react";
+import { Eye, Pencil, ChevronRight, MoreHorizontal } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getProjectStatusMeta } from "@/lib/project-status";
 import { EnterpriseTable } from "@/components/ui/enterprise";
 import { ProjectIdentity } from "@/components/projects/project-identity";
+import { UnifiedActionMenu } from "@/components/ui/unified-action-menu";
 
 export type ProjectRow = {
   id: string;
@@ -30,6 +32,7 @@ export function ProjectsListClient({
   canManage: boolean;
 }) {
   const router = useRouter();
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
 
   const getStatusBadge = (status: string) => {
     const meta = getProjectStatusMeta(status);
@@ -57,7 +60,7 @@ export function ProjectsListClient({
               <th className="w-[34%] px-5 py-3.5 whitespace-nowrap">Công trình</th>
               <th className="w-[28%] px-5 py-3.5 whitespace-nowrap">Địa điểm & Phụ trách</th>
               <th className="w-auto px-5 py-3.5 whitespace-nowrap">Tiến độ</th>
-              <th className="w-[165px] min-w-[165px] px-5 py-3.5 text-right whitespace-nowrap">Thao tác</th>
+              <th className="w-[100px] min-w-[100px] px-5 py-3.5 text-right whitespace-nowrap">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 bg-white">
@@ -68,7 +71,11 @@ export function ProjectsListClient({
                 tabIndex={0}
                 onClick={() => handleRowClick(project.id)}
                 onKeyDown={(e) => handleKeyDown(e, project.id)}
-                className="group cursor-pointer border-b border-slate-200 transition-colors duration-150 ease-out hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30"
+                className={`group cursor-pointer border-b border-slate-200 transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 ${
+                  activeProjectId === project.id
+                    ? "bg-blue-50/70 border-l-2 border-l-blue-600 font-medium"
+                    : "hover:bg-slate-50"
+                }`}
               >
                 {/* 1. Công trình */}
                 <td className="px-5 py-4 align-top">
@@ -126,26 +133,45 @@ export function ProjectsListClient({
                 </td>
 
                 {/* 4. Thao tác */}
-                <td className="w-[165px] min-w-[165px] px-5 py-4 align-top text-right whitespace-nowrap shrink-0">
-                  <div className="flex items-center justify-end gap-2 shrink-0">
-                    <Link
-                      href={`/projects/${project.id}`}
-                      onClick={(e) => e.stopPropagation()}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 px-3 py-1.5 text-[13px] font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 active:scale-[0.98] transition-all duration-150 shadow-2xs"
-                    >
-                      <Eye className="h-4 w-4" />
-                      Xem
-                    </Link>
-                    {canManage && (
-                      <Link
-                        href={`/projects/${project.id}/edit`}
-                        onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-[13px] font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 hover:text-slate-950 active:scale-[0.98] transition-all duration-150"
-                      >
-                        <Pencil className="h-4 w-4" />
-                        Sửa
-                      </Link>
-                    )}
+                <td className="w-[100px] min-w-[100px] px-5 py-4 align-top text-right whitespace-nowrap shrink-0" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center justify-end shrink-0">
+                    <UnifiedActionMenu
+                      ariaLabel={`Thao tác công trình ${project.name}`}
+                      showPointer={true}
+                      open={activeProjectId === project.id}
+                      onOpenChange={(isOpen) => setActiveProjectId(isOpen ? project.id : null)}
+                      menuWidth="w-48"
+                      align="right"
+                      trigger={
+                        <button
+                          type="button"
+                          className={`p-1.5 rounded-lg border transition-colors ${
+                            activeProjectId === project.id
+                              ? "bg-blue-100 border-blue-300 text-blue-700"
+                              : "text-slate-500 hover:bg-slate-100 border-slate-200 hover:text-slate-800"
+                          }`}
+                          title="Thao tác"
+                        >
+                          <MoreHorizontal className="w-4 h-4" />
+                        </button>
+                      }
+                      items={[
+                        {
+                          id: "view-project",
+                          label: "Xem chi tiết",
+                          icon: <Eye className="h-4 w-4 text-blue-600" />,
+                          href: `/projects/${project.id}`,
+                        },
+                        ...(canManage ? [
+                          {
+                            id: "edit-project",
+                            label: "Sửa công trình",
+                            icon: <Pencil className="h-4 w-4 text-slate-600" />,
+                            href: `/projects/${project.id}/edit`,
+                          },
+                        ] : []),
+                      ]}
+                    />
                   </div>
                 </td>
               </tr>

@@ -151,6 +151,8 @@ export function MaterialsCatalog({ materialItems, stocks, transactions = [], onA
 
   const hasActions = permissions.canImport || permissions.canExport || permissions.canUpdate || permissions.canDelete;
 
+  const [activeRowMaterialId, setActiveRowMaterialId] = useState<string | null>(null);
+
   const renderActions = (material: MaterialItemDto, stock?: ProjectStockDto) => {
     if (!hasActions) return null;
 
@@ -165,7 +167,7 @@ export function MaterialsCatalog({ materialItems, stocks, transactions = [], onA
     if (permissions.canImport) {
       actions.push({
         label: "Nhập kho",
-        icon: <ArrowDownRight className="w-4 h-4" />,
+        icon: <ArrowDownRight className="w-4 h-4 text-emerald-600" />,
         onClick: () => onTransaction("IMPORT", material.id),
         disabled: !material.isActive,
         disabledReason: "Vật tư đã lưu trữ",
@@ -175,7 +177,7 @@ export function MaterialsCatalog({ materialItems, stocks, transactions = [], onA
     if (permissions.canExport) {
       actions.push({
         label: "Xuất kho",
-        icon: <ArrowUpRight className="w-4 h-4" />,
+        icon: <ArrowUpRight className="w-4 h-4 text-amber-600" />,
         onClick: () => onTransaction("EXPORT", material.id),
         disabled: !material.isActive || !stock || stock.stock <= 0,
         disabledReason: "Không có tồn kho",
@@ -185,7 +187,7 @@ export function MaterialsCatalog({ materialItems, stocks, transactions = [], onA
     if (permissions.canUpdate) {
       actions.push({
         label: "Sửa vật tư",
-        icon: <Pencil className="w-4 h-4" />,
+        icon: <Pencil className="w-4 h-4 text-slate-500" />,
         onClick: () => onEditMaterial(material.id),
       });
     }
@@ -193,7 +195,7 @@ export function MaterialsCatalog({ materialItems, stocks, transactions = [], onA
     if (!material.isActive && permissions.canUpdate) {
       actions.push({
         label: "Khôi phục vật tư",
-        icon: <RotateCcw className="w-4 h-4" />,
+        icon: <RotateCcw className="w-4 h-4 text-blue-600" />,
         onClick: () => onRestoreMaterial(material.id),
       });
     }
@@ -201,7 +203,7 @@ export function MaterialsCatalog({ materialItems, stocks, transactions = [], onA
     if (permissions.canDelete && material.isActive) {
       actions.push({
         label: "Xóa vật tư",
-        icon: <Trash2 className="w-4 h-4" />,
+        icon: <Trash2 className="w-4 h-4 text-rose-600" />,
         danger: true,
         onClick: () => {
           setDeletingMaterial(material);
@@ -211,7 +213,10 @@ export function MaterialsCatalog({ materialItems, stocks, transactions = [], onA
 
     return (
       <div className="flex justify-end">
-        <MaterialRowActionMenu actions={actions} />
+        <MaterialRowActionMenu
+          actions={actions}
+          onOpenChange={(isOpen) => setActiveRowMaterialId(isOpen ? material.id : null)}
+        />
       </div>
     );
   };
@@ -363,14 +368,20 @@ export function MaterialsCatalog({ materialItems, stocks, transactions = [], onA
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {filtered.map((material) => {
-              const stock = stockByMaterialId.get(material.id);
-              return (
-                <tr 
-                  key={material.id} 
-                  className="transition hover:bg-[var(--surface-subtle)] cursor-pointer group active:bg-[var(--border)] h-12"
-                  onClick={() => handleRowClick(material.id)}
-                >
+              {filtered.map((material) => {
+                const stock = stockByMaterialId.get(material.id);
+                const isActiveRow = activeRowMaterialId === material.id;
+
+                return (
+                  <tr 
+                    key={material.id} 
+                    className={`transition cursor-pointer group h-12 ${
+                      isActiveRow
+                        ? "bg-blue-50/70 border-l-2 border-l-blue-600 font-medium"
+                        : "hover:bg-[var(--surface-subtle)]"
+                    }`}
+                    onClick={() => handleRowClick(material.id)}
+                  >
                   <td className="px-3 py-2 font-mono text-xs font-semibold text-[var(--muted-foreground)] whitespace-nowrap">{material.code}</td>
                   <td className="px-3 py-2 font-semibold text-slate-950 max-w-0">
                     <div className="flex min-w-0 items-center gap-2">

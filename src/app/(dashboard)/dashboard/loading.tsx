@@ -4,7 +4,7 @@ function SkeletonBlock({ className = "" }: { className?: string }) {
 
 export default function DashboardLoading() {
   return (
-    <div data-dashboard-loading className="mx-auto flex w-full max-w-[1600px] flex-col gap-5 overflow-x-hidden sm:gap-6">
+    <div data-dashboard-loading className="mx-auto flex w-full max-w-full flex-col gap-5 overflow-x-hidden sm:gap-6">
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-950/[0.03] sm:p-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-3">

@@ -119,8 +119,6 @@ enum WBSItemStatus {
   CANCELLED
 }
 
-
-
 enum FieldProgressItemType {
   GROUP
   WORK
@@ -179,6 +177,27 @@ enum FieldMaterialPriority {
   URGENT
 }
 
+enum MaterialProposalStatus {
+  DRAFT
+  SUBMITTED
+  REVISION_REQUESTED
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum MaterialProposalApprovalStage {
+  TECHNICAL
+  FINAL
+}
+
+enum MaterialProposalApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
 enum DocumentStatus {
   DRAFT
   SUBMITTED
@@ -219,6 +238,8 @@ model User {
   createdFieldEntries          FieldProgressEntry[]          @relation("FieldEntryCreator")
   approvedFieldEntries         FieldProgressEntry[]          @relation("FieldEntryApprover")
   fieldMaterialRequests        FieldMaterialRequest[]        @relation("FieldMaterialRequester")
+  materialProposalsCreated     MaterialProposal[]            @relation("MaterialProposalRequester")
+  materialProposalApprovals    MaterialProposalApproval[]    @relation("MaterialProposalApprovalApprover")
   updatedSettings              SystemSetting[]               @relation("SettingUpdater")
   notifications                Notification[]
   createdLocationNodes         ProjectLocationNode[]         @relation("ProjectLocationNodeCreator")
@@ -249,16 +270,16 @@ model User {
   safetyWeeklyFilesDeleted       SafetyWeeklyFile[]            @relation("SafetyWeeklyFileDeleter")
 
   // HR Module Relations
-  employee                            Employee?                            @relation("UserEmployee")
-  employeesCreated                    Employee[]                           @relation("EmployeeCreatedBy")
-  employeesUpdated                    Employee[]                           @relation("EmployeeUpdatedBy")
-  employeeOrgAssignmentsCreated       EmployeeOrganizationAssignment[]     @relation("EmployeeOrgAssignmentCreator")
-  unitManagerAssignmentsAppointed     OrganizationUnitManagerAssignment[] @relation("UnitManagerAssignmentAppointer")
-  employeeProjectAssignmentsCreated   EmployeeProjectAssignment[]          @relation("EmployeeProjectAssignmentCreator")
-  accessGrantsTarget                  UserAccessGrant[]                    @relation("UserAccessGrantTarget")
-  accessGrantsGiven                   UserAccessGrant[]                    @relation("UserAccessGrantGranter")
-  accessGrantsRevoked                 UserAccessGrant[]                    @relation("UserAccessGrantRevoker")
-  employeeChangeHistoriesPerformed    EmployeeChangeHistory[]              @relation("EmployeeChangeHistoryActor")
+  employee                          Employee?                           @relation("UserEmployee")
+  employeesCreated                  Employee[]                          @relation("EmployeeCreatedBy")
+  employeesUpdated                  Employee[]                          @relation("EmployeeUpdatedBy")
+  employeeOrgAssignmentsCreated     EmployeeOrganizationAssignment[]    @relation("EmployeeOrgAssignmentCreator")
+  unitManagerAssignmentsAppointed   OrganizationUnitManagerAssignment[] @relation("UnitManagerAssignmentAppointer")
+  employeeProjectAssignmentsCreated EmployeeProjectAssignment[]         @relation("EmployeeProjectAssignmentCreator")
+  accessGrantsTarget                UserAccessGrant[]                   @relation("UserAccessGrantTarget")
+  accessGrantsGiven                 UserAccessGrant[]                   @relation("UserAccessGrantGranter")
+  accessGrantsRevoked               UserAccessGrant[]                   @relation("UserAccessGrantRevoker")
+  employeeChangeHistoriesPerformed  EmployeeChangeHistory[]             @relation("EmployeeChangeHistoryActor")
 
   @@index([email])
   @@index([username])
@@ -266,26 +287,26 @@ model User {
 }
 
 model Project {
-  id          String        @id @default(cuid())
-  code        String        @unique
-  name        String
-  displayName String?
-  description String?
-  investor    String?
-  location    String?
-  status      ProjectStatus @default(PLANNING)
-  startDate   DateTime?
-  endDate     DateTime?
-  budget      Decimal?      @db.Decimal(19, 4)
+  id                   String               @id @default(cuid())
+  code                 String               @unique
+  name                 String
+  displayName          String?
+  description          String?
+  investor             String?
+  location             String?
+  status               ProjectStatus        @default(PLANNING)
+  startDate            DateTime?
+  endDate              DateTime?
+  budget               Decimal?             @db.Decimal(19, 4)
   plannedDurationValue Int?
-  plannedDurationUnit ProjectDurationUnit?
+  plannedDurationUnit  ProjectDurationUnit?
   plannedDurationRaw   String?
-  externalSource    String?
-  externalSourceKey String?      @unique
-  sourceMetadata    Json?
-  deletedAt   DateTime?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  externalSource       String?
+  externalSourceKey    String?              @unique
+  sourceMetadata       Json?
+  deletedAt            DateTime?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
 
   members                      ProjectMember[]
   wbsItems                     WBSItem[]
@@ -298,6 +319,7 @@ model Project {
   fieldProgressItems           FieldProgressItem[]
   fieldProgressEntries         FieldProgressEntry[]
   fieldMaterialRequests        FieldMaterialRequest[]
+  materialProposals            MaterialProposal[]
   projectMaterialStocks        ProjectMaterialStock[]
   materialItems                MaterialItem[]
   approvalRequests             ApprovalRequest[]
@@ -326,7 +348,7 @@ model Project {
 
   // HR Module Relations
   employeeProjectAssignments EmployeeProjectAssignment[]
-  userAccessGrants          UserAccessGrant[]
+  userAccessGrants           UserAccessGrant[]
 
   @@index([code])
   @@index([status])
@@ -334,18 +356,19 @@ model Project {
 }
 
 model ProjectMember {
-  id           String      @id @default(cuid())
-  projectId    String
-  userId       String
-  role         ProjectRole
-  assignedById String?
-  isActive     Boolean     @default(true)
-  note         String?
-  joinedAt     DateTime    @default(now())
-  leftAt       DateTime?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  deletedAt    DateTime?
+  id                                  String      @id @default(cuid())
+  projectId                           String
+  userId                              String
+  role                                ProjectRole
+  assignedById                        String?
+  isActive                            Boolean     @default(true)
+  note                                String?
+  joinedAt                            DateTime    @default(now())
+  leftAt                              DateTime?
+  createdAt                           DateTime    @default(now())
+  updatedAt                           DateTime    @updatedAt
+  deletedAt                           DateTime?
+  canApproveMaterialProposalTechnical Boolean     @default(false)
 
   project                      Project                       @relation(fields: [projectId], references: [id], onDelete: Cascade)
   user                         User                          @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -378,11 +401,11 @@ model WBSItem {
   updatedAt        DateTime      @updatedAt
   deletedAt        DateTime?
 
-  project              Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  parent               WBSItem?              @relation("WBSHierarchy", fields: [parentId], references: [id])
-  children             WBSItem[]             @relation("WBSHierarchy")
-  createdBy            User?                 @relation(fields: [createdById], references: [id])
-  siteReportLines      SiteReportLine[]
+  project         Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parent          WBSItem?         @relation("WBSHierarchy", fields: [parentId], references: [id])
+  children        WBSItem[]        @relation("WBSHierarchy")
+  createdBy       User?            @relation(fields: [createdById], references: [id])
+  siteReportLines SiteReportLine[]
 
   @@unique([projectId, code])
   @@index([projectId])
@@ -491,12 +514,12 @@ model SiteReport {
   updatedAt      DateTime         @updatedAt
   deletedAt      DateTime?
 
-  project          Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  createdBy        User                   @relation("ReportCreator", fields: [createdById], references: [id])
-  approvedBy       User?                  @relation("ReportApprover", fields: [approvedById], references: [id])
-  photos           SiteReportPhoto[]
-  attachments      SiteReportAttachment[]
-  lines            SiteReportLine[]
+  project     Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy   User                   @relation("ReportCreator", fields: [createdById], references: [id])
+  approvedBy  User?                  @relation("ReportApprover", fields: [approvedById], references: [id])
+  photos      SiteReportPhoto[]
+  attachments SiteReportAttachment[]
+  lines       SiteReportLine[]
 
   @@index([projectId])
   @@index([createdById])
@@ -571,8 +594,6 @@ model SiteReportLine {
   @@index([locationNodeId])
 }
 
-
-
 model MaterialItem {
   id          String   @id @default(cuid())
   projectId   String
@@ -588,9 +609,82 @@ model MaterialItem {
   project       Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
   movements     MaterialMovement[]
   projectStocks ProjectMaterialStock[]
+  proposalItems MaterialProposalItem[]
 
   @@unique([projectId, code])
   @@index([projectId])
+}
+
+model MaterialProposal {
+  id                      String                 @id @default(cuid())
+  proposalNo              String                 @unique
+  projectId               String
+  projectNameSnapshot     String
+  projectLocationSnapshot String?
+  requestedById           String
+  requesterNameSnapshot   String
+  requesterRoleSnapshot   String?
+  proposalDate            DateTime
+  purchaseReason          String?                @db.Text
+  requiredDeliveryDate    DateTime?
+  status                  MaterialProposalStatus @default(DRAFT)
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
+
+  project     Project                    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  requestedBy User                       @relation("MaterialProposalRequester", fields: [requestedById], references: [id])
+  items       MaterialProposalItem[]
+  approvals   MaterialProposalApproval[]
+
+  @@index([projectId, status])
+  @@index([requestedById])
+  @@index([proposalDate])
+}
+
+model MaterialProposalItem {
+  id                   String   @id @default(cuid())
+  proposalId           String
+  sequence             Int
+  sectionName          String?
+  materialItemId       String?
+  materialCodeSnapshot String?
+  materialName         String
+  unit                 String
+  contractQuantityText String?
+  actualQuantity       Decimal  @db.Decimal(19, 4)
+  specification        String?
+  manufacturerOrigin   String?
+  note                 String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  proposal     MaterialProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  materialItem MaterialItem?    @relation(fields: [materialItemId], references: [id], onDelete: SetNull)
+
+  @@unique([proposalId, sequence])
+  @@index([proposalId])
+  @@index([materialItemId])
+}
+
+model MaterialProposalApproval {
+  id             String                         @id @default(cuid())
+  proposalId     String
+  stage          MaterialProposalApprovalStage
+  status         MaterialProposalApprovalStatus @default(PENDING)
+  approverId     String
+  decidedAt      DateTime?
+  decisionNote   String?
+  idempotencyKey String?
+  createdAt      DateTime                       @default(now())
+  updatedAt      DateTime                       @updatedAt
+
+  proposal MaterialProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  approver User             @relation("MaterialProposalApprovalApprover", fields: [approverId], references: [id])
+
+  @@unique([proposalId, stage])
+  @@unique([proposalId, idempotencyKey])
+  @@index([proposalId, status])
+  @@index([approverId, status])
 }
 
 model MaterialMovement {
@@ -610,8 +704,8 @@ model MaterialMovement {
   createdAt             DateTime             @default(now())
   updatedAt             DateTime             @updatedAt
 
-  project             Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  materialItem        MaterialItem         @relation(fields: [materialItemId], references: [id])
+  project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  materialItem MaterialItem @relation(fields: [materialItemId], references: [id])
 
   @@index([projectId])
   @@index([materialItemId])
@@ -772,17 +866,17 @@ model FieldProgressItem {
   updatedAt        DateTime                @updatedAt
   deletedAt        DateTime?
 
-  project              Project                       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  template             FieldProgressTemplate         @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  parent               FieldProgressItem?            @relation("FieldItemHierarchy", fields: [parentId], references: [id])
-  children             FieldProgressItem[]           @relation("FieldItemHierarchy")
-  createdBy            User                          @relation("FieldItemCreator", fields: [createdById], references: [id])
-  entries              FieldProgressEntry[]
-  materialRequests     FieldMaterialRequest[]
-  siteReportLines      SiteReportLine[]
-  documents            Document[]
-  assignments          FieldProgressItemAssignment[]
-  locations            FieldProgressItemLocation[]
+  project          Project                       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  template         FieldProgressTemplate         @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  parent           FieldProgressItem?            @relation("FieldItemHierarchy", fields: [parentId], references: [id])
+  children         FieldProgressItem[]           @relation("FieldItemHierarchy")
+  createdBy        User                          @relation("FieldItemCreator", fields: [createdById], references: [id])
+  entries          FieldProgressEntry[]
+  materialRequests FieldMaterialRequest[]
+  siteReportLines  SiteReportLine[]
+  documents        Document[]
+  assignments      FieldProgressItemAssignment[]
+  locations        FieldProgressItemLocation[]
 
   @@index([projectId])
   @@index([templateId])
@@ -1749,34 +1843,34 @@ model SafetySelfAssessmentSequence {
 }
 
 model SafetyReportPlan {
-  id                 String                 @id @default(cuid())
-  documentYear       Int
-  sequenceNumber     Int?
-  documentNumber     String?
+  id                     String                 @id @default(cuid())
+  documentYear           Int
+  sequenceNumber         Int?
+  documentNumber         String?
   officialDocumentNumber String?
-  title              String
-  createdDate        DateTime               @db.Date
-  periodStart        DateTime               @db.Date
-  periodEnd          DateTime               @db.Date
-  legalBases         Json?
-  recipients         Json?
-  purpose            String?                @db.Text
-  note               String?                @db.Text
-  status             SafetyReportPlanStatus @default(DRAFT)
-  createdById        String
-  submittedById      String?
-  submittedAt        DateTime?
-  approvedById       String?
-  approvedAt         DateTime?
-  revisionReason     String?                @db.Text
-  cancelledAt        DateTime?
-  cancellationReason String?                @db.Text
-  version            Int                    @default(1)
-  deletedAt          DateTime?
-  deletedById        String?
-  weeklyFileId       String?
-  createdAt          DateTime               @default(now())
-  updatedAt          DateTime               @updatedAt
+  title                  String
+  createdDate            DateTime               @db.Date
+  periodStart            DateTime               @db.Date
+  periodEnd              DateTime               @db.Date
+  legalBases             Json?
+  recipients             Json?
+  purpose                String?                @db.Text
+  note                   String?                @db.Text
+  status                 SafetyReportPlanStatus @default(DRAFT)
+  createdById            String
+  submittedById          String?
+  submittedAt            DateTime?
+  approvedById           String?
+  approvedAt             DateTime?
+  revisionReason         String?                @db.Text
+  cancelledAt            DateTime?
+  cancellationReason     String?                @db.Text
+  version                Int                    @default(1)
+  deletedAt              DateTime?
+  deletedById            String?
+  weeklyFileId           String?
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
 
   weeklyFile      SafetyWeeklyFile?            @relation(fields: [weeklyFileId], references: [id], onDelete: SetNull)
   createdBy       User                         @relation("SafetyPlanCreator", fields: [createdById], references: [id], onDelete: Restrict)
@@ -1825,7 +1919,7 @@ model SafetySelfAssessmentReport {
   officialDocumentNumber   String?
   documentPlace            String?                    @default("Hà Nội")
   documentDate             DateTime?                  @db.Date
-  createdDate              DateTime                   @db.Date @default(now())
+  createdDate              DateTime                   @default(now()) @db.Date
   title                    String
   periodStart              DateTime                   @db.Date
   periodEnd                DateTime                   @db.Date
@@ -1885,7 +1979,7 @@ model SafetySelfAssessmentEntry {
   updatedAt            DateTime          @updatedAt
 
   report  SafetySelfAssessmentReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
-  project Project?                    @relation(fields: [projectId], references: [id], onDelete: Restrict)
+  project Project?                   @relation(fields: [projectId], references: [id], onDelete: Restrict)
 
   @@index([reportId, inspectionDate, sortOrder])
   @@index([projectId, inspectionDate])
@@ -2019,12 +2113,12 @@ model OrganizationUnit {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  parent              OrganizationUnit?                   @relation("OrgUnitHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
-  children            OrganizationUnit[]                  @relation("OrgUnitHierarchy")
+  parent                   OrganizationUnit?                   @relation("OrgUnitHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children                 OrganizationUnit[]                  @relation("OrgUnitHierarchy")
   employeeAssignments      EmployeeOrganizationAssignment[]
   managerAssignments       OrganizationUnitManagerAssignment[]
   userAccessGrants         UserAccessGrant[]
-  sourceProjectAssignments EmployeeProjectAssignment[]          @relation("EmployeeProjectAssignmentSourceUnit")
+  sourceProjectAssignments EmployeeProjectAssignment[]         @relation("EmployeeProjectAssignmentSourceUnit")
 
   @@index([parentId])
   @@index([code])
@@ -2066,9 +2160,9 @@ model Employee {
   createdAt                DateTime       @default(now())
   updatedAt                DateTime       @updatedAt
 
-  user               User?                                 @relation("UserEmployee", fields: [userId], references: [id], onDelete: SetNull)
-  createdBy          User?                                 @relation("EmployeeCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  updatedBy          User?                                 @relation("EmployeeUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  user               User?                               @relation("UserEmployee", fields: [userId], references: [id], onDelete: SetNull)
+  createdBy          User?                               @relation("EmployeeCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy          User?                               @relation("EmployeeUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
   orgAssignments     EmployeeOrganizationAssignment[]
   managedOrgUnits    OrganizationUnitManagerAssignment[]
   projectAssignments EmployeeProjectAssignment[]
@@ -2138,13 +2232,13 @@ model ProjectPersonnelRole {
 }
 
 model EmployeeProjectAssignment {
-  id                     String                              @id @default(cuid())
-  employeeId             String
-  projectId              String
-  projectPersonnelRoleId String
-  startDate              DateTime
-  expectedEndDate        DateTime?
-  endDate                DateTime?
+  id                        String                              @id @default(cuid())
+  employeeId                String
+  projectId                 String
+  projectPersonnelRoleId    String
+  startDate                 DateTime
+  expectedEndDate           DateTime?
+  endDate                   DateTime?
   allocationPercentage      Int                                 @default(100)
   status                    EmployeeProjectAssignmentStatus     @default(ACTIVE)
   endReason                 EmployeeProjectAssignmentEndReason?

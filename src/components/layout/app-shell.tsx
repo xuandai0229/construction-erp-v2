@@ -44,7 +44,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
             </div>
             <div data-app-mobile-context><MobileProjectContextBar globalContext={globalContext} /></div>
             <main className="min-w-0 max-w-full flex-1 bg-background" data-app-main>
-              <div className="app-page-container p-3 pb-[calc(72px+env(safe-area-inset-bottom))] sm:p-5 lg:p-6 lg:pb-6" data-app-content>
+              <div className="app-page-container p-3 pb-[calc(72px+env(safe-area-inset-bottom))] sm:p-5 lg:p-6 lg:pb-6 xl:p-7 xl:pb-7" data-app-content>
                 {children}
               </div>
             </main>

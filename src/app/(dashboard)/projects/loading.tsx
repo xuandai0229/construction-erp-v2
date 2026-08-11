@@ -2,7 +2,7 @@ import { Building2 } from "lucide-react";
 
 export default function ProjectsLoading() {
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto animate-pulse">
+    <div className="space-y-6 w-full max-w-full animate-pulse">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="h-8 w-48 bg-slate-200 rounded-md"></div>
         <div className="h-10 w-36 bg-slate-200 rounded-md"></div>

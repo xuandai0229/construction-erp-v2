@@ -4,6 +4,7 @@ import { getActiveProjects, getMaterialItems, getProjectStocks, getRecentTransac
 import type { MaterialItemDto, MaterialMovementDto, ProjectStockDto } from "./actions";
 import { MaterialsWorkspace } from "@/components/materials/materials-workspace";
 import { getMaterialPermissions, MaterialPermissionSet } from "@/lib/materials/materials-permissions";
+import { listMaterialProposals } from "@/lib/material-proposals/actions";
 
 import { getGlobalProjectContext } from "@/lib/project-context";
 
@@ -35,6 +36,7 @@ export default async function MaterialsPage({
   let permissions: MaterialPermissionSet | undefined;
 
   let materialRequests: any[] = [];
+  let materialProposals: any[] = [];
   let wbsItems: any[] = [];
 
   if (projectIdToLoad) {
@@ -46,6 +48,7 @@ export default async function MaterialsPage({
       
       const db = (await import("@/lib/prisma")).default;
       materialRequests = [];
+      materialProposals = await listMaterialProposals(projectIdToLoad);
 
       const template = await db.fieldProgressTemplate.findFirst({
         where: { projectId: projectIdToLoad, deletedAt: null },
@@ -84,6 +87,7 @@ export default async function MaterialsPage({
       initialProjectId={projectIdToLoad}
       permissions={permissions}
       materialRequests={JSON.parse(JSON.stringify(materialRequests))}
+      materialProposals={JSON.parse(JSON.stringify(materialProposals))}
       wbsItems={JSON.parse(JSON.stringify(wbsItems))}
       currentUserRole={session.role}
       currentUserId={session.id}

@@ -66,7 +66,7 @@ export default async function FieldProgressPage({ params }: { params: Promise<{ 
   const pendingQty = draftQty + submittedQty;
 
   return (
-    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 pt-4 sm:pt-6 space-y-6 pb-20">
+    <div className="w-full max-w-full space-y-6 pb-20">
       {/* Header */}
       <div className="flex flex-col gap-2">
         <div>
