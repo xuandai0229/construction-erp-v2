@@ -138,8 +138,8 @@ export async function getHrReportKpis(
 
   const totalActiveEmployees = filteredEmployees.length;
 
-  let totalOnSiteSet = new Set<string>();
-  let activeProjectsSet = new Set<string>();
+  const totalOnSiteSet = new Set<string>();
+  const activeProjectsSet = new Set<string>();
   let expiringAssignmentsCount = 0;
   let unassignedCount = 0;
   let availableCapacityCount = 0;

@@ -11,6 +11,8 @@ import { checkUserHasAnyHrPermission } from '@/lib/hr/hr-auth-guard';
 import { measureServerPhase } from '@/lib/performance/server';
 import { ClientRenderProfiler } from '@/components/performance/client-render-profiler';
 
+import { AutoRevalidateListener } from '@/components/common/auto-revalidate-listener';
+
 export async function AppShell({ children }: { children: React.ReactNode }) {
   return measureServerPhase('app-shell', async () => {
     const session = await getSession();
@@ -25,6 +27,7 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
 
     return (
       <ClientRenderProfiler id="AppShell">
+        <AutoRevalidateListener />
         <div className="flex min-h-dvh min-w-0 w-full max-w-full bg-background text-foreground" data-app-shell>
           <div className="hidden lg:block sticky top-0 h-dvh shrink-0" data-app-sidebar>
             <ClientRenderProfiler id="Sidebar">

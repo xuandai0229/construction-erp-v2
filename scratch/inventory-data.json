@@ -1,0 +1,570 @@
+[
+  {
+    "file": "(dashboard)/materials/proposals/[id]/export/route.ts",
+    "routePath": "/(dashboard)/materials/proposals/[id]/export",
+    "isV1": false,
+    "isLegacyApi": false,
+    "isOutsideApi": true,
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "file": "api/auth/login/route.ts",
+    "routePath": "/api/auth/login",
+    "isV1": false,
+    "isLegacyApi": true,
+    "isOutsideApi": false,
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "file": "api/auth/logout/route.ts",
+    "routePath": "/api/auth/logout",
+    "isV1": false,
+    "isLegacyApi": true,
+    "isOutsideApi": false,
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "file": "api/cron/documents-trash-cleanup/route.ts",
+    "routePath": "/api/cron/documents-trash-cleanup",
+    "isV1": false,
+    "isLegacyApi": true,
+    "isOutsideApi": false,
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "file": "api/documents/load-more/route.ts",
+    "routePath": "/api/documents/load-more",
+    "isV1": false,
+    "isLegacyApi": true,
+    "isOutsideApi": false,
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "file": "api/documents/upload/route.ts",
+    "routePath": "/api/documents/upload",
+    "isV1": false,
+    "isLegacyApi": true,
+    "isOutsideApi": false,
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "file": "api/documents/[documentId]/download/route.ts",
+    "routePath": "/api/documents/[documentId]/download",
+    "isV1": false,
+    "isLegacyApi": true,
+    "isOutsideApi": false,
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "file": "api/hr/reports/export/route.ts",
+    "routePath": "/api/hr/reports/export",
+    "isV1": false,
+    "isLegacyApi": true,
+    "isOutsideApi": false,
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "file": "api/reports/attachments/[attachmentId]/route.ts",
+    "routePath": "/api/reports/attachments/[attachmentId]",
+    "isV1": false,
+    "isLegacyApi": true,
+    "isOutsideApi": false,
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "file": "api/reports/safety/plans/route.ts",
+    "routePath": "/api/reports/safety/plans",
+    "isV1": false,
+    "isLegacyApi": true,
+    "isOutsideApi": false,
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "file": "api/reports/safety/plans/[planId]/approve/route.ts",
+    "routePath": "/api/reports/safety/plans/[planId]/approve",
+    "isV1": false,
+    "isLegacyApi": true,
+    "isOutsideApi": false,
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "file": "api/reports/safety/plans/[planId]/export/route.ts",
+    "routePath": "/api/reports/safety/plans/[planId]/export",
+    "isV1": false,
+    "isLegacyApi": true,
+    "isOutsideApi": false,
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "file": "api/reports/safety/plans/[planId]/route.ts",
+    "routePath": "/api/reports/safety/plans/[planId]",
+    "isV1": false,
+    "isLegacyApi": true,
+    "isOutsideApi": false,
+    "methods": [
+      "GET",
+      "DELETE"
+    ]
+  },
+  {
+    "file": "api/reports/safety/plans/[planId]/submit/route.ts",
+    "routePath": "/api/reports/safety/plans/[planId]/submit",
+    "isV1": false,
+    "isLegacyApi": true,
+    "isOutsideApi": false,
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "file": "api/reports/safety/self-assessments/route.ts",
+    "routePath": "/api/reports/safety/self-assessments",
+    "isV1": false,
+    "isLegacyApi": true,
+    "isOutsideApi": false,
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "file": "api/reports/safety/self-assessments/[reportId]/approve/route.ts",
+    "routePath": "/api/reports/safety/self-assessments/[reportId]/approve",
+    "isV1": false,
+    "isLegacyApi": true,
+    "isOutsideApi": false,
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "file": "api/reports/safety/self-assessments/[reportId]/export/route.ts",
+    "routePath": "/api/reports/safety/self-assessments/[reportId]/export",
+    "isV1": false,
+    "isLegacyApi": true,
+    "isOutsideApi": false,
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "file": "api/reports/safety/self-assessments/[reportId]/route.ts",
+    "routePath": "/api/reports/safety/self-assessments/[reportId]",
+    "isV1": false,
+    "isLegacyApi": true,
+    "isOutsideApi": false,
+    "methods": [
+      "GET",
+      "DELETE"
+    ]
+  },
+  {
+    "file": "api/reports/safety/self-assessments/[reportId]/submit/route.ts",
+    "routePath": "/api/reports/safety/self-assessments/[reportId]/submit",
+    "isV1": false,
+    "isLegacyApi": true,
+    "isOutsideApi": false,
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "file": "api/reports/weekly-summary/export/route.ts",
+    "routePath": "/api/reports/weekly-summary/export",
+    "isV1": false,
+    "isLegacyApi": true,
+    "isOutsideApi": false,
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "file": "api/reports/weekly-summary/export-pdf/route.ts",
+    "routePath": "/api/reports/weekly-summary/export-pdf",
+    "isV1": false,
+    "isLegacyApi": true,
+    "isOutsideApi": false,
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "file": "api/reports/[reportId]/attachments/route.ts",
+    "routePath": "/api/reports/[reportId]/attachments",
+    "isV1": false,
+    "isLegacyApi": true,
+    "isOutsideApi": false,
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "file": "api/reports/[reportId]/history/route.ts",
+    "routePath": "/api/reports/[reportId]/history",
+    "isV1": false,
+    "isLegacyApi": true,
+    "isOutsideApi": false,
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "file": "api/supervision/weekly/[id]/export/route.ts",
+    "routePath": "/api/supervision/weekly/[id]/export",
+    "isV1": false,
+    "isLegacyApi": true,
+    "isOutsideApi": false,
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "file": "api/v1/approvals/route.ts",
+    "routePath": "/api/v1/approvals",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "file": "api/v1/approvals/[id]/approve/route.ts",
+    "routePath": "/api/v1/approvals/[id]/approve",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "file": "api/v1/approvals/[id]/reject/route.ts",
+    "routePath": "/api/v1/approvals/[id]/reject",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "file": "api/v1/approvals/[id]/route.ts",
+    "routePath": "/api/v1/approvals/[id]",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "file": "api/v1/auth/login/route.ts",
+    "routePath": "/api/v1/auth/login",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "file": "api/v1/auth/logout/route.ts",
+    "routePath": "/api/v1/auth/logout",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "file": "api/v1/dashboard/route.ts",
+    "routePath": "/api/v1/dashboard",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "file": "api/v1/material-proposals/route.ts",
+    "routePath": "/api/v1/material-proposals",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "file": "api/v1/material-proposals/[id]/approve/route.ts",
+    "routePath": "/api/v1/material-proposals/[id]/approve",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "file": "api/v1/material-proposals/[id]/reject/route.ts",
+    "routePath": "/api/v1/material-proposals/[id]/reject",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "file": "api/v1/material-proposals/[id]/route.ts",
+    "routePath": "/api/v1/material-proposals/[id]",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "file": "api/v1/material-proposals/[id]/submit/route.ts",
+    "routePath": "/api/v1/material-proposals/[id]/submit",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "file": "api/v1/me/route.ts",
+    "routePath": "/api/v1/me",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "file": "api/v1/notifications/read-all/route.ts",
+    "routePath": "/api/v1/notifications/read-all",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "file": "api/v1/notifications/route.ts",
+    "routePath": "/api/v1/notifications",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "file": "api/v1/notifications/[id]/read/route.ts",
+    "routePath": "/api/v1/notifications/[id]/read",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "file": "api/v1/projects/route.ts",
+    "routePath": "/api/v1/projects",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "file": "api/v1/projects/[projectId]/dashboard/route.ts",
+    "routePath": "/api/v1/projects/[projectId]/dashboard",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "file": "api/v1/projects/[projectId]/materials/route.ts",
+    "routePath": "/api/v1/projects/[projectId]/materials",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "file": "api/v1/projects/[projectId]/members/route.ts",
+    "routePath": "/api/v1/projects/[projectId]/members",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "file": "api/v1/projects/[projectId]/personnel/route.ts",
+    "routePath": "/api/v1/projects/[projectId]/personnel",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "file": "api/v1/projects/[projectId]/progress/daily/route.ts",
+    "routePath": "/api/v1/projects/[projectId]/progress/daily",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "file": "api/v1/projects/[projectId]/route.ts",
+    "routePath": "/api/v1/projects/[projectId]",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "file": "api/v1/projects/[projectId]/wbs/route.ts",
+    "routePath": "/api/v1/projects/[projectId]/wbs",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "file": "api/v1/reports/route.ts",
+    "routePath": "/api/v1/reports",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "GET",
+      "POST"
+    ]
+  },
+  {
+    "file": "api/v1/reports/[reportId]/approve/route.ts",
+    "routePath": "/api/v1/reports/[reportId]/approve",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "file": "api/v1/reports/[reportId]/reject/route.ts",
+    "routePath": "/api/v1/reports/[reportId]/reject",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "file": "api/v1/reports/[reportId]/route.ts",
+    "routePath": "/api/v1/reports/[reportId]",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "GET",
+      "PATCH"
+    ]
+  },
+  {
+    "file": "api/v1/reports/[reportId]/submit/route.ts",
+    "routePath": "/api/v1/reports/[reportId]/submit",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "POST"
+    ]
+  },
+  {
+    "file": "api/v1/search/route.ts",
+    "routePath": "/api/v1/search",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "file": "api/v1/supervision/weekly/route.ts",
+    "routePath": "/api/v1/supervision/weekly",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "GET"
+    ]
+  },
+  {
+    "file": "api/v1/users/route.ts",
+    "routePath": "/api/v1/users",
+    "isV1": true,
+    "isLegacyApi": false,
+    "isOutsideApi": false,
+    "methods": [
+      "GET"
+    ]
+  }
+]

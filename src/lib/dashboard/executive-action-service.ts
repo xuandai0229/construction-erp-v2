@@ -58,24 +58,47 @@ export async function getExecutiveActionItems(
   const today = todayWorkDate();
   const todayRange = getWorkDateRange(today);
 
-  // 1. Delayed / At-Risk Projects
-  const projects = await prisma.project.findMany({
-    where: {
-      ...projectWhere,
-      deletedAt: null,
-      status: "ACTIVE",
-    },
-    select: {
-      id: true,
-      code: true,
-      name: true,
-      endDate: true,
-      members: {
-        select: { user: { select: { name: true } } },
-        take: 1,
+  const [projects, reports, fieldMaterialRequests] = await Promise.all([
+    prisma.project.findMany({
+      where: {
+        ...projectWhere,
+        deletedAt: null,
+        status: "ACTIVE",
       },
-    },
-  });
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        endDate: true,
+        members: {
+          select: { user: { select: { name: true } } },
+          take: 1,
+        },
+      },
+    }),
+    prisma.siteReport.findMany({
+      where: {
+        ...projectIdWhere,
+        deletedAt: null,
+        issues: { not: null },
+      },
+      orderBy: { reportDate: "desc" },
+      include: {
+        project: { select: { id: true, name: true } },
+        createdBy: { select: { name: true } },
+      },
+    }),
+    prisma.fieldMaterialRequest.findMany({
+      where: {
+        ...projectIdWhere,
+        deletedAt: null,
+        priority: { in: ["URGENT", "HIGH"] },
+        status: { notIn: ["APPROVED", "REJECTED", "CANCELLED"] },
+      },
+      orderBy: { createdAt: "desc" },
+      include: { project: { select: { id: true, name: true } }, requestedBy: { select: { name: true } } },
+    }),
+  ]);
 
   const riskItems: ExecutiveActionItem[] = [];
   for (const p of projects) {
@@ -106,20 +129,6 @@ export async function getExecutiveActionItems(
     }
   }
 
-  // 2. Operational Issue Site Reports (Filtered by business issue logic, NOT approval status)
-  const reports = await prisma.siteReport.findMany({
-    where: {
-      ...projectIdWhere,
-      deletedAt: null,
-      issues: { not: null },
-    },
-    orderBy: { reportDate: "desc" },
-    include: {
-      project: { select: { id: true, name: true } },
-      createdBy: { select: { name: true } },
-    },
-  });
-
   const reportItems: ExecutiveActionItem[] = [];
   for (const r of reports) {
     const issueState = deriveOperationalIssueState({
@@ -128,7 +137,7 @@ export async function getExecutiveActionItems(
       qualityNote: r.quality,
       laborNote: r.labor,
       materialsNote: r.materials,
-      safetyStatus: r.weatherCondition, // or safety field if present
+      safetyStatus: r.weatherCondition,
       status: r.status,
     });
 
@@ -156,18 +165,6 @@ export async function getExecutiveActionItems(
       });
     }
   }
-
-  // 3. Urgent / Critical Material Shortage Requests
-  const fieldMaterialRequests = await prisma.fieldMaterialRequest.findMany({
-    where: {
-      ...projectIdWhere,
-      deletedAt: null,
-      priority: { in: ["URGENT", "HIGH"] },
-      status: { notIn: ["APPROVED", "REJECTED", "CANCELLED"] },
-    },
-    orderBy: { createdAt: "desc" },
-    include: { project: { select: { id: true, name: true } }, requestedBy: { select: { name: true } } },
-  });
 
   const materialItems: ExecutiveActionItem[] = fieldMaterialRequests.map((fm) => ({
       id: `field-material-${fm.id}`,

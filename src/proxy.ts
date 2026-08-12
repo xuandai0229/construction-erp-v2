@@ -79,6 +79,10 @@ export default async function proxy(request: NextRequest) {
     return response;
   };
 
+  if (request.nextUrl.pathname.startsWith('/_next')) {
+    return NextResponse.next();
+  }
+
   if (isRetiredRoute(request.nextUrl.pathname)) {
     logProxy();
     return addPerfResponseHeader(new NextResponse(null, { status: 404 }));
@@ -92,7 +96,8 @@ export default async function proxy(request: NextRequest) {
   
   if (!hasSession && !isAuthPage && (!isApiRoute || isAuthApiRoute)) {
     if (!isApiRoute) {
-      const url = new URL('/login', request.url);
+      const url = request.nextUrl.clone();
+      url.pathname = '/login';
       url.searchParams.set('next', `${request.nextUrl.pathname}${request.nextUrl.search}`);
       logProxy();
       return addPerfResponseHeader(NextResponse.redirect(url));
@@ -105,8 +110,11 @@ export default async function proxy(request: NextRequest) {
       response.cookies.delete('auth_session');
       return response;
     }
+    const homeUrl = request.nextUrl.clone();
+    homeUrl.pathname = '/';
+    homeUrl.search = '';
     logProxy();
-    return addPerfResponseHeader(NextResponse.redirect(new URL('/', request.url)));
+    return addPerfResponseHeader(NextResponse.redirect(homeUrl));
   }
 
   const requestHeaders = new Headers(request.headers);
@@ -131,6 +139,6 @@ export default async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|images|public).*)',
+    '/((?!_next|favicon.ico|images|public).*)',
   ],
 };

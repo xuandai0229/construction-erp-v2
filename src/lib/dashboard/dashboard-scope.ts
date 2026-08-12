@@ -20,15 +20,8 @@ export async function resolveExecutiveDashboardScope(
   const baseScope = await getProjectAccessScope(session);
   const now = new Date();
 
-  // Fetch allowed project IDs for this user
   let allowedIds: string[] = [];
-  if (baseScope.kind === "ALL_PROJECTS") {
-    const projects = await prisma.project.findMany({
-      where: { deletedAt: null },
-      select: { id: true },
-    });
-    allowedIds = projects.map((p) => p.id);
-  } else if (baseScope.kind === "PROJECT_IDS") {
+  if (baseScope.kind === "PROJECT_IDS") {
     allowedIds = baseScope.projectIds;
   }
 
@@ -50,12 +43,18 @@ export function scopeWhereProject(scope: ExecutiveDashboardScope) {
   if (scope.mode === "SINGLE_PROJECT" && scope.projectId) {
     return { id: scope.projectId, deletedAt: null };
   }
+  if (scope.allowedProjectIds.length === 0) {
+    return { deletedAt: null };
+  }
   return { id: { in: scope.allowedProjectIds }, deletedAt: null };
 }
 
 export function scopeWhereProjectId(scope: ExecutiveDashboardScope) {
   if (scope.mode === "SINGLE_PROJECT" && scope.projectId) {
     return { projectId: scope.projectId, deletedAt: null };
+  }
+  if (scope.allowedProjectIds.length === 0) {
+    return { deletedAt: null };
   }
   return { projectId: { in: scope.allowedProjectIds }, deletedAt: null };
 }

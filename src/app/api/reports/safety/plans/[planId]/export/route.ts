@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
-import { getSession } from "@/lib/auth";
 import { SafetyPlanService } from '@/lib/safety-reporting/plan-service';
 import { SafetyDocxGenerator } from '@/lib/safety-reporting/docx-generator';
 import { SafetyPdfConverter } from '@/lib/safety-reporting/pdf-converter';
+import {
+  getSafetyAuth,
+  verifySafetyProjectAccess,
+  errorResponse,
+} from '@/lib/safety-reporting/safety-auth-guard';
 
 function getSafeHeaderFilenames(rawName: string, prefix: string, extension: string) {
   const sanitized = rawName.replace(/[/\\?%*:|"<>]/g, '-').trim();
@@ -23,10 +27,8 @@ function getSafeHeaderFilenames(rawName: string, prefix: string, extension: stri
 
 export async function GET(request: Request, { params }: { params: Promise<{ planId: string }> }) {
   try {
-    const session = await getSession();
-    if (!session) {
-      return NextResponse.json({ error: 'Chưa đăng nhập' }, { status: 401 });
-    }
+    const auth = await getSafetyAuth();
+    if (auth instanceof NextResponse) return auth;
 
     const { planId } = await params;
     const requestUrl = new URL(request.url);
@@ -34,8 +36,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ plan
 
     const plan = await SafetyPlanService.getPlanById(planId);
     if (!plan) {
-      return NextResponse.json({ error: 'Không tìm thấy kế hoạch kiểm tra' }, { status: 404 });
+      return errorResponse('NOT_FOUND', 'Không tìm thấy kế hoạch kiểm tra để xuất tệp.', 404);
     }
+
+    const projectIds = (plan.entries || []).map((e: any) => e.projectId).filter(Boolean);
+    const scopeErr = await verifySafetyProjectAccess(auth.session, projectIds);
+    if (scopeErr) return scopeErr;
 
     const docNoRaw = plan.officialDocumentNumber || plan.documentNumber || planId;
     const filenames = getSafeHeaderFilenames(docNoRaw, 'Ke-hoach-kiem-tra-ATLD-PCCC-VSMT', format === 'pdf' ? 'pdf' : 'docx');
@@ -59,6 +65,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ plan
     });
   } catch (error: any) {
     console.error("[Export Plan API Error]", error);
-    return NextResponse.json({ error: error.message || 'Không thể sinh tệp văn bản. Vui lòng thử lại.' }, { status: 500 });
+    return errorResponse('SERVER_ERROR', error.message || 'Không thể sinh tệp văn bản. Vui lòng thử lại.', 500);
   }
 }

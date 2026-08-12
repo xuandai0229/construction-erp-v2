@@ -54,8 +54,11 @@ async function getDossierForActor(id: string, actor: Actor) {
       revisions: { include: { actor: { select: { name: true, role: true } } }, orderBy: { createdAt: "desc" } },
     },
   });
-  if (!dossier || !canReadSupervisionWeeklyDossier(actor, dossier)) {
-    await writeSecurityAuditEvent({ eventType: "AUTHORIZATION_DENIED", actorId: actor.id, role: actor.role, action: "supervision.weekly.view", resourceType: "SupervisionWeeklyDossier", resourceId: id, reasonCode: dossier ? "DOSSIER_READ_DENIED" : "DOSSIER_NOT_FOUND" });
+  if (!dossier) {
+    return null;
+  }
+  if (!canReadSupervisionWeeklyDossier(actor, dossier)) {
+    await writeSecurityAuditEvent({ eventType: "AUTHORIZATION_DENIED", actorId: actor.id, role: actor.role, action: "supervision.weekly.view", resourceType: "SupervisionWeeklyDossier", resourceId: id, reasonCode: "DOSSIER_READ_DENIED" });
     throw new Error("Bạn không có quyền xem hồ sơ này.");
   }
   return dossier;
@@ -127,7 +130,7 @@ function decimalOrNull(value: number | null | undefined) {
   return value == null ? null : new Prisma.Decimal(value);
 }
 
-function validateBeforeSubmit(dossier: Awaited<ReturnType<typeof getDossierForActor>>) {
+function validateBeforeSubmit(dossier: NonNullable<Awaited<ReturnType<typeof getDossierForActor>>>) {
   const shiftLabel = { MORNING: "Sáng", AFTERNOON: "Chiều", EVENING: "Tối" } as const;
   const dayLabel = (date: Date) => new Intl.DateTimeFormat("vi-VN", { weekday: "long", day: "2-digit", month: "2-digit" }).format(date);
   const resultEntries = dossier.entries.filter((entry) => entry.documentType === "RESULT");
@@ -278,6 +281,9 @@ export async function createSupervisionWeeklyDossier(
 export async function deleteSupervisionWeeklyDossier(id: string) {
   const actor = await getActor();
   const dossier = await getDossierForActor(id, actor);
+  if (!dossier) {
+    throw new Error("Hồ sơ này không còn tồn tại hoặc đã bị xóa.");
+  }
   if (!canDeleteSupervisionWeeklyDossier(actor, dossier)) {
     await writeSecurityAuditEvent({ eventType: "AUTHORIZATION_DENIED", actorId: actor.id, role: actor.role, action: "supervision.weekly.delete", resourceType: "SupervisionWeeklyDossier", resourceId: id, reasonCode: "WEEKLY_DELETE_DENIED" });
     throw new Error("Bạn không có quyền xóa hồ sơ này.");
@@ -297,6 +303,9 @@ export async function saveSupervisionWeeklyDossier(id: string, rawInput: Supervi
   const actor = await getActor();
   const input = supervisionDossierSaveSchema.parse(rawInput);
   const dossier = await getDossierForActor(id, actor);
+  if (!dossier) {
+    throw new Error("Hồ sơ này không còn tồn tại hoặc đã bị xóa.");
+  }
   if (!canEditSupervisionWeeklyDossier(actor, dossier)) {
     await writeSecurityAuditEvent({ eventType: "AUTHORIZATION_DENIED", actorId: actor.id, role: actor.role, action: "supervision.weekly.update", resourceType: "SupervisionWeeklyDossier", resourceId: id, reasonCode: dossier.createdById === actor.id ? "DOSSIER_STATE_READ_ONLY" : "DOSSIER_OWNER_REQUIRED" });
     throw new Error("Chỉ người lập mới được sửa bản nháp hoặc bản bị yêu cầu chỉnh sửa.");
@@ -428,6 +437,9 @@ export async function saveSupervisionWeeklyDossier(id: string, rawInput: Supervi
 export async function transitionSupervisionWeeklyDossier(id: string, action: WeeklyWorkflowAction, reason?: string) {
   const actor = await getActor();
   const dossier = await getDossierForActor(id, actor);
+  if (!dossier) {
+    throw new Error("Hồ sơ này không còn tồn tại hoặc đã bị xóa.");
+  }
   const ownDraftAction = action === "SUBMIT" && canSubmitSupervisionWeeklyDossier(actor, dossier);
   const reviewAction = action !== "SUBMIT"
     && canReviewSupervisionWeekly(actor.role)
@@ -568,6 +580,7 @@ export async function getSupervisionWeeklyDossiers() {
 export async function getSupervisionWeeklyDossier(id: string) {
   const actor = await getActor();
   const dossier = await getDossierForActor(id, actor);
+  if (!dossier) return null;
   await writeAuditLog({ userId: actor.id, action: "VIEW_SUPERVISION_WEEKLY_DOSSIER", entityType: "SupervisionWeeklyDossier", entityId: id, afterData: { status: dossier.status, ownerId: dossier.createdById } });
   return dossier;
 }
@@ -644,6 +657,9 @@ export async function getSupervisionWeeklySourceOptions(projectId: string) {
 export async function getSupervisionWeeklyPrintData(id: string, purpose: "PREVIEW" | "EXPORT" = "PREVIEW"): Promise<SupervisionWeeklyPrintDto> {
   const actor = await getActor();
   const dossier = await getDossierForActor(id, actor);
+  if (!dossier) {
+    throw new Error("Hồ sơ này không còn tồn tại hoặc đã bị xóa.");
+  }
   const allowed = purpose === "EXPORT"
     ? canExportSupervisionWeeklyDossier(actor, dossier)
     : canPreviewSupervisionWeeklyDossier(actor, dossier);

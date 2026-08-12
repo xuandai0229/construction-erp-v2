@@ -1,17 +1,42 @@
 import { NextResponse } from 'next/server';
 import { SafetyAssessmentService } from '@/lib/safety-reporting/assessment-service';
+import {
+  getSafetyAuth,
+  verifySafetyProjectAccess,
+  verifySafetyApproverRole,
+  SafetyApproveSchema,
+  errorResponse,
+} from '@/lib/safety-reporting/safety-auth-guard';
 
 export async function POST(request: Request, { params }: { params: Promise<{ reportId: string }> }) {
   try {
+    const auth = await getSafetyAuth();
+    if (auth instanceof NextResponse) return auth;
+
+    const approverErr = verifySafetyApproverRole(auth.session);
+    if (approverErr) return approverErr;
+
     const { reportId } = await params;
     const body = await request.json();
-    const actorId = body.actorId || 'system-user';
-    const approve = body.approve === true;
-    const reason = body.reason;
+    const parseResult = SafetyApproveSchema.safeParse(body);
+    if (!parseResult.success) {
+      return errorResponse('BAD_REQUEST', 'Dữ liệu phê duyệt không hợp lệ.', 400);
+    }
 
-    const updated = await SafetyAssessmentService.decideReport(actorId, reportId, approve, reason);
+    const { approve, reason } = parseResult.data;
+
+    const report = await SafetyAssessmentService.getReportById(reportId);
+    if (!report) {
+      return errorResponse('NOT_FOUND', 'Không tìm thấy báo cáo để duyệt.', 404);
+    }
+
+    const projectIds = (report.entries || []).map((e: any) => e.projectId).filter(Boolean);
+    const scopeErr = await verifySafetyProjectAccess(auth.session, projectIds);
+    if (scopeErr) return scopeErr;
+
+    const updated = await SafetyAssessmentService.decideReport(auth.user.id, reportId, approve, reason);
     return NextResponse.json(updated);
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Lỗi duyệt Báo cáo' }, { status: 400 });
+    return errorResponse('BAD_REQUEST', error.message || 'Lỗi khi phê duyệt báo cáo.', 400);
   }
 }

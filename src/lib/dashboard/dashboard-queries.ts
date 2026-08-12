@@ -280,6 +280,7 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
     recentSiteReports,
     issueReports,
     auditLogs,
+    pendingApprovals,
   ] = await Promise.all([
     prisma.project.count({ where: projectWhere }),
     prisma.project.count({ where: activeProjectWhere }),
@@ -368,9 +369,6 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
       take: 8,
       include: { user: { select: { name: true } } },
     }),
-  ]);
-
-  const pendingApprovals = await (
     canViewApprovals
       ? prisma.approvalRequest.findMany({
           where: { deletedAt: null, status: "PENDING", ...projectIdScope(accessScope) },
@@ -378,8 +376,8 @@ export async function getDashboardData(session: SessionUser, rawPeriod?: string,
           take: 5,
           include: { project: { select: { name: true } }, requester: { select: { name: true } } },
         })
-      : Promise.resolve([])
-  );
+      : Promise.resolve([]),
+  ]);
 
   const todayStart = todayRange.start;
   const attentionProjects = activeProjectsForAttention

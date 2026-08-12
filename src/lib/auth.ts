@@ -1,5 +1,5 @@
 import { cache } from 'react';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import prisma from './prisma';
 import { UserRole } from '@prisma/client';
 import {
@@ -21,8 +21,30 @@ export interface SessionUser {
 
 export const getSession = cache(async (): Promise<SessionUser | null> => {
   return measureServerPhase('auth.get-session', async () => {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get('auth_session')?.value;
+    let sessionToken: string | undefined;
+
+    try {
+      const cookieStore = await cookies();
+      sessionToken = cookieStore.get('auth_session')?.value;
+    } catch {
+      // Ignored outside cookie context
+    }
+
+    if (!sessionToken) {
+      try {
+        const headerStore = await headers();
+        const authHeader = headerStore.get('authorization') || headerStore.get('x-session-token');
+        if (authHeader) {
+          if (authHeader.startsWith('Bearer ')) {
+            sessionToken = authHeader.substring(7).trim();
+          } else if (!authHeader.includes(' ')) {
+            sessionToken = authHeader.trim();
+          }
+        }
+      } catch {
+        // Ignored outside request header context
+      }
+    }
 
     if (!sessionToken) return null;
     
@@ -65,13 +87,25 @@ export const getSession = cache(async (): Promise<SessionUser | null> => {
 
 export async function setSession(userId: string) {
   const cookieStore = await cookies();
+  let isSecure = process.env.NODE_ENV === 'production';
+  try {
+    const headerStore = await headers();
+    const proto = headerStore.get('x-forwarded-proto');
+    const referer = headerStore.get('referer');
+    if (proto === 'https' || (referer && referer.startsWith('https://'))) {
+      isSecure = true;
+    }
+  } catch {
+    // Header context unavailable
+  }
+
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { updatedAt: true } });
   if (!user) throw new Error("Không thể tạo phiên cho tài khoản không tồn tại.");
   const token = createSessionToken(userId, undefined, user.updatedAt.toISOString());
   
   cookieStore.set('auth_session', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: isSecure,
     sameSite: 'lax',
     path: '/',
     maxAge: SESSION_MAX_AGE_SECONDS

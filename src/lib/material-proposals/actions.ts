@@ -488,7 +488,7 @@ export async function getMaterialProposal(id: string) {
     },
   });
 
-  if (!proposal) throw new Error("Không tìm thấy đề xuất vật tư.");
+  if (!proposal) return null;
   await assertProjectAccess(user, proposal.projectId);
   return proposal;
 }

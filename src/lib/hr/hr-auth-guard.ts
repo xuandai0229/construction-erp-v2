@@ -73,22 +73,32 @@ export async function checkHrPermission(
  * Helper to check if current user has ANY HR permission (for Sidebar / workspace access).
  */
 export async function checkUserHasAnyHrPermission(userId: string, role: string): Promise<boolean> {
+  if (role === "ADMIN") return true;
+
   const workspacePermissions = [
     "hr:employee:read",
     "hr:employee:create",
     "hr:employee:update",
     "hr:organization:manage",
+    "hr:org_unit:manage",
     "hr:project_role:manage",
     "hr:project_assignment:read",
     "hr:access_grant:manage",
   ];
   return measureServerPhase("hr-permissions.any", async () => {
-    const checks = await Promise.all(
-      workspacePermissions.map((permissionCode) =>
-        measureServerPhase(`hr-permissions.${permissionCode}`, () => resolveUserHrPermission(prisma, userId, permissionCode))
-      )
-    );
-    return checks.some((check) => check.allowed);
+    const now = new Date();
+    const grant = await prisma.userAccessGrant.findFirst({
+      where: {
+        userId,
+        permissionCode: { in: workspacePermissions },
+        effect: "ALLOW",
+        revokedAt: null,
+        OR: [{ validFrom: null }, { validFrom: { lte: now } }],
+        AND: [{ OR: [{ validUntil: null }, { validUntil: { gte: now } }] }],
+      },
+      select: { id: true },
+    });
+    return Boolean(grant);
   });
 }
 
