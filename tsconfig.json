@@ -45,7 +45,6 @@
   "exclude": [
     "node_modules",
     "scripts",
-    "scratch",
-    "mobile"
+    "scratch"
   ]
 }
