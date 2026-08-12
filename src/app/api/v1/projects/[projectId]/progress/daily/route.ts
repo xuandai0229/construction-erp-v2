@@ -4,10 +4,28 @@ import { requireAuth, verifyProjectScope } from '@/lib/v1-auth-guard';
 import { apiList, apiSuccess, apiError, parsePaginationParams } from '@/lib/api-response';
 import { z } from 'zod';
 
+function isValidCalendarDate(dateStr: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false;
+  const [yearStr, monthStr, dayStr] = dateStr.split('-');
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10);
+  const day = parseInt(dayStr, 10);
+
+  if (isNaN(year) || isNaN(month) || isNaN(day)) return false;
+  if (month < 1 || month > 12) return false;
+  if (day < 1 || day > 31) return false;
+
+  const dateObj = new Date(Date.UTC(year, month - 1, day));
+  const isoStr = dateObj.toISOString().slice(0, 10);
+  return isoStr === dateStr;
+}
+
 const CreateDailyProgressSchema = z.object({
   templateId: z.string().min(1, 'Mã template không được để trống.'),
   itemId: z.string().min(1, 'Mã hạng mục công việc không được để trống.'),
-  entryDate: z.string().min(1, 'Ngày ghi nhận nhật ký không được để trống.'),
+  entryDate: z.string().min(1, 'Ngày ghi nhận nhật ký không được để trống.').refine(isValidCalendarDate, {
+    message: 'Ngày ghi nhận không hợp lệ theo lịch (định dạng YYYY-MM-DD hợp lệ).',
+  }),
   quantity: z.number().min(0, 'Khối lượng ghi nhận phải lớn hơn hoặc bằng 0.'),
   note: z.string().optional(),
   issueNote: z.string().optional(),
@@ -87,11 +105,24 @@ export async function POST(
 
     const { templateId, itemId, entryDate, quantity, note, issueNote, proposalNote } = parseResult.data;
 
+    // Validate that target WBS progress item exists and belongs to target project
+    const targetItem = await prisma.fieldProgressItem.findFirst({
+      where: {
+        id: itemId,
+        template: { projectId, deletedAt: null },
+        deletedAt: null,
+      },
+    });
+
+    if (!targetItem) {
+      return apiError('INVALID_WBS_ITEM', 'Hạng mục WBS không tồn tại hoặc không thuộc công trình này.', 400);
+    }
+
     const newEntry = await prisma.fieldProgressEntry.create({
       data: {
         projectId,
-        templateId,
-        itemId,
+        templateId: targetItem.templateId || templateId,
+        itemId: targetItem.id,
         entryDate: new Date(entryDate),
         quantity,
         note: note || null,
