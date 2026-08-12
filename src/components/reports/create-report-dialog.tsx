@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { X, Save, Send, AlertCircle, FileText, CheckCircle2, ListTodo, FileImage, Files, MapPin, Building2, ChevronDown, Plus, CalendarRange, BarChart3 } from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
+import { X, Save, AlertCircle, FileText, CheckCircle2, ListTodo, FileImage, Files, Building2, Plus, CalendarRange, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CloseButton } from "@/components/ui/close-button";
 import { useToast } from "@/components/ui/toast-context";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { GeneralInfoCard } from "./create-dialog/general-info-card";
 import { WorkPicker, type PickerWorkItem } from "./create-dialog/work-picker";
 import { SelectedWorkCard } from "./create-dialog/selected-work-card";
@@ -11,20 +10,21 @@ import { ContentCard } from "@/components/ui/enterprise";
 import { ResourcesAndQuality } from "./create-dialog/resources-and-quality";
 import { AttachmentsCard } from "./create-dialog/attachments-card";
 import { WeeklyReportForm } from "./create-dialog/weekly-report-form";
-import { type CreateReportFormData, type FieldReport, type ReportWorkLine } from "./types";
+import { getStatusLabel, type CreateReportFormData, type FieldReport, type ReportWorkLine } from "./types";
 import { getProjectWorkItems } from "@/app/(dashboard)/reports/actions";
 import { formatNumberSafe } from "@/lib/reports/report-format-utils";
 
 interface CreateReportDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: CreateReportFormData, isDraft: boolean) => Promise<void>;
+  onSubmit: (data: CreateReportFormData) => Promise<void>;
   initialReport?: FieldReport | null;
   mode?: "create" | "edit";
   activeProjects: { id: string; name: string }[];
   currentUser: { id: string; name: string; role?: string };
   isSubmitting: boolean;
   currentProjectId?: string;
+  uploadRetryMessage?: string | null;
 }
 
 export function CreateReportDialog({
@@ -32,11 +32,11 @@ export function CreateReportDialog({
   onClose,
   onSubmit,
   initialReport,
-  mode = "create",
   activeProjects,
   currentUser,
   isSubmitting,
   currentProjectId,
+  uploadRetryMessage,
 }: CreateReportDialogProps) {
   const toast = useToast();
   
@@ -59,6 +59,7 @@ export function CreateReportDialog({
       gpsLocation: "",
       photos: [],
       attachments: [],
+      attachmentIdsToDelete: [],
     };
   }, [currentUser.name, currentProjectId]);
 
@@ -93,6 +94,7 @@ export function CreateReportDialog({
           gpsLocation: initialReport.gpsLocation || "",
           photos: [], // In a real app, load existing photos
           attachments: [],
+          attachmentIdsToDelete: [],
         };
         setForm(loadedForm);
         setInitialFormState(JSON.stringify(loadedForm));
@@ -214,17 +216,14 @@ export function CreateReportDialog({
     }
   };
 
-  const validate = (isDraft: boolean): boolean => {
+  const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
     if (!form.projectId) newErrors.projectId = "Vui lòng chọn công trình";
     
     if (form.type === "DAILY") {
       if (!form.date) newErrors.date = "Vui lòng chọn ngày";
-      if (!isDraft && form.workLines.length === 0) {
-        newErrors.workLines = "Báo cáo ngày cần ít nhất 1 công việc. Bấm Thêm khối lượng để chọn công việc từ bảng khối lượng gốc.";
-      }
       const hasOverQty = form.workLines.some(l => (l.quantityToday || 0) > (l.remainingQuantity || 0));
-      if (!isDraft && hasOverQty) {
+      if (hasOverQty) {
         newErrors.workLines = "Khối lượng không được vượt phần còn lại.";
       }
     }
@@ -234,12 +233,6 @@ export function CreateReportDialog({
       if (!form.weekEndDate) newErrors.weekEndDate = "Vui lòng chọn ngày kết thúc tuần";
       if (form.weekStartDate && form.weekEndDate && form.weekStartDate > form.weekEndDate) {
         newErrors.weekStartDate = "Ngày bắt đầu không được sau ngày kết thúc";
-      }
-      if (!isDraft) {
-        const hasContent = !!(form.summary || form.quality || form.issues || form.recommendations || form.labor || form.materials);
-        if (!hasContent) {
-          newErrors.summary = "Báo cáo tuần cần ít nhất một nội dung tổng hợp (tình hình thi công, chất lượng, vướng mắc, kiến nghị, hoặc kế hoạch tuần sau).";
-        }
       }
     }
 
@@ -254,11 +247,10 @@ export function CreateReportDialog({
     return true;
   };
 
-  const submitAction = async (action: "DRAFT" | "SUBMIT") => {
-    const isDraft = action === "DRAFT";
-    if (!validate(isDraft)) return;
+  const submitAction = async () => {
+    if (!validate()) return;
     try {
-      await onSubmit(form, isDraft);
+      await onSubmit(form);
       setInitialFormState(JSON.stringify(form)); // Reset dirty
     } catch (e: any) {
       toast.error(e.message || "Đã xảy ra lỗi không mong muốn khi tạo báo cáo");
@@ -292,7 +284,6 @@ export function CreateReportDialog({
   }));
 
   const canSaveDraft = !!form.projectId && (form.type === 'WEEKLY' ? !!form.weekStartDate : !!form.date);
-  const canSubmit = !!form.projectId && (form.type === 'WEEKLY' ? (!!form.weekStartDate && !!form.weekEndDate) : (!!form.date && form.workLines.length > 0));
 
   return (
     <>
@@ -316,7 +307,7 @@ export function CreateReportDialog({
             </div>
             <div className="flex items-center gap-4">
               <span className={`hidden sm:inline-flex text-[11px] font-bold px-2.5 py-1 rounded-[var(--radius-md)] uppercase tracking-wider ${initialReport?.status === 'DRAFT' ? 'bg-[var(--border)] text-[var(--muted-foreground)]' : 'bg-blue-100 text-blue-700'}`}>
-                {initialReport ? initialReport.status : "Tạo Mới"}
+                {initialReport ? getStatusLabel(initialReport.status) : "Tạo mới"}
               </span>
               <CloseButton onClick={handleClose} tone="neutral" />
             </div>
@@ -370,7 +361,7 @@ export function CreateReportDialog({
                   </div>
                   <div className="bg-[var(--surface)] p-3.5 rounded-[var(--radius-xl)] border border-[var(--border)] shadow-[var(--shadow-card)] flex items-center gap-3">
                     <div className="bg-emerald-50 p-2.5 rounded-[var(--radius-lg)] text-emerald-600"><BarChart3 className="w-5 h-5" /></div>
-                    <div><p className="text-[11px] font-bold text-[var(--muted-foreground)] opacity-70 uppercase">Tổng hợp từ</p><p className="font-bold text-[var(--foreground)] text-[14px] leading-tight">Báo cáo ngày đã duyệt</p></div>
+                    <div><p className="text-[11px] font-bold text-[var(--muted-foreground)] opacity-70 uppercase">Tổng hợp từ</p><p className="font-bold text-[var(--foreground)] text-[14px] leading-tight">Báo cáo ngày đã lưu</p></div>
                   </div>
                   <div className="bg-[var(--surface)] p-3.5 rounded-[var(--radius-xl)] border border-[var(--border)] shadow-[var(--shadow-card)] flex items-center gap-3">
                     <div className="bg-purple-50 p-2.5 rounded-[var(--radius-lg)] text-purple-600"><FileImage className="w-5 h-5" /></div>
@@ -578,6 +569,8 @@ export function CreateReportDialog({
                 <AttachmentsCard
                 photos={form.photos}
                 attachments={form.attachments}
+                existingPhotos={initialReport?.photos.filter((photo) => !(form.attachmentIdsToDelete || []).includes(photo.id))}
+                existingAttachments={initialReport?.attachments.filter((file) => !(form.attachmentIdsToDelete || []).includes(file.id))}
                 onAddPhotos={e => {
                   if (e.target.files) setForm(prev => ({ ...prev, photos: [...prev.photos, ...Array.from(e.target.files!)] }));
                 }}
@@ -595,6 +588,18 @@ export function CreateReportDialog({
                     const arr = [...prev.attachments]; arr.splice(idx, 1);
                     return { ...prev, attachments: arr };
                   });
+                }}
+                onRemoveExistingPhoto={id => {
+                  setForm(prev => ({
+                    ...prev,
+                    attachmentIdsToDelete: [...(prev.attachmentIdsToDelete || []), id],
+                  }));
+                }}
+                onRemoveExistingAttachment={id => {
+                  setForm(prev => ({
+                    ...prev,
+                    attachmentIdsToDelete: [...(prev.attachmentIdsToDelete || []), id],
+                  }));
                 }}
               />
               )}
@@ -616,9 +621,14 @@ export function CreateReportDialog({
                 ) : form.type === 'WEEKLY' ? (
                   <span className="text-[var(--muted-foreground)]">Báo cáo tuần tổng hợp kết quả thực hiện trong kỳ đã chọn. Kế hoạch tuần sau không cộng vào khối lượng thực tế.</span>
                 ) : (
-                  <span className="text-[var(--muted-foreground)]">Có thể lưu nháp trước, bổ sung khối lượng sau. Gửi báo cáo cần ít nhất 1 công việc.</span>
+                  <span className="text-[var(--muted-foreground)]">Có thể lưu báo cáo trước, bổ sung khối lượng sau.</span>
                 )}
               </div>
+              {uploadRetryMessage && (
+                <div className="w-full rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] font-semibold text-amber-800 sm:absolute sm:bottom-[4.5rem] sm:left-6 sm:w-auto" role="status">
+                  {uploadRetryMessage}
+                </div>
+              )}
               <div className="flex gap-3 w-full sm:w-auto">
                 <Button
                   variant="outline"
@@ -630,29 +640,12 @@ export function CreateReportDialog({
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => submitAction("DRAFT")}
+                  onClick={() => submitAction()}
                   disabled={isSubmitting || !canSaveDraft}
                   className="flex-1 sm:flex-none h-11 rounded-[var(--radius-xl)] bg-[var(--surface-subtle)] text-[var(--foreground)] hover:bg-[var(--border)] font-bold border-[var(--border)]"
                 >
                   <Save className="w-4 h-4 mr-2" />
-                  Lưu nháp
-                </Button>
-                <Button
-                  onClick={() => submitAction("SUBMIT")}
-                  disabled={isSubmitting || !canSubmit}
-                  className="flex-1 sm:flex-none h-11 rounded-[var(--radius-xl)] bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-[var(--shadow-elevated)] shadow-blue-500/20"
-                >
-                  {isSubmitting ? (
-                    <span className="flex items-center">
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                      Đang xử lý...
-                    </span>
-                  ) : (
-                    <span className="flex items-center">
-                      <Send className="w-4 h-4 mr-2" />
-                      Gửi báo cáo
-                    </span>
-                  )}
+                  {initialReport ? "Lưu thay đổi" : "Lưu"}
                 </Button>
               </div>
             </div>
@@ -679,7 +672,7 @@ export function CreateReportDialog({
               <div className="flex flex-col gap-3">
                 {canSaveDraft && (
                   <Button 
-                    onClick={() => { setShowConfirmClose(false); submitAction("DRAFT"); }} 
+                    onClick={() => { setShowConfirmClose(false); submitAction(); }}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 rounded-[var(--radius-xl)]"
                   >
                     <Save className="w-4 h-4 mr-2" /> Lưu bản nháp

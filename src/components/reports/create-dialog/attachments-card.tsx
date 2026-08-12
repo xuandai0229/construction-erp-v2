@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import { Camera, Paperclip, ImagePlus, UploadCloud } from "lucide-react";
 import { ContentCard } from "@/components/ui/enterprise";
 import { CloseButton } from "@/components/ui/close-button";
+import type { ReportAttachment, ReportPhoto } from "../types";
 
 export function AttachmentsCard({
   photos,
@@ -9,7 +10,11 @@ export function AttachmentsCard({
   onAddPhotos,
   onRemovePhoto,
   onAddFiles,
-  onRemoveFile
+  onRemoveFile,
+  existingPhotos = [],
+  existingAttachments = [],
+  onRemoveExistingPhoto,
+  onRemoveExistingAttachment,
 }: {
   photos: File[];
   attachments: File[];
@@ -17,6 +22,10 @@ export function AttachmentsCard({
   onRemovePhoto: (index: number) => void;
   onAddFiles: (e: React.ChangeEvent<HTMLInputElement> | { target: { files: FileList | null } }) => void;
   onRemoveFile: (index: number) => void;
+  existingPhotos?: ReportPhoto[];
+  existingAttachments?: ReportAttachment[];
+  onRemoveExistingPhoto?: (id: string) => void;
+  onRemoveExistingAttachment?: (id: string) => void;
 }) {
   const [isDraggingPhoto, setIsDraggingPhoto] = useState(false);
   const [isDraggingFile, setIsDraggingFile] = useState(false);
@@ -65,7 +74,7 @@ export function AttachmentsCard({
         <div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
             <h4 className="text-[13px] font-semibold text-slate-700 flex items-center gap-1.5">
-              <Camera className="w-4 h-4 text-slate-400" /> Hình ảnh hiện trường ({photos.length})
+              <Camera className="w-4 h-4 text-slate-400" /> Hình ảnh hiện trường ({photos.length + existingPhotos.length})
             </h4>
             <div className="flex gap-2">
               <input  autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" type="file" accept="image/*" capture="environment" className="hidden" ref={photoCaptureRef} onChange={onAddPhotos} />
@@ -91,8 +100,28 @@ export function AttachmentsCard({
             <p className="text-[11px] mt-1 text-center">Tối đa 10 ảnh (JPG, PNG)</p>
           </div>
 
-          {photos.length > 0 && (
+          {(existingPhotos.length > 0 || photos.length > 0) && (
             <div className="grid grid-cols-3 gap-2">
+              {existingPhotos.map((photo) => (
+                <div key={`existing-${photo.id}`} className="relative aspect-square rounded-lg border border-slate-200 overflow-hidden group bg-slate-50">
+                  {photo.url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={photo.url} alt="Ảnh đã lưu" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-[11px] text-slate-400">Ảnh không khả dụng</div>
+                  )}
+                  {onRemoveExistingPhoto && (
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <CloseButton
+                        onClick={() => onRemoveExistingPhoto(photo.id)}
+                        tone="danger"
+                        className="h-8 w-8 shadow-sm hover:scale-110"
+                        title="Xóa ảnh đã lưu"
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
               {photos.map((file, index) => (
                 <div key={index} className="relative aspect-square rounded-lg border border-slate-200 overflow-hidden group bg-slate-50">
                   <img
@@ -117,9 +146,9 @@ export function AttachmentsCard({
         <div>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
             <h4 className="text-[13px] font-semibold text-slate-700 flex items-center gap-1.5">
-              <Paperclip className="w-4 h-4 text-slate-400" /> Tài liệu đính kèm ({attachments.length})
+              <Paperclip className="w-4 h-4 text-slate-400" /> Tài liệu đính kèm ({attachments.length + existingAttachments.length})
             </h4>
-            <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" type="file" multiple className="hidden" ref={fileInputRef} onChange={onAddFiles} />
+            <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.rar" multiple className="hidden" ref={fileInputRef} onChange={onAddFiles} />
             <button type="button" onClick={() => fileInputRef.current?.click()} className="text-[12px] font-bold text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-1.5 border border-blue-100 self-start">
               <Paperclip className="w-3.5 h-3.5" /> Thêm file
             </button>
@@ -134,11 +163,23 @@ export function AttachmentsCard({
           >
             <UploadCloud className={`w-8 h-8 mb-2 ${isDraggingFile ? 'text-blue-500' : 'text-slate-300'}`} />
             <p className="text-[13px] font-medium text-center">Bấm hoặc kéo thả file</p>
-            <p className="text-[11px] mt-1 text-center">PDF, DOCX, XLSX (Tối đa 5 file)</p>
+            <p className="text-[11px] mt-1 text-center">PDF, DOC, DOCX, XLS, XLSX, ZIP, RAR (Tối đa 5 file)</p>
           </div>
 
-          {attachments.length > 0 && (
+          {(existingAttachments.length > 0 || attachments.length > 0) && (
             <div className="space-y-2">
+              {existingAttachments.map((file) => (
+                <div key={`existing-${file.id}`} className="flex items-center gap-3 p-3 rounded-xl border border-blue-100 bg-blue-50/50 shadow-sm">
+                  <div className="bg-white p-2 rounded-lg text-slate-500 shrink-0"><Paperclip className="w-4 h-4" /></div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold text-slate-800 truncate">{file.name}</p>
+                    <p className="text-[11px] text-slate-500">Đã lưu · {file.size}</p>
+                  </div>
+                  {onRemoveExistingAttachment && (
+                    <CloseButton onClick={() => onRemoveExistingAttachment(file.id)} tone="danger" className="h-8 w-8 shrink-0" title="Xóa tệp đã lưu" />
+                  )}
+                </div>
+              ))}
               {attachments.map((file, index) => (
                 <div key={index} className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-white shadow-sm">
                   <div className="bg-slate-100 p-2 rounded-lg text-slate-500 shrink-0">

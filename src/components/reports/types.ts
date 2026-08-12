@@ -141,6 +141,7 @@ export interface FieldReport {
   isSevereIssue?: boolean;
   
   approvalHistory: ApprovalHistoryEntry[];
+  updatedAt?: string;
 }
 
 export type { ReportStats };
@@ -174,6 +175,7 @@ export interface CreateReportFormData {
   gpsLocation: string;
   photos: File[];
   attachments: File[];
+  attachmentIdsToDelete?: string[];
 }
 
 export const WEATHER_OPTIONS: { value: WeatherCondition; label: string }[] = [
@@ -196,16 +198,11 @@ export function computeStats(reports: FieldReport[]): ReportStats {
 
 export function getStatusLabel(status: ReportStatus): string {
   switch (status) {
+    case 'DRAFT': return 'Đã lưu';
+    case 'SUBMITTED': return 'Đã gửi';
     case 'APPROVED': return 'Đã duyệt';
-    case 'SUBMITTED': return 'Đã gửi - Chờ duyệt';
     case 'REVISION_REQUESTED': return 'Yêu cầu chỉnh sửa';
     case 'REJECTED': return 'Từ chối';
-    case 'DRAFT': return 'Nháp';
-    case 'APPROVED': return 'Đã duyệt';
-    case 'SUBMITTED': return 'Chờ duyệt / Đã gửi';
-    case 'REVISION_REQUESTED': return 'Yêu cầu chỉnh sửa';
-    case 'REJECTED': return 'Từ chối';
-    case 'DRAFT': return 'Nháp';
     case 'LOCKED': return 'Đã khóa';
     case 'CANCELLED': return 'Đã hủy';
     default: return status;

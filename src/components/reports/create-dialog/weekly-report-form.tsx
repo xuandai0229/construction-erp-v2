@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Calendar, FileText, BarChart3, AlertTriangle, CheckCircle2, Clock, XCircle, FileWarning, Lightbulb, Users, Wrench, ShieldAlert, ClipboardList, CalendarRange, ListPlus } from "lucide-react";
+import { Calendar, FileText, BarChart3, AlertTriangle, XCircle, FileWarning, Lightbulb, Users, Wrench, ShieldAlert, ClipboardList, CalendarRange, ListPlus } from "lucide-react";
 import { type CreateReportFormData } from "../types";
 import { getWeeklyReportSummary } from "@/app/(dashboard)/reports/actions";
 import { getVietnamDateString, getVietnamIsoWeekInfo } from "@/lib/reports/report-timezone";
@@ -70,6 +70,11 @@ export function WeeklyReportForm({ form, updateField, errors, workItems = [], ac
   const textareaClass = "w-full min-h-[100px] p-3 text-[14px] text-slate-900 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400 resize-y leading-relaxed";
 
   const handleWeekDatePick = useCallback((dateStr: string) => {
+    if (!dateStr) {
+      updateField("weekStartDate", "");
+      updateField("weekEndDate", "");
+      return;
+    }
     const { weekStartDate, weekEndDate } = getVietnamIsoWeekInfo(dateStr);
     updateField("weekStartDate", weekStartDate);
     updateField("weekEndDate", weekEndDate);
@@ -275,15 +280,15 @@ export function WeeklyReportForm({ form, updateField, errors, workItems = [], ac
                   {/* Stats grid */}
                   <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
                     <StatBadge label="Tổng báo cáo ngày" value={preview.dayStatuses.filter(d => d.hasReport).length} color="blue" />
-                    <StatBadge label="Đã duyệt" value={preview.stats.approvedReports} color="emerald" />
-                    <StatBadge label="Chờ duyệt" value={preview.stats.submittedReports} color="amber" />
+                    <StatBadge label="Đã lưu" value={preview.stats.approvedReports} color="emerald" />
+                    <StatBadge label="Đã gửi (lịch sử)" value={preview.stats.submittedReports} color="amber" />
                     <StatBadge label="Từ chối" value={preview.stats.rejectedReports} color="red" />
                     <StatBadge label="Ngày trống" value={preview.stats.emptyDays} color="slate" />
                   </div>
 
                   {/* Day status row */}
                   <div className="flex gap-1.5 flex-wrap">
-                    {preview.dayStatuses.map((d, i) => {
+                    {preview.dayStatuses.map((d) => {
                       const dayLabel = formatYmdToVietnamDayLabel(d.date);
                       let bg = "bg-slate-100 text-slate-400";
                       if (d.approvedCount > 0) bg = "bg-emerald-100 text-emerald-700";
@@ -305,7 +310,7 @@ export function WeeklyReportForm({ form, updateField, errors, workItems = [], ac
                       <span>Tuần này còn <strong>{preview.stats.submittedReports}</strong> báo cáo ngày chưa được duyệt.</span>
                     </div>
                   )}
-                  {preview.emptyReason === "NO_REPORTS_IN_RANGE" && (
+                  {(preview.emptyReason === "NO_REPORTS_IN_RANGE" || preview.emptyReason === "NO_SAVED_REPORTS") && (
                     <div className="flex items-start gap-2 p-3 bg-slate-50 border border-slate-200 rounded-xl text-[13px] text-slate-600">
                       <FileWarning className="w-4 h-4 mt-0.5 shrink-0 text-slate-400" />
                       <span>Chưa có báo cáo ngày đã duyệt trong tuần này.</span>

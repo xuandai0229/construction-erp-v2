@@ -20,12 +20,13 @@ import {
 } from "@/lib/reports/report-workflow-policy";
 import { Prisma, UserRole } from "@prisma/client";
 import { canAccessProject, getProjectAccessScope, projectScopeAllows, projectScopeWhere, type ProjectAccessScope } from "@/lib/rbac";
-import { computeReportStats } from "@/lib/reports/report-stats";
-import { WeeklyGeneralNote, serializeWeeklyGeneralNote, assertWeeklyResultDateAllowed } from "@/lib/reports/weekly-report-utils";
+import { computeReportStats, formatReportCreatorName } from "@/lib/reports/report-stats";
+import { WeeklyGeneralNote, serializeWeeklyGeneralNote, assertWeeklyResultDateAllowed, parseWeeklyGeneralNote } from "@/lib/reports/weekly-report-utils";
 import { updateWeeklyReportCore } from "@/lib/reports/report-update-service";
 import {
   getVietnamCustomDateRange,
   getVietnamDateString,
+  getVietnamTimeString,
   getVietnamMonthRange,
   getVietnamTodayRange,
   getVietnamWeekRange,
@@ -33,6 +34,7 @@ import {
   vietnamEndOfDayUtc,
   vietnamStartOfDayUtc,
 } from "@/lib/reports/report-timezone";
+import { syncSiteReportProgressEntriesInTransaction } from "@/lib/reports/report-progress-sync";
 import { getWorkDateRange } from "@/lib/date/work-date";
 import { evaluateVolumeGuard } from "@/lib/field-progress/volume-guard";
 import { getReportProgressSourceMarker } from "@/lib/reports/report-progress-sync";
@@ -323,7 +325,9 @@ export async function createSiteReport(data: Record<string, unknown>, isDraft: b
   const type = (data.type as "DAILY" | "WEEKLY") || "DAILY";
   const workLines = (data.workLines as Record<string, unknown>[]) || [];
 
-  if (type === "DAILY" && workLines.length === 0) {
+  // The new Field workflow always saves as DRAFT. Keep the legacy direct-submit
+  // contract strict without blocking an empty saved report.
+  if (!isDraft && type === "DAILY" && workLines.length === 0) {
     throw new Error("Daily report requires at least one work line");
   }
 
@@ -789,6 +793,7 @@ export async function getSiteReportsPage(filters: ReportPageFilters) {
       select: {
         status: true,
         issues: true,
+        recommendations: true,
         lines: { select: { issueNote: true } },
       },
     }),
@@ -936,9 +941,14 @@ export async function getWeeklyReportSummary(projectId: string, start: Date, end
   const fromDate = getVietnamDateString(start);
   const toDate = getVietnamDateString(end);
 
-  const statuses = ["APPROVED"];
-  if (options?.includeSubmitted) statuses.push("SUBMITTED", "REVISION_REQUESTED");
-  if (options?.includeDraft) statuses.push("DRAFT");
+  const statuses = ["APPROVED", "SUBMITTED", "REVISION_REQUESTED", "DRAFT"];
+  if (options && options.includeSubmitted === false) {
+    statuses.splice(statuses.indexOf("SUBMITTED"), 1);
+    statuses.splice(statuses.indexOf("REVISION_REQUESTED"), 1);
+  }
+  if (options && options.includeDraft === false) {
+    statuses.splice(statuses.indexOf("DRAFT"), 1);
+  }
 
   const reports = await prisma.siteReport.findMany({
     where: {
@@ -973,17 +983,17 @@ export async function getWeeklyReportSummary(projectId: string, start: Date, end
     curr.setUTCDate(curr.getUTCDate() + 1);
   }
 
-  const approvedReports = reports.filter(r => r.status === "APPROVED");
+  const sourceReports = reports.filter((r) => statuses.includes(r.status));
   
   let emptyReason = null;
-  if (approvedReports.length === 0 && reports.length === 0) {
+  if (sourceReports.length === 0 && reports.length === 0) {
     emptyReason = "NO_REPORTS_IN_RANGE";
-  } else if (approvedReports.length === 0 && reports.length > 0) {
-    emptyReason = "NO_APPROVED_REPORTS";
+  } else if (sourceReports.length === 0 && reports.length > 0) {
+    emptyReason = "NO_SAVED_REPORTS";
   }
 
   const stats = {
-    approvedReports: approvedReports.length,
+    approvedReports: sourceReports.length,
     submittedReports: reports.filter(r => r.status === "SUBMITTED" || r.status === "REVISION_REQUESTED").length,
     rejectedReports: reports.filter(r => r.status === "REJECTED").length,
     emptyDays: dayStatuses.filter(d => !d.hasReport).length,
@@ -993,7 +1003,7 @@ export async function getWeeklyReportSummary(projectId: string, start: Date, end
 
   const groupMap = new Map<string, { categoryId: string, categoryName: string, itemsMap: Map<string, any> }>();
 
-  for (const rep of approvedReports) {
+  for (const rep of sourceReports) {
     const repDate = getVietnamDateString(rep.reportDate as Date);
     for (const line of rep.lines) {
       stats.workLineCount++;
@@ -1048,7 +1058,7 @@ export async function getWeeklyReportSummary(projectId: string, start: Date, end
     }))
   }));
 
-  if (approvedReports.length > 0 && stats.workLineCount === 0) {
+  if (sourceReports.length > 0 && stats.workLineCount === 0) {
     emptyReason = "HAS_REPORTS_BUT_NO_WORK_LINES";
   }
 
@@ -1096,16 +1106,19 @@ export async function createWeeklyReportFromApprovedDailyReports(input: {
   });
 
   // Re-run preview to get exact lines
-  const preview = await getWeeklyReportSummary(input.projectId, start, end);
+  const preview = await getWeeklyReportSummary(input.projectId, start, end, {
+    includeSubmitted: true,
+    includeDraft: true,
+  });
   
   if (!input.isDraft && preview.stats.approvedReports === 0) {
-    throw new Error("Không có báo cáo ngày nào được duyệt trong tuần này để tổng hợp.");
+    throw new Error("Không có báo cáo ngày đã lưu trong tuần này để tổng hợp.");
   }
 
   const status = input.isDraft ? "DRAFT" : "SUBMITTED";
 
   const newReport = await prisma.$transaction(async (tx) => {
-    // Check duplicate again in transaction
+    // Check duplicate again in transaction and return a structured result.
     const existing = await tx.siteReport.findFirst({
       where: {
         projectId: input.projectId,
@@ -1117,7 +1130,13 @@ export async function createWeeklyReportFromApprovedDailyReports(input: {
     });
 
     if (existing) {
-      throw new Error("Báo cáo tuần này đã tồn tại!");
+      return {
+        kind: "DUPLICATE" as const,
+        reportId: existing.id,
+        reportNo: existing.reportNo,
+        weekStartDate: existing.weekStartDate,
+        weekEndDate: existing.weekEndDate,
+      };
     }
 
     const report = await tx.siteReport.create({
@@ -1182,10 +1201,21 @@ export async function createWeeklyReportFromApprovedDailyReports(input: {
       });
     }
 
-    return report;
+    return { kind: "CREATED" as const, report };
   });
 
-  return { success: true, id: newReport.id, reportNo: newReport.reportNo };
+  if (newReport.kind === "DUPLICATE") {
+    return {
+      success: false as const,
+      code: "WEEKLY_REPORT_ALREADY_EXISTS" as const,
+      existingReportId: newReport.reportId,
+      existingReportNo: newReport.reportNo,
+      weekStartDate: newReport.weekStartDate,
+      weekEndDate: newReport.weekEndDate,
+    };
+  }
+
+  return { success: true as const, id: newReport.report.id, reportNo: newReport.report.reportNo };
 }
 
 // === PHASE 3B: EDIT & DELETE ===
@@ -1389,4 +1419,326 @@ export async function softDeleteSiteReport(reportId: string) {
 
   revalidatePath("/reports");
   return { success: true };
+}
+
+
+export async function getSiteReportForEdit(reportId: string) {
+  const session = await getSession();
+  if (!session) throw new Error("Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
+
+  const user = { id: session.id, role: session.role as UserRole };
+
+  const report = await prisma.siteReport.findFirst({
+    where: { id: reportId, deletedAt: null, project: { deletedAt: null } },
+    include: {
+      project: { select: { id: true, name: true, code: true, status: true } },
+      createdBy: { select: { id: true, name: true, email: true, role: true } },
+      lines: { orderBy: { sortOrder: "asc" } },
+      attachments: true,
+    },
+  });
+
+  if (!report) {
+    throw new Error("Không tìm thấy báo cáo hiện trường.");
+  }
+
+  const hasProjectAccess = await canAccessProject(user, report.projectId);
+  if (!hasProjectAccess) {
+    throw new Error("Bạn không có quyền truy cập báo cáo của công trình này.");
+  }
+
+  return {
+    id: report.id,
+    reportNo: report.reportNo,
+    type: report.type,
+    projectId: report.projectId,
+    projectName: report.project.name,
+    projectCode: report.project.code,
+    date: getVietnamDateString(report.reportDate),
+    time: getVietnamTimeString(report.reportDate),
+    weekStartDate: report.weekStartDate ? getVietnamDateString(report.weekStartDate) : undefined,
+    weekEndDate: report.weekEndDate ? getVietnamDateString(report.weekEndDate) : undefined,
+    summary: report.summary || undefined,
+    materials: report.materials || "",
+    labor: report.labor || "",
+    quality: report.quality || "",
+    issues: report.issues || "",
+    recommendations: report.recommendations || "",
+    weatherCondition: report.weatherCondition || "SUNNY",
+    weatherTemperature: report.weatherTemperature ? Number(report.weatherTemperature) : undefined,
+    gpsLocation:
+      report.gpsLat !== null && report.gpsLng !== null
+        ? `${Number(report.gpsLat)}, ${Number(report.gpsLng)}`
+        : undefined,
+    status: report.status,
+    createdById: report.createdById,
+    creatorName: formatReportCreatorName(report as Parameters<typeof formatReportCreatorName>[0]),
+    creatorRole: report.createdBy?.role || "USER",
+    generalNote: report.generalNote,
+    weeklyNote: parseWeeklyGeneralNote(report.generalNote),
+    updatedAt: report.updatedAt.toISOString(),
+    lines: report.lines.map((l) => ({
+      id: l.id,
+      wbsItemId: l.wbsItemId || undefined,
+      fieldProgressItemId: l.fieldProgressItemId || undefined,
+      categoryName: l.area || undefined,
+      workContent: l.workName || l.workContent,
+      unit: l.unit || undefined,
+      designQuantity: Number(l.designQuantity || 0),
+      quantityBefore: Number(l.quantityBefore || 0),
+      quantityToday: l.quantityToday !== null ? Number(l.quantityToday) : undefined,
+      quantityCumulative: Number(l.quantityCumulative || 0),
+      progressPercent: Number(l.progressPercent || 0),
+      note: l.note || undefined,
+      proposalNote: l.proposalNote || undefined,
+      issueNote: l.issueNote || undefined,
+    })),
+    attachments: report.attachments.map((a) => ({
+      id: a.id,
+      kind: a.kind,
+      fileName: a.originalName || a.fileName,
+      originalName: a.originalName || a.fileName,
+      mimeType: a.mimeType,
+      sizeBytes: Number(a.sizeBytes),
+      url: `/api/reports/attachments/${a.id}`,
+    })),
+  };
+}
+
+export type SaveSiteReportDraftInput = {
+  reportId?: string | null;
+  expectedUpdatedAt?: string | null;
+  projectId: string;
+  type: "DAILY" | "WEEKLY";
+  date?: string;
+  time?: string;
+  weekStartDate?: string;
+  weekEndDate?: string;
+  weatherCondition?: string;
+  weatherTemperature?: number | string | null;
+  summary?: string | null;
+  materials?: string | null;
+  labor?: string | null;
+  quality?: string | null;
+  issues?: string | null;
+  recommendations?: string | null;
+  gpsLat?: number | string | null;
+  gpsLng?: number | string | null;
+  weeklyNote?: unknown;
+  workLines?: Array<Record<string, unknown>>;
+};
+
+export async function saveSiteReportDraft(input: SaveSiteReportDraftInput) {
+  const session = await getSession();
+  if (!session) throw new Error("Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.");
+
+  const policyUser = { id: session.id, role: session.role as UserRole };
+  const hasProjectAccess = await canAccessProject(policyUser, input.projectId);
+  if (!hasProjectAccess) {
+    throw new Error("Bạn không có quyền truy cập công trình này.");
+  }
+
+  if (input.reportId) {
+    // Editing existing report
+    const report = await prisma.siteReport.findFirst({
+      where: { id: input.reportId, deletedAt: null, project: { deletedAt: null } },
+      include: { lines: true },
+    });
+
+    if (!report) {
+      throw new Error("Không tìm thấy báo cáo hoặc báo cáo đã bị xóa.");
+    }
+
+    // Optimistic Concurrency Control Check using updatedAt
+    if (input.expectedUpdatedAt && report.updatedAt.toISOString() !== input.expectedUpdatedAt) {
+      throw new Error("CONFLICT: Báo cáo đã được cập nhật ở phiên làm việc khác. Vui lòng tải lại trang.");
+    }
+
+    if (!canUpdateReport(report, policyUser, hasProjectAccess)) {
+      await auditReportMutationDenied({ actor: policyUser, action: "reports.update", reportId: report.id, projectId: report.projectId });
+      throw new Error("Không có quyền chỉnh sửa báo cáo này.");
+    }
+
+    const workLines = input.workLines || [];
+    const updated = await prisma.$transaction(async (tx) => {
+      if (report.type === "WEEKLY") {
+        const result = await updateWeeklyReportCore(
+          tx,
+          report.id,
+          {
+            weekStartDateStr: input.weekStartDate ? String(input.weekStartDate) : undefined,
+            generalNoteObj: input.weeklyNote as Record<string, unknown> | undefined,
+            workLines,
+            weatherCondition: input.weatherCondition,
+            weatherTemperature: input.weatherTemperature ? String(input.weatherTemperature) : undefined,
+            summary: input.summary || undefined,
+            materials: input.materials || undefined,
+            labor: input.labor || undefined,
+            quality: input.quality || undefined,
+            issues: input.issues || undefined,
+            recommendations: input.recommendations || undefined,
+            gpsLat: input.gpsLat ? String(input.gpsLat) : undefined,
+            gpsLng: input.gpsLng ? String(input.gpsLng) : undefined,
+          },
+          policyUser
+        );
+        return result;
+      }
+
+      const nextReportDate = input.date
+        ? vietnamDateTimeToUtc(String(input.date), String(input.time || "07:00"))
+        : report.reportDate;
+
+      const dailyLines = await buildDailyReportLines({
+        client: tx,
+        projectId: report.projectId,
+        reportDate: nextReportDate,
+        workLines,
+        existingReportId: report.id,
+      });
+
+      await tx.siteReportLine.deleteMany({
+        where: { siteReportId: report.id },
+      });
+
+      const res = await tx.siteReport.update({
+        where: { id: report.id },
+        data: {
+          reportDate: nextReportDate,
+          weatherCondition: (input.weatherCondition as any) || undefined,
+          weatherTemperature: input.weatherTemperature ? Number(input.weatherTemperature) : undefined,
+          summary: input.summary ? String(input.summary) : null,
+          materials: input.materials ? String(input.materials) : null,
+          labor: input.labor ? String(input.labor) : null,
+          quality: input.quality ? String(input.quality) : null,
+          issues: input.issues ? String(input.issues) : null,
+          recommendations: input.recommendations ? String(input.recommendations) : null,
+          gpsLat: input.gpsLat ? Number(input.gpsLat) : null,
+          gpsLng: input.gpsLng ? Number(input.gpsLng) : null,
+          lines: { create: dailyLines },
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          userId: session.id,
+          projectId: report.projectId,
+          entityType: "SiteReport",
+          entityId: report.id,
+          action: "SITE_REPORT_UPDATED",
+          afterData: JSON.stringify({
+            status: res.status,
+            reportDate: res.reportDate,
+            linesCount: workLines.length,
+          }),
+        },
+      });
+
+      await syncSiteReportProgressEntriesInTransaction(tx, {
+        reportId: res.id,
+        mode: "SAVE",
+        actor: { id: policyUser.id, role: policyUser.role, name: session.name },
+      });
+
+      return res;
+    });
+
+    revalidatePath("/reports");
+    return {
+      success: true,
+      id: updated.id,
+      reportNo: updated.reportNo,
+      updatedAt: updated.updatedAt.toISOString(),
+    };
+  }
+
+  // Creating new report
+  if (!canCreateReport(policyUser, hasProjectAccess)) {
+    await auditReportMutationDenied({ actor: policyUser, action: "reports.create", projectId: input.projectId });
+    throw new Error("Không có quyền tạo báo cáo hiện trường.");
+  }
+
+  if (input.type === "WEEKLY") {
+    const weeklyResult = await createWeeklyReportFromApprovedDailyReports({
+      projectId: input.projectId,
+      weekStartDate: input.weekStartDate!,
+      weekEndDate: input.weekEndDate!,
+      summary: input.summary || undefined,
+      materials: input.materials || undefined,
+      labor: input.labor || undefined,
+      quality: input.quality || undefined,
+      issues: input.issues || undefined,
+      recommendations: input.recommendations || undefined,
+      weatherCondition: input.weatherCondition || undefined,
+      weeklyNote: input.weeklyNote,
+      isDraft: true,
+    });
+
+    if ("code" in weeklyResult && weeklyResult.code === "WEEKLY_REPORT_ALREADY_EXISTS") {
+      return {
+        success: false as const,
+        code: weeklyResult.code,
+        existingReportId: weeklyResult.existingReportId,
+        existingReportNo: weeklyResult.existingReportNo,
+      };
+    }
+
+    const createdReport = await prisma.siteReport.findUniqueOrThrow({
+      where: { id: (weeklyResult as any).id },
+      select: { id: true, reportNo: true, updatedAt: true },
+    });
+
+    revalidatePath("/reports");
+    return {
+      success: true,
+      id: createdReport.id,
+      reportNo: createdReport.reportNo,
+      updatedAt: createdReport.updatedAt.toISOString(),
+    };
+  }
+
+  // New Daily Report
+  const reportDate = vietnamDateTimeToUtc(String(input.date || getVietnamDateString(new Date())), String(input.time || "07:00"));
+  const workLines = input.workLines || [];
+
+  const created = await prisma.$transaction(async (tx) => {
+    const dailyLines = await buildDailyReportLines({
+      client: tx,
+      projectId: input.projectId,
+      reportDate,
+      workLines,
+    });
+
+    const report = await createSiteReportWithAudit(
+      tx,
+      { id: session.id, name: session.name || session.email || "Người dùng", role: policyUser.role },
+      {
+        projectId: input.projectId,
+        type: "DAILY",
+        reportDate,
+        weatherCondition: (input.weatherCondition as any) || "SUNNY",
+        weatherTemperature: input.weatherTemperature ? Number(input.weatherTemperature) : undefined,
+        gpsLat: input.gpsLat ? Number(input.gpsLat) : undefined,
+        gpsLng: input.gpsLng ? Number(input.gpsLng) : undefined,
+        summary: input.summary || undefined,
+        materials: input.materials || undefined,
+        labor: input.labor || undefined,
+        quality: input.quality || undefined,
+        issues: input.issues || undefined,
+        recommendations: input.recommendations || undefined,
+        status: "DRAFT",
+        lines: { create: dailyLines },
+      }
+    );
+
+    return report;
+  });
+
+  revalidatePath("/reports");
+  return {
+    success: true,
+    id: created.id,
+    reportNo: created.reportNo,
+    updatedAt: created.updatedAt.toISOString(),
+  };
 }

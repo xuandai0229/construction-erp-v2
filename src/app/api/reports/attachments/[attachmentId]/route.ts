@@ -5,8 +5,8 @@ import mime from "mime-types";
 import path from "path";
 import { canAccessProject } from "@/lib/rbac";
 import { resolvePermission } from "@/lib/permissions/permission-resolver";
-import { LocalStorageProvider } from "@/lib/storage/local-storage-provider";
 import { Readable } from "stream";
+import { readSiteReportAttachmentStream } from "@/lib/storage/site-report-storage";
 
 export const runtime = "nodejs";
 
@@ -60,18 +60,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ atta
     }
 
     try {
-      const storageProvider = new LocalStorageProvider();
-      
-      // Determine correct objectKey
-      // Note: Legacy paths might be absolute, which LocalStorageProvider.resolvePath handles safely
-      const objectKey = path.isAbsolute(attachment.storagePath) 
-        ? attachment.storagePath 
-        : attachment.storagePath.startsWith('storage') 
-          ? attachment.storagePath.replace(/^storage[/\\]/, '') 
-          : attachment.storagePath;
-
       // Use Node.js stream for minimal RAM footprint
-      const fileStream = await storageProvider.readFileStream(objectKey);
+      const fileStream = await readSiteReportAttachmentStream(attachment.storagePath);
       const ext = path.extname(attachment.fileName);
       const contentType = (mime.lookup(ext) || attachment.mimeType || "application/octet-stream") as string;
       const originalName = attachment.originalName || attachment.fileName;

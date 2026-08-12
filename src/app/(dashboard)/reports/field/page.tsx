@@ -3,8 +3,6 @@ import { redirect } from "next/navigation";
 import { ReportsWorkspace } from "@/components/reports/reports-workspace";
 import { getActiveProjects, getSiteReportsPage } from "../actions";
 import { FieldReport, ReportType, WeatherCondition, ReportStatus } from "@/components/reports/types";
-import fs from "fs";
-import path from "path";
 import { formatReportCreatorName } from "@/lib/reports/report-stats";
 import { getVietnamDateString, getVietnamTimeString } from "@/lib/reports/report-timezone";
 import { parseWeeklyGeneralNote } from "@/lib/reports/weekly-report-utils";
@@ -13,6 +11,7 @@ import { serializePrisma } from "@/lib/serialize";
 import { canViewNavigationItem } from "@/lib/navigation-permissions";
 import { isCompanyWideUser } from "@/lib/rbac";
 import { getVietnamIsoWeekInfo } from "@/lib/reports/report-timezone";
+import { siteReportAttachmentExists } from "@/lib/storage/site-report-storage";
 
 const formatFileSize = (bytes: number | null | undefined | string | bigint) => {
   if (bytes === undefined || bytes === null || bytes === "") return "Không rõ dung lượng";
@@ -70,7 +69,7 @@ export default async function FieldReportsPage({
   const projects = (await getActiveProjects()).map(p => ({ id: p.id, code: p.code, name: p.name }));
   
   // Map backend model to frontend FieldReport
-  const reports: FieldReport[] = pageData.items.map((r: Record<string, unknown>) => ({
+  const reports: FieldReport[] = await Promise.all(pageData.items.map(async (r: Record<string, unknown>) => ({
     id: r.id as string,
     reportNo: r.reportNo as string,
     code: (r.reportNo as string).length > 20 ? (r.reportNo as string).split('-')[0].toUpperCase() : (r.reportNo as string),
@@ -90,10 +89,9 @@ export default async function FieldReportsPage({
     weatherCondition: (r.weatherCondition as WeatherCondition) || 'SUNNY',
     weatherTemperature: r.weatherTemperature ? Number(r.weatherTemperature) : undefined,
     status: r.status as ReportStatus,
-    photos: ((r.attachments as Record<string, unknown>[]) || []).filter((a: Record<string, unknown>) => a.kind === 'PHOTO').map((a: Record<string, unknown>) => {
+    photos: await Promise.all(((r.attachments as Record<string, unknown>[]) || []).filter((a: Record<string, unknown>) => a.kind === 'PHOTO').map(async (a: Record<string, unknown>) => {
       const storagePath = a.storagePath as string;
-      const physicalPath = storagePath ? path.join(/*turbopackIgnore: true*/ process.cwd(), storagePath.startsWith('storage') ? '' : 'storage', storagePath) : "";
-      const isMissing = storagePath ? !fs.existsSync(physicalPath) : true;
+      const isMissing = storagePath ? !(await siteReportAttachmentExists(storagePath)) : true;
       return {
         id: String(a.id),
         url: isMissing ? null : `/api/reports/attachments/${a.id}`,
@@ -101,11 +99,10 @@ export default async function FieldReportsPage({
         createdAt: (a.createdAt as Date).toISOString(),
         isMissing
       };
-    }),
-    attachments: ((r.attachments as Record<string, unknown>[]) || []).filter((a: Record<string, unknown>) => a.kind === 'FILE').map((a: Record<string, unknown>) => {
+    })),
+    attachments: await Promise.all(((r.attachments as Record<string, unknown>[]) || []).filter((a: Record<string, unknown>) => a.kind === 'FILE').map(async (a: Record<string, unknown>) => {
       const storagePath = a.storagePath as string;
-      const physicalPath = storagePath ? path.join(/*turbopackIgnore: true*/ process.cwd(), storagePath.startsWith('storage') ? '' : 'storage', storagePath) : "";
-      const isMissing = storagePath ? !fs.existsSync(physicalPath) : true;
+      const isMissing = storagePath ? !(await siteReportAttachmentExists(storagePath)) : true;
       return {
         id: String(a.id),
         name: String(a.originalName || a.fileName),
@@ -114,7 +111,7 @@ export default async function FieldReportsPage({
         size: formatFileSize(Number(a.sizeBytes)),
         isMissing
       };
-    }),
+    })),
     workLines: ((r.lines as Record<string, unknown>[]) || []).map((l: Record<string, unknown>) => ({
       id: l.id as string,
       wbsItemId: (l.wbsItemId as string) || undefined,
@@ -165,7 +162,7 @@ export default async function FieldReportsPage({
     })(),
 
     approvalHistory: [],
-  }));
+  })));
 
   return (
     <ReportsWorkspace

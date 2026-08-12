@@ -415,8 +415,8 @@ export function ReportDetailDrawer({
     (report.createdById === currentUser.id ||
       currentUserHasCompanyScope);
   const canSubmitReport =
-    (report.status === "DRAFT" ||
-      report.status === "REJECTED" ||
+    report.status !== "DRAFT" &&
+    (report.status === "REJECTED" ||
       report.status === "REVISION_REQUESTED") &&
     currentUser?.id === report.createdById;
   const canModerateReport =

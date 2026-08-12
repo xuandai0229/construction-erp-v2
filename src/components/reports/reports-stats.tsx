@@ -16,28 +16,26 @@ export function ReportsStats({ stats }: ReportsStatsProps) {
       <div className="hidden md:flex items-center justify-center gap-4">
         <span><strong className="text-[var(--foreground)]">{stats.total}</strong> báo cáo</span>
         <span className="text-slate-300">|</span>
-        <span className="text-emerald-700 font-medium">{stats.approved} đã duyệt</span>
+        <span className="text-amber-700 font-medium">{stats.issues} có phát sinh</span>
         <span className="text-slate-300">|</span>
-        <span className="text-amber-700 font-medium">{stats.pending} chờ duyệt</span>
+        <span className="text-emerald-700 font-medium">{stats.needsAction} cần xử lý</span>
         <span className="text-slate-300">|</span>
-        <span className="text-red-700 font-medium">{stats.rejected} từ chối</span>
-        <span className="text-slate-300">|</span>
-        <span className="text-violet-700 font-medium">Tỷ lệ duyệt {stats.approvalRate}%</span>
+        <span className="text-red-700 font-medium">{stats.urgent} khẩn cấp</span>
       </div>
 
       <div className="md:hidden flex flex-col">
-        <div 
+        <div
           className="flex items-center justify-between font-medium cursor-pointer"
           onClick={() => setIsExpanded(!isExpanded)}
         >
-          <span>Tổng {stats.total} báo cáo (Tỷ lệ duyệt {stats.approvalRate}%)</span>
+          <span>Tổng {stats.total} báo cáo</span>
           {isExpanded ? <ChevronUp className="w-4 h-4 text-[var(--muted-foreground)] opacity-70" /> : <ChevronDown className="w-4 h-4 text-[var(--muted-foreground)] opacity-70" />}
         </div>
         {isExpanded && (
           <div className="flex flex-wrap gap-x-4 gap-y-2 mt-2 pt-2 border-t border-[var(--border)] text-xs">
-            <span className="text-emerald-700 font-medium">{stats.approved} đã duyệt</span>
-            <span className="text-amber-700 font-medium">{stats.pending} chờ duyệt</span>
-            <span className="text-red-700 font-medium">{stats.rejected} từ chối</span>
+            <span className="text-amber-700 font-medium">{stats.issues} có phát sinh</span>
+            <span className="text-emerald-700 font-medium">{stats.needsAction} cần xử lý</span>
+            <span className="text-red-700 font-medium">{stats.urgent} khẩn cấp</span>
           </div>
         )}
       </div>

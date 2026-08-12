@@ -11,6 +11,7 @@ export const ACTIVE_REPORT_STATUSES = [
 export type ReportStatsInput = {
   status: string | null;
   issues?: string | null;
+  recommendations?: string | null;
   lines?: Array<{ issueNote?: string | null }> | null;
 };
 
@@ -23,6 +24,7 @@ export type ReportStats = {
   revisionRequested: number;
   pending: number;
   needsAction: number;
+  urgent: number;
   issues: number;
   approvalRate: number;
   byStatus: Record<string, number>;
@@ -39,6 +41,11 @@ export function reportHasIssues(report: Pick<ReportStatsInput, "issues" | "lines
   return Boolean(report.lines?.some((line) => hasMeaningfulIssueText(line.issueNote)));
 }
 
+function hasUrgentIssue(report: ReportStatsInput) {
+  const text = `${report.issues || ""} ${report.lines?.map((line) => line.issueNote || "").join(" ") || ""}`.toLowerCase();
+  return /khẩn cấp|nghiêm trọng|sự cố nghiêm trọng|urgent|critical/.test(text);
+}
+
 export function computeReportStats(reports: ReportStatsInput[]): ReportStats {
   const byStatus = reports.reduce<Record<string, number>>((acc, report) => {
     const status = report.status || "UNKNOWN";
@@ -51,6 +58,8 @@ export function computeReportStats(reports: ReportStatsInput[]): ReportStats {
   const submitted = byStatus.SUBMITTED || 0;
   const rejected = byStatus.REJECTED || 0;
   const revisionRequested = byStatus.REVISION_REQUESTED || 0;
+  const issueReports = reports.filter(reportHasIssues);
+  const needsAction = issueReports.filter((report) => !report.recommendations?.trim()).length;
 
   return {
     total,
@@ -60,8 +69,9 @@ export function computeReportStats(reports: ReportStatsInput[]): ReportStats {
     rejected,
     revisionRequested,
     pending: submitted,
-    needsAction: submitted + revisionRequested,
-    issues: reports.filter(reportHasIssues).length,
+    needsAction,
+    urgent: reports.filter(hasUrgentIssue).length,
+    issues: issueReports.length,
     approvalRate: total > 0 ? Math.round((approved / total) * 100) : 0,
     byStatus,
   };

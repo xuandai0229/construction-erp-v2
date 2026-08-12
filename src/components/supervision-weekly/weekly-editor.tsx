@@ -282,11 +282,15 @@ export function WeeklyEditor({ initial, projects, canReview, canEditPolicy, canE
   }, []);
 
   return <div className="space-y-5 pb-24 sm:pb-20">
-    {!isOwner && (
+    {!canEditPolicy ? (
       <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900" role="status">
-        Hồ sơ do {dossier.authorName || "cán bộ khác"} thực hiện — Bạn chỉ có quyền xem
+        Hồ sơ hiện ở trạng thái chỉ xem hoặc bạn không có quyền chỉnh sửa.
       </div>
-    )}
+    ) : !isOwner ? (
+      <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900" role="status">
+        Hồ sơ do {dossier.authorName || "cán bộ khác"} thực hiện — bạn có quyền hiệu chỉnh theo chính sách vai trò.
+      </div>
+    ) : null}
     <EditorHeader
       title="Báo cáo tuần"
       weekLabel={weekLabel}

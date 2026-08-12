@@ -66,9 +66,14 @@ export async function getWeeklyProgressSummaryForProject(
   client: Prisma.TransactionClient,
   options: WeeklySummaryOptions,
 ) {
-  const statuses: SiteReportStatus[] = ["APPROVED"];
-  if (options.includeSubmitted) statuses.push("SUBMITTED", "REVISION_REQUESTED");
-  if (options.includeDraft) statuses.push("DRAFT");
+  const statuses: SiteReportStatus[] = ["APPROVED", "SUBMITTED", "REVISION_REQUESTED", "DRAFT"];
+  if (options.includeSubmitted === false) {
+    statuses.splice(statuses.indexOf("SUBMITTED"), 1);
+    statuses.splice(statuses.indexOf("REVISION_REQUESTED"), 1);
+  }
+  if (options.includeDraft === false) {
+    statuses.splice(statuses.indexOf("DRAFT"), 1);
+  }
 
   const reports = await client.siteReport.findMany({
     where: {
@@ -115,9 +120,9 @@ export async function getWeeklyProgressSummaryForProject(
     });
   }
 
-  const approvedReports = reports.filter((report) => report.status === "APPROVED");
+  const sourceReports = reports.filter((report) => statuses.includes(report.status));
   const stats = {
-    approvedReports: approvedReports.length,
+    approvedReports: sourceReports.length,
     submittedReports: reports.filter((report) => report.status === "SUBMITTED" || report.status === "REVISION_REQUESTED").length,
     rejectedReports: reports.filter((report) => report.status === "REJECTED").length,
     draftReports: reports.filter((report) => report.status === "DRAFT").length,
@@ -131,7 +136,7 @@ export async function getWeeklyProgressSummaryForProject(
 
   const groupMap = new Map<string, { categoryId: string; categoryName: string; itemsMap: Map<string, WeeklyProgressItem> }>();
 
-  for (const report of approvedReports) {
+  for (const report of sourceReports) {
     const reportDate = toDateKey(report.reportDate);
     for (const line of report.lines) {
       const fieldItem = line.fieldProgressItem;
@@ -216,9 +221,9 @@ export async function getWeeklyProgressSummaryForProject(
   stats.workItemCount = groups.reduce((sum, group) => sum + group.items.length, 0);
 
   let emptyReason: string | null = null;
-  if (approvedReports.length === 0 && reports.length === 0) emptyReason = "NO_REPORTS_IN_RANGE";
-  else if (approvedReports.length === 0 && reports.length > 0) emptyReason = "NO_APPROVED_REPORTS";
-  else if (approvedReports.length > 0 && stats.workLineCount === 0) emptyReason = "HAS_REPORTS_BUT_NO_WORK_LINES";
+  if (sourceReports.length === 0 && reports.length === 0) emptyReason = "NO_REPORTS_IN_RANGE";
+  else if (sourceReports.length === 0 && reports.length > 0) emptyReason = "NO_SAVED_REPORTS";
+  else if (sourceReports.length > 0 && stats.workLineCount === 0) emptyReason = "HAS_REPORTS_BUT_NO_WORK_LINES";
 
   return {
     range: {

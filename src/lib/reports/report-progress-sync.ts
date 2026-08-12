@@ -195,6 +195,40 @@ export async function syncSiteReportProgressEntriesInTransaction(
 
   const progressLines = report.lines.filter((line) => Number(line.quantityToday || 0) > 0);
   if (progressLines.length === 0) {
+    if (input.mode === "SAVE") {
+      // A saved daily report may be an empty shell. Reconcile any entries from
+      // an earlier edit instead of forcing a fake quantity or creating duplicates.
+      const existingEntries = await tx.fieldProgressEntry.findMany({
+        where: {
+          projectId: report.projectId,
+          deletedAt: null,
+          sourceType: "SITE_REPORT",
+          sourceReportId: report.id,
+        },
+      });
+
+      for (const entry of existingEntries) {
+        await tx.fieldProgressEntry.update({
+          where: { id: entry.id },
+          data: {
+            status: "CANCELLED",
+            approvedAt: null,
+            approvedById: null,
+            deletedAt: new Date(),
+          },
+        });
+      }
+
+      return {
+        reportId: report.id,
+        projectId: report.projectId,
+        created: 0,
+        updated: existingEntries.length,
+        skipped: report.lines.length,
+        blocked: 0,
+        errors: [],
+      };
+    }
     throw new Error("Báo cáo ngày cần ít nhất một dòng khối lượng lớn hơn 0");
   }
 

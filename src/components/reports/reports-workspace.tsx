@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
-import { Plus, AlertCircle, Clock, XCircle, FileEdit, CheckSquare, Filter, X, FileText, ArrowLeft } from "lucide-react";
+import { Plus, Clock, XCircle, CheckSquare, Filter, FileText, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast-context";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -24,12 +24,12 @@ import {
 } from "./types";
 import { 
   createSiteReport, 
-  approveSiteReport, 
-  rejectSiteReport, 
   createWeeklyReportFromApprovedDailyReports,
   updateSiteReport,
   softDeleteSiteReport,
-  submitSiteReport
+  approveSiteReport,
+  rejectSiteReport,
+  submitSiteReport,
 } from "@/app/(dashboard)/reports/actions";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { setProjectContextCookie } from "@/app/actions/project-context";
@@ -67,6 +67,11 @@ export function ReportsWorkspace({
   const searchParamsKey = searchParams.toString();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteReport, setDeleteReport] = useState<FieldReport | null>(null);
+  const [uploadRetry, setUploadRetry] = useState<{
+    reportId: string;
+    photos: File[];
+    attachments: File[];
+  } | null>(null);
 
   // Filter state synced with URL
   const [search, setSearch] = useState(searchParams.get("q") || "");
@@ -224,24 +229,66 @@ export function ReportsWorkspace({
     router.push(pathname);
   };
 
-  const handleCreateSubmit = useCallback(async (data: CreateReportFormData, isDraft: boolean) => {
+  const uploadFiles = useCallback(async (reportId: string, kind: "PHOTO" | "FILE", files: File[]) => {
+    const failed: File[] = [];
+    const reasons: string[] = [];
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append("kind", kind);
+      formData.append("files", file);
+      try {
+        const response = await fetch(`/api/reports/${reportId}/attachments`, { method: "POST", body: formData });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok || body.rejectedFiles?.length) {
+          failed.push(file);
+          reasons.push(`${file.name}: ${body.rejectedFiles?.join(", ") || body.error || "không tải được"}`);
+        }
+      } catch {
+        failed.push(file);
+        reasons.push(`${file.name}: lỗi kết nối`);
+      }
+    }
+    return { failed, reasons };
+  }, []);
+
+  const deleteAttachments = useCallback(async (reportId: string, ids: string[]) => {
+    const failed: string[] = [];
+    for (const attachmentId of ids) {
+      const response = await fetch(`/api/reports/${reportId}/attachments`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ attachmentId }),
+      });
+      if (!response.ok) failed.push(attachmentId);
+    }
+    return failed;
+  }, []);
+
+  const handleCreateSubmit = useCallback(async (data: CreateReportFormData) => {
     setIsSubmitting(true);
     try {
-      // Validate array of work lines
-      if (!data.workLines || data.workLines.length === 0) {
-        if (data.type === "DAILY") {
-          toast.error("Báo cáo ngày cần ít nhất 1 dòng công việc!");
-          setIsSubmitting(false);
+      if (uploadRetry) {
+        const photoResult = await uploadFiles(uploadRetry.reportId, "PHOTO", uploadRetry.photos);
+        const fileResult = await uploadFiles(uploadRetry.reportId, "FILE", uploadRetry.attachments);
+        const failed = [...photoResult.failed, ...fileResult.failed];
+        const reasons = [...photoResult.reasons, ...fileResult.reasons];
+        if (failed.length > 0) {
+          setUploadRetry({ reportId: uploadRetry.reportId, photos: photoResult.failed, attachments: fileResult.failed });
+          toast.error("Báo cáo đã lưu nhưng vẫn còn tệp chưa tải lên được.");
+          if (reasons.length) console.warn("Field report attachment retry:", reasons);
           return;
         }
+        setUploadRetry(null);
+        toast.success("Đã tải lại tệp thành công");
+        setIsCreateOpen(false);
+        router.refresh();
+        return;
       }
 
-      let result;
+      let result: any;
       const createAsDraft = true;
-      
       if (dialogMode === "edit" && editReportData) {
-        // Edit flow
-        const payload: Record<string, unknown> = {
+        result = await updateSiteReport(editReportData.id, {
           date: data.date,
           time: data.time,
           weatherCondition: data.weatherCondition,
@@ -252,8 +299,8 @@ export function ReportsWorkspace({
           quality: data.quality,
           issues: data.issues,
           recommendations: data.recommendations,
-          gpsLat: data.gpsLocation ? parseFloat(data.gpsLocation.split(',')[0]) : undefined,
-          gpsLng: data.gpsLocation && data.gpsLocation.split(',').length > 1 ? parseFloat(data.gpsLocation.split(',')[1]) : undefined,
+          gpsLat: data.gpsLocation ? parseFloat(data.gpsLocation.split(",")[0]) : undefined,
+          gpsLng: data.gpsLocation && data.gpsLocation.split(",").length > 1 ? parseFloat(data.gpsLocation.split(",")[1]) : undefined,
           workLines: data.workLines.map(wl => ({
             fieldProgressItemId: wl.fieldProgressItemId || wl.wbsItemId,
             wbsItemId: wl.wbsItemId,
@@ -269,143 +316,94 @@ export function ReportsWorkspace({
             proposalNote: wl.proposalNote,
           })),
           weeklyNote: data.weeklyNote,
-        };
-        result = await updateSiteReport(editReportData.id, payload);
+        });
+      } else if (data.type === "WEEKLY") {
+        result = await createWeeklyReportFromApprovedDailyReports({
+          projectId: data.projectId,
+          weekStartDate: data.weekStartDate!,
+          weekEndDate: data.weekEndDate!,
+          summary: data.summary,
+          materials: data.materials,
+          labor: data.labor,
+          quality: data.quality,
+          issues: data.issues,
+          recommendations: data.recommendations,
+          weatherCondition: data.weatherCondition,
+          weeklyNote: data.weeklyNote,
+          isDraft: createAsDraft,
+        });
       } else {
-        // Create flow
-        if (data.type === "WEEKLY") {
-          if (!data.weekStartDate || !data.weekEndDate) {
-            toast.error("Vui lòng chọn ngày bắt đầu và kết thúc tuần");
-            setIsSubmitting(false);
-            return;
-          }
-          result = await createWeeklyReportFromApprovedDailyReports({
-            projectId: data.projectId,
-            weekStartDate: data.weekStartDate,
-            weekEndDate: data.weekEndDate,
-            summary: data.summary,
-            materials: data.materials,
-            labor: data.labor,
-            quality: data.quality,
-            issues: data.issues,
-            recommendations: data.recommendations,
-            weatherCondition: data.weatherCondition,
-            weeklyNote: data.weeklyNote,
-            isDraft: createAsDraft
-          });
-        } else {
-          const payload: Record<string, unknown> = {
-            projectId: data.projectId,
-            type: data.type,
-            date: data.date,
-            time: data.time,
-            weatherCondition: data.weatherCondition,
-            weatherTemperature: data.weatherTemperature,
-            summary: data.summary,
-            materials: data.materials,
-            labor: data.labor,
-            quality: data.quality,
-            issues: data.issues,
-            recommendations: data.recommendations,
-            gpsLat: data.gpsLocation ? parseFloat(data.gpsLocation.split(',')[0]) : undefined,
-            gpsLng: data.gpsLocation && data.gpsLocation.split(',').length > 1 ? parseFloat(data.gpsLocation.split(',')[1]) : undefined,
-            workLines: data.workLines.map(wl => ({
-              fieldProgressItemId: wl.fieldProgressItemId || wl.wbsItemId,
-              wbsItemId: wl.wbsItemId,
-              workContent: wl.workContent,
-              quantityToday: wl.quantityToday,
-              unit: wl.unit,
-              designQuantity: wl.designQuantity,
-              quantityBefore: wl.quantityBefore ?? wl.approvedCumulative,
-              quantityCumulative: wl.quantityCumulative,
-              progressPercent: wl.progressPercent,
-              note: wl.note,
-              issueNote: wl.issueNote,
-              proposalNote: wl.proposalNote,
-            })),
-          };
-          result = await createSiteReport(payload, createAsDraft);
-        }
+        result = await createSiteReport({
+          projectId: data.projectId,
+          type: data.type,
+          date: data.date,
+          time: data.time,
+          weatherCondition: data.weatherCondition,
+          weatherTemperature: data.weatherTemperature,
+          summary: data.summary,
+          materials: data.materials,
+          labor: data.labor,
+          quality: data.quality,
+          issues: data.issues,
+          recommendations: data.recommendations,
+          gpsLat: data.gpsLocation ? parseFloat(data.gpsLocation.split(",")[0]) : undefined,
+          gpsLng: data.gpsLocation && data.gpsLocation.split(",").length > 1 ? parseFloat(data.gpsLocation.split(",")[1]) : undefined,
+          workLines: data.workLines.map(wl => ({
+            fieldProgressItemId: wl.fieldProgressItemId || wl.wbsItemId,
+            wbsItemId: wl.wbsItemId,
+            workContent: wl.workContent,
+            quantityToday: wl.quantityToday,
+            unit: wl.unit,
+            designQuantity: wl.designQuantity,
+            quantityBefore: wl.quantityBefore ?? wl.approvedCumulative,
+            quantityCumulative: wl.quantityCumulative,
+            progressPercent: wl.progressPercent,
+            note: wl.note,
+            issueNote: wl.issueNote,
+            proposalNote: wl.proposalNote,
+          })),
+        }, createAsDraft);
       }
-      
-      if (result.success && result.id) {
-        let hasUploadError = false;
-        const reportId = result.id;
 
-        // Upload photos
-        if (data.photos && data.photos.length > 0) {
-          const formData = new FormData();
-          formData.append("kind", "PHOTO");
-          data.photos.forEach(file => formData.append("files", file));
-          const res = await fetch(`/api/reports/${reportId}/attachments`, { method: "POST", body: formData });
-          if (!res.ok) {
-            hasUploadError = true;
-            try {
-              const errData = await res.json();
-              if (errData.rejectedFiles) {
-                toast.error(`Lỗi tải ảnh: ${errData.rejectedFiles.join(", ")}`);
-              } else if (errData.error) {
-                toast.error(`Lỗi tải ảnh: ${errData.error}`);
-              }
-            } catch (e) {}
-          }
-        }
-
-        // Upload attachments
-        if (data.attachments && data.attachments.length > 0) {
-          const formData = new FormData();
-          formData.append("kind", "FILE");
-          data.attachments.forEach(file => formData.append("files", file));
-          const res = await fetch(`/api/reports/${reportId}/attachments`, { method: "POST", body: formData });
-          if (!res.ok) {
-            hasUploadError = true;
-            try {
-              const errData = await res.json();
-              if (errData.rejectedFiles) {
-                toast.error(`Lỗi tải tài liệu: ${errData.rejectedFiles.join(", ")}`);
-              } else if (errData.error) {
-                toast.error(`Lỗi tải tài liệu: ${errData.error}`);
-              }
-            } catch (e) {}
-          }
-        }
-
-        if (hasUploadError) {
-          toast.error("Đã lưu nháp báo cáo nhưng lỗi tải ảnh/file. Vui lòng mở lại báo cáo để tải lại.");
-          // We intentionally do NOT submit if upload fails, and we do NOT close the dialog 
-          // so the user can see it's still open or just know it failed.
-          // Wait, the prompt says: "không đóng dialog nếu có thể; nếu bắt buộc đóng thì phải báo rõ report đang ở nháp."
-          // Let's close it but refresh
-          setIsCreateOpen(false);
-          router.refresh();
-          return; // Stop here, do not submit
-        }
-
-        // If user wanted to submit (isDraft is false), and upload succeeded, we submit now
-        if (!isDraft) {
-          const submitRes = await submitSiteReport(reportId);
-          if (submitRes.success) {
-            toast.success(dialogMode === "edit" ? "Đã sửa và gửi báo cáo thành công" : "Đã tạo và gửi báo cáo thành công");
-            setIsCreateOpen(false);
-            router.refresh();
-          } else {
-            toast.error("Tải file thành công nhưng gửi báo cáo thất bại.");
-            setIsCreateOpen(false);
-            router.refresh();
-          }
-        } else {
-          toast.success(dialogMode === "edit" ? "Đã lưu thay đổi" : "Đã lưu nháp báo cáo");
-          setIsCreateOpen(false);
-          router.refresh();
-        }
+      if (result?.code === "WEEKLY_REPORT_ALREADY_EXISTS") {
+        toast.error("Báo cáo tuần này đã tồn tại. Bạn có thể mở báo cáo đã có.");
+        setIsCreateOpen(false);
+        router.push(`${pathname}?reportId=${encodeURIComponent(result.existingReportId)}`, { scroll: false });
+        return;
       }
+      if (!result?.success || !result.id) {
+        toast.error("Không thể lưu báo cáo: kết quả không hợp lệ.");
+        return;
+      }
+
+      const reportId = result.id;
+      const photoResult = await uploadFiles(reportId, "PHOTO", data.photos || []);
+      const fileResult = await uploadFiles(reportId, "FILE", data.attachments || []);
+      const failed = [...photoResult.failed, ...fileResult.failed];
+      const reasons = [...photoResult.reasons, ...fileResult.reasons];
+      const deleteFailures = await deleteAttachments(reportId, data.attachmentIdsToDelete || []);
+
+      if (failed.length > 0) {
+        setUploadRetry({ reportId, photos: photoResult.failed, attachments: fileResult.failed });
+        toast.error("Báo cáo đã được lưu nhưng có ảnh/tệp chưa tải lên được. Bấm Lưu để thử lại.");
+        if (reasons.length) console.warn("Field report attachment upload:", reasons);
+        router.refresh();
+        return;
+      }
+      if (deleteFailures.length > 0) {
+        toast.error("Báo cáo đã lưu nhưng một số tệp cũ chưa xóa được. Vui lòng thử lại.");
+      } else {
+        toast.success(dialogMode === "edit" ? "Đã lưu thay đổi" : "Đã lưu báo cáo");
+      }
+      setIsCreateOpen(false);
+      router.refresh();
     } catch (error) {
       console.error(error);
-      toast.error((error as Error).message || "Đã xảy ra lỗi không mong muốn khi tạo báo cáo");
+      toast.error(`Không thể lưu báo cáo: ${(error as Error).message || "lỗi không xác định"}`);
     } finally {
       setIsSubmitting(false);
     }
-  }, [router, toast]);
+  }, [dialogMode, editReportData, pathname, router, toast, uploadFiles, deleteAttachments, uploadRetry]);
 
   const handleApprove = useCallback(async (reportId: string, note?: string) => {
     try {
@@ -450,10 +448,9 @@ export function ReportsWorkspace({
   }, [router, toast]);
 
   const handleEdit = useCallback((report: FieldReport) => {
-    setEditReportData(report);
-    setDialogMode("edit");
-    setIsCreateOpen(true);
-  }, []);
+    setUploadRetry(null);
+    router.push(`/reports/field/${report.id}/edit`);
+  }, [router]);
 
   const handleDelete = useCallback((report: FieldReport) => {
     setDeleteReport(report);
@@ -523,7 +520,7 @@ export function ReportsWorkspace({
                   Bộ lọc
                 </Button>
                 {!sourceReadOnly && <Button
-                  onClick={() => { setDialogMode("create"); setEditReportData(null); setIsCreateOpen(true); }}
+                  onClick={() => router.push("/reports/field/new")}
                   className="bg-blue-600 hover:bg-blue-700 text-white h-9 px-3 text-sm shrink-0"
                 >
                   <Plus className="w-4 h-4" />
@@ -531,7 +528,7 @@ export function ReportsWorkspace({
               </div>
             </div>
             {!sourceReadOnly && <Button
-              onClick={() => { setDialogMode("create"); setEditReportData(null); setIsCreateOpen(true); }}
+              onClick={() => router.push("/reports/field/new")}
               className="hidden sm:flex gap-1.5 bg-blue-600 hover:bg-blue-700 text-white h-10 px-5 text-sm shrink-0 self-start sm:self-auto"
             >
               <Plus className="w-4 h-4" />
@@ -545,7 +542,7 @@ export function ReportsWorkspace({
             Nhật ký ngày, tổng hợp hiện trường tuần, phát sinh và sự cố công trình
           </div>
           {!sourceReadOnly && <Button
-            onClick={() => { setDialogMode("create"); setEditReportData(null); setIsCreateOpen(true); }}
+            onClick={() => router.push("/reports/field/new")}
             className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white h-10 px-4 text-sm shrink-0"
           >
             <Plus className="w-4 h-4" />
@@ -577,66 +574,66 @@ export function ReportsWorkspace({
         </div>
 
         <div 
-          onClick={() => handleQuickFilter('SUBMITTED')}
+          onClick={() => handleQuickFilter('ISSUE')}
           className={`rounded-[var(--radius-xl)] p-3 border flex items-center justify-between cursor-pointer transition-colors shadow-[var(--shadow-card)] ${
-            statusFilter === 'SUBMITTED'
+            statusFilter === 'ISSUE'
               ? 'bg-amber-50 border-amber-400 ring-1 ring-amber-400' 
-              : stats.pending === 0 
+              : stats.issues === 0
                 ? 'bg-[var(--surface-subtle)] border-[var(--border)] opacity-80 hover:opacity-100' 
                 : 'bg-amber-50 border-amber-200 hover:bg-amber-100'
           }`}
         >
           <div className="flex items-center gap-2.5">
-            <div className={`p-1.5 rounded-[var(--radius-lg)] ${stats.pending === 0 ? 'bg-slate-200 text-[var(--muted-foreground)]' : 'bg-amber-100 text-amber-600'}`}>
+            <div className={`p-1.5 rounded-[var(--radius-lg)] ${stats.issues === 0 ? 'bg-slate-200 text-[var(--muted-foreground)]' : 'bg-amber-100 text-amber-600'}`}>
               <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h3 className={`font-semibold text-[13px] sm:text-sm ${stats.pending === 0 ? 'text-[var(--muted-foreground)]' : 'text-amber-900'}`}>Có phát sinh</h3>
+              <h3 className={`font-semibold text-[13px] sm:text-sm ${stats.issues === 0 ? 'text-[var(--muted-foreground)]' : 'text-amber-900'}`}>Có phát sinh</h3>
             </div>
           </div>
-          <span className={`text-lg sm:text-xl font-bold ${stats.pending === 0 ? 'text-[var(--muted-foreground)]' : 'text-amber-700'}`}>{stats.pending}</span>
+          <span className={`text-lg sm:text-xl font-bold ${stats.issues === 0 ? 'text-[var(--muted-foreground)]' : 'text-amber-700'}`}>{stats.issues}</span>
         </div>
         
         <div 
-          onClick={() => handleQuickFilter('APPROVED')}
+          onClick={() => handleQuickFilter('ISSUE')}
           className={`rounded-[var(--radius-xl)] p-3 border flex items-center justify-between cursor-pointer transition-colors shadow-[var(--shadow-card)] ${
-            statusFilter === 'APPROVED'
+            statusFilter === 'ISSUE'
               ? 'bg-emerald-50 border-emerald-400 ring-1 ring-emerald-400' 
-              : stats.approved === 0 
+              : stats.needsAction === 0
                 ? 'bg-[var(--surface-subtle)] border-[var(--border)] opacity-80 hover:opacity-100' 
                 : 'bg-emerald-50 border-emerald-200 hover:bg-emerald-100'
           }`}
         >
           <div className="flex items-center gap-2.5">
-            <div className={`p-1.5 rounded-[var(--radius-lg)] ${stats.approved === 0 ? 'bg-slate-200 text-[var(--muted-foreground)]' : 'bg-emerald-100 text-emerald-600'}`}>
+            <div className={`p-1.5 rounded-[var(--radius-lg)] ${stats.needsAction === 0 ? 'bg-slate-200 text-[var(--muted-foreground)]' : 'bg-emerald-100 text-emerald-600'}`}>
               <CheckSquare className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h3 className={`font-semibold text-[13px] sm:text-sm ${stats.approved === 0 ? 'text-[var(--muted-foreground)]' : 'text-emerald-900'}`}>Cần xử lý</h3>
+              <h3 className={`font-semibold text-[13px] sm:text-sm ${stats.needsAction === 0 ? 'text-[var(--muted-foreground)]' : 'text-emerald-900'}`}>Cần xử lý</h3>
             </div>
           </div>
-          <span className={`text-lg sm:text-xl font-bold ${stats.approved === 0 ? 'text-[var(--muted-foreground)]' : 'text-emerald-700'}`}>{stats.approved}</span>
+          <span className={`text-lg sm:text-xl font-bold ${stats.needsAction === 0 ? 'text-[var(--muted-foreground)]' : 'text-emerald-700'}`}>{stats.needsAction}</span>
         </div>
         
         <div 
-          onClick={() => handleQuickFilter('REJECTED')}
+          onClick={() => handleQuickFilter('ISSUE')}
           className={`rounded-[var(--radius-xl)] p-3 border flex items-center justify-between cursor-pointer transition-colors shadow-[var(--shadow-card)] ${
-            statusFilter === 'REJECTED'
+            statusFilter === 'ISSUE'
               ? 'bg-red-50 border-red-400 ring-1 ring-red-400' 
-              : stats.rejected === 0 
+              : stats.urgent === 0
                 ? 'bg-[var(--surface-subtle)] border-[var(--border)] opacity-80 hover:opacity-100' 
                 : 'bg-red-50 border-red-200 hover:bg-red-100'
           }`}
         >
           <div className="flex items-center gap-2.5">
-            <div className={`p-1.5 rounded-[var(--radius-lg)] ${stats.rejected === 0 ? 'bg-slate-200 text-[var(--muted-foreground)]' : 'bg-red-100 text-red-600'}`}>
+            <div className={`p-1.5 rounded-[var(--radius-lg)] ${stats.urgent === 0 ? 'bg-slate-200 text-[var(--muted-foreground)]' : 'bg-red-100 text-red-600'}`}>
               <XCircle className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h3 className={`font-semibold text-[13px] sm:text-sm ${stats.rejected === 0 ? 'text-[var(--muted-foreground)]' : 'text-red-900'}`}>Khẩn cấp</h3>
+              <h3 className={`font-semibold text-[13px] sm:text-sm ${stats.urgent === 0 ? 'text-[var(--muted-foreground)]' : 'text-red-900'}`}>Khẩn cấp</h3>
             </div>
           </div>
-          <span className={`text-lg sm:text-xl font-bold ${stats.rejected === 0 ? 'text-[var(--muted-foreground)]' : 'text-red-700'}`}>{stats.rejected}</span>
+          <span className={`text-lg sm:text-xl font-bold ${stats.urgent === 0 ? 'text-[var(--muted-foreground)]' : 'text-red-700'}`}>{stats.urgent}</span>
         </div>
       </div>
 
@@ -663,8 +660,8 @@ export function ReportsWorkspace({
         </div>
         <div className="hidden sm:flex text-[11px] text-[var(--muted-foreground)] gap-3 whitespace-nowrap">
           <span className="font-semibold text-[var(--foreground)]">Tổng: {stats.total}</span>
-          <span>Duyệt: <span className="text-emerald-600 font-medium">{stats.approved}</span></span>
-          <span>Từ chối: <span className="text-red-600 font-medium">{stats.rejected}</span></span>
+          <span>Phát sinh: <span className="text-amber-600 font-medium">{stats.issues}</span></span>
+          <span>Khẩn cấp: <span className="text-red-600 font-medium">{stats.urgent}</span></span>
         </div>
       </div>
 
@@ -742,6 +739,7 @@ export function ReportsWorkspace({
         mode={dialogMode}
         initialReport={editReportData}
         currentProjectId={projectFilter || globalContext?.selectedProjectId || undefined}
+        uploadRetryMessage={uploadRetry ? "Báo cáo đã lưu; còn tệp chưa tải lên. Bấm Lưu để thử lại." : null}
       />}
 
       {/* Report Detail Drawer */}

@@ -2,17 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import path from "path";
-import crypto from "crypto";
-import { promises as fs } from "fs";
 import {
   assertReportWritableForAttachment,
   canUploadReportAttachment,
 } from "@/lib/reports/report-workflow-policy";
 import { canAccessProject } from "@/lib/rbac";
 import { resolvePermission } from "@/lib/permissions/permission-resolver";
-import { pipeline } from "stream/promises";
-import { createWriteStream } from "fs";
 import { Readable } from "stream";
+import { deleteSiteReportAttachment, saveSiteReportAttachment } from "@/lib/storage/site-report-storage";
 
 export const runtime = "nodejs";
 
@@ -176,11 +173,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ rep
       }, { status: 400 });
     }
 
-    // Write files and create DB records with rollback on failure
-    const baseStorageDir = path.join(/*turbopackIgnore: true*/ process.cwd(), "storage", "site-reports", reportId);
-    await fs.mkdir(baseStorageDir, { recursive: true });
-
-    const savedFilePaths: string[] = [];
+    // Write files through the shared provider and create DB records with rollback on failure.
     const filesToInsert: {
       safeFileName: string;
       originalName: string;
@@ -191,28 +184,20 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ rep
     }[] = [];
 
     try {
-      for (const { file, ext } of validatedFiles) {
-        const timestamp = new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14);
-        const randomHex = crypto.randomBytes(4).toString("hex");
-        const safeFileName = `${timestamp}-${randomHex}${ext}`;
-
-        // storagePath uses relative path from project root for portability
-        const relativeStoragePath = path.join("storage", "site-reports", reportId, safeFileName);
-        const absoluteStoragePath = path.join(/*turbopackIgnore: true*/ process.cwd(), relativeStoragePath);
-
-        // Write file to disk using stream pipeline
-        await pipeline(
-          Readable.fromWeb(file.stream() as any),
-          createWriteStream(absoluteStoragePath)
-        );
-        savedFilePaths.push(absoluteStoragePath);
+      for (const { file } of validatedFiles) {
+        const stored = await saveSiteReportAttachment({
+          stream: Readable.fromWeb(file.stream() as any),
+          projectId: report.projectId,
+          reportId,
+          originalName: file.name,
+        });
 
         filesToInsert.push({
-          safeFileName,
+          safeFileName: path.basename(stored.storagePath),
           originalName: file.name,
           mimeType: file.type || "application/octet-stream",
-          sizeBytes: file.size,
-          relativeStoragePath,
+          sizeBytes: stored.size,
+          relativeStoragePath: stored.storagePath,
           kind: kind as 'PHOTO' | 'FILE'
         });
       }
@@ -275,14 +260,73 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ rep
         ...(rejectedFiles.length > 0 ? { rejectedFiles } : {})
       });
     } catch (error) {
-      // Rollback: delete any files we wrote
-      for (const filePath of savedFilePaths) {
-        await fs.unlink(filePath).catch(() => {});
+      // Rollback provider objects written before the DB transaction failed.
+      for (const fileData of filesToInsert) {
+        await deleteSiteReportAttachment(fileData.relativeStoragePath).catch(() => undefined);
       }
       throw error;
     }
   } catch (error) {
     console.error("Upload report attachment error:", error);
     return NextResponse.json({ error: "Lỗi hệ thống khi upload" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ reportId: string }> }) {
+  try {
+    const session = await getSession();
+    if (!session) return NextResponse.json({ error: "Vui lòng đăng nhập" }, { status: 401 });
+
+    const { reportId } = await params;
+    if (!reportId || !/^[a-z0-9]{20,30}$/i.test(reportId)) {
+      return NextResponse.json({ error: "Invalid report ID" }, { status: 400 });
+    }
+
+    const body = await req.json().catch(() => ({}));
+    const attachmentId = typeof body.attachmentId === "string" ? body.attachmentId : "";
+    if (!attachmentId || !/^[a-z0-9]{20,30}$/i.test(attachmentId)) {
+      return NextResponse.json({ error: "Invalid attachment ID" }, { status: 400 });
+    }
+
+    const attachment = await prisma.siteReportAttachment.findFirst({
+      where: { id: attachmentId, reportId, report: { deletedAt: null } },
+      include: { report: { select: { id: true, projectId: true, createdById: true, status: true } } },
+    });
+    if (!attachment) return NextResponse.json({ error: "Không tìm thấy tệp đính kèm" }, { status: 404 });
+
+    const hasAccess = await canAccessProject(
+      { id: session.id, role: session.role as any },
+      attachment.report.projectId,
+    );
+    const permission = await resolvePermission(session, "reports.update", {
+      projectId: attachment.report.projectId,
+      ownerId: attachment.report.createdById,
+    });
+    if (!hasAccess || !permission.allowed) {
+      return NextResponse.json({ error: "Bạn không có quyền xóa tệp đính kèm này" }, { status: 403 });
+    }
+    if (!canUploadReportAttachment(attachment.report.status)) {
+      return NextResponse.json({ error: "Báo cáo hiện không còn cho phép thay đổi tệp" }, { status: 409 });
+    }
+
+    await deleteSiteReportAttachment(attachment.storagePath);
+    await prisma.$transaction(async (tx) => {
+      await tx.siteReportAttachment.delete({ where: { id: attachment.id } });
+      await tx.auditLog.create({
+        data: {
+          userId: session.id,
+          projectId: attachment.report.projectId,
+          action: "SITE_REPORT_ATTACHMENT_DELETED",
+          entityType: "SiteReport",
+          entityId: reportId,
+          beforeData: JSON.stringify({ attachmentId: attachment.id, originalName: attachment.originalName }),
+        },
+      });
+    });
+
+    return NextResponse.json({ success: true, attachmentId });
+  } catch (error) {
+    console.error("Delete report attachment error:", error);
+    return NextResponse.json({ error: "Lỗi hệ thống khi xóa tệp" }, { status: 500 });
   }
 }
