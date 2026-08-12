@@ -9,12 +9,14 @@ export interface MaterialProposalPreviewToolbarProps {
   proposalId: string;
   proposalNo: string;
   backHref: string;
+  returnToListHref?: string;
 }
 
 export function MaterialProposalPreviewToolbar({
   proposalId,
   proposalNo,
   backHref,
+  returnToListHref,
 }: MaterialProposalPreviewToolbarProps) {
   const [downloadingFormat, setDownloadingFormat] = useState<"excel" | "pdf" | null>(null);
   const [isPrinting, setIsPrinting] = useState(false);
@@ -167,6 +169,18 @@ export function MaterialProposalPreviewToolbar({
       <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
         {/* Navigation & Header Left */}
         <div className="flex flex-wrap items-center gap-3">
+          {returnToListHref && (
+            <Link
+              href={returnToListHref}
+              replace
+              className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-100 transition-colors shadow-2xs"
+              aria-label="Về danh sách đề xuất"
+            >
+              <ArrowLeft className="h-3.5 w-3.5 text-blue-600" />
+              <span>Về danh sách</span>
+            </Link>
+          )}
+
           <Link
             href={backHref}
             replace

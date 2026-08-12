@@ -108,14 +108,15 @@ export function HrReportChartsGrid({ charts }: HrReportChartsGridProps) {
                         isSelected ? "bg-emerald-50 border-emerald-300" : "border-transparent hover:bg-slate-50"
                       }`}
                     >
-                      <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="font-semibold text-slate-800 truncate max-w-[200px] sm:max-w-[300px]" title={proj.projectName}>
-                          {proj.projectName} {proj.projectCode !== "N/A" ? `(${proj.projectCode})` : ""}
+                      <div className="flex items-start justify-between gap-3 text-xs mb-1">
+                        <span className="min-w-0 flex-1 font-semibold leading-snug text-slate-800 line-clamp-2" title={proj.projectName}>
+                          {proj.projectName}
                         </span>
-                        <span className="font-bold text-emerald-700 tabular-nums">
+                        <span className="shrink-0 font-bold text-emerald-700 tabular-nums">
                           {proj.count} nhân sự · TB {proj.averageAllocation}% phân bổ
                         </span>
                       </div>
+                      {proj.projectCode !== "N/A" && <div className="mb-1 font-mono text-[10px] text-slate-500">Mã: {proj.projectCode}</div>}
                       <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                         <div
                           className="bg-emerald-600 h-2 rounded-full transition-all duration-300 group-hover:bg-emerald-700"
@@ -174,14 +175,15 @@ export function HrReportChartsGrid({ charts }: HrReportChartsGridProps) {
                         isSelected ? "bg-blue-50 border-blue-300" : "border-transparent hover:bg-slate-50"
                       }`}
                     >
-                      <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="font-semibold text-slate-800 truncate max-w-[200px] sm:max-w-[300px]" title={org.unitName}>
-                          {org.unitName} {org.unitCode !== "N/A" ? `(${org.unitCode})` : ""}
+                      <div className="flex items-start justify-between gap-3 text-xs mb-1">
+                        <span className="min-w-0 flex-1 font-semibold leading-snug text-slate-800 line-clamp-2" title={org.unitName}>
+                          {org.unitName}
                         </span>
-                        <span className="font-bold text-blue-600 tabular-nums">
+                        <span className="shrink-0 font-bold text-blue-600 tabular-nums">
                           {org.count} nhân sự ({org.percentage}%)
                         </span>
                       </div>
+                      {org.unitCode !== "N/A" && <div className="mb-1 font-mono text-[10px] text-slate-500">Mã: {org.unitCode}</div>}
                       <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                         <div
                           className="bg-blue-600 h-2 rounded-full transition-all duration-300 group-hover:bg-blue-700"

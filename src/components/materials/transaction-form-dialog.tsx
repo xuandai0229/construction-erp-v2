@@ -60,7 +60,7 @@ export function TransactionFormDialog({ isOpen, onClose, onSubmit, isSubmitting,
     code: material.code,
     name: material.name,
     label: `${material.code} — ${material.name}`,
-    description: `${material.unit}${material.group ? ` · ${material.group}` : ""}`,
+    description: [material.unit, material.manufacturer, material.origin].filter(Boolean).join(" · "),
   }));
 
   const handleSubmit = async (e: React.FormEvent) => {

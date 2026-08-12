@@ -57,8 +57,8 @@ export function ProjectsListClient({
         <table className="w-full table-fixed text-left text-[14px] text-[var(--muted-foreground)]">
           <thead className="bg-[var(--surface-subtle)] border-b border-[var(--border)] text-[var(--muted-foreground)] uppercase text-[11px] font-bold tracking-wider sticky top-0 z-[5]">
             <tr>
-              <th className="w-[34%] px-5 py-3.5 whitespace-nowrap">Công trình</th>
-              <th className="w-[28%] px-5 py-3.5 whitespace-nowrap">Địa điểm & Phụ trách</th>
+              <th className="w-[42%] px-5 py-3.5 whitespace-nowrap">Công trình</th>
+              <th className="w-[24%] px-5 py-3.5 whitespace-nowrap">Địa điểm & Phụ trách</th>
               <th className="w-auto px-5 py-3.5 whitespace-nowrap">Tiến độ</th>
               <th className="w-[100px] min-w-[100px] px-5 py-3.5 text-right whitespace-nowrap">Thao tác</th>
             </tr>

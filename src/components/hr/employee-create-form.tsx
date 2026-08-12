@@ -412,23 +412,23 @@ export function EmployeeCreateForm({
             </h3>
 
             <div className="space-y-3 text-xs">
-              <div className="flex justify-between items-center py-1 border-b border-slate-50">
+              <div className="flex items-start justify-between gap-3 py-1 border-b border-slate-50">
                 <span className="text-slate-500">Họ và tên:</span>
-                <span className="font-bold text-slate-900 truncate max-w-[150px]">
+                <span className="max-w-[60%] text-right font-bold leading-snug text-slate-900 line-clamp-2" title={formData.fullName || "(Chưa nhập)"}>
                   {formData.fullName || "(Chưa nhập)"}
                 </span>
               </div>
 
-              <div className="flex justify-between items-center py-1 border-b border-slate-50">
+              <div className="flex items-start justify-between gap-3 py-1 border-b border-slate-50">
                 <span className="text-slate-500">Phòng ban:</span>
-                <span className="font-semibold text-blue-700 truncate max-w-[150px]">
+                <span className="max-w-[60%] text-right font-semibold leading-snug text-blue-700 line-clamp-2" title={selectedUnitName}>
                   {selectedUnitName}
                 </span>
               </div>
 
-              <div className="flex justify-between items-center py-1 border-b border-slate-50">
+              <div className="flex items-start justify-between gap-3 py-1 border-b border-slate-50">
                 <span className="text-slate-500">Chức danh:</span>
-                <span className="font-semibold text-slate-800 truncate max-w-[150px]">
+                <span className="max-w-[60%] text-right font-semibold leading-snug text-slate-800 line-clamp-2" title={selectedPositionTitle}>
                   {selectedPositionTitle}
                 </span>
               </div>

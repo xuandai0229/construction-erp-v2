@@ -67,7 +67,9 @@ export default async function OrganizationPage(props: OrganizationPageProps) {
         <HrPageHeader
           title="Phòng ban & Chức danh"
           description="Quản lý hệ thống chức danh và định mức nhân sự chuyên môn trong công ty"
-          action={
+        />
+        <HrWorkspaceTabs
+          rightContent={
             managePerm.allowed ? (
               <Link
                 href="/hr/organization?tab=positions&create=1"
@@ -79,7 +81,6 @@ export default async function OrganizationPage(props: OrganizationPageProps) {
             ) : undefined
           }
         />
-        <HrWorkspaceTabs />
         <Suspense fallback={<div className="p-4 text-sm text-slate-500">Đang tải...</div>}>
           <OrganizationSubTabs />
         </Suspense>
@@ -181,7 +182,9 @@ export default async function OrganizationPage(props: OrganizationPageProps) {
       <HrPageHeader
         title="Phòng ban & Chức danh"
         description="Quản lý cây phòng ban nhiều cấp, chức năng nhiệm vụ và người phụ trách đơn vị"
-        action={
+      />
+      <HrWorkspaceTabs
+        rightContent={
           managePerm.allowed ? (
             <Link
               href="/hr/organization?tab=units&create=1"
@@ -193,7 +196,6 @@ export default async function OrganizationPage(props: OrganizationPageProps) {
           ) : undefined
         }
       />
-      <HrWorkspaceTabs />
       <Suspense fallback={<div className="p-4 text-sm text-slate-500">Đang tải...</div>}>
         <OrganizationSubTabs />
       </Suspense>

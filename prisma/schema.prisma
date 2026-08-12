@@ -600,6 +600,8 @@ model MaterialItem {
   code        String
   name        String
   unit        String
+  manufacturer String?
+  origin       String?
   group       String?
   description String?
   isActive    Boolean  @default(true)

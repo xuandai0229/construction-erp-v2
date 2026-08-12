@@ -25,6 +25,7 @@ import {
   deleteSafetyWeeklyFileAction,
 } from "@/app/(dashboard)/reports/safety/actions";
 import { SafetyRowActionPortalMenu } from "./safety-row-action-portal-menu";
+import { ProjectName } from "@/components/project/project-name";
 
 function formatDateVN(dateStr: string) {
   if (!dateStr) return "—";
@@ -424,9 +425,7 @@ export function SafetyListClient({
                               <span>Toàn hệ thống</span>
                             </span>
                           ) : projectCount === 1 ? (
-                            <div className="font-medium text-slate-800 truncate max-w-[200px]" title={projectList[0].name}>
-                              {projectList[0].name}
-                            </div>
+                            <ProjectName name={projectList[0].name} maxLines={2} className="max-w-[260px] font-medium text-slate-800" />
                           ) : (
                             <div className="relative inline-block">
                               <button

@@ -127,7 +127,7 @@ export function OrgChartView({ treeData, companyHeadcount }: OrgChartViewProps) 
               >
                 <UserCheck className={`w-3.5 h-3.5 shrink-0 ${isTopDirector ? "text-blue-300" : "text-blue-600"}`} />
                 <div className="min-w-0">
-                  <div className="font-bold truncate">{node.manager.fullName}</div>
+                  <div className="font-bold leading-snug line-clamp-2" title={node.manager.fullName}>{node.manager.fullName}</div>
                 </div>
               </div>
             ) : (

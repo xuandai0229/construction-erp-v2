@@ -200,10 +200,10 @@ export function OrganizationTreeView({ treeData, flatUnits, canManage, companyHe
               <span className="w-5" />
             )}
             <Building2 className={`w-4 h-4 shrink-0 ${isSelected ? "text-blue-600" : "text-slate-400"}`} />
-            <span className="text-[11px] font-mono font-bold uppercase tracking-wide text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 shrink-0">
-              {node.code}
-            </span>
-            <span className="text-xs font-semibold truncate">{node.name}</span>
+            <div className="min-w-0">
+              <span className="block text-xs font-semibold leading-snug line-clamp-2" title={node.name}>{node.name}</span>
+              <span className="mt-0.5 block font-mono text-[10px] font-medium text-slate-500">Mã: {node.code}</span>
+            </div>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">

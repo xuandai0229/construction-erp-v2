@@ -59,7 +59,7 @@ export function ProjectAssignmentToolbar({
       { value: "", label: "Tất cả công trình" },
       ...projects.map((p) => ({
         value: p.id,
-        label: `[${p.code}] ${p.name}`,
+        label: p.name,
         code: p.code,
         name: p.name,
       })),

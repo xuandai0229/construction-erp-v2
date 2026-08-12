@@ -105,14 +105,9 @@ function ProjectAssignmentCell({
         <div className="flex items-start gap-1.5 min-w-0">
           <HardHat className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
           <div className="min-w-0 flex-1 space-y-0.5">
-            {proj.code && (
-              <span className="font-mono text-[10px] font-bold text-slate-500 bg-slate-100/90 border border-slate-200/80 px-1.5 py-0.2 rounded-xs whitespace-nowrap inline-block tracking-tight">
-                {proj.code}
-              </span>
-            )}
             <Link
               href={`/projects/${proj.id}`}
-              className="font-medium text-slate-800 hover:text-blue-600 hover:underline text-xs leading-snug line-clamp-2 break-words transition-colors block"
+              className="block break-words text-xs font-semibold leading-snug text-slate-800 transition-colors line-clamp-2 hover:text-blue-600 hover:underline"
               title={cleanProjName}
             >
               {cleanProjName}
@@ -129,7 +124,7 @@ function ProjectAssignmentCell({
             <div className="flex items-center justify-between text-blue-300 font-bold border-b border-slate-700 pb-1.5">
               <span className="flex items-center gap-1.5">
                 <HardHat className="w-4 h-4 text-amber-400" />
-                <span>{proj.code ? `[${proj.code}] ` : ""}Chi tiết công trình</span>
+                <span>Chi tiết công trình</span>
               </span>
               <span className="text-[11px] text-emerald-400 font-mono">
                 Phân bổ: {proj.allocationPercentage}%
@@ -138,6 +133,7 @@ function ProjectAssignmentCell({
             <p className="font-semibold text-slate-100 leading-normal break-words">
               {cleanProjName}
             </p>
+            {proj.code && <p className="font-mono text-[11px] text-slate-400">Mã: {proj.code}</p>}
             {proj.roleName && (
               <p className="text-[11px] text-slate-400">
                 Vai trò: <span className="text-slate-200 font-medium">{sanitizeDisplayName(proj.roleName)}</span>
@@ -218,10 +214,11 @@ function ProjectAssignmentCell({
                         onClick={() => setIsOpen(false)}
                         className="font-bold text-slate-900 hover:text-blue-600 text-xs leading-snug break-words flex-1 flex items-center gap-1 group"
                       >
-                        <span>{proj.code ? `[${proj.code}] ` : ""}{cleanName}</span>
+                        <span>{cleanName}</span>
                         <ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-blue-600 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
                       </Link>
                     </div>
+                    {proj.code && <div className="font-mono text-[10px] text-slate-500">Mã: {proj.code}</div>}
                     <div className="flex items-center justify-between text-[11px] text-slate-600 pt-1 border-t border-slate-200/60">
                       <span className="font-medium text-slate-700">{cleanRole}</span>
                       <span className="font-bold text-blue-700">Tỷ lệ: {proj.allocationPercentage}%</span>
@@ -312,13 +309,13 @@ export function EmployeeDataTable({
         <table className="w-full text-left text-sm border-collapse table-fixed">
           <thead>
             <tr className="bg-slate-50/90 border-b border-slate-200 text-xs font-bold text-slate-700 tracking-tight">
-              <th className="py-2.5 px-3 w-[17%]">Nhân viên</th>
-              <th className="py-2.5 px-3 w-[19%]">Phòng ban / Chức danh</th>
-              <th className="py-2.5 px-3 w-[33%]">Công trình hiện tại</th>
+              <th className="py-2.5 px-3 w-[21%]">Nhân viên</th>
+              <th className="py-2.5 px-3 w-[20%]">Phòng ban / Chức danh</th>
+              <th className="py-2.5 px-3 w-[29%]">Công trình hiện tại</th>
               <th className="py-2.5 px-3 w-[7%] whitespace-nowrap">Phân bổ</th>
-              <th className="py-2.5 px-3 w-[9%] whitespace-nowrap">Trạng thái</th>
-              <th className="py-2.5 px-3 w-[9%] whitespace-nowrap">Ngày vào</th>
-              <th className="py-2.5 px-3 w-[6%] text-right whitespace-nowrap">Thao tác</th>
+              <th className="py-2.5 px-3 w-[8%] whitespace-nowrap">Trạng thái</th>
+              <th className="py-2.5 px-3 w-[8%] whitespace-nowrap">Ngày vào</th>
+              <th className="py-2.5 px-3 w-[7%] text-right whitespace-nowrap">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -349,7 +346,7 @@ export function EmployeeDataTable({
                       : "hover:bg-slate-50/80"
                   }`}
                 >
-                  {/* 1. Employee Name & Code Cell (17%) */}
+                  {/* 1. Employee Name & Code Cell (21%) */}
                   <td className="py-2.5 px-3 overflow-hidden">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center shrink-0">
@@ -359,7 +356,7 @@ export function EmployeeDataTable({
                         <Link
                           href={`/hr/employees/${emp.id}`}
                           title={cleanFullName}
-                          className="font-bold text-slate-900 hover:text-blue-600 transition-colors block truncate text-xs"
+                          className="block text-xs font-bold leading-snug text-slate-900 transition-colors line-clamp-2 hover:text-blue-600"
                         >
                           {cleanFullName}
                         </Link>
@@ -370,14 +367,14 @@ export function EmployeeDataTable({
                     </div>
                   </td>
 
-                  {/* 2. Department & Position Cell (19%) */}
+                  {/* 2. Department & Position Cell (20%) */}
                   <td className="py-2.5 px-3 overflow-hidden">
                     <div className="space-y-0.5 min-w-0">
-                      <div className="text-xs font-semibold text-slate-900 truncate" title={cleanDeptName || "Chưa phân phòng ban"}>
+                      <div className="text-xs font-semibold text-slate-900" title={cleanDeptName || "Chưa phân phòng ban"}>
                         {cleanDeptName ? (
                           <span className="flex items-center gap-1 min-w-0">
                             <Building2 className="w-3 h-3 text-slate-400 shrink-0" />
-                            <span className="truncate">{cleanDeptName}</span>
+                            <span className="line-clamp-2 leading-snug">{cleanDeptName}</span>
                           </span>
                         ) : (
                           <span className="text-amber-700 bg-amber-50 px-1 py-0.5 rounded text-[10px] font-medium border border-amber-200">
@@ -385,11 +382,11 @@ export function EmployeeDataTable({
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-slate-600 truncate" title={cleanPosTitle || "Chưa xác định chức danh"}>
+                      <div className="text-xs text-slate-600" title={cleanPosTitle || "Chưa xác định chức danh"}>
                         {cleanPosTitle ? (
                           <span className="flex items-center gap-1 min-w-0">
                             <Briefcase className="w-3 h-3 text-slate-400 shrink-0" />
-                            <span className="truncate text-[11px]">{cleanPosTitle}</span>
+                            <span className="text-[11px] leading-snug line-clamp-2">{cleanPosTitle}</span>
                           </span>
                         ) : (
                           <span className="text-slate-400 italic text-[11px]">Chưa xác định chức danh</span>
@@ -398,7 +395,7 @@ export function EmployeeDataTable({
                     </div>
                   </td>
 
-                  {/* 3. Current Project Assignment Cell (33% - MAX 2 LINES + CLICKABLE LINK + TOOLTIP) */}
+                  {/* 3. Current Project Assignment Cell (29% - MAX 2 LINES + CLICKABLE LINK + TOOLTIP) */}
                   <td className="py-2.5 px-3 overflow-hidden">
                     <ProjectAssignmentCell projects={projects} totalAllocationPercentage={totalPct} />
                   </td>
@@ -497,7 +494,7 @@ export function EmployeeDataTable({
                     {getInitials(cleanFullName)}
                   </div>
                   <div className="min-w-0">
-                    <h3 className="font-bold text-slate-900 text-base truncate">
+                    <h3 className="text-base font-bold leading-snug text-slate-900 line-clamp-2" title={cleanFullName}>
                       {cleanFullName}
                     </h3>
                     <span className="text-xs font-mono font-semibold text-slate-500">
@@ -513,10 +510,10 @@ export function EmployeeDataTable({
               <div className="grid grid-cols-2 gap-2 text-xs border-t border-b border-slate-100 py-2.5 text-slate-600">
                 <div className="min-w-0">
                   <span className="text-slate-400 block text-[10px] uppercase font-bold">Phòng ban / Chức danh</span>
-                  <span className="font-semibold text-slate-900 block truncate">
+                  <span className="block font-semibold leading-snug text-slate-900 line-clamp-2" title={sanitizeDisplayName(emp.currentDepartmentName) || "Chưa phân phòng ban"}>
                     {sanitizeDisplayName(emp.currentDepartmentName) || "Chưa phân phòng ban"}
                   </span>
-                  <span className="text-slate-600 text-[11px] block truncate">
+                  <span className="block text-[11px] leading-snug text-slate-600 line-clamp-2" title={sanitizeDisplayName(emp.currentPositionTitle) || "Chưa xác định chức danh"}>
                     {sanitizeDisplayName(emp.currentPositionTitle) || "Chưa xác định chức danh"}
                   </span>
                 </div>

@@ -154,12 +154,12 @@ export function HrReportDetailTable({ tableData }: HrReportDetailTableProps) {
                 return (
                   <tr key={item.assignmentId} className="hover:bg-slate-50 transition-colors">
                     <td className="px-3 py-3 text-center font-medium text-slate-500">{stt}</td>
-                    <td className="px-3 py-3 min-w-[150px] max-w-[200px] sticky left-0 bg-white z-10 shadow-xs">
-                      <div className="font-bold text-slate-900 truncate" title={item.employeeFullName}>{item.employeeFullName}</div>
+                    <td className="px-3 py-3 min-w-[180px] max-w-[240px] sticky left-0 bg-white z-10 shadow-xs">
+                      <div className="font-bold leading-snug text-slate-900 line-clamp-2" title={item.employeeFullName}>{item.employeeFullName}</div>
                       <div className="text-2xs font-mono font-semibold text-blue-700">{item.employeeCode}</div>
                     </td>
-                    <td className="px-3 py-3 min-w-[140px] max-w-[180px] text-slate-600">
-                      <div className="truncate" title={item.orgUnitName}>{item.orgUnitName || "Chưa gán"}</div>
+                    <td className="px-3 py-3 min-w-[160px] max-w-[220px] text-slate-600">
+                      <div className="leading-snug line-clamp-2" title={item.orgUnitName}>{item.orgUnitName || "Chưa gán"}</div>
                     </td>
                     <td className="px-3 py-3 min-w-[180px] max-w-[260px]">
                       <div className="font-semibold text-slate-900 line-clamp-2 leading-snug" title={item.projectName}>

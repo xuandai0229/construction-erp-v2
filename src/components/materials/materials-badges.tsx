@@ -50,30 +50,31 @@ export function StockStatusBadge({ stock, minStockLevel, compact = false }: Stoc
   );
 }
 
-export function MovementTypeBadge({ type, className }: { type: MaterialMovementType; className?: string }) {
-  if (type === "IMPORT") {
+export function MovementTypeBadge({ type, className, compact }: { type: string | MaterialMovementType; className?: string; compact?: boolean }) {
+  const moveType = type as MaterialMovementType;
+  if (moveType === "IMPORT") {
     return (
       <StatusBadge variant="success" size="sm" className={`gap-1.5 ${className || ""}`}>
         <ArrowDownRight className="h-3.5 w-3.5" />
-        {getMovementLabel(type)}
+        {getMovementLabel(moveType)}
       </StatusBadge>
     );
   }
 
-  if (type === "EXPORT") {
+  if (moveType === "EXPORT") {
     return (
       <StatusBadge variant="warning" size="sm" className={`gap-1.5 ${className || ""}`}>
         <ArrowUpRight className="h-3.5 w-3.5" />
-        {getMovementLabel(type)}
+        {getMovementLabel(moveType)}
       </StatusBadge>
     );
   }
 
-  if (type === "RETURN") {
+  if (moveType === "RETURN") {
     return (
       <StatusBadge variant="info" size="sm" className={`gap-1.5 ${className || ""}`}>
         <RotateCcw className="h-3.5 w-3.5" />
-        {getMovementLabel(type)}
+        {getMovementLabel(moveType)}
       </StatusBadge>
     );
   }
@@ -81,7 +82,29 @@ export function MovementTypeBadge({ type, className }: { type: MaterialMovementT
   return (
     <StatusBadge variant="neutral" size="sm" className={`gap-1.5 ${className || ""}`}>
       <Truck className="h-3.5 w-3.5" />
-      {getMovementLabel(type)}
+      {getMovementLabel(moveType)}
     </StatusBadge>
+  );
+}
+
+export function ProposalStatusBadge({ status }: { status: string }) {
+  if (status === "APPROVED") {
+    return (
+      <span className="bg-emerald-50 text-emerald-700 font-semibold px-2 py-0.5 rounded text-xs border border-emerald-200">
+        Đã duyệt
+      </span>
+    );
+  }
+  if (status === "REJECTED") {
+    return (
+      <span className="bg-rose-50 text-rose-700 font-semibold px-2 py-0.5 rounded text-xs border border-rose-200">
+        Bị từ chối
+      </span>
+    );
+  }
+  return (
+    <span className="bg-amber-50 text-amber-700 font-semibold px-2 py-0.5 rounded text-xs border border-amber-200">
+      Chờ duyệt
+    </span>
   );
 }

@@ -21,11 +21,11 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 const DEMO_MATERIALS = [
-  { code: "DEMO-THEP-D10", name: "Thép D10 (Demo)", unit: "kg", group: "Thép", description: "Thép cuộn D10 Hòa Phát" },
-  { code: "DEMO-THEP-D16", name: "Thép D16 (Demo)", unit: "Cây", group: "Thép", description: "Thép vằn D16" },
-  { code: "DEMO-XM-PCB40", name: "Xi măng PCB40 (Demo)", unit: "Bao", group: "Xi măng", description: "Xi măng Bỉm Sơn PCB40" },
-  { code: "DEMO-CAT-V", name: "Cát vàng (Demo)", unit: "m3", group: "Vật liệu rời", description: "Cát vàng đổ bê tông" },
-  { code: "DEMO-DA-1X2", name: "Đá 1x2 (Demo)", unit: "m3", group: "Vật liệu rời", description: "Đá 1x2 trộn bê tông" },
+  { code: "DEMO-THEP-D10", name: "Thép D10 (Demo)", unit: "kg", manufacturer: "Hòa Phát", origin: "Việt Nam", description: "Thép cuộn D10" },
+  { code: "DEMO-THEP-D16", name: "Thép D16 (Demo)", unit: "Cây", manufacturer: "Hòa Phát", origin: "Việt Nam", description: "Thép vằn D16" },
+  { code: "DEMO-XM-PCB40", name: "Xi măng PCB40 (Demo)", unit: "Bao", manufacturer: "Bỉm Sơn", origin: "Việt Nam", description: "Xi măng PCB40" },
+  { code: "DEMO-CAT-V", name: "Cát vàng (Demo)", unit: "m3", manufacturer: null, origin: "Việt Nam", description: "Cát vàng đổ bê tông" },
+  { code: "DEMO-DA-1X2", name: "Đá 1x2 (Demo)", unit: "m3", manufacturer: null, origin: "Việt Nam", description: "Đá 1x2 trộn bê tông" },
 ];
 
 async function runDemoSeed() {

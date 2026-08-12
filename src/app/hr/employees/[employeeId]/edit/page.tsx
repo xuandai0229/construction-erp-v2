@@ -61,7 +61,10 @@ export default async function EmployeeEditPage({ params }: EmployeeEditPageProps
       <HrPageHeader
         title="Chỉnh sửa hồ sơ nhân viên"
         description={`Mã NV: ${employee.code} — ${employee.fullName}`}
-        action={
+      />
+
+      <HrWorkspaceTabs
+        rightContent={
           <Link
             href={`/hr/employees/${employeeId}`}
             className="inline-flex items-center gap-1.5 px-3 py-2 border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg transition-colors shrink-0"
@@ -71,8 +74,6 @@ export default async function EmployeeEditPage({ params }: EmployeeEditPageProps
           </Link>
         }
       />
-
-      <HrWorkspaceTabs />
 
       <EmployeeEditForm
         employee={{

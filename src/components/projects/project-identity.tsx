@@ -3,6 +3,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { getProjectStatusMeta } from "@/lib/project-status";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { ProjectName } from "@/components/project/project-name";
 
 export type ProjectIdentityVariant =
   | "header"
@@ -70,9 +71,7 @@ export function ProjectIdentity({
   if (variant === "table") {
     return (
       <div className={cn("flex flex-col min-w-0 py-0.5", className)} data-project-identity="table">
-        <div className="line-clamp-2 text-[14px] font-bold text-slate-950 leading-snug break-words">
-          {renderTitle("font-bold text-slate-950 text-[14px]")}
-        </div>
+        <ProjectName name={primaryTitle} maxLines={2} className="text-[14px] font-bold leading-snug text-slate-950" />
         <div className="mt-1 flex items-center gap-1.5 text-[12px] font-mono font-medium text-slate-600">
           <span className="bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded text-[11px] font-bold text-slate-800">
             {code}
@@ -93,7 +92,7 @@ export function ProjectIdentity({
     return (
       <div className={cn("flex flex-col min-w-0 text-left py-0.5", className)} data-project-identity="selector">
         {/* Row 1: Display Name */}
-        <div className={cn("text-[14px] font-bold leading-tight text-slate-950 line-clamp-2 break-words", selected && "text-blue-950 font-black")}>
+        <div title={primaryTitle} className={cn("text-[14px] font-bold leading-tight text-slate-950 line-clamp-2 break-words", selected && "text-blue-950 font-black")}>
           {primaryTitle}
         </div>
 
@@ -139,12 +138,10 @@ export function ProjectIdentity({
   // 3. Header Variant
   if (variant === "header") {
     return (
-      <div className={cn("flex items-center gap-2 min-w-0", className)} data-project-identity="header">
-        <span className="font-bold text-[15px] sm:text-[16px] text-slate-950 truncate">
-          {primaryTitle}
-        </span>
-        <span className="shrink-0 px-2 py-0.5 rounded bg-blue-50 text-blue-800 text-[11px] font-mono font-bold border border-blue-200">
-          {code}
+      <div className={cn("flex min-w-0 flex-col gap-1", className)} data-project-identity="header">
+        <ProjectName name={primaryTitle} maxLines={2} className="text-[15px] font-bold leading-5 sm:text-base" />
+        <span className="w-fit rounded border border-slate-200 bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-slate-600">
+          Mã: {code}
         </span>
       </div>
     );
@@ -154,7 +151,7 @@ export function ProjectIdentity({
   if (variant === "dashboard") {
     return (
       <div className={cn("flex flex-col min-w-0 space-y-1.5", className)} data-project-identity="dashboard">
-        <h1 className="text-[20px] sm:text-[24px] font-black text-slate-950 leading-tight">
+        <h1 title={primaryTitle} className="text-[20px] sm:text-[24px] font-black text-slate-950 leading-tight">
           {primaryTitle}
         </h1>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-slate-700 font-medium">
@@ -192,7 +189,7 @@ export function ProjectIdentity({
           </span>
           {statusMeta && <StatusBadge variant={statusMeta.variant}>{statusMeta.label}</StatusBadge>}
         </div>
-        <div className="text-[15px] font-bold text-slate-950 leading-snug line-clamp-2">
+        <div title={primaryTitle} className="text-[15px] font-bold text-slate-950 leading-snug line-clamp-2">
           {renderTitle("text-[15px] font-bold text-slate-950 leading-snug")}
         </div>
         <div className="text-[13px] text-slate-700 font-medium space-y-1 pt-1.5 border-t border-slate-200">
@@ -219,7 +216,7 @@ export function ProjectIdentity({
             </span>
           )}
         </div>
-        <h1 className="text-[22px] sm:text-[26px] font-black text-slate-950 leading-tight">
+        <h1 title={primaryTitle} className="text-[22px] sm:text-[26px] font-black text-slate-950 leading-tight">
           {primaryTitle}
         </h1>
         {displayName && name && displayName !== name && (

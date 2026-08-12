@@ -16,6 +16,7 @@ import { formatDisplayDate } from "@/lib/hr/vietnam-date-helper";
 import { AssignmentStatusBadge } from "./assignment-status-badge";
 import { AssignmentUserCapabilities } from "@/app/hr/project-assignments/actions/project-assignment-actions";
 import { UnifiedActionMenu } from "@/components/ui/unified-action-menu";
+import { ProjectName } from "@/components/project/project-name";
 
 interface ProjectAssignmentTableProps {
   assignments: ProjectAssignmentDTO[];
@@ -120,7 +121,7 @@ export function ProjectAssignmentTable({
                         {item.employeeName.charAt(0)}
                       </div>
                       <div className="min-w-0">
-                        <div className="truncate font-semibold text-slate-900" title={item.employeeName}>
+                        <div className="font-semibold leading-snug text-slate-900 line-clamp-2" title={item.employeeName}>
                           {item.employeeName}
                         </div>
                         <div className="text-[11px] text-slate-500 font-mono">
@@ -133,7 +134,7 @@ export function ProjectAssignmentTable({
                   {/* Unit */}
                   <td className="py-3.5 px-4 text-slate-600">
                     {item.orgUnitName ? (
-                      <span className="truncate block max-w-[140px]" title={item.orgUnitName}>
+                      <span className="block max-w-[180px] leading-snug line-clamp-2" title={item.orgUnitName}>
                         {item.orgUnitName}
                       </span>
                     ) : (
@@ -144,12 +145,7 @@ export function ProjectAssignmentTable({
                   {/* Project */}
                   <td className="py-3.5 px-4">
                     <div className="min-w-0">
-                      <div 
-                        className="font-semibold text-slate-900 line-clamp-2 max-w-[220px] leading-snug" 
-                        title={item.projectName}
-                      >
-                        {item.projectName}
-                      </div>
+                      <ProjectName name={item.projectName} maxLines={2} className="max-w-[260px] text-sm font-semibold leading-snug text-slate-900" />
                       <div className="text-[11px] text-slate-500 font-mono mt-0.5">
                         {item.projectCode}
                       </div>
@@ -276,7 +272,10 @@ export function ProjectAssignmentTable({
               <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-sm space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-slate-500">Công trình:</span>
-                  <span className="font-semibold text-slate-900 text-right">[{item.projectCode}] {item.projectName}</span>
+                  <span className="min-w-0 text-right">
+                    <ProjectName name={item.projectName} maxLines={2} className="text-sm font-semibold leading-snug text-slate-900" />
+                    <span className="mt-0.5 block font-mono text-[10px] font-medium text-slate-500">{item.projectCode}</span>
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-500">Vai trò:</span>

@@ -1,0 +1,500 @@
+﻿        section        
+-----------------------
+ === PROJECT COUNT ===
+(1 row)
+
+ project_count 
+---------------
+            21
+(1 row)
+
+       section        
+----------------------
+ === PROJECT LIST ===
+(1 row)
+
+            id             |     code     |                                                                                                                                       name                                                                                                                                       |                   location                    | status | start_date |  end_date  |    created_at    
+---------------------------+--------------+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------------------------------------------+--------+------------+------------+------------------
+ cms9tyddq0000n4k5mvu9wdrt | CT-2026-0001 | Kß║┐ hoß║ích lß╗▒a chß╗ìn nh├á thß║ºu thß╗▒c hiß╗çn nhiß╗çm vß╗Ñ quß║ún l├╜ bß║úo tr├¼ kß║┐t cß║Ñu hß║í tß║ºng giao th├┤ng ─æ╞░ß╗¥ng bß╗Ö giai ─æoß║ín 2026-2030 tr├¬n ─æß╗ïa b├án ph╞░ß╗¥ng Thanh Xu├ón                                                                                                                             |                                               | ACTIVE |            |            | 2026-08-01 03:47
+ cms9tyde50001n4k53e221ea6 | CT-2026-0002 | Dß╗▒ ├ín: ─Éß║ºu t╞░ x├óy dß╗▒ng ph├ón kß╗│ 1 (giai ─æoß║ín 1) Quß║úng tr╞░ß╗¥ng ΓÇô c├┤ng vi├¬n ph├¡a ─É├┤ng hß╗ô Ho├án Kiß║┐m                                                                                                                                                                                   | Ph╞░ß╗¥ng Ho├án Kiß║┐m                              | ACTIVE |            |            | 2026-08-01 03:47
+ cms9tydgm0004n4k5luf4qn5n | CT-2026-0003 | X├óy dß╗▒ng tr╞░ß╗¥ng THCS Lß╗ç Chi                                                                                                                                                                                                                                                      | X├ú Thuß║¡n An, TP HN                            | ACTIVE |            |            | 2026-08-01 03:47
+ cms9tydia0007n4k563f6j0g7 | CT-2026-0004 | X├óy dß╗▒ng tr╞░ß╗¥ng mß║ºm non Kim S╞ín, huyß╗çn Gia L├óm                                                                                                                                                                                                                                   | X├ú Thuß║¡n An                                   | ACTIVE | 2025-12-19 | 2026-10-19 | 2026-08-01 03:47
+ cms9tydic0009n4k57z419qjm | CT-2026-0005 | X├óy dß╗▒ng tr╞░ß╗¥ng MN Hoa Hß╗ông                                                                                                                                                                                                                                                      | th├┤n Tr├╣ng Qu├ín, x├ú Y├¬n Th╞░ß╗¥ng, huyß╗çn Gia L├óm | ACTIVE |            |            | 2026-08-01 03:47
+ cms9tydif000bn4k56ypfqjxw | CT-2026-0006 | Ho├án thiß╗çn v├á ─æß║ºu t╞░ trang thiß║┐t bß╗ï tr╞░ß╗¥ng Mß║ºm non Minh Khai                                                                                                                                                                                                                     | 201 Minh Khai, ph╞░ß╗¥ng Bß║ích Mai                | ACTIVE |            |            | 2026-08-01 03:47
+ cms9tydk2000en4k56itvgc7a | CT-2026-0007 | Cß║úi tß║ío, sß╗¡a chß╗»a v├á mua sß║»m trang thiß║┐t bß╗ï tß║íi mß╗Öt sß╗æ tr╞░ß╗¥ng hß╗ìc tr├¬n ─æß╗ïa b├án ph╞░ß╗¥ng T├óy Hß╗ô- 15 tr╞░ß╗¥ng                                                                                                                                                                          | ph╞░ß╗¥ng T├óy Hß╗ô                                 | ACTIVE |            |            | 2026-08-01 03:47
+ cms9tydlp000hn4k5s8402dhe | CT-2026-0008 | Cß║úi tß║ío, sß╗¡a chß╗»a v├á mua sß║»m trang thiß║┐t bß╗ï tß║íi mß╗Öt sß╗æ tr╞░ß╗¥ng hß╗ìc tr├¬n ─æß╗ïa b├án ph╞░ß╗¥ng T├óy Hß╗ô- 13 tr╞░ß╗¥ng                                                                                                                                                                          | ph╞░ß╗¥ng T├óy Hß╗ô                                 | ACTIVE |            |            | 2026-08-01 03:47
+ cms9tydlu000jn4k5itd0vzcd | CT-2026-0009 | Dß╗▒ ├ín: Trung t├óm giao dß╗ïch c├┤ng nghß╗ç th╞░ß╗¥ng xuy├¬n H├á Nß╗Öi - Khu li├¬n c╞í V├╡ Ch├¡ C├┤ng (─æiß╗üu chß╗ënh)                                                                                                                                                                                  | Sß╗æ 258 V├╡ Ch├¡ C├┤ng, ph╞░ß╗¥ng T├óy Hß╗ô             | ACTIVE | 2026-03-19 | 2026-06-30 | 2026-08-01 03:47
+ cms9tydnk000mn4k5azfl2w64 | CT-2026-0010 | Sß╗¡a chß╗»a, cß║úi tß║ío tß║Ñm ─æan cß╗æng hß╗Öp tho├ít n╞░ß╗¢c ─æ╞░ß╗¥ng Nguyß╗àn Ch├¡ Thanh ( ─æoß║ín tß╗½ Hß╗ìc viß╗çn Phß╗Ñ nß╗» ─æß║┐n ch├ón cß║ºu v╞░ß╗út Nguyß╗àn Ch├¡ Thanh                                                                                                                                                |                                               | ACTIVE |            |            | 2026-08-01 03:47
+ cms9tydp8000pn4k5tuwqq9ga | CT-2026-0011 | Cß║úi tß║ío sß╗¡a chß╗»a ─ÉNN ph╞░ß╗¥ng V─⌐nh Tuy n─âm 2026, c├íc ng├╡ 477,487,325 Kim Ng╞░u, ng├ích 325/135, 121/48, 121/95, hß║╗m ng├ích 121/3 Kim Ng╞░u                                                                                                                                             | Ph╞░ß╗¥ng V─⌐nh Tuy                               | ACTIVE |            |            | 2026-08-01 03:47
+ cms9tydqx000sn4k5sz6q6wfj | CT-2026-0012 | X├óy dß╗▒ng, cß║úi tß║ío tr╞░ß╗¥ng Mß║ºm non 20 -10, quß║¡n Ho├án Kiß║┐m                                                                                                                                                                                                                          | 40 Thß╗ú Nhuß╗Öm, ph╞░ß╗¥ng Cß╗¡a Nam                  | ACTIVE | 2025-08-25 | 2027-08-20 | 2026-08-01 03:47
+ cms9tydsm000vn4k5t0z7fhsx | CT-2026-0013 | Cß║úi tß║ío ─æ╞░ß╗¥ng v├á hß╗ç thß╗æng tho├ít n╞░ß╗¢c ng├╡ 718,1008 ─æ╞░ß╗¥ng L├íng, ng├ích 1150/1 ─æ╞░ß╗¥ng L├íng, ng├╡ 1194, ng├ích 1194/19, 1194/63,1194/67,1194/73,1194/91 ─æ╞░ß╗¥ng L├íng, ng├╡ 67 phß╗æ ch├╣a L├íng, ng├╡ 10 ph├ío ─æ├ái L├íng, ng├ích 45/25,14/31 Ph├ío ─É├ái L├íng, ng├╡ 74,100, ng├ích 76/3 Nguyß╗àn Ch├¡ Thanh | Ph╞░ß╗¥ng L├íng                                   | ACTIVE |            |            | 2026-08-01 03:47
+ cms9tydsp000xn4k5286p44ty | CT-2026-0014 | X├óy dß╗▒ng tuyß║┐n ─æ╞░ß╗¥ng ─æoß║ín tß╗½ n├║t giao ng├╡ 612 Lß║íc Long Qu├ón- phß╗æ V┼⌐ Tuß║Ñn Chi├¬u ─æß║┐n phß╗æ Nhß║¡t Chi├¬u, lß║»p ─æß║╖t tuyß║┐n ß╗æng bß╗ò cß║¡p n╞░ß╗¢c Hß╗ô T├óy                                                                                                                                          | 612 Lß║íc Long Qu├ón                             | ACTIVE |            |            | 2026-08-01 03:47
+ cms9tydud0010n4k5w2hmqjmh | CT-2026-0015 | Bß║úo tr├¼, kß║┐t cß║Ñu hß║í tß║ºng giao th├┤ng ─æ╞░ß╗¥ng bß╗Ö tr├¬n ─æß╗ïa b├án ph╞░ß╗¥ng Xu├ón Ph╞░╞íng theo ph├ón cß║Ñp 2026-2028                                                                                                                                                                             | Ph╞░ß╗¥ng Xu├ón Ph╞░╞íng                            | ACTIVE | 2026-06-05 | 2028-12-31 | 2026-08-01 03:47
+ cms9tydw00013n4k5sjjtouul | CT-2026-0016 | Cß║úi tß║ío, chß╗ënh trang hß║í tß║ºng kß╗╣ thuß║¡t khu vß╗▒c h├¿ phß╗æ Trß║ºn Nh├ón T├┤ng v├á cß╗òng c├┤ng vi├¬n Thß╗æng Nhß║Ñt                                                                                                                                                                                 |                                               | ACTIVE |            |            | 2026-08-01 03:47
+ cms9tydxt0016n4k5rx9hikdj | CT-2026-0017 | Cß║úi tß║ío,chß╗ënh trang h├¿, ─æ╞░ß╗¥ng, hß║í tß║ºng kß╗╣ thuß║¡t v├á v╞░ß╗¥n hoa thuß╗Öc khu ─æ├┤ thß╗ï mß╗¢i Trung V─ân, ph╞░ß╗¥ng ─Éß║íi Mß╗ù, TP H├á Nß╗Öi                                                                                                                                                             | Ph╞░ß╗¥ng ─Éß║íi Mß╗ù                                 | ACTIVE | 2026-07-15 | 2026-12-20 | 2026-08-01 03:47
+ cms9tydxx0018n4k5xsmxehmz | CT-2026-0018 | Cß║úi tß║ío,chß╗ënh trang h├¿, ─æ╞░ß╗¥ng, hß║í tß║ºng kß╗╣ thuß║¡t v├á v╞░ß╗¥n hoa thuß╗Öc khu ─æ├┤ thß╗ï mß╗¢i Trung V─ân, ph╞░ß╗¥ng ─Éß║íi Mß╗ù, TP H├á Nß╗Öi                                                                                                                                                             | Ph╞░ß╗¥ng ─Éß║íi Mß╗ù                                 | ACTIVE | 2026-07-15 | 2026-12-20 | 2026-08-01 03:47
+ cms9tydy1001an4k52iepe45t | CT-2026-0019 | Quß║ún l├╜, duy tu, duy tr├¼ vß║¡n h├ánh hß╗ç thß╗æng c├┤ng vi├¬n hß╗ô Ph├╣ng Khoang theo ph├ón cß║Ñp tr├¬n ─æß╗ïa b├án ph╞░ß╗¥ng ─Éß║íi Mß╗ù giai ─æoß║ín 2026-2028                                                                                                                                                | C├┤ng vi├¬n Ph├╣ng Khoang                        | ACTIVE |            | 2028-12-31 | 2026-08-01 03:47
+ cms9tydy2001bn4k58evaixfi | CT-2026-0020 | Quß║ún l├╜ duy tu duy tr├¼ hß║í tß║ºng giao th├┤ng( bao gß╗ôm lß║»p biß╗ân chß╗ë dß║½n ─æ╞░ß╗¥ng, s╞ín kß║╗ vß║ích) theo ph├ón cß║Ñp tr├¬n ─æß╗ïa b├án ph╞░ß╗¥ng ─Éß║íi Mß╗ù n─âm 2026                                                                                                                                        | Ph╞░ß╗¥ng ─Éß║íi Mß╗ù                                 | ACTIVE |            |            | 2026-08-01 03:47
+ cms9tydy4001dn4k58iib1ob9 | CT-2026-0021 | Duy tu h├¿ tuyß║┐n phß╗æ D╞░╞íng V─ân B├⌐ ─æß╗ìan lß╗æi v├áo ao c├í b├íc Hß╗ô                                                                                                                                                                                                                       | Ph╞░ß╗¥ng V─⌐nh Tuy                               | ACTIVE |            |            | 2026-08-01 03:47
+(21 rows)
+
+         section         
+-------------------------
+ === TABLE INVENTORY ===
+(1 row)
+
+            table_name             | row_count 
+-----------------------------------+-----------
+ ApprovalRequest                   |         0
+ AuditLog                          |       648
+ ChatMessage                       |         0
+ Document                          |         0
+ DocumentFolder                    |         1
+ Employee                          |        31
+ EmployeeChangeHistory             |        33
+ EmployeeCodeSequence              |         6
+ EmployeeOrganizationAssignment    |        31
+ EmployeeProjectAssignment         |        15
+ FieldMaterialRequest              |         0
+ FieldMaterialRequestItem          |         0
+ FieldProgressEntry                |         0
+ FieldProgressItem                 |         2
+ FieldProgressItemAssignment       |         0
+ FieldProgressItemLocation         |         0
+ FieldProgressTemplate             |         1
+ HrPermissionDefinition            |        14
+ MaterialItem                      |        12
+ MaterialMovement                  |        17
+ MaterialProposal                  |        19
+ MaterialProposalApproval          |         0
+ MaterialProposalItem              |        22
+ Notification                      |         0
+ OrganizationUnit                  |        13
+ OrganizationUnitManagerAssignment |         4
+ Position                          |        13
+ Project                           |        21
+ ProjectLocationNode               |         0
+ ProjectMaterialStock              |        12
+ ProjectMember                     |        18
+ ProjectPersonnelRole              |         4
+ SafetyReportApprovalHistory       |         0
+ SafetyReportAuditLog              |        11
+ SafetyReportPlan                  |         4
+ SafetyReportPlanEntry             |         1
+ SafetyReportPlanSequence          |         1
+ SafetySelfAssessmentEntry         |         0
+ SafetySelfAssessmentReport        |         4
+ SafetySelfAssessmentSequence      |         1
+ SafetyWeeklyFile                  |         4
+ SiteReport                        |         0
+ SiteReportAttachment              |         0
+ SiteReportLine                    |         0
+ SiteReportPhoto                   |         0
+ SupervisionAttachment             |         0
+ SupervisionFinding                |         0
+ SupervisionInspectionSchedule     |         0
+ SupervisionPlanItem               |         0
+ SupervisionProgressAssessment     |         0
+ SupervisionQuantityVerification   |         0
+ SupervisionRecommendation         |         0
+ SupervisionScope                  |         0
+ SupervisionScopeProject           |         0
+ SupervisionTransitionCheck        |         0
+ SupervisionVisit                  |         0
+ SupervisionWeeklyAttachment       |         0
+ SupervisionWeeklyDossier          |        14
+ SupervisionWeeklyEntry            |        14
+ SupervisionWeeklyObservation      |         0
+ SupervisionWeeklyPackage          |         0
+ SupervisionWeeklyProgress         |         1
+ SupervisionWeeklyQuantity         |         1
+ SupervisionWeeklyRevision         |        65
+ SupervisionWeeklyShiftSelection   |        14
+ SupervisionWeeklyTransition       |         1
+ SupervisionWorkflowHistory        |         0
+ SystemSetting                     |         1
+ User                              |        14
+ UserAccessGrant                   |         0
+ WBSItem                           |         0
+(71 rows)
+
+      section      
+-------------------
+ === USER LIST ===
+(1 row)
+
+            id             |          email           |       name       |      role       | isActive |   status   |    created_at    
+---------------------------+--------------------------+------------------+-----------------+----------+------------+------------------
+ cmroatu6r0000mowklk61sv56 | daicongtu2910@gmail.com  | X─É               | ADMIN           | t        | active     | 2026-07-17 02:08
+ cms9tydg20002n4k5278zks3g | lemanhhung@gmail.com     | L├¬ Mß║ính H├╣ng     | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+ cms9tydi70005n4k5q2lrno9t | doanvangiang@gmail.com   | ─Éo├án V─ân Giang   | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+ cms9tydjz000cn4k5ui1zb9f3 | letrongha@gmail.com      | L├¬ Trß╗ìng Hß║í      | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+ cms9tydlm000fn4k59tbl32fv | tranquocdung@gmail.com   | Trß║ºn Quß╗æc D┼⌐ng   | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+ cms9tydng000kn4k5c6ikcaui | nguyenvanhung@gmail.com  | Nguyß╗àn V─ân H╞░ng  | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+ cms9tydp5000nn4k5zgilcwjy | phamanhtuan@gmail.com    | Phß║ím Anh Tuß║Ñn    | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+ cms9tydqu000qn4k52vt6oczg | nguyenducmui@gmail.com   | Nguyß╗àn ─Éß╗⌐c M├╣i   | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+ cms9tydsj000tn4k5ka22kbsk | nguyentumanh@gmail.com   | Nguyß╗àn T╞░ Mß║ính   | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+ cms9tydub000yn4k5gfbu0mpv | luongvancong@gmail.com   | L╞░╞íng V─ân C├┤ng   | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+ cms9tydvx0011n4k5jeu2r6hl | vuhung@gmail.com         | V┼⌐ H╞░ng          | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+ cms9tydxq0014n4k5rrqox9or | nguyenminhhung@gmail.com | Nguyß╗àn Minh H├╣ng | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+ cmsczcskg00009ck57x7moaxt | daicongty2910@gmail.com  | Admin System     | ADMIN           | f        | 2026-08-03 | 2026-08-03 08:41
+ qa_admin_override_id      | admin@construction.local | Admin QA         | ADMIN           | t        | active     | 2026-08-05 13:43
+(14 rows)
+
+        section         
+------------------------
+ === MATERIAL ITEMS ===
+(1 row)
+
+            id             |       code        |                name                | unit  |         projectId         | project_code |    created_at    
+---------------------------+-------------------+------------------------------------+-------+---------------------------+--------------+------------------
+ cmsodh4zp00002ck5v1l49fs7 | QA-XI-MANG        | Xi m─âng PCB40 Ho├áng Thß║ích          | bao   | cms9tyddq0000n4k5mvu9wdrt | CT-2026-0001 | 2026-08-11 08:02
+ cmsodh50300032ck5w4c2y6z5 | QA-THEP-D10       | Th├⌐p thanh vß║▒n D10 CB300-V         | kg    | cms9tyddq0000n4k5mvu9wdrt | CT-2026-0001 | 2026-08-11 08:02
+ cmsodh50800062ck5m8qz1v3k | QA-CAT-VANG-01    | C├ít v├áng tinh x├óy tr├ít             | m3    | cms9tyddq0000n4k5mvu9wdrt | CT-2026-0001 | 2026-08-11 08:02
+ cmsodh50b00082ck5m8xv6fcw | QA-COP-PHA        | Cß╗æp pha phß╗º phim 18mm              | m2    | cms9tyddq0000n4k5mvu9wdrt | CT-2026-0001 | 2026-08-11 08:02
+ cmsodh50g000b2ck5eqlwvquc | QA-DA-1X2         | ─É├í 1x2 ─æß╗ò b├¬ t├┤ng                  | m3    | cms9tyddq0000n4k5mvu9wdrt | CT-2026-0001 | 2026-08-11 08:02
+ cmsodh50m000e2ck5um74uj52 | QA-XI-MANG        | Xi m─âng PCB40 Ho├áng Thß║ích          | bao   | cms9tydud0010n4k5w2hmqjmh | CT-2026-0015 | 2026-08-11 08:02
+ cmsodh50q000h2ck51y1r0u9q | QA-THEP-D10       | Th├⌐p thanh vß║▒n D10 CB300-V         | kg    | cms9tydud0010n4k5w2hmqjmh | CT-2026-0015 | 2026-08-11 08:02
+ cmsodh50x000k2ck5nfsk58a9 | QA-CAT-VANG-02    | C├ít v├áng tinh x├óy tr├ít             | m3    | cms9tydud0010n4k5w2hmqjmh | CT-2026-0015 | 2026-08-11 08:02
+ cmsodh514000n2ck5gseeet6m | QA-COP-PHA        | Cß╗æp pha phß╗º phim 18mm              | bß╗Ö    | cms9tydud0010n4k5w2hmqjmh | CT-2026-0015 | 2026-08-11 08:02
+ cmsodh518000q2ck5xz8bisrd | QA-SON-NGOAI-THAT | S╞ín ngoß║íi thß║Ñt Dulux Weathershield | th├╣ng | cms9tydud0010n4k5w2hmqjmh | CT-2026-0015 | 2026-08-11 08:02
+ cmsodh51b000t2ck52k9x5lgw | QA-XI-MANG        | Xi m─âng PCB40 Ho├áng Thß║ích          | bao   | cms9tydp8000pn4k5tuwqq9ga | CT-2026-0011 | 2026-08-11 08:02
+ cmsodh51f000w2ck5wl73ifh4 | QA-GACH-THIEN-TAN | Gß║ích ─æß║╖c 2 lß╗ù Thß║ích B├án            | vi├¬n  | cms9tydp8000pn4k5tuwqq9ga | CT-2026-0011 | 2026-08-11 08:02
+(12 rows)
+
+          section           
+----------------------------
+ === MATERIAL MOVEMENTS ===
+(1 row)
+
+            id             |         projectId         | project_code |      materialItemId       |   material_code   |  type  |  quantity  | movement_date |    created_at    
+---------------------------+---------------------------+--------------+---------------------------+-------------------+--------+------------+---------------+------------------
+ cmsodh50000022ck55npmxdu9 | cms9tyddq0000n4k5mvu9wdrt | CT-2026-0001 | cmsodh4zp00002ck5v1l49fs7 | QA-XI-MANG        | IMPORT |   250.0000 | 2026-08-06    | 2026-08-11 08:02
+ cmsodh50700052ck5efer0kpr | cms9tyddq0000n4k5mvu9wdrt | CT-2026-0001 | cmsodh50300032ck5w4c2y6z5 | QA-THEP-D10       | IMPORT |   500.0000 | 2026-08-06    | 2026-08-11 08:02
+ cmsodh50f000a2ck512a2p9mt | cms9tyddq0000n4k5mvu9wdrt | CT-2026-0001 | cmsodh50b00082ck5m8xv6fcw | QA-COP-PHA        | IMPORT |   120.0000 | 2026-08-06    | 2026-08-11 08:02
+ cmsodh50k000d2ck50ynu6on3 | cms9tyddq0000n4k5mvu9wdrt | CT-2026-0001 | cmsodh50g000b2ck5eqlwvquc | QA-DA-1X2         | IMPORT |    45.0000 | 2026-08-06    | 2026-08-11 08:02
+ cmsodh50p000g2ck5q8904dk9 | cms9tydud0010n4k5w2hmqjmh | CT-2026-0015 | cmsodh50m000e2ck5um74uj52 | QA-XI-MANG        | IMPORT |    80.0000 | 2026-08-06    | 2026-08-11 08:02
+ cmsodh50u000j2ck5k3rd2p3i | cms9tydud0010n4k5w2hmqjmh | CT-2026-0015 | cmsodh50q000h2ck51y1r0u9q | QA-THEP-D10       | IMPORT |  3500.0000 | 2026-08-06    | 2026-08-11 08:02
+ cmsodh511000m2ck5mzlujsrj | cms9tydud0010n4k5w2hmqjmh | CT-2026-0015 | cmsodh50x000k2ck5nfsk58a9 | QA-CAT-VANG-02    | IMPORT |    30.0000 | 2026-08-06    | 2026-08-11 08:02
+ cmsodh517000p2ck54oam7ew7 | cms9tydud0010n4k5w2hmqjmh | CT-2026-0015 | cmsodh514000n2ck5gseeet6m | QA-COP-PHA        | IMPORT |     5.0000 | 2026-08-06    | 2026-08-11 08:02
+ cmsodh51a000s2ck5b0vanlts | cms9tydud0010n4k5w2hmqjmh | CT-2026-0015 | cmsodh518000q2ck5xz8bisrd | QA-SON-NGOAI-THAT | IMPORT |    25.0000 | 2026-08-06    | 2026-08-11 08:02
+ cmsodh51e000v2ck5hjip8g6g | cms9tydp8000pn4k5tuwqq9ga | CT-2026-0011 | cmsodh51b000t2ck52k9x5lgw | QA-XI-MANG        | IMPORT |   100.0000 | 2026-08-06    | 2026-08-11 08:02
+ cmsodh51i000y2ck5yhtweffh | cms9tydp8000pn4k5tuwqq9ga | CT-2026-0011 | cmsodh51f000w2ck5wl73ifh4 | QA-GACH-THIEN-TAN | IMPORT | 12000.0000 | 2026-08-06    | 2026-08-11 08:02
+ cmsodh51j000z2ck5gmi9a5v9 | cms9tyddq0000n4k5mvu9wdrt | CT-2026-0001 | cmsodh4zp00002ck5v1l49fs7 | QA-XI-MANG        | IMPORT |    50.0000 | 2026-08-08    | 2026-08-11 08:02
+ cmsodh51l00102ck5b4dnaw0k | cms9tyddq0000n4k5mvu9wdrt | CT-2026-0001 | cmsodh4zp00002ck5v1l49fs7 | QA-XI-MANG        | EXPORT |    30.0000 | 2026-08-10    | 2026-08-11 08:02
+ cmsodh51n00112ck5xhv4kohf | cms9tyddq0000n4k5mvu9wdrt | CT-2026-0001 | cmsodh50300032ck5w4c2y6z5 | QA-THEP-D10       | EXPORT |   200.0000 | 2026-08-09    | 2026-08-11 08:02
+ cmsodh51o00122ck5gfha6dox | cms9tydud0010n4k5w2hmqjmh | CT-2026-0015 | cmsodh50q000h2ck51y1r0u9q | QA-THEP-D10       | IMPORT |  1000.0000 | 2026-08-07    | 2026-08-11 08:02
+ cmsodh51q00132ck58ffk474m | cms9tydud0010n4k5w2hmqjmh | CT-2026-0015 | cmsodh50q000h2ck51y1r0u9q | QA-THEP-D10       | EXPORT |   500.0000 | 2026-08-10    | 2026-08-11 08:02
+ cmsodh51s00142ck5uk7r7ebb | cms9tydp8000pn4k5tuwqq9ga | CT-2026-0011 | cmsodh51f000w2ck5wl73ifh4 | QA-GACH-THIEN-TAN | EXPORT |  3000.0000 | 2026-08-09    | 2026-08-11 08:02
+(17 rows)
+
+            section             
+--------------------------------
+ === PROJECT MATERIAL STOCK ===
+(1 row)
+
+            id             |         projectId         | project_code |      materialItemId       |   material_code   |   stock    |    created_at    
+---------------------------+---------------------------+--------------+---------------------------+-------------------+------------+------------------
+ cmsodh4zw00012ck5vmg0j16c | cms9tyddq0000n4k5mvu9wdrt | CT-2026-0001 | cmsodh4zp00002ck5v1l49fs7 | QA-XI-MANG        |   250.0000 | 2026-08-11 08:02
+ cmsodh50500042ck51adk90bf | cms9tyddq0000n4k5mvu9wdrt | CT-2026-0001 | cmsodh50300032ck5w4c2y6z5 | QA-THEP-D10       |   500.0000 | 2026-08-11 08:02
+ cmsodh50a00072ck5ziz2wm95 | cms9tyddq0000n4k5mvu9wdrt | CT-2026-0001 | cmsodh50800062ck5m8qz1v3k | QA-CAT-VANG-01    |     0.0000 | 2026-08-11 08:02
+ cmsodh50d00092ck5qdd6t74p | cms9tyddq0000n4k5mvu9wdrt | CT-2026-0001 | cmsodh50b00082ck5m8xv6fcw | QA-COP-PHA        |   120.0000 | 2026-08-11 08:02
+ cmsodh50i000c2ck5r5xkiojc | cms9tyddq0000n4k5mvu9wdrt | CT-2026-0001 | cmsodh50g000b2ck5eqlwvquc | QA-DA-1X2         |    45.0000 | 2026-08-11 08:02
+ cmsodh50n000f2ck5hhyqyfp0 | cms9tydud0010n4k5w2hmqjmh | CT-2026-0015 | cmsodh50m000e2ck5um74uj52 | QA-XI-MANG        |    80.0000 | 2026-08-11 08:02
+ cmsodh50s000i2ck5u1n5kdz9 | cms9tydud0010n4k5w2hmqjmh | CT-2026-0015 | cmsodh50q000h2ck51y1r0u9q | QA-THEP-D10       |  3500.0000 | 2026-08-11 08:02
+ cmsodh50z000l2ck5mj6wjfmb | cms9tydud0010n4k5w2hmqjmh | CT-2026-0015 | cmsodh50x000k2ck5nfsk58a9 | QA-CAT-VANG-02    |    30.0000 | 2026-08-11 08:02
+ cmsodh516000o2ck5kire4c0e | cms9tydud0010n4k5w2hmqjmh | CT-2026-0015 | cmsodh514000n2ck5gseeet6m | QA-COP-PHA        |     5.0000 | 2026-08-11 08:02
+ cmsodh519000r2ck536jojh75 | cms9tydud0010n4k5w2hmqjmh | CT-2026-0015 | cmsodh518000q2ck5xz8bisrd | QA-SON-NGOAI-THAT |    25.0000 | 2026-08-11 08:02
+ cmsodh51d000u2ck5dbcp4aui | cms9tydp8000pn4k5tuwqq9ga | CT-2026-0011 | cmsodh51b000t2ck52k9x5lgw | QA-XI-MANG        |   100.0000 | 2026-08-11 08:02
+ cmsodh51h000x2ck51vr1xp3t | cms9tydp8000pn4k5tuwqq9ga | CT-2026-0011 | cmsodh51f000w2ck5wl73ifh4 | QA-GACH-THIEN-TAN | 12000.0000 | 2026-08-11 08:02
+(12 rows)
+
+          section           
+----------------------------
+ === MATERIAL PROPOSALS ===
+(1 row)
+
+            id             |     proposalNo      |         projectId         | project_code |       status       |       requestedById       |    created_at    
+---------------------------+---------------------+---------------------------+--------------+--------------------+---------------------------+------------------
+ cmsnzdiw80001ikk5ws6ymdac | DVT-20260811-77F068 | cms9tydud0010n4k5w2hmqjmh | CT-2026-0015 | DRAFT              | cmroatu6r0000mowklk61sv56 | 2026-08-11 01:27
+ cmsnzhclp0003ikk54uamxfxx | DVT-20260811-C4FB4F | cms9tydud0010n4k5w2hmqjmh | CT-2026-0015 | DRAFT              | cmroatu6r0000mowklk61sv56 | 2026-08-11 01:30
+ cmsnzvyl0000bikk5xjt9d5e8 | DVT-20260811-E4654F | cms9tydp8000pn4k5tuwqq9ga | CT-2026-0011 | DRAFT              | cmroatu6r0000mowklk61sv56 | 2026-08-11 01:41
+ cmso0exwo000eikk5l7vrhrw0 | DVT-20260811-47A1D9 | cms9tydp8000pn4k5tuwqq9ga | CT-2026-0011 | DRAFT              | cmroatu6r0000mowklk61sv56 | 2026-08-11 01:56
+ cmso0hc9r000pikk5pvlx5k48 | DVT-20260811-EA4475 | cms9tydud0010n4k5w2hmqjmh | CT-2026-0015 | DRAFT              | cmroatu6r0000mowklk61sv56 | 2026-08-11 01:58
+ cmso0to710023ikk5p1dba725 | DVT-20260811-D018FE | cms9tydud0010n4k5w2hmqjmh | CT-2026-0015 | DRAFT              | cmroatu6r0000mowklk61sv56 | 2026-08-11 02:08
+ cmso172xq0035ikk5xvvejcbz | DVT-20260811-A215A8 | cms9tydp8000pn4k5tuwqq9ga | CT-2026-0011 | DRAFT              | cmroatu6r0000mowklk61sv56 | 2026-08-11 02:18
+ cmso1hmt80047ikk55hw9jj0y | DVT-20260811-CE0477 | cms9tyddq0000n4k5mvu9wdrt | CT-2026-0001 | DRAFT              | cmroatu6r0000mowklk61sv56 | 2026-08-11 02:26
+ cmso1wii20048ikk5kmaahdlp | DVT-20260811-28729E | cms9tyddq0000n4k5mvu9wdrt | CT-2026-0001 | DRAFT              | cmroatu6r0000mowklk61sv56 | 2026-08-11 02:38
+ cmsodh52f00152ck5rs51hqeo | DVT-QA-2026-001     | cms9tyddq0000n4k5mvu9wdrt | CT-2026-0001 | SUBMITTED          | qa_admin_override_id      | 2026-08-11 08:02
+ cmsodh52r00172ck5jadr7vym | DVT-QA-2026-002     | cms9tyddq0000n4k5mvu9wdrt | CT-2026-0001 | APPROVED           | qa_admin_override_id      | 2026-08-11 08:02
+ cmsodh52v00192ck538g8q10e | DVT-QA-2026-003     | cms9tydud0010n4k5w2hmqjmh | CT-2026-0015 | SUBMITTED          | qa_admin_override_id      | 2026-08-11 08:02
+ cmsodh52y001b2ck5xidoru64 | DVT-QA-2026-004     | cms9tydud0010n4k5w2hmqjmh | CT-2026-0015 | DRAFT              | qa_admin_override_id      | 2026-08-11 08:02
+ cmsodh531001d2ck51f5lflsb | DVT-QA-2026-005     | cms9tydp8000pn4k5tuwqq9ga | CT-2026-0011 | APPROVED           | qa_admin_override_id      | 2026-08-11 08:02
+ cmsodh535001f2ck5w12bpfi4 | DVT-QA-2026-006     | cms9tydp8000pn4k5tuwqq9ga | CT-2026-0011 | SUBMITTED          | qa_admin_override_id      | 2026-08-11 08:02
+ cmsodh538001h2ck5hlh554r3 | DVT-QA-2026-007     | cms9tyddq0000n4k5mvu9wdrt | CT-2026-0001 | REVISION_REQUESTED | qa_admin_override_id      | 2026-08-11 08:02
+ cmsodh53c001j2ck5gadq2wyq | DVT-QA-2026-008     | cms9tydud0010n4k5w2hmqjmh | CT-2026-0015 | CANCELLED          | qa_admin_override_id      | 2026-08-11 08:02
+ cmsog61lx0000d0k5x0kb6a0a | DVT-20260811-638088 | cms9tydud0010n4k5w2hmqjmh | CT-2026-0015 | DRAFT              | cmroatu6r0000mowklk61sv56 | 2026-08-11 09:17
+ cmsog61of0001d0k5wnbjmr8l | DVT-20260811-196927 | cms9tydud0010n4k5w2hmqjmh | CT-2026-0015 | DRAFT              | cmroatu6r0000mowklk61sv56 | 2026-08-11 09:17
+(19 rows)
+
+             section             
+---------------------------------
+ === MATERIAL PROPOSAL ITEMS ===
+(1 row)
+
+            id             |        proposalId         |                materialName                 | unit  | actualQuantity |    created_at    
+---------------------------+---------------------------+---------------------------------------------+-------+----------------+------------------
+ cmsnzdiwm0002ikk59vek4l20 | cmsnzdiw80001ikk5ws6ymdac | Xi mang PCB40                               | Tan   |        10.0000 | 2026-08-11 01:27
+ cmsnzhclx0004ikk5ta7qn1x9 | cmsnzhclp0003ikk54uamxfxx | xi m─âng                                     | Tß║Ñn   |        33.0000 | 2026-08-11 01:30
+ cmso0kpha001likk570comx1g | cmso0hc9r000pikk5pvlx5k48 | Vß║¡t t╞░ ch╞░a ─æß║╖t t├¬n                         | C├íi   |         1.0000 | 2026-08-11 02:01
+ cmso0kpha001kikk5213enwcp | cmso0hc9r000pikk5pvlx5k48 | Ong nhua PVC D90                            | C├íi   |        50.0000 | 2026-08-11 02:01
+ cmso0lluw001wikk5zjea3n2i | cmso0exwo000eikk5l7vrhrw0 | Xi m─âng                                     | C├íi   |       332.0000 | 2026-08-11 02:01
+ cmso0zwp4002kikk50yvdfad0 | cmso0to710023ikk5p1dba725 | Day mang                                    | Met   |       100.0000 | 2026-08-11 02:12
+ cmso0zwp4002likk5l0d50z0v | cmso0to710023ikk5p1dba725 | Cap thoai                                   | Met   |       200.0000 | 2026-08-11 02:12
+ cmso18yi3003tikk56phlp50u | cmsnzvyl0000bikk5xjt9d5e8 | Xi m─âng                                     | Tß║Ñn   |        33.0000 | 2026-08-11 02:20
+ cmso18yi3003wikk5hvrebfro | cmsnzvyl0000bikk5xjt9d5e8 | Vß║¡t t╞░ ch╞░a ─æß║╖t t├¬n                         |       |         0.0000 | 2026-08-11 02:20
+ cmso18yi3003vikk5pa6o33ig | cmsnzvyl0000bikk5xjt9d5e8 | Vß║¡t t╞░ ch╞░a ─æß║╖t t├¬n                         | C├íi   |         1.0000 | 2026-08-11 02:20
+ cmso18yi3003xikk5m8jky0ef | cmsnzvyl0000bikk5xjt9d5e8 | jjjjjj                                      | jj    |        77.0000 | 2026-08-11 02:20
+ cmso18yi3003uikk5i2tdsqrq | cmsnzvyl0000bikk5xjt9d5e8 | ß╗Éng n╞░ß╗¢c                                    | m     |        49.0000 | 2026-08-11 02:20
+ cmso1dv920046ikk508936r5y | cmso172xq0035ikk5xvvejcbz | Daya                                        |       |         0.0000 | 2026-08-11 02:23
+ cmsod4fhw000230k5kdp773un | cmso1wii20048ikk5kmaahdlp | aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa |       |         0.0000 | 2026-08-11 07:52
+ cmsodh52h00162ck5izdl3a1y | cmsodh52f00152ck5rs51hqeo | QA-XI-MANG                                  | bao   |       200.0000 | 2026-08-11 08:02
+ cmsodh52s00182ck52ph1qhil | cmsodh52r00172ck5jadr7vym | QA-THEP-D10                                 | kg    |      1500.0000 | 2026-08-11 08:02
+ cmsodh52v001a2ck53m6hau1g | cmsodh52v00192ck538g8q10e | QA-XI-MANG                                  | bao   |       300.0000 | 2026-08-11 08:02
+ cmsodh52y001c2ck5pxw2sl71 | cmsodh52y001b2ck5xidoru64 | QA-SON-NGOAI-THAT                           | th├╣ng |        50.0000 | 2026-08-11 08:02
+ cmsodh532001e2ck52lndsgmx | cmsodh531001d2ck51f5lflsb | QA-GACH-THIEN-TAN                           | vi├¬n  |     10000.0000 | 2026-08-11 08:02
+ cmsodh535001g2ck56o3a2asn | cmsodh535001f2ck5w12bpfi4 | QA-XI-MANG                                  | bao   |       150.0000 | 2026-08-11 08:02
+ cmsodh53c001k2ck5rvmk406x | cmsodh53c001j2ck5gadq2wyq | QA-COP-PHA                                  | bß╗Ö    |        20.0000 | 2026-08-11 08:02
+ cmsodjdjk000430k5vlstk7fc | cmsodh538001h2ck5hlh554r3 | QA-CAT-VANG-01                              | m3    |        50.0000 | 2026-08-11 08:04
+(22 rows)
+
+               section               
+-------------------------------------
+ === MATERIAL PROPOSAL APPROVALS ===
+(1 row)
+
+ id | proposalId | stage | status | approverId | created_at 
+----+------------+-------+--------+------------+------------
+(0 rows)
+
+         section         
+-------------------------
+ === PROJECT MEMBERS ===
+(1 row)
+
+            id             |         projectId         | project_code |          userId           |          email           |      role       | isActive | del_status |    created_at    
+---------------------------+---------------------------+--------------+---------------------------+--------------------------+-----------------+----------+------------+------------------
+ cms9tydgf0003n4k55whbrj18 | cms9tyde50001n4k53e221ea6 | CT-2026-0002 | cms9tydg20002n4k5278zks3g | lemanhhung@gmail.com     | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+ cms9tydi80006n4k5ge8u8als | cms9tydgm0004n4k5luf4qn5n | CT-2026-0003 | cms9tydi70005n4k5q2lrno9t | doanvangiang@gmail.com   | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+ cms9tydib0008n4k5h015ojzy | cms9tydia0007n4k563f6j0g7 | CT-2026-0004 | cms9tydi70005n4k5q2lrno9t | doanvangiang@gmail.com   | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+ cms9tydid000an4k5rczozx8q | cms9tydic0009n4k57z419qjm | CT-2026-0005 | cms9tydi70005n4k5q2lrno9t | doanvangiang@gmail.com   | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+ cms9tydk0000dn4k5w1y0kzmj | cms9tydif000bn4k56ypfqjxw | CT-2026-0006 | cms9tydjz000cn4k5ui1zb9f3 | letrongha@gmail.com      | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+ cms9tydlm000gn4k59le2hn8b | cms9tydk2000en4k56itvgc7a | CT-2026-0007 | cms9tydlm000fn4k59tbl32fv | tranquocdung@gmail.com   | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+ cms9tydlq000in4k5cfsps9m6 | cms9tydlp000hn4k5s8402dhe | CT-2026-0008 | cms9tydlm000fn4k59tbl32fv | tranquocdung@gmail.com   | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+ cms9tydnh000ln4k51zd6c6a8 | cms9tydlu000jn4k5itd0vzcd | CT-2026-0009 | cms9tydng000kn4k5c6ikcaui | nguyenvanhung@gmail.com  | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+ cms9tydp6000on4k5ceg6crpf | cms9tydnk000mn4k5azfl2w64 | CT-2026-0010 | cms9tydp5000nn4k5zgilcwjy | phamanhtuan@gmail.com    | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+ cms9tydqv000rn4k5cpbqvrjf | cms9tydp8000pn4k5tuwqq9ga | CT-2026-0011 | cms9tydqu000qn4k52vt6oczg | nguyenducmui@gmail.com   | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+ cms9tydsk000un4k58o8ydtj0 | cms9tydqx000sn4k5sz6q6wfj | CT-2026-0012 | cms9tydsj000tn4k5ka22kbsk | nguyentumanh@gmail.com   | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+ cms9tydso000wn4k5bkwlffom | cms9tydsm000vn4k5t0z7fhsx | CT-2026-0013 | cms9tydp5000nn4k5zgilcwjy | phamanhtuan@gmail.com    | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+ cms9tyduc000zn4k5fq1ccy3k | cms9tydsp000xn4k5286p44ty | CT-2026-0014 | cms9tydub000yn4k5gfbu0mpv | luongvancong@gmail.com   | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+ cms9tydvy0012n4k5jwzyi4ty | cms9tydud0010n4k5w2hmqjmh | CT-2026-0015 | cms9tydvx0011n4k5jeu2r6hl | vuhung@gmail.com         | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+ cms9tydxr0015n4k5tdn8hrsu | cms9tydw00013n4k5sjjtouul | CT-2026-0016 | cms9tydxq0014n4k5rrqox9or | nguyenminhhung@gmail.com | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+ cms9tydxu0017n4k5yqq2yte3 | cms9tydxt0016n4k5rx9hikdj | CT-2026-0017 | cms9tydp5000nn4k5zgilcwjy | phamanhtuan@gmail.com    | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+ cms9tydxy0019n4k5vjaoqu8d | cms9tydxx0018n4k5xsmxehmz | CT-2026-0018 | cms9tydp5000nn4k5zgilcwjy | phamanhtuan@gmail.com    | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+ cms9tydy3001cn4k5le4smmnd | cms9tydy2001bn4k58evaixfi | CT-2026-0020 | cms9tydvx0011n4k5jeu2r6hl | vuhung@gmail.com         | CHIEF_COMMANDER | t        | active     | 2026-08-01 03:47
+(18 rows)
+
+          section          
+---------------------------
+ === APPROVAL REQUESTS ===
+(1 row)
+
+ id | code | projectId | project_code | type | status | requesterId | entityType | created_at 
+----+------+-----------+--------------+------+--------+-------------+------------+------------
+(0 rows)
+
+       section        
+----------------------
+ === SITE REPORTS ===
+(1 row)
+
+ id | reportNo | projectId | project_code | type | status | report_date | created_at 
+----+----------+-----------+--------------+------+--------+-------------+------------
+(0 rows)
+
+        section        
+-----------------------
+ === NOTIFICATIONS ===
+(1 row)
+
+ total_notifications 
+---------------------
+                   0
+(1 row)
+
+      section       
+--------------------
+ === AUDIT LOGS ===
+(1 row)
+
+ total_audit_logs 
+------------------
+              648
+(1 row)
+
+        section        
+-----------------------
+ === CHAT MESSAGES ===
+(1 row)
+
+ total_chat_messages 
+---------------------
+                   0
+(1 row)
+
+      section      
+-------------------
+ === EMPLOYEES ===
+(1 row)
+
+psql.exe : psql:d:/construction-erp-v2/scripts/cleanup/db-inventory.sql:119: ERROR:  column e.employeeCode does not 
+exist
+At line:1 char:55
++ ... _2026_x7!"; & "C:\Program Files\PostgreSQL\16\bin\psql.exe" -h 127.0. ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (psql:d:/constru... does not exist:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+LINE 1: SELECT e.id, e."employeeCode", e."fullName", e.email, e.stat...
+                     ^
+          section           
+----------------------------
+ === ORGANIZATION UNITS ===
+(1 row)
+
+            id             |      code      |            name            |         parentId          | isActive |    created_at    
+---------------------------+----------------+----------------------------+---------------------------+----------+------------------
+ cmsebfgs500008ck5vrdk8eti | PKT            | Ph├▓ng Kß╗╣ thuß║¡t             | cmsin1reg0000agk58d1407m2 | t        | 2026-08-04 07:07
+ cmsin1reg0000agk58d1407m2 | BGD            | Ph├▓ng Gi├ím ─æß╗æc             |                           | t        | 2026-08-07 07:43
+ cmsin1zlp0000bck55pt2qxix | HCNS           | Ph├▓ng H├ánh ch├¡nh - Nh├ón sß╗▒ | cmsin1reg0000agk58d1407m2 | t        | 2026-08-07 07:43
+ cmsin1zlu0001bck57euldkc2 | KTTTC          | Ph├▓ng Kß║┐ to├ín              | cmsin1reg0000agk58d1407m2 | t        | 2026-08-07 07:43
+ cmsin1zlw0002bck5704iib79 | ATCL           | Ph├▓ng An to├án & QA/QC      | cmsebfgs500008ck5vrdk8eti | f        | 2026-08-07 07:43
+ cmsjpv6v30000pgk5zl60vqzu | QA_PARENT_8487 | Ph├▓ng QA Parent Temp       |                           | t        | 2026-08-08 01:50
+ cmsjpv6vm0001pgk5s5jo8xr9 | QA_CHILD_8512  | Ph├▓ng QA Child Temp        | cmsjpv6v30000pgk5zl60vqzu | t        | 2026-08-08 01:50
+ cmsjpvobn0000a8k5ciqpy5vt | QA_PARENT_1115 | Ph├▓ng QA Parent Temp       |                           | t        | 2026-08-08 01:50
+ cmsjpvobu0001a8k53qw4q2vn | QA_CHILD_1129  | Ph├▓ng QA Child Temp        | cmsjpvobn0000a8k5ciqpy5vt | t        | 2026-08-08 01:50
+ cmsjpvzpm00009kk5j4odoles | QA_PARENT_5874 | Ph├▓ng QA Parent Temp       |                           | t        | 2026-08-08 01:50
+ cmsjpvzps00019kk52r4b87bc | QA_CHILD_5886  | Ph├▓ng QA Child Temp        | cmsjpvzpm00009kk5j4odoles | t        | 2026-08-08 01:50
+ cmsjpw9mx0000twk5lx8i535z | QA_PARENT_8737 | Ph├▓ng QA Parent Temp       |                           | f        | 2026-08-08 01:51
+ cmsjpw9n40001twk5hma3ppkz | QA_CHILD_8750  | Ph├▓ng QA Child Temp        |                           | f        | 2026-08-08 01:51
+(13 rows)
+
+      section      
+-------------------
+ === POSITIONS ===
+(1 row)
+
+psql:d:/construction-erp-v2/scripts/cleanup/db-inventory.sql:129: ERROR:  column pos.name does not exist
+LINE 1: SELECT pos.id, pos.code, pos.name, pos."isActive",
+                                 ^
+           section           
+-----------------------------
+ === SAFETY REPORT PLANS ===
+(1 row)
+
+ total 
+-------
+     4
+(1 row)
+
+            section             
+--------------------------------
+ === SAFETY SELF ASSESSMENT ===
+(1 row)
+
+ total 
+-------
+     4
+(1 row)
+
+               section               
+-------------------------------------
+ === SUPERVISION WEEKLY PACKAGES ===
+(1 row)
+
+ total 
+-------
+     0
+(1 row)
+
+               section               
+-------------------------------------
+ === SUPERVISION WEEKLY DOSSIERS ===
+(1 row)
+
+ total 
+-------
+    14
+(1 row)
+
+      section      
+-------------------
+ === DOCUMENTS ===
+(1 row)
+
+ total_documents 
+-----------------
+               0
+(1 row)
+
+         section          
+--------------------------
+ === DOCUMENT FOLDERS ===
+(1 row)
+
+ total_folders 
+---------------
+             1
+(1 row)
+
+         section         
+-------------------------
+ === SYSTEM SETTINGS ===
+(1 row)
+
+ total 
+-------
+     1
+(1 row)
+
+      section      
+-------------------
+ === WBS ITEMS ===
+(1 row)
+
+ total 
+-------
+     0
+(1 row)
+
+        section         
+------------------------
+ === FIELD PROGRESS ===
+(1 row)
+
+          tbl          | cnt 
+-----------------------+-----
+ FieldProgressTemplate |   1
+ FieldProgressItem     |   2
+ FieldProgressEntry    |   0
+(3 rows)
+
+          section           
+----------------------------
+ === USER ACCESS GRANTS ===
+(1 row)
+
+psql:d:/construction-erp-v2/scripts/cleanup/db-inventory.sql:174: ERROR:  column uag.role does not exist
+LINE 2:        uag.role, uag."isActive",
+               ^
+HINT:  Perhaps you meant to reference the column "u.role".

@@ -177,11 +177,11 @@ export function HrReportFilterBar({ orgUnits, projects, projectRoles }: HrReport
               aria-label="Chọn công trình hoặc dự án"
               onClick={() => setIsProjectOpen(!isProjectOpen)}
               className="w-full flex items-center justify-between gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-900 text-left hover:bg-slate-50 focus:border-blue-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
-              title={selectedProject ? `${selectedProject.name} (${selectedProject.code})` : "Tất cả công trình"}
+              title={selectedProject?.name || "Tất cả công trình"}
             >
               <span className="truncate">
                 {selectedProject
-                  ? `${selectedProject.name} (${selectedProject.code})`
+                  ? selectedProject.name
                   : "Tất cả công trình"}
               </span>
               <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-400" />

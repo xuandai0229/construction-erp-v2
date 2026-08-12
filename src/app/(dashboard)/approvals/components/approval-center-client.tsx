@@ -23,6 +23,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ReasonDialog } from "@/components/ui/reason-dialog";
 import { useToast } from "@/components/ui/toast-context";
 import { cn } from "@/lib/utils";
+import { ProjectName } from "@/components/project/project-name";
 import { safeFormatDateVN, toDateInputValue } from "@/lib/date-utils";
 import { DateFieldVN } from "@/components/ui/date-field-vn";
 import {
@@ -959,8 +960,9 @@ export function ApprovalCenterClient({
                       </td>
                       <td className="px-5 py-3">
                         <div className="flex flex-col gap-1">
-                          <div className="font-medium text-[var(--foreground)] line-clamp-1 max-w-[250px]" title={`${approval.project.code} - ${approval.project.name}`}>
-                            {approval.project.code} - {approval.project.name}
+                          <div className="min-w-0 max-w-[320px]">
+                            <ProjectName name={approval.project.name} maxLines={2} className="font-medium text-[var(--foreground)]" />
+                            <span className="mt-0.5 block font-mono text-[10px] text-[var(--muted-foreground)]">{approval.project.code}</span>
                           </div>
                           {approval.sourceType || approval.sourceId ? (
                             <div className="text-[11px] text-[var(--muted-foreground)]">

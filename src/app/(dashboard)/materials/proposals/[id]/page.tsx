@@ -18,23 +18,26 @@ import {
 
 export default async function MaterialProposalDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ returnTo?: string | string[] }>;
 }) {
   const session = await getSession();
   if (!session) {
     redirect("/login");
   }
 
-  const { id } = await params;
+  const [{ id }, resolvedSearchParams] = await Promise.all([params, searchParams]);
   const proposal = await getMaterialProposal(id).catch(() => null);
   if (!proposal) notFound();
 
   const isCreator = proposal.requestedById === session.id || isHighLevel(session.role);
 
-  let sequenceCounter = 0;
-
-  const backUrl = `/materials?tab=requests${proposal.projectId ? `&projectId=${proposal.projectId}` : ""}`;
+  const requestedReturnTo = typeof resolvedSearchParams.returnTo === "string" ? resolvedSearchParams.returnTo : "";
+  const safeReturnTo = requestedReturnTo.startsWith("/materials") && !requestedReturnTo.startsWith("//") ? requestedReturnTo : null;
+  const backUrl = safeReturnTo || `/materials?tab=requests&scope=project${proposal.projectId ? `&projectId=${proposal.projectId}` : ""}`;
+  const editUrl = `/materials/proposals/new?edit=${proposal.id}&returnTo=${encodeURIComponent(backUrl)}`;
 
   return (
     <main className="w-full max-w-full space-y-6">
@@ -62,7 +65,7 @@ export default async function MaterialProposalDetailPage({
         <div className="flex items-center gap-2.5">
           {isCreator && (
             <Link
-              href={`/materials/proposals/new?edit=${proposal.id}`}
+              href={editUrl}
               className="flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-700 shadow-2xs hover:bg-blue-100"
             >
               <Edit className="h-3.5 w-3.5" />
@@ -230,8 +233,7 @@ export default async function MaterialProposalDetailPage({
                   item.sectionName &&
                   (index === 0 || proposal.items[index - 1].sectionName !== item.sectionName);
 
-                sequenceCounter += 1;
-                const sequenceNum = sequenceCounter;
+                const sequenceNum = index + 1;
 
                 return (
                   <Fragment key={item.id}>
@@ -242,7 +244,7 @@ export default async function MaterialProposalDetailPage({
                           <div className="flex items-center gap-2">
                             <Layers className="h-4 w-4 text-blue-600 shrink-0" />
                             <span className="text-xs uppercase text-slate-500 font-bold">
-                              Nhóm vật tư:
+                              Phần vật tư:
                             </span>
                             <span className="text-xs font-bold text-blue-900">
                               {item.sectionName}

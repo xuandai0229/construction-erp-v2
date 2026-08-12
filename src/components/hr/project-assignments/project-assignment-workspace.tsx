@@ -145,7 +145,10 @@ export function ProjectAssignmentWorkspace({
       <HrPageHeader
         title="Quản lý điều động nhân sự công trình"
         description="Theo dõi kế hoạch phân bổ, điều chuyển vai trò và lịch sử công tác nhân sự tại các dự án."
-        action={
+      />
+
+      <HrWorkspaceTabs
+        rightContent={
           capabilities.canCreate ? (
             <button
               type="button"
@@ -158,9 +161,6 @@ export function ProjectAssignmentWorkspace({
           ) : undefined
         }
       />
-
-      {/* Workspace Tabs */}
-      <HrWorkspaceTabs />
 
       {/* Toolbar & Filters */}
       <ProjectAssignmentToolbar

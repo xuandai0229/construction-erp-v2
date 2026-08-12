@@ -20,7 +20,8 @@ async function main() {
           code: `C-10-${Date.now()}`,
           name: 'ống nhựa tiền phong',
           unit: 'm',
-          group: 'Đường ống',
+          manufacturer: 'Tiền Phong',
+          origin: 'Việt Nam',
           description: 'ống nhựa',
           isActive: true,
         }
@@ -45,7 +46,8 @@ async function main() {
           code: newCode,
           name: 'Ống nhựa Tiền Phong', // user input uppercase
           unit: 'm',
-          group: 'Đường ống PVC',
+          manufacturer: 'Tiền Phong',
+          origin: 'Việt Nam',
           description: 'ống nhựa 124',
         }
       });
@@ -68,8 +70,8 @@ async function main() {
         console.error(`[FAIL] Name case modified or not updated. Got ${updatedMat?.name}`);
         hasErrors = true;
       }
-      if (updatedMat?.group !== 'Đường ống PVC') {
-        console.error(`[FAIL] Group not updated. Got ${updatedMat?.group}`);
+      if (updatedMat?.manufacturer !== 'Tiền Phong' || updatedMat?.origin !== 'Việt Nam') {
+        console.error(`[FAIL] Manufacturer/origin not updated. Got ${updatedMat?.manufacturer} / ${updatedMat?.origin}`);
         hasErrors = true;
       }
       if (updatedMat?.description !== 'ống nhựa 124') {

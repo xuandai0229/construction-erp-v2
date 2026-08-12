@@ -8,13 +8,16 @@ export const metadata = { title: "Xem trước đề xuất vật tư | ERP Côn
 
 export default async function MaterialProposalPreviewPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ returnTo?: string }>;
 }) {
   const session = await getSession();
   if (!session) redirect("/login?reason=session_expired");
 
   const { id } = await params;
+  const { returnTo } = await searchParams;
 
   let proposal;
   try {
@@ -36,6 +39,10 @@ export default async function MaterialProposalPreviewPage({
     })),
   };
 
+  const backHref = returnTo
+    ? `/materials/proposals/new?edit=${proposal.id}&returnTo=${encodeURIComponent(returnTo)}`
+    : `/materials/proposals/new?edit=${proposal.id}`;
+
   return (
     <div
       className="w-full min-h-screen bg-slate-200/80 p-4 sm:p-8 print:p-0 print:bg-white"
@@ -45,7 +52,8 @@ export default async function MaterialProposalPreviewPage({
         <MaterialProposalPreviewToolbar
           proposalId={proposal.id}
           proposalNo={proposal.proposalNo}
-          backHref={`/materials/proposals/new?edit=${proposal.id}`}
+          backHref={backHref}
+          returnToListHref={returnTo}
         />
         <div className="canvas-container w-full overflow-x-auto print:overflow-visible">
           <main className="document-paper shadow-2xl border border-slate-300 rounded-sm bg-white p-[15mm] mx-auto min-w-[297mm] max-w-[297mm] print:shadow-none print:border-none print:p-0 print:max-w-none print:w-full">

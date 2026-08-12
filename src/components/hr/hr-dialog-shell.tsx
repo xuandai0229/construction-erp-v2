@@ -82,7 +82,7 @@ export function HrDialogShell({
         <div className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
           <div className="flex min-w-0 items-center gap-2.5">
             <div className="shrink-0 rounded-lg bg-blue-50 p-2 text-blue-600">{icon}</div>
-            <h2 id="hr-dialog-title" className="truncate text-base font-bold text-slate-900">{title}</h2>
+            <h2 id="hr-dialog-title" className="text-base font-bold leading-snug text-slate-900 line-clamp-2" title={title}>{title}</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Đóng hộp thoại" className="shrink-0 rounded-lg p-1 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900">
             <X className="h-5 w-5" />

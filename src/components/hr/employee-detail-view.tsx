@@ -28,6 +28,7 @@ import { revealIdentityNumberAction, archiveEmployeeAction, linkUserAccountActio
 import { EmployeeTransferDialog } from "@/components/hr/employee-transfer-dialog";
 import { cn } from "@/lib/utils";
 import { EmployeeStatus } from "@prisma/client";
+import { ProjectName } from "@/components/project/project-name";
 
 export interface EmployeeDto {
   id: string;
@@ -304,8 +305,8 @@ export function EmployeeDetailView({
             </div>
 
             <div className="space-y-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-2xl font-extrabold text-slate-900 truncate">
+              <div className="flex flex-wrap items-start gap-3">
+                <h1 className="min-w-0 text-2xl font-extrabold leading-tight text-slate-900 line-clamp-2" title={cleanFullName}>
                   {cleanFullName}
                 </h1>
                 <span className="font-mono text-xs font-semibold px-2 py-0.5 bg-slate-100 text-slate-700 rounded border border-slate-200">
@@ -319,11 +320,11 @@ export function EmployeeDetailView({
               <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-slate-600 pt-1">
                 <div className="flex items-center gap-1.5 min-w-0">
                   <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  <span className="truncate">{cleanDeptName || "Chưa có phòng ban"}</span>
+                  <span className="leading-snug line-clamp-2" title={cleanDeptName || "Chưa có phòng ban"}>{cleanDeptName || "Chưa có phòng ban"}</span>
                 </div>
                 <div className="flex items-center gap-1.5 min-w-0">
                   <Briefcase className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                  <span className="truncate">{cleanPosTitle || "Chưa có chức danh"}</span>
+                  <span className="leading-snug line-clamp-2" title={cleanPosTitle || "Chưa có chức danh"}>{cleanPosTitle || "Chưa có chức danh"}</span>
                 </div>
               </div>
             </div>
@@ -641,8 +642,8 @@ export function EmployeeDetailView({
               <table className="w-full text-left text-xs border-collapse table-fixed">
                 <thead>
                   <tr className="bg-slate-50/90 border-b border-slate-200 text-slate-700 font-bold">
-                    <th className="p-3 w-[31%]">Công trình / Dự án</th>
-                    <th className="p-3 w-[25%]">Vai trò công trường</th>
+                    <th className="p-3 w-[35%]">Công trình / Dự án</th>
+                    <th className="p-3 w-[23%]">Vai trò công trường</th>
                     <th className="p-3 w-[9%] whitespace-nowrap">Tỷ lệ phân bổ</th>
                     <th className="p-3 w-[11%] whitespace-nowrap">Ngày bắt đầu</th>
                     <th className="p-3 w-[14%] whitespace-nowrap">Ngày dự kiến kết thúc</th>
@@ -655,14 +656,17 @@ export function EmployeeDetailView({
                     const cleanRole = sanitizeDisplayName(p.projectPersonnelRole?.name || p.role?.name);
                     return (
                       <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="p-3 font-bold text-slate-900 overflow-hidden" title={`${cleanProj} (${p.project?.code || ""})`}>
+                        <td className="p-3 font-bold text-slate-900 overflow-hidden">
                           <div className="flex items-center gap-1.5 min-w-0">
                             <HardHat className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                            <span className="truncate block min-w-0">{cleanProj}</span>
+                            <div className="min-w-0">
+                              <ProjectName name={cleanProj} maxLines={2} className="text-xs font-bold leading-snug text-slate-900" />
+                              {p.project?.code && <span className="mt-0.5 block font-mono text-[10px] font-medium text-slate-500">Mã: {p.project.code}</span>}
+                            </div>
                           </div>
                         </td>
                         <td className="p-3 text-slate-700 font-medium overflow-hidden" title={cleanRole || "Kỹ sư công trường"}>
-                          <span className="truncate block">{cleanRole || "Kỹ sư công trường"}</span>
+                          <span className="block leading-snug line-clamp-2">{cleanRole || "Kỹ sư công trường"}</span>
                         </td>
                         <td className="p-3 font-mono font-bold text-blue-700 whitespace-nowrap">
                           {p.allocationPercentage || 100}%

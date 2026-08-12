@@ -204,7 +204,10 @@ export default async function HrDashboardPage() {
       <HrPageHeader
         title="Tổng quan nhân sự"
         description="Theo dõi nhân sự toàn công ty, tình hình bố trí công trình và các việc cần chú ý."
-        action={
+      />
+
+      <HrWorkspaceTabs
+        rightContent={
           createPermCheck.allowed ? (
             <Link
               href="/hr/employees/new"
@@ -216,8 +219,6 @@ export default async function HrDashboardPage() {
           ) : undefined
         }
       />
-
-      <HrWorkspaceTabs />
 
       {/* 4 Core Workforce Resource Management KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

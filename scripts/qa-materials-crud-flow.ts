@@ -29,7 +29,8 @@ async function main() {
         code: "TEST-MAT-01",
         name: "Test Material 01",
         unit: "kg",
-        group: "TEST",
+        manufacturer: "QA manufacturer",
+        origin: "Việt Nam",
         isActive: true,
       },
     });

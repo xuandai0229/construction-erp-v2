@@ -30,15 +30,15 @@ const prismaClientSingleton = (): PrismaClient => {
 }
 
 declare const globalThis: {
-  prismaGlobal_v5: ReturnType<typeof prismaClientSingleton>;
+  prismaGlobal_v6: ReturnType<typeof prismaClientSingleton>;
 } & typeof global;
 
 function getPrismaClient() {
-  let client = globalThis.prismaGlobal_v5;
+  let client = globalThis.prismaGlobal_v6;
   if (!client || (process.env.NODE_ENV !== 'production' && !(client as any).safetyWeeklyFile)) {
     client = prismaClientSingleton();
     if (process.env.NODE_ENV !== 'production') {
-      globalThis.prismaGlobal_v5 = client;
+      globalThis.prismaGlobal_v6 = client;
     }
   }
   return client;

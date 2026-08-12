@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Plus,
   Search,
@@ -18,11 +18,13 @@ import {
 } from "lucide-react";
 import { UnifiedActionMenu, ActionMenuItem } from "@/components/ui/unified-action-menu";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { EnterpriseCombobox, type EnterpriseComboboxOption } from "@/components/ui/enterprise-combobox";
 import { deleteMaterialProposal } from "@/lib/material-proposals/actions";
 
 export type MaterialProposalListItem = {
   id: string;
   proposalNo: string;
+  projectId?: string;
   projectNameSnapshot: string;
   requesterNameSnapshot: string;
   proposalDate: Date | string;
@@ -32,35 +34,76 @@ export type MaterialProposalListItem = {
 };
 
 interface MaterialProposalListProps {
+  isPortfolioMode?: boolean;
   proposals: MaterialProposalListItem[];
   currentProjectId?: string;
+  projects?: Array<{ id: string; name: string; code: string }>;
+  onSelectProject?: (projectId: string) => void;
+  capabilities?: { canCreate: boolean; canEdit: boolean; canDelete: boolean; canExport: boolean };
 }
 
-export function MaterialProposalList({ proposals, currentProjectId }: MaterialProposalListProps) {
+export function MaterialProposalList({
+  isPortfolioMode = false,
+  proposals,
+  currentProjectId,
+  projects = [],
+  onSelectProject,
+  capabilities = { canCreate: true, canEdit: true, canDelete: true, canExport: true },
+}: MaterialProposalListProps) {
   const router = useRouter();
-  const [searchTerm, setSearchTerm] = useState("");
+  const searchParams = useSearchParams();
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("proposalSearch") || "");
+  const selectedProjectId = isPortfolioMode ? (searchParams.get("proposalProjectId") || "") : "";
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const projectOptions = useMemo<EnterpriseComboboxOption[]>(
+    () => projects.map((project) => ({ value: project.id, label: project.name, name: project.name })),
+    [projects],
+  );
+
+  useEffect(() => {
+    const valueFromUrl = searchParams.get("proposalSearch") || "";
+    setSearchTerm((current) => current === valueFromUrl ? current : valueFromUrl);
+  }, [searchParams]);
+
+  useEffect(() => {
+    const valueFromUrl = searchParams.get("proposalSearch") || "";
+    if (valueFromUrl === searchTerm) return;
+    const timer = window.setTimeout(() => {
+      const params = new URLSearchParams(searchParams);
+      if (searchTerm) params.set("proposalSearch", searchTerm);
+      else params.delete("proposalSearch");
+      router.replace(`?${params.toString()}`, { scroll: false });
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [router, searchParams, searchTerm]);
 
   const filteredProposals = useMemo(() => {
-    if (!searchTerm.trim()) return proposals;
+    const scoped = selectedProjectId ? proposals.filter((item) => item.projectId === selectedProjectId) : proposals;
+    if (!searchTerm.trim()) return scoped;
     const term = searchTerm.toLowerCase();
-    return proposals.filter(
+    return scoped.filter(
       (item) =>
         item.proposalNo.toLowerCase().includes(term) ||
         item.requesterNameSnapshot.toLowerCase().includes(term) ||
         item.projectNameSnapshot.toLowerCase().includes(term)
     );
-  }, [proposals, searchTerm]);
+  }, [proposals, searchTerm, selectedProjectId]);
+
+  const returnToUrl = isPortfolioMode
+    ? (() => { const params = new URLSearchParams(searchParams); params.set("tab", "requests"); params.set("scope", "portfolio"); params.delete("returnTo"); return `/materials?${params.toString()}`; })()
+    : currentProjectId
+    ? `/materials?tab=requests&scope=project&projectId=${currentProjectId}`
+    : `/materials?tab=requests`;
 
   const createUrl = currentProjectId
-    ? `/materials/proposals/new?projectId=${currentProjectId}`
-    : `/materials/proposals/new`;
+    ? `/materials/proposals/new?projectId=${currentProjectId}&returnTo=${encodeURIComponent(returnToUrl)}`
+    : `/materials/proposals/new?returnTo=${encodeURIComponent(returnToUrl)}`;
 
   const handleRowClick = (proposalId: string) => {
-    router.push(`/materials/proposals/new?edit=${proposalId}`);
+    router.push(capabilities.canEdit ? `/materials/proposals/new?edit=${proposalId}&returnTo=${encodeURIComponent(returnToUrl)}` : `/materials/proposals/${proposalId}/preview?returnTo=${encodeURIComponent(returnToUrl)}`);
   };
 
   const triggerDownload = async (proposalId: string, proposalNo: string, format: "excel" | "pdf") => {
@@ -162,17 +205,17 @@ export function MaterialProposalList({ proposals, currentProjectId }: MaterialPr
           <h1 className="text-lg font-bold text-slate-900">Danh sách Đề xuất vật tư</h1>
           <p className="text-xs text-slate-500">Quản lý và theo dõi nhu cầu đề xuất vật tư công trình</p>
         </div>
-        <Link
+        {capabilities.canCreate && <Link
           href={createUrl}
           className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-blue-700 transition"
         >
           <Plus className="h-4 w-4" />
           <span>Tạo đề xuất</span>
-        </Link>
+        </Link>}
       </div>
 
       {/* Search Area */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
@@ -183,6 +226,27 @@ export function MaterialProposalList({ proposals, currentProjectId }: MaterialPr
             className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-4 py-2 text-xs font-medium text-slate-800 shadow-2xs focus:border-blue-500 focus:outline-none"
           />
         </div>
+        {isPortfolioMode && (
+          <EnterpriseCombobox
+            value={selectedProjectId}
+            options={projectOptions}
+            onChange={(projectId) => {
+              const params = new URLSearchParams(searchParams);
+              if (projectId) params.set("proposalProjectId", projectId);
+              else params.delete("proposalProjectId");
+              router.replace(`?${params.toString()}`, { scroll: false });
+            }}
+            placeholder="Tất cả công trình"
+            searchPlaceholder="Tìm công trình..."
+            emptyMessage="Không tìm thấy công trình phù hợp."
+            ariaLabel="Lọc theo công trình"
+            className="w-full sm:w-80"
+            buttonClassName="h-9 rounded-xl border-slate-200 text-xs font-medium"
+            density="compact"
+            maxPanelHeight={300}
+            testId="materials-proposal-project-filter"
+          />
+        )}
       </div>
 
       {/* Global Error Banner */}
@@ -224,16 +288,6 @@ export function MaterialProposalList({ proposals, currentProjectId }: MaterialPr
                 return (
                   <tr
                     key={proposal.id}
-                    tabIndex={0}
-                    role="button"
-                    aria-label={`Sửa đề xuất vật tư ${proposal.proposalNo}`}
-                    onClick={() => handleRowClick(proposal.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        handleRowClick(proposal.id);
-                      }
-                    }}
                     className={`transition-colors cursor-pointer group text-slate-800 align-middle ${
                       isActiveRow
                         ? "bg-blue-50/70 border-l-2 border-l-blue-600 font-medium"
@@ -244,12 +298,28 @@ export function MaterialProposalList({ proposals, currentProjectId }: MaterialPr
                     <td className={`px-4 py-3.5 whitespace-nowrap font-bold transition-colors align-middle ${
                       isActiveRow ? "text-blue-700" : "text-blue-900 group-hover:text-blue-600"
                     }`}>
-                      {proposal.proposalNo}
+                      <button
+                        type="button"
+                        onClick={() => handleRowClick(proposal.id)}
+                        className="rounded text-left outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                        aria-label={`${capabilities.canEdit ? "Chỉnh sửa" : "Xem trước"} đề xuất vật tư ${proposal.proposalNo}`}
+                      >
+                        {proposal.proposalNo}
+                      </button>
                     </td>
 
                     {/* Công trình */}
                     <td className="px-4 py-3.5 whitespace-normal break-words font-medium text-slate-800 leading-relaxed align-middle">
-                      {proposal.projectNameSnapshot}
+                      {isPortfolioMode && proposal.projectId && onSelectProject ? (
+                        <button
+                          type="button"
+                          onClick={() => onSelectProject(proposal.projectId!)}
+                          className="rounded text-left outline-none hover:underline focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                          aria-label={`Mở công trình ${proposal.projectNameSnapshot}`}
+                        >
+                          {proposal.projectNameSnapshot}
+                        </button>
+                      ) : proposal.projectNameSnapshot}
                     </td>
 
                     {/* Người đề nghị */}
@@ -312,28 +382,27 @@ export function MaterialProposalList({ proposals, currentProjectId }: MaterialPr
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            router.push(`/materials/proposals/${proposal.id}/preview`);
+                            router.push(`/materials/proposals/${proposal.id}/preview?returnTo=${encodeURIComponent(returnToUrl)}`);
                           }}
                         >
                           Xem trước
                         </ActionMenuItem>
 
-                        {/* 2. Chỉnh sửa */}
-                        <ActionMenuItem
+                        {capabilities.canEdit && <ActionMenuItem
                           icon={<Pencil className="h-4 w-4 text-slate-500" />}
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            router.push(`/materials/proposals/new?edit=${proposal.id}`);
+                            router.push(`/materials/proposals/new?edit=${proposal.id}&returnTo=${encodeURIComponent(returnToUrl)}`);
                           }}
                         >
                           Chỉnh sửa
-                        </ActionMenuItem>
+                        </ActionMenuItem>}
 
-                        <div className="my-1 border-t border-slate-100" />
+                        {capabilities.canExport && <div className="my-1 border-t border-slate-100" />}
 
                         {/* 3. Tải Excel */}
-                        <ActionMenuItem
+                        {capabilities.canExport && <ActionMenuItem
                           icon={<FileSpreadsheet className="h-4 w-4 text-emerald-600" />}
                           onClick={(e) => {
                             e.preventDefault();
@@ -342,10 +411,10 @@ export function MaterialProposalList({ proposals, currentProjectId }: MaterialPr
                           }}
                         >
                           Tải Excel
-                        </ActionMenuItem>
+                        </ActionMenuItem>}
 
                         {/* 4. Tải PDF */}
-                        <ActionMenuItem
+                        {capabilities.canExport && <ActionMenuItem
                           icon={<Download className="h-4 w-4 text-rose-600" />}
                           onClick={(e) => {
                             e.preventDefault();
@@ -354,10 +423,10 @@ export function MaterialProposalList({ proposals, currentProjectId }: MaterialPr
                           }}
                         >
                           Tải PDF
-                        </ActionMenuItem>
+                        </ActionMenuItem>}
 
                         {/* 5. In */}
-                        <ActionMenuItem
+                        {capabilities.canExport && <ActionMenuItem
                           icon={<Printer className="h-4 w-4 text-blue-600" />}
                           onClick={(e) => {
                             e.preventDefault();
@@ -366,12 +435,12 @@ export function MaterialProposalList({ proposals, currentProjectId }: MaterialPr
                           }}
                         >
                           In
-                        </ActionMenuItem>
+                        </ActionMenuItem>}
 
-                        <div className="my-1 border-t border-slate-100" />
+                        {capabilities.canDelete && <div className="my-1 border-t border-slate-100" />}
 
                         {/* 6. Xóa đề xuất */}
-                        <ActionMenuItem
+                        {capabilities.canDelete && <ActionMenuItem
                           destructive
                           icon={<Trash2 className="h-4 w-4 text-rose-600" />}
                           onClick={(e) => {
@@ -381,7 +450,7 @@ export function MaterialProposalList({ proposals, currentProjectId }: MaterialPr
                           }}
                         >
                           Xóa đề xuất
-                        </ActionMenuItem>
+                        </ActionMenuItem>}
                       </UnifiedActionMenu>
                     </td>
                   </tr>
@@ -400,13 +469,13 @@ export function MaterialProposalList({ proposals, currentProjectId }: MaterialPr
           <p className="mt-1 text-xs text-slate-500 max-w-sm">
             Tạo đề xuất đầu tiên để quản lý nhu cầu cấp vật tư cho công trình này.
           </p>
-          <Link
+          {capabilities.canCreate && <Link
             href={createUrl}
             className="mt-4 flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-blue-700 transition"
           >
             <Plus className="h-3.5 w-3.5" />
             <span>Tạo đề xuất đầu tiên</span>
-          </Link>
+          </Link>}
         </div>
       )}
 

@@ -122,7 +122,10 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
       <HrPageHeader
         title="Chi tiết hồ sơ nhân viên"
         description={`Mã hồ sơ: ${employeeDto.code} — ${employeeDto.fullName}`}
-        action={
+      />
+
+      <HrWorkspaceTabs
+        rightContent={
           <Link
             href="/hr/employees"
             className="inline-flex items-center gap-1.5 px-3 py-2 border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg transition-colors shrink-0"
@@ -132,8 +135,6 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
           </Link>
         }
       />
-
-      <HrWorkspaceTabs />
 
       <EmployeeDetailView
         employee={{ ...employeeDto, user: linkedUser }}

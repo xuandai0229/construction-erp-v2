@@ -285,7 +285,10 @@ export default async function EmployeeListPage({ searchParams }: EmployeeListPag
       <HrPageHeader
         title="Nhân sự"
         description="Tra cứu nhân viên, phòng ban, chức danh và tình trạng bố trí công trình."
-        action={
+      />
+
+      <HrWorkspaceTabs
+        rightContent={
           createPermCheck.allowed ? (
             <Link
               href="/hr/employees/new"
@@ -297,8 +300,6 @@ export default async function EmployeeListPage({ searchParams }: EmployeeListPag
           ) : undefined
         }
       />
-
-      <HrWorkspaceTabs />
 
       <EmployeeListFilters organizationUnits={organizationUnits} positions={positions} />
 

@@ -55,7 +55,10 @@ export default async function NewEmployeePage() {
       <HrPageHeader
         title="Thêm hồ sơ nhân viên mới"
         description="Nhập thông tin nhân sự và phân công ban đầu. Mã nhân viên sẽ tự động tạo theo chuỗi quy định."
-        action={
+      />
+
+      <HrWorkspaceTabs
+        rightContent={
           <Link
             href="/hr/employees"
             className="inline-flex items-center gap-1.5 px-3 py-2 border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg transition-colors shrink-0"
@@ -65,8 +68,6 @@ export default async function NewEmployeePage() {
           </Link>
         }
       />
-
-      <HrWorkspaceTabs />
 
       <EmployeeCreateForm
         organizationUnits={organizationUnits}

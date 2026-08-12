@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { AppDrawer } from "@/components/ui/app-drawer";
 import { CloseButton } from "@/components/ui/close-button";
-import { formatDateTime, formatQuantity, getStockDelta, getStockRatio, getStockStatus } from "./materials-formatters";
+import { formatDateTime, formatManufacturerOrigin, formatQuantity, getStockDelta, getStockRatio, getStockStatus } from "./materials-formatters";
 import { MovementTypeBadge, StockStatusBadge } from "./materials-badges";
 import { Button } from "@/components/ui/button";
 import type { ProjectStockDto, MaterialMovementDto } from "@/app/(dashboard)/materials/actions";
@@ -60,10 +60,10 @@ export function StockDetailDrawer({
               <h2 className="text-lg font-bold text-[var(--foreground)] line-clamp-1">{materialItem.name}</h2>
               <div className="mt-1 flex items-center gap-2 text-sm text-[var(--muted-foreground)] font-mono">
                 {materialItem.code}
-                {materialItem.group && (
+                {(materialItem.manufacturer || materialItem.origin) && (
                   <>
                     <span className="font-sans text-slate-300">•</span>
-                    <span className="font-sans font-medium text-[var(--muted-foreground)] bg-[var(--border)] px-2 py-0.5 rounded-full">{materialItem.group}</span>
+                    <span className="font-sans font-medium text-[var(--muted-foreground)] bg-[var(--border)] px-2 py-0.5 rounded-full">{formatManufacturerOrigin(materialItem.manufacturer, materialItem.origin)}</span>
                   </>
                 )}
               </div>

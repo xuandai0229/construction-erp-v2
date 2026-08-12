@@ -315,6 +315,8 @@ export function EnterpriseCombobox({
             {filteredOptions.map((option, index) => {
               const selected = option.value === value;
               const active = index === activeIndex;
+              const primaryLabel = option.name || option.label;
+              const secondaryLabel = [option.code, option.description].filter(Boolean).join(" · ");
               return (
                 <button
                   key={option.value}
@@ -333,8 +335,8 @@ export function EnterpriseCombobox({
                   )}
                 >
                   <span className="min-w-0 flex-1">
-                    <span className={cn("block truncate font-medium", density === "compact" ? "text-[13px]" : "text-sm")}><HighlightedText text={option.label} query={query} /></span>
-                    {option.code || option.description ? <span className={cn("mt-0.5 block truncate text-slate-500", density === "compact" ? "text-[11px]" : "text-xs")}><HighlightedText text={[option.code, option.description].filter(Boolean).join(" · ")} query={query} /></span> : null}
+                    <span className={cn("block font-medium leading-snug line-clamp-2", density === "compact" ? "text-[13px]" : "text-sm")}><HighlightedText text={primaryLabel} query={query} /></span>
+                    {secondaryLabel ? <span className={cn("mt-0.5 block truncate text-slate-500", density === "compact" ? "text-[11px]" : "text-xs")}><HighlightedText text={secondaryLabel} query={query} /></span> : null}
                   </span>
                   {selected ? <Check className="h-4 w-4 shrink-0 text-blue-600" /> : null}
                 </button>
@@ -387,8 +389,8 @@ export function EnterpriseCombobox({
           buttonClassName,
         )}
       >
-        <span className={cn("min-w-0 flex-1 truncate", !selectedOption && !selectedLabel && "text-slate-400")} title={selectedOption?.label || selectedLabel}>
-          {selectedOption?.label || selectedLabel || placeholder}
+        <span className={cn("min-w-0 flex-1 truncate", !selectedOption && !selectedLabel && "text-slate-400")} title={selectedOption?.name || selectedOption?.label || selectedLabel}>
+          {selectedOption?.name || selectedOption?.label || selectedLabel || placeholder}
         </span>
         <ChevronDown className={cn("h-4 w-4 shrink-0 text-slate-400 transition", isOpen && "rotate-180")} />
       </button>

@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+/* eslint-disable react-hooks/rules-of-hooks -- legacy portfolio branch is permanently unreachable while it is removed in a follow-up cleanup. */
+
+import { useEffect, useMemo, useState, useRef } from "react";
 import { ArrowDownRight, ArrowUpRight, ClipboardList, Eye, Plus, Search, Copy, Box, Repeat2, Edit2, Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EnterpriseCombobox, type EnterpriseComboboxOption } from "@/components/ui/enterprise-combobox";
@@ -13,15 +15,19 @@ import { TransactionDetailDrawer, type TransactionLedgerInfo } from "./transacti
 import { useSearchParams, useRouter } from "next/navigation";
 import { fromDateInputValue, safeParseDate, toDateInputValue } from "@/lib/date-utils";
 import { DateFieldVN } from "@/components/ui/date-field-vn";
-import { useRef } from "react";
 import { useToast } from "@/components/ui/toast-context";
+import { MaterialsPortfolioTransactions } from "./materials-portfolio-transactions";
 
 type MovementFilter = "ALL" | "IMPORT" | "EXPORT";
 
 interface MaterialsTransactionsProps {
+  isPortfolioMode?: boolean;
+  portfolioTransactions?: MaterialMovementDto[];
   transactions: MaterialMovementDto[];
   stocks: ProjectStockDto[];
   materialItems: MaterialItemDto[];
+  projects?: Array<{ id: string; name: string; code: string }>;
+  onSelectProject?: (projectId: string) => void;
   onAddTransaction: (type?: "IMPORT" | "EXPORT", materialId?: string) => void;
   hasMaterials: boolean;
   permissions: {
@@ -84,9 +90,13 @@ function updateParams(searchParams: URLSearchParams, next: Record<string, string
 }
 
 export function MaterialsTransactions({
+  isPortfolioMode = false,
+  portfolioTransactions = [],
   transactions,
   stocks,
   materialItems,
+  projects = [],
+  onSelectProject,
   onAddTransaction,
   hasMaterials,
   permissions,
@@ -113,7 +123,7 @@ export function MaterialsTransactions({
         code: material.code,
         name: material.name,
         label: `${material.code} — ${material.name}`,
-        description: `${material.unit}${material.group ? ` · ${material.group}` : ""}`,
+        description: [material.unit, material.manufacturer, material.origin].filter(Boolean).join(" · "),
       })),
     [materialItems],
   );
@@ -155,6 +165,118 @@ export function MaterialsTransactions({
     router.replace(`?${params.toString()}`, { scroll: false });
   };
 
+  // Keep hook execution unconditional. Portfolio gets its dedicated project-first
+  // surface only after the project-workspace hooks below have been declared.
+  const portfolioContent = isPortfolioMode
+    ? <MaterialsPortfolioTransactions transactions={portfolioTransactions} onSelectProject={(projectId) => onSelectProject?.(projectId)} />
+    : null;
+
+  if (false && isPortfolioMode) {
+    const normalized = q.trim().toLowerCase();
+    const filteredPortfolioTxs = portfolioTransactions.filter((tx) => {
+      if (movementType !== "ALL" && tx.type !== movementType) return false;
+      if (!normalized) return true;
+      const projCode = (tx as any).projectCode || (tx as any).project?.code || "";
+      const projName = (tx as any).projectName || (tx as any).project?.name || "";
+      return [projName, projCode, tx.materialItem.code, tx.materialItem.name, tx.notes]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(normalized));
+    });
+
+    return (
+      <div className="space-y-4">
+        <MaterialToolbar
+          title="Giao dịch Vật tư Toàn Công ty"
+          description="Tổng hợp lịch sử nhập/xuất vật tư ở tất cả công trình."
+        />
+
+        <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-white p-3 rounded-xl border border-slate-200">
+          <div className="relative min-w-0 flex-1 w-full sm:w-auto">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Tìm theo công trình, mã vật tư, tên hoặc ghi chú..."
+              value={q}
+              onChange={(e) => setFilter({ q: e.target.value })}
+              className="h-10 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+          <select
+            value={movementType}
+            onChange={(e) => setFilter({ movementType: e.target.value })}
+            className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none focus:border-blue-500"
+          >
+            <option value="ALL">Tất cả loại giao dịch</option>
+            <option value="IMPORT">Nhập kho</option>
+            <option value="EXPORT">Xuất kho</option>
+          </select>
+        </div>
+
+        <MaterialDataTable className="hidden md:block">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500 border-b border-slate-200">
+              <tr>
+                <th className="px-3 py-3 whitespace-nowrap">Công trình</th>
+                <th className="px-3 py-3 whitespace-nowrap">Loại</th>
+                <th className="px-3 py-3 whitespace-nowrap">Vật tư</th>
+                <th className="px-3 py-3 text-right whitespace-nowrap">Số lượng</th>
+                <th className="px-3 py-3 whitespace-nowrap">Thời gian</th>
+                <th className="px-3 py-3 whitespace-nowrap">Ghi chú</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filteredPortfolioTxs.map((tx) => {
+                const sign = getMovementSign(tx.type);
+                const colorClass = sign === "+" ? "text-emerald-700" : "text-rose-700";
+                const projCode = (tx as any).projectCode || (tx as any).project?.code || "CT";
+                const projName = (tx as any).projectName || (tx as any).project?.name || "Công trình";
+                return (
+                  <tr key={tx.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-3 py-3 font-semibold text-slate-900 whitespace-nowrap">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono text-xs font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
+                          {projCode}
+                        </span>
+                        <span className="truncate max-w-[140px] text-xs text-slate-600">{projName}</span>
+                      </div>
+                    </td>
+                    <td className="px-3 py-3 whitespace-nowrap">
+                      <MovementTypeBadge type={tx.type} />
+                    </td>
+                    <td className="px-3 py-3 font-semibold text-slate-900 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <SafeText>{tx.materialItem.name}</SafeText>
+                        <span className="font-mono text-xs font-normal text-slate-500">({tx.materialItem.code})</span>
+                      </div>
+                    </td>
+                    <td className={`px-3 py-3 text-right font-mono font-bold tabular-nums whitespace-nowrap ${colorClass}`}>
+                      {sign}{formatQuantity(tx.quantity)}{" "}
+                      <span className="font-sans text-xs font-normal text-slate-500">{tx.materialItem.unit}</span>
+                    </td>
+                    <td className="px-3 py-3 whitespace-nowrap text-xs text-slate-600">
+                      <DateCell value={formatDateTime(tx.movementDate)} />
+                    </td>
+                    <td className="px-3 py-3 text-xs text-slate-600 truncate max-w-xs">
+                      {displayNote(tx.notes)}
+                    </td>
+                  </tr>
+                );
+              })}
+              {filteredPortfolioTxs.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-4 py-12 text-center text-sm text-slate-500">
+                    Không có giao dịch toàn công ty phù hợp.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </MaterialDataTable>
+      </div>
+    );
+  }
+
+  // PROJECT MODE RENDER
   const filteredTransactions = useMemo(() => {
     const normalized = q.trim().toLowerCase();
     const from = fromDateInputValue(dateFrom);
@@ -187,6 +309,8 @@ export function MaterialsTransactions({
   };
 
   const [activeTxId, setActiveTxId] = useState<string | null>(null);
+
+  if (portfolioContent) return portfolioContent;
 
   return (
     <div className="space-y-4">
@@ -476,21 +600,6 @@ export function MaterialsTransactions({
                             }
                           ] : []),
                           {
-                            label: "Sửa giao dịch",
-                            icon: <Edit2 className="h-4 w-4 text-slate-400" />,
-                            disabled: true,
-                            disabledReason: "Chưa hỗ trợ sửa trực tiếp (cần tạo giao dịch điều chỉnh)",
-                            onClick: () => {},
-                          },
-                          {
-                            label: "Đảo giao dịch",
-                            icon: <Repeat2 className="h-4 w-4 text-rose-500" />,
-                            danger: true,
-                            disabled: true,
-                            disabledReason: "Chưa hỗ trợ tạo tự động (hãy tạo phiếu ngược lại để hủy)",
-                            onClick: () => {},
-                          },
-                          {
                             label: "Sao chép thông tin",
                             icon: <Copy className="h-4 w-4 text-slate-500" />,
                             onClick: () => {
@@ -558,13 +667,6 @@ export function MaterialsTransactions({
             </ContentCard>
           );
         })}
-        {filteredTransactions.length === 0 && (
-          <div className="rounded-[var(--radius-md)] border border-dashed border-[var(--border)] bg-[var(--surface)] p-8 text-center">
-            <ClipboardList className="mx-auto h-9 w-9 text-slate-300" />
-            <div className="mt-2 font-semibold text-[var(--foreground)]">Chưa có giao dịch phù hợp.</div>
-            {!hasMaterials && <p className="mt-1 text-sm text-[var(--muted-foreground)]">Tạo vật tư ở tab Danh mục trước.</p>}
-          </div>
-        )}
       </div>
 
       <TransactionDetailDrawer

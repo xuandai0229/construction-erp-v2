@@ -211,7 +211,7 @@ export function ProjectsStatusClientView({ projects }: ProjectsStatusClientViewP
                       <td className="px-4 py-3.5 text-xs font-bold text-slate-900 font-mono">{p.code}</td>
                       <td className="px-4 py-3.5 text-xs font-bold text-slate-950">
                         <Link href={`/projects/${p.id}`} className="block min-w-0 hover:text-blue-600 transition-colors">
-                          <ProjectName name={p.name} maxLines={1} className="text-xs leading-5" />
+                          <ProjectName name={p.name} maxLines={2} className="text-xs leading-5" />
                         </Link>
                       </td>
                       <td className="px-4 py-3.5">

@@ -2,7 +2,7 @@
 
 import { AppDrawer } from "@/components/ui/app-drawer";
 import { CloseButton } from "@/components/ui/close-button";
-import { formatDateTime, formatQuantity, getStockStatus } from "./materials-formatters";
+import { formatDateTime, formatManufacturerOrigin, formatQuantity, getStockStatus } from "./materials-formatters";
 import { MovementTypeBadge, StockStatusBadge } from "./materials-badges";
 import type { MaterialItemDto, ProjectStockDto, MaterialMovementDto } from "@/app/(dashboard)/materials/actions";
 import { useEffect, useState } from "react";
@@ -63,10 +63,10 @@ export function MaterialDetailDrawer({
               <h2 className="text-lg font-bold text-[var(--foreground)] line-clamp-1">{material.name}</h2>
               <div className="mt-1 flex items-center gap-2 text-sm text-[var(--muted-foreground)] font-mono">
                 {material.code}
-                {material.group && (
+                {(material.manufacturer || material.origin) && (
                   <>
                     <span className="font-sans text-slate-300">•</span>
-                    <span className="font-sans font-medium text-[var(--muted-foreground)] bg-[var(--border)] px-2 py-0.5 rounded-full">{material.group}</span>
+                    <span className="font-sans font-medium text-[var(--muted-foreground)] bg-[var(--border)] px-2 py-0.5 rounded-full">{formatManufacturerOrigin(material.manufacturer, material.origin)}</span>
                   </>
                 )}
               </div>
@@ -131,8 +131,8 @@ export function MaterialDetailDrawer({
                   <div className="p-3 col-span-2 font-semibold text-[var(--foreground)]">{material.unit}</div>
                 </div>
                 <div className="grid grid-cols-3 border-b border-[var(--border)]">
-                  <div className="p-3 font-medium text-[var(--muted-foreground)] bg-[var(--surface-subtle)]">Nhóm vật tư</div>
-                  <div className="p-3 col-span-2 text-[var(--foreground)]">{material.group || "—"}</div>
+                  <div className="p-3 font-medium text-[var(--muted-foreground)] bg-[var(--surface-subtle)]">Hãng sản xuất / xuất xứ</div>
+                  <div className="p-3 col-span-2 text-[var(--foreground)]">{formatManufacturerOrigin(material.manufacturer, material.origin)}</div>
                 </div>
                 <div className="grid grid-cols-3">
                   <div className="p-3 font-medium text-[var(--muted-foreground)] bg-[var(--surface-subtle)]">Ghi chú</div>

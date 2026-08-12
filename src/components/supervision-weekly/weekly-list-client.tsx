@@ -29,6 +29,7 @@ import { ContentCard, FilterBar } from "@/components/ui/enterprise";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast-context";
 import { UnifiedActionMenu } from "@/components/ui/unified-action-menu";
+import { ProjectName } from "@/components/project/project-name";
 import {
   createSupervisionWeeklyDossier,
   deleteSupervisionWeeklyDossier,
@@ -771,9 +772,7 @@ export function WeeklyListClient({
                               <span>Toàn hệ thống</span>
                             </span>
                           ) : projectCount === 1 ? (
-                            <div className="font-medium text-slate-800 truncate max-w-[200px]" title={projectList[0].name}>
-                              {projectList[0].name}
-                            </div>
+                            <ProjectName name={projectList[0].name} maxLines={2} className="max-w-[260px] font-medium text-slate-800" />
                           ) : (
                             <div className="inline-block">
                               <button

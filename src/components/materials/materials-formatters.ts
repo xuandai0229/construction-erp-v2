@@ -15,6 +15,17 @@ export function formatDateTime(value: string | Date) {
   return safeFormatDateTimeVN(value);
 }
 
+export function formatManufacturerOrigin(
+  manufacturer?: string | null,
+  origin?: string | null,
+  fallback = "—",
+) {
+  const maker = manufacturer?.trim();
+  const source = origin?.trim();
+  if (maker && source) return `${maker} · ${source}`;
+  return maker || source || fallback;
+}
+
 export function getStockStatus(stock: number, minStockLevel: number) {
   if (stock < 0) return "negative" as const;
   if (stock === 0) return "out" as const;

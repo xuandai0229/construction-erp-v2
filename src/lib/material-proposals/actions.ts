@@ -415,6 +415,33 @@ export async function submitMaterialProposal(id: string) {
   return { ok: true };
 }
 
+export async function listMaterialProposalsForProjects(projectIds: string[]) {
+  const user = await sessionOrThrow();
+  if (projectIds.length === 0) return [];
+
+  // Never trust project ids supplied by a client invocation. Company users may
+  // read their portfolio; project users are intersected with active membership.
+  const permittedProjectIds = isHighLevel(user.role)
+    ? projectIds
+    : (await prisma.projectMember.findMany({
+        where: { projectId: { in: projectIds }, userId: user.id, isActive: true, deletedAt: null, leftAt: null },
+        select: { projectId: true },
+      })).map((membership) => membership.projectId);
+
+  if (permittedProjectIds.length === 0) return [];
+
+  return prisma.materialProposal.findMany({
+    where: {
+      projectId: { in: permittedProjectIds },
+      status: { not: MaterialProposalStatus.CANCELLED },
+    },
+    include: {
+      items: { select: { id: true, materialName: true, actualQuantity: true, unit: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
 export async function listMaterialProposals(projectId?: string) {
   const user = await sessionOrThrow();
   const where: Prisma.MaterialProposalWhereInput = {
@@ -593,4 +620,3 @@ export async function deleteMaterialProposal(id: string) {
   revalidatePath(`/materials/proposals/${id}`);
   return { success: true };
 }
-

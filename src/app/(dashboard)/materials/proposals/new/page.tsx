@@ -9,7 +9,7 @@ import { redirect } from "next/navigation";
 export default async function NewMaterialProposalPage({
   searchParams,
 }: {
-  searchParams: Promise<{ projectId?: string; edit?: string }>;
+  searchParams: Promise<{ projectId?: string; edit?: string; returnTo?: string }>;
 }) {
   const session = await getSession();
   if (!session) {
@@ -26,7 +26,8 @@ export default async function NewMaterialProposalPage({
       code: true,
       name: true,
       unit: true,
-      group: true,
+      manufacturer: true,
+      origin: true,
       description: true,
     },
     orderBy: { name: "asc" },
@@ -82,6 +83,7 @@ export default async function NewMaterialProposalPage({
       currentUserName={session.name || session.email || "Người dùng"}
       currentUserRole={session.role}
       initialProjectId={initialProjectId}
+      returnTo={params.returnTo}
     />
   );
 }

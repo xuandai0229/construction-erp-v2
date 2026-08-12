@@ -38,7 +38,8 @@ export interface CatalogItemOption {
   code: string;
   name: string;
   unit: string;
-  group?: string | null;
+  manufacturer?: string | null;
+  origin?: string | null;
   description?: string | null;
 }
 
@@ -83,6 +84,7 @@ interface MaterialProposalFormProps {
   currentUserName: string;
   currentUserRole: string;
   initialProjectId?: string;
+  returnTo?: string;
 }
 
 const createBlankItem = (sectionName?: string): ProposalFormItem => ({
@@ -172,6 +174,7 @@ export function MaterialProposalForm({
   currentUserName,
   currentUserRole,
   initialProjectId,
+  returnTo,
 }: MaterialProposalFormProps) {
   const router = useRouter();
   const isEditing = Boolean(initialProposal);
@@ -256,7 +259,10 @@ export function MaterialProposalForm({
       if (res?.id) {
         if (!proposalId) {
           setProposalId(res.id);
-          window.history.replaceState({}, "", `/materials/proposals/new?edit=${res.id}`);
+          const newUrl = returnTo
+            ? `/materials/proposals/new?edit=${res.id}&returnTo=${encodeURIComponent(returnTo)}`
+            : `/materials/proposals/new?edit=${res.id}`;
+          window.history.replaceState({}, "", newUrl);
         }
         setSaveStatus("saved");
         const now = new Date();
@@ -266,7 +272,7 @@ export function MaterialProposalForm({
       setSaveStatus("error");
       setSaveErrorMsg(err instanceof Error ? err.message : "Chưa lưu được");
     }
-  }, [proposalId, projectId, projectLocation, purchaseReason, requiredDeliveryDate, items]);
+  }, [proposalId, projectId, projectLocation, purchaseReason, requiredDeliveryDate, items, returnTo]);
 
   const handleOpenPreview = async () => {
     if (!projectId) return;
@@ -289,7 +295,10 @@ export function MaterialProposalForm({
         setSaveStatus("saved");
         const now = new Date();
         setLastSavedTime(`${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`);
-        router.push(`/materials/proposals/${res.id}/preview`);
+        const previewUrl = returnTo
+          ? `/materials/proposals/${res.id}/preview?returnTo=${encodeURIComponent(returnTo)}`
+          : `/materials/proposals/${res.id}/preview`;
+        router.push(previewUrl);
       } else {
         throw new Error("Tự động lưu thất bại.");
       }
@@ -361,7 +370,7 @@ export function MaterialProposalForm({
   };
 
   const addSection = () => {
-    const defaultSectionName = `NHÓM VẬT TƯ ${items.filter((i) => i.sectionName).length + 1}`;
+    const defaultSectionName = `PHẦN VẬT TƯ ${items.filter((i) => i.sectionName).length + 1}`;
     setItems((prev) => [...prev, createBlankItem(defaultSectionName)]);
   };
 
@@ -381,6 +390,7 @@ export function MaterialProposalForm({
         materialName: catItem.name,
         unit: catItem.unit || copy[index].unit || "",
         specification: catItem.description || copy[index].specification || "",
+        manufacturerOrigin: [catItem.manufacturer, catItem.origin].filter(Boolean).join(" · ") || copy[index].manufacturerOrigin || "",
       };
       return copy;
     });
@@ -401,8 +411,6 @@ export function MaterialProposalForm({
     setActiveSuggestionRow(null);
   };
 
-  let sequenceCounter = 0;
-
   return (
     <main className="w-full max-w-full space-y-6">
       {/* Header Bar */}
@@ -411,8 +419,12 @@ export function MaterialProposalForm({
           <button
             type="button"
             onClick={() => {
-              const targetUrl = `/materials?tab=requests${projectId ? `&projectId=${projectId}` : ""}`;
-              router.push(targetUrl);
+              if (returnTo) {
+                router.push(returnTo);
+              } else {
+                const targetUrl = `/materials?tab=requests${projectId ? `&projectId=${projectId}` : ""}`;
+                router.push(targetUrl);
+              }
             }}
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-2xs transition hover:bg-slate-50"
             aria-label="Quay lại danh sách đề xuất"
@@ -641,7 +653,7 @@ export function MaterialProposalForm({
               className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50"
             >
               <Layers className="h-3.5 w-3.5 text-slate-600" />
-              + Thêm nhóm
+              + Thêm phần
             </button>
             <button
               type="button"
@@ -727,8 +739,7 @@ export function MaterialProposalForm({
                   item.sectionName &&
                   (index === 0 || items[index - 1].sectionName !== item.sectionName);
 
-                sequenceCounter += 1;
-                const sequenceNum = sequenceCounter;
+                const sequenceNum = index + 1;
 
                 // Catalog suggestions filter
                 const searchLower = item.materialName.trim().toLowerCase();
@@ -747,13 +758,13 @@ export function MaterialProposalForm({
                           <div className="flex items-center gap-2">
                             <Layers className="h-4 w-4 text-blue-600 shrink-0" />
                             <span className="text-xs uppercase text-slate-500 font-bold">
-                              Nhóm vật tư:
+                              Phần vật tư:
                             </span>
                             <input
                               type="text"
                               value={item.sectionName}
                               onChange={(e) => updateItem(index, "sectionName", e.target.value)}
-                              placeholder="Nhập tên nhóm / phần vật tư..."
+                              placeholder="Nhập tên phần vật tư..."
                               className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold text-blue-900 shadow-2xs focus:border-blue-500 focus:outline-none min-w-[280px]"
                             />
                             <button
@@ -761,7 +772,7 @@ export function MaterialProposalForm({
                               onClick={() => updateItem(index, "sectionName", undefined)}
                               className="text-[11px] font-normal text-rose-600 hover:underline ml-2"
                             >
-                              Bỏ nhóm này
+                              Bỏ phần này
                             </button>
                           </div>
                         </td>

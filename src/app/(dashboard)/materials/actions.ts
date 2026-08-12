@@ -3,7 +3,7 @@
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { applyMaterialMovement, parseNonNegativeQuantity, parsePositiveQuantity } from "@/lib/materials/ledger";
-import { MaterialMovementType, Prisma } from "@prisma/client";
+import { MaterialMovementType, MaterialProposalStatus, Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { getMaterialPermissions, MaterialPermissionSet } from "@/lib/materials/materials-permissions";
 import { canViewAllProjects } from "@/lib/rbac";
@@ -32,7 +32,8 @@ export interface MaterialItemDto {
   code: string;
   name: string;
   unit: string;
-  group: string | null;
+  manufacturer: string | null;
+  origin: string | null;
   description: string | null;
   isActive: boolean;
   hasMovement: boolean;
@@ -69,6 +70,11 @@ export interface MaterialMovementDto {
     requestNo: string;
     requestedBy?: { name: string | null };
   } | null;
+  /** Present for company-scope queries.  Never infer a project label in the UI. */
+  project?: {
+    code: string;
+    name: string;
+  };
 }
 
 function normalizeText(value: unknown) {
@@ -119,7 +125,8 @@ function toMaterialItemDto(item: {
   code: string;
   name: string;
   unit: string;
-  group: string | null;
+  manufacturer: string | null;
+  origin: string | null;
   description: string | null;
   isActive: boolean;
   _count?: { movements: number };
@@ -131,7 +138,8 @@ function toMaterialItemDto(item: {
     code: item.code,
     name: item.name,
     unit: item.unit,
-    group: item.group,
+    manufacturer: item.manufacturer,
+    origin: item.origin,
     description: item.description,
     isActive: item.isActive,
     hasMovement: item._count ? item._count.movements > 0 : false,
@@ -176,6 +184,7 @@ function toMovementDto(movement: {
   materialItem: Parameters<typeof toMaterialItemDto>[0];
   materialRequestId?: string | null;
   materialRequest?: any;
+  project?: { code: string; name: string };
 }): MaterialMovementDto {
   return {
     id: movement.id,
@@ -192,7 +201,8 @@ function toMovementDto(movement: {
     materialRequest: movement.materialRequest ? {
       requestNo: movement.materialRequest.requestNo,
       requestedBy: movement.materialRequest.requestedBy
-    } : null
+    } : null,
+    project: movement.project,
   };
 }
 
@@ -297,7 +307,7 @@ export async function getMaterialItems(projectId: string): Promise<MaterialItemD
     include: {
       _count: { select: { movements: true } },
     },
-    orderBy: [{ group: "asc" }, { name: "asc" }],
+    orderBy: [{ name: "asc" }, { code: "asc" }],
   });
 
   return items.map(item => {
@@ -341,7 +351,8 @@ export async function createMaterialItem(data: {
   code?: string;
   name: string;
   unit: string;
-  group?: string;
+  manufacturer?: string;
+  origin?: string;
   description?: string;
   minStockLevel?: number;
   initialStock?: number;
@@ -377,7 +388,8 @@ export async function createMaterialItem(data: {
           code,
           name,
           unit,
-          group: normalizeOptionalText(data.group),
+          manufacturer: normalizeOptionalText(data.manufacturer),
+          origin: normalizeOptionalText(data.origin),
           description: normalizeOptionalText(data.description),
         },
         select: { id: true },
@@ -426,7 +438,7 @@ export async function createMaterialItem(data: {
   return { ok: true };
 }
 
-export async function updateMaterialItem(id: string, data: { code?: string; name: string; unit: string; group?: string; description?: string; minStockLevel?: number }) {
+export async function updateMaterialItem(id: string, data: { code?: string; name: string; unit: string; manufacturer?: string; origin?: string; description?: string; minStockLevel?: number }) {
   const session = await requireSession();
 
   const name = normalizeText(data.name);
@@ -478,7 +490,8 @@ export async function updateMaterialItem(id: string, data: { code?: string; name
           code: requestedCode,
           name,
           unit,
-          group: normalizeOptionalText(data.group),
+          manufacturer: normalizeOptionalText(data.manufacturer),
+          origin: normalizeOptionalText(data.origin),
           description: normalizeOptionalText(data.description),
         },
       });
@@ -692,6 +705,366 @@ export async function getRecentTransactions(projectId: string): Promise<Material
     where: { projectId },
     include: {
       materialItem: true,
+    },
+    orderBy: { movementDate: "desc" },
+  });
+
+  return movements.map(toMovementDto);
+}
+
+// ==========================================
+// PORTFOLIO / COMPANY SCOPE ACTIONS
+// ==========================================
+
+export interface PortfolioCatalogItemDto {
+  identity: string;
+  code: string;
+  name: string;
+  unit: string;
+  manufacturer: string | null;
+  origin: string | null;
+  projectCount: number;
+  totalStock: number;
+  lowStockProjectCount: number;
+  lastUpdated: string;
+  projectsBreakdown: {
+    materialItemId: string;
+    projectId: string;
+    projectCode: string;
+    projectName: string;
+    stock: number;
+    minStockLevel: number;
+    isActive: boolean;
+  }[];
+}
+
+export interface PortfolioStockItemDto {
+  identity: string;
+  code: string;
+  name: string;
+  unit: string;
+  manufacturer: string | null;
+  origin: string | null;
+  totalStock: number;
+  projectCount: number;
+  lowStockProjectCount: number;
+  inStockProjectCount: number;
+  warning: boolean;
+  lastUpdated: string;
+  projectsBreakdown: {
+    projectId: string;
+    projectCode: string;
+    projectName: string;
+    stock: number;
+    minStockLevel: number;
+    lastUpdated: string;
+  }[];
+}
+
+export interface PortfolioOverviewDto {
+  totalProjects: number;
+  projectsWithMaterialData: number;
+  totalMaterialItems: number;
+  lowStockProjectsCount: number;
+  totalProposalsCount: number;
+  recentMovementsCount: number;
+  lowStockItemsCount: number;
+  attentionProjects: {
+    projectId: string;
+    projectCode: string;
+    projectName: string;
+    lowStockCount: number;
+    pendingProposalsCount: number;
+  }[];
+  recentTransactions: MaterialMovementDto[];
+  recentProposals: any[];
+}
+
+export async function getPortfolioOverview(permittedProjectIds: string[]): Promise<PortfolioOverviewDto> {
+  const session = await getSession();
+  if (!session || !canViewAllProjects(session) || permittedProjectIds.length === 0) {
+    return {
+      totalProjects: 0,
+      projectsWithMaterialData: 0,
+      totalMaterialItems: 0,
+      lowStockProjectsCount: 0,
+      totalProposalsCount: 0,
+      recentMovementsCount: 0,
+      lowStockItemsCount: 0,
+      attentionProjects: [],
+      recentTransactions: [],
+      recentProposals: [],
+    };
+  }
+
+  // 1. Projects count
+  const totalProjects = permittedProjectIds.length;
+
+  // 2. Distinct projects with material items
+  const projectsWithMaterials = await prisma.materialItem.groupBy({
+    by: ["projectId"],
+    where: { projectId: { in: permittedProjectIds } },
+  });
+  const projectsWithMaterialData = projectsWithMaterials.length;
+
+  // MaterialItem belongs to a project. Count real records rather than implying
+  // a global material master by deduplicating only on the local code.
+  const totalMaterialItems = await prisma.materialItem.count({
+    where: { projectId: { in: permittedProjectIds } },
+  });
+
+  // 4. Stocks & low stock calculations
+  const stocks = await prisma.projectMaterialStock.findMany({
+    where: { projectId: { in: permittedProjectIds } },
+    include: {
+      project: { select: { id: true, code: true, name: true } },
+    },
+  });
+
+  let lowStockItemsCount = 0;
+  const lowStockProjectIds = new Set<string>();
+  const lowStockCountByProject: Record<string, number> = {};
+
+  stocks.forEach((s) => {
+    const stockVal = Number(s.stock);
+    const minVal = Number(s.minStockLevel);
+    if ((minVal > 0 && stockVal <= minVal) || stockVal < 0) {
+      lowStockItemsCount += 1;
+      lowStockProjectIds.add(s.projectId);
+      lowStockCountByProject[s.projectId] = (lowStockCountByProject[s.projectId] || 0) + 1;
+    }
+  });
+
+  // 5. Material Proposals count & pending per project
+  const proposals = await prisma.materialProposal.findMany({
+    // The proposal list deliberately excludes cancelled documents. Keep this
+    // KPI on the identical presentation dataset so the portfolio total can
+    // always be reconciled with project rows.
+    where: {
+      projectId: { in: permittedProjectIds },
+      status: { not: MaterialProposalStatus.CANCELLED },
+    },
+    select: { id: true, projectId: true, status: true, requiredDeliveryDate: true },
+  });
+  const totalProposalsCount = proposals.length;
+  const pendingProposalCountByProject: Record<string, number> = {};
+  const today = new Date();
+
+  proposals.forEach((p) => {
+    if (
+      p.status === MaterialProposalStatus.SUBMITTED ||
+      p.status === MaterialProposalStatus.DRAFT ||
+      p.status === MaterialProposalStatus.REVISION_REQUESTED ||
+      (p.requiredDeliveryDate !== null && p.requiredDeliveryDate < today && p.status !== MaterialProposalStatus.APPROVED)
+    ) {
+      pendingProposalCountByProject[p.projectId] = (pendingProposalCountByProject[p.projectId] || 0) + 1;
+    }
+  });
+
+  // 6. Recent Movements count
+  const recentMovementsCount = await prisma.materialMovement.count({
+    where: { projectId: { in: permittedProjectIds } },
+  });
+
+  // 7. Attention Projects
+  const attentionProjectIds = Array.from(
+    new Set([...Object.keys(lowStockCountByProject), ...Object.keys(pendingProposalCountByProject)])
+  );
+
+  const attentionProjectsData = await prisma.project.findMany({
+    where: { id: { in: attentionProjectIds } },
+    select: { id: true, code: true, name: true },
+  });
+
+  const attentionProjects = attentionProjectsData.map((p) => ({
+    projectId: p.id,
+    projectCode: p.code,
+    projectName: p.name,
+    lowStockCount: lowStockCountByProject[p.id] || 0,
+    pendingProposalsCount: pendingProposalCountByProject[p.id] || 0,
+  }));
+
+  // 8. Recent transactions cross-project
+  const rawMovements = await prisma.materialMovement.findMany({
+    where: { projectId: { in: permittedProjectIds } },
+    include: { materialItem: true, project: { select: { code: true, name: true } } },
+    orderBy: { movementDate: "desc" },
+    take: 10,
+  });
+  const recentTransactions = rawMovements.map(toMovementDto);
+
+  // 9. Recent proposals cross-project
+  const { listMaterialProposalsForProjects } = await import("@/lib/material-proposals/actions");
+  const recentProposals = await listMaterialProposalsForProjects(permittedProjectIds);
+
+  return {
+    totalProjects,
+    projectsWithMaterialData,
+    totalMaterialItems,
+    lowStockProjectsCount: lowStockProjectIds.size,
+    totalProposalsCount,
+    recentMovementsCount,
+    lowStockItemsCount,
+    attentionProjects,
+    recentTransactions,
+    recentProposals: recentProposals.slice(0, 10),
+  };
+}
+
+export async function getPortfolioCatalog(permittedProjectIds: string[]): Promise<PortfolioCatalogItemDto[]> {
+  const session = await getSession();
+  if (!session || !canViewAllProjects(session) || permittedProjectIds.length === 0) return [];
+
+  const items = await prisma.materialItem.findMany({
+    where: { projectId: { in: permittedProjectIds } },
+    include: {
+      project: { select: { id: true, code: true, name: true } },
+      projectStocks: { select: { stock: true, minStockLevel: true, lastUpdated: true } },
+    },
+    orderBy: [{ code: "asc" }, { name: "asc" }],
+  });
+
+  // A local code is only unique inside a project. This is a presentation-only
+  // grouping, never a global material master. We only combine rows whose
+  // current metadata agrees; the individual MaterialItem ids stay available.
+  const grouped = new Map<string, PortfolioCatalogItemDto>();
+
+  items.forEach((item) => {
+    const key = `${item.name.trim().toLocaleLowerCase("vi")}::${item.unit.trim().toLocaleLowerCase("vi")}::${(item.manufacturer || "").trim().toLocaleLowerCase("vi")}::${(item.origin || "").trim().toLocaleLowerCase("vi")}`;
+    const stockInfo = item.projectStocks[0];
+    const stockVal = stockInfo ? Number(stockInfo.stock) : 0;
+    const minVal = stockInfo ? Number(stockInfo.minStockLevel) : 0;
+    const isLow = (minVal > 0 && stockVal < minVal) || stockVal < 0;
+
+    if (!grouped.has(key)) {
+      grouped.set(key, {
+        identity: key,
+        code: item.code,
+        name: item.name,
+        unit: item.unit,
+        manufacturer: item.manufacturer || null,
+        origin: item.origin || null,
+        projectCount: 1,
+        totalStock: stockVal,
+        lowStockProjectCount: isLow ? 1 : 0,
+        lastUpdated: item.updatedAt.toISOString(),
+        projectsBreakdown: [
+          {
+            materialItemId: item.id,
+            projectId: item.project.id,
+            projectCode: item.project.code,
+            projectName: item.project.name,
+            stock: stockVal,
+            minStockLevel: minVal,
+            isActive: item.isActive,
+          },
+        ],
+      });
+    } else {
+      const existing = grouped.get(key)!;
+      existing.projectCount += 1;
+      existing.totalStock += stockVal;
+      if (isLow) existing.lowStockProjectCount += 1;
+      if (new Date(item.updatedAt) > new Date(existing.lastUpdated)) {
+        existing.lastUpdated = item.updatedAt.toISOString();
+      }
+      existing.projectsBreakdown.push({
+        materialItemId: item.id,
+        projectId: item.project.id,
+        projectCode: item.project.code,
+        projectName: item.project.name,
+        stock: stockVal,
+        minStockLevel: minVal,
+        isActive: item.isActive,
+      });
+    }
+  });
+
+  return Array.from(grouped.values());
+}
+
+export async function getPortfolioStocks(permittedProjectIds: string[]): Promise<PortfolioStockItemDto[]> {
+  const session = await getSession();
+  if (!session || !canViewAllProjects(session) || permittedProjectIds.length === 0) return [];
+
+  const stocks = await prisma.projectMaterialStock.findMany({
+    where: { projectId: { in: permittedProjectIds } },
+    include: {
+      project: { select: { id: true, code: true, name: true } },
+      materialItem: { select: { code: true, name: true, unit: true, manufacturer: true, origin: true } },
+    },
+    orderBy: { materialItem: { name: "asc" } },
+  });
+
+  const grouped = new Map<string, PortfolioStockItemDto>();
+
+  stocks.forEach((s) => {
+    const key = `${s.materialItem.name.trim().toLocaleLowerCase("vi")}::${s.materialItem.unit.trim().toLocaleLowerCase("vi")}::${(s.materialItem.manufacturer || "").trim().toLocaleLowerCase("vi")}::${(s.materialItem.origin || "").trim().toLocaleLowerCase("vi")}`;
+    const stockVal = Number(s.stock);
+    const minVal = Number(s.minStockLevel);
+    const isLow = (minVal > 0 && stockVal < minVal) || stockVal < 0;
+    const hasStock = stockVal > 0;
+
+    if (!grouped.has(key)) {
+      grouped.set(key, {
+        identity: key,
+        code: s.materialItem.code,
+        name: s.materialItem.name,
+        unit: s.materialItem.unit,
+        manufacturer: s.materialItem.manufacturer || null,
+        origin: s.materialItem.origin || null,
+        totalStock: stockVal,
+        projectCount: 1,
+        lowStockProjectCount: isLow ? 1 : 0,
+        inStockProjectCount: hasStock ? 1 : 0,
+        warning: isLow,
+        lastUpdated: s.lastUpdated.toISOString(),
+        projectsBreakdown: [
+          {
+            projectId: s.project.id,
+            projectCode: s.project.code,
+            projectName: s.project.name,
+            stock: stockVal,
+            minStockLevel: minVal,
+            lastUpdated: s.lastUpdated.toISOString(),
+          },
+        ],
+      });
+    } else {
+      const existing = grouped.get(key)!;
+      existing.totalStock += stockVal;
+      existing.projectCount += 1;
+      if (isLow) {
+        existing.lowStockProjectCount += 1;
+        existing.warning = true;
+      }
+      if (hasStock) existing.inStockProjectCount += 1;
+      if (new Date(s.lastUpdated) > new Date(existing.lastUpdated)) {
+        existing.lastUpdated = s.lastUpdated.toISOString();
+      }
+      existing.projectsBreakdown.push({
+        projectId: s.project.id,
+        projectCode: s.project.code,
+        projectName: s.project.name,
+        stock: stockVal,
+        minStockLevel: minVal,
+        lastUpdated: s.lastUpdated.toISOString(),
+      });
+    }
+  });
+
+  return Array.from(grouped.values());
+}
+
+export async function getPortfolioTransactions(permittedProjectIds: string[]): Promise<MaterialMovementDto[]> {
+  const session = await getSession();
+  if (!session || !canViewAllProjects(session) || permittedProjectIds.length === 0) return [];
+
+  const movements = await prisma.materialMovement.findMany({
+    where: { projectId: { in: permittedProjectIds } },
+    include: {
+      materialItem: true,
+      project: { select: { code: true, name: true } },
     },
     orderBy: { movementDate: "desc" },
   });

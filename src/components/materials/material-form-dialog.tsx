@@ -1,111 +1,111 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { CloseButton } from "@/components/ui/close-button";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { fromDateTimeLocalInputValue, toDateTimeLocalInputValue } from "@/lib/date-utils";
+import { CloseButton } from "@/components/ui/close-button";
 import { DateTimeFieldVN } from "@/components/ui/date-field-vn";
 import { NumericInput } from "@/components/ui/numeric-input";
-import { EditableCombobox } from "@/components/ui/editable-combobox";
+import { fromDateTimeLocalInputValue, toDateTimeLocalInputValue } from "@/lib/date-utils";
+
+type MaterialSubmitData = {
+  code?: string;
+  name: string;
+  unit: string;
+  manufacturer?: string;
+  origin?: string;
+  description?: string;
+  minStockLevel?: number;
+  initialStock?: number;
+  initialStockDate?: Date;
+  initialStockNotes?: string;
+};
 
 interface MaterialFormDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: {
-    code?: string;
-    name: string;
-    unit: string;
-    group?: string;
-    description?: string;
-    minStockLevel?: number;
-    initialStock?: number;
-    initialStockDate?: Date;
-    initialStockNotes?: string;
-  }) => Promise<void>;
+  onSubmit: (data: MaterialSubmitData) => Promise<void>;
   isSubmitting: boolean;
   initialData?: {
     id?: string;
     code: string;
     name: string;
     unit: string;
-    group: string | null;
+    manufacturer: string | null;
+    origin: string | null;
     description: string | null;
     minStockLevel?: number;
     hasMovement?: boolean;
   };
-  existingGroups?: string[];
 }
 
-const initialForm = {
+const emptyForm = {
   code: "",
   name: "",
   unit: "",
-  group: "",
+  manufacturer: "",
+  origin: "",
   minStockLevel: "",
   description: "",
   hasInitialStock: false,
   initialStock: "",
-  initialStockDate: "", // will be initialized in component
+  initialStockDate: "",
   initialStockNotes: "",
 };
 
-export function MaterialFormDialog({ isOpen, onClose, onSubmit, isSubmitting, initialData, existingGroups = [] }: MaterialFormDialogProps) {
-  const [formData, setFormData] = useState(initialForm);
+function FieldLabel({ htmlFor, children, required = false }: { htmlFor: string; children: React.ReactNode; required?: boolean }) {
+  return <label htmlFor={htmlFor} className="mb-1.5 block text-sm font-semibold text-[var(--foreground)]">{children}{required && <span className="ml-1 text-rose-600">*</span>}</label>;
+}
+
+const inputClassName = "h-10 w-full rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted-foreground)] focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
+
+export function MaterialFormDialog({ isOpen, onClose, onSubmit, isSubmitting, initialData }: MaterialFormDialogProps) {
+  const [formData, setFormData] = useState(emptyForm);
   const [error, setError] = useState("");
+  const previousFocus = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    if (isOpen) {
-      setError("");
-      if (initialData) {
-        setFormData({
-          code: initialData.code || "",
-          name: initialData.name || "",
-          unit: initialData.unit || "",
-          group: initialData.group || "",
-          minStockLevel: initialData.minStockLevel !== undefined && initialData.minStockLevel !== null && initialData.minStockLevel > 0 ? initialData.minStockLevel.toString() : "",
-          description: initialData.description || "",
-          hasInitialStock: false,
-          initialStock: "",
-          initialStockDate: toDateTimeLocalInputValue(new Date()),
-          initialStockNotes: "",
-        });
-      } else {
-        setFormData({ ...initialForm, initialStockDate: toDateTimeLocalInputValue(new Date()) });
-      }
-    }
-  }, [isOpen, initialData]);
+    if (!isOpen) return;
+    previousFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setError("");
+    setFormData(initialData ? {
+      code: initialData.code || "",
+      name: initialData.name || "",
+      unit: initialData.unit || "",
+      manufacturer: initialData.manufacturer || "",
+      origin: initialData.origin || "",
+      minStockLevel: initialData.minStockLevel && initialData.minStockLevel > 0 ? String(initialData.minStockLevel) : "",
+      description: initialData.description || "",
+      hasInitialStock: false,
+      initialStock: "",
+      initialStockDate: toDateTimeLocalInputValue(new Date()),
+      initialStockNotes: "",
+    } : { ...emptyForm, initialStockDate: toDateTimeLocalInputValue(new Date()) });
+
+    return () => previousFocus.current?.focus();
+  }, [initialData, isOpen]);
 
   if (!isOpen) return null;
 
-  const updateField = (field: keyof typeof initialForm, value: string) => {
-    setFormData((current) => ({ ...current, [field]: value }));
-  };
+  const updateField = (field: keyof typeof emptyForm, value: string | boolean) => setFormData((current) => ({ ...current, [field]: value }));
+  const close = () => { if (!isSubmitting) onClose(); };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError("");
-
     const name = formData.name.trim();
     const unit = formData.unit.trim();
-    const minStockLevelRaw = formData.minStockLevel.toString().trim();
-    const minStockLevel = minStockLevelRaw === "" ? 0 : Number(minStockLevelRaw);
+    const threshold = formData.minStockLevel.trim() === "" ? 0 : Number(formData.minStockLevel);
+    if (!name) return setError("Vui lòng nhập tên vật tư.");
+    if (!unit) return setError("Vui lòng nhập đơn vị tính.");
+    if (!Number.isFinite(threshold) || threshold < 0) return setError("Ngưỡng cảnh báo không được nhỏ hơn 0.");
 
-    if (!name) return setError("Tên vật tư là bắt buộc.");
-    if (!unit) return setError("Đơn vị tính là bắt buộc.");
-    if (!Number.isFinite(minStockLevel) || minStockLevel < 0) return setError("Tồn tối thiểu phải lớn hơn hoặc bằng 0.");
-
-    let initialStockParam: number | undefined = undefined;
-    let initialStockDateParam: Date | undefined = undefined;
-    let initialStockNotesParam: string | undefined = undefined;
-
+    let initialStock: number | undefined;
+    let initialStockDate: Date | undefined;
     if (!initialData && formData.hasInitialStock) {
-      initialStockParam = Number(formData.initialStock);
-      if (isNaN(initialStockParam) || initialStockParam <= 0) return setError("Số lượng tồn ban đầu phải lớn hơn 0.");
-      
-      const parsedDate = fromDateTimeLocalInputValue(formData.initialStockDate);
-      if (!parsedDate) return setError("Ngày nhập tồn ban đầu không hợp lệ.");
-      initialStockDateParam = parsedDate;
-      initialStockNotesParam = formData.initialStockNotes;
+      initialStock = Number(formData.initialStock);
+      if (!Number.isFinite(initialStock) || initialStock <= 0) return setError("Tồn kho ban đầu phải lớn hơn 0.");
+      initialStockDate = fromDateTimeLocalInputValue(formData.initialStockDate) || undefined;
+      if (!initialStockDate) return setError("Vui lòng chọn ngày ghi nhận tồn kho ban đầu.");
     }
 
     try {
@@ -113,197 +113,64 @@ export function MaterialFormDialog({ isOpen, onClose, onSubmit, isSubmitting, in
         code: formData.code.trim() || undefined,
         name,
         unit,
-        group: formData.group.trim() || undefined,
+        manufacturer: formData.manufacturer.trim() || undefined,
+        origin: formData.origin.trim() || undefined,
         description: formData.description.trim() || undefined,
-        minStockLevel,
-        initialStock: initialStockParam,
-        initialStockDate: initialStockDateParam,
-        initialStockNotes: initialStockNotesParam,
+        minStockLevel: threshold,
+        initialStock,
+        initialStockDate,
+        initialStockNotes: formData.initialStockNotes.trim() || undefined,
       });
-      setFormData({ ...initialForm, initialStockDate: toDateTimeLocalInputValue(new Date()) });
+      setFormData({ ...emptyForm, initialStockDate: toDateTimeLocalInputValue(new Date()) });
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Không thể lưu vật tư.");
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-slate-950/45 p-0 backdrop-blur-sm sm:items-center sm:p-4">
-      <div className="flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl bg-[var(--surface)] shadow-2xl shadow-slate-950/20 sm:rounded-[var(--radius-xl)]">
-        <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
-          <div>
-            <h2 className="text-lg font-bold text-slate-950">{initialData ? "Sửa vật tư" : "Thêm vật tư"}</h2>
-          </div>
-          <CloseButton onClick={onClose} tone="neutral" />
+  return <div className="fixed inset-0 z-[90] flex items-end justify-center bg-slate-950/45 p-0 backdrop-blur-sm sm:items-center sm:p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) close(); }}>
+    <section role="dialog" aria-modal="true" aria-labelledby="material-form-title" className="flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl bg-[var(--surface)] shadow-2xl shadow-slate-950/20 sm:rounded-[var(--radius-xl)]" onKeyDown={(event) => { if (event.key === "Escape") { event.preventDefault(); close(); } }}>
+      <header className="flex items-start justify-between gap-4 border-b border-[var(--border)] px-5 py-4 sm:px-6">
+        <div>
+          <h2 id="material-form-title" className="text-lg font-bold text-slate-950">{initialData ? "Sửa vật tư" : "Thêm vật tư"}</h2>
+          {!initialData && <p className="mt-1 text-sm text-[var(--muted-foreground)]">Thêm vật tư vào danh mục của công trình.</p>}
         </div>
+        <CloseButton onClick={close} tone="neutral" disabled={isSubmitting} />
+      </header>
 
-        <form onSubmit={handleSubmit} className="overflow-y-auto p-4">
-          {error && (
-            <div className="mb-4 rounded-[var(--radius-lg)] border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
-              {error}
-            </div>
-          )}
+      <form id="material-form" onSubmit={handleSubmit} className="min-h-0 overflow-y-auto px-5 py-5 sm:px-6">
+        {error && <div role="alert" className="mb-5 rounded-[var(--radius-lg)] border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">{error}</div>}
 
-          <div className="grid gap-4">
-            <div>
-              <label htmlFor="material-code" className="mb-1.5 block text-sm font-semibold text-[var(--foreground)]">
-                Mã vật tư <span className="font-normal text-[var(--muted-foreground)] opacity-70">(tùy chọn)</span>
-              </label>
-              <input
-                id="material-code"
-                value={formData.code}
-                onChange={(event) => updateField("code", event.target.value)}
-                placeholder="VD: THEP-D10"
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
-                spellCheck={false}
-                data-1p-ignore="true"
-                data-lpignore="true"
-                className="h-10 w-full rounded-[var(--radius-lg)] border border-[var(--border)] px-3 text-sm text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted-foreground)] opacity-70 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="material-name" className="mb-1.5 block text-sm font-semibold text-[var(--foreground)]">
-                Tên vật tư <span className="text-rose-600">*</span>
-              </label>
-              <input
-                id="material-name"
-                value={formData.name}
-                onChange={(event) => updateField("name", event.target.value)}
-                placeholder="VD: Thép cuộn D10"
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
-                spellCheck={false}
-                data-1p-ignore="true"
-                data-lpignore="true"
-                className="h-10 w-full rounded-[var(--radius-lg)] border border-[var(--border)] px-3 text-sm text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted-foreground)] opacity-70 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                required
-              />
-            </div>
-
+        <div className="space-y-6">
+          <fieldset className="space-y-4">
+            <legend className="text-sm font-bold text-slate-950">Thông tin vật tư</legend>
+            <div><FieldLabel htmlFor="material-name" required>Tên vật tư</FieldLabel><input id="material-name" value={formData.name} onChange={(event) => updateField("name", event.target.value)} placeholder="VD: Thép thanh vằn D10 CB300-V" className={inputClassName} required autoFocus /></div>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label htmlFor="material-unit" className="mb-1.5 block text-sm font-semibold text-[var(--foreground)]">
-                  Đơn vị tính <span className="text-rose-600">*</span>
-                </label>
-                  <input
-                    id="material-unit"
-                    value={formData.unit}
-                    onChange={(event) => updateField("unit", event.target.value)}
-                    placeholder="VD: kg, bao, cây"
-                    autoComplete="off"
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    spellCheck={false}
-                    data-1p-ignore="true"
-                    data-lpignore="true"
-                    className="h-10 w-full rounded-[var(--radius-lg)] border border-[var(--border)] px-3 text-sm text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted-foreground)] opacity-70 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                    required
-                  />
-              </div>
-              <div>
-                <label htmlFor="material-group" className="mb-1.5 block text-sm font-semibold text-[var(--foreground)]">Nhóm vật tư</label>
-                <EditableCombobox
-                  id="material-group"
-                  value={formData.group}
-                  options={existingGroups.map(g => ({ value: g, label: g }))}
-                  onChange={(val) => updateField("group", val)}
-                  placeholder="Chọn hoặc nhập nhóm vật tư..."
-                  customOptionLabel={(query) => `Dùng nhóm mới: "${query}"`}
-                  emptyMessage="Chưa có nhóm nào."
-                />
-                <p className="mt-1 text-xs text-[var(--muted-foreground)]">Có thể chọn nhóm đã có hoặc nhập nhóm mới.</p>
-              </div>
+              <div><FieldLabel htmlFor="material-code">Mã vật tư</FieldLabel><input id="material-code" value={formData.code} onChange={(event) => updateField("code", event.target.value)} placeholder="Để trống để hệ thống tự sinh mã" className={inputClassName} autoComplete="off" spellCheck={false} /></div>
+              <div><FieldLabel htmlFor="material-unit" required>Đơn vị tính</FieldLabel><input id="material-unit" value={formData.unit} onChange={(event) => updateField("unit", event.target.value)} placeholder="VD: kg, bao, cây" className={inputClassName} required /></div>
             </div>
+          </fieldset>
 
-            <div className="rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--surface-subtle)] p-4">
-              <label htmlFor="material-min-stock" className="mb-1 block text-sm font-semibold text-[var(--foreground)]">Ngưỡng cảnh báo tồn tối thiểu</label>
-              <p className="mb-2 text-xs text-[var(--muted-foreground)]">Số này chỉ dùng để cảnh báo khi tồn kho thấp, không phải tồn ban đầu.</p>
-              <NumericInput
-                id="material-min-stock"
-                value={formData.minStockLevel}
-                onChange={(value) => updateField("minStockLevel", value)}
-                placeholder="VD: 100"
-                className="h-10 w-full rounded-[var(--radius-lg)] border border-[var(--border)] px-3 text-right text-sm text-[var(--foreground)] outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              />
+          <fieldset className="border-t border-[var(--border)] pt-5">
+            <legend className="text-sm font-bold text-slate-950">Nguồn gốc</legend>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div><FieldLabel htmlFor="material-manufacturer">Hãng sản xuất</FieldLabel><input id="material-manufacturer" value={formData.manufacturer} onChange={(event) => updateField("manufacturer", event.target.value)} placeholder="VD: Hòa Phát" className={inputClassName} /></div>
+              <div><FieldLabel htmlFor="material-origin">Xuất xứ</FieldLabel><input id="material-origin" value={formData.origin} onChange={(event) => updateField("origin", event.target.value)} placeholder="VD: Việt Nam" className={inputClassName} /></div>
             </div>
+          </fieldset>
 
-            <div>
-              <label htmlFor="material-description" className="mb-1.5 block text-sm font-semibold text-[var(--foreground)]">Ghi chú</label>
-              <textarea
-                id="material-description"
-                value={formData.description}
-                onChange={(event) => updateField("description", event.target.value)}
-                placeholder="Quy cách, thương hiệu, tiêu chuẩn nghiệm thu..."
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
-                spellCheck={false}
-                data-1p-ignore="true"
-                data-lpignore="true"
-                className="min-h-24 w-full resize-none rounded-[var(--radius-lg)] border border-[var(--border)] px-3 py-2 text-sm text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted-foreground)] opacity-70 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-              />
-            </div>
+          <fieldset className="border-t border-[var(--border)] pt-5">
+            <legend className="text-sm font-bold text-slate-950">Quản lý tồn kho</legend>
+            <div className="mt-4 max-w-xs"><FieldLabel htmlFor="material-min-stock">Ngưỡng cảnh báo tồn kho</FieldLabel><NumericInput id="material-min-stock" value={formData.minStockLevel} onChange={(value) => updateField("minStockLevel", value)} placeholder="VD: 100" className={`${inputClassName} text-right`} /><p className="mt-1.5 text-xs leading-5 text-[var(--muted-foreground)]">Hệ thống cảnh báo khi tồn kho bằng hoặc thấp hơn mức này.</p></div>
+            {!initialData && <div className="mt-5 rounded-[var(--radius-lg)] border border-blue-100 bg-blue-50/40 p-4"><label className="flex cursor-pointer items-start gap-3"><input id="has-initial-stock" type="checkbox" checked={formData.hasInitialStock} onChange={(event) => updateField("hasInitialStock", event.target.checked)} className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" /><span><span className="block text-sm font-semibold text-slate-950">Khai báo tồn kho ban đầu</span><span className="mt-1 block text-xs leading-5 text-[var(--muted-foreground)]">Dùng khi vật tư đã có sẵn tại công trình trước khi được tạo trên hệ thống.</span></span></label>
+              {formData.hasInitialStock && <div className="mt-4 grid gap-4 border-t border-blue-100 pt-4 sm:grid-cols-2"><div><FieldLabel htmlFor="initial-stock" required>Tồn kho ban đầu</FieldLabel><NumericInput id="initial-stock" value={formData.initialStock} onChange={(value) => updateField("initialStock", value)} placeholder="0" className={`${inputClassName} text-right`} /></div><div><FieldLabel htmlFor="initial-stock-date" required>Ngày ghi nhận</FieldLabel><DateTimeFieldVN value={formData.initialStockDate} onChange={(value) => updateField("initialStockDate", value)} /></div><div className="sm:col-span-2"><FieldLabel htmlFor="initial-stock-note">Ghi chú tồn đầu kỳ</FieldLabel><input id="initial-stock-note" value={formData.initialStockNotes} onChange={(event) => updateField("initialStockNotes", event.target.value)} placeholder="VD: Kiểm kê đầu kỳ" className={inputClassName} /></div></div>}
+            </div>}
+          </fieldset>
 
-            {!initialData && (
-              <div className="rounded-[var(--radius-xl)] border border-blue-100 bg-blue-50/30 p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <input
-                    type="checkbox"
-                    id="has-initial-stock"
-                    checked={formData.hasInitialStock}
-                    onChange={(e) => setFormData(prev => ({ ...prev, hasInitialStock: e.target.checked }))}
-                    className="h-4 w-4 rounded border-[var(--border)] text-blue-600 focus:ring-blue-500"
-                  />
-                  <label htmlFor="has-initial-stock" className="text-sm font-semibold text-[var(--foreground)] cursor-pointer">
-                    Nhập số tồn kho thực tế ban đầu (Tồn kho thật)
-                  </label>
-                </div>
-                
-                {formData.hasInitialStock && (
-                  <div className="grid gap-4 sm:grid-cols-2 mt-2 pt-3 border-t border-blue-100">
-                    <div>
-                      <label className="mb-1.5 block text-sm font-medium text-[var(--foreground)]">Số lượng tồn ban đầu <span className="text-rose-500">*</span></label>
-                      <NumericInput
-                        value={formData.initialStock}
-                        onChange={(val) => updateField("initialStock", val)}
-                        placeholder="0.00"
-                        className="h-10 w-full rounded-[var(--radius-lg)] border border-[var(--border)] px-3 text-right text-sm text-[var(--foreground)] outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1.5 block text-sm font-medium text-[var(--foreground)]">Ngày nhập <span className="text-rose-500">*</span></label>
-                      <DateTimeFieldVN 
-                        value={formData.initialStockDate} 
-                        onChange={val => updateField("initialStockDate", val)}
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="mb-1.5 block text-sm font-medium text-[var(--foreground)]">Ghi chú nhập kho ban đầu</label>
-                      <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} data-1p-ignore="true" data-lpignore="true"
-                        type="text"
-                        value={formData.initialStockNotes}
-                        onChange={(e) => updateField("initialStockNotes", e.target.value)}
-                        placeholder="Ví dụ: Kiểm kê đầu kỳ..."
-                        className="h-10 w-full rounded-[var(--radius-lg)] border border-[var(--border)] px-3 text-sm text-[var(--foreground)] outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          <fieldset className="border-t border-[var(--border)] pt-5"><FieldLabel htmlFor="material-description">Ghi chú</FieldLabel><textarea id="material-description" value={formData.description} onChange={(event) => updateField("description", event.target.value)} placeholder="Quy cách, tiêu chuẩn nghiệm thu hoặc thông tin cần lưu ý..." className="min-h-20 w-full resize-y rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted-foreground)] focus:border-blue-500 focus:ring-2 focus:ring-blue-100" rows={3} /></fieldset>
+        </div>
+      </form>
 
-          <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>Hủy</Button>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white" disabled={isSubmitting}>
-              {isSubmitting ? "Đang lưu..." : "Lưu"}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
+      <footer className="flex shrink-0 flex-col-reverse gap-2 border-t border-[var(--border)] bg-[var(--surface)] px-5 py-3 sm:flex-row sm:justify-end sm:px-6"><Button type="button" variant="outline" onClick={close} disabled={isSubmitting}>Hủy</Button><Button type="submit" form="material-form" className="bg-blue-600 text-white hover:bg-blue-700" disabled={isSubmitting}>{isSubmitting ? "Đang lưu..." : initialData ? "Lưu thay đổi" : "Thêm vật tư"}</Button></footer>
+    </section>
+  </div>;
 }

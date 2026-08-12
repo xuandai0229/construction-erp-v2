@@ -56,7 +56,7 @@ export function CreateAssignmentDialog({
     () =>
       employees.map((emp) => ({
         value: emp.id,
-        label: `[${emp.code}] ${emp.fullName}`,
+        label: emp.fullName,
         code: emp.code,
         name: emp.fullName,
         description: emp.orgUnitName || "Chưa thuộc đơn vị",
@@ -68,7 +68,7 @@ export function CreateAssignmentDialog({
     () =>
       projects.map((prj) => ({
         value: prj.id,
-        label: `[${prj.code}] ${prj.name}`,
+        label: prj.name,
         code: prj.code,
         name: prj.name,
       })),
@@ -185,8 +185,8 @@ export function CreateAssignmentDialog({
               {selectedEmployee.activeProjects && selectedEmployee.activeProjects.length > 0 && (
                 <div className="mt-1 pt-1 border-t border-slate-200/60 text-slate-500 space-y-0.5 max-h-24 overflow-y-auto">
                   {selectedEmployee.activeProjects.map((ap, idx) => (
-                    <div key={idx} className="flex justify-between items-center text-[11px]">
-                      <span className="truncate pr-2">• [{ap.projectCode}] {ap.projectName}</span>
+                    <div key={idx} className="flex items-start justify-between gap-2 text-[11px]">
+                      <span className="min-w-0 pr-2 leading-snug line-clamp-2" title={ap.projectName}>{ap.projectName}</span>
                       <span className="font-mono text-slate-700 shrink-0">{ap.allocationPercentage}%</span>
                     </div>
                   ))}

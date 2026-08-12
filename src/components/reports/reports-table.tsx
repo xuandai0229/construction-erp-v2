@@ -11,6 +11,7 @@ import { formatDateVN, formatTimeVN, formatReportCode } from "@/lib/utils";
 import { ContentCard } from "@/components/ui/enterprise";
 import { isCompanyWideRole } from "@/lib/rbac-rules";
 import { UnifiedActionMenu } from "@/components/ui/unified-action-menu";
+import { ProjectName } from "@/components/project/project-name";
 
 interface ReportsTableProps {
   reports: FieldReport[];
@@ -208,7 +209,7 @@ export function ReportsTable({
                           </td>
                           {showProjectColumn && (
                             <td className="py-2.5 px-3">
-                              <span className="text-[var(--foreground)] font-medium text-[13px] line-clamp-1">{report.projectName}</span>
+                              <ProjectName name={report.projectName} maxLines={2} className="text-[13px] font-medium text-[var(--foreground)]" />
                             </td>
                           )}
                           <td className="py-2.5 px-3">

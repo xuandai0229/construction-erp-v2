@@ -103,9 +103,9 @@ async function main() {
   // PHASE 4 - Create Material Data
   console.log("Đang tạo dữ liệu vật tư test...");
   const materials = [
-    { code: "TEST-XM", name: "Xi măng test", unit: "bao", group: "Vật liệu chính" },
-    { code: "TEST-THEP", name: "Thép test", unit: "kg", group: "Vật liệu chính" },
-    { code: "TEST-CAT", name: "Cát test", unit: "m3", group: "Vật liệu rời" },
+    { code: "TEST-XM", name: "Xi măng test", unit: "bao", manufacturer: "Vicem", origin: "Việt Nam" },
+    { code: "TEST-THEP", name: "Thép test", unit: "kg", manufacturer: "Hòa Phát", origin: "Việt Nam" },
+    { code: "TEST-CAT", name: "Cát test", unit: "m3", manufacturer: null, origin: "Việt Nam" },
   ];
 
   for (const m of materials) {

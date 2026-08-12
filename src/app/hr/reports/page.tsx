@@ -92,10 +92,9 @@ export default async function HrReportsPage(props: HrReportsPageProps) {
       <HrPageHeader
         title="Báo cáo và phân tích nhân sự"
         description="Theo dõi quy mô, cơ cấu, tình trạng phân bổ và lịch sử điều động nhân sự trên toàn công ty."
-        action={exportPermCheck.allowed ? <HrReportExportButton /> : undefined}
       />
 
-      <HrWorkspaceTabs />
+      <HrWorkspaceTabs rightContent={exportPermCheck.allowed ? <HrReportExportButton /> : undefined} />
 
       {/* Filter Bar */}
       <HrReportFilterBar
