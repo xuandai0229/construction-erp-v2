@@ -15,6 +15,12 @@ import {
 import { writeAuditLog } from "@/lib/audit";
 import { EmployeeStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { executeWithAdvisoryLock } from "@/lib/hr/concurrency-lock-helper";
+import {
+  provisionSiteCommanderAccount,
+  SiteCommanderProvisioningError,
+} from "@/lib/hr/site-commander-account-service";
+import { assertPermission } from "@/lib/permissions/permission-resolver";
 
 // --- Zod Schemas ---
 const CreateEmployeeSchema = z.object({
@@ -43,6 +49,7 @@ const UpdateEmployeeSchema = z.object({
   dateOfBirth: z.string().optional().nullable(),
   phoneNumber: z.string().optional().nullable(),
   personalEmail: z.string().email().optional().nullable().or(z.literal("")),
+  joinedDate: z.string().optional().nullable(),
   status: z.nativeEnum(EmployeeStatus),
   resignedDate: z.string().optional().nullable(),
   expectedUpdatedAt: z.string().min(1, "Thiếu thông tin phiên bản hồ sơ"),
@@ -255,7 +262,7 @@ export async function updateEmployeeProfileAction(formData: unknown) {
   if ((data.status === EmployeeStatus.RESIGNED || data.status === EmployeeStatus.RETIRED) && !nextResignedDate) {
     return { success: false, error: "Nhân viên nghỉ việc hoặc nghỉ hưu bắt buộc phải có ngày nghỉ" };
   }
-  if (nextResignedDate && (Number.isNaN(nextResignedDate.getTime()) || nextResignedDate < currentEmp.joinedDate)) {
+  if (nextResignedDate && (Number.isNaN(nextResignedDate.getTime()) || (currentEmp.joinedDate && nextResignedDate < currentEmp.joinedDate))) {
     return { success: false, error: "Ngày nghỉ không được trước ngày vào công ty" };
   }
 
@@ -277,6 +284,7 @@ export async function updateEmployeeProfileAction(formData: unknown) {
           dateOfBirth: nextDateOfBirth,
           phoneNumber: data.phoneNumber || null,
           personalEmail: data.personalEmail || null,
+          ...(data.joinedDate ? { joinedDate: new Date(data.joinedDate) } : {}),
           status: data.status,
           resignedDate: nextResignedDate,
           updatedById: currentUserId,
@@ -496,17 +504,14 @@ export async function archiveEmployeeAction(employeeId: string, resignedDate: st
 
   const currentUserId = permCheck.context.session.id;
   const resignedDateObj = new Date(resignedDate);
-  if (Number.isNaN(resignedDateObj.getTime()) || resignedDateObj < scopedEmployee.joinedDate) {
+  if (Number.isNaN(resignedDateObj.getTime()) || (scopedEmployee.joinedDate && resignedDateObj < scopedEmployee.joinedDate)) {
     return { success: false, error: "Ngày nghỉ không hợp lệ hoặc sớm hơn ngày vào công ty" };
   }
-  const activeProjectAssignmentCount = await prisma.employeeProjectAssignment.count({
-    where: { employeeId, status: "ACTIVE", endDate: null },
-  });
 
   try {
-    await prisma.$transaction(async (tx) => {
-      // 1. Update Employee status
-      const updated = await tx.employee.update({
+    await executeWithAdvisoryLock(prisma, employeeId, async (tx) => {
+      // 1. Update Employee status & resignedDate
+      await tx.employee.update({
         where: { id: employeeId },
         data: {
           status: status || EmployeeStatus.RESIGNED,
@@ -524,14 +529,66 @@ export async function archiveEmployeeAction(employeeId: string, resignedDate: st
         },
       });
 
-      // 3. Record change history
+      // 3. End active manager terms in OrganizationUnitManagerAssignment
+      await tx.organizationUnitManagerAssignment.updateMany({
+        where: { employeeId, endDate: null },
+        data: {
+          endDate: resignedDateObj,
+        },
+      });
+
+      // 4. Release or cancel all active project assignments for this employee
+      const activeProjectAssignments = await tx.employeeProjectAssignment.findMany({
+        where: { employeeId, status: "ACTIVE" },
+      });
+
+      for (const assignment of activeProjectAssignments) {
+        const isFutureAssignment = assignment.startDate > resignedDateObj;
+        const nextStatus = isFutureAssignment ? "CANCELLED" : "RELEASED";
+        const effectiveEndDate = isFutureAssignment ? assignment.startDate : resignedDateObj;
+        const appendNote = isFutureAssignment
+          ? `Tự động hủy do nhân viên nghỉ việc trước ngày bắt đầu (${resignedDateObj.toLocaleDateString("vi-VN")})`
+          : `Tự động thu hồi phân công do nhân viên nghỉ việc ngày ${resignedDateObj.toLocaleDateString("vi-VN")}`;
+        const newNotes = assignment.notes ? `${assignment.notes} | ${appendNote}` : appendNote;
+
+        await tx.employeeProjectAssignment.update({
+          where: { id: assignment.id },
+          data: {
+            status: nextStatus,
+            endDate: effectiveEndDate,
+            notes: newNotes,
+          },
+        });
+
+        await tx.employeeChangeHistory.create({
+          data: {
+            employeeId,
+            changeType: "EMPLOYEE_PROJECT_RELEASED",
+            performedById: currentUserId,
+            reason: appendNote,
+            details: {
+              projectId: assignment.projectId,
+              assignmentId: assignment.id,
+              previousStatus: "ACTIVE",
+              newStatus: nextStatus,
+              releasedDate: effectiveEndDate.toISOString(),
+            },
+          },
+        });
+      }
+
+      // 5. Record employment status change history
       await tx.employeeChangeHistory.create({
         data: {
           employeeId,
           changeType: "EMPLOYMENT_STATUS_CHANGED",
           performedById: currentUserId,
           reason,
-          details: { resignedDate: resignedDateObj.toISOString(), status },
+          details: {
+            resignedDate: resignedDateObj.toISOString(),
+            status,
+            releasedProjectAssignmentsCount: activeProjectAssignments.length,
+          },
         },
       });
     });
@@ -547,15 +604,11 @@ export async function archiveEmployeeAction(employeeId: string, resignedDate: st
     revalidatePath(`/hr/employees/${employeeId}`);
     revalidatePath("/hr/employees");
     revalidatePath("/hr");
+    revalidatePath("/hr/organization");
 
-    return {
-      success: true,
-      warning: activeProjectAssignmentCount > 0
-        ? "Nhân viên vẫn còn phân công công trình đang hoạt động; hệ thống không tự động thu hồi phân công."
-        : undefined,
-    };
-  } catch {
-    return { success: false, error: "Không thể lưu trữ hồ sơ nhân viên. Vui lòng thử lại." };
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || "Không thể lưu trữ hồ sơ nhân viên. Vui lòng thử lại." };
   }
 }
 
@@ -598,5 +651,46 @@ export async function revealIdentityNumberAction(employeeId: string) {
     return { success: true, identityNumber: plaintext };
   } catch (error: any) {
     return { success: false, error: "Không thể giải mã dữ liệu CCCD do lỗi khóa bảo mật" };
+  }
+}
+
+// --- Server Action: Provision a verified site commander account ---
+export async function provisionSiteCommanderAccountAction(employeeId: string) {
+  const permCheck = await checkHrPermission("hr:employee:update");
+  if (!permCheck.allowed) {
+    return { success: false as const, code: "PERMISSION_DENIED", error: "Bạn không có quyền cập nhật hồ sơ nhân sự." };
+  }
+
+  const scopedEmployee = await findEmployeeInScope(employeeId, permCheck);
+  if (!scopedEmployee) {
+    return { success: false as const, code: "EMPLOYEE_NOT_FOUND", error: "Không tìm thấy Employee trong phạm vi được phép." };
+  }
+
+  const actor = permCheck.context.session;
+  try {
+    await assertPermission(actor, "users.create");
+    await assertPermission(actor, "users.assign_system_role");
+    await assertPermission(actor, "users.assign_project_role");
+
+    const result = await provisionSiteCommanderAccount({
+      prisma,
+      employeeId,
+      actorUserId: actor.id,
+    });
+
+    revalidatePath("/hr/employees");
+    revalidatePath(`/hr/employees/${employeeId}`);
+    revalidatePath("/users");
+    revalidatePath("/projects");
+    return { success: true as const, result };
+  } catch (error) {
+    if (error instanceof SiteCommanderProvisioningError) {
+      return { success: false as const, code: error.code, error: error.message };
+    }
+    return {
+      success: false as const,
+      code: "PROVISIONING_FAILED",
+      error: error instanceof Error ? error.message : "Không thể tạo tài khoản Chỉ huy trưởng.",
+    };
   }
 }

@@ -11,10 +11,10 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast-context";
 import { notifyOverlayOpen } from "@/components/ui/global-overlay-manager";
-import { UnifiedActionMenu, ActionMenuItem } from "@/components/ui/unified-action-menu";
+import { ActionMenuItem } from "@/components/ui/unified-action-menu";
 import { 
   createUser, toggleUserActive, assignProjectToUser, unassignProjectFromUser, 
-  resetUserPassword, updateUser, softDeleteUser, restoreUser 
+  resetUserPassword, updateUser, softDeleteUser, restoreUser, deleteUserSafely
 } from "@/app/(dashboard)/users/actions";
 
 interface AssignedProject {
@@ -30,7 +30,7 @@ interface AssignedProject {
 interface UserData {
   id: string;
   name: string;
-  email: string;
+  email: string | null;
   username: string | null;
   phone: string | null;
   role: string;
@@ -56,6 +56,7 @@ type SortField = "name" | "role" | "status";
 type SortDirection = "asc" | "desc";
 
 const PAGE_SIZE = 10;
+const GLOBAL_PROJECT_ROLES = new Set(["ADMIN", "DIRECTOR", "DEPUTY_DIRECTOR"]);
 
 const ROLE_DESCRIPTIONS: Record<string, string> = {
   ADMIN: "Toàn quyền quản trị hệ thống và cấu hình tài khoản",
@@ -90,9 +91,10 @@ function getAccountStatus(user: UserData) {
 
 function generateSecurePassword(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
-  let pass = "Ct2026#";
-  for (let i = 0; i < 4; i++) {
-    pass += chars.charAt(Math.floor(Math.random() * chars.length));
+  const values = crypto.getRandomValues(new Uint32Array(14));
+  let pass = "A7#";
+  for (let i = 0; i < values.length; i++) {
+    pass += chars.charAt(values[i] % chars.length);
   }
   return pass;
 }
@@ -114,6 +116,7 @@ export function UserManagementClient({
   projectRoleOptions: { role: string; label: string }[];
   roleLevels: Record<string, number>;
 }) {
+  const creatableRoles = allowedRoles.filter((item) => item.role !== "CHIEF_COMMANDER");
   const actorLevel = roleLevels[currentUserRole] ?? 0;
   const canManageUser = (user: UserData) => {
     if (currentUserRole === "ADMIN") return true;
@@ -149,7 +152,7 @@ export function UserManagementClient({
   const [formPhone, setFormPhone] = useState("");
   const [formPassword, setFormPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [formRole, setFormRole] = useState(allowedRoles.length > 0 ? allowedRoles[0].role : "STAFF");
+  const [formRole, setFormRole] = useState(creatableRoles.length > 0 ? creatableRoles[0].role : "STAFF");
   const [formProjectIds, setFormProjectIds] = useState<string[]>([]);
   const [formProjectRoles, setFormProjectRoles] = useState<Record<string, string>>({});
   const [formNote, setFormNote] = useState("");
@@ -198,7 +201,7 @@ export function UserManagementClient({
     const searchLower = search.toLowerCase();
     const matchSearch = !search || 
       u.name.toLowerCase().includes(searchLower) || 
-      u.email.toLowerCase().includes(searchLower) || 
+      (u.email || "").toLowerCase().includes(searchLower) ||
       (u.username || "").toLowerCase().includes(searchLower) || 
       (u.phone || "").includes(search);
     const matchRole = !roleFilter || u.role === roleFilter;
@@ -319,7 +322,7 @@ export function UserManagementClient({
   const handleCreate = async () => {
     if (operationRef.current) return;
     
-    if (!formName.trim() || !formEmail.trim() || !formPassword.trim()) {
+    if (!formName.trim() || (!formEmail.trim() && !formUsername.trim()) || !formPassword.trim()) {
       setError("Vui lòng điền đầy đủ thông tin bắt buộc (*)");
       return;
     }
@@ -335,7 +338,7 @@ export function UserManagementClient({
     try {
       const result = await createUser({
         name: formName.trim(),
-        email: formEmail.trim(),
+        email: formEmail.trim() || null,
         username: formUsername.trim() || undefined,
         phone: formPhone.trim() || undefined,
         password: formPassword,
@@ -366,7 +369,7 @@ export function UserManagementClient({
     setFormPhone("");
     setFormPassword(""); 
     setShowPassword(false);
-    setFormRole(allowedRoles.length > 0 ? allowedRoles[0].role : "STAFF");
+    setFormRole(creatableRoles.length > 0 ? creatableRoles[0].role : "STAFF");
     setFormProjectIds([]); 
     setFormProjectRoles({}); 
     setFormNote(""); 
@@ -442,10 +445,29 @@ export function UserManagementClient({
     });
   };
 
+  const handleDelete = async (user: UserData) => {
+    setConfirmState({
+      isOpen: true,
+      title: "Xóa tài khoản tạo nhầm?",
+      description: "Hệ thống sẽ kiểm tra toàn bộ lịch sử nghiệp vụ. Nếu đã có dữ liệu cần truy vết, tài khoản chỉ được chuyển sang Ngừng sử dụng.",
+      variant: "danger",
+      confirmText: "Kiểm tra và xóa",
+      onConfirm: async () => {
+        setConfirmState((previous) => ({ ...previous, isOpen: false }));
+        const result = await withOperation(() => deleteUserSafely(user.id));
+        if (!result) return;
+        if (result.error) toast.error(result.error);
+        else if (result.archived) toast.info(result.message || "Tài khoản đã chuyển sang Ngừng sử dụng.");
+        else toast.success(result.message || "Đã xóa tài khoản.");
+        router.refresh();
+      },
+    });
+  };
+
   const handleEditSubmit = async () => {
     if (operationRef.current) return;
     if (!editUser) return;
-    if (!formName.trim() || !formEmail.trim()) {
+    if (!formName.trim() || (!formEmail.trim() && !formUsername.trim())) {
       setError("Vui lòng điền đầy đủ thông tin bắt buộc (*)");
       return;
     }
@@ -457,7 +479,7 @@ export function UserManagementClient({
     setError("");
     const result = await withOperation(() => updateUser(editUser.id, {
       name: formName.trim(),
-      email: formEmail.trim(),
+      email: formEmail.trim() || null,
       username: formUsername.trim() || undefined,
       phone: formPhone.trim() || undefined,
       role: formRole as any,
@@ -481,7 +503,7 @@ export function UserManagementClient({
     }
     setEditUser(user);
     setFormName(user.name);
-    setFormEmail(user.email);
+    setFormEmail(user.email || "");
     setFormUsername(user.username || "");
     setFormPhone(user.phone || "");
     setFormRole(user.role);
@@ -708,7 +730,7 @@ export function UserManagementClient({
                       {user.name}
                     </div>
                     <div className="text-[12.5px] text-slate-600 font-medium mt-0.5 truncate">
-                      {user.email}
+                      {user.email || "Chưa có email"}
                     </div>
                     <div className="text-[11.5px] font-mono text-slate-500 font-semibold mt-1">
                       {renderUserSubtext(user.phone, user.username)}
@@ -724,7 +746,9 @@ export function UserManagementClient({
 
                   {/* 3. CÔNG TRÌNH PHỤ TRÁCH (PRIMARY: TÊN CÔNG TRÌNH) */}
                   <td className="px-3.5 py-3.5 align-top">
-                    {assignedCount === 0 ? (
+                    {GLOBAL_PROJECT_ROLES.has(user.role) ? (
+                      <div className="text-[13px] font-semibold text-slate-800">Toàn hệ thống</div>
+                    ) : assignedCount === 0 ? (
                       <div className="text-[12.5px] text-slate-600 italic">
                         Chưa phân công công trình
                       </div>
@@ -735,7 +759,10 @@ export function UserManagementClient({
                           <div key={p.id} className="flex items-start gap-1.5 text-[13px]">
                             <span className="text-blue-500 font-bold shrink-0 mt-0.5">•</span>
                             <div className="min-w-0">
-                              <span className="font-bold text-slate-900 leading-snug">
+                              <span
+                                className="line-clamp-2 font-bold leading-snug text-slate-900"
+                                title={p.displayName || p.name}
+                              >
                                 {p.displayName || p.name}
                               </span>
                               <span className="ml-1.5 inline-block font-mono text-[11px] font-bold text-slate-800 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200">
@@ -808,82 +835,45 @@ export function UserManagementClient({
 
                   {/* 5. THAO TÁC (Unified 3-dot Action Menu) */}
                   <td className="w-[80px] min-w-[80px] px-3.5 py-3.5 align-top text-right whitespace-nowrap shrink-0" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center justify-end">
-                      <UnifiedActionMenu
-                        ariaLabel={`Thao tác tài khoản ${user.name}`}
-                        showPointer={true}
-                        open={openActionMenuId === user.id}
-                        onOpenChange={(isOpen) => setOpenActionMenuId(isOpen ? user.id : null)}
-                        menuWidth="w-52"
-                        align="right"
-                        trigger={
-                          <button
-                            type="button"
-                            className={`p-1.5 rounded-lg border transition-colors ${
-                              openActionMenuId === user.id
-                                ? "bg-blue-100 border-blue-300 text-blue-700"
-                                : "text-slate-500 hover:bg-slate-100 border-slate-200 hover:text-slate-800"
-                            }`}
-                            title="Thao tác"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </button>
-                        }
-                        items={[
-                          {
-                            id: "view-details",
-                            label: "Xem chi tiết",
-                            icon: <Eye className="h-4 w-4 text-slate-500" />,
-                            onClick: () => setDetailUser(user),
-                          },
-                          ...(!user.deletedAt && canManageUser(user) ? [{
-                            id: "edit-user",
-                            label: "Sửa thông tin",
-                            icon: <Edit className="h-4 w-4 text-slate-500" />,
-                            onClick: () => openEdit(user),
-                          }] : []),
-                          {
-                            id: "assign-project",
-                            label: "Gán công trình",
-                            icon: <Building2 className="h-4 w-4 text-slate-500" />,
-                            onClick: () => {
+                    <details className="group relative inline-block text-left">
+                      <summary
+                        className="list-none cursor-pointer rounded-lg border border-slate-200 p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+                        aria-label={`Thao tác tài khoản ${user.name}`}
+                        title="Thao tác"
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </summary>
+                      <div className="absolute right-0 top-full z-50 mt-2 w-52 rounded-xl border border-slate-200 bg-white p-1.5 text-left shadow-xl">
+                        <ActionMenuItem label="Xem chi tiết" icon={<Eye className="h-4 w-4" />} onClick={() => setDetailUser(user)} />
+                        {!user.deletedAt && canManageUser(user) ? (
+                          <>
+                            <ActionMenuItem label="Sửa thông tin" icon={<Edit className="h-4 w-4" />} onClick={() => openEdit(user)} />
+                            <ActionMenuItem label="Gán công trình" icon={<Building2 className="h-4 w-4" />} onClick={() => {
                               setAssignUserId(user.id);
                               setAssignProjectId("");
                               setAssignProjectRole("");
-                            },
-                          },
-                          ...(canPerformSensitiveAction(user) && !user.deletedAt ? [
-                            {
-                              id: "reset-pw",
-                              label: "Đặt lại mật khẩu",
-                              icon: <Key className="h-4 w-4 text-amber-500" />,
-                              onClick: () => handleResetPwClick(user),
-                            },
-                            {
-                              id: "toggle-active",
-                              label: user.isActive ? "Khóa tài khoản" : "Mở khóa tài khoản",
-                              icon: user.isActive ? <Lock className="h-4 w-4 text-amber-500" /> : <Unlock className="h-4 w-4 text-emerald-500" />,
-                              onClick: () => handleToggleActive(user.id, user.isActive),
-                            },
-                            {
-                              id: "soft-delete",
-                              label: "Ngừng sử dụng",
-                              icon: <Trash2 className="h-4 w-4 text-rose-500" />,
-                              variant: "destructive" as const,
-                              onClick: () => handleSoftDelete(user),
-                            },
-                          ] : []),
-                          ...(canPerformSensitiveAction(user) && user.deletedAt ? [
-                            {
-                              id: "restore-user",
-                              label: "Khôi phục tài khoản",
-                              icon: <RefreshCcw className="h-4 w-4 text-emerald-600" />,
-                              onClick: () => handleRestore(user),
-                            },
-                          ] : []),
-                        ]}
-                      />
-                    </div>
+                            }} />
+                          </>
+                        ) : null}
+                        {canPerformSensitiveAction(user) && !user.deletedAt ? (
+                          <>
+                            <ActionMenuItem label="Đặt lại mật khẩu" icon={<Key className="h-4 w-4 text-amber-500" />} onClick={() => handleResetPwClick(user)} />
+                            <ActionMenuItem
+                              label={user.isActive ? "Khóa tài khoản" : "Mở khóa tài khoản"}
+                              icon={user.isActive ? <Lock className="h-4 w-4 text-amber-500" /> : <Unlock className="h-4 w-4 text-emerald-500" />}
+                              onClick={() => handleToggleActive(user.id, user.isActive)}
+                            />
+                            <ActionMenuItem destructive label="Ngừng sử dụng" icon={<Trash2 className="h-4 w-4" />} onClick={() => handleSoftDelete(user)} />
+                            {currentUserRole === "ADMIN" ? (
+                              <ActionMenuItem destructive label="Xóa tài khoản" icon={<Trash2 className="h-4 w-4" />} onClick={() => handleDelete(user)} />
+                            ) : null}
+                          </>
+                        ) : null}
+                        {canPerformSensitiveAction(user) && user.deletedAt ? (
+                          <ActionMenuItem label="Khôi phục tài khoản" icon={<RefreshCcw className="h-4 w-4 text-emerald-600" />} onClick={() => handleRestore(user)} />
+                        ) : null}
+                      </div>
+                    </details>
                   </td>
                 </tr>
               );
@@ -919,11 +909,13 @@ export function UserManagementClient({
               {/* Assigned Projects */}
               <div className="pt-2 border-t border-slate-100">
                 <span className="text-[11px] font-bold uppercase text-slate-500 block mb-1">Công trình phụ trách:</span>
-                {user.assignedProjects.length > 0 ? (
+                {GLOBAL_PROJECT_ROLES.has(user.role) ? (
+                  <p className="text-sm font-semibold text-slate-800">Toàn hệ thống</p>
+                ) : user.assignedProjects.length > 0 ? (
                   <div className="space-y-1">
                     {user.assignedProjects.map(p => (
                       <div key={p.id} className="flex items-center justify-between text-xs p-1.5 rounded bg-slate-50 border border-slate-200">
-                        <span className="font-bold text-slate-900 truncate max-w-[200px]">
+                        <span className="line-clamp-2 max-w-[220px] font-bold text-slate-900" title={p.displayName || p.name}>
                           {p.displayName || p.name}
                         </span>
                         <span className="font-mono text-[10px] font-bold bg-white px-1.5 py-0.5 rounded border border-slate-200">
@@ -952,12 +944,14 @@ export function UserManagementClient({
                     Sửa
                   </button>
                 )}
-                <button 
-                  onClick={() => { setAssignUserId(user.id); setAssignProjectId(""); setAssignProjectRole(""); }} 
-                  className="px-3 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50 text-xs font-bold text-emerald-700"
-                >
-                  Gán CT
-                </button>
+                {!user.deletedAt && canManageUser(user) && (
+                  <button
+                    onClick={() => { setAssignUserId(user.id); setAssignProjectId(""); setAssignProjectRole(""); }}
+                    className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700"
+                  >
+                    Gán công trình
+                  </button>
+                )}
               </div>
             </div>
           );
@@ -1046,7 +1040,7 @@ export function UserManagementClient({
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <label htmlFor="create-email" className="block text-sm font-bold text-slate-800 mb-1">
-                      Email đăng nhập <span className="text-red-500">*</span>
+                      Email đăng nhập <span className="font-medium text-slate-500">(không bắt buộc)</span>
                     </label>
                     <input 
                       id="create-email" 
@@ -1081,7 +1075,7 @@ export function UserManagementClient({
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <label htmlFor="create-username" className="block text-sm font-bold text-slate-800 mb-1">
-                      Tên đăng nhập (nếu khác email)
+                      Tên đăng nhập <span className="text-red-500">*</span>
                     </label>
                     <input 
                       id="create-username" 
@@ -1154,7 +1148,7 @@ export function UserManagementClient({
                     onChange={e => setFormRole(e.target.value)} 
                     className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm font-bold bg-white text-slate-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   >
-                    {allowedRoles.map(r => (
+                    {creatableRoles.map(r => (
                       <option key={r.role} value={r.role}>{r.label}</option>
                     ))}
                   </select>
@@ -1373,7 +1367,7 @@ export function UserManagementClient({
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <label htmlFor="edit-email" className="block text-sm font-bold text-slate-800 mb-1">
-                      Email đăng nhập <span className="text-red-500">*</span>
+                      Email đăng nhập <span className="font-medium text-slate-500">(không bắt buộc)</span>
                     </label>
                     <input 
                       id="edit-email" 
@@ -1604,7 +1598,7 @@ export function UserManagementClient({
                 <div className="grid grid-cols-2 gap-3 text-xs pt-2 border-t border-slate-200">
                   <div>
                     <span className="text-slate-500 font-medium block">Email:</span>
-                    <span className="font-bold text-slate-900">{detailUser.email}</span>
+                    <span className="font-bold text-slate-900">{detailUser.email || "Chưa có"}</span>
                   </div>
                   <div>
                     <span className="text-slate-500 font-medium block">Số điện thoại:</span>
@@ -1612,7 +1606,7 @@ export function UserManagementClient({
                   </div>
                   <div>
                     <span className="text-slate-500 font-medium block">Tên đăng nhập:</span>
-                    <span className="font-mono font-bold text-slate-900">{detailUser.username || detailUser.email}</span>
+                    <span className="font-mono font-bold text-slate-900">{detailUser.username || detailUser.email || "Chưa có"}</span>
                   </div>
                   <div>
                     <span className="text-slate-500 font-medium block">Trạng thái:</span>
@@ -1626,10 +1620,16 @@ export function UserManagementClient({
               {/* Assigned Projects Section */}
               <div>
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
-                  Công trình phụ trách ({detailUser.assignedProjects.length})
+                  {GLOBAL_PROJECT_ROLES.has(detailUser.role)
+                    ? "Phạm vi công trình"
+                    : `Công trình phụ trách (${detailUser.assignedProjects.length})`}
                 </h4>
 
-                {detailUser.assignedProjects.length > 0 ? (
+                {GLOBAL_PROJECT_ROLES.has(detailUser.role) ? (
+                  <p className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-800">
+                    Toàn hệ thống
+                  </p>
+                ) : detailUser.assignedProjects.length > 0 ? (
                   <div className="space-y-2">
                     {detailUser.assignedProjects.map(p => (
                       <div key={p.id} className="p-3 bg-white border border-slate-200 rounded-xl shadow-2xs space-y-1">
@@ -1724,7 +1724,7 @@ export function UserManagementClient({
               {!tempPassword ? (
                 <>
                   <p className="text-sm text-slate-700 font-medium leading-relaxed">
-                    Tạo mật khẩu ngẫu nhiên cho tài khoản <strong className="text-slate-950">{resetPwUser.name}</strong> ({resetPwUser.email}).
+                    Tạo mật khẩu ngẫu nhiên cho tài khoản <strong className="text-slate-950">{resetPwUser.name}</strong> ({resetPwUser.username || resetPwUser.email || "chưa có định danh"}).
                   </p>
                   <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs font-medium text-blue-800">
                     ℹ️ Mật khẩu tạm thời sẽ được hiển thị một lần duy nhất để bạn sao chép gửi cho người dùng.

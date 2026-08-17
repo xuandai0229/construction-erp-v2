@@ -118,7 +118,7 @@ export default function LoginPage() {
               {/* Email Input */}
               <div className="space-y-2">
                 <label htmlFor="email" className="text-sm font-semibold text-slate-700 ml-1">
-                  Email đăng nhập
+                  Tên đăng nhập hoặc email
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
@@ -130,12 +130,11 @@ export default function LoginPage() {
                     type="text"
                     required
                     ref={emailInputRef}
-                    autoComplete="email"
-                    inputMode="email"
+                    autoComplete="username"
                     autoCapitalize="none"
                     autoCorrect="off"
                     className="block w-full h-[52px] rounded-2xl border border-slate-200 bg-slate-50/80 pl-11 pr-4 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all duration-200 sm:text-sm font-medium"
-                    placeholder="admin@construction.local"
+                    placeholder="NV-2026-0002 hoặc email@congty.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />

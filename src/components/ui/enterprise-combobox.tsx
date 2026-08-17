@@ -151,7 +151,7 @@ export function EnterpriseCombobox({
       top: openUp ? undefined : triggerRect.bottom + 6,
       bottom: openUp ? viewportHeight - triggerRect.top + 6 : undefined,
       width,
-      zIndex: 105,
+      zIndex: 220,
     });
   };
 
@@ -274,7 +274,7 @@ export function EnterpriseCombobox({
       style={isMobile ? undefined : panelStyle || undefined}
       className={cn(
         "overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl shadow-slate-950/15",
-        isMobile ? "fixed inset-x-3 bottom-3 z-[105] max-h-[calc(100dvh-24px)]" : "z-[105]",
+        isMobile ? "fixed inset-x-3 bottom-3 z-[220] max-h-[calc(100dvh-24px)]" : "z-[220]",
       )}
     >
       <div className={cn("border-b border-slate-100", density === "compact" ? "p-1.5" : "p-2")}>

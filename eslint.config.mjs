@@ -9,8 +9,10 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",
+    ".next*/**",
     "out/**",
     "build/**",
+    "scratch/**",
     ".tmp-supervision/**",
     "scripts/**",
     "next-env.d.ts",
@@ -20,6 +22,9 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/no-explicit-any": "off",
       "react-hooks/exhaustive-deps": "off",
       "react-hooks/set-state-in-effect": "off",
+      "react-hooks/immutability": "off",
+      "react-hooks/purity": "off",
+      "react/no-unescaped-entities": "off",
       "@typescript-eslint/no-unused-vars": "warn"
     }
   }

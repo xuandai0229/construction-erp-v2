@@ -19,7 +19,7 @@ interface OrganizationPageProps {
 
 export default async function OrganizationPage(props: OrganizationPageProps) {
   const searchParams = await props.searchParams;
-  const activeTab = searchParams.tab || "units";
+  const activeTab = searchParams.tab || "chart";
 
   const permCheck = await checkHrPermission("hr:employee:read");
   if (!permCheck.allowed) {
@@ -107,7 +107,11 @@ export default async function OrganizationPage(props: OrganizationPageProps) {
           isPrimary: true,
           employee: { status: { in: ["ACTIVE", "PROBATION"] } },
         },
-        select: { id: true },
+        select: {
+          id: true,
+          employee: { select: { id: true, fullName: true, code: true } },
+          position: { select: { title: true } },
+        },
       },
     },
   });
@@ -122,6 +126,13 @@ export default async function OrganizationPage(props: OrganizationPageProps) {
   const unitMap = new Map<string, OrgTreeNode>();
   units.forEach((u) => {
     const mgr = u.managerAssignments[0];
+    const members = u.employeeAssignments.map((ea) => ({
+      id: ea.employee.id,
+      fullName: ea.employee.fullName,
+      code: ea.employee.code,
+      positionTitle: ea.position?.title || null,
+    }));
+
     unitMap.set(u.id, {
       id: u.id,
       code: u.code,
@@ -140,6 +151,7 @@ export default async function OrganizationPage(props: OrganizationPageProps) {
             startDate: mgr.startDate.toISOString(),
           }
         : null,
+      members,
       children: [],
     });
   });
@@ -156,8 +168,15 @@ export default async function OrganizationPage(props: OrganizationPageProps) {
   // Calculate total active company workforce headcount (CURRENT_WORKFORCE)
   const companyHeadcount = await prisma.employee.count({
     where: {
-      status: { in: ["ACTIVE", "PROBATION", "SUSPENDED"] },
+      status: { in: ["ACTIVE", "PROBATION"] },
     },
+  });
+
+  // Fetch active employees for manager assignment select
+  const activeEmployees = await prisma.employee.findMany({
+    where: { status: { in: ["ACTIVE", "PROBATION"] } },
+    orderBy: [{ fullName: "asc" }],
+    select: { id: true, fullName: true, code: true },
   });
 
   if (activeTab === "chart") {
@@ -171,7 +190,12 @@ export default async function OrganizationPage(props: OrganizationPageProps) {
         <Suspense fallback={<div className="p-4 text-sm text-slate-500">Đang tải...</div>}>
           <OrganizationSubTabs />
         </Suspense>
-        <OrgChartView treeData={rootNodes} companyHeadcount={companyHeadcount} />
+        <OrgChartView
+          treeData={rootNodes}
+          companyHeadcount={companyHeadcount}
+          canManage={managePerm.allowed}
+          activeEmployees={activeEmployees}
+        />
       </HrWorkspaceShell>
     );
   }
@@ -204,6 +228,7 @@ export default async function OrganizationPage(props: OrganizationPageProps) {
         flatUnits={flatUnits}
         canManage={managePerm.allowed}
         companyHeadcount={companyHeadcount}
+        activeEmployees={activeEmployees}
       />
     </HrWorkspaceShell>
   );

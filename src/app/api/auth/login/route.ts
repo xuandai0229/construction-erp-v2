@@ -7,26 +7,26 @@ import { resolvePostLoginRoute } from '@/lib/roles/role-workspace-policy';
 export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
-    const rawEmail = typeof body.email === 'string' ? body.email.trim() : '';
+    const loginIdentifier = typeof body.email === 'string' ? body.email.trim() : '';
     const password = typeof body.password === 'string' ? body.password : '';
     const next = typeof body.next === 'string' ? body.next : null;
 
-    if (!rawEmail || !password) {
-      return NextResponse.json({ error: 'Email và mật khẩu không được bỏ trống.' }, { status: 400 });
+    if (!loginIdentifier || !password) {
+      return NextResponse.json({ error: 'Tên đăng nhập hoặc email và mật khẩu không được bỏ trống.' }, { status: 400 });
     }
 
     // Support login by email OR username (case-insensitive)
     const user = await prisma.user.findFirst({
       where: {
         OR: [
-          { email: { equals: rawEmail, mode: 'insensitive' } },
-          { username: { equals: rawEmail, mode: 'insensitive' } },
+          { email: { equals: loginIdentifier, mode: 'insensitive' } },
+          { username: { equals: loginIdentifier, mode: 'insensitive' } },
         ],
       },
     });
 
     if (!user) {
-      return NextResponse.json({ error: 'Email hoặc mật khẩu không chính xác.' }, { status: 401 });
+      return NextResponse.json({ error: 'Tên đăng nhập, email hoặc mật khẩu không chính xác.' }, { status: 401 });
     }
 
     if (user.deletedAt !== null) {
@@ -38,22 +38,23 @@ export async function POST(request: Request) {
     }
 
     if (!user.password || typeof user.password !== 'string') {
-      return NextResponse.json({ error: 'Email hoặc mật khẩu không chính xác.' }, { status: 401 });
+      return NextResponse.json({ error: 'Tên đăng nhập, email hoặc mật khẩu không chính xác.' }, { status: 401 });
     }
 
     const isValidPassword = await bcrypt.compare(password, user.password);
 
     if (!isValidPassword) {
-      return NextResponse.json({ error: 'Email hoặc mật khẩu không chính xác.' }, { status: 401 });
+      return NextResponse.json({ error: 'Tên đăng nhập, email hoặc mật khẩu không chính xác.' }, { status: 401 });
     }
 
     await setSession(user.id);
 
-    const redirectTo = resolvePostLoginRoute(user.role, next);
+    const redirectTo = user.mustChangePassword ? '/change-password' : resolvePostLoginRoute(user.role, next);
 
     return NextResponse.json({
       success: true,
       redirectTo,
+      mustChangePassword: user.mustChangePassword,
     });
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);

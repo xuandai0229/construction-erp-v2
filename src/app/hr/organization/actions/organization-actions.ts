@@ -150,7 +150,7 @@ export async function updateOrgUnitAction(formData: unknown) {
   }
 }
 
-// --- Server Action: Delete Org Unit (TRUE HARD DELETE) ---
+// --- Server Action: Deactivate/Soft Delete Org Unit ---
 export async function deleteOrgUnitAction(unitId: string) {
   const permCheck = await checkHrPermission("hr:organization:manage");
   if (!permCheck.allowed) {
@@ -167,86 +167,42 @@ export async function deleteOrgUnitAction(unitId: string) {
   const currentUserId = permCheck.context.session.id;
 
   try {
-    await prisma.$transaction(async (tx) => {
+    const updated = await prisma.$transaction(async (tx) => {
       const targetUnit = await tx.organizationUnit.findUnique({
         where: { id: unitId },
-        select: { id: true, code: true, name: true, parentId: true },
+        select: { id: true, code: true, name: true, isActive: true },
       });
       if (!targetUnit) {
         throw new Error("Đơn vị tổ chức không tồn tại.");
       }
 
-      const now = new Date();
-
-      // 1. Re-parent child units to parent of deleted unit
-      await tx.organizationUnit.updateMany({
-        where: { parentId: unitId },
-        data: { parentId: targetUnit.parentId || null },
-      });
-
-      // 2. Snapshot history for all employees assigned to this unit (active & past)
-      const allUnitAssignments = await tx.employeeOrganizationAssignment.findMany({
-        where: { organizationUnitId: unitId },
-        select: { id: true, employeeId: true, positionId: true },
-      });
-
-      const uniqueEmployeeIds = Array.from(new Set(allUnitAssignments.map((a) => a.employeeId)));
-      for (const empId of uniqueEmployeeIds) {
-        await tx.employeeChangeHistory.create({
-          data: {
-            employeeId: empId,
-            changeType: "EMPLOYEE_ORGANIZATION_TRANSFERRED",
-            performedById: currentUserId,
-            reason: `Phòng ban '${targetUnit.name}' (${targetUnit.code}) đã bị xóa khỏi hệ thống`,
-            details: {
-              fromUnitId: unitId,
-              fromUnitName: targetUnit.name,
-              fromUnitCode: targetUnit.code,
-              toUnitId: null,
-              toUnitName: null,
-              deletedAt: now.toISOString(),
-            },
-          },
-        });
+      if (!targetUnit.isActive) {
+        throw new Error("Đơn vị tổ chức này đã ở trạng thái ngừng sử dụng.");
       }
 
-      // 3. Remove manager assignments for this unit
-      await tx.organizationUnitManagerAssignment.deleteMany({
-        where: { organizationUnitId: unitId },
-      });
-
-      // 4. Remove employee organization assignments referencing this unit
-      await tx.employeeOrganizationAssignment.deleteMany({
-        where: { organizationUnitId: unitId },
-      });
-
-      // 5. Clear UserAccessGrant referencing this unit
-      await tx.userAccessGrant.updateMany({
-        where: { organizationUnitId: unitId },
-        data: { organizationUnitId: null },
-      });
-
-      // 6. HARD DELETE OrganizationUnit
-      await tx.organizationUnit.delete({
+      // Soft delete: set isActive = false
+      const unit = await tx.organizationUnit.update({
         where: { id: unitId },
+        data: { isActive: false },
       });
 
-      // 7. Write audit log
       await writeAuditLog({
         userId: currentUserId,
-        action: "ORGANIZATION_UNIT_DELETED",
+        action: "ORGANIZATION_UNIT_DEACTIVATED",
         entityType: "OrganizationUnit",
         entityId: unitId,
-        afterData: { id: unitId, code: targetUnit.code, name: targetUnit.name, deleted: true },
+        afterData: { id: unitId, code: targetUnit.code, name: targetUnit.name, isActive: false },
       });
+
+      return unit;
     });
 
     safeRevalidatePath("/hr/organization");
     safeRevalidatePath("/hr/employees");
 
-    return { success: true };
+    return { success: true, unit: updated };
   } catch (error: any) {
-    return { success: false, error: error.message || "Không thể xóa đơn vị tổ chức." };
+    return { success: false, error: error.message || "Không thể ngừng sử dụng đơn vị tổ chức." };
   }
 }
 
@@ -338,7 +294,7 @@ export async function updatePositionAction(formData: unknown) {
   }
 }
 
-// --- Server Action: Delete Position (TRUE HARD DELETE) ---
+// --- Server Action: Deactivate/Soft Delete Position ---
 export async function deletePositionAction(positionId: string) {
   const permCheck = await checkHrPermission("hr:organization:manage");
   if (!permCheck.allowed) {
@@ -353,69 +309,42 @@ export async function deletePositionAction(positionId: string) {
   const currentUserId = permCheck.context.session.id;
 
   try {
-    await prisma.$transaction(async (tx) => {
+    const updated = await prisma.$transaction(async (tx) => {
       const targetPos = await tx.position.findUnique({
         where: { id: positionId },
-        select: { id: true, code: true, title: true },
+        select: { id: true, code: true, title: true, isActive: true },
       });
       if (!targetPos) {
         throw new Error("Chức danh không tồn tại.");
       }
 
-      const now = new Date();
-
-      // 1. Snapshot history for all employees assigned to this position (active & past)
-      const allPosAssignments = await tx.employeeOrganizationAssignment.findMany({
-        where: { positionId },
-        select: { id: true, employeeId: true, organizationUnitId: true },
-      });
-
-      const uniqueEmployeeIds = Array.from(new Set(allPosAssignments.map((a) => a.employeeId)));
-      for (const empId of uniqueEmployeeIds) {
-        await tx.employeeChangeHistory.create({
-          data: {
-            employeeId: empId,
-            changeType: "EMPLOYEE_POSITION_CHANGED",
-            performedById: currentUserId,
-            reason: `Chức danh '${targetPos.title}' (${targetPos.code}) đã bị xóa khỏi hệ thống`,
-            details: {
-              fromPositionId: positionId,
-              fromPositionTitle: targetPos.title,
-              fromPositionCode: targetPos.code,
-              toPositionId: null,
-              toPositionTitle: null,
-              deletedAt: now.toISOString(),
-            },
-          },
-        });
+      if (!targetPos.isActive) {
+        throw new Error("Chức danh này đã ở trạng thái ngừng sử dụng.");
       }
 
-      // 2. Remove all employee organization assignments referencing this position
-      await tx.employeeOrganizationAssignment.deleteMany({
-        where: { positionId },
-      });
-
-      // 3. HARD DELETE Position
-      await tx.position.delete({
+      // Soft delete: set isActive = false
+      const pos = await tx.position.update({
         where: { id: positionId },
+        data: { isActive: false },
       });
 
-      // 4. Write audit log
       await writeAuditLog({
         userId: currentUserId,
-        action: "POSITION_DELETED",
+        action: "POSITION_DEACTIVATED",
         entityType: "Position",
         entityId: positionId,
-        afterData: { id: positionId, code: targetPos.code, title: targetPos.title, deleted: true },
+        afterData: { id: positionId, code: targetPos.code, title: targetPos.title, isActive: false },
       });
+
+      return pos;
     });
 
     safeRevalidatePath("/hr/organization");
     safeRevalidatePath("/hr/organization/positions");
 
-    return { success: true };
+    return { success: true, position: updated };
   } catch (error: any) {
-    return { success: false, error: error.message || "Không thể xóa chức danh." };
+    return { success: false, error: error.message || "Không thể ngừng sử dụng chức danh." };
   }
 }
 

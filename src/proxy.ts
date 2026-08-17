@@ -21,13 +21,15 @@ function decodeBase64Url(value: string): ArrayBuffer {
   ).buffer as ArrayBuffer;
 }
 
-async function hasValidSession(request: NextRequest): Promise<boolean> {
+type SessionState = { valid: boolean; mustChangePassword: boolean };
+
+async function readSessionState(request: NextRequest): Promise<SessionState> {
   const token = request.cookies.get('auth_session')?.value;
   const secret = process.env.AUTH_SECRET || process.env.SESSION_SECRET;
-  if (!token || !secret) return false;
+  if (!token || !secret) return { valid: false, mustChangePassword: false };
 
   const parts = token.split(".");
-  if (parts.length !== 2 || !parts[0] || !parts[1]) return false;
+  if (parts.length !== 2 || !parts[0] || !parts[1]) return { valid: false, mustChangePassword: false };
 
   try {
     const key = await crypto.subtle.importKey(
@@ -43,13 +45,13 @@ async function hasValidSession(request: NextRequest): Promise<boolean> {
       decodeBase64Url(parts[1]),
       new TextEncoder().encode(parts[0])
     );
-    if (!signatureValid) return false;
+    if (!signatureValid) return { valid: false, mustChangePassword: false };
 
     const payload = JSON.parse(
       new TextDecoder().decode(decodeBase64Url(parts[0]))
-    ) as { userId?: unknown; iat?: unknown; exp?: unknown };
+    ) as { userId?: unknown; iat?: unknown; exp?: unknown; mustChangePassword?: unknown };
     const now = Math.floor(Date.now() / 1000);
-    return (
+    const valid = (
       typeof payload.userId === "string" &&
       Number.isInteger(payload.iat) &&
       Number.isInteger(payload.exp) &&
@@ -57,8 +59,12 @@ async function hasValidSession(request: NextRequest): Promise<boolean> {
       Number(payload.exp) > now &&
       Number(payload.exp) > Number(payload.iat)
     );
+    return {
+      valid,
+      mustChangePassword: valid && payload.mustChangePassword === true,
+    };
   } catch {
-    return false;
+    return { valid: false, mustChangePassword: false };
   }
 }
 
@@ -88,11 +94,17 @@ export default async function proxy(request: NextRequest) {
     return addPerfResponseHeader(new NextResponse(null, { status: 404 }));
   }
 
-  const hasSession = await hasValidSession(request);
+  const sessionState = await readSessionState(request);
+  const hasSession = sessionState.valid;
   
   const isAuthPage = request.nextUrl.pathname.startsWith('/login');
+  const isPasswordChangePage = request.nextUrl.pathname === '/change-password';
   const isApiRoute = request.nextUrl.pathname.startsWith('/api');
   const isAuthApiRoute = request.nextUrl.pathname.startsWith('/api/auth');
+  const isPasswordChangeApi = request.nextUrl.pathname === '/api/auth/change-password'
+    || request.nextUrl.pathname === '/api/v1/auth/change-password'
+    || request.nextUrl.pathname === '/api/auth/logout'
+    || request.nextUrl.pathname === '/api/v1/auth/logout';
   
   if (!hasSession && !isAuthPage && (!isApiRoute || isAuthApiRoute)) {
     if (!isApiRoute) {
@@ -102,6 +114,28 @@ export default async function proxy(request: NextRequest) {
       logProxy();
       return addPerfResponseHeader(NextResponse.redirect(url));
     }
+  }
+
+  if (hasSession && sessionState.mustChangePassword && !isPasswordChangePage && !isPasswordChangeApi) {
+    if (isApiRoute) {
+      return NextResponse.json(
+        { error: "Bạn phải đổi mật khẩu tạm thời trước khi tiếp tục.", code: "PASSWORD_CHANGE_REQUIRED" },
+        { status: 403 },
+      );
+    }
+    const passwordUrl = request.nextUrl.clone();
+    passwordUrl.pathname = '/change-password';
+    passwordUrl.search = '';
+    logProxy();
+    return addPerfResponseHeader(NextResponse.redirect(passwordUrl));
+  }
+
+  if (hasSession && !sessionState.mustChangePassword && isPasswordChangePage) {
+    const homeUrl = request.nextUrl.clone();
+    homeUrl.pathname = '/';
+    homeUrl.search = '';
+    logProxy();
+    return addPerfResponseHeader(NextResponse.redirect(homeUrl));
   }
 
   if (hasSession && isAuthPage) {
@@ -139,6 +173,6 @@ export default async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next|favicon.ico|images|public).*)',
+    '/((?!_next|favicon.ico|images|public|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2)$).*)',
   ],
 };

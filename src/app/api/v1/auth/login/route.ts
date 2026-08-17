@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import * as bcrypt from 'bcryptjs';
 import { setSession } from '@/lib/auth';
@@ -8,24 +7,24 @@ import { apiSuccess, apiError } from '@/lib/api-response';
 export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
-    const rawEmail = typeof body.email === 'string' ? body.email.trim() : '';
+    const loginIdentifier = typeof body.email === 'string' ? body.email.trim() : '';
     const password = typeof body.password === 'string' ? body.password : '';
 
-    if (!rawEmail || !password) {
+    if (!loginIdentifier || !password) {
       return apiError('BAD_REQUEST', 'Email/tên đăng nhập và mật khẩu không được bỏ trống.', 400);
     }
 
     const user = await prisma.user.findFirst({
       where: {
         OR: [
-          { email: { equals: rawEmail, mode: 'insensitive' } },
-          { username: { equals: rawEmail, mode: 'insensitive' } },
+          { email: { equals: loginIdentifier, mode: 'insensitive' } },
+          { username: { equals: loginIdentifier, mode: 'insensitive' } },
         ],
       },
     });
 
     if (!user) {
-      return apiError('UNAUTHENTICATED', 'Email hoặc mật khẩu không chính xác.', 401);
+      return apiError('UNAUTHENTICATED', 'Tên đăng nhập, email hoặc mật khẩu không chính xác.', 401);
     }
 
     if (user.deletedAt !== null || !user.isActive) {
@@ -33,19 +32,19 @@ export async function POST(request: Request) {
     }
 
     if (!user.password) {
-      return apiError('UNAUTHENTICATED', 'Email hoặc mật khẩu không chính xác.', 401);
+      return apiError('UNAUTHENTICATED', 'Tên đăng nhập, email hoặc mật khẩu không chính xác.', 401);
     }
 
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
-      return apiError('UNAUTHENTICATED', 'Email hoặc mật khẩu không chính xác.', 401);
+      return apiError('UNAUTHENTICATED', 'Tên đăng nhập, email hoặc mật khẩu không chính xác.', 401);
     }
 
     // Set HTTP-Only Session Cookie for web clients
     await setSession(user.id);
 
     // Generate cryptographic token for mobile clients
-    const token = createSessionToken(user.id, undefined, user.updatedAt.toISOString());
+    const token = createSessionToken(user.id, undefined, user.updatedAt.toISOString(), user.mustChangePassword);
     const expiresAt = new Date(Date.now() + SESSION_MAX_AGE_SECONDS * 1000).toISOString();
 
     return apiSuccess({
@@ -58,6 +57,7 @@ export async function POST(request: Request) {
         name: user.name,
         role: user.role,
         phone: user.phone,
+        mustChangePassword: user.mustChangePassword,
       },
     });
   } catch (error: any) {

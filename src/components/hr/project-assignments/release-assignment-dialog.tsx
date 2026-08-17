@@ -20,10 +20,6 @@ export function ReleaseAssignmentDialog({
   onSuccess,
   assignment,
 }: ReleaseAssignmentDialogProps) {
-  if (!isOpen || !assignment) return null;
-
-  const isFinite = Boolean(assignment.expectedEndDate);
-
   const [releaseDate, setReleaseDate] = useState(new Date().toISOString().split("T")[0]);
   const [endReason, setEndReason] = useState<EmployeeProjectAssignmentEndReason | "">("");
   const [decisionNumber, setDecisionNumber] = useState("");
@@ -31,6 +27,10 @@ export function ReleaseAssignmentDialog({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  if (!isOpen || !assignment) return null;
+
+  const isFinite = Boolean(assignment.expectedEndDate);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

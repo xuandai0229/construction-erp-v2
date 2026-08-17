@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import {
   UserCheck,
@@ -20,6 +21,7 @@ import {
 } from "@/app/hr/organization/actions/organization-actions";
 import { UnifiedActionMenu, ActionMenuItem } from "@/components/ui/unified-action-menu";
 import { MoreHorizontal } from "lucide-react";
+import { EnterpriseCombobox, type EnterpriseComboboxOption } from "@/components/ui/enterprise-combobox";
 
 export interface ManagerAssignmentItem {
   id: string;
@@ -82,6 +84,20 @@ export function UnitManagerManagementClient({
     if (canManage && searchParams.get("create") === "1") handleOpenAppoint();
   }, [canManage, searchParams]);
 
+  const unitComboboxOptions: EnterpriseComboboxOption[] = units.map((u) => ({
+    value: u.id,
+    label: `${u.name} (${u.code})`,
+    name: u.name,
+    code: u.code,
+  }));
+
+  const employeeComboboxOptions: EnterpriseComboboxOption[] = employees.map((emp) => ({
+    value: emp.id,
+    label: `${emp.fullName} [${emp.code}]`,
+    name: emp.fullName,
+    code: emp.code,
+  }));
+
   const handleOpenAppoint = (defaultUnitId?: string) => {
     setUnitId(defaultUnitId || units[0]?.id || "");
     setEmployeeId(employees[0]?.id || "");
@@ -94,6 +110,11 @@ export function UnitManagerManagementClient({
 
   const handleAppointSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!unitId || !employeeId) {
+      setError("Vui lòng chọn đầy đủ Phòng ban và Nhân viên bổ nhiệm.");
+      return;
+    }
+
     setError(null);
 
     startTransition(async () => {
@@ -151,7 +172,7 @@ export function UnitManagerManagementClient({
             <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
             <span>{error}</span>
           </div>
-          <button onClick={() => setError(null)} className="text-red-500 hover:text-red-800 text-xs font-bold">
+          <button onClick={() => setError(null)} className="text-red-500 hover:text-red-800 text-xs font-bold cursor-pointer">
             Đóng
           </button>
         </div>
@@ -215,7 +236,7 @@ export function UnitManagerManagementClient({
             <button
               onClick={() => handleOpenAppoint()}
               disabled={units.length === 0 || employees.length === 0}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Bổ nhiệm người quản lý đầu tiên</span>
@@ -328,7 +349,7 @@ export function UnitManagerManagementClient({
                                         e.stopPropagation();
                                         toggle();
                                       }}
-                                      className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border transition-colors shadow-2xs ${
+                                      className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border transition-colors shadow-2xs cursor-pointer ${
                                         isOpen
                                           ? "border-blue-300 bg-blue-100/80 text-blue-700"
                                           : "border-slate-200 bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-900"
@@ -363,8 +384,8 @@ export function UnitManagerManagementClient({
       )}
 
       {/* Appoint Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+      {isModalOpen && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
           <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
               <div className="flex items-center gap-2.5">
@@ -376,8 +397,9 @@ export function UnitManagerManagementClient({
                 </h3>
               </div>
               <button
+                type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors"
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -394,36 +416,30 @@ export function UnitManagerManagementClient({
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
                   Đơn vị / Phòng ban bổ nhiệm <span className="text-red-500">*</span>
                 </label>
-                <select
-                  required
+                <EnterpriseCombobox
+                  options={unitComboboxOptions}
                   value={unitId}
-                  onChange={(e) => setUnitId(e.target.value)}
-                  className="w-full h-9 rounded-lg border border-slate-300 px-3 text-xs text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                >
-                  {units.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name} ({u.code})
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setUnitId(val)}
+                  placeholder="-- Chọn đơn vị / phòng ban --"
+                  searchPlaceholder="Tìm theo tên hoặc mã phòng ban..."
+                  emptyMessage="Không tìm thấy đơn vị phù hợp"
+                  clearable
+                />
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
                   Chọn nhân viên được bổ nhiệm <span className="text-red-500">*</span>
                 </label>
-                <select
-                  required
+                <EnterpriseCombobox
+                  options={employeeComboboxOptions}
                   value={employeeId}
-                  onChange={(e) => setEmployeeId(e.target.value)}
-                  className="w-full h-9 rounded-lg border border-slate-300 px-3 text-xs text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                >
-                  {employees.map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.fullName} [{emp.code}]
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setEmployeeId(val)}
+                  placeholder="-- Chọn nhân viên --"
+                  searchPlaceholder="Tìm theo tên hoặc mã nhân viên..."
+                  emptyMessage="Không tìm thấy nhân viên phù hợp"
+                  clearable
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -460,9 +476,9 @@ export function UnitManagerManagementClient({
                   id="isPrimaryManager"
                   checked={isPrimary}
                   onChange={(e) => setIsPrimary(e.target.checked)}
-                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                 />
-                <label htmlFor="isPrimaryManager" className="text-xs font-medium text-slate-700">
+                <label htmlFor="isPrimaryManager" className="text-xs font-medium text-slate-700 cursor-pointer">
                   Là Trưởng đơn vị chính (Tự động kết thúc nhiệm kỳ của trưởng đơn vị cũ nếu có)
                 </label>
               </div>
@@ -471,14 +487,14 @@ export function UnitManagerManagementClient({
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
                 >
                   Hủy bỏ
                 </button>
                 <button
                   type="submit"
-                  disabled={isPending}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors disabled:opacity-50"
+                  disabled={isPending || !unitId || !employeeId}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   <span>Xác nhận bổ nhiệm</span>
@@ -486,12 +502,13 @@ export function UnitManagerManagementClient({
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* End Term Modal */}
-      {isEndingTermId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+      {isEndingTermId && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
           <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             <div className="px-6 py-4 border-b border-slate-100 font-bold text-slate-900 text-sm">
               Xác nhận kết thúc nhiệm kỳ
@@ -510,7 +527,7 @@ export function UnitManagerManagementClient({
                 <button
                   type="button"
                   onClick={() => setIsEndingTermId(null)}
-                  className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg"
+                  className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
                 >
                   Hủy
                 </button>
@@ -518,15 +535,17 @@ export function UnitManagerManagementClient({
                   type="button"
                   disabled={isPending}
                   onClick={() => handleEndTerm(isEndingTermId)}
-                  className="px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg shadow-xs"
+                  className="px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg shadow-xs cursor-pointer"
                 >
                   {isPending ? "Đang xử lý..." : "Mãn nhiệm"}
                 </button>
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
 }
+

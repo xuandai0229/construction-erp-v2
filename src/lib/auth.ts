@@ -11,15 +11,16 @@ import { measureServerPhase } from './performance/server';
 
 export interface SessionUser {
   id: string;
-  email: string;
+  email: string | null;
   username: string | null;
   name: string;
   role: UserRole;
   phone: string | null;
   isActive: boolean;
+  mustChangePassword?: boolean;
 }
 
-export const getSession = cache(async (): Promise<SessionUser | null> => {
+async function resolveSession(allowPasswordChangeRequired: boolean): Promise<SessionUser | null> {
   return measureServerPhase('auth.get-session', async () => {
     let sessionToken: string | undefined;
 
@@ -62,6 +63,7 @@ export const getSession = cache(async (): Promise<SessionUser | null> => {
           role: true,
           phone: true,
           isActive: true,
+          mustChangePassword: true,
           deletedAt: true,
           updatedAt: true,
         }
@@ -69,6 +71,7 @@ export const getSession = cache(async (): Promise<SessionUser | null> => {
 
       if (!user || !user.isActive || user.deletedAt !== null) return null;
       if (sessionData.credentialVersion !== user.updatedAt.toISOString()) return null;
+      if (user.mustChangePassword && !allowPasswordChangeRequired) return null;
 
       return {
         id: user.id,
@@ -78,11 +81,19 @@ export const getSession = cache(async (): Promise<SessionUser | null> => {
         role: user.role,
         phone: user.phone,
         isActive: user.isActive,
+        mustChangePassword: user.mustChangePassword,
       };
     } catch {
       return null;
     }
   });
+}
+
+export const getSession = cache(async (): Promise<SessionUser | null> => resolveSession(false));
+
+export const getPasswordChangeSession = cache(async (): Promise<SessionUser | null> => {
+  const session = await resolveSession(true);
+  return session?.mustChangePassword ? session : null;
 });
 
 export async function setSession(userId: string) {
@@ -99,9 +110,17 @@ export async function setSession(userId: string) {
     // Header context unavailable
   }
 
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { updatedAt: true } });
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { updatedAt: true, mustChangePassword: true },
+  });
   if (!user) throw new Error("Không thể tạo phiên cho tài khoản không tồn tại.");
-  const token = createSessionToken(userId, undefined, user.updatedAt.toISOString());
+  const token = createSessionToken(
+    userId,
+    undefined,
+    user.updatedAt.toISOString(),
+    user.mustChangePassword,
+  );
   
   cookieStore.set('auth_session', token, {
     httpOnly: true,

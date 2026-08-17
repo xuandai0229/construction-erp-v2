@@ -30,6 +30,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast-context";
 import { UnifiedActionMenu } from "@/components/ui/unified-action-menu";
 import { ProjectName } from "@/components/project/project-name";
+import { ProjectCombobox } from "@/components/ui/project-combobox";
 import {
   createSupervisionWeeklyDossier,
   deleteSupervisionWeeklyDossier,
@@ -633,25 +634,18 @@ export function WeeklyListClient({
 
             {/* Project Filter */}
             {projects.length > 0 && (
-              <select
-                value={projectFilter}
-                onChange={(e) => {
-                  setProjectFilter(e.target.value);
-                  setPage(1);
-                }}
-                className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 outline-none focus:border-blue-500 w-full sm:w-auto max-w-full sm:max-w-[260px] truncate"
-              >
-                <option value="ALL">Tất cả công trình</option>
-                {projects.map((p) => {
-                  const label = `${p.code} - ${p.name}`;
-                  const truncated = label.length > 42 ? label.slice(0, 39) + "..." : label;
-                  return (
-                    <option key={p.id} value={p.id} title={label}>
-                      {truncated}
-                    </option>
-                  );
-                })}
-              </select>
+              <div className="w-full sm:w-64 shrink-0">
+                <ProjectCombobox
+                  value={projectFilter === "ALL" ? "" : projectFilter}
+                  projects={projects}
+                  onValueChange={(id) => {
+                    setProjectFilter(id || "ALL");
+                    setPage(1);
+                  }}
+                  placeholder="Tất cả công trình"
+                  clearable
+                />
+              </div>
             )}
 
             {/* Sort Filter */}

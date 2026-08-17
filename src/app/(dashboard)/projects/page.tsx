@@ -88,10 +88,13 @@ export default async function ProjectsPage({
       plannedDurationValue: true,
       plannedDurationUnit: true,
       sourceMetadata: true,
-      members: {
-        where: { role: "CHIEF_COMMANDER", isActive: true, deletedAt: null },
-        select: { user: { select: { name: true } } },
-        take: 1
+      employeeProjectAssignments: {
+        where: {
+          status: "ACTIVE",
+          projectPersonnelRole: { code: "CHT", isActive: true },
+        },
+        select: { employee: { select: { fullName: true } } },
+        orderBy: { createdAt: "asc" },
       }
     }
   });
@@ -101,7 +104,9 @@ export default async function ProjectsPage({
       ? String((project.sourceMetadata as { unit?: unknown }).unit ?? "") 
       : null;
 
-    const commanderName = project.members[0]?.user?.name || null;
+    const commanderName = project.employeeProjectAssignments.length
+      ? [...new Set(project.employeeProjectAssignments.map((assignment) => assignment.employee.fullName))].join(", ")
+      : null;
 
     let dateRangeLabel: string | null = null;
     if (project.startDate && project.endDate) {

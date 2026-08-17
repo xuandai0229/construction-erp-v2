@@ -26,7 +26,7 @@ import {
 import type { CreateReportFormData, FieldReport, ReportWorkLine } from "./types";
 import { formatNumberSafe } from "@/lib/reports/report-format-utils";
 
-export type SaveState = "saved" | "dirty" | "saving" | "error" | "conflict";
+export type SaveState = "pristine" | "saved" | "dirty" | "saving" | "error" | "conflict";
 
 export type SectionNavItem = {
   id: string;
@@ -34,6 +34,11 @@ export type SectionNavItem = {
   shortLabel?: string;
   status: "complete" | "active" | "incomplete" | "error" | "empty";
 };
+
+function isUuid(str?: string | null): boolean {
+  if (!str) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+}
 
 /* ── Save status indicator component matching Supervision UX ── */
 function SaveIndicator({
@@ -52,7 +57,7 @@ function SaveIndicator({
       <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
     ) : state === "saved" ? (
       <Cloud className="h-4 w-4 text-emerald-500" />
-    ) : state === "dirty" ? (
+    ) : state === "dirty" || state === "pristine" ? (
       <Cloud className="h-4 w-4 text-slate-400" />
     ) : (
       <CloudOff className="h-4 w-4 text-rose-500" />
@@ -60,11 +65,13 @@ function SaveIndicator({
 
   const text =
     state === "saving"
-      ? "Đang lưu nháp..."
+      ? "Đang lưu..."
       : state === "saved"
       ? lastSavedAt
         ? `Đã lưu lúc ${lastSavedAt}`
         : "Đã lưu bản nháp"
+      : state === "pristine"
+      ? "Chưa lưu"
       : state === "dirty"
       ? "Có thay đổi chưa lưu"
       : state === "conflict"
@@ -92,7 +99,7 @@ function SaveIndicator({
             className="ml-1 inline-flex items-center gap-1 rounded bg-rose-50 px-2 py-0.5 text-xs font-bold text-rose-700 hover:bg-rose-100 transition-colors"
             aria-label="Thử lưu lại"
           >
-            <RefreshCw className="h-3 w-3" /> Thử lại
+            <RefreshCw className="h-3 w-3" /> {state === "conflict" ? "Tải lại trang" : "Thử lại"}
           </button>
         )}
       </div>
@@ -156,7 +163,7 @@ export function FieldEditor({
   }, [initialReport, initialType, activeProjects, currentUser.name]);
 
   const [form, setForm] = useState<CreateReportFormData>(getDefaultForm());
-  const [saveState, setSaveState] = useState<SaveState>("saved");
+  const [saveState, setSaveState] = useState<SaveState>(mode === "edit" ? "saved" : "pristine");
   const [message, setMessage] = useState("");
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [revision, setRevision] = useState(0);
@@ -166,12 +173,21 @@ export function FieldEditor({
   const [isLoadingItems, setIsLoadingItems] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [activeWeeklyTab, setActiveWeeklyTab] = useState<"result" | "plan" | "notes">("result");
+  const [duplicateInfo, setDuplicateInfo] = useState<{ id: string; reportNo: string } | null>(null);
 
   const formRef = useRef(form);
   const dirtyRef = useRef(false);
   const failedRef = useRef(false);
   const savePromiseRef = useRef<Promise<boolean> | null>(null);
   const persistFunctionRef = useRef<() => Promise<boolean>>(async () => true);
+
+  // Check minimum report identity before saving
+  const hasMinimumIdentity = (snapshot: CreateReportFormData): boolean => {
+    if (!snapshot.projectId) return false;
+    if (snapshot.type === "DAILY") return Boolean(snapshot.date);
+    if (snapshot.type === "WEEKLY") return Boolean(snapshot.weekStartDate && snapshot.weekEndDate);
+    return false;
+  };
 
   // Mark form as dirty when user edits
   const markDirty = (updater: (prev: CreateReportFormData) => CreateReportFormData) => {
@@ -182,7 +198,11 @@ export function FieldEditor({
     });
     dirtyRef.current = true;
     failedRef.current = false;
-    setSaveState("dirty");
+    if (hasMinimumIdentity(formRef.current)) {
+      setSaveState("dirty");
+    } else {
+      setSaveState("pristine");
+    }
     setMessage("");
     setRevision((val) => val + 1);
   };
@@ -212,16 +232,27 @@ export function FieldEditor({
   };
 
   // Single-flight persist logic matching Supervision UX
-  const persistOnce = async (): Promise<boolean> => {
+  const persistOnce = async (options?: { isExplicit?: boolean }): Promise<boolean> => {
     if (savePromiseRef.current) return savePromiseRef.current;
-    if (!dirtyRef.current) return saveState !== "error" && saveState !== "conflict";
 
     const snapshot = formRef.current;
-    if (!snapshot.projectId) {
-      setSaveState("error");
-      setMessage("Vui lòng chọn công trình trước khi lưu.");
+    const isExplicit = options?.isExplicit ?? false;
+
+    // Minimum identity guard
+    if (!hasMinimumIdentity(snapshot)) {
+      if (isExplicit) {
+        if (!snapshot.projectId) {
+          toast.error("Vui lòng chọn công trình trước khi lưu báo cáo.");
+        } else if (snapshot.type === "WEEKLY" && (!snapshot.weekStartDate || !snapshot.weekEndDate)) {
+          toast.error("Vui lòng chọn tuần báo cáo trước khi lưu.");
+        } else if (snapshot.type === "DAILY" && !snapshot.date) {
+          toast.error("Vui lòng chọn ngày báo cáo trước khi lưu.");
+        }
+      }
       return false;
     }
+
+    if (!dirtyRef.current && !isExplicit) return saveState !== "error" && saveState !== "conflict";
 
     dirtyRef.current = false;
     setSaveState("saving");
@@ -232,6 +263,7 @@ export function FieldEditor({
         const input: SaveSiteReportDraftInput = {
           reportId: reportId,
           expectedUpdatedAt: expectedUpdatedAtRef.current,
+          isExplicitSave: isExplicit,
           projectId: snapshot.projectId,
           type: snapshot.type,
           date: snapshot.date,
@@ -268,7 +300,11 @@ export function FieldEditor({
 
         if (!result.success && "code" in result && result.code === "WEEKLY_REPORT_ALREADY_EXISTS") {
           setSaveState("error");
-          setMessage(`Báo cáo tuần cho kỳ này đã tồn tại (${result.existingReportNo}).`);
+          setDuplicateInfo({
+            id: result.existingReportId!,
+            reportNo: result.existingReportNo || "NHÁP",
+          });
+          setMessage(`Báo cáo tuần cho kỳ này đã tồn tại (${result.existingReportNo || "NHÁP"}).`);
           failedRef.current = true;
           return false;
         }
@@ -330,6 +366,7 @@ export function FieldEditor({
               })
             );
             setMessage("Đã lưu bản nháp");
+            if (isExplicit) toast.success("Đã lưu báo cáo thành công");
           }
           return true;
         }
@@ -381,7 +418,7 @@ export function FieldEditor({
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
         e.preventDefault();
-        void persistOnce();
+        void persistOnce({ isExplicit: true });
       }
     };
     window.addEventListener("keydown", handler);
@@ -409,9 +446,20 @@ export function FieldEditor({
   }, [form.projectId, form.date]);
 
   const retrySave = () => {
+    if (saveState === "conflict") {
+      window.location.reload();
+      return;
+    }
     failedRef.current = false;
     setSaveState("dirty");
-    void persistOnce();
+    void persistOnce({ isExplicit: true });
+  };
+
+  const handleOpenPreview = async () => {
+    if (dirtyRef.current) {
+      await persistOnce({ isExplicit: false });
+    }
+    setPreviewOpen(true);
   };
 
   const handleSelectWorkItems = (items: PickerWorkItem[]) => {
@@ -465,11 +513,7 @@ export function FieldEditor({
   };
 
   const currentProject = activeProjects.find((p) => p.id === form.projectId);
-  const selectedCount = form.workLines.length;
-  const totalQtyToday = form.workLines.reduce(
-    (sum, line) => sum + (Number(line.quantityToday) || 0),
-    0
-  );
+  const displayReportNo = reportNo && !isUuid(reportNo) ? reportNo : null;
 
   const sections: SectionNavItem[] = [
     { id: "general", label: "Thông tin chung", shortLabel: "Chung", status: (form.projectId ? "complete" : "incomplete") as SectionNavItem["status"] },
@@ -523,7 +567,7 @@ export function FieldEditor({
   }));
 
   return (
-    <div className="space-y-5 pb-24 sm:pb-20 max-w-7xl mx-auto px-2 sm:px-6 py-4">
+    <div className="space-y-5 pb-24 sm:pb-20 w-full px-2 sm:px-6 py-4">
       {/* Breadcrumb Navigation */}
       <nav className="flex items-center gap-2 px-1 py-1 text-sm print:hidden" aria-label="Breadcrumb">
         <Link
@@ -549,11 +593,13 @@ export function FieldEditor({
               <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
                 {form.type === "DAILY"
                   ? `Nhật ký thi công — ${form.date || "Ngày làm việc"}`
-                  : `Báo cáo tổng hợp tuần — ${form.weekStartDate || "Tuần"}`}
+                  : form.weekStartDate && form.weekEndDate
+                  ? `Báo cáo tổng hợp tuần (${form.weekStartDate.split("-").reverse().join("/")} – ${form.weekEndDate.split("-").reverse().join("/")})`
+                  : "Báo cáo tổng hợp tuần"}
               </h1>
-              {reportNo && (
+              {displayReportNo && (
                 <span className="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-1 text-xs font-mono font-bold text-blue-700 border border-blue-200">
-                  {reportNo}
+                  {displayReportNo}
                 </span>
               )}
             </div>
@@ -578,8 +624,26 @@ export function FieldEditor({
           </div>
         </div>
 
+        {/* Structured Duplicate Info Banner */}
+        {duplicateInfo && (
+          <div className="border-t border-amber-200 bg-amber-50 px-5 py-3 text-xs font-semibold flex items-center justify-between gap-3 text-amber-900">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
+              <span>Báo cáo tuần cho kỳ này đã tồn tại (Mã: {duplicateInfo.reportNo}).</span>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => router.push(`/reports/field/${duplicateInfo.id}/edit`)}
+              className="h-8 border-amber-300 bg-white text-amber-900 hover:bg-amber-100 font-bold rounded-lg text-xs"
+            >
+              Mở báo cáo đã có
+            </Button>
+          </div>
+        )}
+
         {/* Message Banner for errors or conflicts */}
-        {message && message !== "Đã lưu bản nháp" && (
+        {message && message !== "Đã lưu bản nháp" && !duplicateInfo && (
           <div
             className={`border-t px-5 py-2.5 text-xs font-semibold flex items-center gap-2 ${
               saveState === "conflict" || saveState === "error"
@@ -602,14 +666,14 @@ export function FieldEditor({
               variant="outline"
               size="sm"
               className="h-9 px-4 text-slate-700 border-slate-300 hover:bg-slate-100 font-semibold rounded-xl"
-              onClick={() => setPreviewOpen(true)}
+              onClick={handleOpenPreview}
             >
               <Eye className="mr-1.5 h-4 w-4 text-slate-500" /> Xem trước
             </Button>
             <Button
               size="sm"
               className="h-9 px-5 bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-xs rounded-xl"
-              onClick={() => void persistOnce()}
+              onClick={() => void persistOnce({ isExplicit: true })}
               disabled={saveState === "saving"}
             >
               <Save className="mr-1.5 h-4 w-4" />
@@ -646,31 +710,40 @@ export function FieldEditor({
 
       {/* Editor Body */}
       <div className="space-y-6">
-        {/* Type selector toggle */}
-        <div className="bg-white p-1.5 rounded-2xl border border-slate-200 shadow-xs inline-flex">
-          <button
-            type="button"
-            onClick={() => updateField("type", "DAILY")}
-            className={`px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-              form.type === "DAILY"
-                ? "bg-blue-600 text-white shadow-xs"
-                : "text-slate-600 hover:bg-slate-50"
-            }`}
-          >
-            Báo cáo ngày
-          </button>
-          <button
-            type="button"
-            onClick={() => updateField("type", "WEEKLY")}
-            className={`px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-              form.type === "WEEKLY"
-                ? "bg-blue-600 text-white shadow-xs"
-                : "text-slate-600 hover:bg-slate-50"
-            }`}
-          >
-            Báo cáo tuần
-          </button>
-        </div>
+        {/* Type selector toggle (Only in create mode) */}
+        {mode === "create" ? (
+          <div className="bg-white p-1.5 rounded-2xl border border-slate-200 shadow-xs inline-flex">
+            <button
+              type="button"
+              onClick={() => updateField("type", "DAILY")}
+              className={`px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                form.type === "DAILY"
+                  ? "bg-blue-600 text-white shadow-xs"
+                  : "text-slate-600 hover:bg-slate-50"
+              }`}
+            >
+              Báo cáo ngày
+            </button>
+            <button
+              type="button"
+              onClick={() => updateField("type", "WEEKLY")}
+              className={`px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                form.type === "WEEKLY"
+                  ? "bg-blue-600 text-white shadow-xs"
+                  : "text-slate-600 hover:bg-slate-50"
+              }`}
+            >
+              Báo cáo tuần
+            </button>
+          </div>
+        ) : (
+          <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700">
+            <span>Loại báo cáo:</span>
+            <span className="rounded-md bg-blue-50 px-2 py-0.5 text-blue-700">
+              {form.type === "DAILY" ? "Báo cáo ngày" : "Báo cáo tuần"}
+            </span>
+          </div>
+        )}
 
         {/* Section 1: General Info */}
         <div id="general">
@@ -1035,7 +1108,7 @@ export function FieldEditor({
       <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-slate-200 bg-white/95 backdrop-blur px-4 py-3 sm:hidden print:hidden safe-area-bottom shadow-lg">
         <Button
           className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-xs"
-          onClick={() => void persistOnce()}
+          onClick={() => void persistOnce({ isExplicit: true })}
           disabled={saveState === "saving"}
         >
           <Save className="mr-2 h-4 w-4" />

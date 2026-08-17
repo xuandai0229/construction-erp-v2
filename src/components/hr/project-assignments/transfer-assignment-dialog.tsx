@@ -29,11 +29,9 @@ export function TransferAssignmentDialog({
   roles,
   canOverride,
 }: TransferAssignmentDialogProps) {
-  if (!isOpen || !assignment) return null;
-
   const [effectiveDate, setEffectiveDate] = useState(new Date().toISOString().split("T")[0]);
-  const [newRoleId, setNewRoleId] = useState(assignment.projectPersonnelRoleId);
-  const [newAllocation, setNewAllocation] = useState<number>(assignment.allocationPercentage);
+  const [newRoleId, setNewRoleId] = useState(assignment?.projectPersonnelRoleId || "");
+  const [newAllocation, setNewAllocation] = useState<number>(assignment?.allocationPercentage || 0);
   const [endReason, setEndReason] = useState<EmployeeProjectAssignmentEndReason>(
     EmployeeProjectAssignmentEndReason.ROLE_TRANSFER
   );
@@ -56,6 +54,8 @@ export function TransferAssignmentDialog({
       })),
     [roles]
   );
+
+  if (!isOpen || !assignment) return null;
 
   const handleSubmit = async (e: React.FormEvent | null, allowOverride = false, overrideReason?: string) => {
     if (e) e.preventDefault();

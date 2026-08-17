@@ -53,10 +53,13 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
         where: { parentId: null, deletedAt: null },
         orderBy: { name: 'asc' }
       },
-      members: {
-        where: { role: "CHIEF_COMMANDER", isActive: true, deletedAt: null },
-        select: { user: { select: { name: true } } },
-        take: 1
+      employeeProjectAssignments: {
+        where: {
+          status: "ACTIVE",
+          projectPersonnelRole: { code: "CHT", isActive: true },
+        },
+        select: { employee: { select: { fullName: true } } },
+        orderBy: { createdAt: "asc" },
       },
       _count: {
         select: {
@@ -76,7 +79,9 @@ export default async function ProjectDetailsPage({ params }: { params: Promise<{
     ? String((project.sourceMetadata as { unit?: unknown }).unit ?? "") 
     : null;
 
-  const commanderName = project.members[0]?.user?.name || null;
+  const commanderName = project.employeeProjectAssignments.length
+    ? [...new Set(project.employeeProjectAssignments.map((assignment) => assignment.employee.fullName))].join(", ")
+    : null;
   const hasWbs = project._count.fieldProgressTemplates > 0;
 
   return (

@@ -51,11 +51,10 @@ export default async function DocumentsOverviewPage({
     orderBy: { createdAt: "desc" },
     include: {
       _count: {
-        select: { documentFolders: { where: { deletedAt: null } } }
-      },
-      documents: {
-        where: { deletedAt: null },
-        select: { id: true }
+        select: {
+          documentFolders: { where: { deletedAt: null } },
+          documents: { where: { deletedAt: null } },
+        }
       },
       members: {
         where: { role: "CHIEF_COMMANDER", isActive: true, deletedAt: null },
@@ -154,7 +153,7 @@ export default async function DocumentsOverviewPage({
                                 </div>
                                 <div className="flex items-center gap-1.5 text-[12px] text-slate-600 font-medium w-[100px]">
                                   <svg className="h-3.5 w-3.5 text-emerald-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
-                                  {project.documents ? project.documents.length : 0} tài liệu
+                                  {project._count.documents} tài liệu
                                 </div>
                               </div>
                             </>
@@ -190,7 +189,7 @@ export default async function DocumentsOverviewPage({
                                   <div className="h-6 w-6 rounded-[var(--radius-md)] bg-emerald-50 flex items-center justify-center shrink-0">
                                     <svg className="h-3.5 w-3.5 text-emerald-600" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
                                   </div>
-                                  <span className="text-[13px] font-semibold text-[var(--foreground)]">{project.documents ? project.documents.length : 0}</span>
+                                  <span className="text-[13px] font-semibold text-[var(--foreground)]">{project._count.documents}</span>
                                   {density === 'comfortable' && <span className="text-[13px] text-[var(--muted-foreground)]">tài liệu</span>}
                                 </div>
                               </div>

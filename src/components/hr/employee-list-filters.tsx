@@ -120,12 +120,13 @@ export function EmployeeListFilters({ organizationUnits, positions }: EmployeeLi
             onChange={(e) => applyFilters({ status: e.target.value })}
             className="w-full py-1.5 px-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
           >
-            <option value="">Tất cả</option>
+            <option value="">Nhân sự hiện tại (Mặc định)</option>
             <option value="ACTIVE">Đang làm việc</option>
             <option value="PROBATION">Thử việc</option>
             <option value="SUSPENDED">Tạm ngừng</option>
             <option value="RESIGNED">Đã nghỉ việc</option>
             <option value="RETIRED">Nghỉ hưu</option>
+            <option value="ALL">Tất cả hồ sơ (Bao gồm đã nghỉ việc)</option>
           </select>
         </div>
 
@@ -271,7 +272,7 @@ export function EmployeeListFilters({ organizationUnits, positions }: EmployeeLi
           )}
           {status && (
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-800 border border-slate-200 font-medium">
-              Trạng thái: {status === "ACTIVE" ? "Đang làm việc" : status === "PROBATION" ? "Thử việc" : status === "SUSPENDED" ? "Tạm ngừng" : status === "RESIGNED" ? "Đã nghỉ việc" : "Nghỉ hưu"}
+              Trạng thái: {status === "ACTIVE" ? "Đang làm việc" : status === "PROBATION" ? "Thử việc" : status === "SUSPENDED" ? "Tạm ngừng" : status === "RESIGNED" ? "Đã nghỉ việc" : status === "RETIRED" ? "Nghỉ hưu" : "Tất cả hồ sơ"}
               <button type="button" onClick={() => { setStatus(""); applyFilters({ status: null }); }} className="hover:text-red-600 cursor-pointer ml-0.5"><X className="w-3 h-3" /></button>
             </span>
           )}

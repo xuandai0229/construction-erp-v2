@@ -9,9 +9,16 @@ export function OrganizationSubTabs() {
   const searchParams = useSearchParams();
   const activeTabRef = useRef<HTMLAnchorElement>(null);
 
-  const activeTab = searchParams.get("tab") || "units";
+  const activeTab = searchParams.get("tab") || "chart";
 
   const tabs = [
+    {
+      id: "hr-tab-org-chart",
+      label: "Sơ đồ tổ chức",
+      href: "/hr/organization?tab=chart",
+      tabKey: "chart",
+      icon: Network,
+    },
     {
       id: "hr-tab-units",
       label: "Phòng ban",
@@ -25,13 +32,6 @@ export function OrganizationSubTabs() {
       href: "/hr/organization?tab=positions",
       tabKey: "positions",
       icon: ShieldCheck,
-    },
-    {
-      id: "hr-tab-org-chart",
-      label: "Sơ đồ tổ chức",
-      href: "/hr/organization?tab=chart",
-      tabKey: "chart",
-      icon: Network,
     },
   ];
 

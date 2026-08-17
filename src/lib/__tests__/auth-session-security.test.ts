@@ -34,6 +34,13 @@ describe("Auth & Session Token Security Audit Suite", () => {
     expect(verifySessionToken("abc.def")).toBeNull();
   });
 
+  it("preserves the mandatory first-login password-change flag", () => {
+    const token = createSessionToken("temporary-user", 1_800_000_000, "credential-v1", true);
+    const payload = verifySessionToken(token, 1_800_000_001);
+    expect(payload?.mustChangePassword).toBe(true);
+    expect(payload?.credentialVersion).toBe("credential-v1");
+  });
+
   it("prevents Open Redirect attacks in post-login route resolution", () => {
     const role: UserRole = "STAFF";
     

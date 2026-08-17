@@ -210,18 +210,20 @@ enum DocumentStatus {
 // MODELS
 
 model User {
-  id        String    @id @default(cuid())
-  email     String    @unique
-  username  String?   @unique
-  password  String
-  name      String
-  role      UserRole  @default(STAFF)
-  phone     String?
-  avatar    String?
-  isActive  Boolean   @default(true)
-  deletedAt DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id                 String    @id @default(cuid())
+  email              String?   @unique
+  username           String?   @unique
+  password           String
+  name               String
+  role               UserRole  @default(STAFF)
+  phone              String?
+  avatar             String?
+  isActive           Boolean   @default(true)
+  mustChangePassword Boolean   @default(false)
+  passwordChangedAt  DateTime?
+  deletedAt          DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   projectMembers               ProjectMember[]
   assignedProjectMembers       ProjectMember[]               @relation("ProjectMemberAssigner")
@@ -2150,7 +2152,7 @@ model Employee {
   dateOfBirth              DateTime?
   phoneNumber              String?
   personalEmail            String?
-  joinedDate               DateTime
+  joinedDate               DateTime?
   resignedDate             DateTime?
   status                   EmployeeStatus @default(ACTIVE)
   identityNumberEncrypted  String?

@@ -217,7 +217,7 @@ export function UnifiedActionMenu({
     window.addEventListener("resize", handleScrollOrResize);
 
     // Initial animation frame ticks to update position after DOM layout stabilization
-    let rafId = requestAnimationFrame(() => {
+    const rafId = requestAnimationFrame(() => {
       updatePosition();
     });
 
@@ -265,6 +265,8 @@ export function UnifiedActionMenu({
         onClick={typeof trigger !== "function" ? handleToggle : undefined}
       >
         {typeof trigger === "function"
+          // The render-prop receives an event callback; it does not read refs during render.
+          // eslint-disable-next-line react-hooks/refs
           ? trigger({ isOpen, toggle: handleToggle })
           : trigger}
       </div>

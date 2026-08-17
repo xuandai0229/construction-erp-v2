@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Calendar, Plus, Trash2, Save, Send } from 'lucide-react';
+import { ProjectCombobox } from '@/components/ui/project-combobox';
 
 interface SafetyPlanFormProps {
   projects: Array<{ id: string; name: string; code: string }>;
@@ -254,17 +255,11 @@ export function SafetyPlanForm({ projects, userId }: SafetyPlanFormProps) {
 
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-600 mb-1">Công trình</label>
-                  <select
+                  <ProjectCombobox
                     value={entry.projectId}
-                    onChange={(e) => updateEntry(idx, 'projectId', e.target.value)}
-                    className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs bg-white focus:outline-none"
-                  >
-                    {projects.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name} ({p.code})
-                      </option>
-                    ))}
-                  </select>
+                    projects={projects}
+                    onValueChange={(id) => updateEntry(idx, 'projectId', id)}
+                  />
                 </div>
 
                 <div className="sm:col-span-3">

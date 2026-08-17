@@ -87,8 +87,14 @@ function getPrintableProgressLine(line: FieldReport["workLines"][number], report
   });
 }
 
+export function isUuid(str?: string | null): boolean {
+  if (!str) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+}
+
 export function ReportPrintTemplate({ report }: ReportPrintTemplateProps) {
   const isWeekly = report.type === "WEEKLY";
+  const displayReportNo = report.reportNo && !isUuid(report.reportNo) ? report.reportNo : "……./…….";
   
   // Clean notes in worklines
   const lines = (report.workLines || []).map(line => ({
@@ -165,7 +171,7 @@ export function ReportPrintTemplate({ report }: ReportPrintTemplateProps) {
           <p>{normalizeVietnameseUppercase("CÔNG TY CỔ PHẦN XÂY DỰNG")}</p>
           <p>{normalizeVietnameseUppercase("VÀ THƯƠNG MẠI SỐ 2 HÀ NỘI")}</p>
           <div className="w-1/3 h-[1px] bg-black mx-auto mt-1 mb-2"></div>
-          <p className="font-normal mt-2">Số: ……./………</p>
+          <p className="font-normal mt-2">Số: {displayReportNo}</p>
         </div>
         <div className="text-center font-bold">
           <p>{normalizeVietnameseUppercase("CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM")}</p>
@@ -199,7 +205,7 @@ export function ReportPrintTemplate({ report }: ReportPrintTemplateProps) {
             <tr>
               <td className="border-none py-1 font-bold align-top">2.</td>
               <td className="border-none py-1 font-bold align-top">Mã báo cáo</td>
-              <td className="border-none py-1 align-top">: {normalizeVietnameseText(report.reportNo)}</td>
+              <td className="border-none py-1 align-top">: {normalizeVietnameseText(displayReportNo)}</td>
             </tr>
             <tr>
               <td className="border-none py-1 font-bold align-top">3.</td>

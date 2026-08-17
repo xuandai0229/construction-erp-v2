@@ -22,8 +22,11 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
     }
 
     const roleDisplayName = ROLE_DISPLAY_NAMES[session.role] || session.role;
-    const globalContext = serializePrisma(await getGlobalProjectContext(session));
-    const canAccessHr = await checkUserHasAnyHrPermission(session.id, session.role);
+    const [globalContextRaw, canAccessHr] = await Promise.all([
+      getGlobalProjectContext(session),
+      checkUserHasAnyHrPermission(session.id, session.role),
+    ]);
+    const globalContext = serializePrisma(globalContextRaw);
 
     return (
       <ClientRenderProfiler id="AppShell">

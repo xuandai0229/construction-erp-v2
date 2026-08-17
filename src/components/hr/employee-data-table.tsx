@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { EmployeeListDTO } from "@/lib/hr/hr-projection";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -18,11 +20,15 @@ import {
   AlertCircle,
   X,
   ExternalLink,
+  KeyRound,
+  UserCheck,
+  UserX,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { HrEmptyState } from "./hr-empty-state";
 import { UnifiedActionMenu, ActionMenuItem } from "@/components/ui/unified-action-menu";
 import { MoreHorizontal } from "lucide-react";
+import { SiteCommanderAccountDialog } from "./site-commander-account-dialog";
 
 interface EmployeeDataTableProps {
   employees: EmployeeListDTO[];
@@ -32,6 +38,7 @@ interface EmployeeDataTableProps {
   canUpdate: boolean;
   canArchive: boolean;
   canCreate?: boolean;
+  canManageAccounts: boolean;
   searchQuery: string;
 }
 
@@ -42,6 +49,21 @@ const STATUS_CONFIG: Record<string, { label: string; style: string }> = {
   RESIGNED: { label: "Đã nghỉ", style: "bg-rose-50 text-rose-700 border-rose-200" },
   RETIRED: { label: "Nghỉ hưu", style: "bg-slate-100 text-slate-700 border-slate-200" },
 };
+
+function AccountStatusBadge({ employee }: { employee: EmployeeListDTO }) {
+  const config = employee.accountStatus === "ACTIVE"
+    ? { label: employee.userMustChangePassword ? "Đã có tài khoản · Chờ đổi mật khẩu" : "Đã có tài khoản · Đang hoạt động", style: "border-emerald-200 bg-emerald-50 text-emerald-700", icon: UserCheck }
+    : employee.accountStatus === "LOCKED"
+      ? { label: "Đã có tài khoản · Đã khóa", style: "border-rose-200 bg-rose-50 text-rose-700", icon: UserX }
+      : { label: "Chưa có tài khoản", style: "border-slate-200 bg-slate-50 text-slate-600", icon: KeyRound };
+  const Icon = config.icon;
+  return (
+    <span className={cn("mt-1 inline-flex max-w-full items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-semibold", config.style)}>
+      <Icon className="h-3 w-3 shrink-0" aria-hidden="true" />
+      <span className="truncate">{config.label}</span>
+    </span>
+  );
+}
 
 function sanitizeDisplayName(name: string | null | undefined): string {
   if (!name) return "";
@@ -181,12 +203,12 @@ function ProjectAssignmentCell({
         <span>{projects.length} công trình đang tham gia</span>
       </button>
 
-      {isOpen && (
+      {isOpen && typeof document !== "undefined" && createPortal(
         <>
-          <div className="fixed inset-0 z-50 bg-black/10" onClick={() => setIsOpen(false)} />
+          <div className="fixed inset-0 z-[200] bg-black/10" onClick={() => setIsOpen(false)} />
           <div
             style={{ top: `${coords.top}px`, left: `${coords.left}px` }}
-            className="fixed z-50 w-96 max-w-md bg-white rounded-xl border border-slate-200 p-4 shadow-2xl space-y-3 text-xs text-slate-800 animate-in fade-in zoom-in-95 duration-100"
+            className="fixed z-[220] w-96 max-w-md bg-white rounded-xl border border-slate-200 p-4 shadow-2xl space-y-3 text-xs text-slate-800 animate-in fade-in zoom-in-95 duration-100"
           >
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <span className="font-bold text-slate-900 flex items-center gap-1.5 text-sm">
@@ -235,7 +257,8 @@ function ProjectAssignmentCell({
               </span>
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );
@@ -248,9 +271,12 @@ export function EmployeeDataTable({
   pageSize,
   canUpdate,
   canCreate,
+  canManageAccounts,
   searchQuery,
 }: EmployeeDataTableProps) {
+  const router = useRouter();
   const [activeEmpId, setActiveEmpId] = useState<string | null>(null);
+  const [accountEmployee, setAccountEmployee] = useState<EmployeeListDTO | null>(null);
   const totalPages = Math.ceil(totalCount / pageSize) || 1;
   const pageHref = (page: number) => {
     const params = new URLSearchParams(searchQuery);
@@ -363,6 +389,7 @@ export function EmployeeDataTable({
                         <span className="text-[11px] font-mono font-semibold text-slate-500 whitespace-nowrap block truncate">
                           {emp.code}
                         </span>
+                        <AccountStatusBadge employee={emp} />
                       </div>
                     </div>
                   </td>
@@ -465,6 +492,18 @@ export function EmployeeDataTable({
                             Chỉnh sửa
                           </ActionMenuItem>
                         )}
+                        {emp.userId ? (
+                          <ActionMenuItem href="/users" icon={<UserCheck className="w-4 h-4 text-slate-500" />}>
+                            Xem tài khoản
+                          </ActionMenuItem>
+                        ) : emp.siteCommanderProjectCount > 0 && canManageAccounts ? (
+                          <ActionMenuItem
+                            icon={<KeyRound className="w-4 h-4 text-slate-500" />}
+                            onClick={() => setAccountEmployee(emp)}
+                          >
+                            Tạo tài khoản
+                          </ActionMenuItem>
+                        ) : null}
                       </UnifiedActionMenu>
                     </div>
                   </td>
@@ -500,6 +539,7 @@ export function EmployeeDataTable({
                     <span className="text-xs font-mono font-semibold text-slate-500">
                       Mã: {emp.code}
                     </span>
+                    <AccountStatusBadge employee={emp} />
                   </div>
                 </div>
                 <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border shrink-0 whitespace-nowrap", statusCfg.style)}>
@@ -529,13 +569,25 @@ export function EmployeeDataTable({
                 <span className="text-xs text-slate-500 font-medium">
                   Vào công ty: {emp.joinedDate ? format(new Date(emp.joinedDate), "dd/MM/yyyy", { locale: vi }) : "—"}
                 </span>
-                <Link
-                  href={`/hr/employees/${emp.id}`}
-                  className="px-3 py-1.5 bg-blue-50 text-blue-700 text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-1"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                  <span>Chi tiết</span>
-                </Link>
+                <div className="flex items-center gap-2">
+                  {!emp.userId && emp.siteCommanderProjectCount > 0 && canManageAccounts ? (
+                    <button
+                      type="button"
+                      onClick={() => setAccountEmployee(emp)}
+                      className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <KeyRound className="h-3.5 w-3.5" aria-hidden="true" />
+                      Tạo tài khoản
+                    </button>
+                  ) : null}
+                  <Link
+                    href={emp.userId ? "/users" : `/hr/employees/${emp.id}`}
+                    className="px-3 py-1.5 bg-blue-50 text-blue-700 text-xs font-semibold rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-1"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>{emp.userId ? "Xem tài khoản" : "Chi tiết"}</span>
+                  </Link>
+                </div>
               </div>
             </div>
           );
@@ -576,6 +628,12 @@ export function EmployeeDataTable({
           </div>
         )}
       </div>
+
+      <SiteCommanderAccountDialog
+        employee={accountEmployee}
+        onClose={() => setAccountEmployee(null)}
+        onCompleted={() => router.refresh()}
+      />
     </div>
   );
 }

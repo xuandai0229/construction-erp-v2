@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import {
   ChevronRight,
@@ -38,17 +39,21 @@ export interface OrgTreeNode {
     employeeCode: string;
     startDate: string;
   } | null;
+  members?: { id: string; fullName: string; code: string; positionTitle: string | null }[];
   children: OrgTreeNode[];
 }
+
+import { ManagerAssignmentPanel } from "./manager-assignment-panel";
 
 interface OrganizationTreeViewProps {
   treeData: OrgTreeNode[];
   flatUnits: { id: string; code: string; name: string; parentId?: string | null }[];
   canManage: boolean;
   companyHeadcount?: number;
+  activeEmployees?: { id: string; fullName: string; code: string }[];
 }
 
-export function OrganizationTreeView({ treeData, flatUnits, canManage, companyHeadcount }: OrganizationTreeViewProps) {
+export function OrganizationTreeView({ treeData, flatUnits, canManage, companyHeadcount, activeEmployees }: OrganizationTreeViewProps) {
   const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>(() => {
@@ -407,27 +412,14 @@ export function OrganizationTreeView({ treeData, flatUnits, canManage, companyHe
                   </div>
 
                   {/* Manager Box */}
-                  <div className="bg-blue-50/60 p-3 rounded-xl border border-blue-200/80 space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-blue-900 flex items-center gap-1.5">
-                        <UserCheck className="w-4 h-4 text-blue-600" />
-                        Người phụ trách / Trưởng đơn vị
-                      </span>
-                    </div>
-
-                    {selectedNode.manager ? (
-                      <div className="text-xs text-slate-800 space-y-0.5 pt-1">
-                        <div className="font-bold text-slate-900">
-                          {selectedNode.manager.fullName} ({selectedNode.manager.employeeCode})
-                        </div>
-                        <div className="text-[11px] text-slate-500">
-                          Ngày bổ nhiệm: {new Date(selectedNode.manager.startDate).toLocaleDateString("vi-VN")}
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-xs text-slate-500 italic pt-1">Chưa bổ nhiệm người phụ trách đơn vị.</p>
-                    )}
-                  </div>
+                  <ManagerAssignmentPanel
+                    unitId={selectedNode.id}
+                    unitCode={selectedNode.code}
+                    unitName={selectedNode.name}
+                    currentManager={selectedNode.manager}
+                    canManage={canManage}
+                    activeEmployees={activeEmployees}
+                  />
                 </div>
 
                 {/* Actions Footer */}
@@ -453,9 +445,8 @@ export function OrganizationTreeView({ treeData, flatUnits, canManage, companyHe
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {deleteTargetNode && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+      {deleteTargetNode && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[200] bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center gap-3 text-red-600">
               <div className="p-2 bg-red-100 rounded-xl">
@@ -512,7 +503,8 @@ export function OrganizationTreeView({ treeData, flatUnits, canManage, companyHe
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Modal Dialog */}

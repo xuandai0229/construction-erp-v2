@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
@@ -29,6 +30,7 @@ import { EmployeeTransferDialog } from "@/components/hr/employee-transfer-dialog
 import { cn } from "@/lib/utils";
 import { EmployeeStatus } from "@prisma/client";
 import { ProjectName } from "@/components/project/project-name";
+import { EnterpriseCombobox, type EnterpriseComboboxOption } from "@/components/ui/enterprise-combobox";
 
 export interface EmployeeDto {
   id: string;
@@ -819,8 +821,8 @@ export function EmployeeDetailView({
       )}
 
       {/* Resign / Archive Modal */}
-      {showArchiveModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+      {showArchiveModal && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
           <div className="bg-white border border-slate-200 rounded-xl max-w-md w-full p-6 shadow-xl space-y-4">
             <h3 className="text-lg font-bold text-slate-900">
               Ghi nhận nhân viên nghỉ việc / Lưu trữ
@@ -892,12 +894,13 @@ export function EmployeeDetailView({
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Link User Modal */}
-      {showLinkModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+      {showLinkModal && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
           <div className="bg-white border border-slate-200 rounded-xl max-w-md w-full p-6 shadow-xl space-y-4">
             <h3 className="text-lg font-bold text-slate-900">
               Liên kết tài khoản hệ thống
@@ -914,18 +917,20 @@ export function EmployeeDetailView({
                 <label className="block text-xs font-bold text-slate-700 mb-1">
                   Chọn tài khoản hệ thống
                 </label>
-                <select
+                <EnterpriseCombobox
+                  options={unlinkedUsers.map((u) => ({
+                    value: u.id,
+                    label: `${u.name} (${u.email || "Chưa có email"})`,
+                    name: u.name,
+                    code: u.email || "",
+                  }))}
                   value={selectedUserId}
-                  onChange={(e) => setSelectedUserId(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-900"
-                >
-                  <option value="">-- Không liên kết (Hủy liên kết hiện tại) --</option>
-                  {unlinkedUsers.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name} ({u.email || "No email"})
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setSelectedUserId(val)}
+                  placeholder="-- Không liên kết (Hủy liên kết hiện tại) --"
+                  searchPlaceholder="Tìm tài khoản theo tên hoặc email..."
+                  emptyMessage="Không tìm thấy tài khoản chưa liên kết"
+                  clearable
+                />
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
@@ -947,7 +952,8 @@ export function EmployeeDetailView({
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Transfer Dialog */}

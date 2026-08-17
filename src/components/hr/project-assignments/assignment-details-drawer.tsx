@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   X,
   User,
@@ -42,10 +43,10 @@ export function AssignmentDetailsDrawer({
     }
   }, [isOpen, assignment?.employeeId]);
 
-  if (!isOpen || !assignment) return null;
+  if (!isOpen || !assignment || typeof document === "undefined") return null;
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-hidden bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
+  return createPortal(
+    <div className="fixed inset-0 z-[200] overflow-hidden bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
       <div className="absolute inset-y-0 right-0 max-w-full flex pl-10">
         <div className="w-screen max-w-md bg-white shadow-2xl border-l border-slate-200 flex flex-col">
           {/* Header */}
@@ -58,7 +59,7 @@ export function AssignmentDetailsDrawer({
               type="button"
               onClick={onClose}
               aria-label="Đóng chi tiết điều động"
-              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -214,6 +215,8 @@ export function AssignmentDetailsDrawer({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
+

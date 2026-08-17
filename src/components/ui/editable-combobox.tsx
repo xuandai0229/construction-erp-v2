@@ -122,7 +122,7 @@ export function EditableCombobox({
       top: openUp ? undefined : rect.bottom + 4,
       bottom: openUp ? vh - rect.top + 4 : undefined,
       width: rect.width,
-      zIndex: 100,
+      zIndex: 220,
     });
   };
 
@@ -247,7 +247,7 @@ export function EditableCombobox({
       style={isMobile ? undefined : panelStyle || undefined}
       className={cn(
         "overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl shadow-slate-950/15",
-        isMobile ? "fixed inset-x-3 bottom-3 z-[100] max-h-[calc(100dvh-24px)]" : "z-[100]",
+        isMobile ? "fixed inset-x-3 bottom-3 z-[220] max-h-[calc(100dvh-24px)]" : "z-[220]",
       )}
     >
       <div

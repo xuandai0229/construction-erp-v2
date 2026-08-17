@@ -11,6 +11,7 @@ import { generateIdentityBlindIndex, normalizeIdentityNumber } from "@/lib/hr/pi
 import prisma from "@/lib/prisma";
 import { writeAuditLog } from "@/lib/audit";
 import { Plus } from "lucide-react";
+import { resolvePermission } from "@/lib/permissions/permission-resolver";
 
 export const dynamic = "force-dynamic";
 
@@ -71,9 +72,13 @@ export default async function EmployeeListPage({ searchParams }: EmployeeListPag
   const scopeWhere = await buildEmployeeScopeWhereClause(permCheck.context, permCheck.scope);
   const conditions: any[] = [scopeWhere];
 
-  // 1. Status Filter
-  if (statusFilter) {
+  // 1. Status Filter (Default to Current Workforce: ACTIVE + PROBATION unless status=ALL or specific)
+  if (statusFilter === "ALL") {
+    // Show all employee records (including RESIGNED, RETIRED, SUSPENDED)
+  } else if (statusFilter) {
     conditions.push({ status: statusFilter });
+  } else {
+    conditions.push({ status: { in: ["ACTIVE", "PROBATION"] } });
   }
 
   // 2. Workplace Filter
@@ -246,7 +251,17 @@ export default async function EmployeeListPage({ searchParams }: EmployeeListPag
       take: pageSize,
       orderBy: { [sortKey]: sortDirection },
       include: {
-        user: { select: { id: true, name: true, email: true } },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            isActive: true,
+            deletedAt: true,
+            mustChangePassword: true,
+          },
+        },
         orgAssignments: {
           where: { endDate: null },
           include: {
@@ -261,6 +276,7 @@ export default async function EmployeeListPage({ searchParams }: EmployeeListPag
           },
           include: {
             project: { select: { id: true, name: true, code: true } },
+            projectPersonnelRole: { select: { code: true, name: true } },
           },
         },
       },
@@ -273,6 +289,14 @@ export default async function EmployeeListPage({ searchParams }: EmployeeListPag
   const employees = rawEmployees.map((emp) =>
     projectEmployeeForList(emp, permCheck.sensitiveFieldPolicy)
   );
+  const [createUserPermission, assignSystemRolePermission, assignProjectRolePermission] = await Promise.all([
+    resolvePermission(permCheck.context.session, "users.create"),
+    resolvePermission(permCheck.context.session, "users.assign_system_role"),
+    resolvePermission(permCheck.context.session, "users.assign_project_role"),
+  ]);
+  const canManageAccounts = createUserPermission.allowed
+    && assignSystemRolePermission.allowed
+    && assignProjectRolePermission.allowed;
 
   const queryParams = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
@@ -311,6 +335,7 @@ export default async function EmployeeListPage({ searchParams }: EmployeeListPag
         canUpdate={updatePermCheck.allowed}
         canArchive={archivePermCheck.allowed}
         canCreate={createPermCheck.allowed}
+        canManageAccounts={canManageAccounts}
         searchQuery={searchQuery}
       />
     </HrWorkspaceShell>

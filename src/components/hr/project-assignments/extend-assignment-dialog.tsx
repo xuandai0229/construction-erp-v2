@@ -19,15 +19,15 @@ export function ExtendAssignmentDialog({
   onSuccess,
   assignment,
 }: ExtendAssignmentDialogProps) {
-  if (!isOpen || !assignment) return null;
-
   const [newExpectedEndDate, setNewExpectedEndDate] = useState(
-    assignment.expectedEndDate || new Date().toISOString().split("T")[0]
+    assignment?.expectedEndDate || new Date().toISOString().split("T")[0]
   );
   const [notes, setNotes] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  if (!isOpen || !assignment) return null;
 
   const isFinite = Boolean(assignment.expectedEndDate);
   const dialogTitle = isFinite ? "Gia hạn điều động" : "Thiết lập ngày dự kiến kết thúc";

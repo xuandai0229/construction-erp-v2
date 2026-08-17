@@ -6,6 +6,7 @@ export interface ActiveProjectDTO {
   name: string;
   code: string;
   roleName?: string;
+  roleCode?: string;
   allocationPercentage: number;
 }
 
@@ -25,6 +26,12 @@ export interface EmployeeListDTO {
   userId: string | null;
   userEmail: string | null;
   userName: string | null;
+  userRole: string | null;
+  userIsActive: boolean | null;
+  userDeletedAt: string | null;
+  userMustChangePassword: boolean;
+  siteCommanderProjectCount: number;
+  accountStatus: "NO_ACCOUNT" | "ACTIVE" | "LOCKED";
   updatedAt: string;
   activeProjects: ActiveProjectDTO[];
   totalAllocationPercentage: number;
@@ -72,6 +79,7 @@ export function projectEmployeeForList(
     name: pa.project?.name || "Công trình",
     code: pa.project?.code || "",
     roleName: pa.projectPersonnelRole?.name || pa.role?.name || "Kỹ sư",
+    roleCode: pa.projectPersonnelRole?.code || pa.role?.code,
     allocationPercentage: pa.allocationPercentage ?? 100,
   }));
 
@@ -79,6 +87,11 @@ export function projectEmployeeForList(
     (acc, p) => acc + (p.allocationPercentage || 0),
     0
   );
+
+  const userId = employee.user?.id || employee.userId || null;
+  const userIsActive = employee.user ? Boolean(employee.user.isActive) : null;
+  const userDeletedAt = employee.user?.deletedAt ? new Date(employee.user.deletedAt).toISOString() : null;
+  const accountStatus = !userId ? "NO_ACCOUNT" : userIsActive && !userDeletedAt ? "ACTIVE" : "LOCKED";
 
   return {
     id: employee.id,
@@ -93,9 +106,15 @@ export function projectEmployeeForList(
     currentPositionTitle: primaryAssignment?.position?.title || null,
     phoneNumber: canSeeContact ? employee.phoneNumber || null : null,
     personalEmail: canSeeContact ? employee.personalEmail || null : null,
-    userId: employee.user?.id || employee.userId || null,
+    userId,
     userEmail: canSeeContact ? employee.user?.email || null : maskEmail(employee.user?.email),
     userName: employee.user?.name || null,
+    userRole: employee.user?.role || null,
+    userIsActive,
+    userDeletedAt,
+    userMustChangePassword: Boolean(employee.user?.mustChangePassword),
+    siteCommanderProjectCount: activeProjects.filter((project) => project.roleCode === "CHT").length,
+    accountStatus,
     updatedAt: employee.updatedAt ? new Date(employee.updatedAt).toISOString() : "",
     activeProjects,
     totalAllocationPercentage,

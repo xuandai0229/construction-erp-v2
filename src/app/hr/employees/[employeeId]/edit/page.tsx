@@ -46,15 +46,64 @@ export default async function EmployeeEditPage({ params }: EmployeeEditPageProps
       dateOfBirth: true,
       phoneNumber: true,
       personalEmail: true,
-      status: true,
+      joinedDate: true,
       resignedDate: true,
+      status: true,
+      userId: true,
       updatedAt: true,
+      user: {
+        select: { id: true, username: true, email: true },
+      },
+      orgAssignments: {
+        where: { endDate: null, isPrimary: true },
+        include: {
+          organizationUnit: { select: { id: true, code: true, name: true } },
+          position: { select: { id: true, code: true, title: true } },
+        },
+        take: 1,
+      },
+      projectAssignments: {
+        where: {
+          status: "ACTIVE",
+          OR: [{ endDate: null }, { endDate: { gte: new Date() } }],
+        },
+        include: {
+          project: { select: { id: true, name: true, code: true } },
+          projectPersonnelRole: { select: { name: true, code: true } },
+        },
+      },
     },
   });
 
   if (!employee) {
     notFound();
   }
+
+  // Options for transfer & link user
+  const orgUnits = await prisma.organizationUnit.findMany({
+    where: { isActive: true },
+    orderBy: [{ orderIndex: "asc" }, { code: "asc" }],
+    select: { id: true, code: true, name: true },
+  });
+
+  const positions = await prisma.position.findMany({
+    where: { isActive: true },
+    orderBy: [{ code: "asc" }],
+    select: { id: true, code: true, title: true },
+  });
+
+  const availableUsers = await prisma.user.findMany({
+    where: {
+      OR: [
+        { employee: null },
+        { id: employee.userId || "" },
+      ],
+    },
+    orderBy: [{ username: "asc" }],
+    select: { id: true, username: true, email: true, role: true },
+  });
+
+  const currentOrgAssignment = employee.orgAssignments[0] || null;
 
   return (
     <HrWorkspaceShell>
@@ -79,9 +128,23 @@ export default async function EmployeeEditPage({ params }: EmployeeEditPageProps
         employee={{
           ...employee,
           dateOfBirth: employee.dateOfBirth ? employee.dateOfBirth.toISOString() : null,
+          joinedDate: employee.joinedDate ? employee.joinedDate.toISOString() : null,
           resignedDate: employee.resignedDate ? employee.resignedDate.toISOString() : null,
           updatedAt: employee.updatedAt.toISOString(),
+          currentOrgUnit: currentOrgAssignment?.organizationUnit || null,
+          currentPosition: currentOrgAssignment?.position || null,
+          activeProjects: employee.projectAssignments.map((pa) => ({
+            id: pa.id,
+            projectId: pa.projectId,
+            projectName: pa.project.name,
+            projectCode: pa.project.code,
+            roleTitle: pa.projectPersonnelRole?.name || "Thành viên dự án",
+            allocationPercentage: pa.allocationPercentage,
+          })),
         }}
+        orgUnits={orgUnits}
+        positions={positions}
+        availableUsers={availableUsers}
       />
     </HrWorkspaceShell>
   );

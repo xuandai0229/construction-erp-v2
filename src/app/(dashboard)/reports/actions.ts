@@ -1508,6 +1508,7 @@ export async function getSiteReportForEdit(reportId: string) {
 export type SaveSiteReportDraftInput = {
   reportId?: string | null;
   expectedUpdatedAt?: string | null;
+  isExplicitSave?: boolean;
   projectId: string;
   type: "DAILY" | "WEEKLY";
   date?: string;
@@ -1549,11 +1550,6 @@ export async function saveSiteReportDraft(input: SaveSiteReportDraftInput) {
       throw new Error("Không tìm thấy báo cáo hoặc báo cáo đã bị xóa.");
     }
 
-    // Optimistic Concurrency Control Check using updatedAt
-    if (input.expectedUpdatedAt && report.updatedAt.toISOString() !== input.expectedUpdatedAt) {
-      throw new Error("CONFLICT: Báo cáo đã được cập nhật ở phiên làm việc khác. Vui lòng tải lại trang.");
-    }
-
     if (!canUpdateReport(report, policyUser, hasProjectAccess)) {
       await auditReportMutationDenied({ actor: policyUser, action: "reports.update", reportId: report.id, projectId: report.projectId });
       throw new Error("Không có quyền chỉnh sửa báo cáo này.");
@@ -1561,6 +1557,17 @@ export async function saveSiteReportDraft(input: SaveSiteReportDraftInput) {
 
     const workLines = input.workLines || [];
     const updated = await prisma.$transaction(async (tx) => {
+      // Atomic Optimistic Concurrency Control Check inside transaction
+      if (input.expectedUpdatedAt) {
+        const current = await tx.siteReport.findUnique({
+          where: { id: report.id },
+          select: { updatedAt: true },
+        });
+        if (!current || current.updatedAt.toISOString() !== input.expectedUpdatedAt) {
+          throw new Error("CONFLICT: Báo cáo đã được cập nhật ở phiên làm việc khác. Vui lòng tải lại trang.");
+        }
+      }
+
       if (report.type === "WEEKLY") {
         const result = await updateWeeklyReportCore(
           tx,
@@ -1619,26 +1626,29 @@ export async function saveSiteReportDraft(input: SaveSiteReportDraftInput) {
         },
       });
 
-      await tx.auditLog.create({
-        data: {
-          userId: session.id,
-          projectId: report.projectId,
-          entityType: "SiteReport",
-          entityId: report.id,
-          action: "SITE_REPORT_UPDATED",
-          afterData: JSON.stringify({
-            status: res.status,
-            reportDate: res.reportDate,
-            linesCount: workLines.length,
-          }),
-        },
-      });
+      // Only write audit log and reconcile business progress on explicit user save action
+      if (input.isExplicitSave) {
+        await tx.auditLog.create({
+          data: {
+            userId: session.id,
+            projectId: report.projectId,
+            entityType: "SiteReport",
+            entityId: report.id,
+            action: "SITE_REPORT_UPDATED",
+            afterData: JSON.stringify({
+              status: res.status,
+              reportDate: res.reportDate,
+              linesCount: workLines.length,
+            }),
+          },
+        });
 
-      await syncSiteReportProgressEntriesInTransaction(tx, {
-        reportId: res.id,
-        mode: "SAVE",
-        actor: { id: policyUser.id, role: policyUser.role, name: session.name },
-      });
+        await syncSiteReportProgressEntriesInTransaction(tx, {
+          reportId: res.id,
+          mode: "SAVE",
+          actor: { id: policyUser.id, role: policyUser.role, name: session.name },
+        });
+      }
 
       return res;
     });

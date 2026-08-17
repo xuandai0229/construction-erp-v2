@@ -7,6 +7,7 @@ interface SessionTokenPayload {
   iat: number;
   exp: number;
   credentialVersion: string | null;
+  mustChangePassword: boolean;
 }
 
 function getSessionSecret(): string {
@@ -27,12 +28,14 @@ export function createSessionToken(
   userId: string,
   issuedAtSeconds = Math.floor(Date.now() / 1000),
   credentialVersion: string | null = null,
+  mustChangePassword = false,
 ): string {
   const payload: SessionTokenPayload = {
     userId,
     iat: issuedAtSeconds,
     exp: issuedAtSeconds + SESSION_MAX_AGE_SECONDS,
     credentialVersion,
+    mustChangePassword,
   };
   const encodedPayload = Buffer.from(JSON.stringify(payload)).toString("base64url");
   const encodedSignature = sign(encodedPayload).toString("base64url");
@@ -66,7 +69,7 @@ export function verifySessionToken(
     const payload = JSON.parse(
       Buffer.from(encodedPayload, "base64url").toString("utf8")
     ) as Partial<SessionTokenPayload>;
-    const { userId, iat, exp, credentialVersion } = payload;
+    const { userId, iat, exp, credentialVersion, mustChangePassword } = payload;
     if (
       typeof userId !== "string" ||
       !userId ||
@@ -77,11 +80,18 @@ export function verifySessionToken(
       iat > nowSeconds + 60 ||
       exp <= nowSeconds ||
       exp <= iat ||
-      (credentialVersion !== null && credentialVersion !== undefined && typeof credentialVersion !== "string")
+      (credentialVersion !== null && credentialVersion !== undefined && typeof credentialVersion !== "string") ||
+      (mustChangePassword !== undefined && typeof mustChangePassword !== "boolean")
     ) {
       return null;
     }
-    return { userId, iat, exp, credentialVersion: credentialVersion ?? null };
+    return {
+      userId,
+      iat,
+      exp,
+      credentialVersion: credentialVersion ?? null,
+      mustChangePassword: mustChangePassword ?? false,
+    };
   } catch {
     return null;
   }

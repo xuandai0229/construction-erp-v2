@@ -5,6 +5,7 @@ import { Search, X, Calendar, Filter } from "lucide-react";
 import { getStatusLabel } from "./types";
 import { Button } from "@/components/ui/button";
 import { ContentCard } from "@/components/ui/enterprise";
+import { ProjectCombobox } from "@/components/ui/project-combobox";
 
 interface ReportsToolbarProps {
   search: string;
@@ -120,18 +121,15 @@ export function ReportsToolbar({
             ))}
           </select>
 
-          <select
-            value={projectFilter}
-            onChange={(e) => onProjectFilterChange(e.target.value)}
-            className={`h-10 px-3 text-sm rounded-[var(--radius-lg)] focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
-              projectFilter ? 'bg-blue-50/50 text-blue-900 border border-blue-200' : 'bg-[var(--surface-subtle)] text-[var(--foreground)] border border-[var(--border)]'
-            }`}
-          >
-            <option value="">Tất cả công trình</option>
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
+          <div className="min-w-0">
+            <ProjectCombobox
+              value={projectFilter}
+              projects={projects}
+              onValueChange={(id) => onProjectFilterChange(id)}
+              placeholder="Tất cả công trình"
+              clearable
+            />
+          </div>
 
           <div className="relative">
             <Calendar className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${dateRange ? 'text-blue-500' : 'text-[var(--muted-foreground)] opacity-70'}`} />

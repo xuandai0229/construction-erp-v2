@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -10,8 +11,6 @@ import {
   Edit2,
   Trash2,
   X,
-  RotateCcw,
-  PowerOff,
   Loader2,
   AlertCircle,
   Users,
@@ -172,7 +171,7 @@ export function PositionManagementClient({ positions, canManage }: PositionManag
           {canManage && (
             <button
               onClick={handleOpenCreate}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Thêm chức danh đầu tiên</span>
@@ -265,7 +264,7 @@ export function PositionManagementClient({ positions, canManage }: PositionManag
                                       e.stopPropagation();
                                       toggle();
                                     }}
-                                    className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border transition-colors shadow-2xs ${
+                                    className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border transition-colors shadow-2xs cursor-pointer ${
                                       isOpen
                                         ? "border-blue-300 bg-blue-100/80 text-blue-700"
                                         : "border-slate-200 bg-white text-slate-500 hover:bg-slate-100 hover:text-slate-900"
@@ -309,8 +308,8 @@ export function PositionManagementClient({ positions, canManage }: PositionManag
       )}
 
       {/* Modal Dialog Form */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+      {isModalOpen && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
           <div className="w-full max-w-md rounded-2xl bg-white shadow-xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
               <div className="flex items-center gap-2.5">
@@ -324,7 +323,7 @@ export function PositionManagementClient({ positions, canManage }: PositionManag
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors"
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -382,14 +381,14 @@ export function PositionManagementClient({ positions, canManage }: PositionManag
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
                 >
                   Hủy bỏ
                 </button>
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer disabled:opacity-50"
                 >
                   {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   <span>{editingPosition ? "Lưu thay đổi" : "Tạo chức danh"}</span>
@@ -397,11 +396,13 @@ export function PositionManagementClient({ positions, canManage }: PositionManag
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
+
       {/* Delete Position Confirmation Modal */}
-      {deleteTargetPos && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+      {deleteTargetPos && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[200] bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center gap-3 text-red-600">
               <div className="p-2 bg-red-100 rounded-xl">
@@ -452,8 +453,10 @@ export function PositionManagementClient({ positions, canManage }: PositionManag
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
 }
+
