@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import {
   getHrReportKpis,
   getHrReportCharts,
@@ -8,6 +8,15 @@ import {
 import Workbook from "exceljs";
 
 describe("HR Phase 4.4 — Enterprise Reporting & Excel Export Complete Validation", () => {
+  beforeAll(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-08-01T00:00:00.000Z"));
+  });
+
+  afterAll(() => {
+    vi.useRealTimers();
+  });
+
   const adminCtx = {
     session: { id: "user-admin-1", name: "Trưởng phòng HR", email: "admin@erp.com", role: "ADMIN" },
     isSystemAdmin: true,

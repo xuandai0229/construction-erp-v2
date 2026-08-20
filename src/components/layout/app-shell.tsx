@@ -12,6 +12,8 @@ import { measureServerPhase } from '@/lib/performance/server';
 import { ClientRenderProfiler } from '@/components/performance/client-render-profiler';
 
 import { AutoRevalidateListener } from '@/components/common/auto-revalidate-listener';
+import { AIAssistantDrawer } from '@/components/ai/ai-assistant-drawer';
+import { isUserInPilotCohort } from '@/lib/ai/pilot/ai-pilot-cohort';
 
 export async function AppShell({ children }: { children: React.ReactNode }) {
   return measureServerPhase('app-shell', async () => {
@@ -55,6 +57,17 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
               </div>
             </main>
             <div data-app-bottom-nav><MobileBottomNav userRole={session.role} canAccessHr={canAccessHr} /></div>
+            {isUserInPilotCohort(session) && (() => {
+              const activeProject = globalContext?.accessibleProjects.find(
+                (p) => p.id === globalContext.selectedProjectId
+              );
+              return (
+                <AIAssistantDrawer
+                  activeProjectId={activeProject?.id}
+                  activeProjectName={activeProject?.displayName || activeProject?.name}
+                />
+              );
+            })()}
           </div>
         </div>
       </ClientRenderProfiler>

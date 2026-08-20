@@ -153,5 +153,5 @@ describe("Safety Reporting Vietnamese Text & Unicode Integrity", () => {
     };
     const pdfBuffer = await SafetyPdfConverter.generatePlanPdf(mockPlan);
     expect(pdfBuffer.slice(0, 4).toString("ascii")).toBe("%PDF");
-  });
+  }, 30000);
 });

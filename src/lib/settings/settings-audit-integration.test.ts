@@ -21,6 +21,8 @@ describe("Phase 6 — Settings Audit Integration Tests", () => {
   let initialSettingCount = 0;
   let initialAuditCount = 0;
 
+  let wasCreated = false;
+
   beforeAll(async () => {
     process.env.DATABASE_URL = dbUrl;
     pool = new Pool({ connectionString: dbUrl });
@@ -39,24 +41,31 @@ describe("Phase 6 — Settings Audit Integration Tests", () => {
     initialSettingCount = await prisma.systemSetting.count({ where: { singletonKey: { not: testRunId } } });
     initialAuditCount = await prisma.auditLog.count({ where: { afterData: { not: { contains: testRunId } } } });
 
-    setting = await prisma.systemSetting.create({
-      data: {
-        companyName: `QA Company ${testRunId}`,
-        taxCode: "1234567890",
-        hotline: "1900 1234",
-        maxUploadSizeMb: 50,
-        allowedExtensions: ".pdf,.docx",
-        timezone: "Asia/Ho_Chi_Minh",
-        currency: "VND",
-      }
-    });
+    const existing = await prisma.systemSetting.findFirst();
+    if (existing) {
+      setting = existing;
+      wasCreated = false;
+    } else {
+      setting = await prisma.systemSetting.create({
+        data: {
+          companyName: `QA Company ${testRunId}`,
+          taxCode: "1234567890",
+          hotline: "1900 1234",
+          maxUploadSizeMb: 50,
+          allowedExtensions: ".pdf,.docx",
+          timezone: "Asia/Ho_Chi_Minh",
+          currency: "VND",
+        }
+      });
+      wasCreated = true;
+    }
   });
 
   afterAll(async () => {
     if (createdAuditLogIds.length > 0) {
       await prisma.auditLog.deleteMany({ where: { id: { in: createdAuditLogIds } } });
     }
-    if (setting) await prisma.systemSetting.delete({ where: { id: setting.id } });
+    if (wasCreated && setting) await prisma.systemSetting.delete({ where: { id: setting.id } });
     if (adminUser) await prisma.user.delete({ where: { id: adminUser.id } });
 
     const finalSettingCount = await prisma.systemSetting.count({ where: { singletonKey: { not: testRunId } } });

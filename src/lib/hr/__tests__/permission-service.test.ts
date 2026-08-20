@@ -68,7 +68,7 @@ describe("HR Permission Registry & Resolution Service", () => {
       },
     });
 
-    const granter = (await prisma.user.findFirst({ where: { id: { not: testUser.id } } })) || testUser;
+    const granter = testUser;
 
     // Add ALLOW grant
     await prisma.userAccessGrant.create({
@@ -130,7 +130,7 @@ describe("HR Permission Registry & Resolution Service", () => {
       },
     });
 
-    const granter = (await prisma.user.findFirst()) || testUser;
+    const granter = testUser;
 
     // Add expired grant
     await prisma.userAccessGrant.create({
