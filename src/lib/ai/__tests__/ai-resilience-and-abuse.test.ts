@@ -47,9 +47,8 @@ describe("Phase 1B.2 — Resilience, Immutable Pilot Cohort & Provider Failure G
   it("Layer 2 Kill Switch (Database SystemSetting): Disables AI at runtime by Admin without redeploy", async () => {
     vi.spyOn(prisma.systemSetting, "findUnique").mockResolvedValueOnce({
       id: "set_1",
-      singletonKey: "SYSTEM_SETTINGS",
-      value: "false",
-      description: "Admin runtime disable",
+      singletonKey: "DEFAULT_SETTINGS",
+      aiReadOnlyEnabled: false,
       updatedAt: new Date(),
     } as any);
 
@@ -62,8 +61,8 @@ describe("Phase 1B.2 — Resilience, Immutable Pilot Cohort & Provider Failure G
     process.env.AI_READ_ONLY_ENABLED = "false";
     vi.spyOn(prisma.systemSetting, "findUnique").mockResolvedValueOnce({
       id: "set_1",
-      singletonKey: "SYSTEM_SETTINGS",
-      value: "true",
+      singletonKey: "DEFAULT_SETTINGS",
+      aiReadOnlyEnabled: true,
       updatedAt: new Date(),
     } as any);
 
@@ -262,7 +261,7 @@ describe("Phase 1B.2 — Resilience, Immutable Pilot Cohort & Provider Failure G
       preferredProvider: "mock",
     });
 
-    expect(turn.success).toBe(true);
-    expect(turn.content).toContain("không có quyền truy cập");
+    expect(turn.success).toBe(false);
+    expect(["PROJECT_NOT_FOUND", "PROJECT_SCOPE_DENIED"]).toContain(turn.error?.code);
   });
 });

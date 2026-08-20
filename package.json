@@ -6,7 +6,9 @@
     "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "ai:data-readiness": "tsx scripts/ai-data-readiness-audit.ts",
+    "ai:verify-kill-switch": "tsx scripts/verify-ai-kill-switch.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",

@@ -24,12 +24,15 @@ export interface AIToolExportDefinition {
   };
 }
 
+export type AIReasoningEffort = "none" | "low" | "medium" | "high" | "xhigh" | "max";
+
 export interface AIGenerateOptions {
   messages: AIChatMessage[];
   tools?: AIToolExportDefinition[];
   maxTokens?: number;
   temperature?: number;
   model?: string;
+  reasoningEffort?: AIReasoningEffort;
 }
 
 export interface AIGenerateResult {
@@ -38,10 +41,15 @@ export interface AIGenerateResult {
   usage?: {
     promptTokens: number;
     completionTokens: number;
+    reasoningTokens?: number;
     totalTokens: number;
   };
   model: string;
   provider: string;
+  requestId?: string;
+  httpStatus: number;
+  latencyMs: number;
+  remote: boolean;
 }
 
 export interface AIProvider {

@@ -3,7 +3,7 @@ import { projectScopeWhere } from "@/lib/rbac";
 import { AIRequestContext } from "../types";
 
 export interface ResolvedProjectResult {
-  matchType: "EXACT" | "FUZZY" | "AMBIGUOUS" | "NOT_FOUND";
+  matchType: "EXACT" | "FUZZY" | "AMBIGUOUS" | "NOT_FOUND" | "SCOPE_DENIED";
   projectId?: string;
   projectCode?: string;
   projectName?: string;
@@ -27,45 +27,43 @@ export async function resolveProjectMention(
 
   const scopeWhere = projectScopeWhere(context.projectScope);
 
-  // 1. Check exact match by code (e.g. "CT-2026-0002")
-  const codeMatch = await prisma.project.findFirst({
+  // 1. Resolve exact ID/code inside the authoritative project scope.
+  const exactMatch = await prisma.project.findFirst({
     where: {
       ...scopeWhere,
-      code: { equals: cleanMention, mode: "insensitive" },
+      OR: [
+        { id: cleanMention },
+        { code: { equals: cleanMention, mode: "insensitive" } },
+      ],
       deletedAt: null,
     },
     select: { id: true, code: true, name: true },
   });
 
-  if (codeMatch) {
+  if (exactMatch) {
     return {
       matchType: "EXACT",
-      projectId: codeMatch.id,
-      projectCode: codeMatch.code,
-      projectName: codeMatch.name,
+      projectId: exactMatch.id,
+      projectCode: exactMatch.code,
+      projectName: exactMatch.name,
     };
   }
 
-  // 2. Check exact match by ID
-  const idMatch = await prisma.project.findFirst({
+  // 2. Distinguish an exact but unauthorized entity without exposing its details.
+  const exactOutsideScope = await prisma.project.findFirst({
     where: {
-      ...scopeWhere,
-      id: cleanMention,
+      OR: [
+        { id: cleanMention },
+        { code: { equals: cleanMention, mode: "insensitive" } },
+      ],
       deletedAt: null,
     },
-    select: { id: true, code: true, name: true },
+    select: { id: true },
   });
 
-  if (idMatch) {
-    return {
-      matchType: "EXACT",
-      projectId: idMatch.id,
-      projectCode: idMatch.code,
-      projectName: idMatch.name,
-    };
-  }
+  if (exactOutsideScope) return { matchType: "SCOPE_DENIED" };
 
-  // 3. Search by name / displayName contains
+  // 3. Search by name/displayName only inside scope.
   const matchingProjects = await prisma.project.findMany({
     where: {
       ...scopeWhere,

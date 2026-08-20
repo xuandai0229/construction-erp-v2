@@ -5,7 +5,8 @@ import { validateToolInput } from "./input-validator";
 import { sanitizeToolOutput } from "./output-sanitizer";
 import { logAIAuditEvent } from "../audit/ai-audit-logger";
 import { createPendingConfirmation } from "../confirmations/confirmation-state";
-import { AIToolExecutionResult, AIRequestContext } from "../types";
+import { AIToolExecutionResult, AIRequestContext, isAIToolPayload } from "../types";
+import { resolveProjectMention } from "../controller/ai-project-resolver";
 
 export interface ExecuteToolGatewayOptions {
   toolName: string;
@@ -160,12 +161,85 @@ export async function executeAIToolGateway<T = any>(
     };
   }
 
-  // 4. Policy Engine Evaluation (Fail Closed)
-  const targetProjectId = typeof (validatedInput as any)?.projectId === "string" ? ((validatedInput as any).projectId as string) : undefined;
+  // 4. Canonicalize project code/name/CUID before applying the CUID-based scope policy.
+  const canonicalInput: Record<string, unknown> = { ...validatedInput };
+  const projectReference = typeof canonicalInput.projectId === "string"
+    ? canonicalInput.projectId.trim()
+    : undefined;
+  let targetProjectId: string | undefined;
+
+  if (projectReference) {
+    if (
+      context.projectScope.kind === "PROJECT_IDS" &&
+      context.projectScope.projectIds.includes(projectReference)
+    ) {
+      targetProjectId = projectReference;
+    } else if (
+      context.projectScope.kind === "PROJECT_IDS" &&
+      !/^[A-Z]{2,10}-\d{4}-\d{3,8}$/i.test(projectReference)
+    ) {
+      // A direct CUID-like reference can be denied by the authoritative scope
+      // without any database lookup or entity-enumeration side channel.
+      targetProjectId = projectReference;
+    } else {
+      const resolution = await resolveProjectMention(projectReference, context);
+      if (resolution.matchType === "EXACT" || resolution.matchType === "FUZZY") {
+        targetProjectId = resolution.projectId;
+        canonicalInput.projectId = resolution.projectId;
+      } else {
+        const durationMs = Date.now() - startTime;
+        const errorCode = resolution.matchType === "AMBIGUOUS"
+          ? "PROJECT_AMBIGUOUS"
+          : resolution.matchType === "SCOPE_DENIED"
+            ? "PROJECT_SCOPE_DENIED"
+            : "PROJECT_NOT_FOUND";
+        const message = resolution.matchType === "AMBIGUOUS"
+          ? "Có nhiều công trình phù hợp. Vui lòng chọn rõ mã công trình."
+          : resolution.matchType === "SCOPE_DENIED"
+            ? "Bạn không có quyền truy cập công trình được yêu cầu."
+            : "Không tìm thấy công trình phù hợp trong phạm vi được cấp quyền.";
+        await logAIAuditEvent({
+          eventType: "TOOL_EXECUTION",
+          aiRunId,
+          conversationId,
+          toolCallId,
+          requestId: context.requestId,
+          userId: context.userId,
+          role: context.role,
+          toolName,
+          toolVersion: tool.version,
+          operation: tool.operation,
+          riskLevel: tool.riskLevel,
+          policyDecision: "DENY",
+          confirmationRequired: false,
+          rawInput: { ...canonicalInput, projectId: "[PROJECT_REFERENCE]" },
+          executionStatus: "REJECTED",
+          errorCode,
+          failureCategory: "PROJECT_RESOLUTION_ERROR",
+          durationMs,
+          modelProvider: null,
+          modelName: null,
+        });
+        return {
+          success: false,
+          toolName,
+          policyDecision: "DENY",
+          error: {
+            code: errorCode,
+            message,
+            details: resolution.matchType === "AMBIGUOUS"
+              ? { candidates: resolution.ambiguousCandidates }
+              : undefined,
+          },
+          durationMs,
+        };
+      }
+    }
+  }
 
   const policyResult = evaluateAIPolicy({
     toolName,
-    input: validatedInput,
+    input: canonicalInput,
     context,
     targetProjectId,
   });
@@ -189,7 +263,7 @@ export async function executeAIToolGateway<T = any>(
       riskLevel: tool.riskLevel,
       policyDecision: "DENY",
       confirmationRequired: false,
-      rawInput: validatedInput,
+      rawInput: canonicalInput,
       executionStatus: "REJECTED",
       errorCode: "POLICY_DENIED",
       durationMs,
@@ -216,7 +290,7 @@ export async function executeAIToolGateway<T = any>(
       requiredRole: tool.requiredRole || [context.role],
       projectId: targetProjectId,
       toolName,
-      proposedInput: validatedInput,
+      proposedInput: canonicalInput,
     });
 
     const durationMs = Date.now() - startTime;
@@ -236,7 +310,7 @@ export async function executeAIToolGateway<T = any>(
       riskLevel: tool.riskLevel,
       policyDecision: "CONFIRM",
       confirmationRequired: true,
-      rawInput: validatedInput,
+      rawInput: canonicalInput,
       executionStatus: "PENDING_CONFIRMATION",
       durationMs,
       modelProvider: null,
@@ -254,7 +328,7 @@ export async function executeAIToolGateway<T = any>(
         message: policyResult.reason,
         proposedAction: {
           toolName,
-          parameters: validatedInput,
+          parameters: canonicalInput,
         },
       } as any,
       durationMs,
@@ -263,8 +337,10 @@ export async function executeAIToolGateway<T = any>(
 
   // 7. Execute Domain Tool (AUTO_READ allowed)
   try {
-    const rawResult = await tool.execute(validatedInput, context);
-    const sanitizedData = sanitizeToolOutput(rawResult);
+    const rawResult = await tool.execute(canonicalInput, context);
+    const sanitizedResult = sanitizeToolOutput(rawResult);
+    const payload = isAIToolPayload(sanitizedResult) ? sanitizedResult : null;
+    const sanitizedData = payload ? payload.data : sanitizedResult;
     const durationMs = Date.now() - startTime;
 
     const auditRecord = await logAIAuditEvent({
@@ -282,8 +358,8 @@ export async function executeAIToolGateway<T = any>(
       riskLevel: tool.riskLevel,
       policyDecision: "ALLOW",
       confirmationRequired: false,
-      rawInput: validatedInput,
-      outputSummary: `Returned ${Array.isArray(sanitizedData) ? `${sanitizedData.length} records` : "object"}`,
+      rawInput: canonicalInput,
+      outputSummary: `Returned ${Array.isArray(sanitizedData) ? `${sanitizedData.length} records` : "object"}; coverage=${payload?.coverage.status || "LEGACY"}; sources=${payload?.sources.length || 0}`,
       executionStatus: "SUCCESS",
       durationMs,
       modelProvider: null,
@@ -297,6 +373,11 @@ export async function executeAIToolGateway<T = any>(
       data: sanitizedData,
       durationMs,
       aiAuditId: auditRecord.id,
+      asOf: payload?.asOf,
+      coverage: payload?.coverage,
+      qualityFlags: payload?.qualityFlags,
+      warnings: payload?.warnings,
+      sources: payload?.sources,
     };
   } catch (err: any) {
     const durationMs = Date.now() - startTime;
@@ -317,7 +398,7 @@ export async function executeAIToolGateway<T = any>(
       riskLevel: tool.riskLevel,
       policyDecision: "ALLOW",
       confirmationRequired: false,
-      rawInput: validatedInput,
+      rawInput: canonicalInput,
       executionStatus: "FAILED",
       errorCode: "TOOL_EXECUTION_ERROR",
       durationMs,

@@ -23,7 +23,7 @@ describe("AI Runtime Kill Switch & Pilot Enforcement Hierarchy Test", () => {
   it("1. State 1: Normal Operation (ENV=true, DB=enabled) -> Request succeeds", async () => {
     vi.spyOn(prisma.systemSetting, "findUnique").mockResolvedValue({
       id: "setting-1",
-      singletonKey: "SYSTEM_SETTINGS",
+      singletonKey: "DEFAULT_SETTINGS",
       aiReadOnlyEnabled: true,
       updatedAt: new Date(),
     } as any);
@@ -36,7 +36,7 @@ describe("AI Runtime Kill Switch & Pilot Enforcement Hierarchy Test", () => {
   it("2. State 2: DB Runtime Kill Switch turned OFF -> Same process request blocked immediately", async () => {
     vi.spyOn(prisma.systemSetting, "findUnique").mockResolvedValue({
       id: "setting-1",
-      singletonKey: "SYSTEM_SETTINGS",
+      singletonKey: "DEFAULT_SETTINGS",
       aiReadOnlyEnabled: false,
       updatedAt: new Date(),
     } as any);
@@ -50,7 +50,7 @@ describe("AI Runtime Kill Switch & Pilot Enforcement Hierarchy Test", () => {
   it("3. State 3: DB Runtime Kill Switch turned back ON -> Request succeeds again on same process", async () => {
     vi.spyOn(prisma.systemSetting, "findUnique").mockResolvedValue({
       id: "setting-1",
-      singletonKey: "SYSTEM_SETTINGS",
+      singletonKey: "DEFAULT_SETTINGS",
       aiReadOnlyEnabled: true,
       updatedAt: new Date(),
     } as any);
@@ -64,7 +64,7 @@ describe("AI Runtime Kill Switch & Pilot Enforcement Hierarchy Test", () => {
 
     vi.spyOn(prisma.systemSetting, "findUnique").mockResolvedValue({
       id: "setting-1",
-      singletonKey: "SYSTEM_SETTINGS",
+      singletonKey: "DEFAULT_SETTINGS",
       aiReadOnlyEnabled: true,
       updatedAt: new Date(),
     } as any);

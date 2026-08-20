@@ -1,0 +1,88 @@
+{
+  "metadata": {
+    "classification": "SYNTHETIC_QA",
+    "milestone": "AI-01B",
+    "projectCode": "CT-2026-0009",
+    "projectId": "cms9tydlu000jn4k5itd0vzcd",
+    "createdAt": "2026-08-20T10:16:28.247Z",
+    "provenanceStatus": "UNVERIFIED_OPERATIONAL_DATA",
+    "intendedEnvironment": "ISOLATED_QA_TESTING_ONLY",
+    "warning": "SYNTHETIC_QA_ONLY - NOT_REAL_CONSTRUCTION_DATA - DO_NOT_LOAD_INTO_BUSINESS_DB"
+  },
+  "counts": {
+    "templates": 1,
+    "items": 11,
+    "reports": 5,
+    "lines": 20,
+    "entries": 20
+  },
+  "exactIds": {
+    "fieldProgressTemplateIds": [
+      "cmt1cvgy40000m0k5ub5caihx"
+    ],
+    "fieldProgressItemIds": [
+      "cmt1cvgyh0001m0k58rm5hqgs",
+      "cmt1cvgyw0002m0k52wkcqawg",
+      "cmt1cvgz00003m0k5bk3rbgxy",
+      "cmt1cvgz30004m0k5injzprrl",
+      "cmt1cvgz60005m0k5p9didxgn",
+      "cmt1cvgza0006m0k5n5hqmiak",
+      "cmt1cvgzd0007m0k5idp1g6st",
+      "cmt1cvgzg0008m0k5uwjt4hxr",
+      "cmt1cvgzj0009m0k5wu5p0cm2",
+      "cmt1cvgzl000am0k5xvd7dooc",
+      "cmt1cvgzo000bm0k543sqbzbv"
+    ],
+    "siteReportIds": [
+      "cmt1cw05b0000pck5xtrufh3h",
+      "cmt1cw0ax0008pck5w55axwt6",
+      "cmt1cw0c6000kpck5evef0hkr",
+      "cmt1cw0db000wpck59mkp8naa",
+      "cmt1cw0ej001apck5zm1s756g"
+    ],
+    "siteReportLineIds": [
+      "cmt1cw05n0001pck5o1z6w0q0",
+      "cmt1cw05n0002pck5c60zfw9y",
+      "cmt1cw0ay0009pck5j44bpzk9",
+      "cmt1cw0ay000apck5th670hdc",
+      "cmt1cw0ay000bpck54nkts5np",
+      "cmt1cw0ay000cpck5uql8bgl9",
+      "cmt1cw0c7000lpck53p8nqdsb",
+      "cmt1cw0c7000mpck5ne2ed6kz",
+      "cmt1cw0c7000npck5gf4lwizs",
+      "cmt1cw0c7000opck56ngpdvvw",
+      "cmt1cw0dc000xpck5k21ffvns",
+      "cmt1cw0dc000ypck5ahyxfe73",
+      "cmt1cw0dc000zpck5gjys55ph",
+      "cmt1cw0dc0010pck5y34ny89p",
+      "cmt1cw0dc0011pck51hanc5ko",
+      "cmt1cw0ek001bpck5jh0o4dj8",
+      "cmt1cw0ek001cpck5b8e2b5ly",
+      "cmt1cw0ek001dpck5bf6r763o",
+      "cmt1cw0ek001epck5o4b5i1x3",
+      "cmt1cw0ek001fpck55sap75el"
+    ],
+    "fieldProgressEntryIds": [
+      "cmt1cw09d0004pck5x01yq5ks",
+      "cmt1cw09p0005pck5w10dras5",
+      "cmt1cw0b6000epck5itfsb714",
+      "cmt1cw0b8000fpck52zvxehk1",
+      "cmt1cw0ba000gpck5scv4krxj",
+      "cmt1cw0bb000hpck5flpimalk",
+      "cmt1cw0ce000qpck5maxlu484",
+      "cmt1cw0cf000rpck52zhzb6bz",
+      "cmt1cw0ch000spck5sqkikv0r",
+      "cmt1cw0ci000tpck5o5kf94np",
+      "cmt1cw0dk0013pck5bbw81096",
+      "cmt1cw0dm0014pck5aqw38lzv",
+      "cmt1cw0dn0015pck52k5tgxu2",
+      "cmt1cw0dp0016pck5pd48t8u9",
+      "cmt1cw0dq0017pck59dzivmvs",
+      "cmt1cw0es001hpck5d8s1jjf8",
+      "cmt1cw0eu001ipck5akh6vczp",
+      "cmt1cw0ev001jpck5g47s9pxl",
+      "cmt1cw0ew001kpck5pqhiwv8d",
+      "cmt1cw0ey001lpck51e0sls6k"
+    ]
+  }
+}

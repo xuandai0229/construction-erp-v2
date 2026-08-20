@@ -14,6 +14,7 @@ import { ClientRenderProfiler } from '@/components/performance/client-render-pro
 import { AutoRevalidateListener } from '@/components/common/auto-revalidate-listener';
 import { AIAssistantDrawer } from '@/components/ai/ai-assistant-drawer';
 import { isUserInPilotCohort } from '@/lib/ai/pilot/ai-pilot-cohort';
+import { getAIProviderStatus } from '@/lib/ai/provider/provider-mode';
 
 export async function AppShell({ children }: { children: React.ReactNode }) {
   return measureServerPhase('app-shell', async () => {
@@ -64,7 +65,10 @@ export async function AppShell({ children }: { children: React.ReactNode }) {
               return (
                 <AIAssistantDrawer
                   activeProjectId={activeProject?.id}
+                  activeProjectCode={activeProject?.code}
                   activeProjectName={activeProject?.displayName || activeProject?.name}
+                  userRole={roleDisplayName}
+                  providerStatus={getAIProviderStatus()}
                 />
               );
             })()}

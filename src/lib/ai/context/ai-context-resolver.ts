@@ -3,11 +3,17 @@ import { getProjectAccessScopeByCredentials, ProjectAccessScope } from "@/lib/rb
 import prisma from "@/lib/prisma";
 import { AIRequestContext } from "../types";
 import { randomUUID } from "node:crypto";
+import { resolveProjectMention } from "../controller/ai-project-resolver";
+import { projectScopeAllows } from "@/lib/rbac";
+import { AIUIContextCandidate } from "../types";
+import { validateAIUIContextCandidate } from "./ai-ui-context";
 
 export interface AIContextResolveOptions {
   explicitUser?: SessionUser;
   activeProjectId?: string;
   requestId?: string;
+  conversationId?: string;
+  uiContext?: AIUIContextCandidate;
 }
 
 /**
@@ -65,25 +71,74 @@ export async function resolveAIRequestContext(
     allowedProjectIds = [];
   }
 
-  // Validate activeProjectId against authoritative scope
-  let activeProjectId = options.activeProjectId;
-  if (activeProjectId) {
-    if (projectScope.kind === "PROJECT_IDS" && !projectScope.projectIds.includes(activeProjectId)) {
-      // Requested active project not allowed for user; clear or clamp
-      activeProjectId = undefined;
-    } else if (projectScope.kind === "NO_PROJECTS") {
-      activeProjectId = undefined;
-    }
+  const uiContext = validateAIUIContextCandidate(options.uiContext);
+  const conversationId = options.conversationId?.startsWith("conv_")
+    ? options.conversationId.slice(0, 90)
+    : `conv_${randomUUID()}`;
+  let timezone = "Asia/Bangkok";
+  try {
+    const settings = await prisma.systemSetting.findUnique({
+      where: { singletonKey: "DEFAULT_SETTINGS" },
+      select: { timezone: true },
+    });
+    if (settings?.timezone) timezone = settings.timezone;
+  } catch {
+    // Context remains usable with the application default timezone.
   }
 
-  return {
+  const baseContext: AIRequestContext = {
     userId: dbUser.id,
     role: dbUser.role,
     projectScope,
     allowedProjectIds,
-    activeProjectId,
+    route: uiContext.route,
+    module: uiContext.module,
+    recordType: uiContext.recordType,
+    recordId: uiContext.recordId,
+    timezone,
+    locale: "vi-VN",
+    effectiveTime: new Date().toISOString(),
+    conversationId,
     requestId,
     userEmail: dbUser.email || undefined,
     userName: dbUser.name || dbUser.username || undefined,
+  };
+
+  // A project route is a stronger UI context candidate than the global selector.
+  const activeProjectCandidate = uiContext.recordType === "PROJECT" && uiContext.recordId
+    ? uiContext.recordId
+    : options.activeProjectId;
+  let activeProjectId: string | undefined;
+  let activeProjectCode: string | undefined;
+  let activeProjectName: string | undefined;
+
+  if (activeProjectCandidate && projectScope.kind !== "NO_PROJECTS") {
+    if (projectScopeAllows(projectScope, activeProjectCandidate) && projectScope.kind === "PROJECT_IDS") {
+      activeProjectId = activeProjectCandidate;
+      try {
+        const project = await prisma.project.findFirst({
+          where: { id: activeProjectCandidate, deletedAt: null },
+          select: { code: true, name: true },
+        });
+        activeProjectCode = project?.code;
+        activeProjectName = project?.name;
+      } catch {
+        // Tests may inject a canonical project ID without a project repository mock.
+      }
+    } else {
+      const resolved = await resolveProjectMention(activeProjectCandidate, baseContext);
+      if (resolved.matchType === "EXACT" || resolved.matchType === "FUZZY") {
+        activeProjectId = resolved.projectId;
+        activeProjectCode = resolved.projectCode;
+        activeProjectName = resolved.projectName;
+      }
+    }
+  }
+
+  return {
+    ...baseContext,
+    activeProjectId,
+    activeProjectCode,
+    activeProjectName,
   };
 }

@@ -11,6 +11,54 @@ export type AIRiskLevel =
 
 export type AIPolicyDecisionKind = "ALLOW" | "CONFIRM" | "DENY";
 
+export type AIProviderMode =
+  | "DEVELOPMENT_MOCK"
+  | "PILOT_REMOTE"
+  | "PRODUCTION_REMOTE";
+
+export type AIDataCoverageStatus = "AVAILABLE" | "PARTIAL" | "NO_DATA" | "UNAVAILABLE";
+
+export interface AIDataCoverage {
+  status: AIDataCoverageStatus;
+  summary: string;
+  domains?: Record<string, AIDataCoverageStatus>;
+}
+
+export type AISourceType =
+  | "PROJECT"
+  | "FIELD_REPORT"
+  | "MATERIAL_STOCK"
+  | "APPROVAL"
+  | "SYSTEM";
+
+export interface AISource {
+  sourceType: AISourceType;
+  recordId: string;
+  projectId?: string;
+  title: string;
+  route?: string;
+  asOf: string;
+  label: string;
+}
+
+export interface AIToolPayload<T> {
+  data: T;
+  asOf: string;
+  coverage: AIDataCoverage;
+  qualityFlags: string[];
+  warnings: string[];
+  sources: AISource[];
+}
+
+export interface AIUIContextCandidate {
+  route?: string;
+  module?: string;
+  recordType?: string;
+  recordId?: string;
+  timezone?: string;
+  locale?: string;
+}
+
 export interface AIPolicyDecision {
   decision: AIPolicyDecisionKind;
   reason: string;
@@ -25,6 +73,16 @@ export interface AIRequestContext {
   projectScope: ProjectAccessScope;
   allowedProjectIds?: string[];
   activeProjectId?: string;
+  activeProjectCode?: string;
+  activeProjectName?: string;
+  route?: string;
+  module?: string;
+  recordType?: string;
+  recordId?: string;
+  timezone?: string;
+  locale?: string;
+  effectiveTime?: string;
+  conversationId?: string;
   requestId: string;
   userEmail?: string;
   userName?: string;
@@ -55,4 +113,22 @@ export interface AIToolExecutionResult<T = any> {
   policyDecision: AIPolicyDecisionKind;
   durationMs: number;
   aiAuditId?: string;
+  asOf?: string;
+  coverage?: AIDataCoverage;
+  qualityFlags?: string[];
+  warnings?: string[];
+  sources?: AISource[];
+}
+
+export function isAIToolPayload<T>(value: unknown): value is AIToolPayload<T> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const candidate = value as Partial<AIToolPayload<T>>;
+  return (
+    "data" in candidate &&
+    typeof candidate.asOf === "string" &&
+    Boolean(candidate.coverage) &&
+    Array.isArray(candidate.qualityFlags) &&
+    Array.isArray(candidate.warnings) &&
+    Array.isArray(candidate.sources)
+  );
 }

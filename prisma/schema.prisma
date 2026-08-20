@@ -1070,6 +1070,7 @@ model SystemSetting {
   allowedIpMode             String  @default("restricted")
   trustedDeviceReviewDays   Int     @default(30)
   auditSensitiveActions     Boolean @default(true)
+  aiReadOnlyEnabled         Boolean @default(true)
 
   // Workflow
   materialRequestApproval Boolean @default(true)

@@ -172,17 +172,20 @@ describe("Phase 1A — Controlled LLM Read-Only Assistant End-to-End Suite", () 
       { projectId: "CT-2026-0002" },
     ] as any);
 
-    vi.spyOn(prisma.materialItem, "findMany").mockResolvedValueOnce([
+    vi.spyOn(prisma.projectMaterialStock, "findMany").mockResolvedValueOnce([
       {
-        id: "mat_1",
-        code: "VT-001",
-        name: "Xi măng PC40",
-        unit: "Tấn",
-        description: "Xi măng xây trát",
-        manufacturer: "Vicem",
-        origin: "Việt Nam",
-        group: "Vật liệu thô",
-        isActive: true,
+        id: "stock_1",
+        projectId: "CT-2026-0002",
+        stock: 12,
+        minStockLevel: 5,
+        lastUpdated: new Date("2026-08-19"),
+        materialItem: {
+          id: "mat_1",
+          code: "VT-001",
+          name: "Xi măng PC40",
+          unit: "Tấn",
+          movements: [],
+        },
       },
     ] as any);
 
@@ -254,8 +257,8 @@ describe("Phase 1A — Controlled LLM Read-Only Assistant End-to-End Suite", () 
     });
 
     // The tool call was made to CT-1, Gateway denied it with PROJECT_SCOPE_DENIED, AI explains user has no permission
-    expect(turn.success).toBe(true);
-    expect(turn.content).toContain("không có quyền truy cập");
+    expect(turn.success).toBe(false);
+    expect(["PROJECT_NOT_FOUND", "PROJECT_SCOPE_DENIED"]).toContain(turn.error?.code);
   });
 
   // --- 4. ROLE SPOOFING & PROMPT INJECTION RESILIENCE ---
@@ -276,8 +279,8 @@ describe("Phase 1A — Controlled LLM Read-Only Assistant End-to-End Suite", () 
       preferredProvider: "mock",
     });
 
-    expect(turn.success).toBe(true);
-    expect(turn.content).toContain("không có quyền truy cập");
+    expect(turn.success).toBe(false);
+    expect(turn.error?.code).toBe("SECURITY_REFUSAL");
   });
 
   // --- 5. SAFE ENTITY RESOLUTION TESTS ---

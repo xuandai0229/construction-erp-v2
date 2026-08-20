@@ -44,6 +44,7 @@ export interface AIAuditRecord {
   requestId: string;
 
   userId: string;
+  userAliasHash?: string;
   role: UserRole;
   projectId?: string;
 
@@ -68,6 +69,13 @@ export interface AIAuditRecord {
 
   modelProvider?: string | null;
   modelName?: string | null;
+  providerRequestId?: string;
+  providerHttpStatus?: number;
+  remote?: boolean;
+  mock?: boolean;
+  promptVersion?: string;
+  toolCalls?: string[];
+  sourceCount?: number;
 
   promptTokens?: number;
   completionTokens?: number;

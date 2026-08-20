@@ -9,18 +9,20 @@ export interface AIGuardResult {
   allowed: boolean;
   code?: "FEATURE_DISABLED" | "RATE_LIMITED";
   message?: string;
+  retryAfterSeconds?: number;
 }
 
 /**
  * Validates 2-Layer Kill-Switch and Per-User Rate Limits
  *
  * Layer 1 (Hard): process.env.AI_READ_ONLY_ENABLED !== "false"
- * Layer 2 (Soft): SystemSetting.ai_read_only_enabled !== "false"
+ * Layer 2 (Soft): DEFAULT_SETTINGS.aiReadOnlyEnabled === true
  * Rate Limit: Max 10 requests / minute / user
  */
 export async function evaluateAIGuards(userId: string): Promise<AIGuardResult> {
-  // Layer 1: Hardware ENV Flag (Hard disable)
-  if (process.env.AI_READ_ONLY_ENABLED === "false") {
+  // Layer 1: explicit environment flag. Production fails closed when omitted.
+  const envEnabled = process.env.AI_READ_ONLY_ENABLED;
+  if (envEnabled === "false" || (process.env.NODE_ENV === "production" && envEnabled !== "true")) {
     return {
       allowed: false,
       code: "FEATURE_DISABLED",
@@ -31,14 +33,11 @@ export async function evaluateAIGuards(userId: string): Promise<AIGuardResult> {
   // Layer 2: Runtime Database Setting (Instant ADMIN Kill-switch without redeploy)
   try {
     const dbSetting = await prisma.systemSetting.findUnique({
-      where: { singletonKey: "SYSTEM_SETTINGS" },
+      where: { singletonKey: "DEFAULT_SETTINGS" },
+      select: { aiReadOnlyEnabled: true },
     });
 
-    if (
-      dbSetting &&
-      ((dbSetting as any).aiReadOnlyEnabled === false ||
-        (dbSetting as any).value === "false")
-    ) {
+    if (!dbSetting || dbSetting.aiReadOnlyEnabled === false) {
       return {
         allowed: false,
         code: "FEATURE_DISABLED",
@@ -46,7 +45,12 @@ export async function evaluateAIGuards(userId: string): Promise<AIGuardResult> {
       };
     }
   } catch {
-    // If DB check fails gracefully, fall back to ENV flag
+    return {
+      allowed: false,
+      code: "FEATURE_DISABLED",
+      message: "Không thể xác minh trạng thái an toàn của Trợ lý AI. Vui lòng thử lại sau.",
+      retryAfterSeconds: 30,
+    };
   }
 
   // Layer 3: Per-User Sliding Window Rate Limiter
@@ -55,10 +59,15 @@ export async function evaluateAIGuards(userId: string): Promise<AIGuardResult> {
   const validTimestamps = timestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
 
   if (validTimestamps.length >= MAX_REQUESTS_PER_WINDOW) {
+    const retryAfterSeconds = Math.max(
+      1,
+      Math.ceil((RATE_LIMIT_WINDOW_MS - (now - validTimestamps[0])) / 1000),
+    );
     return {
       allowed: false,
       code: "RATE_LIMITED",
       message: "Bạn đã vượt quá số lượt yêu cầu cho phép (tối đa 10 lượt/phút). Vui lòng đợi trong giây lát.",
+      retryAfterSeconds,
     };
   }
 

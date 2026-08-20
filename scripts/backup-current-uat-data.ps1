@@ -22,12 +22,16 @@ Write-Host "Creating backup directory: $backupDir" -ForegroundColor Cyan
 New-Item -ItemType Directory -Force -Path $backupDir | Out-Null
 
 # 1. Backup .env
-$envPath = Join-Path $workspaceRoot ".env"
+$envCandidates = @(
+    (Join-Path $workspaceRoot ".env.local"),
+    (Join-Path $workspaceRoot ".env")
+)
+$envPath = $envCandidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
 $copyEnv = $false # By default, avoid copying sensitive data if possible. Change to $true if strictly needed.
 
 Write-Host "WARNING: .env file contains sensitive database credentials!" -ForegroundColor Yellow
 if ($copyEnv) {
-    if (Test-Path $envPath) {
+    if ($envPath -and (Test-Path -LiteralPath $envPath)) {
         Write-Host "Backing up .env file..."
         Copy-Item $envPath -Destination $backupDir
     } else {
@@ -53,7 +57,7 @@ if (Test-Path $storagePath) {
 # 3. Backup PostgreSQL DB
 Write-Host "Extracting connection string from .env for DB backup..."
 $dbUrl = ""
-if (Test-Path $envPath) {
+if ($envPath -and (Test-Path -LiteralPath $envPath)) {
     $envContent = Get-Content $envPath
     foreach ($line in $envContent) {
         if ($line -match '^DATABASE_URL="(.*)"') {

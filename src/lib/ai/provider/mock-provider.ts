@@ -1,11 +1,49 @@
 import { AIProvider, AIGenerateOptions, AIGenerateResult, AIToolCall } from "./ai-provider";
 
-/**
- * Deterministic Mock AI Provider
- *
- * Simulates intelligent LLM tool calling and text synthesis without external API dependencies.
- * Perfect for offline CI, automated regression, and deterministic red-team simulations.
- */
+const MOCK_MODEL = "local-deterministic-readonly-v1";
+
+function result(
+  startedAt: number,
+  value: Omit<AIGenerateResult, "model" | "provider" | "httpStatus" | "latencyMs" | "remote">,
+): AIGenerateResult {
+  return {
+    ...value,
+    model: MOCK_MODEL,
+    provider: "mock",
+    httpStatus: 200,
+    latencyMs: Date.now() - startedAt,
+    remote: false,
+  };
+}
+
+function parseContext(messages: AIGenerateOptions["messages"]): {
+  activeProjectId?: string;
+  activeProjectCode?: string;
+} {
+  const system = messages.find((message) => message.role === "system")?.content || "";
+  const marker = system.match(/<AI_REQUEST_CONTEXT>([\s\S]*?)<\/AI_REQUEST_CONTEXT>/);
+  if (!marker) return {};
+  try {
+    const parsed = JSON.parse(marker[1]);
+    return {
+      activeProjectId: typeof parsed.activeProjectId === "string" ? parsed.activeProjectId : undefined,
+      activeProjectCode: typeof parsed.activeProjectCode === "string" ? parsed.activeProjectCode : undefined,
+    };
+  } catch {
+    return {};
+  }
+}
+
+function latestUserText(messages: AIGenerateOptions["messages"]): string {
+  return [...messages].reverse().find((message) => message.role === "user")?.content || "";
+}
+
+function projectReference(text: string, context: ReturnType<typeof parseContext>): string | undefined {
+  const code = text.match(/\b[A-Z]{2,10}-\d{4}-\d{3,8}\b/i)?.[0]?.toUpperCase();
+  return code || context.activeProjectId || context.activeProjectCode;
+}
+
+/** Local-only deterministic provider for Gate A development and tests. */
 export class MockAIProvider implements AIProvider {
   name = "mock";
 
@@ -14,173 +52,88 @@ export class MockAIProvider implements AIProvider {
   }
 
   async generate(options: AIGenerateOptions): Promise<AIGenerateResult> {
-    const lastMessage = options.messages[options.messages.length - 1];
+    const startedAt = Date.now();
+    const lastMessage = options.messages.at(-1);
 
-    // 1. If last message is a TOOL result, synthesize assistant answer
     if (lastMessage?.role === "tool") {
       try {
         const toolResult = JSON.parse(lastMessage.content);
-        if (!toolResult.success && toolResult.policyDecision === "DENY") {
-          return {
-            content: "Bạn không có quyền truy cập thông tin của công trình này theo chính sách phân quyền của hệ thống.",
-            model: "mock-gpt-4o",
-            provider: "mock",
-            usage: { promptTokens: 150, completionTokens: 40, totalTokens: 190 },
-          };
+        if (!toolResult.success) {
+          return result(startedAt, {
+            content: toolResult.error?.message || "Không thể lấy dữ liệu ERP cho yêu cầu này.",
+          });
+        }
+        if (toolResult.coverage?.status === "NO_DATA") {
+          return result(startedAt, {
+            content: `${toolResult.coverage.summary} Tôi không suy diễn số liệu khi nguồn ERP chưa có dữ liệu.`,
+          });
         }
 
         const data = toolResult.data;
-        if (Array.isArray(data) && data.length === 0) {
-          return {
-            content: "Chưa có dữ liệu phù hợp trong hệ thống cho yêu cầu này.",
-            model: "mock-gpt-4o",
-            provider: "mock",
-            usage: { promptTokens: 120, completionTokens: 25, totalTokens: 145 },
-          };
-        }
-
         if (Array.isArray(data)) {
-          const summaryList = data
-            .slice(0, 5)
-            .map((item, idx) => {
-              if (item.code && item.name) return `${idx + 1}. [${item.code}] ${item.name} (${item.status || "Đang hoạt động"})`;
-              if (item.reportNo) return `${idx + 1}. Báo cáo số ${item.reportNo} ngày ${item.reportDate} (${item.status})`;
-              if (item.title) return `${idx + 1}. ${item.title} (${item.status})`;
-              return `${idx + 1}. ${JSON.stringify(item)}`;
-            })
-            .join("\n");
-
-          return {
-            content: `Dưới đây là thông tin được cập nhật từ hệ thống ERP:\n\n${summaryList}\n\n*Nguồn dữ liệu: Hệ thống ERP Xây dựng construction-erp-v2*`,
-            model: "mock-gpt-4o",
-            provider: "mock",
-            usage: { promptTokens: 200, completionTokens: 80, totalTokens: 280 },
-          };
+          const lines = data.slice(0, 5).map((item, index) => {
+            const label = item.code && item.name
+              ? `[${item.code}] ${item.name}`
+              : item.reportNo
+                ? `Báo cáo ${item.reportNo} ngày ${item.reportDate}${item.summary ? ` — ${item.summary}` : item.issues ? ` — Vấn đề: ${item.issues}` : ""}`
+                : item.title || item.name || "Bản ghi ERP";
+            const stock = typeof item.stock === "number" ? ` — tồn ${item.stock} ${item.unit || ""} (${item.stockStatus})` : "";
+            return `${index + 1}. ${label}${stock}`;
+          });
+          return result(startedAt, {
+            content: lines.length > 0
+              ? `Dữ liệu ERP mới nhất trong phạm vi được cấp quyền:\n${lines.join("\n")}`
+              : "Chưa có bản ghi ERP phù hợp trong phạm vi được cấp quyền.",
+          });
         }
 
         if (data && typeof data === "object") {
-          const detail = data as any;
-          return {
-            content: `Thông tin công trình [${detail.code}] ${detail.name}:\n- Trạng thái: ${detail.status}\n- Địa điểm: ${detail.location || "Chưa cập nhật"}\n- Thành viên tích cực: ${detail.stats?.activeMembersCount || 0}\n- Số lượng báo cáo: ${detail.stats?.siteReportsCount || 0}\n\n*Nguồn: Dữ liệu công trình ${detail.code}*`,
-            model: "mock-gpt-4o",
-            provider: "mock",
-            usage: { promptTokens: 180, completionTokens: 60, totalTokens: 240 },
-          };
+          const detail = data as Record<string, any>;
+          const progress = detail.actualProgress?.status === "AVAILABLE"
+            ? `${Number(detail.actualProgress.percent).toFixed(1)}%`
+            : "chưa đủ dữ liệu tiến độ đã duyệt";
+          return result(startedAt, {
+            content: `[${detail.code || "ERP"}] ${detail.name || "Thông tin công trình"}\n- Trạng thái: ${detail.status || "chưa xác định"}\n- Tiến độ thực tế: ${progress}\n- Hạn hoàn thành: ${detail.deadline?.label || "chưa cập nhật"}\n- Việc chờ: ${detail.pendingItemsCount ?? "không truy vấn được"}\n- Rủi ro có bằng chứng: ${detail.riskFlags?.length ? detail.riskFlags.join(", ") : "chưa có signal"}${detail.budget ? `\n- Ngân sách theo quyền hiện tại: ${detail.budget}` : ""}\n- Chất lượng dữ liệu: ${detail.dataQuality?.summary || "xem các nguồn đính kèm"}`,
+          });
         }
-
-        return {
-          content: "Đã trích xuất thông tin thành công từ hệ thống.",
-          model: "mock-gpt-4o",
-          provider: "mock",
-        };
       } catch {
-        return {
-          content: "Đã xử lý xong dữ liệu.",
-          model: "mock-gpt-4o",
-          provider: "mock",
-        };
+        return result(startedAt, { content: "Dữ liệu công cụ không hợp lệ; tôi đã dừng để tránh đưa ra kết luận không có căn cứ." });
       }
     }
 
-    // 2. If user message, interpret intent and return structured tool call
-    const userText = (lastMessage?.content || "").toLowerCase();
-
+    const userText = latestUserText(options.messages);
+    const normalized = userText.toLowerCase();
+    const context = parseContext(options.messages);
+    const projectId = projectReference(userText, context);
     const toolCalls: AIToolCall[] = [];
+    const push = (name: string, args: Record<string, unknown>) => toolCalls.push({
+      id: `call_local_${name}_${toolCalls.length + 1}`,
+      type: "function",
+      function: { name, arguments: JSON.stringify(args) },
+    });
 
-    if (
-      userText.includes("phụ trách") ||
-      userText.includes("công trình của tôi") ||
-      userText.includes("danh sách công trình") ||
-      userText.includes("danh sách các dự án") ||
-      userText.includes("dự án đang chạy")
-    ) {
-      toolCalls.push({
-        id: "call_mock_projects_1",
-        type: "function",
-        function: {
-          name: "get_my_projects",
-          arguments: JSON.stringify({ limit: 50 }),
-        },
-      });
-    } else if (userText.includes("báo cáo") || userText.includes("nhật ký")) {
-      // Extract projectId if mentioned or match CT-2026-XXXX
-      const match = userText.match(/ct-2026-\d{4}/i);
-      const projectId = match ? match[0].toUpperCase() : "CT-2026-0002";
-      toolCalls.push({
-        id: "call_mock_reports_1",
-        type: "function",
-        function: {
-          name: "get_latest_field_reports",
-          arguments: JSON.stringify({ projectId, limit: 10 }),
-        },
-      });
-    } else if (
-      userText.includes("vật tư") ||
-      userText.includes("tồn kho") ||
-      userText.includes("xi măng") ||
-      userText.includes("thép") ||
-      userText.includes("kho công trình")
-    ) {
-      const match = userText.match(/ct-2026-\d{4}/i);
-      const projectId = match ? match[0].toUpperCase() : "CT-2026-0002";
-      toolCalls.push({
-        id: "call_mock_materials_1",
-        type: "function",
-        function: {
-          name: "get_project_material_summary",
-          arguments: JSON.stringify({ projectId, limit: 50 }),
-        },
-      });
-    } else if (
-      userText.includes("việc gì cần xử lý") ||
-      userText.includes("chờ duyệt") ||
-      userText.includes("chờ sếp") ||
-      userText.includes("tờ trình") ||
-      userText.includes("pending")
-    ) {
-      toolCalls.push({
-        id: "call_mock_pending_1",
-        type: "function",
-        function: {
-          name: "get_pending_items",
-          arguments: JSON.stringify({ limit: 20 }),
-        },
-      });
-    } else if (
-      userText.includes("tóm tắt") ||
-      userText.includes("thông tin công trình") ||
-      userText.includes("tài chính") ||
-      userText.includes("dữ liệu") ||
-      userText.includes("ngân sách")
-    ) {
-      const match = userText.match(/ct-2026-\d{4}/i);
-      const projectId = match ? match[0].toUpperCase() : "CT-2026-0002";
-      toolCalls.push({
-        id: "call_mock_summary_1",
-        type: "function",
-        function: {
-          name: "get_project_summary",
-          arguments: JSON.stringify({ projectId }),
-        },
+    if (/phụ trách|công trình của tôi|danh sách công trình|danh sách các dự án|dự án đang chạy/.test(normalized)) {
+      push("get_my_projects", { limit: 50 });
+    } else if (/việc gì cần xử lý|chờ duyệt|chờ sếp|tờ trình|pending/.test(normalized)) {
+      push("get_pending_items", projectId ? { projectId, limit: 20 } : { limit: 20 });
+    } else if (/báo cáo|nhật ký/.test(normalized)) {
+      if (projectId) push("get_latest_field_reports", { projectId, limit: 10 });
+    } else if (/vật tư|tồn kho|xi măng|thép|kho công trình/.test(normalized)) {
+      if (projectId) push("get_project_material_summary", { projectId, limit: 50 });
+    } else if (/tóm tắt|thông tin công trình|tiến độ|tình hình|hôm nay|ngân sách|xem kỹ|vì sao|công trình đang mở/.test(normalized)) {
+      if (projectId) push("get_project_summary", { projectId });
+    }
+
+    if (toolCalls.length > 0) return result(startedAt, { content: null, toolCalls });
+
+    if (/báo cáo|nhật ký|vật tư|tồn kho|tóm tắt|tiến độ|tình hình|xem kỹ/.test(normalized) && !projectId) {
+      return result(startedAt, {
+        content: "Bạn muốn tra cứu công trình nào? Hãy chọn công trình trên màn hình hoặc cho tôi mã/tên công trình.",
       });
     }
 
-    if (toolCalls.length > 0) {
-      return {
-        content: null,
-        toolCalls,
-        model: "mock-gpt-4o",
-        provider: "mock",
-        usage: { promptTokens: 80, completionTokens: 30, totalTokens: 110 },
-      };
-    }
-
-    // Default general response if not matching 5 tools
-    return {
-      content: "Tôi là Trợ lý AI Read-Only nội bộ của hệ thống ERP Xây dựng construction-erp-v2. Tôi có thể hỗ trợ bạn tra cứu danh sách công trình, xem tóm tắt tiến độ, báo cáo hiện trường, tình hình vật tư và các công việc đang chờ xử lý trong phạm vi phân quyền của bạn.",
-      model: "mock-gpt-4o",
-      provider: "mock",
-      usage: { promptTokens: 60, completionTokens: 50, totalTokens: 110 },
-    };
+    return result(startedAt, {
+      content: "Đây là chế độ mô phỏng cục bộ Gate A (không phải OpenAI thật). Tôi có thể tra cứu read-only: công trình, tiến độ, báo cáo hiện trường, tồn kho vật tư và việc đang chờ xử lý trong phạm vi quyền của bạn.",
+    });
   }
 }

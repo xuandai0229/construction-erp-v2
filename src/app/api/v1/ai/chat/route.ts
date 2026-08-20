@@ -3,8 +3,21 @@ import { getSession } from "@/lib/auth";
 import { executeAIChatTurn } from "@/lib/ai/controller/ai-chat-controller";
 import { evaluateAIGuards } from "@/lib/ai/controller/ai-guard";
 import { isUserInPilotCohort } from "@/lib/ai/pilot/ai-pilot-cohort";
+import { getAIProviderStatus } from "@/lib/ai/provider/provider-mode";
 
 export const dynamic = "force-dynamic";
+
+export async function GET() {
+  const session = await getSession();
+  if (!session?.id) {
+    return NextResponse.json({ success: false, error: { code: "UNAUTHENTICATED" } }, { status: 401 });
+  }
+  return NextResponse.json({
+    success: true,
+    pilotEligible: isUserInPilotCohort(session),
+    providerStatus: getAIProviderStatus(),
+  });
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -49,15 +62,35 @@ export async function POST(req: NextRequest) {
             message: guardResult.message || "Dịch vụ AI hiện không khả dụng.",
           },
         },
-        { status: statusCode }
+        {
+          status: statusCode,
+          headers: guardResult.retryAfterSeconds
+            ? { "Retry-After": String(guardResult.retryAfterSeconds) }
+            : undefined,
+        }
       );
     }
 
     // 3. Parse and Validate Body
     const body = await req.json().catch(() => ({}));
-    const messages = Array.isArray(body.messages) ? body.messages : [];
+    const messages = Array.isArray(body.messages)
+      ? body.messages
+          .filter((message: unknown): message is { role: "user" | "assistant"; content: string } => {
+            if (!message || typeof message !== "object") return false;
+            const candidate = message as Record<string, unknown>;
+            return (candidate.role === "user" || candidate.role === "assistant") && typeof candidate.content === "string";
+          })
+          .slice(-12)
+      : [];
     const activeProjectId = typeof body.activeProjectId === "string" ? body.activeProjectId : undefined;
     const conversationId = typeof body.conversationId === "string" ? body.conversationId : undefined;
+    const uiContext = body.uiContext && typeof body.uiContext === "object"
+      ? {
+          route: typeof body.uiContext.route === "string" ? body.uiContext.route : undefined,
+          recordType: typeof body.uiContext.recordType === "string" ? body.uiContext.recordType : undefined,
+          recordId: typeof body.uiContext.recordId === "string" ? body.uiContext.recordId : undefined,
+        }
+      : undefined;
 
     if (messages.length === 0) {
       return NextResponse.json(
@@ -77,13 +110,19 @@ export async function POST(req: NextRequest) {
       messages,
       activeProjectId,
       conversationId,
+      uiContext,
       contextOptions: {
         explicitUser: session,
       },
     });
 
-    return NextResponse.json(result);
-  } catch (error: any) {
+    return NextResponse.json(result, {
+      status: result.success ? 200 : result.httpStatus || 500,
+      headers: result.error?.retryAfterSeconds
+        ? { "Retry-After": String(result.error.retryAfterSeconds) }
+        : undefined,
+    });
+  } catch {
     return NextResponse.json(
       {
         success: false,

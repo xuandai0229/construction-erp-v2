@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { AIAuditRecord } from "./ai-audit-types";
 import { sanitizeAuditPayload } from "./ai-audit-sanitizer";
 import { writeAuditLog } from "@/lib/audit";
@@ -20,6 +20,7 @@ export async function logAIAuditEvent(
     toolCallId: record.toolCallId,
     requestId: record.requestId,
     userId: record.userId,
+    userAliasHash: createHash("sha256").update(record.userId).digest("hex").slice(0, 12),
     role: record.role,
     projectId: record.projectId,
     toolName: record.toolName,
@@ -38,6 +39,13 @@ export async function logAIAuditEvent(
     durationMs: record.durationMs,
     modelProvider: record.modelProvider || null,
     modelName: record.modelName || null,
+    providerRequestId: record.providerRequestId,
+    providerHttpStatus: record.providerHttpStatus,
+    remote: record.remote,
+    mock: record.mock,
+    promptVersion: record.promptVersion,
+    toolCalls: record.toolCalls?.slice(0, 5),
+    sourceCount: record.sourceCount,
     promptTokens: record.promptTokens,
     completionTokens: record.completionTokens,
     estimatedCostUsd: record.estimatedCostUsd,
@@ -68,6 +76,16 @@ export async function logAIAuditEvent(
         failureCategory: record.failureCategory,
         durationMs: record.durationMs,
         errorCode: record.errorCode,
+        provider: record.modelProvider || null,
+        model: record.modelName || null,
+        providerRequestId: record.providerRequestId,
+        providerHttpStatus: record.providerHttpStatus,
+        remote: record.remote,
+        mock: record.mock,
+        promptVersion: record.promptVersion,
+        toolCalls: record.toolCalls?.slice(0, 5),
+        sourceCount: record.sourceCount,
+        userAliasHash: auditRecord.userAliasHash,
         input: auditRecord.inputSanitized,
       },
     });
