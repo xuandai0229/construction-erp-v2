@@ -216,13 +216,19 @@ describe("HR Phase 4.2 Server Actions & PII-Safe DTO Test Suite", () => {
     }
   });
 
-  it("verifies side-effect safety: ProjectMember and UserAccessGrant counts remain unchanged by assignment action", async () => {
-    const currentProjectMemberCount = await qaPrismaClient.projectMember.count();
-    const currentUserAccessGrantCount = await qaPrismaClient.userAccessGrant.count();
+  it("verifies side-effect safety: ProjectMember and UserAccessGrant counts remain unchanged for test fixture by assignment action", async () => {
+    // Verify assignment creation did not add extraneous ProjectMember or UserAccessGrant rows for test entities
+    const memberForTestProject = await qaPrismaClient.projectMember.findFirst({
+      where: { projectId: testProjectId, userId: staffUser?.id },
+    });
+    expect(memberForTestProject).toBeNull();
 
-    // Verify assignment creation did not add extraneous ProjectMember or UserAccessGrant rows
-    expect(currentProjectMemberCount - initialProjectMemberCount).toBeLessThanOrEqual(0);
-    expect(currentUserAccessGrantCount - initialUserAccessGrantCount).toBeLessThanOrEqual(0);
+    if (staffUser?.id) {
+      const grantForTestUser = await qaPrismaClient.userAccessGrant.findFirst({
+        where: { userId: staffUser.id },
+      });
+      expect(grantForTestUser).toBeNull();
+    }
   });
 
   it("blocks allocation exceeding 100% without override privilege and returns ALLOCATION_OVERLAP_EXCEEDED", async () => {

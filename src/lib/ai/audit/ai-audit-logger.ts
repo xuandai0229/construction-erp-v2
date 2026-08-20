@@ -34,9 +34,14 @@ export async function logAIAuditEvent(
     outputSummary: record.outputSummary,
     executionStatus: record.executionStatus,
     errorCode: record.errorCode,
+    failureCategory: record.failureCategory,
     durationMs: record.durationMs,
     modelProvider: record.modelProvider || null,
     modelName: record.modelName || null,
+    promptTokens: record.promptTokens,
+    completionTokens: record.completionTokens,
+    estimatedCostUsd: record.estimatedCostUsd,
+    userFeedback: record.userFeedback,
     createdAt: new Date().toISOString(),
   };
 
@@ -60,6 +65,7 @@ export async function logAIAuditEvent(
         role: record.role,
         policyDecision: record.policyDecision,
         executionStatus: record.executionStatus,
+        failureCategory: record.failureCategory,
         durationMs: record.durationMs,
         errorCode: record.errorCode,
         input: auditRecord.inputSanitized,

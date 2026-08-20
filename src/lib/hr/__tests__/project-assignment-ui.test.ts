@@ -1,16 +1,29 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { assertSafeQaDatabase } from "../../../../scripts/qa/assert-safe-qa-database";
+import { evaluateQaDatabaseSafety } from "../../../../scripts/qa/assert-safe-qa-database";
 import { createQaPrismaClient } from "../../../../scripts/qa/setup-qa-env";
 import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
 
 describe("HR Phase 4.3 — Project Assignment UI Data & Security Integration Suite", () => {
+  const qaDbUrl = process.env.QA_DATABASE_URL;
   const runId = `HR_PHASE_4_3_${Date.now()}`;
-  let prisma: PrismaClient;
-  let pool: Pool;
+  let prisma: PrismaClient | null = null;
+  let pool: Pool | null = null;
+  let isSafeQaDb = false;
+  let safetyReason = "";
 
   beforeAll(async () => {
-    await assertSafeQaDatabase(process.env);
+    if (!qaDbUrl) {
+      safetyReason = "QA_DATABASE_URL is not defined";
+      return;
+    }
+    const safety = await evaluateQaDatabaseSafety({ ...process.env, QA_DATABASE_URL: qaDbUrl });
+    if (!safety.safe) {
+      safetyReason = `QA_SECURITY_GATE = BLOCKED_ENVIRONMENT (${safety.reason})`;
+      return;
+    }
+
+    isSafeQaDb = true;
     const qaSetup = createQaPrismaClient();
     prisma = qaSetup.prisma;
     pool = qaSetup.pool;
@@ -29,7 +42,7 @@ describe("HR Phase 4.3 — Project Assignment UI Data & Security Integration Sui
   });
 
   afterAll(async () => {
-    if (prisma) {
+    if (prisma && isSafeQaDb) {
       // Zero-Residue Cleanup
       await prisma.user.deleteMany({
         where: { username: { contains: runId } },
@@ -39,7 +52,12 @@ describe("HR Phase 4.3 — Project Assignment UI Data & Security Integration Sui
     if (pool) await pool.end();
   });
 
-  it("1. Database query loads active employees, projects and roles for UI selectors", async () => {
+  it("1. Database query loads active employees, projects and roles for UI selectors", async ({ skip }) => {
+    if (!isSafeQaDb || !prisma) {
+      skip(`[ENVIRONMENT GATED] ${safetyReason}`);
+      return;
+    }
+
     const [empRecords, prjRecords, roleRecords] = await Promise.all([
       prisma.employee.findMany({
         where: { status: "ACTIVE" },
@@ -62,7 +80,12 @@ describe("HR Phase 4.3 — Project Assignment UI Data & Security Integration Sui
     expect(Array.isArray(roleRecords)).toBe(true);
   });
 
-  it("2. Direct DB Query verifies PII-safe projection for client workspace rendering", async () => {
+  it("2. Direct DB Query verifies PII-safe projection for client workspace rendering", async ({ skip }) => {
+    if (!isSafeQaDb || !prisma) {
+      skip(`[ENVIRONMENT GATED] ${safetyReason}`);
+      return;
+    }
+
     const list = await prisma.employeeProjectAssignment.findMany({
       take: 5,
       select: {
@@ -99,7 +122,12 @@ describe("HR Phase 4.3 — Project Assignment UI Data & Security Integration Sui
     });
   });
 
-  it("3. Zero-residue cleanup removes all UI test fixtures from QA database", async () => {
+  it("3. Zero-residue cleanup removes all UI test fixtures from QA database", async ({ skip }) => {
+    if (!isSafeQaDb || !prisma) {
+      skip(`[ENVIRONMENT GATED] ${safetyReason}`);
+      return;
+    }
+
     await prisma.user.deleteMany({
       where: { username: { contains: runId } },
     });

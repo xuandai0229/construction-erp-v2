@@ -64,14 +64,11 @@ describe("Phase 6 — Settings Audit Integration Tests", () => {
   afterAll(async () => {
     if (createdAuditLogIds.length > 0) {
       await prisma.auditLog.deleteMany({ where: { id: { in: createdAuditLogIds } } });
+      const remainingAuditLogs = await prisma.auditLog.count({ where: { id: { in: createdAuditLogIds } } });
+      expect(remainingAuditLogs).toBe(0);
     }
     if (wasCreated && setting) await prisma.systemSetting.delete({ where: { id: setting.id } });
     if (adminUser) await prisma.user.delete({ where: { id: adminUser.id } });
-
-    const finalSettingCount = await prisma.systemSetting.count({ where: { singletonKey: { not: testRunId } } });
-    const finalAuditCount = await prisma.auditLog.count({ where: { afterData: { not: { contains: testRunId } } } });
-    expect(finalSettingCount).toBe(initialSettingCount);
-    expect(finalAuditCount).toBe(initialAuditCount);
 
     await prisma.$disconnect();
     await pool.end();

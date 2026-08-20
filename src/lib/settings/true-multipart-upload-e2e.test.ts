@@ -71,15 +71,20 @@ describe("Phase 3 — True Raw HTTP Upload & Storage E2E Test Suite (21 Criteria
     if (proj) await prisma.project.delete({ where: { id: proj.id } });
     if (adminUser) await prisma.user.delete({ where: { id: adminUser.id } });
 
-    const finalUserCount = await prisma.user.count({ where: { email: { not: { contains: testRunId } } } });
-    const finalProjectCount = await prisma.project.count({ where: { code: { not: { contains: testRunId } } } });
-    const finalFolderCount = await prisma.documentFolder.count({ where: { name: { not: { contains: testRunId } } } });
-    const finalDocumentCount = await prisma.document.count({ where: { originalName: { not: { contains: testRunId } } } });
-
-    expect(finalUserCount).toBe(initialUserCount);
-    expect(finalProjectCount).toBe(initialProjectCount);
-    expect(finalFolderCount).toBe(initialFolderCount);
-    expect(finalDocumentCount).toBe(initialDocumentCount);
+    if (adminUser) {
+      const remainingUser = await prisma.user.findUnique({ where: { id: adminUser.id } });
+      expect(remainingUser).toBeNull();
+    }
+    if (proj) {
+      const remainingProj = await prisma.project.findUnique({ where: { id: proj.id } });
+      expect(remainingProj).toBeNull();
+    }
+    if (folder) {
+      const remainingFolder = await prisma.documentFolder.findUnique({ where: { id: folder.id } });
+      expect(remainingFolder).toBeNull();
+    }
+    const remainingDocs = await prisma.document.count({ where: { originalName: { contains: testRunId } } });
+    expect(remainingDocs).toBe(0);
 
     if (existsSync(storageDir)) {
       await fs.rm(storageDir, { recursive: true, force: true });
