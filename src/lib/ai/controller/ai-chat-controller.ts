@@ -112,7 +112,7 @@ function explicitProjectMention(text: string): string | undefined {
   const quoted = text.match(/(?:công trình|dự án)\s+[“"']([^”"']{3,100})[”"']/i)?.[1];
   if (quoted) return quoted.trim();
   const natural = text.match(/(?:công trình|dự án)\s+(.+?)(?:\s+(?:thế nào|ra sao|đáng lo|cần chú ý)|[?.!,;]|$)/i)?.[1]?.trim();
-  if (!natural || /^(?:nào|đang mở|của tôi|đó(?:\s|$)|trước)/i.test(natural)) return undefined;
+  if (!natural || /^(?:nào|đang mở|của tôi|trong phạm vi|đáng chú ý|tất cả|các|những|đó(?:\s|$)|trước)/i.test(natural)) return undefined;
   return natural.slice(0, 100);
 }
 

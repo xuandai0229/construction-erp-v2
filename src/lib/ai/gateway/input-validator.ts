@@ -15,11 +15,17 @@ export function validateToolInput<T>(
   schema: z.ZodType<T>,
   rawInput: unknown
 ): InputValidationResult<T> {
-  if (!rawInput || typeof rawInput !== "object") {
-    rawInput = {};
+  let sanitizedInput = rawInput;
+  if (!sanitizedInput || typeof sanitizedInput !== "object") {
+    sanitizedInput = {};
+  } else if (!Array.isArray(sanitizedInput)) {
+    // Strip explicit null values so optional Zod fields with defaults parse cleanly
+    sanitizedInput = Object.fromEntries(
+      Object.entries(sanitizedInput).filter(([_, v]) => v !== null && v !== undefined)
+    );
   }
 
-  const result = schema.safeParse(rawInput);
+  const result = schema.safeParse(sanitizedInput);
 
   if (result.success) {
     return {

@@ -31,7 +31,10 @@ export function getAIProviderStatus(): AIProviderStatus {
     return { mode, provider: "mock", available: true, remote: false, mock: true };
   }
 
-  const available = Boolean(process.env.OPENAI_API_KEY?.trim());
+  const isGroq = process.env.AI_PROVIDER?.toLowerCase() === "groq" || Boolean(process.env.GROQ_API_KEY && !process.env.OPENAI_API_KEY);
+  const available = Boolean(
+    (isGroq ? process.env.GROQ_API_KEY : (process.env.OPENAI_API_KEY || process.env.GROQ_API_KEY))?.trim()
+  );
   return {
     mode,
     provider: "openai",

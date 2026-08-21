@@ -5,7 +5,7 @@ import { AIRequestContext, AIToolDefinition, AIToolPayload } from "../types";
 
 export const getMyProjectsInputSchema = z
   .object({
-    limit: z.number().int().min(1).max(100).optional().default(50),
+    limit: z.number().int().min(1).max(50).optional().default(15),
     search: z.string().max(100).optional(),
   })
   .strict();
@@ -56,7 +56,7 @@ export const getMyProjectsTool: AIToolDefinition<GetMyProjectsInput, AIToolPaylo
 
     const projects = await prisma.project.findMany({
       where: whereClause,
-      take: Math.min(input.limit || 50, 100),
+      take: Math.min(input.limit || 15, 50),
       orderBy: { code: "asc" },
       select: {
         id: true,

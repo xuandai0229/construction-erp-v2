@@ -10,6 +10,9 @@ export const ALLOWED_MODELS_ALLOWLIST = [
   "gpt-4o",
   "gpt-4o-mini",
   "o3-mini",
+  "openai/gpt-oss-120b",
+  "openai/gpt-oss-20b",
+  "qwen/qwen3.6-27b",
 ];
 
 export const ALLOWED_REASONING_EFFORTS = [
@@ -135,11 +138,19 @@ export function parseOpenAIChatResult(input: {
 export class OpenAIProvider implements AIProvider {
   name = "openai";
   private apiKey: string | undefined;
+  private baseUrl: string;
   private configuredModel: string;
   private configuredReasoningEffort: AIReasoningEffort;
 
   constructor() {
-    this.apiKey = process.env.OPENAI_API_KEY;
+    const isGroq = process.env.AI_PROVIDER?.toLowerCase() === "groq" || Boolean(process.env.GROQ_API_KEY && !process.env.OPENAI_API_KEY);
+    this.apiKey = isGroq
+      ? (process.env.GROQ_API_KEY?.replace(/^<|>$/g, '').trim() || process.env.OPENAI_API_KEY?.replace(/^<|>$/g, '').trim())
+      : process.env.OPENAI_API_KEY?.replace(/^<|>$/g, '').trim();
+
+    this.baseUrl = process.env.OPENAI_BASE_URL || (isGroq ? "https://api.groq.com/openai/v1" : "https://api.openai.com/v1");
+
+    const defaultModel = isGroq ? "openai/gpt-oss-120b" : DEFAULT_AI_MODEL;
     const envModel = process.env.AI_MODEL_NAME?.trim();
     if (envModel) {
       if (!ALLOWED_MODELS_ALLOWLIST.includes(envModel)) {
@@ -151,7 +162,7 @@ export class OpenAIProvider implements AIProvider {
       }
       this.configuredModel = envModel;
     } else {
-      this.configuredModel = DEFAULT_AI_MODEL;
+      this.configuredModel = defaultModel;
     }
 
     const envEffort = process.env.AI_REASONING_EFFORT?.trim().toLowerCase() as AIReasoningEffort | undefined;
@@ -212,57 +223,79 @@ export class OpenAIProvider implements AIProvider {
 
     const payload = buildOpenAIChatPayload(options, model, reasoningEffort);
 
-    // 15s Request Timeout to prevent hanging connections
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    let maxRetries = 2;
+    let attempt = 0;
 
-    try {
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify(payload),
-        signal: controller.signal,
-      });
+    while (attempt <= maxRetries) {
+      attempt += 1;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000);
 
-      const requestId = response.headers.get("x-request-id") || undefined;
-      const retryAfterHeader = response.headers.get("retry-after");
-      const retryAfterSeconds = retryAfterHeader ? Number(retryAfterHeader) : undefined;
-
-      if (!response.ok) {
-        throw mapOpenAIHttpFailure({
-          status: response.status,
-          requestId,
-          retryAfterSeconds: Number.isFinite(retryAfterSeconds) ? retryAfterSeconds : undefined,
+      try {
+        const response = await fetch(`${this.baseUrl}/chat/completions`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${this.apiKey}`,
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
         });
-      }
 
-      const data = await response.json().catch(() => null);
-      return parseOpenAIChatResult({
-        data,
-        model,
-        requestId,
-        httpStatus: response.status,
-        latencyMs: Date.now() - startedAt,
-      });
-    } catch (error) {
-      if (error instanceof AIApplicationError) throw error;
-      if (error instanceof Error && error.name === "AbortError") {
-        throw new AIApplicationError(
-          "PROVIDER_TIMEOUT",
-          "Dịch vụ AI từ xa phản hồi quá thời gian cho phép.",
-          503,
-        );
+        const requestId = response.headers.get("x-request-id") || undefined;
+        const retryAfterHeader = response.headers.get("retry-after");
+        const retryAfterSeconds = retryAfterHeader ? Number(retryAfterHeader) : undefined;
+
+        if (response.status === 429 && attempt <= maxRetries) {
+          const waitMs = (retryAfterSeconds ? Math.min(retryAfterSeconds, 5) : (attempt * 2)) * 1000;
+          await new Promise((resolve) => setTimeout(resolve, waitMs));
+          continue;
+        }
+
+        if (!response.ok) {
+          throw mapOpenAIHttpFailure({
+            status: response.status,
+            requestId,
+            retryAfterSeconds: Number.isFinite(retryAfterSeconds) ? retryAfterSeconds : undefined,
+          });
+        }
+
+        const data = await response.json().catch(() => null);
+        return parseOpenAIChatResult({
+          data,
+          model,
+          requestId,
+          httpStatus: response.status,
+          latencyMs: Date.now() - startedAt,
+        });
+      } catch (error) {
+        if (error instanceof AIApplicationError) throw error;
+        if (error instanceof Error && error.name === "AbortError") {
+          throw new AIApplicationError(
+            "PROVIDER_TIMEOUT",
+            "Dịch vụ AI từ xa phản hồi quá thời gian cho phép.",
+            503,
+          );
+        }
+        if (attempt > maxRetries) {
+          throw new AIApplicationError(
+            "PROVIDER_FAILED",
+            "Không thể kết nối tới dịch vụ AI từ xa.",
+            503,
+          );
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      } finally {
+        clearTimeout(timeoutId);
       }
-      throw new AIApplicationError(
-        "PROVIDER_FAILED",
-        "Không thể kết nối tới dịch vụ AI từ xa.",
-        503,
-      );
-    } finally {
-      clearTimeout(timeoutId);
     }
+
+    throw new AIApplicationError(
+      "PROVIDER_FAILED",
+      "Không thể kết nối tới dịch vụ AI từ xa.",
+      503,
+    );
   }
 }
+
+
