@@ -113,6 +113,8 @@ function uniqueSources(sources: AISource[]): AISource[] {
 function explicitProjectMention(text: string): string | undefined {
   const code = text.match(/\b[A-Z]{2,10}-\d{4}-\d{3,8}\b/i)?.[0];
   if (code) return code;
+  const shortCode = text.match(/\b(?:ct|da|project)[-_\s]*0*\d{1,4}\b/i)?.[0];
+  if (shortCode) return shortCode;
   const quoted = text.match(/(?:công trình|dự án)\s+[“"']([^”"']{3,100})[”"']/i)?.[1];
   if (quoted) return quoted.trim();
   if (/(?:xếp hạng|danh sách|tất cả|phân tích|so sánh|toàn bộ|chất lượng dữ liệu|tại sao|vì sao)\s+(?:các\s+)?(?:công trình|dự án)/i.test(text)) {
@@ -144,8 +146,9 @@ function refusal(text: string): { code: "READ_ONLY_REFUSAL" | "SECURITY_REFUSAL"
       message: "Tôi không thể truy xuất hoặc tiết lộ secret, thông tin xác thực, session, hay bỏ qua chính sách backend.",
     };
   }
+  const isReadQueryAboutApprovals = /chờ duyệt|đang duyệt|đã duyệt|được duyệt|cần duyệt|chờ phê duyệt|số lượng phê duyệt|danh sách.*duyệt|việc.*duyệt/i.test(text);
   if (
-    (!/chờ duyệt|đang duyệt|đã duyệt|được duyệt/i.test(text) && /(?:^|\s)(sửa|cập nhật|xóa|duyệt|phê duyệt|gửi duyệt|ghi(?!\s*nhận)|submit|approve|delete|update)(?:\s|$)/i.test(text)) ||
+    (!isReadQueryAboutApprovals && /(?:^|\s)(sửa|cập nhật|xóa|gửi duyệt|ghi(?!\s*nhận)|submit|approve|delete|update)(?:\s|$)|(?:^|\s)(?:hãy\s+|vui lòng\s+)?(?:duyệt|phê duyệt)(?:\s+cho|\s+luôn|\s+ngay|$)/i.test(text)) ||
     /(?:tạo|gửi)\s+(?:và\s+gửi\s+)?(?:nhật ký|yêu cầu|tờ trình|bản ghi|dữ liệu)/i.test(text)
   ) {
     return {
@@ -491,26 +494,6 @@ export async function executeAIChatTurn(input: AIChatTurnInput): Promise<AIChatT
     };
   }
 
-  if (/điều khoản hợp đồng|sự cố an toàn|cảnh báo an toàn/i.test(userText)) {
-    const message = /hợp đồng/i.test(userText)
-      ? "Năm tool read-only hiện tại không đọc điều khoản hợp đồng; tôi không thể kết luận nguy cơ vi phạm."
-      : "Năm tool read-only hiện tại không bao phủ sự cố an toàn; tôi không thể kết luận công trình nào cần cảnh báo.";
-    return {
-      success: false,
-      content: message,
-      toolCallsExecuted: 0,
-      sources: [],
-      conversationId: conversation.conversationId,
-      traceId,
-      qualityFlags: ["CAPABILITY_NOT_AVAILABLE"],
-      coverageSummary: "Yêu cầu nằm ngoài semantic coverage của 5 tool hiện hành.",
-      contextSnapshot: contextSnapshot(context),
-      providerStatus,
-      telemetry: emptyTelemetry(startTime, providerStatus),
-      httpStatus: 422,
-      error: { code: "DATA_UNAVAILABLE", message },
-    };
-  }
 
   if (/soạn bản nháp báo cáo/i.test(userText) && !context.activeProjectId) {
     const message = "Bạn muốn dùng dữ liệu của công trình nào để soạn bản nháp read-only? Tôi sẽ không tự chọn công trình mặc định.";
@@ -758,6 +741,59 @@ Dựa trên gói bằng chứng Top-3 điểm nóng của danh mục (${ranking.
         httpStatus: 200,
       };
     }
+  }
+
+  // Document Intelligence & Construction RAG (Milestone 02C)
+  if (
+    routing.intent === "DOCUMENT_ERP_COMPARISON" ||
+    routing.intent === "CONTRACT_ANALYSIS" ||
+    routing.intent === "DOCUMENT_QA" ||
+    routing.intent === "DOCUMENT_SOURCE_EXPLANATION"
+  ) {
+    const { executeDocumentChatTurn } = await import("./document-chat-orchestrator");
+    const docResult = await executeDocumentChatTurn(context, userText, context.activeProjectId);
+
+    await auditChat({
+      context,
+      aiRunId: traceId,
+      status: "SUCCESS",
+      rawInput: { intent: routing.intent, query: userText },
+      summary: "Document Intelligence RAG completed.",
+      durationMs: Date.now() - startTime,
+      provider: providerStatus.provider,
+      model: providerStatus.configuredModel,
+      providerHttpStatus: 200,
+      remote: providerStatus.mode !== "DEVELOPMENT_MOCK",
+      mock: providerStatus.mock,
+      toolCalls: ["document_retrieval_gateway"],
+      sourceCount: docResult.sources.length,
+      promptTokens: docResult.providerTokens?.promptTokens,
+      completionTokens: docResult.providerTokens?.completionTokens,
+    });
+
+    return {
+      success: true,
+      content: docResult.content,
+      toolCallsExecuted: docResult.toolCallsExecuted,
+      sources: docResult.sources,
+      conversationId: conversation.conversationId,
+      traceId,
+      qualityFlags: docResult.qualityFlags,
+      coverageSummary: "Truy xuất và tổng hợp tài liệu có phân quyền (Document Brain V1).",
+      contextSnapshot: contextSnapshot(context),
+      providerStatus,
+      telemetry: {
+        durationMs: Date.now() - startTime,
+        provider: providerStatus.provider,
+        model: providerStatus.configuredModel,
+        remote: providerStatus.mode !== "DEVELOPMENT_MOCK",
+        mock: providerStatus.mock,
+        promptTokens: docResult.providerTokens?.promptTokens || 0,
+        completionTokens: docResult.providerTokens?.completionTokens || 0,
+        totalTokens: docResult.providerTokens?.totalTokens || 0,
+      },
+      httpStatus: 200,
+    };
   }
 
   // Daily Briefing V3 with Deterministic Project Brain Portfolio Pre-Ranking

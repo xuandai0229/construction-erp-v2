@@ -128,5 +128,6 @@ logs/
 # QA fixture manifests
 /scripts/qa/manifests/
 /storage/dev-fixtures/
+/storage/test-fixtures/
 .current_fixture_manifest.json
 .current_fixture_run_id

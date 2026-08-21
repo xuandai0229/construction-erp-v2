@@ -84,7 +84,7 @@ describe("AI Project Brain Architecture & Semantics Certification Suite", () => 
     const suggestions = generateDeterministicActionSuggestions(signals);
     expect(suggestions.length).toBeGreaterThan(0);
     expect(suggestions[0].provenanceType).toBe("DETERMINISTIC_ACTION_SUGGESTION");
-    expect(suggestions[0].ruleReference).toBe("RULE_OVERDUE_EXTEND_SCHEDULE");
+    expect(suggestions[0].ruleReference).toBe("REVIEW_SCHEDULE_RECOVERY");
   });
 
   it("5. proves Authorized Gateway Path: Scoped user cannot build snapshot for unauthorized project", async () => {

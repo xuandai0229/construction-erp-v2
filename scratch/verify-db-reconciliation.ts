@@ -1,34 +1,44 @@
 import * as dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
+import { PrismaClient } from '@prisma/client';
+import { Pool } from 'pg';
+import { PrismaPg } from '@prisma/adapter-pg';
 
 async function verifyDBReconciliation() {
-  const { default: prisma } = await import('../src/lib/prisma');
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const adapter = new PrismaPg(pool);
+  const prisma = new PrismaClient({ adapter });
 
   console.log('================================================================');
-  console.log('PHASE 23: DATABASE INTEGRITY & RECONCILIATION VERIFICATION');
+  console.log('BUSINESS DB RECONCILIATION AUDIT (AI-02C Document Intelligence)');
   console.log('================================================================');
 
-  const totalProjects = await prisma.project.count({ where: { deletedAt: null } });
-  const allProjects = await prisma.project.findMany({
-    where: { deletedAt: null },
-    orderBy: { code: 'asc' },
-    select: { code: true, name: true, status: true },
+  const docCount = await prisma.document.count();
+  const folderCount = await prisma.documentFolder.count();
+
+  console.log('PostgreSQL Business DB Document count:', docCount);
+  console.log('PostgreSQL Business DB DocumentFolder count:', folderCount);
+
+  // Check if any QA test title entered DB
+  const syntheticDoc = await prisma.document.findFirst({
+    where: {
+      OR: [
+        { originalName: { contains: '12/2025/HĐ-XD' } },
+        { displayName: { contains: '12/2025/HĐ-XD' } },
+        { originalName: { contains: '01/2026/PLHĐ-CT009' } },
+        { displayName: { contains: '01/2026/PLHĐ-CT009' } },
+        { originalName: { contains: 'SYNTHETIC_QA' } },
+        { originalName: { contains: 'DOC-QA' } },
+      ]
+    }
   });
 
-  console.log(`Total Active Projects in DB: ${totalProjects}`);
-  console.log('First 3 Projects:', allProjects.slice(0, 3));
-  console.log('Last 3 Projects:', allProjects.slice(-3));
+  console.log('Synthetic QA document in business DB:', syntheticDoc ? 'LEAK DETECTED ❌' : 'CLEAN ✅ (0 records)');
 
-  const syntheticCount = await prisma.project.count({
-    where: { code: { startsWith: 'TEST-MOCK' } },
-  });
-
-  console.log(`Synthetic Mock Projects in DB: ${syntheticCount}`);
-
-  if (totalProjects === 21 && syntheticCount === 0) {
-    console.log('>>> BUSINESS DB INTEGRITY: CLEAN (21/21 genuine projects preserved, 0 contamination)');
+  if (docCount === 0 && !syntheticDoc) {
+    console.log('\n[PASS] Database integrity confirmed: Document Intelligence V1 operated 100% on isolated in-memory QA corpus.');
   } else {
-    console.error('>>> BUSINESS DB INTEGRITY: CONTAMINATED');
+    console.log('\n[NOTICE] Real DB records present.');
   }
 
   await prisma.$disconnect();

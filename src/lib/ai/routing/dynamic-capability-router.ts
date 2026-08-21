@@ -80,11 +80,11 @@ export function routeUserIntent(text: string, activeProjectId?: string): Routing
   }
 
   // 5. Pending Decisions / Approvals
-  if (/việc gì cần xử lý|việc gì đang chờ|chờ xử lý|chờ tôi duyệt|chờ duyệt|tờ trình|pending|công việc đang chờ|chờ phê duyệt/i.test(normalized)) {
+  if (/việc gì cần xử lý|việc gì đang chờ|chờ xử lý|chờ tôi duyệt|chờ duyệt|tờ trình|pending|công việc đang chờ|chờ phê duyệt|việc cần duyệt|việc cần phê duyệt|cần duyệt|các việc cần duyệt|danh sách.*duyệt|số lượng phê duyệt/i.test(normalized)) {
     return {
       intent: "PENDING_DECISIONS",
-      selectedCapabilities: ["PENDING_DECISIONS"],
-      toolsToExpose: ["get_pending_items"],
+      selectedCapabilities: ["PENDING_DECISIONS", "PROJECT_SUMMARY"],
+      toolsToExpose: ["get_pending_items", "get_project_summary"],
       isDeterministicFastPath: false,
       confidence: 0.90,
       reasonCode: "PENDING_DECISIONS_INTENT",
@@ -118,7 +118,52 @@ export function routeUserIntent(text: string, activeProjectId?: string): Routing
     };
   }
 
-  // 8. Project Specific Summary / Health
+  // 8. Document & Contract Intelligence Queries
+  if (/so sánh.*hợp đồng|đối chiếu.*hợp đồng|erp.*hợp đồng|hợp đồng.*erp|giống nhau không/i.test(normalized)) {
+    return {
+      intent: "DOCUMENT_ERP_COMPARISON",
+      selectedCapabilities: ["DOCUMENT_INTELLIGENCE", "PROJECT_SUMMARY"],
+      toolsToExpose: ["get_project_summary"],
+      isDeterministicFastPath: false,
+      confidence: 0.96,
+      reasonCode: "DOCUMENT_ERP_COMPARISON_INTENT",
+    };
+  }
+
+  if (/hợp đồng.*nói gì|điều khoản.*hợp đồng|tạm ứng.*hợp đồng|phạt vi phạm|thời hạn.*hợp đồng|phụ lục hợp đồng|hợp đồng số/i.test(normalized)) {
+    return {
+      intent: "CONTRACT_ANALYSIS",
+      selectedCapabilities: ["DOCUMENT_INTELLIGENCE", "PROJECT_SUMMARY"],
+      toolsToExpose: ["get_project_summary"],
+      isDeterministicFastPath: false,
+      confidence: 0.95,
+      reasonCode: "CONTRACT_ANALYSIS_INTENT",
+    };
+  }
+
+  if (/biện pháp thi công|bptc|nghiệm thu.*vật liệu|bản vẽ|file nào nói|tài liệu nào nói|hồ sơ thiết kế/i.test(normalized)) {
+    return {
+      intent: "DOCUMENT_QA",
+      selectedCapabilities: ["DOCUMENT_INTELLIGENCE"],
+      toolsToExpose: ["get_project_summary"],
+      isDeterministicFastPath: false,
+      confidence: 0.93,
+      reasonCode: "DOCUMENT_QA_INTENT",
+    };
+  }
+
+  if (/nguồn ở đâu|trang nào|bản mới nhất|trích từ đâu/i.test(normalized)) {
+    return {
+      intent: "DOCUMENT_SOURCE_EXPLANATION",
+      selectedCapabilities: ["DOCUMENT_INTELLIGENCE"],
+      toolsToExpose: ["get_project_summary"],
+      isDeterministicFastPath: false,
+      confidence: 0.95,
+      reasonCode: "DOCUMENT_SOURCE_EXPLANATION_INTENT",
+    };
+  }
+
+  // 9. Project Specific Summary / Health
   if (
     activeProjectId ||
     /\b[a-z]{2,10}-\d{4}-\d{3,8}\b/i.test(normalized) ||

@@ -49,6 +49,29 @@ export async function resolveProjectMention(
     };
   }
 
+  // 1.5. Resolve shorthand codes like "CT-03", "ct 03", "ct-2", "ct 21"
+  const shorthand = cleanMention.match(/^(?:ct|da|project|công trình|dự án)[-_\s]*0*(\d{1,4})$/i);
+  if (shorthand) {
+    const num = parseInt(shorthand[1], 10);
+    const padded = String(num).padStart(4, "0");
+    const shorthandMatch = await prisma.project.findFirst({
+      where: {
+        ...scopeWhere,
+        code: { endsWith: padded },
+        deletedAt: null,
+      },
+      select: { id: true, code: true, name: true },
+    });
+    if (shorthandMatch) {
+      return {
+        matchType: "EXACT",
+        projectId: shorthandMatch.id,
+        projectCode: shorthandMatch.code,
+        projectName: shorthandMatch.name,
+      };
+    }
+  }
+
   // 2. Distinguish an exact but unauthorized entity without exposing its details.
   const exactOutsideScope = await prisma.project.findFirst({
     where: {

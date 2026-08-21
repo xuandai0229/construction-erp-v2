@@ -29,7 +29,8 @@ export type AISourceType =
   | "FIELD_REPORT"
   | "MATERIAL_STOCK"
   | "APPROVAL"
-  | "SYSTEM";
+  | "SYSTEM"
+  | "DOCUMENT";
 
 export interface AISource {
   sourceType: AISourceType;
@@ -69,6 +70,7 @@ export interface AIPolicyDecision {
 export interface AIRequestContext {
   userId: string;
   role: UserRole;
+  userRole?: string;
   sessionId?: string;
   projectScope: ProjectAccessScope;
   allowedProjectIds?: string[];

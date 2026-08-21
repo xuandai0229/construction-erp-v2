@@ -287,10 +287,10 @@ export function generateDeterministicActionSuggestions(
       suggestions.push({
         signalCode: s.signalCode,
         category: "SCHEDULE",
-        suggestionText: "Rà soát mốc bàn giao thực tế và lập phụ lục gia hạn tiến độ.",
+        suggestionText: "Rà soát nguyên nhân quá hạn, kế hoạch phục hồi tiến độ và căn cứ cho phương án xử lý thời hạn.",
         priority: "HIGH",
         provenanceType: "DETERMINISTIC_ACTION_SUGGESTION",
-        ruleReference: "RULE_OVERDUE_EXTEND_SCHEDULE",
+        ruleReference: "REVIEW_SCHEDULE_RECOVERY",
       });
     } else if (s.signalCode === "PROGRESS_BEHIND_PLAN") {
       suggestions.push({
