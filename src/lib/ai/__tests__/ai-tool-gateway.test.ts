@@ -60,6 +60,7 @@ describe("AI Tool Gateway — Security Boundary & Execution Orchestration", () =
   });
 
   it("should successfully execute get_my_projects and sanitize output data", async () => {
+    vi.spyOn(prisma.project, "count").mockResolvedValueOnce(1);
     vi.spyOn(prisma.project, "findMany").mockResolvedValueOnce([
       {
         id: "project_123",
@@ -82,9 +83,11 @@ describe("AI Tool Gateway — Security Boundary & Execution Orchestration", () =
 
     expect(result.success).toBe(true);
     expect(result.policyDecision).toBe("ALLOW");
-    expect(Array.isArray(result.data)).toBe(true);
-    expect(result.data.length).toBe(1);
-    expect(result.data[0].code).toBe("CT-2026-0001");
+    expect(result.data.authorizedTotalCount).toBe(1);
+    expect(result.data.returnedCount).toBe(1);
+    expect(Array.isArray(result.data.items)).toBe(true);
+    expect(result.data.items.length).toBe(1);
+    expect(result.data.items[0].code).toBe("CT-2026-0001");
 
     const auditLogs = getAIAuditRecords();
     expect(auditLogs.length).toBe(1);
@@ -139,11 +142,12 @@ describe("AI Tool Gateway — Security Boundary & Execution Orchestration", () =
   });
 
   it("should strip sensitive credentials and tokens from output", async () => {
+    vi.spyOn(prisma.project, "count").mockResolvedValueOnce(1);
     vi.spyOn(prisma.project, "findMany").mockResolvedValueOnce([
       {
-        id: "proj_1",
-        code: "CT-1",
-        name: "P1",
+        id: "project_leak_test",
+        code: "CT-2026-9999",
+        name: "Leak Test Project",
         displayName: null,
         status: "ACTIVE",
         address: "HN",
@@ -162,7 +166,7 @@ describe("AI Tool Gateway — Security Boundary & Execution Orchestration", () =
     });
 
     expect(result.success).toBe(true);
-    const item = result.data[0];
+    const item = result.data.items[0];
     expect(item.passwordHash).toBeUndefined();
     expect(item.sessionToken).toBeUndefined();
   });

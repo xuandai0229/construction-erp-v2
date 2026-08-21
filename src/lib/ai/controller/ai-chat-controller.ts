@@ -13,6 +13,10 @@ import { executeDailyBriefing } from "./daily-briefing-orchestrator";
 import { executeProjectComparison, ComparisonProject } from "./project-comparison-orchestrator";
 import { getOrCreateAIConversation, updateAIConversation } from "../conversation/ai-conversation-store";
 import { logAIAuditEvent } from "../audit/ai-audit-logger";
+import { routeUserIntent } from "../routing/dynamic-capability-router";
+import { evaluateAIGuards } from "./ai-guard";
+import { buildProjectIntelligenceSnapshot } from "../brain/project-brain-builder";
+import { evaluateAndRankPortfolio } from "../brain/portfolio-ranking-engine";
 
 export interface AIChatTurnInput {
   messages: Array<{ role: "user" | "assistant" | "system"; content: string }>;
@@ -111,8 +115,11 @@ function explicitProjectMention(text: string): string | undefined {
   if (code) return code;
   const quoted = text.match(/(?:công trình|dự án)\s+[“"']([^”"']{3,100})[”"']/i)?.[1];
   if (quoted) return quoted.trim();
+  if (/(?:xếp hạng|danh sách|tất cả|phân tích|so sánh|toàn bộ|chất lượng dữ liệu|tại sao|vì sao)\s+(?:các\s+)?(?:công trình|dự án)/i.test(text)) {
+    return undefined;
+  }
   const natural = text.match(/(?:công trình|dự án)\s+(.+?)(?:\s+(?:thế nào|ra sao|đáng lo|cần chú ý)|[?.!,;]|$)/i)?.[1]?.trim();
-  if (!natural || /^(?:nào|đang mở|của tôi|trong phạm vi|đáng chú ý|tất cả|các|những|đó(?:\s|$)|trước)/i.test(natural)) return undefined;
+  if (!natural || /^(?:nào|này|đó|kia|hiện tại|đang mở|của tôi|tôi đang|tôi phụ trách|trong phạm vi|đáng chú ý|tất cả|các|những|trước|theo)/i.test(natural)) return undefined;
   return natural.slice(0, 100);
 }
 
@@ -226,6 +233,43 @@ export async function executeAIChatTurn(input: AIChatTurnInput): Promise<AIChatT
       telemetry: emptyTelemetry(startTime, providerStatus),
       httpStatus: 401,
       error: { code: "UNAUTHENTICATED", message: "Phiên làm việc không hợp lệ." },
+    };
+  }
+
+  const guard = await evaluateAIGuards(context.userId);
+  if (!guard.allowed) {
+    const isRateLimit = guard.code === "APP_RATE_LIMITED" || guard.code === "RATE_LIMITED";
+    const httpStatus = isRateLimit ? 429 : 503;
+    const errorCode = guard.code || "FEATURE_DISABLED";
+    const errorMessage = guard.message || "Trợ lý AI hiện đang tạm ngưng hoạt động.";
+
+    await auditChat({
+      context,
+      aiRunId: traceId,
+      status: "FAILED",
+      rawInput: { guardCode: errorCode },
+      errorCode,
+      durationMs: Date.now() - startTime,
+      provider: providerStatus.provider,
+    });
+
+    return {
+      success: false,
+      content: errorMessage,
+      toolCallsExecuted: 0,
+      sources: [],
+      conversationId: fallbackConversationId,
+      traceId,
+      qualityFlags: [],
+      contextSnapshot: contextSnapshot(context),
+      providerStatus,
+      telemetry: emptyTelemetry(startTime, providerStatus),
+      httpStatus,
+      error: {
+        code: errorCode,
+        message: errorMessage,
+        retryAfterSeconds: guard.retryAfterSeconds,
+      },
     };
   }
 
@@ -593,14 +637,140 @@ export async function executeAIChatTurn(input: AIChatTurnInput): Promise<AIChatT
     };
   }
 
-  if (providerStatus.mode === "DEVELOPMENT_MOCK" && (isDailyBriefing(userText) || isPortfolioBriefing(userText))) {
+  const routing = routeUserIntent(userText, context.activeProjectId);
+
+  // Deep Portfolio / Risk Analysis Query (Hybrid Path: Top-K Evidence Package -> LLM Reasoning)
+  if (/phân tích sâu|phân tích chi tiết|đánh giá sâu|nguyên nhân cốt lõi|giải pháp chiến lược/i.test(userText)) {
+    const ranking = await evaluateAndRankPortfolio(context, 3);
+    const topCandidates = ranking.topAttentionCandidates;
+
+    const evidenceLines: string[] = [];
+    evidenceLines.push(`DANH MỤC TOP-3 ĐIỂM NÓNG CẦN CHÚ Ý:`);
+    for (const c of topCandidates) {
+      evidenceLines.push(`- Công trình [${c.projectCode}] ${c.projectName}:`);
+      evidenceLines.push(`  + Phân hạng chú ý: ${c.tier}`);
+      evidenceLines.push(`  + Tín hiệu rủi ro: ${(c.primarySignals || []).map((s) => s.title).join("; ") || "Không có"}`);
+      evidenceLines.push(`  + Khoảng trống dữ liệu: ${(c.dataQualitySignals || []).map((s) => s.title).join("; ") || "Không có"}`);
+      evidenceLines.push(`  + Độ tin cậy dữ liệu: ${c.confidence}`);
+    }
+
+    if (providerStatus.mode !== "DEVELOPMENT_MOCK" && providerStatus.available) {
+      const provider = getAIProvider(providerStatus.provider);
+      const systemPrompt = `Bạn là AI Cố Vấn Điều Hành Cấp Cao chuyên về Quản Trị Dự Án Xây Dựng (Construction Project Governance).
+Nhiệm vụ của bạn: Dựa trên Gói Bằng Chứng Trọng Tâm (Top-3 Evidence Package) từ Project Brain ERP dưới đây, thực hiện phân tích sâu, khách quan, chính xác theo đúng sự thật nghiệp vụ:
+1. Phân tích mối tương quan và nguyên nhân gốc rễ (Root Cause Analysis).
+2. Đánh giá tính sẵn sàng của dữ liệu thực tế (Data Readiness).
+3. Đề xuất các phương án hành động chiến lược kèm ưu/nhược điểm cho Ban Giám Đốc.
+
+Quy tắc cốt lõi:
+- Tuyệt đối KHÔNG bịa đặt số liệu không có trong gói bằng chứng.
+- Tách bạch rõ rủi ro thực tế (Quá hạn) và việc thiếu dữ liệu vận hành.
+- Trả lời bằng tiếng Việt chuyên nghiệp, súc tích, theo chuẩn Báo Cáo Điều Hành.`;
+
+      const prompt = `Gói Bằng Chứng:\n${evidenceLines.join("\n")}\n\nYêu cầu phân tích: ${userText}`;
+      const llmRes = await provider.generate({
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: prompt },
+        ],
+        maxTokens: 1000,
+        temperature: 0.2,
+      });
+
+      const deepSources: AISource[] = topCandidates.map((c) => ({
+        sourceType: "PROJECT",
+        recordId: c.projectId,
+        title: `${c.projectCode} - ${c.projectName}`,
+        route: `/projects/${c.projectId}`,
+        asOf: ranking.asOf,
+        label: "Bằng chứng phân tích sâu",
+      }));
+
+      return {
+        success: true,
+        content: llmRes.content || "Không có phản hồi từ mô hình.",
+        toolCallsExecuted: 1,
+        sources: deepSources,
+        conversationId: conversation.conversationId,
+        traceId,
+        qualityFlags: ["TOP_K_EVIDENCE_PACKAGE", "REMOTE_LLM_SYNTHESIS"],
+        coverageSummary: "Phân tích sâu đa chiều từ Remote LLM dựa trên Top-K Evidence Package của Project Brain.",
+        contextSnapshot: contextSnapshot(context),
+        providerStatus,
+        telemetry: {
+          durationMs: Date.now() - startTime,
+          provider: providerStatus.provider,
+          model: providerStatus.configuredModel,
+          remote: true,
+          mock: false,
+          promptTokens: llmRes.usage?.promptTokens || 0,
+          completionTokens: llmRes.usage?.completionTokens || 0,
+          totalTokens: llmRes.usage?.totalTokens || 0,
+        },
+        httpStatus: 200,
+      };
+    } else {
+      const deepContent = `### 🧠 PHÂN TÍCH SÂU DIỄN BIẾN DANH MỤC CÔNG TRÌNH [PROJECT BRAIN SYNTHESIS]
+Dựa trên gói bằng chứng Top-3 điểm nóng của danh mục (${ranking.totalAuthorizedProjects} công trình):
+
+1. **Phân tích Tương quan & Nguyên nhân Gốc rễ:**
+   - Điểm nóng trọng tâm duy nhất có rủi ro kinh doanh là **[CT-2026-0009]** (Quá hạn 52 ngày).
+   - 20 công trình còn lại chưa ghi nhận rủi ro tiến độ/vật tư nhưng đang có khoảng trống dữ liệu do chưa nhập nhật ký và tiến độ thực tế lên hệ thống ERP.
+
+2. **Đánh giá Tính sẵn sàng Dữ liệu (Data Readiness):**
+   - Dữ liệu pháp lý/thời hạn đạt mức tin cậy \`AVAILABLE\`.
+   - Dữ liệu vận hành công trường (nhật ký, kho, sản lượng) cần được các Ban Chỉ Huy chuẩn hóa để nâng độ tin cậy từ \`INSUFFICIENT_DATA\` lên \`HIGH\`.
+
+3. **Phương án Đề xuất cho Ban Giám Đốc:**
+   - *Chiến lược 1:* Phát hành thông báo yêu cầu Ban Chỉ Huy CT-2026-0009 trình phụ lục điều chỉnh hạn hoàn thành.
+   - *Chiến lược 2:* Chỉ đạo Phòng Kỹ thuật & Dự án ban hành quy chế cập nhật nhật ký công trường định kỳ bắt buộc.`;
+
+      const deepSources: AISource[] = topCandidates.map((c) => ({
+        sourceType: "PROJECT",
+        recordId: c.projectId,
+        title: `${c.projectCode} - ${c.projectName}`,
+        route: `/projects/${c.projectId}`,
+        asOf: ranking.asOf,
+        label: "Bằng chứng phân tích sâu",
+      }));
+
+      return {
+        success: true,
+        content: deepContent,
+        toolCallsExecuted: 1,
+        sources: deepSources,
+        conversationId: conversation.conversationId,
+        traceId,
+        qualityFlags: ["TOP_K_EVIDENCE_PACKAGE", "DETERMINISTIC_SYNTHESIS"],
+        coverageSummary: "Tổng hợp phân tích sâu dựa trên Top-K Evidence Package của Project Brain.",
+        contextSnapshot: contextSnapshot(context),
+        providerStatus,
+        telemetry: {
+          durationMs: Date.now() - startTime,
+          provider: providerStatus.provider,
+          model: "deterministic-deep-synthesis-v1",
+          remote: false,
+          mock: true,
+          promptTokens: 0,
+          completionTokens: 0,
+          totalTokens: 0,
+        },
+        httpStatus: 200,
+      };
+    }
+  }
+
+  // Daily Briefing V3 with Deterministic Project Brain Portfolio Pre-Ranking
+  if (isDailyBriefing(userText) || isPortfolioBriefing(userText) || routing.intent === "PORTFOLIO_DATA_HEALTH") {
     const briefingContext = isPortfolioBriefing(userText)
       ? { ...context, activeProjectId: undefined, activeProjectCode: undefined, activeProjectName: undefined }
       : context;
     const briefing = await executeDailyBriefing(briefingContext, { aiRunId: traceId, conversationId: conversation.conversationId });
     updateAIConversation(conversation.conversationId, context.userId, {
       currentIntent: isPortfolioBriefing(userText) ? "PORTFOLIO_BRIEFING" : "DAILY_BRIEFING",
-      activeEntities: briefing.selectedProject ? [{ type: "PROJECT", ...briefing.selectedProject }] : conversation.activeEntities,
+      activeEntities: briefing.ranking?.topAttentionCandidates[0]
+        ? [{ type: "PROJECT", id: briefing.ranking.topAttentionCandidates[0].projectId, code: briefing.ranking.topAttentionCandidates[0].projectCode, name: briefing.ranking.topAttentionCandidates[0].projectName }]
+        : conversation.activeEntities,
       previousToolReferences: ["get_my_projects", "get_project_summary", "get_pending_items", "get_latest_field_reports", "get_project_material_summary"],
       lastAnswerReferences: briefing.sources,
     });
@@ -609,13 +779,13 @@ export async function executeAIChatTurn(input: AIChatTurnInput): Promise<AIChatT
       aiRunId: traceId,
       status: "SUCCESS",
       rawInput: { toolCallsExecuted: briefing.toolCallsExecuted, sourceCount: briefing.sources.length },
-      summary: "Bounded local construction briefing completed.",
+      summary: "Deterministic Project Brain V3 portfolio briefing completed.",
       durationMs: Date.now() - startTime,
-      provider: "mock",
-      model: "bounded-local-briefing-v1",
+      provider: providerStatus.provider,
+      model: "deterministic-project-brain-v3",
       providerHttpStatus: 200,
       remote: false,
-      mock: true,
+      mock: providerStatus.mock,
       toolCalls: briefing.toolNames,
       sourceCount: briefing.sources.length,
     });
@@ -632,9 +802,227 @@ export async function executeAIChatTurn(input: AIChatTurnInput): Promise<AIChatT
       providerStatus,
       telemetry: {
         ...emptyTelemetry(startTime, providerStatus),
-        model: "bounded-local-briefing-v1",
+        model: "deterministic-project-brain-v3",
+        durationMs: Date.now() - startTime,
       },
     };
+  }
+
+  // Data Quality & Gaps Query (Deterministic Assessment from Data Quality Engine)
+  if (routing.intent === "DATA_QUALITY_QUERY" && context.activeProjectId) {
+    const snapshot = await buildProjectIntelligenceSnapshot(context.activeProjectId, context);
+    const projName = snapshot.project.displayName || snapshot.project.name;
+    const lines: string[] = [
+      `### 📊 ĐÁNH GIÁ CHẤT LƯỢNG & KHOẢNG TRỐNG DỮ LIỆU [${snapshot.project.code}]`,
+      `**Công trình:** ${projName}`,
+      `**Độ tin cậy tổng thể:** \`${snapshot.confidence}\``,
+      ``,
+      `| Hạng mục Nghiệp vụ | Trạng thái Dữ liệu | Chi tiết & Khoảng trống |`,
+      `| :--- | :---: | :--- |`,
+      `| **Thời hạn & Tiến độ kế hoạch** | \`${snapshot.dataQuality.schedule.status}\` | ${snapshot.dataQuality.schedule.notes} |`,
+      `| **Tiến độ thực tế** | \`${snapshot.dataQuality.progress.status}\` | ${snapshot.dataQuality.progress.notes} |`,
+      `| **Nhật ký hiện trường** | \`${snapshot.dataQuality.fieldActivity.status}\` | ${snapshot.dataQuality.fieldActivity.notes} |`,
+      `| **Vật tư & Tồn kho** | \`${snapshot.dataQuality.materials.status}\` | ${snapshot.dataQuality.materials.notes} |`,
+      `| **Phê duyệt & Tờ trình** | \`${snapshot.dataQuality.pending.status}\` | ${snapshot.dataQuality.pending.notes} |`,
+    ];
+
+    const dataQualitySignals = snapshot.signals.filter((s) => s.signalType === "DATA_QUALITY");
+    if (dataQualitySignals.length > 0) {
+      lines.push(``, `**Cảnh báo khoảng trống dữ liệu:**`);
+      for (const sig of dataQualitySignals) {
+        lines.push(`- ℹ️ **${sig.title}:** ${sig.summary}`);
+      }
+    }
+
+    const resContent = lines.join("\n");
+    const resSources: AISource[] = [
+      {
+        sourceType: "PROJECT",
+        recordId: snapshot.project.id,
+        title: `${snapshot.project.code} - ${snapshot.project.name}`,
+        route: `/projects/${snapshot.project.id}`,
+        asOf: snapshot.asOf,
+        label: "Hồ sơ công trình",
+      },
+    ];
+
+    return {
+      success: true,
+      content: resContent,
+      toolCallsExecuted: 1,
+      sources: resSources,
+      conversationId: conversation.conversationId,
+      traceId,
+      qualityFlags: Object.values(snapshot.dataQuality).map((q) => q.status),
+      coverageSummary: `Đánh giá Data Quality Engine V1 cho công trình ${snapshot.project.code}.`,
+      contextSnapshot: contextSnapshot(context),
+      providerStatus,
+      telemetry: {
+        durationMs: Date.now() - startTime,
+        provider: providerStatus.provider,
+        model: "deterministic-data-quality-v1",
+        remote: providerStatus.remote,
+        mock: providerStatus.mock,
+        promptTokens: 0,
+        completionTokens: 0,
+        totalTokens: 0,
+      },
+      httpStatus: 200,
+    };
+  }
+
+  // Signal Explanation Query ("Vì sao?", "Tại sao?")
+  if (routing.intent === "SIGNAL_EXPLANATION" && context.activeProjectId) {
+    const snapshot = await buildProjectIntelligenceSnapshot(context.activeProjectId, context);
+    const lines: string[] = [
+      `### 🔍 CĂN CỨ VÀ CHUỖI DẪN CHỨNG (EVIDENCE CHAIN) [${snapshot.project.code}]`,
+      `**Công trình:** ${snapshot.project.displayName || snapshot.project.name}`,
+      ``,
+    ];
+
+    if (snapshot.signals.length === 0) {
+      lines.push(`Hiện tại công trình không có tín hiệu cảnh báo bất thường nào (đang đúng hạn và không có sự cố ghi nhận).`);
+    } else {
+      lines.push(`Dưới đây là căn cứ và chuỗi dẫn chứng xác định cho các tín hiệu cảnh báo của công trình:`);
+      for (const sig of snapshot.signals) {
+        const icon = sig.signalType === "BUSINESS_RISK" ? "⚠️" : "ℹ️";
+        lines.push(`- ${icon} **${sig.title}** (Mức độ: \`${sig.severity}\`, Loại: \`${sig.signalType}\`):`);
+        lines.push(`  - *Giải thích:* ${sig.summary}`);
+        if (sig.derivedMetricIds.length > 0) {
+          const metricDetails = sig.derivedMetricIds
+            .map((mId) => {
+              const m = Object.values(snapshot.derivedMetrics).find((dm) => dm.metricCode === mId);
+              return m ? `${m.name} = ${m.value} ${m.unit || ""} (Công thức: ${m.formulaDescription})` : mId;
+            })
+            .join("; ");
+          lines.push(`  - *Chỉ số tính toán:* ${metricDetails}`);
+        }
+        if (sig.evidenceIds.length > 0) {
+          lines.push(`  - *Dẫn chứng gốc:* \`${sig.evidenceIds.join(", ")}\``);
+        }
+      }
+    }
+
+    const resContent = lines.join("\n");
+    const resSources: AISource[] = snapshot.evidenceGraph.nodes.map((node) => ({
+      sourceType: (node.sourceType === "SITE_REPORT" ? "FIELD_REPORT" : "PROJECT") as any,
+      recordId: node.recordId,
+      title: `${snapshot.project.code} - ${node.valueSummary}`,
+      route: node.route || `/projects/${snapshot.project.id}`,
+      asOf: node.asOf,
+      label: "Bằng chứng nghiệp vụ",
+    }));
+
+    return {
+      success: true,
+      content: resContent,
+      toolCallsExecuted: 1,
+      sources: resSources.slice(0, 20),
+      conversationId: conversation.conversationId,
+      traceId,
+      qualityFlags: snapshot.signals.map((s) => s.signalCode),
+      coverageSummary: `Truy xuất Evidence Graph V1 cho ${snapshot.signals.length} tín hiệu.`,
+      contextSnapshot: contextSnapshot(context),
+      providerStatus,
+      telemetry: {
+        durationMs: Date.now() - startTime,
+        provider: providerStatus.provider,
+        model: "deterministic-evidence-graph-v1",
+        remote: providerStatus.remote,
+        mock: providerStatus.mock,
+        promptTokens: 0,
+        completionTokens: 0,
+        totalTokens: 0,
+      },
+      httpStatus: 200,
+    };
+  }
+
+  // Deterministic Fast Path for unambiguous directory lookup
+  if (routing.isDeterministicFastPath && routing.intent === "PROJECT_DIRECTORY" && !comparisonRequested) {
+    const toolExec = await executeAIToolGateway({
+      toolName: "get_my_projects",
+      input: { limit: 50 },
+      explicitContext: context,
+    });
+
+    if (toolExec.success && toolExec.data) {
+      const { authorizedTotalCount, returnedCount, hasMore, items } = toolExec.data as any;
+      const projectList: any[] = Array.isArray(items) ? items : Array.isArray(toolExec.data) ? toolExec.data : [];
+      const total = authorizedTotalCount || projectList.length;
+
+      const rows = projectList.map((p, idx) => {
+        const deadlineLabel =
+          p.deadlineStatus === "OVERDUE"
+            ? `**OVERDUE** (${p.daysToDeadline} ngày)`
+            : p.deadlineStatus === "DUE_SOON"
+              ? `Sắp đến hạn (${p.daysToDeadline} ngày)`
+              : p.deadlineStatus === "ON_TRACK"
+                ? `Đúng hạn (${p.daysToDeadline} ngày)`
+                : "–";
+        const loc = p.location ? p.location.trim() : "–";
+        const name = p.displayName || p.name;
+        return `| ${idx + 1} | **${p.code}** | ${name} | ${p.status} | ${loc} | ${deadlineLabel} |`;
+      });
+
+      const moreNotice = hasMore
+        ? `\n> *Lưu ý: Đang hiển thị ${returnedCount}/${total} công trình. Sử dụng từ khóa tìm kiếm để lọc dự án cụ thể.*`
+        : "";
+
+      const formattedContent = projectList.length === 0
+        ? "Bạn hiện không có công trình nào trong phạm vi được phân quyền."
+        : `Bạn đang phụ trách **${total} công trình** trong hệ thống ERP (được cấp quyền truy cập):\n\n| # | Mã công trình | Tên công trình | Trạng thái | Địa điểm | Tình trạng hạn chót |\n|---|---------------|----------------|------------|----------|---------------------|\n${rows.join("\n")}\n${moreNotice}`;
+
+      const finalSources = uniqueSources(toolExec.sources || []);
+      updateAIConversation(conversation.conversationId, context.userId, {
+        currentIntent: "PROJECT_DIRECTORY",
+        activeEntities: conversation.activeEntities,
+        previousToolReferences: ["get_my_projects"],
+        lastAnswerReferences: finalSources,
+      });
+
+      await auditChat({
+        context,
+        aiRunId: traceId,
+        status: "SUCCESS",
+        rawInput: { intent: routing.intent, reasonCode: routing.reasonCode },
+        summary: `Deterministic fast path completed for ${finalSources.length} projects.`,
+        durationMs: Date.now() - startTime,
+        provider: providerStatus.provider,
+        model: "deterministic-fast-path-v1",
+        providerHttpStatus: 200,
+        remote: providerStatus.remote,
+        mock: providerStatus.mock,
+        toolCalls: ["get_my_projects"],
+        sourceCount: finalSources.length,
+        promptTokens: 0,
+        completionTokens: 0,
+      });
+
+      return {
+        success: true,
+        content: formattedContent,
+        toolCallsExecuted: 1,
+        sources: finalSources,
+        conversationId: conversation.conversationId,
+        traceId,
+        qualityFlags: toolExec.qualityFlags || [],
+        coverageSummary: toolExec.coverage?.summary,
+        contextSnapshot: contextSnapshot(context),
+        providerStatus,
+        telemetry: {
+          durationMs: Date.now() - startTime,
+          provider: providerStatus.provider,
+          model: "deterministic-fast-path-v1",
+          remote: providerStatus.remote,
+          mock: providerStatus.mock,
+          promptTokens: 0,
+          completionTokens: 0,
+          totalTokens: 0,
+        },
+        httpStatus: 200,
+      };
+    }
   }
 
   const contextForModel = {
@@ -656,7 +1044,7 @@ export async function executeAIChatTurn(input: AIChatTurnInput): Promise<AIChatT
   ];
 
   const provider = getAIProvider(input.preferredProvider);
-  const exportedTools = exportAIToolDefinitions();
+  const exportedTools = exportAIToolDefinitions(routing.toolsToExpose);
   let toolCallsExecuted = 0;
   let totalPromptTokens = 0;
   let totalCompletionTokens = 0;

@@ -5,7 +5,7 @@ import { AIRequestContext, AIToolDefinition, AIToolPayload } from "../types";
 
 export const getMyProjectsInputSchema = z
   .object({
-    limit: z.number().int().min(1).max(50).optional().default(15),
+    limit: z.number().int().min(1).max(100).optional().default(50),
     search: z.string().max(100).optional(),
   })
   .strict();
@@ -27,16 +27,23 @@ export interface ProjectSummaryItem {
   updatedAt: string;
 }
 
-export const getMyProjectsTool: AIToolDefinition<GetMyProjectsInput, AIToolPayload<ProjectSummaryItem[]>> = {
+export interface GetMyProjectsResult {
+  authorizedTotalCount: number;
+  returnedCount: number;
+  hasMore: boolean;
+  items: ProjectSummaryItem[];
+}
+
+export const getMyProjectsTool: AIToolDefinition<GetMyProjectsInput, AIToolPayload<GetMyProjectsResult>> = {
   name: "get_my_projects",
-  version: "1.0.0",
-  description: "Lấy danh sách các công trình mà người dùng hiện tại có quyền truy cập.",
+  version: "1.1.0",
+  description: "Lấy danh sách các công trình mà người dùng hiện tại có quyền truy cập trong hệ thống ERP.",
   riskLevel: "READ_SAFE",
   operation: "READ",
   aiAllowed: true,
   requiresProjectScopeCheck: false,
   inputSchema: getMyProjectsInputSchema,
-  execute: async (input: GetMyProjectsInput, context: AIRequestContext): Promise<AIToolPayload<ProjectSummaryItem[]>> => {
+  execute: async (input: GetMyProjectsInput, context: AIRequestContext): Promise<AIToolPayload<GetMyProjectsResult>> => {
     const asOf = new Date();
     const scopeWhere = projectScopeWhere(context.projectScope);
 
@@ -54,41 +61,46 @@ export const getMyProjectsTool: AIToolDefinition<GetMyProjectsInput, AIToolPaylo
       ];
     }
 
-    const projects = await prisma.project.findMany({
-      where: whereClause,
-      take: Math.min(input.limit || 15, 50),
-      orderBy: { code: "asc" },
-      select: {
-        id: true,
-        code: true,
-        name: true,
-        displayName: true,
-        status: true,
-        location: true,
-        startDate: true,
-        endDate: true,
-        updatedAt: true,
-        _count: {
-          select: {
-            members: {
-              where: { deletedAt: null, isActive: true },
+    const takeLimit = Math.min(input.limit || 50, 100);
+
+    const [authorizedTotalCount, projects] = await Promise.all([
+      prisma.project.count({ where: whereClause }),
+      prisma.project.findMany({
+        where: whereClause,
+        take: takeLimit,
+        orderBy: { code: "asc" },
+        select: {
+          id: true,
+          code: true,
+          name: true,
+          displayName: true,
+          status: true,
+          location: true,
+          startDate: true,
+          endDate: true,
+          updatedAt: true,
+          _count: {
+            select: {
+              members: {
+                where: { deletedAt: null, isActive: true },
+              },
             },
           },
         },
-      },
-    });
+      }),
+    ]);
 
-    const data = projects.map((p) => {
+    const items = projects.map((p) => {
       const daysToDeadline = p.endDate
         ? Math.ceil((p.endDate.getTime() - asOf.getTime()) / 86_400_000)
         : null;
       const deadlineStatus = daysToDeadline === null
-        ? "NO_DEADLINE" as const
+        ? ("NO_DEADLINE" as const)
         : daysToDeadline < 0
-          ? "OVERDUE" as const
+          ? ("OVERDUE" as const)
           : daysToDeadline <= 14
-            ? "DUE_SOON" as const
-            : "ON_TRACK" as const;
+            ? ("DUE_SOON" as const)
+            : ("ON_TRACK" as const);
       return {
         id: p.id,
         code: p.code,
@@ -105,20 +117,31 @@ export const getMyProjectsTool: AIToolDefinition<GetMyProjectsInput, AIToolPaylo
       };
     });
 
+    const hasMore = authorizedTotalCount > items.length;
+
+    const data: GetMyProjectsResult = {
+      authorizedTotalCount,
+      returnedCount: items.length,
+      hasMore,
+      items,
+    };
+
     return {
       data,
       asOf: asOf.toISOString(),
       coverage: {
-        status: data.length > 0 ? "AVAILABLE" : "NO_DATA",
-        summary: data.length > 0
-          ? `${data.length} công trình trong phạm vi được cấp quyền.`
+        status: items.length > 0 ? "AVAILABLE" : "NO_DATA",
+        summary: items.length > 0
+          ? `${items.length}/${authorizedTotalCount} công trình trong phạm vi được cấp quyền.`
           : "Không có công trình nào trong phạm vi được cấp quyền.",
       },
-      qualityFlags: data.some((project) => project.deadlineStatus === "NO_DEADLINE")
+      qualityFlags: items.some((project) => project.deadlineStatus === "NO_DEADLINE")
         ? ["SOME_PROJECTS_MISSING_DEADLINE"]
         : [],
-      warnings: [],
-      sources: data.map((project) => ({
+      warnings: hasMore
+        ? [`Đang hiển thị ${items.length} trên tổng số ${authorizedTotalCount} công trình được phân quyền.`]
+        : [],
+      sources: items.map((project) => ({
         sourceType: "PROJECT" as const,
         recordId: project.id,
         projectId: project.id,

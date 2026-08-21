@@ -28,6 +28,7 @@ describe("Phase 1A — Controlled LLM Read-Only Assistant End-to-End Suite", () 
 
   beforeEach(() => {
     vi.restoreAllMocks();
+    process.env.AI_PROVIDER_MODE = "DEVELOPMENT_MOCK";
   });
 
   // --- 1. ACTIVE TOOLS EXPORT ASSERTION ---

@@ -7,9 +7,12 @@ const VALID_MODES = new Set<AIProviderMode>([
   "PRODUCTION_REMOTE",
 ]);
 
+export type AIProviderName = "mock" | "openai" | "groq" | "gemini";
+
 export interface AIProviderStatus {
   mode: AIProviderMode;
-  provider: "mock" | "openai";
+  provider: AIProviderName;
+  configuredModel: string;
   available: boolean;
   remote: boolean;
   mock: boolean;
@@ -28,16 +31,45 @@ export function getAIProviderMode(
 export function getAIProviderStatus(): AIProviderStatus {
   const mode = getAIProviderMode();
   if (mode === "DEVELOPMENT_MOCK") {
-    return { mode, provider: "mock", available: true, remote: false, mock: true };
+    return {
+      mode,
+      provider: "mock",
+      configuredModel: "mock-construction-agent-v1",
+      available: true,
+      remote: false,
+      mock: true,
+    };
   }
 
-  const isGroq = process.env.AI_PROVIDER?.toLowerCase() === "groq" || Boolean(process.env.GROQ_API_KEY && !process.env.OPENAI_API_KEY);
-  const available = Boolean(
-    (isGroq ? process.env.GROQ_API_KEY : (process.env.OPENAI_API_KEY || process.env.GROQ_API_KEY))?.trim()
-  );
+  const explicitProvider = process.env.AI_PROVIDER?.trim().toLowerCase() as AIProviderName | undefined;
+  let resolvedProvider: AIProviderName = "openai";
+
+  if (explicitProvider === "groq" || explicitProvider === "gemini" || explicitProvider === "openai") {
+    resolvedProvider = explicitProvider;
+  } else if (process.env.GROQ_API_KEY?.trim() && !process.env.OPENAI_API_KEY?.trim()) {
+    resolvedProvider = "groq";
+  } else if (process.env.GEMINI_API_KEY?.trim() && !process.env.OPENAI_API_KEY?.trim()) {
+    resolvedProvider = "gemini";
+  }
+
+  let available = false;
+  let configuredModel = "";
+
+  if (resolvedProvider === "groq") {
+    available = Boolean(process.env.GROQ_API_KEY?.trim());
+    configuredModel = process.env.AI_MODEL_NAME?.trim() || "openai/gpt-oss-20b";
+  } else if (resolvedProvider === "gemini") {
+    available = Boolean(process.env.GEMINI_API_KEY?.trim() || process.env.GOOGLE_API_KEY?.trim());
+    configuredModel = process.env.AI_MODEL_NAME?.trim() || "gemini-2.5-flash";
+  } else {
+    available = Boolean(process.env.OPENAI_API_KEY?.trim());
+    configuredModel = process.env.AI_MODEL_NAME?.trim() || "gpt-5.6-terra";
+  }
+
   return {
     mode,
-    provider: "openai",
+    provider: resolvedProvider,
+    configuredModel,
     available,
     remote: true,
     mock: false,

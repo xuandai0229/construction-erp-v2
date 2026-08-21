@@ -1,0 +1,137 @@
+[
+  {
+    "promptId": "A",
+    "prompt": "Tôi đang phụ trách những công trình nào?",
+    "samples": [
+      {
+        "sampleIndex": 1,
+        "latencyMs": 62,
+        "remoteLlmInputTokens": 0,
+        "remoteLlmOutputTokens": 0,
+        "providerRounds": 0,
+        "toolLatencyMs": 62,
+        "model": "deterministic-fast-path-v1",
+        "httpStatus": 200,
+        "success": true
+      },
+      {
+        "sampleIndex": 2,
+        "latencyMs": 14,
+        "remoteLlmInputTokens": 0,
+        "remoteLlmOutputTokens": 0,
+        "providerRounds": 0,
+        "toolLatencyMs": 14,
+        "model": "deterministic-fast-path-v1",
+        "httpStatus": 200,
+        "success": true
+      },
+      {
+        "sampleIndex": 3,
+        "latencyMs": 12,
+        "remoteLlmInputTokens": 0,
+        "remoteLlmOutputTokens": 0,
+        "providerRounds": 0,
+        "toolLatencyMs": 12,
+        "model": "deterministic-fast-path-v1",
+        "httpStatus": 200,
+        "success": true
+      }
+    ],
+    "p50LatencyMs": 14,
+    "p95LatencyMs": 62,
+    "avgRemoteInputTokens": 0,
+    "avgRemoteOutputTokens": 0,
+    "avgProviderRounds": 0,
+    "verdict": "PASS"
+  },
+  {
+    "promptId": "B",
+    "prompt": "Tóm tắt CT-2026-0009.",
+    "samples": [
+      {
+        "sampleIndex": 1,
+        "latencyMs": 1950,
+        "remoteLlmInputTokens": 2219,
+        "remoteLlmOutputTokens": 579,
+        "providerRounds": 2,
+        "toolLatencyMs": 15,
+        "model": "openai/gpt-oss-20b",
+        "httpStatus": 200,
+        "success": true
+      },
+      {
+        "sampleIndex": 2,
+        "latencyMs": 1542,
+        "remoteLlmInputTokens": 2219,
+        "remoteLlmOutputTokens": 398,
+        "providerRounds": 2,
+        "toolLatencyMs": 15,
+        "model": "openai/gpt-oss-20b",
+        "httpStatus": 200,
+        "success": true
+      },
+      {
+        "sampleIndex": 3,
+        "latencyMs": 1670,
+        "remoteLlmInputTokens": 2219,
+        "remoteLlmOutputTokens": 522,
+        "providerRounds": 2,
+        "toolLatencyMs": 15,
+        "model": "openai/gpt-oss-20b",
+        "httpStatus": 200,
+        "success": true
+      }
+    ],
+    "p50LatencyMs": 1670,
+    "p95LatencyMs": 1950,
+    "avgRemoteInputTokens": 2219,
+    "avgRemoteOutputTokens": 500,
+    "avgProviderRounds": 2,
+    "verdict": "PASS"
+  },
+  {
+    "promptId": "C",
+    "prompt": "Có việc gì đang chờ xử lý?",
+    "samples": [
+      {
+        "sampleIndex": 1,
+        "latencyMs": 4794,
+        "remoteLlmInputTokens": 1114,
+        "remoteLlmOutputTokens": 212,
+        "providerRounds": 2,
+        "toolLatencyMs": 15,
+        "model": "openai/gpt-oss-20b",
+        "httpStatus": 200,
+        "success": true
+      },
+      {
+        "sampleIndex": 2,
+        "latencyMs": 2359,
+        "remoteLlmInputTokens": 1114,
+        "remoteLlmOutputTokens": 198,
+        "providerRounds": 2,
+        "toolLatencyMs": 15,
+        "model": "openai/gpt-oss-20b",
+        "httpStatus": 200,
+        "success": true
+      },
+      {
+        "sampleIndex": 3,
+        "latencyMs": 3861,
+        "remoteLlmInputTokens": 1114,
+        "remoteLlmOutputTokens": 284,
+        "providerRounds": 2,
+        "toolLatencyMs": 15,
+        "model": "openai/gpt-oss-20b",
+        "httpStatus": 200,
+        "success": true
+      }
+    ],
+    "p50LatencyMs": 3861,
+    "p95LatencyMs": 4794,
+    "avgRemoteInputTokens": 1114,
+    "avgRemoteOutputTokens": 231,
+    "avgProviderRounds": 2,
+    "verdict": "PASS"
+  }
+]

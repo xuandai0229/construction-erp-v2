@@ -1,5 +1,6 @@
 import { AIProvider } from "./ai-provider";
 import { OpenAIProvider } from "./openai-provider";
+import { GroqProvider } from "./groq-provider";
 import { MockAIProvider } from "./mock-provider";
 import { AIApplicationError } from "../errors";
 import { getAIProviderStatus } from "./provider-mode";
@@ -19,14 +20,21 @@ export function getAIProvider(preferred?: string): AIProvider {
     );
   }
 
-  const openAI = new OpenAIProvider();
-  if (openAI.isAvailable()) {
-    return openAI;
+  if (status.provider === "groq") {
+    const groq = new GroqProvider();
+    if (groq.isAvailable()) {
+      return groq;
+    }
+  } else if (status.provider === "openai") {
+    const openAI = new OpenAIProvider();
+    if (openAI.isAvailable()) {
+      return openAI;
+    }
   }
 
   throw new AIApplicationError(
     "PROVIDER_UNAVAILABLE",
-    "Dịch vụ AI từ xa chưa được Operator cấu hình hoặc hiện không khả dụng.",
+    `Dịch vụ AI từ xa (${status.provider}) chưa được Operator cấu hình API key hoặc hiện không khả dụng.`,
     503,
   );
 }

@@ -7,17 +7,20 @@ import prisma from "@/lib/prisma";
 describe("Phase 1B.2 — Resilience, Immutable Pilot Cohort & Provider Failure Gate", () => {
   const originalEnv = process.env.AI_READ_ONLY_ENABLED;
   const originalPilotEnv = process.env.AI_PILOT_ENFORCEMENT;
+  const originalProviderMode = process.env.AI_PROVIDER_MODE;
 
   beforeEach(() => {
     vi.restoreAllMocks();
     resetAIGuardRateLimits();
     process.env.AI_READ_ONLY_ENABLED = "true";
     process.env.AI_PILOT_ENFORCEMENT = "true";
+    process.env.AI_PROVIDER_MODE = "DEVELOPMENT_MOCK";
   });
 
   afterEach(() => {
     process.env.AI_READ_ONLY_ENABLED = originalEnv;
     process.env.AI_PILOT_ENFORCEMENT = originalPilotEnv;
+    process.env.AI_PROVIDER_MODE = originalProviderMode;
   });
 
   // --- 1. IMMUTABLE USER.ID PILOT COHORT ENFORCEMENT ---
@@ -82,7 +85,7 @@ describe("Phase 1B.2 — Resilience, Immutable Pilot Cohort & Provider Failure G
 
     const blockedGuard = await evaluateAIGuards(userId);
     expect(blockedGuard.allowed).toBe(false);
-    expect(blockedGuard.code).toBe("RATE_LIMITED");
+    expect(["APP_RATE_LIMITED", "RATE_LIMITED"]).toContain(blockedGuard.code);
   });
 
   // --- 4. RED-TEAM: MULTI-ROLE FINANCIAL INFERENCE & RECONSTRUCTION DEFENSE ---

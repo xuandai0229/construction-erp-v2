@@ -7,7 +7,7 @@ const MAX_REQUESTS_PER_WINDOW = 10;
 
 export interface AIGuardResult {
   allowed: boolean;
-  code?: "FEATURE_DISABLED" | "RATE_LIMITED";
+  code?: "FEATURE_DISABLED" | "APP_RATE_LIMITED" | "RATE_LIMITED";
   message?: string;
   retryAfterSeconds?: number;
 }
@@ -65,8 +65,8 @@ export async function evaluateAIGuards(userId: string): Promise<AIGuardResult> {
     );
     return {
       allowed: false,
-      code: "RATE_LIMITED",
-      message: "Bạn đã vượt quá số lượt yêu cầu cho phép (tối đa 10 lượt/phút). Vui lòng đợi trong giây lát.",
+      code: "APP_RATE_LIMITED",
+      message: `Bạn đang gửi yêu cầu quá nhanh. Có thể thử lại sau ${retryAfterSeconds} giây.`,
       retryAfterSeconds,
     };
   }

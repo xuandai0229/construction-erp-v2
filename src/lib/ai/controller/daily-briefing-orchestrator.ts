@@ -1,8 +1,7 @@
 import "server-only";
-import { executeAIToolGateway } from "../gateway/ai-tool-gateway";
-import { AIRequestContext, AISource, AIToolExecutionResult } from "../types";
-
-const MAX_BRIEFING_TOOL_CALLS = 5;
+import { AIRequestContext, AISource } from "../types";
+import { evaluateAndRankPortfolio, PortfolioRankingResult } from "../brain/portfolio-ranking-engine";
+import { buildProjectIntelligenceSnapshot } from "../brain/project-brain-builder";
 
 export interface DailyBriefingResult {
   content: string;
@@ -11,144 +10,125 @@ export interface DailyBriefingResult {
   qualityFlags: string[];
   coverageSummary: string;
   toolNames: string[];
-  selectedProject?: { id: string; code: string; name: string };
+  ranking?: PortfolioRankingResult;
 }
 
-function uniqueSources(results: AIToolExecutionResult[]): AISource[] {
-  const byKey = new Map<string, AISource>();
-  for (const result of results) {
-    for (const source of result.sources || []) {
-      byKey.set(`${source.sourceType}:${source.recordId}`, source);
-    }
-  }
-  return [...byKey.values()].slice(0, 20);
-}
-
-function priority(project: any): number {
-  if (project.deadlineStatus === "OVERDUE") return 0;
-  if (project.deadlineStatus === "DUE_SOON") return 1;
-  return 2;
-}
-
+/**
+ * Daily Briefing Orchestrator V3 (Project Brain + Deterministic Portfolio Pre-Ranking)
+ *
+ * Architecture:
+ * 1. Evaluates all authorized projects via Project Brain snapshots.
+ * 2. Deterministically ranks projects into Explainable Attention Tiers.
+ * 3. Highlights Top 3-5 Attention Candidates with explicit separation between:
+ *    - Genuine Business Risks (e.g. Overdue, Progress variance)
+ *    - Data Quality Gaps (e.g. Missing reports, missing progress)
+ * 4. Yields compact, fast, grounded Executive Briefing.
+ */
 export async function executeDailyBriefing(
   context: AIRequestContext,
   trace: { aiRunId: string; conversationId: string },
 ): Promise<DailyBriefingResult> {
-  const results: AIToolExecutionResult[] = [];
-  let selectedProject = context.activeProjectId
-    ? { id: context.activeProjectId, code: context.activeProjectCode || context.activeProjectId, name: context.activeProjectName || "Công trình đang chọn" }
-    : undefined;
+  const ranking = await evaluateAndRankPortfolio(context, 3);
 
-  if (!selectedProject) {
-    const projectsResult = await executeAIToolGateway({
-      toolName: "get_my_projects",
-      input: { limit: 50 },
-      explicitContext: context,
-      ...trace,
-      toolCallId: "briefing_projects",
-    });
-    results.push(projectsResult);
-    const projects = projectsResult.success && Array.isArray(projectsResult.data)
-      ? [...projectsResult.data].sort((a: any, b: any) => priority(a) - priority(b))
-      : [];
-    const candidate = projects[0] as any;
-    if (candidate) selectedProject = { id: candidate.id, code: candidate.code, name: candidate.name };
-  }
-
-  if (!selectedProject) {
+  if (ranking.evaluatedProjectsCount === 0) {
     return {
-      content: "Không có công trình nào trong phạm vi được cấp quyền để lập briefing hôm nay.",
-      toolCallsExecuted: results.length,
-      sources: uniqueSources(results),
+      content: "Không có công trình nào trong phạm vi được cấp quyền để lập báo cáo hôm nay.",
+      toolCallsExecuted: 1,
+      sources: [],
       qualityFlags: ["NO_AUTHORIZED_PROJECTS"],
-      coverageSummary: "Không có dữ liệu công trình để tiếp tục orchestration.",
-      toolNames: results.map((result) => result.toolName),
+      coverageSummary: "Không có dữ liệu công trình để lập briefing.",
+      toolNames: ["get_my_projects"],
+      ranking,
     };
   }
 
-  const calls = [
-    ["get_project_summary", { projectId: selectedProject.id }],
-    ["get_pending_items", { projectId: selectedProject.id, limit: 10 }],
-    ["get_latest_field_reports", { projectId: selectedProject.id, limit: 3 }],
-    ["get_project_material_summary", { projectId: selectedProject.id, limit: 20 }],
-  ] as const;
-  for (const [toolName, input] of calls) {
-    if (results.length >= MAX_BRIEFING_TOOL_CALLS) break;
-    results.push(await executeAIToolGateway({
-      toolName,
-      input,
-      explicitContext: context,
-      ...trace,
-      toolCallId: `briefing_${toolName}`,
-    }));
+  const sources: AISource[] = [];
+  const qualityFlags: string[] = [];
+
+  const tierSummaryText = [
+    ranking.tierSummary.CRITICAL > 0 ? `🔴 **${ranking.tierSummary.CRITICAL}** Nguy cấp (CRITICAL)` : null,
+    ranking.tierSummary.HIGH > 0 ? `🟠 **${ranking.tierSummary.HIGH}** Cao (HIGH)` : null,
+    ranking.tierSummary.MEDIUM > 0 ? `🟡 **${ranking.tierSummary.MEDIUM}** Trung bình (MEDIUM)` : null,
+    ranking.tierSummary.DATA_QUALITY_ATTENTION > 0
+      ? `ℹ️ **${ranking.tierSummary.DATA_QUALITY_ATTENTION}** Cần bổ sung dữ liệu`
+      : null,
+    ranking.tierSummary.LOW > 0 ? `🟢 **${ranking.tierSummary.LOW}** Đúng tiến độ / Bình thường` : null,
+  ]
+    .filter(Boolean)
+    .join(" | ");
+
+  const lines: string[] = [
+    `## 📋 BÁO CÁO NHANH TÌNH HÌNH CÔNG TRÌNH HÔM NAY`,
+    `*Phạm vi: **${ranking.evaluatedProjectsCount} công trình** được cấp quyền truy cập.*`,
+    ``,
+    `### 1. Phân bổ Mức độ Chú ý Toàn Danh mục`,
+    tierSummaryText || "Tất cả công trình đang ở trạng thái bình thường.",
+    ``,
+    `### 2. Top ${ranking.topAttentionCandidates.length} Công Trình Cần Quan Tâm Nhất`,
+  ];
+
+  for (let i = 0; i < ranking.topAttentionCandidates.length; i++) {
+    const c = ranking.topAttentionCandidates[i];
+    const badge =
+      c.tier === "CRITICAL"
+        ? "🔴 [CRITICAL]"
+        : c.tier === "HIGH"
+          ? "🟠 [HIGH]"
+          : c.tier === "MEDIUM"
+            ? "🟡 [MEDIUM]"
+            : c.tier === "DATA_QUALITY_ATTENTION"
+              ? "ℹ️ [DATA QUALITY ATTENTION]"
+              : "🟢 [LOW]";
+
+    lines.push(`**${i + 1}. ${badge} [${c.projectCode}] ${c.projectName}**`);
+    lines.push(`- **Tình trạng:** ${c.briefExplanation}`);
+
+    if (c.dataQualitySignals.length > 0 && c.tier !== "DATA_QUALITY_ATTENTION") {
+      lines.push(`- **Khoảng trống dữ liệu:** ${c.dataQualitySignals.map((s) => s.title).join(", ")}`);
+    }
+    lines.push(`- **Độ tin cậy dữ liệu:** ${c.confidence}`);
+    lines.push(``);
+
+    sources.push({
+      sourceType: "PROJECT",
+      recordId: c.projectId,
+      title: `${c.projectCode} - ${c.projectName}`,
+      route: `/projects/${c.projectId}`,
+      asOf: ranking.asOf,
+      label: "Hồ sơ công trình",
+    });
   }
 
-  const [summaryResult, pendingResult, reportsResult, materialsResult] = results.slice(-4);
-  const summary = summaryResult?.success ? summaryResult.data as any : null;
-  const pending = pendingResult?.success && Array.isArray(pendingResult.data) ? pendingResult.data as any[] : [];
-  const reports = reportsResult?.success && Array.isArray(reportsResult.data) ? reportsResult.data as any[] : [];
-  const materials = materialsResult?.success && Array.isArray(materialsResult.data) ? materialsResult.data as any[] : [];
-  const latestReport = reports[0];
-  const lowStock = materials.filter((item) => item.stockStatus !== "AVAILABLE");
-  const issues = [
-    ...(summary?.deadline?.status === "OVERDUE" ? [`Mốc hoàn thành ${summary.deadline.label.toLowerCase()}.`] : []),
-    ...(summary?.actualProgress?.status !== "AVAILABLE" ? ["Chưa đủ dữ liệu tiến độ đã duyệt để kết luận phần trăm hoàn thành."] : []),
-    ...(pending.length > 0 ? [`Có ${pending.length} việc đang chờ trong miền workflow được hỗ trợ.`] : []),
-    ...(latestReport?.issues ? [`Báo cáo gần nhất nêu: ${latestReport.issues}`] : []),
-    ...(lowStock.length > 0 ? [`Có ${lowStock.length} vật tư hết/dưới ngưỡng.`] : []),
-  ].slice(0, 3);
-  const dataGaps = [...new Set(results.flatMap((result) => result.qualityFlags || []))];
-  const priorities = [
-    summary?.deadline?.status === "OVERDUE"
-      ? "Xác minh kế hoạch xử lý mốc quá hạn và cập nhật tiến độ đã duyệt."
-      : "Xác minh tiến độ đã duyệt mới nhất trước khi ra quyết định.",
-    pending.length > 0
-      ? `Rà soát việc chờ lâu nhất: ${pending[0].title}.`
-      : "Kiểm tra xem workflow ngoài hai miền đang hỗ trợ có việc chờ quan trọng hay không.",
-    lowStock.length > 0
-      ? `Kiểm tra vật tư ${lowStock[0].code} (${lowStock[0].stockStatus}).`
-      : latestReport
-        ? `Mở báo cáo ${latestReport.reportNo} để đối chiếu hiện trường.`
-        : "Bổ sung báo cáo hiện trường nếu công trình đã phát sinh hoạt động.",
-  ];
-  const lines = [
-    `1. Tổng quan — [${selectedProject.code}] ${selectedProject.name}`,
-    summary
-      ? `- Tiến độ đã duyệt: ${summary.actualProgress?.status === "AVAILABLE" ? `${Number(summary.actualProgress.percent).toFixed(1)}%` : "chưa đủ dữ liệu"}.`
-      : "- Tiến độ: không truy vấn được.",
-    summary
-      ? `- Thời hạn: ${summary.deadline?.label || "chưa cập nhật"}.`
-      : "- Thời hạn: không truy vấn được.",
-    `- Việc đang chờ trong miền hỗ trợ: ${pending.length}.`,
-    latestReport
-      ? `- Báo cáo gần nhất: ${latestReport.reportNo} ngày ${latestReport.reportDate}${latestReport.issues ? `; vấn đề: ${latestReport.issues}` : "."}`
-      : "- Báo cáo hiện trường: chưa có nội dung phù hợp.",
-    materials.length > 0
-      ? `- Tồn kho: ${materials.length} vật tư được theo dõi; ${lowStock.length} vật tư hết/dưới ngưỡng.`
-      : "- Tồn kho: chưa có ProjectMaterialStock; không dùng catalog để thay số tồn.",
-    "2. Top vấn đề cần chú ý",
-    ...(issues.length > 0 ? issues.map((issue, index) => `${index + 1}. ${issue}`) : ["- Chưa có signal rủi ro đủ dữ liệu để xếp hạng."]),
-    "3. Vì sao",
-    `- Các kết luận trên chỉ dùng deadline, approved progress, pending, report content và ProjectMaterialStock đã truy vấn; không suy diễn từ keyword.`,
-    "4. Evidence",
-    `- ${uniqueSources(results).length} nguồn ERP có deep-link được đính kèm bên dưới.`,
-    "5. Data gaps",
-    `- ${dataGaps.length > 0 ? dataGaps.join(", ") : "Không có lỗi truy vấn; miền trống vẫn có thể chưa được nhập dữ liệu."}`,
-    "6. Ba kiểm tra ưu tiên tiếp theo",
-    ...priorities.map((priority, index) => `${index + 1}. ${priority}`),
-  ];
-  const qualityFlags = dataGaps;
-  const unavailable = results.filter((result) => !result.success || result.coverage?.status === "UNAVAILABLE").length;
+  // Action Suggestions section (Provenance: DETERMINISTIC_ACTION_SUGGESTION)
+  lines.push(`### 3. Gợi ý Hành động Trọng tâm (Quy tắc Xác định)`);
+  if (ranking.topAttentionCandidates.length > 0) {
+    const top1 = ranking.topAttentionCandidates[0];
+    if (top1.tier === "CRITICAL" || top1.tier === "HIGH") {
+      lines.push(`1. **Ưu tiên xử lý [${top1.projectCode}]:** Rà soát mốc tiến độ và nguyên nhân quá hạn.`);
+    } else if (top1.tier === "DATA_QUALITY_ATTENTION") {
+      lines.push(`1. **Đôn đốc dữ liệu [${top1.projectCode}]:** Nhắc nhở ban chỉ huy cập nhật nhật ký thi công.`);
+    } else {
+      lines.push(`1. **Theo dõi định kỳ [${top1.projectCode}]:** Tiếp tục giám sát các mốc công việc tuần.`);
+    }
+  }
+  lines.push(`2. **Kiểm tra phê duyệt:** Xử lý các tờ trình hoặc yêu cầu vật tư đang chờ duyệt.`);
+  lines.push(`3. **Chuẩn hóa dữ liệu:** Cập nhật nhật ký hiện trường cho các dự án đang thiếu thông tin.`);
+  lines.push(``);
+  lines.push(`*Ghi chú nguồn gốc: Các gợi ý trên được sinh từ quy tắc xác định (\`DETERMINISTIC_ACTION_SUGGESTION\`) dựa trên tín hiệu rủi ro, không qua mô hình ngôn ngữ tự do.*`);
+
+  for (const c of ranking.topAttentionCandidates) {
+    for (const sig of c.dataQualitySignals) {
+      qualityFlags.push(sig.signalCode);
+    }
+  }
 
   return {
     content: lines.join("\n"),
-    toolCallsExecuted: results.length,
-    sources: uniqueSources(results),
-    qualityFlags,
-    coverageSummary: unavailable > 0
-      ? `${unavailable}/${results.length} truy vấn không khả dụng; briefing chỉ phản ánh dữ liệu lấy được.`
-      : "Briefing hoàn tất trong giới hạn 5 tool read-only; miền trống được nêu rõ.",
-    selectedProject,
-    toolNames: results.map((result) => result.toolName),
+    toolCallsExecuted: ranking.topAttentionCandidates.length + 1,
+    sources: sources.slice(0, 20),
+    qualityFlags: [...new Set(qualityFlags)],
+    coverageSummary: `Đã đánh giá 5 tầng Project Brain cho ${ranking.evaluatedProjectsCount} công trình.`,
+    toolNames: ["get_my_projects", "get_project_summary", "get_latest_field_reports", "get_project_material_summary"],
+    ranking,
   };
 }

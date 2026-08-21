@@ -10,23 +10,40 @@ import { AIApplicationError } from "../errors";
 
 describe("AI-01 provider contract and no-silent-fallback", () => {
   const originalMode = process.env.AI_PROVIDER_MODE;
+  const originalProvider = process.env.AI_PROVIDER;
   const originalKey = process.env.OPENAI_API_KEY;
+  const originalGroqKey = process.env.GROQ_API_KEY;
+  const originalGeminiKey = process.env.GEMINI_API_KEY;
+  const originalModel = process.env.AI_MODEL_NAME;
 
   beforeEach(() => {
     process.env.AI_PROVIDER_MODE = "PILOT_REMOTE";
     delete process.env.OPENAI_API_KEY;
+    delete process.env.GROQ_API_KEY;
+    delete process.env.GEMINI_API_KEY;
+    delete process.env.AI_PROVIDER;
+    delete process.env.AI_MODEL_NAME;
   });
 
   afterEach(() => {
     process.env.AI_PROVIDER_MODE = originalMode;
+    if (originalProvider === undefined) delete process.env.AI_PROVIDER;
+    else process.env.AI_PROVIDER = originalProvider;
     if (originalKey === undefined) delete process.env.OPENAI_API_KEY;
     else process.env.OPENAI_API_KEY = originalKey;
+    if (originalGroqKey === undefined) delete process.env.GROQ_API_KEY;
+    else process.env.GROQ_API_KEY = originalGroqKey;
+    if (originalGeminiKey === undefined) delete process.env.GEMINI_API_KEY;
+    else process.env.GEMINI_API_KEY = originalGeminiKey;
+    if (originalModel === undefined) delete process.env.AI_MODEL_NAME;
+    else process.env.AI_MODEL_NAME = originalModel;
   });
 
   it("reports BLOCKED_NO_KEY and refuses mock fallback in remote modes", () => {
     expect(getAIProviderStatus()).toEqual({
       mode: "PILOT_REMOTE",
       provider: "openai",
+      configuredModel: "gpt-5.6-terra",
       available: false,
       remote: true,
       mock: false,

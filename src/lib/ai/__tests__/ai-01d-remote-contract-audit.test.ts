@@ -15,18 +15,34 @@ import * as path from "path";
 
 describe("AI-01D — Real OpenAI Intelligence Gate Contract & Security Audit", () => {
   const originalMode = process.env.AI_PROVIDER_MODE;
+  const originalProvider = process.env.AI_PROVIDER;
   const originalKey = process.env.OPENAI_API_KEY;
+  const originalGroqKey = process.env.GROQ_API_KEY;
+  const originalGeminiKey = process.env.GEMINI_API_KEY;
+  const originalGoogleKey = process.env.GOOGLE_API_KEY;
   const originalModel = process.env.AI_MODEL_NAME;
 
   beforeEach(() => {
     delete process.env.OPENAI_API_KEY;
+    delete process.env.GROQ_API_KEY;
+    delete process.env.GEMINI_API_KEY;
+    delete process.env.GOOGLE_API_KEY;
+    delete process.env.AI_PROVIDER;
     delete process.env.AI_MODEL_NAME;
   });
 
   afterEach(() => {
     process.env.AI_PROVIDER_MODE = originalMode;
+    if (originalProvider !== undefined) process.env.AI_PROVIDER = originalProvider;
+    else delete process.env.AI_PROVIDER;
     if (originalKey !== undefined) process.env.OPENAI_API_KEY = originalKey;
     else delete process.env.OPENAI_API_KEY;
+    if (originalGroqKey !== undefined) process.env.GROQ_API_KEY = originalGroqKey;
+    else delete process.env.GROQ_API_KEY;
+    if (originalGeminiKey !== undefined) process.env.GEMINI_API_KEY = originalGeminiKey;
+    else delete process.env.GEMINI_API_KEY;
+    if (originalGoogleKey !== undefined) process.env.GOOGLE_API_KEY = originalGoogleKey;
+    else delete process.env.GOOGLE_API_KEY;
     if (originalModel !== undefined) process.env.AI_MODEL_NAME = originalModel;
     else delete process.env.AI_MODEL_NAME;
   });
@@ -154,7 +170,42 @@ describe("AI-01D — Real OpenAI Intelligence Gate Contract & Security Audit", (
     expect(err.details?.requestId).toBe("req-12345");
   });
 
-  // --- 5. TELEMETRY & ACTUAL MODEL TRACKING ---
+  it("Error Taxonomy: Accurately distinguishes billing_not_active from true rate limiting", () => {
+    const err = mapOpenAIHttpFailure({
+      status: 429,
+      data: { error: { code: "billing_not_active", message: "Account not active" } },
+      requestId: "req-billing-1",
+    });
+    expect(err.code).toBe("PROVIDER_BILLING_INACTIVE");
+    expect(err.message).toContain("tài khoản nhà cung cấp chưa được kích hoạt");
+  });
+
+  it("Error Taxonomy: Accurately distinguishes insufficient_quota from true rate limiting", () => {
+    const err = mapOpenAIHttpFailure({
+      status: 429,
+      data: { error: { code: "insufficient_quota", message: "Quota exhausted" } },
+      requestId: "req-quota-1",
+    });
+    expect(err.code).toBe("PROVIDER_QUOTA_EXHAUSTED");
+    expect(err.message).toContain("Hạn mức sử dụng AI của nhà cung cấp hiện đã hết");
+  });
+
+  // --- 5. GROQ PROVIDER & PROVIDER FACTORY ROUTING ---
+  it("Provider Factory: Dynamically routes to Groq when AI_PROVIDER is groq", () => {
+    process.env.AI_PROVIDER_MODE = "PILOT_REMOTE";
+    process.env.AI_PROVIDER = "groq";
+    process.env.GROQ_API_KEY = "gsk_test_key";
+    delete process.env.OPENAI_API_KEY;
+
+    const status = getAIProviderStatus();
+    expect(status.provider).toBe("groq");
+    expect(status.available).toBe(true);
+
+    const provider = getAIProvider();
+    expect(provider.name).toBe("groq");
+  });
+
+  // --- 6. TELEMETRY & ACTUAL MODEL TRACKING ---
   it("Telemetry: Correctly parses actual model returned by OpenAI and tracks token usage", () => {
     const parsed = parseOpenAIChatResult({
       data: {
@@ -189,7 +240,7 @@ describe("AI-01D — Real OpenAI Intelligence Gate Contract & Security Audit", (
     expect(parsed.latencyMs).toBe(340);
   });
 
-  // --- 6. QA FIXTURE AVAILABILITY ---
+  // --- 7. QA FIXTURE AVAILABILITY ---
   it("QA Fixture: Isolated vertical slice fixture is present and valid JSON for remote benchmarking", () => {
     const fixturePath = path.resolve("d:/construction-erp-v2/scripts/qa/fixtures/ai01b-construction-vertical-slice.json");
     expect(fs.existsSync(fixturePath)).toBe(true);

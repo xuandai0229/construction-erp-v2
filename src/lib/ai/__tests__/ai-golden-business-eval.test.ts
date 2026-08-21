@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { executeAIChatTurn, AIChatTurnOutput } from "../controller/ai-chat-controller";
 import { clearAIAuditRecords, getAIAuditRecords } from "../audit/ai-audit-logger";
 import { clearAIConversationStore } from "../conversation/ai-conversation-store";
+import { resetAIGuardRateLimits } from "../controller/ai-guard";
 import { GOLDEN_BUSINESS_CASES, GoldenBusinessCase } from "../evals/golden-business-cases";
 
 type EvalVerdict = "PASS" | "PARTIAL" | "FAIL";
@@ -90,6 +91,7 @@ describe.sequential("AI-01 Golden Business Eval — exact audit 30", () => {
     const outputs = new Map<number, AIChatTurnOutput>();
 
     for (const testCase of GOLDEN_BUSINESS_CASES) {
+      resetAIGuardRateLimits();
       const conversationId = testCase.id >= 4 && testCase.id <= 8
         ? followUpConversation
         : testCase.id >= 20 && testCase.id <= 21

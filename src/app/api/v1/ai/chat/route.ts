@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     // 3. 2-Layer Kill-Switch & Per-User Rate Limit Guard
     const guardResult = await evaluateAIGuards(session.id);
     if (!guardResult.allowed) {
-      const statusCode = guardResult.code === "RATE_LIMITED" ? 429 : 503;
+      const statusCode = (guardResult.code === "APP_RATE_LIMITED" || guardResult.code === "RATE_LIMITED") ? 429 : 503;
       return NextResponse.json(
         {
           success: false,

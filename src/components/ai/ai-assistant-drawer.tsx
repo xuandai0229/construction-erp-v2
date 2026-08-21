@@ -24,7 +24,8 @@ interface AIAssistantDrawerProps {
   userRole: string;
   providerStatus: {
     mode: AIProviderMode;
-    provider: "mock" | "openai";
+    provider: "mock" | "openai" | "groq" | "gemini";
+    configuredModel?: string;
     available: boolean;
     remote: boolean;
     mock: boolean;
@@ -59,11 +60,16 @@ export function AIAssistantDrawer({
     if (isOpen) messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isOpen]);
 
-  const statusLabel = providerStatus.blockedReason === "BLOCKED_NO_KEY"
-    ? "Remote bị khóa"
-    : providerStatus.mock
-      ? "Mô phỏng local"
-      : "OpenAI Remote";
+  const getStatusLabel = (status: typeof providerStatus) => {
+    if (status.blockedReason === "BLOCKED_NO_KEY") return "Remote bị khóa";
+    if (status.mock) return "Mô phỏng local";
+    if (status.provider === "groq") return "Groq Remote";
+    if (status.provider === "gemini") return "Gemini Remote";
+    if (status.provider === "openai") return "OpenAI Remote";
+    return "AI Remote";
+  };
+
+  const statusLabel = getStatusLabel(providerStatus);
 
   const handleSendMessage = async (textToSend?: string) => {
     const query = (textToSend || input).trim();

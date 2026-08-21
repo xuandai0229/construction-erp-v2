@@ -95,11 +95,12 @@ const STRICT_TOOL_JSON_SCHEMAS: Record<string, Record<string, unknown>> = {
  * 1. Exactly 5 Read Tools allowed in Phase 1B (ACTIVE_EXECUTABLE_AI_TOOLS === 5).
  * 2. Zero Write, Mutation, Delete, or Raw SQL tools are ever exported.
  * 3. Enforces strict: true on OpenAI function calling format.
+ * 4. Supports dynamic tool filtering to reduce prompt token footprint.
  */
-export function exportAIToolDefinitions(): AIToolExportDefinition[] {
+export function exportAIToolDefinitions(allowedToolNames?: string[]): AIToolExportDefinition[] {
   const toolEntries = Object.entries(AI_TOOL_REGISTRY);
 
-  // Assertion: Exactly 5 active tools allowed
+  // Assertion: Exactly 5 active tools allowed in registry
   if (toolEntries.length !== 5) {
     throw new Error(`SECURITY ASSERTION FAILED: Expected exactly 5 registered AI tools, found ${toolEntries.length}`);
   }
@@ -107,6 +108,10 @@ export function exportAIToolDefinitions(): AIToolExportDefinition[] {
   const exported: AIToolExportDefinition[] = [];
 
   for (const [name, tool] of toolEntries) {
+    if (allowedToolNames && !allowedToolNames.includes(name)) {
+      continue;
+    }
+
     if (tool.operation !== "READ" || tool.riskLevel !== "READ_SAFE" || !tool.aiAllowed) {
       throw new Error(`SECURITY VIOLATION: Tool '${name}' has non-read attributes and cannot be exported to LLM.`);
     }
